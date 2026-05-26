@@ -4,6 +4,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../api/src/modules/prisma/prisma.service";
 import { NotificacoesService } from "../api/src/modules/notificacoes/notificacoes.service";
 import { EmailService } from "../api/src/modules/email/email.service";
+import { PushNotificacoesService } from "../api/src/modules/push-notificacoes/push-notificacoes.service";
 
 export const QUEUE_LIBERACAO = "liberacao-parcela";
 
@@ -21,7 +22,8 @@ export class LiberacaoParcelaWorker {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
-    private readonly email: EmailService
+    private readonly email: EmailService,
+    private readonly pushNotificacoes: PushNotificacoesService
   ) {}
 
   @Process()
@@ -63,6 +65,15 @@ export class LiberacaoParcelaWorker {
         `Liberação de R$ ${formattedValue} foi processada para ${obra?.nome || "sua obra"}.`,
         obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
       );
+
+      // Envia push notification
+      this.pushNotificacoes.enviarPush({
+        usuarioId: credito.usuarioId,
+        titulo: "Parcela Liberada!",
+        mensagem: `R$ ${formattedValue} foi creditado para ${obra?.nome || "sua obra"}.`,
+        tipo: "PARCELA_LIBERADA",
+        dados: { creditoId, valor: String(valor) },
+      }).catch((e) => this.logger.error(`Erro ao enviar push: ${e}`));
 
       // Envia email
       this.email
