@@ -1,13 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
+import { EmailService } from "../email/email.service";
 import { KycDocumentoStatus } from "@prisma/client";
 
 @Injectable()
 export class KycService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notificacoes: NotificacoesService
+    private readonly notificacoes: NotificacoesService,
+    private readonly email: EmailService
   ) {}
 
   async uploadDocumento(usuarioId: string, tipo: string, url: string) {
@@ -70,6 +72,11 @@ export class KycService {
       "/dashboard/perfil"
     );
 
+    // Envia email
+    this.email
+      .kycAprovadoEmail(documento.usuario.nome, documento.usuario.email)
+      .catch(() => {});
+
     return atualizado;
   }
 
@@ -106,6 +113,11 @@ export class KycService {
       `Seu documento "${documento.tipo}" foi rejeitado. Motivo: ${motivo}. Por favor, envie um novo documento.`,
       "/dashboard/perfil"
     );
+
+    // Envia email
+    this.email
+      .kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo)
+      .catch(() => {});
 
     return atualizado;
   }

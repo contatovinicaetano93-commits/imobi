@@ -3,6 +3,7 @@ import { Job } from "bull";
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../api/src/modules/prisma/prisma.service";
 import { NotificacoesService } from "../api/src/modules/notificacoes/notificacoes.service";
+import { EmailService } from "../api/src/modules/email/email.service";
 
 export const QUEUE_LIBERACAO = "liberacao-parcela";
 
@@ -19,7 +20,8 @@ export class LiberacaoParcelaWorker {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notificacoes: NotificacoesService
+    private readonly notificacoes: NotificacoesService,
+    private readonly email: EmailService
   ) {}
 
   @Process()
@@ -61,6 +63,16 @@ export class LiberacaoParcelaWorker {
         `Liberação de R$ ${formattedValue} foi processada para ${obra?.nome || "sua obra"}.`,
         obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
       );
+
+      // Envia email
+      this.email
+        .parcelaLiberadaEmail(
+          credito.usuario.nome,
+          credito.usuario.email,
+          valor,
+          obra?.nome || "sua obra"
+        )
+        .catch((e) => this.logger.error(`Erro ao enviar email: ${e}`));
 
       this.logger.log(`Liberação processada para crédito ${creditoId}: R$ ${valor}`);
     } catch (error) {
