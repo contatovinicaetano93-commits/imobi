@@ -253,6 +253,7 @@ model KycDocumento {
   @@index([usuarioId])
   @@index([status])
   @@index([criadoEm])
+  @@index([analisadoPor])
 }
 
 enum KycDocumentoStatus {
