@@ -29,4 +29,5 @@ const NAV_ITEMS = [
   { label: "Painel do Gestor", href: "/dashboard/gestor" },
   { label: "Relatórios", href: "/dashboard/relatorios" },
   { label: "Perfil", href: "/dashboard/perfil" },
+  { label: "KYC", href: "/dashboard/kyc" },
 ];

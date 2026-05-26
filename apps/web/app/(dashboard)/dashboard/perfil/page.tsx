@@ -94,9 +94,9 @@ export default async function PerfilPage() {
               : "Seu documento foi rejeitado. Entre em contato com suporte para mais informações."}
           </p>
           {usuario.kycStatus === "PENDENTE" && (
-            <button className="text-sm font-semibold text-yellow-700 hover:text-yellow-800">
+            <a href="/dashboard/kyc" className="text-sm font-semibold text-yellow-700 hover:text-yellow-800">
               Iniciar Validação →
-            </button>
+            </a>
           )}
         </div>
       )}
