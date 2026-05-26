@@ -5,6 +5,7 @@ import {
 } from "@nestjs/platform-fastify";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -12,7 +13,7 @@ async function bootstrap() {
     new FastifyAdapter({ logger: process.env["NODE_ENV"] !== "production" })
   );
 
-  // ThrottlerGuard is registered via AppModule providers
+  app.useGlobalGuards(new CustomThrottlerGuard());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");
 

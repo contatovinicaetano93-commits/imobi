@@ -1,7 +1,8 @@
-import { Controller, Get, Patch, Param, Query, Body, UseGuards } from "@nestjs/common";
+import { Controller, Get, Patch, Param, Query, Body, UseGuards, Req } from "@nestjs/common";
 import { ManagerService } from "./manager.service";
 import { EtapasService } from "../etapas/etapas.service";
 import { KycService } from "../kyc/kyc.service";
+import { AuditService } from "../audit/audit.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
@@ -12,6 +13,7 @@ export class ManagerController {
     private readonly manager: ManagerService,
     private readonly etapas: EtapasService,
     private readonly kyc: KycService,
+    private readonly audit: AuditService,
   ) {}
 
   @Get("dashboard")
@@ -86,5 +88,25 @@ export class ManagerController {
   ) {
     await this.manager.verificarPermissao(u.id);
     return this.kyc.rejeitarDocumento(id, u.id, motivo);
+  }
+
+  @Get("audit-trail")
+  async auditTrail(
+    @UsuarioAtual() u: IUsuario,
+    @Query("limit") limit: string = "50",
+    @Query("offset") offset: string = "0"
+  ) {
+    await this.manager.verificarPermissao(u.id);
+    return this.audit.listarPorGestor(u.id, Number(limit), Number(offset));
+  }
+
+  @Get("audit-trail/:entidade/:id")
+  async auditTrailPorEntidade(
+    @UsuarioAtual() u: IUsuario,
+    @Param("entidade") entidade: string,
+    @Param("id") id: string
+  ) {
+    await this.manager.verificarPermissao(u.id);
+    return this.audit.listarPorEntidade(entidade, id);
   }
 }

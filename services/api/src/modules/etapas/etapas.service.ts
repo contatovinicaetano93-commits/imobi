@@ -5,6 +5,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
+import { AuditService, AcaoAudit } from "../audit/audit.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
 
 @Injectable()
@@ -14,6 +15,7 @@ export class EtapasService {
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
     private readonly pushNotificacoes: PushNotificacoesService,
+    private readonly audit: AuditService,
     @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue<LiberacaoJob>
   ) {}
 
@@ -80,6 +82,15 @@ export class EtapasService {
       await this.liberacaoQueue.add({ creditoId: credito.creditoId, etapaId, valor: valorLiberacao });
     }
 
+    // Log to audit trail
+    this.audit.registrar(
+      gestorId,
+      AcaoAudit.ETAPA_APROVADA,
+      "ETAPA",
+      etapaId,
+      { etapaNome: etapa.nome, obraId: etapa.obra.obraId, observacao }
+    ).catch(() => {});
+
     return { ok: true, observacao };
   }
 
@@ -105,6 +116,15 @@ export class EtapasService {
       `A etapa "${etapa.nome}" foi reprovada. Motivo: ${motivo}`,
       `/dashboard/obras/${etapa.obra.obraId}`
     );
+
+    // Log to audit trail
+    this.audit.registrar(
+      gestorId,
+      AcaoAudit.ETAPA_REJEITADA,
+      "ETAPA",
+      etapaId,
+      { etapaNome: etapa.nome, obraId: etapa.obra.obraId, motivo }
+    ).catch(() => {});
 
     return { ok: true, motivo };
   }

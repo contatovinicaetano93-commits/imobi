@@ -292,3 +292,32 @@ enum TipoNotificacao {
   SCORE_ATUALIZADO
   VISTORIA_PENDENTE
 }
+
+// ── Audit Trail ────────────────────────────────────────────────────
+
+model AuditLog {
+  auditId       String   @id @default(uuid())
+  gestorId      String   // usuarioId of the manager who took the action
+  acao          AcaoAudit
+  entidade      String   // "ETAPA" | "KYC" | "CREDITO"
+  entidadeId    String   // ID of the entity being audited
+  dados         Json?    // Details of the action (approval/rejection reason, etc)
+  ipAddress     String?
+  userAgent     String?
+  criadoEm      DateTime @default(now())
+
+  @@index([gestorId])
+  @@index([entidade])
+  @@index([acao])
+  @@index([criadoEm])
+  @@map("audit_logs")
+}
+
+enum AcaoAudit {
+  ETAPA_APROVADA
+  ETAPA_REJEITADA
+  KYC_APROVADO
+  KYC_REJEITADO
+  CREDITO_APROVADO
+  CREDITO_REJEITADO
+}

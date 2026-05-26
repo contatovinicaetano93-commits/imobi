@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
+import { AuditService, AcaoAudit } from "../audit/audit.service";
 import { KycDocumentoStatus } from "@prisma/client";
 
 @Injectable()
@@ -11,7 +12,8 @@ export class KycService {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
+    private readonly audit: AuditService
   ) {}
 
   async uploadDocumento(usuarioId: string, tipo: string, url: string) {
@@ -87,6 +89,15 @@ export class KycService {
       .kycAprovadoEmail(documento.usuario.nome, documento.usuario.email)
       .catch(() => {});
 
+    // Log to audit trail
+    this.audit.registrar(
+      gestorId,
+      AcaoAudit.KYC_APROVADO,
+      "KYC",
+      kycDocumentoId,
+      { tipo: documento.tipo, usuarioId: documento.usuarioId }
+    ).catch(() => {});
+
     return atualizado;
   }
 
@@ -137,6 +148,15 @@ export class KycService {
     this.email
       .kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo)
       .catch(() => {});
+
+    // Log to audit trail
+    this.audit.registrar(
+      gestorId,
+      AcaoAudit.KYC_REJEITADO,
+      "KYC",
+      kycDocumentoId,
+      { tipo: documento.tipo, usuarioId: documento.usuarioId, motivo }
+    ).catch(() => {});
 
     return atualizado;
   }

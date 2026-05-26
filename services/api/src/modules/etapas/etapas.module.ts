@@ -5,6 +5,7 @@ import { EtapasService } from "./etapas.service";
 import { NotificacoesModule } from "../notificacoes/notificacoes.module";
 import { EmailModule } from "../email/email.module";
 import { PushNotificacoesModule } from "../push-notificacoes/push-notificacoes.module";
+import { AuditModule } from "../audit/audit.module";
 import { QUEUE_LIBERACAO } from "../../common/constants";
 
 @Module({
@@ -13,6 +14,7 @@ import { QUEUE_LIBERACAO } from "../../common/constants";
     NotificacoesModule,
     EmailModule,
     PushNotificacoesModule,
+    AuditModule,
   ],
   controllers: [EtapasController],
   providers: [EtapasService],
