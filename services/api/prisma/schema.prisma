@@ -31,6 +31,8 @@ model Usuario {
   kycDocumentos KycDocumento[] @relation("KycDocumentos")
   notificacoes  Notificacao[]
   fcmTokens     UsuarioFcmToken[]
+  parceiro      Parceiro?
+  avaliacoesParceiro AvaliacaoParceiro[] @relation("AvaliacoesParceiro")
 
   @@index([email])
   @@index([cpf])
@@ -160,6 +162,7 @@ model EtapaObra {
   atualizadoEm        DateTime @updatedAt
 
   evidencias          EvidenciaEtapa[]
+  vistorias           Vistoria[]
 
   @@unique([obraId, ordem])
   @@index([obraId])
@@ -321,4 +324,95 @@ enum AcaoAudit {
   KYC_REJEITADO
   CREDITO_APROVADO
   CREDITO_REJEITADO
+}
+
+// ── Marketplace & Contractors ──────────────────────────────────
+
+model Parceiro {
+  parceiroId      String   @id @default(uuid())
+  usuarioId       String   @unique
+  usuario         Usuario  @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  descricao       String?
+  especialidades  String[] // JSON array of specializations
+  telefone        String?
+  endereco        String?
+  mediaAvaliacao  Float    @default(0.0)
+  totalAvaliacoes Int      @default(0)
+  ativo           Boolean  @default(true)
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+
+  servicos        ServicoOferece[]
+  vistorias       Vistoria[]
+  avaliacoes      AvaliacaoParceiro[]
+
+  @@index([ativo])
+  @@index([mediaAvaliacao])
+  @@map("parceiros")
+}
+
+model ServicoOferece {
+  servicoId       String   @id @default(uuid())
+  parceiroId      String
+  parceiro        Parceiro @relation(fields: [parceiroId], references: [parceiroId], onDelete: Cascade)
+  nome            String
+  descricao       String?
+  preco           Float
+  estimadoHoras   Int?     // estimated hours to complete
+  ativo           Boolean  @default(true)
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+
+  vistorias       Vistoria[]
+
+  @@index([parceiroId])
+  @@index([ativo])
+  @@map("servicos_oferece")
+}
+
+model Vistoria {
+  vistoriaId      String   @id @default(uuid())
+  etapaId         String
+  etapa           EtapaObra @relation(fields: [etapaId], references: [etapaId], onDelete: Cascade)
+  parceiroId      String
+  parceiro        Parceiro @relation(fields: [parceiroId], references: [parceiroId], onDelete: Restrict)
+  servicoId       String?
+  servico         ServicoOferece? @relation(fields: [servicoId], references: [servicoId], onDelete: SetNull)
+  status          VistoriaStatus @default(PENDENTE)
+  dataAgendada    DateTime?
+  dataRealizada   DateTime?
+  observacao      String?
+  precoAcordado   Float?
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+
+  @@index([etapaId])
+  @@index([parceiroId])
+  @@index([status])
+  @@map("vistorias")
+}
+
+enum VistoriaStatus {
+  PENDENTE        // Awaiting contractor response
+  AGENDADA        // Scheduled with contractor
+  CONCLUIDA       // Completed
+  CANCELADA       // Cancelled
+  NAO_COMPARECEU  // Contractor didn't show
+}
+
+model AvaliacaoParceiro {
+  avaliacaoId     String   @id @default(uuid())
+  parceiroId      String
+  parceiro        Parceiro @relation(fields: [parceiroId], references: [parceiroId], onDelete: Cascade)
+  vistoriaId      String?
+  usuarioId       String
+  usuario         Usuario  @relation("AvaliacoesParceiro", fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  estrelas        Int      // 1-5 stars
+  comentario      String?
+  criadoEm        DateTime @default(now())
+
+  @@unique([parceiroId, vistoriaId, usuarioId])
+  @@index([parceiroId])
+  @@index([usuarioId])
+  @@map("avaliacoes_parceiro")
 }

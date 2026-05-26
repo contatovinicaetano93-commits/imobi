@@ -31,6 +31,9 @@ export class CacheService {
     OBRA_DETAIL: (obraId: string) => `obra:detail:${obraId}`,
     CREDITO_DETAIL: (creditoId: string) => `credito:detail:${creditoId}`,
     MANAGER_STATS: "manager:stats",
+    PARCEIROS_LIST: (especialidade: string, minAvaliacao: number) =>
+      `parceiros:list:${especialidade}:${minAvaliacao}`,
+    PARCEIRO_DETAIL: (parceiroId: string) => `parceiro:detail:${parceiroId}`,
   };
 
   static readonly TTL = {
