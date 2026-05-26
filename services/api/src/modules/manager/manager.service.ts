@@ -1,9 +1,20 @@
-import { Injectable, ForbiddenException } from "@nestjs/common";
+import { Injectable, ForbiddenException, Inject } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
+
+const CACHE_KEYS = {
+  STATS: "manager:stats",
+  ETAPAS_PENDENTES: (limit: number, offset: number) => `manager:etapas:${limit}:${offset}`,
+  KYC_PENDENTES: (limit: number, offset: number) => `manager:kyc:${limit}:${offset}`,
+};
 
 @Injectable()
 export class ManagerService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
+  ) {}
 
   async verificarPermissao(usuarioId: string) {
     const usuario = await this.prisma.usuario.findUnique({
@@ -15,6 +26,10 @@ export class ManagerService {
   }
 
   async listarEtapasPendentes(limit = 20, offset = 0) {
+    const cacheKey = CACHE_KEYS.ETAPAS_PENDENTES(limit, offset);
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) return cached;
+
     const [etapas, total] = await Promise.all([
       this.prisma.etapaObra.findMany({
         where: { status: "AGUARDANDO_VISTORIA" },
@@ -39,7 +54,7 @@ export class ManagerService {
       }),
     ]);
 
-    return {
+    const result = {
       etapas: etapas.map((e) => ({
         etapaId: e.etapaId,
         nome: e.nome,
@@ -61,9 +76,16 @@ export class ManagerService {
       })),
       total,
     };
+
+    await this.cacheManager.set(cacheKey, result, 300000);
+    return result;
   }
 
   async listarKycPendentes(limit = 20, offset = 0) {
+    const cacheKey = CACHE_KEYS.KYC_PENDENTES(limit, offset);
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) return cached;
+
     const [documentos, total] = await Promise.all([
       this.prisma.kycDocumento.findMany({
         where: { status: "PENDENTE" },
@@ -87,7 +109,9 @@ export class ManagerService {
       }),
     ]);
 
-    return { documentos, total };
+    const result = { documentos, total };
+    await this.cacheManager.set(cacheKey, result, 300000);
+    return result;
   }
 
   async obterEtapaDetalhe(etapaId: string) {
@@ -142,6 +166,10 @@ export class ManagerService {
   }
 
   async obterEstatisticas() {
+    const cacheKey = CACHE_KEYS.STATS;
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) return cached;
+
     const [etapasPendentes, kycPendentes, creditosAtivos, obrasAtivas] = await Promise.all([
       this.prisma.etapaObra.count({ where: { status: "AGUARDANDO_VISTORIA" } }),
       this.prisma.kycDocumento.count({ where: { status: "PENDENTE" } }),
@@ -149,11 +177,14 @@ export class ManagerService {
       this.prisma.obra.count({ where: { status: "EM_EXECUCAO" } }),
     ]);
 
-    return {
+    const result = {
       filaAprovacoes: etapasPendentes,
       filaKyc: kycPendentes,
       creditosAtivos,
       obrasAtivas,
     };
+
+    await this.cacheManager.set(cacheKey, result, 60000);
+    return result;
   }
 }
