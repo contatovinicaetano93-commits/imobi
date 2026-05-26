@@ -164,6 +164,26 @@ export class EmailService {
     });
   }
 
+  async parcelaFalhaEmail(
+    nome: string,
+    email: string,
+    valor: number
+  ): Promise<boolean> {
+    const html = `
+      <h2>Erro na Liberação de Parcela</h2>
+      <p>Olá ${nome},</p>
+      <p>Ocorreu um erro ao processar a liberação de uma parcela no valor de R$ ${valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.</p>
+      <p>Nosso time técnico já foi notificado e está trabalhando para resolver o problema.</p>
+      <p>Por favor, <a href="${process.env["APP_URL"] || "http://localhost:3000"}/contato">entre em contato conosco</a> se o problema persistir.</p>
+    `;
+
+    return this.enviarEmail({
+      to: email,
+      subject: "Erro na Liberação de Parcela",
+      html,
+    });
+  }
+
   async recuperacaoSenhaEmail(
     nome: string,
     email: string,

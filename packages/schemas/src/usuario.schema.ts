@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidCpf, isValidCnpj } from "./validators";
 
 export const TipoUsuarioEnum = z.enum([
   "TOMADOR",
@@ -18,7 +19,7 @@ export const CadastroUsuarioSchema = z.object({
   nome: z.string().min(3).max(120),
   cpf: z
     .string()
-    .regex(/^\d{11}$/, "CPF deve conter 11 dígitos numéricos"),
+    .refine((val) => isValidCpf(val), "CPF inválido"),
   email: z.string().email(),
   telefone: z
     .string()
