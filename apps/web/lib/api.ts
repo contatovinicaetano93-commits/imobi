@@ -102,3 +102,26 @@ export const scoreApi = {
   historico: (limit?: number) =>
     apiFetch<ScoreHistorico[]>(`/score/historico${limit ? `?limit=${limit}` : ""}`),
 };
+
+// ── Usuários ──────────────────────────────────────────────────────────
+
+export type UsuarioPerfil = {
+  usuarioId: string;
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  tipo: string;
+  kycStatus: string;
+  criadoEm: string;
+  atualizadoEm: string;
+};
+
+export const usuariosApi = {
+  meuPerfil: () => apiFetch<UsuarioPerfil>("/usuarios/meu-perfil"),
+  atualizarPerfil: (data: { nome?: string; telefone?: string }) =>
+    apiFetch<UsuarioPerfil>("/usuarios/meu-perfil", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+};
