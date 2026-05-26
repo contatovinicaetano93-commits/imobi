@@ -1,0 +1,23 @@
+{
+  "name": "@imbobi/core",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@imbobi/schemas": "workspace:*",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/react": "^18.3.0",
+    "react": "^18.3.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "jsx": "react-native",
+    "moduleResolution": "bundler",
+    "paths": {
+      "@/*": ["./*"],
+      "@imbobi/core": ["../../packages/core/src/index.ts"],
+      "@imbobi/schemas": ["../../packages/schemas/src/index.ts"],
+      "@imbobi/ui/native": ["../../packages/ui/native/src/index.ts"]
+    }
+  }
+}
