@@ -16,6 +16,7 @@ import { EmailModule } from "./modules/email/email.module";
 import { MarketplaceModule } from "./modules/marketplace/marketplace.module";
 import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
+import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { LiberacaoParcelaWorker } from "../../workers/liberacao-parcela.worker";
 
 @Module({
@@ -40,6 +41,7 @@ import { LiberacaoParcelaWorker } from "../../workers/liberacao-parcela.worker";
     ManagerModule,
     EmailModule,
     NotificacoesModule,
+    PushNotificacoesModule,
     MarketplaceModule,
     ParceirosModule,
   ],

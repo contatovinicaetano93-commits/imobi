@@ -4,6 +4,7 @@ import { Queue } from "bull";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
+import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
 
 @Injectable()
@@ -12,6 +13,7 @@ export class EtapasService {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
+    private readonly pushNotificacoes: PushNotificacoesService,
     @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue<LiberacaoJob>
   ) {}
 
@@ -46,6 +48,15 @@ export class EtapasService {
       `A etapa "${etapa.nome}" da obra "${etapa.obra.nome}" foi aprovada com sucesso. A liberação da parcela foi agendada.`,
       `/dashboard/obras/${etapa.obra.obraId}`
     );
+
+    // Envia push notification
+    this.pushNotificacoes.enviarPush({
+      usuarioId: etapa.obra.usuarioId,
+      titulo: `Etapa Aprovada: ${etapa.nome}`,
+      mensagem: `Sua etapa foi aprovada e a parcela será liberada em breve.`,
+      tipo: "ETAPA_APROVADA",
+      dados: { obraId: etapa.obra.obraId, etapaId },
+    }).catch(() => {});
 
     // Envia email de confirmação
     const credito = etapa.obra.credito;
