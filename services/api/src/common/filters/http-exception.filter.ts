@@ -1,11 +1,10 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from "@nestjs/common";
-import { FastifyReply } from "fastify";
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const reply = ctx.getResponse<FastifyReply>();
+    const reply = ctx.getResponse<{ status: (code: number) => { send: (body: unknown) => void } }>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = "Erro interno do servidor";

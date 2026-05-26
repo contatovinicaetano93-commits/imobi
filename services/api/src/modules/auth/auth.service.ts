@@ -17,13 +17,19 @@ export class AuthService {
     });
     if (existe) throw new ConflictException("E-mail ou CPF já cadastrado.");
 
-    const senhaHash = await bcrypt.hash(input.senha, 12);
+    const passwordHash = await bcrypt.hash(input.senha, 12);
     const usuario = await this.prisma.usuario.create({
-      data: { ...input, senhaHash, senha: undefined } as never,
-      select: { id: true, nome: true, email: true, tipo: true, kycStatus: true },
+      data: {
+        nome: input.nome,
+        email: input.email,
+        cpf: input.cpf,
+        telefone: input.telefone,
+        passwordHash,
+      },
+      select: { usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true },
     });
 
-    return { usuario, ...this.gerarTokens(usuario.id) };
+    return { usuario, ...this.gerarTokens(usuario.usuarioId) };
   }
 
   async login(input: LoginInput) {
@@ -32,12 +38,12 @@ export class AuthService {
     });
     if (!usuario) throw new UnauthorizedException("Credenciais inválidas.");
 
-    const senhaOk = await bcrypt.compare(input.senha, usuario.senhaHash);
+    const senhaOk = await bcrypt.compare(input.senha, usuario.passwordHash);
     if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
 
     return {
-      usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
-      ...this.gerarTokens(usuario.id),
+      usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
+      ...this.gerarTokens(usuario.usuarioId),
     };
   }
 
@@ -45,12 +51,12 @@ export class AuthService {
     const sessao = await this.prisma.sessaoToken.findUnique({
       where: { refreshToken },
     });
-    if (!sessao || sessao.revogado || sessao.expiresAt < new Date()) {
+    if (!sessao || sessao.revogadoEm || sessao.expiresAt < new Date()) {
       throw new UnauthorizedException("Sessão inválida ou expirada.");
     }
     await this.prisma.sessaoToken.update({
-      where: { id: sessao.id },
-      data: { revogado: true },
+      where: { sessionId: sessao.sessionId },
+      data: { revogadoEm: new Date() },
     });
     return this.gerarTokens(sessao.usuarioId);
   }
@@ -58,7 +64,7 @@ export class AuthService {
   async revogarToken(refreshToken: string) {
     await this.prisma.sessaoToken.updateMany({
       where: { refreshToken },
-      data: { revogado: true },
+      data: { revogadoEm: new Date() },
     });
   }
 

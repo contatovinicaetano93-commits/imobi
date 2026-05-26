@@ -17,7 +17,7 @@ import { MarketplaceModule } from "./modules/marketplace/marketplace.module";
 import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
-import { LiberacaoParcelaWorker } from "../../workers/liberacao-parcela.worker";
+import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 
 @Module({
   imports: [
