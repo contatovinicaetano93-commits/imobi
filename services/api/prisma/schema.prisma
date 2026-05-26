@@ -1,0 +1,219 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Usuários ──────────────────────────────────────────────────────────
+
+model Usuario {
+  usuarioId     String   @id @default(uuid())
+  nome          String
+  cpf           String   @unique
+  email         String   @unique
+  telefone      String
+  passwordHash  String
+  tipo          UsuarioTipo @default(TOMADOR)
+  kycStatus     KycStatus @default(PENDENTE)
+  criadoEm      DateTime  @default(now())
+  atualizadoEm  DateTime  @updatedAt
+
+  sessoes       SessaoToken[]
+  creditos      Credito[]
+  obras         Obra[]
+  scoreHistorico ScoreHistorico[]
+
+  @@index([email])
+  @@index([cpf])
+}
+
+enum UsuarioTipo {
+  TOMADOR
+  GESTOR_OBRA
+  ADMIN
+  PARCEIRO
+}
+
+enum KycStatus {
+  PENDENTE
+  EM_VERIFICACAO
+  APROVADO
+  REJEITADO
+}
+
+// ── Sessões ───────────────────────────────────────────────────────────
+
+model SessaoToken {
+  sessionId     String    @id @default(uuid())
+  usuarioId     String
+  usuario       Usuario   @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  refreshToken  String    @unique
+  expiresAt     DateTime
+  revogadoEm    DateTime?
+  criadoEm      DateTime  @default(now())
+
+  @@index([usuarioId])
+}
+
+// ── Créditos ──────────────────────────────────────────────────────────
+
+model Credito {
+  creditoId       String    @id @default(uuid())
+  usuarioId       String
+  usuario         Usuario   @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  valorAprovado   Float
+  valorLiberado   Float
+  taxaMensal      Float     @default(0.0099)
+  prazoMeses      Int
+  status          CreditoStatus @default(ATIVO)
+  dataAprovacao   DateTime  @default(now())
+  dataVencimento  DateTime?
+  criadoEm        DateTime  @default(now())
+  atualizadoEm    DateTime  @updatedAt
+
+  obras           Obra[]
+  liberacoes      LiberacaoParcela[]
+
+  @@index([usuarioId])
+  @@index([status])
+}
+
+enum CreditoStatus {
+  ATIVO
+  SUSPENSO
+  VENCIDO
+  QUITADO
+}
+
+// ── Obras ─────────────────────────────────────────────────────────────
+
+model Obra {
+  obraId              String   @id @default(uuid())
+  creditoId           String?
+  credito             Credito? @relation(fields: [creditoId], references: [creditoId], onDelete: SetNull)
+  usuarioId           String
+  usuario             Usuario  @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  nome                String
+  endereco            String
+  geoLatitude         Float
+  geoLongitude        Float
+  raioValidacaoMetros Int      @default(50)
+  areaM2              Float?
+  tipo                String?
+  status              ObraStatus @default(PLANEJAMENTO)
+  criadoEm            DateTime @default(now())
+  atualizadoEm        DateTime @updatedAt
+
+  etapas              EtapaObra[]
+  evidencias          EvidenciaEtapa[]
+
+  @@index([usuarioId])
+  @@index([creditoId])
+  @@index([status])
+}
+
+enum ObraStatus {
+  PLANEJAMENTO
+  EM_EXECUCAO
+  PAUSADA
+  CONCLUIDA
+  CANCELADA
+}
+
+// ── Etapas de Obra ────────────────────────────────────────────────────
+
+model EtapaObra {
+  etapaId             String   @id @default(uuid())
+  obraId              String
+  obra                Obra     @relation(fields: [obraId], references: [obraId], onDelete: Cascade)
+  nome                String
+  ordem               Int
+  percentualObra      Float
+  valorLiberacao      Float
+  status              EtapaStatus @default(PLANEJADA)
+  dataConclusaoPrevista DateTime?
+  dataConclusaoReal   DateTime?
+  criadoEm            DateTime @default(now())
+  atualizadoEm        DateTime @updatedAt
+
+  evidencias          EvidenciaEtapa[]
+
+  @@unique([obraId, ordem])
+  @@index([obraId])
+  @@index([status])
+}
+
+enum EtapaStatus {
+  PLANEJADA
+  EM_EXECUCAO
+  AGUARDANDO_VISTORIA
+  REPROVADA
+  CONCLUIDA
+}
+
+// ── Evidências de Etapa ───────────────────────────────────────────────
+
+model EvidenciaEtapa {
+  evidenciaId       String   @id @default(uuid())
+  etapaId           String
+  etapa             EtapaObra @relation(fields: [etapaId], references: [etapaId], onDelete: Cascade)
+  obraId            String
+  obra              Obra     @relation(fields: [obraId], references: [obraId], onDelete: Cascade)
+  fotoUrl           String
+  latCaptura        Float
+  lngCaptura        Float
+  accuracyMetros    Float?
+  distanciaObra     Float?
+  validada          Boolean  @default(false)
+  observacao        String?
+  criadoEm          DateTime @default(now())
+  atualizadoEm      DateTime @updatedAt
+
+  @@index([etapaId])
+  @@index([obraId])
+  @@index([validada])
+}
+
+// ── Liberações de Parcelas ────────────────────────────────────────────
+
+model LiberacaoParcela {
+  liberacaoId     String   @id @default(uuid())
+  creditoId       String
+  credito         Credito  @relation(fields: [creditoId], references: [creditoId], onDelete: Cascade)
+  valor           Float
+  status          LiberacaoStatus @default(PENDENTE)
+  motivo          String?
+  processadoEm    DateTime?
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+
+  @@index([creditoId])
+  @@index([status])
+}
+
+enum LiberacaoStatus {
+  PENDENTE
+  PROCESSANDO
+  CONCLUIDA
+  FALHA
+}
+
+// ── Score de Construtibilidade ────────────────────────────────────────
+
+model ScoreHistorico {
+  scoreId     String   @id @default(uuid())
+  usuarioId   String
+  usuario     Usuario  @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  score       Int
+  motivo      String?
+  criadoEm    DateTime @default(now())
+
+  @@index([usuarioId])
+  @@index([criadoEm])
+}
