@@ -1,4 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
+import * as nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
 
 interface EmailOptions {
   to: string;
@@ -10,18 +12,50 @@ interface EmailOptions {
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private provider: string = process.env["EMAIL_PROVIDER"] || "console";
+  private transporter: Transporter | null = null;
+
+  constructor() {
+    this.initializeTransporter();
+  }
+
+  private initializeTransporter() {
+    const smtpHost = process.env["SMTP_HOST"];
+    const smtpPort = process.env["SMTP_PORT"];
+    const smtpUser = process.env["SMTP_USER"];
+    const smtpPass = process.env["SMTP_PASS"];
+    const fromEmail = process.env["SMTP_FROM"] || "noreply@imbobi.com";
+
+    if (!smtpHost || !smtpPort) {
+      this.logger.warn("SMTP configuration not found - using console mode");
+      return;
+    }
+
+    this.transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: parseInt(smtpPort),
+      secure: parseInt(smtpPort) === 465,
+      auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
+    });
+
+    this.logger.debug(`Email configured: ${smtpHost}:${smtpPort}`);
+  }
 
   async enviarEmail(opcoes: EmailOptions): Promise<boolean> {
     try {
-      if (this.provider === "console" || !process.env["SMTP_HOST"]) {
-        this.logger.debug(`[EMAIL] ${opcoes.to} - ${opcoes.subject}`);
-        this.logger.debug(`[EMAIL CONTENT]\n${opcoes.html}`);
+      if (!this.transporter) {
+        this.logger.debug(`[EMAIL-CONSOLE] ${opcoes.to} - ${opcoes.subject}`);
         return true;
       }
 
-      // Real email implementation would go here
-      // For now, we're just logging
+      await this.transporter.sendMail({
+        from: process.env["SMTP_FROM"] || "noreply@imbobi.com",
+        to: opcoes.to,
+        subject: opcoes.subject,
+        html: opcoes.html,
+        text: opcoes.text,
+      });
+
+      this.logger.debug(`Email enviado para ${opcoes.to}`);
       return true;
     } catch (error) {
       this.logger.error(`Erro ao enviar email: ${error}`);
