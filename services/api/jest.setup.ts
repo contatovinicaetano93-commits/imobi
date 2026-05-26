@@ -1,0 +1,23 @@
+// Set test environment variables before tests run
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_secret_key_that_is_long_enough_for_testing_purposes_1234567890';
+process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
+process.env.JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://imbobi:senha@localhost:5432/imbobi_test';
+process.env.REDIS_HOST = process.env.REDIS_HOST || 'localhost';
+process.env.REDIS_PORT = process.env.REDIS_PORT || '6379';
+process.env.AWS_REGION = process.env.AWS_REGION || 'us-east-1';
+process.env.AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID || 'test_key';
+process.env.AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || 'test_secret';
+process.env.S3_BUCKET = process.env.S3_BUCKET || 'test-bucket';
+process.env.SMTP_HOST = process.env.SMTP_HOST || 'localhost';
+process.env.SMTP_PORT = process.env.SMTP_PORT || '1025';
+process.env.SMTP_USER = process.env.SMTP_USER || 'test';
+process.env.SMTP_PASS = process.env.SMTP_PASS || 'test';
+process.env.SMTP_FROM = process.env.SMTP_FROM || 'test@test.com';
+process.env.APP_URL = process.env.APP_URL || 'http://localhost:3000';
+process.env.UNICO_API_KEY = process.env.UNICO_API_KEY || 'test_key';
+process.env.SERPRO_TOKEN = process.env.SERPRO_TOKEN || 'test_token';
+process.env.FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'test_project';
+process.env.FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY || 'test_key';
+process.env.FIREBASE_CLIENT_EMAIL = process.env.FIREBASE_CLIENT_EMAIL || 'test@test.com';
