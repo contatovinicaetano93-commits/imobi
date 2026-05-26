@@ -64,7 +64,7 @@ export class PushNotificacoesService {
     };
 
     try {
-      const response = await this.messaging.sendMulticast(message);
+      const response = await this.messaging.sendEachForMulticast(message);
       this.logger.debug(`Push enviado para ${response.successCount} dispositivos`);
 
       // Desativa tokens que falharam

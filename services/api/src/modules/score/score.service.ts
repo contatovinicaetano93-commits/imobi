@@ -22,11 +22,8 @@ export class ScoreService {
 
     let score = 600; // Base mínima para usuário novo
 
-    // 1. Obras concluídas no prazo (+200)
-    const obrasConcluidasNoPrazo = obras.filter((o) => {
-      if (!o.dataConclusaoReal || !o.dataConclusaoPrevista) return false;
-      return o.dataConclusaoReal <= o.dataConclusaoPrevista;
-    }).length;
+    // 1. Obras concluídas (+200)
+    const obrasConcluidasNoPrazo = obras.filter((o) => o.status === "CONCLUIDA").length;
     if (obrasConcluidasNoPrazo > 0) score += Math.min(200, obrasConcluidasNoPrazo * 50);
 
     // 2. Taxa média de conclusão (+300)
@@ -37,7 +34,7 @@ export class ScoreService {
 
     // 3. Créditos sem atrasos (+200)
     const creditosSemAtraso = creditos.filter(
-      (c) => c.status !== "INADIMPLENTE"
+      (c) => c.status === "ATIVO" || c.status === "QUITADO"
     ).length;
     if (creditosSemAtraso > 0) score += Math.min(200, creditosSemAtraso * 100);
 

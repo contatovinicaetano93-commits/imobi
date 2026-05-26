@@ -17,11 +17,9 @@ export class CreditoService {
       data: {
         usuarioId,
         valorAprovado: input.valorSolicitado,
+        valorLiberado: 0,
         taxaMensal: 0.0099,
         prazoMeses: input.prazoMeses,
-        finalidade: input.finalidade,
-        rendaDeclarada: input.rendaMensalDeclarada,
-        status: "ANALISE",
       },
     });
   }
@@ -30,9 +28,9 @@ export class CreditoService {
     return this.prisma.credito.findMany({
       where: { usuarioId },
       include: {
-        obras: { select: { id: true, nome: true, status: true } },
+        obras: { select: { obraId: true, nome: true, status: true } },
         liberacoes: {
-          select: { id: true, valor: true, status: true, processadoEm: true },
+          select: { liberacaoId: true, valor: true, status: true, processadoEm: true },
           orderBy: { criadoEm: "desc" },
           take: 10,
         },
@@ -43,7 +41,7 @@ export class CreditoService {
 
   async extrato(creditoId: string) {
     const credito = await this.prisma.credito.findUnique({
-      where: { id: creditoId },
+      where: { creditoId },
       include: { liberacoes: { orderBy: { criadoEm: "desc" } } },
     });
     if (!credito) throw new NotFoundException("Crédito não encontrado.");
