@@ -29,7 +29,7 @@ export class EtapasService {
 
     // Exige ao menos 1 evidência validada
     const evidencias = await this.prisma.evidenciaEtapa.count({
-      where: { etapaId, validada: true },
+      where: { etapaId: etapaId, validada: true },
     });
     if (evidencias === 0) {
       throw new BadRequestException("Etapa precisa ter ao menos uma evidência validada.");
