@@ -14,5 +14,6 @@ import { QUEUE_LIBERACAO } from "../../../workers/liberacao-parcela.worker";
   ],
   controllers: [EtapasController],
   providers: [EtapasService],
+  exports: [EtapasService],
 })
 export class EtapasModule {}

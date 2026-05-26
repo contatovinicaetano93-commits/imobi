@@ -1,12 +1,18 @@
-import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Patch, Param, Query, Body, UseGuards } from "@nestjs/common";
 import { ManagerService } from "./manager.service";
+import { EtapasService } from "../etapas/etapas.service";
+import { KycService } from "../kyc/kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
 @UseGuards(JwtAuthGuard)
 @Controller("manager")
 export class ManagerController {
-  constructor(private readonly manager: ManagerService) {}
+  constructor(
+    private readonly manager: ManagerService,
+    private readonly etapas: EtapasService,
+    private readonly kyc: KycService,
+  ) {}
 
   @Get("dashboard")
   async dashboard(@UsuarioAtual() u: IUsuario) {
@@ -44,5 +50,41 @@ export class ManagerController {
   async obterKycDetalhe(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     await this.manager.verificarPermissao(u.id);
     return this.manager.obterKycDetalhe(id);
+  }
+
+  @Patch("etapas/:id/aprovar")
+  async aprovarEtapa(
+    @UsuarioAtual() u: IUsuario,
+    @Param("id") id: string,
+    @Body("observacao") observacao?: string
+  ) {
+    await this.manager.verificarPermissao(u.id);
+    return this.etapas.aprovar(u.id, id, observacao);
+  }
+
+  @Patch("etapas/:id/rejeitar")
+  async rejeitarEtapa(
+    @UsuarioAtual() u: IUsuario,
+    @Param("id") id: string,
+    @Body("motivo") motivo: string
+  ) {
+    await this.manager.verificarPermissao(u.id);
+    return this.etapas.rejeitar(u.id, id, motivo);
+  }
+
+  @Patch("kyc/:id/aprovar")
+  async aprovarKyc(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
+    await this.manager.verificarPermissao(u.id);
+    return this.kyc.aprovarDocumento(id, u.id);
+  }
+
+  @Patch("kyc/:id/rejeitar")
+  async rejeitarKyc(
+    @UsuarioAtual() u: IUsuario,
+    @Param("id") id: string,
+    @Body("motivo") motivo: string
+  ) {
+    await this.manager.verificarPermissao(u.id);
+    return this.kyc.rejeitarDocumento(id, u.id, motivo);
   }
 }

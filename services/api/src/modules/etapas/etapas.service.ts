@@ -73,6 +73,32 @@ export class EtapasService {
     return { ok: true, observacao };
   }
 
+  async rejeitar(gestorId: string, etapaId: string, motivo: string) {
+    const etapa = await this.prisma.etapaObra.findUnique({
+      where: { etapaId },
+      include: { obra: { include: { usuario: true } } },
+    });
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+    if (etapa.status !== "AGUARDANDO_VISTORIA") {
+      throw new BadRequestException("Etapa não está aguardando vistoria.");
+    }
+
+    await this.prisma.etapaObra.update({
+      where: { etapaId },
+      data: { status: "REPROVADA" },
+    });
+
+    await this.notificacoes.criar(
+      etapa.obra.usuarioId,
+      "ETAPA_REPROVADA",
+      `Etapa reprovada: ${etapa.nome}`,
+      `A etapa "${etapa.nome}" foi reprovada. Motivo: ${motivo}`,
+      `/dashboard/obras/${etapa.obra.obraId}`
+    );
+
+    return { ok: true, motivo };
+  }
+
   async atualizarStatus(etapaId: string, status: string) {
     return this.prisma.etapaObra.update({
       where: { etapaId },

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { managerApi, type KycPendente } from "@/lib/api";
+
 import Image from "next/image";
 
 function getTipoLabel(tipo: string): string {
@@ -48,9 +49,7 @@ export default function KycDetailPage() {
     if (!doc) return;
     setSubmitting(true);
     try {
-      // TODO: Call approval endpoint when implemented
-      // await kycApi.aprovarDocumento(docId);
-      alert("Aprovação registrada (ainda não implementado no backend)");
+      await managerApi.aprovarKyc(docId);
       router.push("/dashboard/gestor/kyc");
     } catch (err) {
       alert(`Erro: ${err instanceof Error ? err.message : "Desconhecido"}`);
@@ -66,9 +65,7 @@ export default function KycDetailPage() {
     }
     setSubmitting(true);
     try {
-      // TODO: Call rejection endpoint when implemented
-      // await kycApi.rejeitarDocumento(docId, rejectionReason);
-      alert("Rejeição registrada (ainda não implementado no backend)");
+      await managerApi.rejeitarKyc(docId, rejectionReason);
       router.push("/dashboard/gestor/kyc");
     } catch (err) {
       alert(`Erro: ${err instanceof Error ? err.message : "Desconhecido"}`);

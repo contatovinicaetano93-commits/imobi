@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { managerApi, type EtapaDetalhe } from "@/lib/api";
+
 import Image from "next/image";
 
 function brl(v: number) {
@@ -43,9 +44,7 @@ export default function EtapaDetailPage() {
     if (!etapa) return;
     setSubmitting(true);
     try {
-      // TODO: Call approval endpoint when implemented
-      // await etapasApi.aprovarEtapa(etapaId);
-      alert("Aprovação registrada (ainda não implementado no backend)");
+      await managerApi.aprovarEtapa(etapaId);
       router.push("/dashboard/gestor/etapas");
     } catch (err) {
       alert(`Erro: ${err instanceof Error ? err.message : "Desconhecido"}`);
@@ -61,9 +60,7 @@ export default function EtapaDetailPage() {
     }
     setSubmitting(true);
     try {
-      // TODO: Call rejection endpoint when implemented
-      // await etapasApi.rejeitarEtapa(etapaId, rejectionReason);
-      alert("Rejeição registrada (ainda não implementado no backend)");
+      await managerApi.rejeitarEtapa(etapaId, rejectionReason);
       router.push("/dashboard/gestor/etapas");
     } catch (err) {
       alert(`Erro: ${err instanceof Error ? err.message : "Desconhecido"}`);
