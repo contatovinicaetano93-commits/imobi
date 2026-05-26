@@ -5,9 +5,3 @@ export interface LiberacaoJob {
   etapaId: string;
   valor: number;
 }
-
-export const ETAPA_STATUS_MAP = {
-  pendente: "AGUARDANDO_VISTORIA",
-  aprovada: "APROVADA",
-  rejeitada: "REJEITADA",
-} as const;

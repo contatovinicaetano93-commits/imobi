@@ -4,7 +4,7 @@ import { Queue } from "bull";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
-import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../../workers/liberacao-parcela.worker";
+import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
 
 @Injectable()
 export class EtapasService {
@@ -61,7 +61,6 @@ export class EtapasService {
     }
 
     // Dispara liberação de parcela via fila (assíncrono)
-    const credito = etapa.obra.credito;
     if (credito && credito.status === "ATIVO") {
       const valorLiberacao = Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
       await this.prisma.liberacaoParcela.create({

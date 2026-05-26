@@ -4,7 +4,7 @@ import { EtapasController } from "./etapas.controller";
 import { EtapasService } from "./etapas.service";
 import { NotificacoesModule } from "../notificacoes/notificacoes.module";
 import { EmailModule } from "../email/email.module";
-import { QUEUE_LIBERACAO } from "../../../workers/liberacao-parcela.worker";
+import { QUEUE_LIBERACAO } from "../../common/constants";
 
 @Module({
   imports: [
