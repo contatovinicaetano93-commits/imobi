@@ -87,6 +87,7 @@ model Usuario {
   evidencias  EvidenciaEtapa[]
   sessoes     SessaoToken[]
   scoreHistorico ScoreHistorico[]
+  fcmTokens   UsuarioFcmToken[]
 
   @@index([email])
   @@index([cpf])
@@ -109,6 +110,20 @@ model SessaoToken {
 
   @@index([usuarioId])
   @@map("sessao_tokens")
+}
+
+model UsuarioFcmToken {
+  usuarioId   String
+  token       String
+  ativo       Boolean  @default(true)
+  criadoEm   DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@id([usuarioId, token])
+  @@index([ativo])
+  @@map("usuario_fcm_tokens")
 }
 
 // ─────────────────────────────────────────────
