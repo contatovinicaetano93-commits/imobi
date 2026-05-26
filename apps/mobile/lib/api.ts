@@ -43,6 +43,102 @@ export const pushApi = {
   },
 };
 
+export const usuarioApi = {
+  registro: async (data: { nome: string; cpf: string; email: string; telefone: string; senha: string }) => {
+    return apiClient.post<{ accessToken: string; refreshToken: string }>("/auth/register", data);
+  },
+  perfil: async () => {
+    const token = await getToken();
+    return apiClient.get<Usuario>("/api/v1/usuarios/me", token ?? undefined);
+  },
+};
+
+export const notificacaoApi = {
+  listar: async () => {
+    const token = await getToken();
+    return apiClient.get<Notificacao[]>("/api/v1/notificacoes", token ?? undefined);
+  },
+  marcarComoLida: async (notificacaoId: string) => {
+    const token = await getToken();
+    return apiClient.post(`/api/v1/notificacoes/${notificacaoId}/marcar-lida`, {}, token ?? undefined);
+  },
+};
+
+export const parceiroApi = {
+  listar: async () => {
+    const token = await getToken();
+    return apiClient.get<Parceiro[]>("/api/v1/parceiros", token ?? undefined);
+  },
+  buscar: async (parceiroId: string) => {
+    const token = await getToken();
+    return apiClient.get<ParceiroPerfil>(`/api/v1/parceiros/${parceiroId}`, token ?? undefined);
+  },
+  reviews: async (parceiroId: string) => {
+    const token = await getToken();
+    return apiClient.get<Review[]>(`/api/v1/parceiros/${parceiroId}/reviews`, token ?? undefined);
+  },
+};
+
+export const vistoriaApi = {
+  solicitar: async (parceiroId: string) => {
+    const token = await getToken();
+    return apiClient.post("/api/v1/vistorias", { parceiroId }, token ?? undefined);
+  },
+};
+
+// Additional types
+export type Usuario = {
+  usuarioId: string;
+  nome: string;
+  email: string;
+  cpf: string;
+  telefone: string;
+  tipo: string;
+  kycStatus: string;
+  criadoEm: string;
+};
+
+export type Notificacao = {
+  notificacaoId: string;
+  titulo: string;
+  mensagem: string;
+  tipo: string;
+  lida: boolean;
+  criadoEm: string;
+  obraId?: string;
+  creditoId?: string;
+};
+
+export type Parceiro = {
+  parceiroId: string;
+  nome: string;
+  servico: string;
+  descricao: string;
+  rating: number;
+  reviewCount: number;
+  latitude: number;
+  longitude: number;
+  distanciaKm?: number;
+  telefone?: string;
+  email?: string;
+};
+
+export type ParceiroPerfil = Parceiro & {
+  bio: string;
+  experiencia: string;
+  certificacoes: string[];
+  fotos?: string[];
+  disponivel: boolean;
+};
+
+export type Review = {
+  reviewId: string;
+  usuario: string;
+  rating: number;
+  comentario: string;
+  data: string;
+};
+
 // Types
 export type Obra = {
   obraId: string;
