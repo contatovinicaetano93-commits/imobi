@@ -1,13 +1,15 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import * as request from "supertest";
-import { AppModule } from "../../app.module";
-import { PrismaService } from "../prisma/prisma.service";
+import { AppModule } from "../app.module";
+import { PrismaService } from "../modules/prisma/prisma.service";
 
-describe("KYC E2E", () => {
+describe("Obras E2E", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let token: string;
+  let usuarioId: string;
+  let obraId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -22,7 +24,7 @@ describe("KYC E2E", () => {
     prisma = moduleFixture.get(PrismaService);
 
     // Setup: Register and login
-    const email = `kyc-test-${Date.now()}@imbobi.com`;
+    const email = `obras-test-${Date.now()}@imbobi.com`;
     await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
       .send({ email, password: "Senha@123", nome: "Test" });
@@ -32,47 +34,52 @@ describe("KYC E2E", () => {
       .send({ email, password: "Senha@123" });
 
     token = loginRes.body.access_token;
+    usuarioId = loginRes.body.usuarioId;
   });
 
   afterAll(async () => {
+    if (obraId) {
+      await prisma.obra.deleteMany({ where: { obraId } });
+    }
     await app.close();
   });
 
-  it("Upload KYC document", async () => {
-    const docData = {
-      tipo: "RG",
-      url: "https://example.com/rg.jpg",
+  it("Create obra with 9 auto-generated stages", async () => {
+    const obraData = {
+      nome: "Test Obra",
+      endereco: "Rua A, 123",
+      geoLatitude: -23.55,
+      geoLongitude: -46.63,
+      raioValidacaoMetros: 50,
     };
 
     const res = await request(app.getHttpServer())
-      .post("/api/v1/kyc/upload")
+      .post("/api/v1/obras")
       .set("Authorization", `Bearer ${token}`)
-      .send(docData)
+      .send(obraData)
       .expect(201);
 
-    expect(res.body).toHaveProperty("kycDocumentoId");
-    expect(res.body).toHaveProperty("status", "PENDENTE");
-    expect(res.body).toHaveProperty("tipo", "RG");
-  });
+    expect(res.body).toHaveProperty("obraId");
+    expect(res.body).toHaveProperty("nome", obraData.nome);
+    obraId = res.body.obraId;
 
-  it("Get KYC status", async () => {
-    const res = await request(app.getHttpServer())
-      .get("/api/v1/kyc/status")
+    // Verify 9 stages created
+    const etapasRes = await request(app.getHttpServer())
+      .get(`/api/v1/obras/${obraId}`)
       .set("Authorization", `Bearer ${token}`)
       .expect(200);
 
-    expect(res.body).toHaveProperty("usuarioId");
-    expect(res.body).toHaveProperty("status");
-    expect(res.body).toHaveProperty("documentos");
-    expect(res.body).toHaveProperty("resumo");
+    expect(etapasRes.body.etapas).toHaveLength(9);
+    expect(etapasRes.body.etapas[0]).toHaveProperty("ordem", 1);
   });
 
-  it("List user documents", async () => {
+  it("List obras", async () => {
     const res = await request(app.getHttpServer())
-      .get("/api/v1/kyc/documentos")
+      .get("/api/v1/obras")
       .set("Authorization", `Bearer ${token}`)
       .expect(200);
 
     expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThan(0);
   });
 });
