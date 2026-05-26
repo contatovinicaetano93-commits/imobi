@@ -10,6 +10,7 @@ import { EtapasModule } from "./modules/etapas/etapas.module";
 import { EvidenciasModule } from "./modules/evidencias/evidencias.module";
 import { ScoreModule } from "./modules/score/score.module";
 import { KycModule } from "./modules/kyc/kyc.module";
+import { ManagerModule } from "./modules/manager/manager.module";
 import { EmailModule } from "./modules/email/email.module";
 import { MarketplaceModule } from "./modules/marketplace/marketplace.module";
 import { ParceirosModule } from "./modules/parceiros/parceiros.module";
@@ -34,6 +35,7 @@ import { LiberacaoParcelaWorker } from "../../workers/liberacao-parcela.worker";
     EvidenciasModule,
     ScoreModule,
     KycModule,
+    ManagerModule,
     EmailModule,
     NotificacoesModule,
     MarketplaceModule,

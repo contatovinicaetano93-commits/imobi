@@ -156,6 +156,65 @@ export const kycApi = {
   verificarKycCompleto: () => apiFetch<{ completo: boolean; documentos: KycDocumento[] }>("/kyc/verificar"),
 };
 
+// ── Manager ───────────────────────────────────────────────────────────
+
+export type EtapaPendente = {
+  etapaId: string;
+  nome: string;
+  ordem: number;
+  percentualObra: number;
+  valorLiberacao: number;
+  evidenciasCount: number;
+  criadoEm: string;
+  obra: {
+    obraId: string;
+    nome: string;
+    endereco: string;
+    usuario: { usuarioId: string; nome: string; email: string; cpf: string };
+    credito?: { creditoId: string; valorAprovado: number };
+  };
+};
+
+export type EtapaDetalhe = EtapaPendente & {
+  status: string;
+  evidencias: Array<{ evidenciaId: string; fotoUrl: string; criadoEm: string }>;
+};
+
+export type KycPendente = {
+  kycDocumentoId: string;
+  tipo: string;
+  url: string;
+  criadoEm: string;
+  usuario: {
+    usuarioId: string;
+    nome: string;
+    email: string;
+    cpf: string;
+    kycStatus: string;
+  };
+};
+
+export type ManagerStats = {
+  filaAprovacoes: number;
+  filaKyc: number;
+  creditosAtivos: number;
+  obrasAtivas: number;
+};
+
+export const managerApi = {
+  dashboard: () => apiFetch<ManagerStats>("/manager/dashboard"),
+  listarEtapasPendentes: (limit?: number, offset?: number) =>
+    apiFetch<{ etapas: EtapaPendente[]; total: number }>(
+      `/manager/etapas-pendentes${limit || offset ? `?limit=${limit ?? 20}&offset=${offset ?? 0}` : ""}`
+    ),
+  listarKycPendentes: (limit?: number, offset?: number) =>
+    apiFetch<{ documentos: KycPendente[]; total: number }>(
+      `/manager/kyc-pendentes${limit || offset ? `?limit=${limit ?? 20}&offset=${offset ?? 0}` : ""}`
+    ),
+  obterEtapaDetalhe: (id: string) => apiFetch<EtapaDetalhe>(`/manager/etapas/${id}`),
+  obterKycDetalhe: (id: string) => apiFetch<KycPendente>(`/manager/kyc/${id}`),
+};
+
 // ── Notificações ──────────────────────────────────────────────────────
 
 export type Notificacao = {
