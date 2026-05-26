@@ -126,6 +126,36 @@ export const usuariosApi = {
     }),
 };
 
+// ── KYC ───────────────────────────────────────────────────────────────
+
+export type KycDocumento = {
+  kycDocumentoId: string;
+  tipo: string;
+  url: string;
+  status: string;
+  motivo_rejeicao?: string;
+  analisadoEm?: string;
+  criadoEm: string;
+};
+
+export type KycStatus = {
+  usuarioId: string;
+  status: string;
+  documentos: KycDocumento[];
+  resumo: { pendentes: number; aprovados: number; rejeitados: number };
+};
+
+export const kycApi = {
+  uploadDocumento: (tipo: string, url: string) =>
+    apiFetch<KycDocumento>("/kyc/upload", {
+      method: "POST",
+      body: JSON.stringify({ tipo, url }),
+    }),
+  listarDocumentos: () => apiFetch<KycDocumento[]>("/kyc/documentos"),
+  obterStatus: () => apiFetch<KycStatus>("/kyc/status"),
+  verificarKycCompleto: () => apiFetch<{ completo: boolean; documentos: KycDocumento[] }>("/kyc/verificar"),
+};
+
 // ── Notificações ──────────────────────────────────────────────────────
 
 export type Notificacao = {

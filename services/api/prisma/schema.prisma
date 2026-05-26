@@ -28,6 +28,7 @@ model Usuario {
   creditos      Credito[]
   obras         Obra[]
   scoreHistorico ScoreHistorico[]
+  kycDocumentos KycDocumento[] @relation("KycDocumentos")
   notificacoes  Notificacao[]
 
   @@index([email])
@@ -217,6 +218,32 @@ model ScoreHistorico {
 
   @@index([usuarioId])
   @@index([criadoEm])
+}
+
+// ── KYC Documents ──────────────────────────────────────────────────────
+
+model KycDocumento {
+  kycDocumentoId String   @id @default(uuid())
+  usuarioId      String
+  usuario        Usuario  @relation("KycDocumentos", fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  tipo           String   // RG, CNH, Selfie, Comprovante de Residência, etc.
+  url            String   // S3 URL
+  status         KycDocumentoStatus @default(PENDENTE)
+  motivo_rejeicao String?
+  analisadoPor   String?  // usuarioId of reviewer
+  analisadoEm    DateTime?
+  criadoEm       DateTime @default(now())
+  atualizadoEm   DateTime @updatedAt
+
+  @@index([usuarioId])
+  @@index([status])
+  @@index([criadoEm])
+}
+
+enum KycDocumentoStatus {
+  PENDENTE
+  APROVADO
+  REJEITADO
 }
 
 // ── Notificações ───────────────────────────────────────────────────
