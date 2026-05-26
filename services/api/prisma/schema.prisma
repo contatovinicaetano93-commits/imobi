@@ -28,6 +28,7 @@ model Usuario {
   creditos      Credito[]
   obras         Obra[]
   scoreHistorico ScoreHistorico[]
+  notificacoes  Notificacao[]
 
   @@index([email])
   @@index([cpf])
@@ -216,4 +217,36 @@ model ScoreHistorico {
 
   @@index([usuarioId])
   @@index([criadoEm])
+}
+
+// ── Notificações ───────────────────────────────────────────────────
+
+model Notificacao {
+  notificacaoId String   @id @default(uuid())
+  usuarioId     String
+  usuario       Usuario  @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  tipo          TipoNotificacao
+  titulo        String
+  mensagem      String
+  link          String?
+  lida          Boolean  @default(false)
+  lidoEm        DateTime?
+  criadoEm      DateTime @default(now())
+
+  @@index([usuarioId])
+  @@index([lida])
+  @@index([criadoEm])
+}
+
+enum TipoNotificacao {
+  ETAPA_APROVADA
+  ETAPA_REPROVADA
+  PARCELA_LIBERADA
+  PARCELA_FALHA
+  CREDITO_APROVADO
+  KYC_APROVADO
+  KYC_REJEITADO
+  OBRA_CRIADA
+  SCORE_ATUALIZADO
+  VISTORIA_PENDENTE
 }

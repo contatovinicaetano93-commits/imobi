@@ -125,3 +125,36 @@ export const usuariosApi = {
       body: JSON.stringify(data),
     }),
 };
+
+// ── Notificações ──────────────────────────────────────────────────────
+
+export type Notificacao = {
+  notificacaoId: string;
+  tipo: string;
+  titulo: string;
+  mensagem: string;
+  link?: string;
+  lida: boolean;
+  lidoEm?: string;
+  criadoEm: string;
+};
+
+export type NotificacaoListResponse = {
+  notificacoes: Notificacao[];
+  total: number;
+};
+
+export const notificacoesApi = {
+  listar: (limit?: number, offset?: number) =>
+    apiFetch<NotificacaoListResponse>(
+      `/notificacoes${limit || offset ? `?limit=${limit ?? 20}&offset=${offset ?? 0}` : ""}`
+    ),
+  listarNaoLidas: () => apiFetch<Notificacao[]>("/notificacoes/nao-lidas"),
+  contarNaoLidas: () => apiFetch<{ count: number }>("/notificacoes/contar-nao-lidas"),
+  marcarComoLida: (id: string) =>
+    apiFetch(`/notificacoes/${id}/lida`, { method: "PATCH" }),
+  marcarTudasComoLidas: () =>
+    apiFetch("/notificacoes/marcar-todas-lidas", { method: "PATCH" }),
+  deletar: (id: string) =>
+    apiFetch(`/notificacoes/${id}`, { method: "DELETE" }),
+};

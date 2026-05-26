@@ -11,6 +11,7 @@ import { EvidenciasModule } from "./modules/evidencias/evidencias.module";
 import { ScoreModule } from "./modules/score/score.module";
 import { MarketplaceModule } from "./modules/marketplace/marketplace.module";
 import { ParceirosModule } from "./modules/parceiros/parceiros.module";
+import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ParceirosModule } from "./modules/parceiros/parceiros.module";
     EtapasModule,
     EvidenciasModule,
     ScoreModule,
+    NotificacoesModule,
     MarketplaceModule,
     ParceirosModule,
   ],
