@@ -4,6 +4,7 @@ import {
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import { AppModule } from "./app.module";
+import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -11,6 +12,7 @@ async function bootstrap() {
     new FastifyAdapter({ logger: process.env["NODE_ENV"] !== "production" })
   );
 
+  app.useGlobalGuards(new CustomThrottlerGuard());
   app.setGlobalPrefix("api/v1");
 
   app.enableCors({

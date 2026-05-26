@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsuariosModule } from "./modules/usuarios/usuarios.module";
@@ -20,6 +21,7 @@ import { LiberacaoParcelaWorker } from "../../workers/liberacao-parcela.worker";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     BullModule.forRoot({
       redis: {
         host: process.env["REDIS_HOST"] ?? "localhost",
