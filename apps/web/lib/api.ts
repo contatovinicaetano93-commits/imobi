@@ -80,3 +80,25 @@ export const evidenciasApi = {
   listarPorEtapa: (etapaId: string) =>
     apiFetch<EvidenciaDetalhe[]>(`/evidencias/etapa/${etapaId}`),
 };
+
+// ── Score ─────────────────────────────────────────────────────────────
+
+export type ScoreAtual = {
+  score: number;
+  nivel: string;
+  cor: string;
+  descricao: string;
+};
+
+export type ScoreHistorico = {
+  id: string;
+  score: number;
+  motivo: string;
+  criadoEm: string;
+};
+
+export const scoreApi = {
+  atual: () => apiFetch<ScoreAtual>("/score/atual"),
+  historico: (limit?: number) =>
+    apiFetch<ScoreHistorico[]>(`/score/historico${limit ? `?limit=${limit}` : ""}`),
+};

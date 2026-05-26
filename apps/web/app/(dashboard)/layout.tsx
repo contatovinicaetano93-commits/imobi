@@ -24,6 +24,7 @@ const NAV_ITEMS = [
   { label: "Início", href: "/dashboard" },
   { label: "Minhas Obras", href: "/dashboard/obras" },
   { label: "Crédito", href: "/dashboard/credito" },
+  { label: "Score", href: "/dashboard/score" },
   { label: "Simulador", href: "/dashboard/simulador" },
   { label: "Painel do Gestor", href: "/dashboard/gestor" },
   { label: "Relatórios", href: "/dashboard/relatorios" },
