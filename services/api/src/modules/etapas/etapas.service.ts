@@ -13,7 +13,7 @@ export class EtapasService {
 
   async aprovar(gestorId: string, etapaId: string, observacao?: string) {
     const etapa = await this.prisma.etapaObra.findUnique({
-      where: { id: etapaId },
+      where: { etapaId },
       include: { obra: { include: { credito: true } } },
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
@@ -30,8 +30,8 @@ export class EtapasService {
     }
 
     await this.prisma.etapaObra.update({
-      where: { id: etapaId },
-      data: { status: "APROVADA", dataConclusaoReal: new Date() },
+      where: { etapaId },
+      data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
     });
 
     // Dispara liberação de parcela via fila (assíncrono)
@@ -39,9 +39,9 @@ export class EtapasService {
     if (credito && credito.status === "ATIVO") {
       const valorLiberacao = Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
       await this.prisma.liberacaoParcela.create({
-        data: { creditoId: credito.id, etapaId, valor: valorLiberacao, status: "PROCESSANDO" },
+        data: { creditoId: credito.creditoId, valor: valorLiberacao, status: "PENDENTE" },
       });
-      await this.liberacaoQueue.add({ creditoId: credito.id, etapaId, valor: valorLiberacao });
+      await this.liberacaoQueue.add({ creditoId: credito.creditoId, etapaId, valor: valorLiberacao });
     }
 
     return { ok: true, observacao };
@@ -49,7 +49,7 @@ export class EtapasService {
 
   async atualizarStatus(etapaId: string, status: string) {
     return this.prisma.etapaObra.update({
-      where: { id: etapaId },
+      where: { etapaId },
       data: { status: status as never },
     });
   }
@@ -60,7 +60,7 @@ export class EtapasService {
       orderBy: { ordem: "asc" },
       include: {
         evidencias: {
-          select: { id: true, fotoUrl: true, validada: true, criadoEm: true },
+          select: { evidenciaId: true, fotoUrl: true, validada: true, criadoEm: true },
           orderBy: { criadoEm: "desc" },
           take: 5,
         },
