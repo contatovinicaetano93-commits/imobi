@@ -6,7 +6,7 @@ export default function EtapaLayout() {
       <Stack.Screen
         name="[etapaId]"
         options={{
-          animationEnabled: true,
+          animation: "slide_from_right",
           presentation: "card",
         }}
       />

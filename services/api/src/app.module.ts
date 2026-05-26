@@ -1,7 +1,9 @@
 import { Module } from "@nestjs/common";
+import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
 import { ThrottlerModule } from "@nestjs/throttler";
+import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { AdminModule } from "./modules/admin/admin.module";
@@ -49,6 +51,9 @@ import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
     ParceirosModule,
     AuditModule,
   ],
-  providers: [LiberacaoParcelaWorker],
+  providers: [
+    LiberacaoParcelaWorker,
+    { provide: APP_GUARD, useClass: CustomThrottlerGuard },
+  ],
 })
 export class AppModule {}

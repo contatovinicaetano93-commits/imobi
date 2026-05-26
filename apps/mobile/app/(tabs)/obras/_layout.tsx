@@ -7,21 +7,21 @@ export default function ObrasLayout() {
       <Stack.Screen
         name="[id]/index"
         options={{
-          animationEnabled: true,
+          animation: "slide_from_right",
           presentation: "card",
         }}
       />
       <Stack.Screen
         name="[id]/registrar"
         options={{
-          animationEnabled: true,
+          animation: "slide_from_right",
           presentation: "card",
         }}
       />
       <Stack.Screen
         name="[id]/etapa/[etapaId]"
         options={{
-          animationEnabled: true,
+          animation: "slide_from_right",
           presentation: "card",
         }}
       />

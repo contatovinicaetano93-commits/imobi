@@ -19,7 +19,7 @@ export class CacheService {
   }
 
   async invalidatePattern(pattern: string): Promise<void> {
-    const keys = await this.cacheManager.store.keys();
+    const keys = await (this.cacheManager as any).stores?.keys?.() ?? await (this.cacheManager as any).store?.keys?.() ?? [];
     const matchingKeys = keys.filter((key) => key.includes(pattern));
     await Promise.all(matchingKeys.map((key) => this.cacheManager.del(key)));
   }

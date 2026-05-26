@@ -7,7 +7,7 @@ export default function MarketplaceLayout() {
       <Stack.Screen
         name="[id]"
         options={{
-          animationEnabled: true,
+          animation: "slide_from_right",
           presentation: "card",
         }}
       />

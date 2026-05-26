@@ -42,7 +42,7 @@ export function PerfilForm({ usuario }: Props) {
     setErro(null);
     setSucesso(false);
 
-    startTransition(async () => {
+    startTransition(() => { void (async () => {
       try {
         await usuariosApi.atualizarPerfil({
           nome: data.nome,
@@ -56,7 +56,8 @@ export function PerfilForm({ usuario }: Props) {
           err instanceof Error ? err.message : "Erro ao atualizar perfil"
         );
       }
-    });
+    })();
+  });
   };
 
   return (

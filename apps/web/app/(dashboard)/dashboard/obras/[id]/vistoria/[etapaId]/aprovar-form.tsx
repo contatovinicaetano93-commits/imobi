@@ -18,7 +18,7 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
 
   const acao = async (aprovado: boolean) => {
     setErro(null);
-    startTransition(async () => {
+    startTransition(() => { void (async () => {
       const res = await fetch(`/api/etapas/${etapaId}/validar`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -33,7 +33,8 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
 
       router.push(`/dashboard/obras/${obraId}`);
       router.refresh();
-    });
+    })();
+  });
   };
 
   return (

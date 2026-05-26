@@ -7,7 +7,7 @@ export default function AuthLayout() {
       <Stack.Screen
         name="register"
         options={{
-          animationEnabled: true,
+          animation: "slide_from_right",
           presentation: "card",
         }}
       />
