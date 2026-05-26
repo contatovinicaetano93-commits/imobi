@@ -1,4 +1,5 @@
 import { NestFactory } from "@nestjs/core";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import {
   FastifyAdapter,
   type NestFastifyApplication,
@@ -16,6 +17,17 @@ async function bootstrap() {
   app.useGlobalGuards(new CustomThrottlerGuard());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");
+
+  // Setup Swagger
+  const config = new DocumentBuilder()
+    .setTitle("imbobi API")
+    .setDescription("API para gerenciamento de créditos e obras")
+    .setVersion("1.0.0")
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup("api-docs", app, document);
 
   app.enableCors({
     origin: process.env["CORS_ORIGIN"]?.split(",") ?? ["http://localhost:3000"],

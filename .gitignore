@@ -9,6 +9,10 @@ build/
 .next/
 out/
 *.tsbuildinfo
+packages/*/src/**/*.js
+packages/*/src/**/*.d.ts
+services/*/src/**/*.js
+services/*/src/**/*.d.ts
 
 # Expo
 .expo/

@@ -7,6 +7,7 @@ import { EmailService } from "../modules/email/email.service";
 import { PushNotificacoesService } from "../modules/push-notificacoes/push-notificacoes.service";
 
 export const QUEUE_LIBERACAO = "liberacao-parcela";
+export const QUEUE_LIBERACAO_DLQ = "liberacao-parcela-dlq";
 
 export interface LiberacaoJob {
   creditoId: string;
@@ -93,36 +94,56 @@ export class LiberacaoParcelaWorker {
   }
 
   @OnQueueFailed()
-  onFailed(job: Job, err: Error) {
-    this.logger.error(`Job ${job.id} falhou: ${err.message}`);
+  async onFailed(job: Job, err: Error) {
+    this.logger.error(
+      `Job ${job.id} falhou na tentativa ${job.attemptsMade} de ${job.opts.attempts}: ${err.message}`
+    );
 
-    // Registra a falha no banco de dados e notifica
-    this.prisma.credito
-      .findUnique({
-        where: { creditoId: job.data.creditoId },
-        include: { obras: true },
-      })
-      .then(async (credito) => {
-        if (!credito) return;
-
-        await this.prisma.liberacaoParcela.updateMany({
-          where: { creditoId: job.data.creditoId, status: "PENDENTE" },
-          data: { status: "FALHA", processadoEm: new Date() },
+    // Only mark as final failure after all retries are exhausted
+    if (job.attemptsMade >= (job.opts.attempts || 3)) {
+      try {
+        const credito = await this.prisma.credito.findUnique({
+          where: { creditoId: job.data.creditoId },
+          include: { obras: true, usuario: true },
         });
 
-        // Notifica usuário sobre falha
+        if (!credito) {
+          this.logger.warn(`Crédito ${job.data.creditoId} não encontrado`);
+          return;
+        }
+
+        // Update liberação status to FALHA
+        await this.prisma.liberacaoParcela.updateMany({
+          where: { creditoId: job.data.creditoId, status: "PENDENTE" },
+          data: {
+            status: "FALHA",
+            processadoEm: new Date(),
+            motivo: `Erro após 3 tentativas: ${err.message}`,
+          },
+        });
+
+        // Notify user about failure
         const obra = credito.obras?.[0];
-        await this.notificacoes
-          .criar(
-            credito.usuarioId,
-            "PARCELA_FALHA",
-            "Erro na liberação da parcela",
-            `Ocorreu um erro ao processar a liberação para ${obra?.nome || "sua obra"}. Por favor, contate o suporte.`,
-            obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
-          )
-          .catch((e) => this.logger.error(`Erro ao notificar falha: ${e}`));
-      })
-      .catch((e) => this.logger.error(`Erro ao processar falha de liberação: ${e}`));
+        await this.notificacoes.criar(
+          credito.usuarioId,
+          "PARCELA_FALHA",
+          "Erro na liberação da parcela",
+          `Ocorreu um erro ao processar a liberação para ${obra?.nome || "sua obra"}. Por favor, contate o suporte.`,
+          obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
+        );
+
+        // Send email notification
+        this.email
+          .parcelaFalhaEmail(credito.usuario.nome, credito.usuario.email, job.data.valor)
+          .catch((e) => this.logger.error(`Erro ao enviar email de falha: ${e}`));
+
+        this.logger.error(
+          `Liberação para crédito ${job.data.creditoId} falhou permanentemente. Motivo: ${err.message}`
+        );
+      } catch (error) {
+        this.logger.error(`Erro ao processar falha de liberação: ${error}`);
+      }
+    }
   }
 
   @OnQueueCompleted()

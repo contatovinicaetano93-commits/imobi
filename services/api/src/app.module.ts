@@ -4,6 +4,7 @@ import { BullModule } from "@nestjs/bull";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
+import { AdminModule } from "./modules/admin/admin.module";
 import { UsuariosModule } from "./modules/usuarios/usuarios.module";
 import { CreditoModule } from "./modules/credito/credito.module";
 import { ObrasModule } from "./modules/obras/obras.module";
@@ -32,6 +33,7 @@ import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
     }),
     PrismaModule,
     AuthModule,
+    AdminModule,
     UsuariosModule,
     CreditoModule,
     ObrasModule,
