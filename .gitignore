@@ -42,3 +42,4 @@ coverage/
 # IDE
 .vscode/
 .idea/
+SESSION_SUMMARY.md
