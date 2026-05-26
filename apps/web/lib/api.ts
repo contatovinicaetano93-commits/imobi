@@ -221,6 +221,10 @@ export const managerApi = {
     apiFetch(`/manager/kyc/${id}/aprovar`, { method: "PATCH" }),
   rejeitarKyc: (id: string, motivo: string) =>
     apiFetch(`/manager/kyc/${id}/rejeitar`, { method: "PATCH", body: JSON.stringify({ motivo }) }),
+  aprovarEtapasBatch: (etapaIds: string[]) =>
+    apiFetch(`/manager/etapas/batch-aprovar`, { method: "PATCH", body: JSON.stringify({ etapaIds }) }),
+  aprovarKycBatch: (kycIds: string[]) =>
+    apiFetch(`/manager/kyc/batch-aprovar`, { method: "PATCH", body: JSON.stringify({ kycIds }) }),
 };
 
 // ── Notificações ──────────────────────────────────────────────────────

@@ -187,4 +187,21 @@ export class ManagerService {
     await this.cacheManager.set(cacheKey, result, 60000);
     return result;
   }
+
+  async validarEtapaAprovacao(etapaId: string): Promise<{ valida: boolean; motivo?: string }> {
+    const etapa = await this.prisma.etapaObra.findUnique({
+      where: { etapaId },
+      include: { evidencias: { where: { validada: true } } },
+    });
+
+    if (!etapa) return { valida: false, motivo: "Etapa não encontrada" };
+    if (etapa.status !== "AGUARDANDO_VISTORIA") {
+      return { valida: false, motivo: "Etapa não está aguardando vistoria" };
+    }
+    if (etapa.evidencias.length === 0) {
+      return { valida: false, motivo: "Etapa precisa ter ao menos uma evidência validada" };
+    }
+
+    return { valida: true };
+  }
 }

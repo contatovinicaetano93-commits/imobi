@@ -109,4 +109,67 @@ export class ManagerController {
     await this.manager.verificarPermissao(u.id);
     return this.audit.listarPorEntidade(entidade, id);
   }
+
+  @Patch("etapas/batch-aprovar")
+  async aprovarEtapasBatch(
+    @UsuarioAtual() u: IUsuario,
+    @Body("etapaIds") etapaIds: string[]
+  ) {
+    await this.manager.verificarPermissao(u.id);
+
+    const resultados = [];
+    for (const etapaId of etapaIds) {
+      try {
+        const validacao = await this.manager.validarEtapaAprovacao(etapaId);
+        if (!validacao.valida) {
+          resultados.push({ etapaId, sucesso: false, erro: validacao.motivo });
+          continue;
+        }
+        const resultado = await this.etapas.aprovar(u.id, etapaId);
+        resultados.push({ etapaId, sucesso: true, resultado });
+      } catch (erro) {
+        resultados.push({
+          etapaId,
+          sucesso: false,
+          erro: erro instanceof Error ? erro.message : "Erro desconhecido"
+        });
+      }
+    }
+
+    return {
+      total: etapaIds.length,
+      sucesso: resultados.filter((r) => r.sucesso).length,
+      erro: resultados.filter((r) => !r.sucesso).length,
+      resultados,
+    };
+  }
+
+  @Patch("kyc/batch-aprovar")
+  async aprovarKycBatch(
+    @UsuarioAtual() u: IUsuario,
+    @Body("kycIds") kycIds: string[]
+  ) {
+    await this.manager.verificarPermissao(u.id);
+
+    const resultados = [];
+    for (const kycId of kycIds) {
+      try {
+        const resultado = await this.kyc.aprovarDocumento(kycId, u.id);
+        resultados.push({ kycId, sucesso: true, resultado });
+      } catch (erro) {
+        resultados.push({
+          kycId,
+          sucesso: false,
+          erro: erro instanceof Error ? erro.message : "Erro desconhecido"
+        });
+      }
+    }
+
+    return {
+      total: kycIds.length,
+      sucesso: resultados.filter((r) => r.sucesso).length,
+      erro: resultados.filter((r) => !r.sucesso).length,
+      resultados,
+    };
+  }
 }
