@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { obrasApi, creditoApi, type ObraResumo, type CreditoResumo, type EtapaResumo } from "@/lib/api";
+import { obrasApi, creditoApi } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
-
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: "Dashboard — imbobi" };
 
@@ -12,13 +10,13 @@ export default async function DashboardPage() {
     creditoApi.meus().catch(() => []),
   ]);
 
-  const ativas = obras.filter((o: ObraResumo) => o.status === "EM_ANDAMENTO");
-  const creditoAtivo = creditos.find((c: CreditoResumo) => c.status === "ATIVO");
+  const ativas = obras.filter((o) => o.status === "EM_ANDAMENTO");
+  const creditoAtivo = creditos.find((c) => c.status === "ATIVO");
   const saldoDisponivel = creditoAtivo
     ? Number(creditoAtivo.valorAprovado) - Number(creditoAtivo.valorLiberado)
     : 0;
-  const totalEtapas = obras.flatMap((o: ObraResumo) => o.etapas ?? []);
-  const etapasAprovadas = totalEtapas.filter((e: EtapaResumo) => e.status === "APROVADA");
+  const totalEtapas = obras.flatMap((o) => o.etapas ?? []);
+  const etapasAprovadas = totalEtapas.filter((e) => e.status === "APROVADA");
 
   return (
     <div className="space-y-8">
@@ -29,7 +27,7 @@ export default async function DashboardPage() {
           { label: "Crédito disponível", value: formatarBRL(saldoDisponivel), sub: creditoAtivo ? "crédito ativo" : "sem crédito ativo" },
           { label: "Obras ativas", value: String(ativas.length), sub: `${obras.length} no total` },
           { label: "Etapas concluídas", value: `${etapasAprovadas.length} / ${totalEtapas.length}`, sub: totalEtapas.length ? `${Math.round((etapasAprovadas.length / totalEtapas.length) * 100)}%` : "—" },
-          { label: "Aguardando vistoria", value: String(totalEtapas.filter((e: EtapaResumo) => e.status === "AGUARDANDO_VISTORIA").length), sub: "etapas" },
+          { label: "Aguardando vistoria", value: String(totalEtapas.filter((e) => e.status === "AGUARDANDO_VISTORIA").length), sub: "etapas" },
         ].map((kpi) => (
           <div key={kpi.label} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <p className="text-sm text-gray-500 mb-1">{kpi.label}</p>
@@ -54,7 +52,7 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
-            {ativas.map((obra: ObraResumo) => (
+            {ativas.map((obra) => (
               <a
                 key={obra.id}
                 href={`/dashboard/obras/${obra.id}`}

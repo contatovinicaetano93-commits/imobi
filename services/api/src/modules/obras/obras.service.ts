@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import type { CriarObraInput } from "@imbobi/schemas";
 import { ETAPAS_PADRAO } from "./etapas-padrao";
@@ -9,41 +9,34 @@ export class ObrasService {
 
   async criar(usuarioId: string, input: CriarObraInput) {
     return this.prisma.$transaction(async (tx) => {
-      // BUG-002: Server-side GPS validation using PostGIS
-      if (input.geo?.latitude && input.geo?.longitude) {
-        const gpsValidation = await tx.$queryRaw<Array<{ valid: boolean }>>`
-          SELECT ST_IsValid(ST_GeomFromText('POINT(${input.geo.longitude} ${input.geo.latitude})', 4326)) AS valid
-        `;
-        if (!gpsValidation[0]?.valid) {
-          throw new BadRequestException('GPS inválido (fora dos limites do Brasil)');
-        }
-      }
-
       const obra = await tx.obra.create({
         data: {
           usuarioId,
           creditoId: input.creditoId,
           nome: input.nome,
-          endereco: typeof input.endereco === "string" ? input.endereco : JSON.stringify(input.endereco),
-          geoLatitude: input.geo?.latitude ?? 0,
-          geoLongitude: input.geo?.longitude ?? 0,
-          raioValidacaoMetros: input.geo?.raioValidacaoMetros ?? 50,
+          enderecoJson: input.endereco,
+          geoLatitude: input.geo.latitude,
+          geoLongitude: input.geo.longitude,
+          raioValidacaoMetros: input.geo.raioValidacaoMetros,
           areaM2: input.areaM2,
+          dataInicio: input.datainicioISO ? new Date(input.datainicioISO) : null,
+          dataConclusaoPrevista: new Date(input.dataConclusaoPrevistaISO),
         },
       });
 
+      // Cria etapas padrão automaticamente
       await tx.etapaObra.createMany({
         data: ETAPAS_PADRAO.map((e, i) => ({
-          obraId: obra.obraId,
+          obraId: obra.id,
           nome: e.nome,
+          descricao: e.descricao,
           ordem: i + 1,
           percentualObra: e.percentual,
-          valorLiberacao: 0,
         })),
       });
 
       return tx.obra.findUnique({
-        where: { obraId: obra.obraId },
+        where: { id: obra.id },
         include: { etapas: { orderBy: { ordem: "asc" } } },
       });
     });
@@ -52,26 +45,26 @@ export class ObrasService {
   async listar(usuarioId: string) {
     return this.prisma.obra.findMany({
       where: { usuarioId },
-      include: { etapas: { select: { etapaId: true, nome: true, status: true, ordem: true } } },
+      include: { etapas: { select: { id: true, nome: true, status: true, ordem: true } } },
       orderBy: { criadoEm: "desc" },
     });
   }
 
   async buscar(usuarioId: string, obraId: string) {
     const obra = await this.prisma.obra.findUnique({
-      where: { obraId },
+      where: { id: obraId },
       include: {
         etapas: {
           orderBy: { ordem: "asc" },
           include: {
             evidencias: {
               where: { validada: true },
-              select: { evidenciaId: true, fotoUrl: true, criadoEm: true },
+              select: { id: true, fotoUrl: true, criadoEm: true },
               take: 3,
             },
           },
         },
-        credito: { select: { creditoId: true, valorAprovado: true, valorLiberado: true, status: true } },
+        credito: { select: { id: true, valorAprovado: true, valorLiberado: true, status: true } },
       },
     });
     if (!obra) throw new NotFoundException("Obra não encontrada.");
@@ -81,9 +74,9 @@ export class ObrasService {
 
   async progressoGeral(obraId: string): Promise<number> {
     const etapas = await this.prisma.etapaObra.findMany({ where: { obraId } });
-    const concluidas = etapas.filter((e) => e.status === "CONCLUIDA");
+    const aprovadas = etapas.filter((e) => e.status === "APROVADA");
     const total = etapas.reduce((acc, e) => acc + Number(e.percentualObra), 0);
-    const concluido = concluidas.reduce((acc, e) => acc + Number(e.percentualObra), 0);
+    const concluido = aprovadas.reduce((acc, e) => acc + Number(e.percentualObra), 0);
     return total > 0 ? Math.round((concluido / total) * 100) : 0;
   }
 }

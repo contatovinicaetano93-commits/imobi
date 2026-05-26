@@ -1,6 +1,4 @@
-import { Controller, Get, Patch, Param, Query, Body, UseGuards, UseInterceptors } from "@nestjs/common";
-import { Throttle } from "@nestjs/throttler";
-import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
+import { Controller, Get, Patch, Param, Query, Body, UseGuards } from "@nestjs/common";
 import { ManagerService } from "./manager.service";
 import { EtapasService } from "../etapas/etapas.service";
 import { KycService } from "../kyc/kyc.service";
@@ -17,46 +15,22 @@ export class ManagerController {
   ) {}
 
   @Get("dashboard")
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async dashboard(@UsuarioAtual() u: IUsuario) {
     await this.manager.verificarPermissao(u.id);
     return this.manager.obterEstatisticas();
   }
 
   @Get("etapas-pendentes")
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
-  @UseInterceptors(CacheInterceptor)
-  @CacheTTL(120) // 2 min
   async listarEtapasPendentes(
     @UsuarioAtual() u: IUsuario,
     @Query("limit") limit: string = "20",
-    @Query("offset") offset: string = "0",
-    @Query("status") status?: "todas" | "pendente" | "aprovada" | "rejeitada",
-    @Query("dataInicio") dataInicio?: string,
-    @Query("dataFim") dataFim?: string,
-    @Query("obraType") obraType?: string,
-    @Query("priority") priority?: "todas" | "urgente" | "intermediaria" | "normal",
-    @Query("searchTerm") searchTerm?: string
+    @Query("offset") offset: string = "0"
   ) {
     await this.manager.verificarPermissao(u.id);
-    return this.manager.listarEtapasPendentes(
-      Number(limit),
-      Number(offset),
-      {
-        status,
-        dataInicio,
-        dataFim,
-        obraType,
-        priority,
-        searchTerm,
-      }
-    );
+    return this.manager.listarEtapasPendentes(Number(limit), Number(offset));
   }
 
   @Get("kyc-pendentes")
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
-  @UseInterceptors(CacheInterceptor)
-  @CacheTTL(120) // 2 min
   async listarKycPendentes(
     @UsuarioAtual() u: IUsuario,
     @Query("limit") limit: string = "20",
@@ -112,17 +86,5 @@ export class ManagerController {
   ) {
     await this.manager.verificarPermissao(u.id);
     return this.kyc.rejeitarDocumento(id, u.id, motivo);
-  }
-
-  @Get("etapas/:id/audit-log")
-  async obterEtapaAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
-    await this.manager.verificarPermissao(u.id);
-    return this.manager.obterEtapaAuditLog(id);
-  }
-
-  @Get("kyc/:id/audit-log")
-  async obterKycAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
-    await this.manager.verificarPermissao(u.id);
-    return this.manager.obterKycAuditLog(id);
   }
 }

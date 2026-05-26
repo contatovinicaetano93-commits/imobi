@@ -1,10 +1,13 @@
 import {
-  Controller, Post, Get, Patch, Param, Body, UseGuards,
+  Controller, Post, Get, Patch, Param, Body,
+  UploadedFile, UseInterceptors, UseGuards,
 } from "@nestjs/common";
-import { Throttle } from "@nestjs/throttler";
+import { FileInterceptor } from "@nestjs/platform-fastify";
 import { EvidenciasService } from "./evidencias.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { UploadEvidenciaSchema } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
 @Controller("evidencias")
@@ -12,12 +15,13 @@ export class EvidenciasController {
   constructor(private readonly evidencias: EvidenciasService) {}
 
   @Post()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseInterceptors(FileInterceptor("file"))
   upload(
     @UsuarioAtual() u: IUsuario,
-    @Body() body: any
+    @UploadedFile() file: Express.Multer.File,
+    @Body(new ZodPipe(UploadEvidenciaSchema)) body: unknown
   ) {
-    return this.evidencias.upload(u.id, body, Buffer.alloc(0), "image/jpeg");
+    return this.evidencias.upload(u.id, body as never, file.buffer, file.mimetype);
   }
 
   @Get("etapa/:etapaId")

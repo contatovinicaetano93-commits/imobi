@@ -1,19 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
-import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { KycDocumentoStatus } from "@prisma/client";
 
 @Injectable()
 export class KycService {
-  private readonly logger = new Logger(KycService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
-    private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly email: EmailService
   ) {}
 
   async uploadDocumento(usuarioId: string, tipo: string, url: string) {
@@ -67,15 +63,6 @@ export class KycService {
       },
     });
 
-    // Create audit log entry
-    await this.prisma.kycAuditLog.create({
-      data: {
-        kycDocumentoId,
-        acaoTipo: "APROVADO",
-        usuarioId: gestorId,
-      },
-    });
-
     // Notifica usuário
     await this.notificacoes.criar(
       documento.usuarioId,
@@ -85,20 +72,10 @@ export class KycService {
       "/dashboard/perfil"
     );
 
-    // Envia push notification
-    this.pushNotificacoes.enviarPush({
-      usuarioId: documento.usuarioId,
-      titulo: "Documentação Aprovada",
-      mensagem: `Seu documento ${documento.tipo} foi aprovado!`,
-      tipo: "KYC_APROVADO",
-    }).catch(() => {});
-
-    // BUG-003: Ensure email is sent before returning response
-    try {
-      await this.email.kycAprovadoEmail(documento.usuario.nome, documento.usuario.email);
-    } catch (error) {
-      this.logger.warn(`Failed to send KYC approval email: ${error}`);
-    }
+    // Envia email
+    this.email
+      .kycAprovadoEmail(documento.usuario.nome, documento.usuario.email)
+      .catch(() => {});
 
     return atualizado;
   }
@@ -128,16 +105,6 @@ export class KycService {
       },
     });
 
-    // Create audit log entry
-    await this.prisma.kycAuditLog.create({
-      data: {
-        kycDocumentoId,
-        acaoTipo: "REJEITADO",
-        usuarioId: gestorId,
-        motivo,
-      },
-    });
-
     // Notifica usuário
     await this.notificacoes.criar(
       documento.usuarioId,
@@ -147,21 +114,10 @@ export class KycService {
       "/dashboard/perfil"
     );
 
-    // Envia push notification
-    this.pushNotificacoes.enviarPush({
-      usuarioId: documento.usuarioId,
-      titulo: "Documentação Rejeitada",
-      mensagem: `Seu documento foi rejeitado. Motivo: ${motivo}`,
-      tipo: "KYC_REJEITADO",
-      dados: { motivo },
-    }).catch(() => {});
-
     // Envia email
-    try {
-      await this.email.kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo);
-    } catch (error) {
-      this.logger.warn(`Failed to send KYC rejection email: ${error}`);
-    }
+    this.email
+      .kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo)
+      .catch(() => {});
 
     return atualizado;
   }

@@ -20,9 +20,7 @@ model Usuario {
   telefone      String
   passwordHash  String
   tipo          UsuarioTipo @default(TOMADOR)
-  comercialRole ComercialRole?
   kycStatus     KycStatus @default(PENDENTE)
-  deletadoEm    DateTime?  // LGPD Article 17 - soft delete timestamp
   criadoEm      DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt
 
@@ -32,14 +30,9 @@ model Usuario {
   scoreHistorico ScoreHistorico[]
   kycDocumentos KycDocumento[] @relation("KycDocumentos")
   notificacoes  Notificacao[]
-  fcmTokens     UsuarioFcmToken[]
-  etapaAuditLogs EtapaAuditLog[] @relation("EtapaAuditLogs")
-  kycAuditLogs  KycAuditLog[] @relation("KycAuditLogs")
-  leadsGerenciados Lead[] @relation("LeadUsuarios")
 
   @@index([email])
   @@index([cpf])
-  @@index([deletadoEm])
 }
 
 enum UsuarioTipo {
@@ -68,20 +61,6 @@ model SessaoToken {
   criadoEm      DateTime  @default(now())
 
   @@index([usuarioId])
-}
-
-model UsuarioFcmToken {
-  usuarioId   String
-  token       String
-  ativo       Boolean  @default(true)
-  criadoEm   DateTime @default(now())
-  atualizadoEm DateTime @updatedAt
-
-  usuario     Usuario  @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
-
-  @@id([usuarioId, token])
-  @@index([ativo])
-  @@map("usuario_fcm_tokens")
 }
 
 // ── Créditos ──────────────────────────────────────────────────────────
@@ -135,7 +114,6 @@ model Obra {
 
   etapas              EtapaObra[]
   evidencias          EvidenciaEtapa[]
-  leads               Lead[]
 
   @@index([usuarioId])
   @@index([creditoId])
@@ -167,7 +145,6 @@ model EtapaObra {
   atualizadoEm        DateTime @updatedAt
 
   evidencias          EvidenciaEtapa[]
-  auditLogs           EtapaAuditLog[]
 
   @@unique([obraId, ordem])
   @@index([obraId])
@@ -257,7 +234,6 @@ model KycDocumento {
   analisadoEm    DateTime?
   criadoEm       DateTime @default(now())
   atualizadoEm   DateTime @updatedAt
-  auditLogs      KycAuditLog[]
 
   @@index([usuarioId])
   @@index([status])
@@ -300,173 +276,4 @@ enum TipoNotificacao {
   OBRA_CRIADA
   SCORE_ATUALIZADO
   VISTORIA_PENDENTE
-}
-
-// ── Auditoria de Etapas ─────────────────────────────────────────────
-
-model EtapaAuditLog {
-  auditId         String   @id @default(uuid())
-  etapaId         String
-  etapa           EtapaObra @relation(fields: [etapaId], references: [etapaId], onDelete: Cascade)
-  acaoTipo        String   // APROVADA, REJEITADA, EDITADA
-  usuarioId       String
-  usuario         Usuario  @relation("EtapaAuditLogs", fields: [usuarioId], references: [usuarioId], onDelete: Restrict)
-  observacoes     String?
-  criadoEm        DateTime @default(now())
-
-  @@index([etapaId])
-  @@index([usuarioId])
-  @@index([criadoEm])
-}
-
-// ── Auditoria de KYC ────────────────────────────────────────────────
-
-model KycAuditLog {
-  auditId         String      @id @default(uuid())
-  kycDocumentoId  String
-  kyc             KycDocumento @relation(fields: [kycDocumentoId], references: [kycDocumentoId], onDelete: Cascade)
-  acaoTipo        String      // APROVADO, REJEITADO
-  usuarioId       String
-  usuario         Usuario     @relation("KycAuditLogs", fields: [usuarioId], references: [usuarioId], onDelete: Restrict)
-  motivo          String?
-  criadoEm        DateTime @default(now())
-
-  @@index([kycDocumentoId])
-  @@index([usuarioId])
-  @@index([criadoEm])
-}
-
-// ── Comercial: Leads & Pipeline (Phase 11) ──────────────────────────
-
-enum LeadFonte {
-  WEBSITE
-  INDICACAO
-  MARKETPLACE
-  CAMPANHA_DIGITAL
-  OFFLINE
-  PARCEIRO
-}
-
-enum LeadSegmento {
-  NOVO
-  RETORNO
-  CONCORRENTE
-}
-
-enum LeadActivityTipo {
-  CALL_OUTBOUND
-  CALL_INBOUND
-  EMAIL_SENT
-  EMAIL_RECEIVED
-  MEETING_SCHEDULED
-  MEETING_COMPLETED
-  PROPOSAL_SENT
-  DOCUMENT_REQUESTED
-  PAYMENT_RECEIVED
-  STAGE_CHANGED
-  NOTE_ADDED
-  FOLLOW_UP_SET
-}
-
-enum ComercialRole {
-  GERENTE_VENDAS
-  REPRESENTANTE
-}
-
-model PipelineStage {
-  stageId         String   @id @default(uuid())
-  nome            String   @unique
-  ordem           Int      @unique
-  descricao       String?
-  corHex          String   @default("#999999")
-  taxaConversao   Float    @default(0.0)
-  diasMedioStage  Int      @default(7)
-
-  leads           Lead[]
-
-  criadoEm        DateTime @default(now())
-  atualizadoEm    DateTime @updatedAt
-
-  @@index([ordem])
-}
-
-model Lead {
-  leadId              String   @id @default(uuid())
-  obraId              String?
-  obra                Obra?    @relation(fields: [obraId], references: [obraId], onDelete: SetNull)
-  usuarioId           String?
-  usuario             Usuario? @relation("LeadUsuarios", fields: [usuarioId], references: [usuarioId], onDelete: SetNull)
-  atribuidoEm         DateTime?
-
-  clienteNome         String
-  clienteEmail        String
-  clienteTelefone     String
-  clienteCpf          String?
-
-  stageId             String
-  stage               PipelineStage @relation(fields: [stageId], references: [stageId], onDelete: Restrict)
-
-  fonte               LeadFonte     @default(WEBSITE)
-  tipoObra            String?
-  segmentoCliente     LeadSegmento  @default(NOVO)
-
-  condicoes           String?
-  proximoAcompanhamento DateTime?
-  statusUltimo        String?
-
-  criadoEm            DateTime @default(now())
-  atualizadoEm        DateTime @updatedAt
-  convertidoEm        DateTime?
-
-  scoreHistorico      ConversionScore[]
-  atividades          LeadActivity[]
-
-  @@index([obraId])
-  @@index([usuarioId])
-  @@index([stageId])
-  @@index([fonte])
-  @@index([segmentoCliente])
-  @@index([criadoEm])
-  @@index([convertidoEm])
-}
-
-model ConversionScore {
-  scoreId             String   @id @default(uuid())
-  leadId              String
-  lead                Lead     @relation(fields: [leadId], references: [leadId], onDelete: Cascade)
-
-  scoreFinal          Float
-  probabilidadeClosing Float
-  dataEstimadaClosing DateTime?
-
-  fonteScore          Float    @default(0.0)
-  tipoObraScore       Float    @default(0.0)
-  segmentoScore       Float    @default(0.0)
-  engajamentoScore    Float    @default(0.0)
-  historicoScore      Float    @default(0.0)
-
-  versaoAlgoritmo     String   @default("v1")
-
-  criadoEm            DateTime @default(now())
-  atualizadoEm        DateTime @updatedAt
-
-  @@index([leadId])
-  @@index([scoreFinal])
-  @@index([atualizadoEm])
-}
-
-model LeadActivity {
-  atividadeId     String   @id @default(uuid())
-  leadId          String
-  lead            Lead     @relation(fields: [leadId], references: [leadId], onDelete: Cascade)
-
-  tipo            LeadActivityTipo
-  descricao       String
-  usuarioId       String
-
-  criadoEm        DateTime @default(now())
-
-  @@index([leadId])
-  @@index([tipo])
-  @@index([criadoEm])
 }

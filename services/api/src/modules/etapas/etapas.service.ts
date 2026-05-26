@@ -4,8 +4,7 @@ import { Queue } from "bull";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
-import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
-import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
+import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../../workers/liberacao-parcela.worker";
 
 @Injectable()
 export class EtapasService {
@@ -13,7 +12,6 @@ export class EtapasService {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService,
     @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue<LiberacaoJob>
   ) {}
 
@@ -29,7 +27,7 @@ export class EtapasService {
 
     // Exige ao menos 1 evidência validada
     const evidencias = await this.prisma.evidenciaEtapa.count({
-      where: { etapaId: etapaId, validada: true },
+      where: { etapaId, validada: true },
     });
     if (evidencias === 0) {
       throw new BadRequestException("Etapa precisa ter ao menos uma evidência validada.");
@@ -40,16 +38,6 @@ export class EtapasService {
       data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
     });
 
-    // Create audit log entry
-    await this.prisma.etapaAuditLog.create({
-      data: {
-        etapaId,
-        acaoTipo: "APROVADA",
-        usuarioId: gestorId,
-        observacoes: observacao || null,
-      },
-    });
-
     // Notifica o criador da obra sobre a aprovação
     await this.notificacoes.criar(
       etapa.obra.usuarioId,
@@ -58,15 +46,6 @@ export class EtapasService {
       `A etapa "${etapa.nome}" da obra "${etapa.obra.nome}" foi aprovada com sucesso. A liberação da parcela foi agendada.`,
       `/dashboard/obras/${etapa.obra.obraId}`
     );
-
-    // Envia push notification
-    this.pushNotificacoes.enviarPush({
-      usuarioId: etapa.obra.usuarioId,
-      titulo: `Etapa Aprovada: ${etapa.nome}`,
-      mensagem: `Sua etapa foi aprovada e a parcela será liberada em breve.`,
-      tipo: "ETAPA_APROVADA",
-      dados: { obraId: etapa.obra.obraId, etapaId },
-    }).catch(() => {});
 
     // Envia email de confirmação
     const credito = etapa.obra.credito;
@@ -82,6 +61,7 @@ export class EtapasService {
     }
 
     // Dispara liberação de parcela via fila (assíncrono)
+    const credito = etapa.obra.credito;
     if (credito && credito.status === "ATIVO") {
       const valorLiberacao = Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
       await this.prisma.liberacaoParcela.create({
@@ -106,16 +86,6 @@ export class EtapasService {
     await this.prisma.etapaObra.update({
       where: { etapaId },
       data: { status: "REPROVADA" },
-    });
-
-    // Create audit log entry
-    await this.prisma.etapaAuditLog.create({
-      data: {
-        etapaId,
-        acaoTipo: "REJEITADA",
-        usuarioId: gestorId,
-        observacoes: motivo,
-      },
     });
 
     await this.notificacoes.criar(

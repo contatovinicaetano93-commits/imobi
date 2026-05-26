@@ -4,15 +4,13 @@ import { EtapasController } from "./etapas.controller";
 import { EtapasService } from "./etapas.service";
 import { NotificacoesModule } from "../notificacoes/notificacoes.module";
 import { EmailModule } from "../email/email.module";
-import { PushNotificacoesModule } from "../push-notificacoes/push-notificacoes.module";
-import { QUEUE_LIBERACAO } from "../../common/constants";
+import { QUEUE_LIBERACAO } from "../../../workers/liberacao-parcela.worker";
 
 @Module({
   imports: [
     BullModule.registerQueue({ name: QUEUE_LIBERACAO }),
     NotificacoesModule,
     EmailModule,
-    PushNotificacoesModule,
   ],
   controllers: [EtapasController],
   providers: [EtapasService],

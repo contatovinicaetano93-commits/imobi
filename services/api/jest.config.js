@@ -3,13 +3,9 @@ module.exports = {
   rootDir: 'src',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.(t|j)s$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
-      isolatedModules: true,
-    }],
+    '^.+\\.(t|j)s$': 'ts-jest',
   },
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
-  setupFilesAfterEnv: ['<rootDir>/../jest.setup.js'],
 };

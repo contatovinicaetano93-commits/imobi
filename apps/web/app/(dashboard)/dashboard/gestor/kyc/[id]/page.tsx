@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { managerApi, type KycPendente, type KycAuditEntry } from "@/lib/api";
-import { ApprovalAuditTrail } from "@/components/dashboard/ApprovalAuditTrail";
+import { managerApi, type KycPendente } from "@/lib/api";
+
 import Image from "next/image";
 
 function getTipoLabel(tipo: string): string {
@@ -23,11 +23,8 @@ export default function KycDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [doc, setDoc] = useState<KycPendente | null>(null);
-  const [auditLogs, setAuditLogs] = useState<KycAuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [auditLoading, setAuditLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [auditError, setAuditError] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionForm, setShowRejectionForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -46,22 +43,6 @@ export default function KycDetailPage() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [docId]);
-
-  useEffect(() => {
-    setAuditLoading(true);
-    managerApi
-      .obterKycAuditLog(docId)
-      .then((logs) => {
-        setAuditLogs(logs);
-        setAuditError(null);
-      })
-      .catch((err) => {
-        setAuditError(
-          err instanceof Error ? err.message : "Erro ao carregar histórico"
-        );
-      })
-      .finally(() => setAuditLoading(false));
   }, [docId]);
 
   const handleApprove = async () => {
@@ -246,13 +227,6 @@ export default function KycDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* Audit Trail */}
-      <ApprovalAuditTrail
-        auditLogs={auditLogs}
-        loading={auditLoading}
-        error={auditError}
-      />
     </div>
   );
 }

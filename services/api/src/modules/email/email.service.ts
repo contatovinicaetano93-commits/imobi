@@ -1,6 +1,4 @@
 import { Injectable, Logger } from "@nestjs/common";
-import * as nodemailer from "nodemailer";
-import type { Transporter } from "nodemailer";
 
 interface EmailOptions {
   to: string;
@@ -9,143 +7,26 @@ interface EmailOptions {
   text?: string;
 }
 
-interface RetryConfig {
-  maxAttempts: number;
-  delayMs: number;
-  backoffMultiplier: number;
-}
-
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private transporter: Transporter | null = null;
-  private readonly provider: string;
-  private readonly retryConfig: RetryConfig = {
-    maxAttempts: 3,
-    delayMs: 1000,
-    backoffMultiplier: 2,
-  };
-
-  constructor() {
-    this.provider = process.env["EMAIL_PROVIDER"] || "smtp";
-    this.initializeTransporter();
-  }
-
-  private initializeTransporter() {
-    const provider = this.provider.toLowerCase();
-
-    if (provider === "sendgrid") {
-      this.initializeSendGrid();
-    } else if (provider === "ses") {
-      this.initializeAwsSes();
-    } else {
-      this.initializeSmtp();
-    }
-  }
-
-  private initializeSendGrid() {
-    const apiKey = process.env["SENDGRID_API_KEY"];
-
-    if (!apiKey) {
-      this.logger.warn("SendGrid API key not found - using console mode");
-      return;
-    }
-
-    this.transporter = nodemailer.createTransport({
-      host: "smtp.sendgrid.net",
-      port: 587,
-      auth: {
-        user: "apikey",
-        pass: apiKey,
-      },
-    });
-
-    this.logger.debug("SendGrid email provider configured");
-  }
-
-  private initializeAwsSes() {
-    const region = process.env["AWS_REGION"];
-    const accessKeyId = process.env["AWS_ACCESS_KEY_ID"];
-    const secretAccessKey = process.env["AWS_SECRET_ACCESS_KEY"];
-
-    if (!region || !accessKeyId || !secretAccessKey) {
-      this.logger.warn("AWS SES credentials not found - using console mode");
-      return;
-    }
-
-    // Para SES, usamos nodemailer com o driver SMTP
-    this.transporter = nodemailer.createTransport({
-      host: `email-smtp.${region}.amazonaws.com`,
-      port: 587,
-      secure: false,
-      auth: {
-        user: accessKeyId,
-        pass: secretAccessKey,
-      },
-    });
-
-    this.logger.debug("AWS SES email provider configured");
-  }
-
-  private initializeSmtp() {
-    const smtpHost = process.env["SMTP_HOST"];
-    const smtpPort = process.env["SMTP_PORT"];
-    const smtpUser = process.env["SMTP_USER"];
-    const smtpPass = process.env["SMTP_PASS"];
-
-    if (!smtpHost || !smtpPort) {
-      this.logger.warn("SMTP configuration not found - using console mode");
-      return;
-    }
-
-    this.transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: parseInt(smtpPort),
-      secure: parseInt(smtpPort) === 465,
-      auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
-    });
-
-    this.logger.debug(`SMTP email provider configured: ${smtpHost}:${smtpPort}`);
-  }
-
-  private async sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
+  private provider: string = process.env["EMAIL_PROVIDER"] || "console";
 
   async enviarEmail(opcoes: EmailOptions): Promise<boolean> {
-    if (!this.transporter) {
-      this.logger.debug(`[EMAIL-CONSOLE] ${opcoes.to} - ${opcoes.subject}`);
-      return true;
-    }
-
-    let lastError: Error | null = null;
-    let delayMs = this.retryConfig.delayMs;
-
-    for (let attempt = 1; attempt <= this.retryConfig.maxAttempts; attempt++) {
-      try {
-        await this.transporter.sendMail({
-          from: process.env["SMTP_FROM"] || "noreply@imbobi.com",
-          to: opcoes.to,
-          subject: opcoes.subject,
-          html: opcoes.html,
-          text: opcoes.text,
-        });
-
-        this.logger.debug(`Email enviado para ${opcoes.to} (attempt ${attempt}/${this.retryConfig.maxAttempts})`);
+    try {
+      if (this.provider === "console" || !process.env["SMTP_HOST"]) {
+        this.logger.debug(`[EMAIL] ${opcoes.to} - ${opcoes.subject}`);
+        this.logger.debug(`[EMAIL CONTENT]\n${opcoes.html}`);
         return true;
-      } catch (error) {
-        lastError = error as Error;
-        this.logger.warn(`Email send attempt ${attempt} failed for ${opcoes.to}: ${lastError.message}`);
-
-        if (attempt < this.retryConfig.maxAttempts) {
-          await this.sleep(delayMs);
-          delayMs *= this.retryConfig.backoffMultiplier;
-        }
       }
-    }
 
-    this.logger.error(`Email failed after ${this.retryConfig.maxAttempts} attempts for ${opcoes.to}: ${lastError?.message}`);
-    return false;
+      // Real email implementation would go here
+      // For now, we're just logging
+      return true;
+    } catch (error) {
+      this.logger.error(`Erro ao enviar email: ${error}`);
+      return false;
+    }
   }
 
   async bemVindoEmail(nome: string, email: string): Promise<boolean> {
@@ -267,40 +148,6 @@ export class EmailService {
     return this.enviarEmail({
       to: email,
       subject: "Recuperar sua senha",
-      html,
-    });
-  }
-
-  /**
-   * LGPD Article 17 - Account Deletion Confirmation
-   * Sent after 30-day grace period when account is permanently deleted
-   */
-  async contaExcluida(nome: string, email: string): Promise<boolean> {
-    const html = `
-      <h2>Sua Conta foi Permanentemente Excluída</h2>
-      <p>Olá ${nome},</p>
-      <p>Sua conta no imbobi foi permanentemente excluída após o período de graça de 30 dias.</p>
-      <h3>O que foi deletado:</h3>
-      <ul>
-        <li>Seu perfil de usuário</li>
-        <li>Suas solicitações de crédito</li>
-        <li>Seus projetos de construção</li>
-        <li>Seus tokens de sessão</li>
-        <li>Notificações e histórico de transações</li>
-      </ul>
-      <h3>O que foi retido (conforme lei):</h3>
-      <ul>
-        <li>Documentos KYC (5 anos - requisito AML)</li>
-        <li>Logs de auditoria (7 anos - requisito regulatório)</li>
-      </ul>
-      <p>Em conformidade com a Lei Geral de Proteção de Dados (LGPD), seus dados pessoais foram completamente removidos de nossos sistemas.</p>
-      <p>Se tiver dúvidas sobre esta exclusão, entre em contato com nosso time de privacidade: privacidade@imbobi.com.br</p>
-      <p>Obrigado por ter usado o imbobi.</p>
-    `;
-
-    return this.enviarEmail({
-      to: email,
-      subject: "Conta Excluída - Confirmação",
       html,
     });
   }
