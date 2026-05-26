@@ -2,12 +2,14 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException 
 import { InjectQueue } from "@nestjs/bull";
 import { Queue } from "bull";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../../workers/liberacao-parcela.worker";
 
 @Injectable()
 export class EtapasService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly notificacoes: NotificacoesService,
     @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue<LiberacaoJob>
   ) {}
 
@@ -33,6 +35,15 @@ export class EtapasService {
       where: { etapaId },
       data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
     });
+
+    // Notifica o criador da obra sobre a aprovação
+    await this.notificacoes.criar(
+      etapa.obra.usuarioId,
+      "ETAPA_APROVADA",
+      `Etapa aprovada: ${etapa.nome}`,
+      `A etapa "${etapa.nome}" da obra "${etapa.obra.nome}" foi aprovada com sucesso. A liberação da parcela foi agendada.`,
+      `/dashboard/obras/${etapa.obra.obraId}`
+    );
 
     // Dispara liberação de parcela via fila (assíncrono)
     const credito = etapa.obra.credito;

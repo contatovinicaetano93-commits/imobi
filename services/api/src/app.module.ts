@@ -12,6 +12,7 @@ import { ScoreModule } from "./modules/score/score.module";
 import { MarketplaceModule } from "./modules/marketplace/marketplace.module";
 import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
+import { LiberacaoParcelaWorker } from "../../workers/liberacao-parcela.worker";
 
 @Module({
   imports: [
@@ -34,5 +35,6 @@ import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
     MarketplaceModule,
     ParceirosModule,
   ],
+  providers: [LiberacaoParcelaWorker],
 })
 export class AppModule {}

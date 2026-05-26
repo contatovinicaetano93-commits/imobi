@@ -2,6 +2,7 @@ import { Processor, Process, OnWorkerEvent } from "@nestjs/bull";
 import { Job } from "bull";
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../api/src/modules/prisma/prisma.service";
+import { NotificacoesService } from "../api/src/modules/notificacoes/notificacoes.service";
 
 export const QUEUE_LIBERACAO = "liberacao-parcela";
 
@@ -16,13 +17,22 @@ export interface LiberacaoJob {
 export class LiberacaoParcelaWorker {
   private readonly logger = new Logger(LiberacaoParcelaWorker.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificacoes: NotificacoesService
+  ) {}
 
   @Process()
   async handle(job: Job<LiberacaoJob>) {
     const { creditoId, valor } = job.data;
 
     try {
+      const credito = await this.prisma.credito.findUnique({
+        where: { creditoId },
+        include: { usuario: true, obras: true },
+      });
+      if (!credito) throw new Error(`Crédito ${creditoId} não encontrado`);
+
       await this.prisma.$transaction(async (tx) => {
         // Atualiza saldo liberado no crédito
         await tx.credito.update({
@@ -37,10 +47,24 @@ export class LiberacaoParcelaWorker {
         });
       });
 
+      // Notifica usuário sobre liberação bem-sucedida
+      const obra = credito.obras?.[0];
+      const formattedValue = new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(valor);
+
+      await this.notificacoes.criar(
+        credito.usuarioId,
+        "PARCELA_LIBERADA",
+        "Parcela liberada com sucesso",
+        `Liberação de R$ ${formattedValue} foi processada para ${obra?.nome || "sua obra"}.`,
+        obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
+      );
+
       this.logger.log(`Liberação processada para crédito ${creditoId}: R$ ${valor}`);
     } catch (error) {
       this.logger.error(`Erro ao processar liberação: ${error}`);
-      // Rethrow para que o BullMQ marque como falha
       throw error;
     }
   }
@@ -48,13 +72,34 @@ export class LiberacaoParcelaWorker {
   @OnWorkerEvent("failed")
   onFailed(job: Job, err: Error) {
     this.logger.error(`Job ${job.id} falhou: ${err.message}`);
-    // Registra a falha no banco de dados
-    this.prisma.liberacaoParcela
-      .updateMany({
-        where: { creditoId: job.data.creditoId, status: "PENDENTE" },
-        data: { status: "FALHA", processadoEm: new Date() },
+
+    // Registra a falha no banco de dados e notifica
+    this.prisma.credito
+      .findUnique({
+        where: { creditoId: job.data.creditoId },
+        include: { obras: true },
       })
-      .catch((e) => this.logger.error(`Erro ao atualizar status de falha: ${e}`));
+      .then(async (credito) => {
+        if (!credito) return;
+
+        await this.prisma.liberacaoParcela.updateMany({
+          where: { creditoId: job.data.creditoId, status: "PENDENTE" },
+          data: { status: "FALHA", processadoEm: new Date() },
+        });
+
+        // Notifica usuário sobre falha
+        const obra = credito.obras?.[0];
+        await this.notificacoes
+          .criar(
+            credito.usuarioId,
+            "PARCELA_FALHA",
+            "Erro na liberação da parcela",
+            `Ocorreu um erro ao processar a liberação para ${obra?.nome || "sua obra"}. Por favor, contate o suporte.`,
+            obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
+          )
+          .catch((e) => this.logger.error(`Erro ao notificar falha: ${e}`));
+      })
+      .catch((e) => this.logger.error(`Erro ao processar falha de liberação: ${e}`));
   }
 
   @OnWorkerEvent("completed")

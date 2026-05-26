@@ -1,0 +1,13 @@
+{
+  "name": "@imbobi/ui",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./web/index.ts",
+  "types": "./web/index.ts",
+  "exports": {
+    ".": {
+      "import": "./web/index.ts",
+      "require": "./web/index.ts"
+    }
+  }
+}
