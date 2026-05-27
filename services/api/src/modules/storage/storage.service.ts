@@ -39,6 +39,19 @@ export class StorageService {
     );
   }
 
+  async getSignedUploadUrl(key: string, contentType: string, expiresIn = 3600) {
+    return getSignedUrl(
+      this.s3,
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        ContentType: contentType,
+        ServerSideEncryption: "AES256",
+      }),
+      { expiresIn }
+    );
+  }
+
   async delete(key: string) {
     await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
   }

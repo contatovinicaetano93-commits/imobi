@@ -12,7 +12,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
-import { kycApi, ApiError } from "../../../lib/api";
+import { kycApi, ApiError } from "@/lib/api";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"];
@@ -130,18 +130,39 @@ export default function UploadScreen() {
       setUploading(true);
       setError(null);
 
-      // Read file as base64
-      const base64 = await FileSystem.readAsStringAsync(selectedFile.uri, {
+      // Get presigned URL from backend
+      const { uploadUrl, key } = await kycApi.gerarPresignedUrl(tipo || "RG", selectedFile.type);
+
+      // Read file as binary
+      const fileData = await FileSystem.readAsStringAsync(selectedFile.uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
 
-      // In a real app, you'd upload to S3 and get the URL back
-      // For now, we'll create a data URL (this won't work for real uploads)
-      const fileUrl = `data:${selectedFile.type};base64,${base64}`;
+      // Convert base64 to binary buffer using ArrayBuffer
+      const binaryString = atob(fileData);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
 
-      // Call the API to register the document
-      // Note: The real implementation should upload to S3 first and get a signed URL
-      await kycApi.uploadDocumento(tipo || "RG", fileUrl);
+      // Upload to S3 using presigned URL
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        body: bytes,
+        headers: {
+          "Content-Type": selectedFile.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Erro ao fazer upload: ${uploadResponse.statusText}`);
+      }
+
+      // Extract the file URL from the key
+      const s3Url = `https://${process.env.EXPO_PUBLIC_S3_BUCKET ?? "imbobi-kyc"}.s3.amazonaws.com/${key}`;
+
+      // Register the document with the API
+      await kycApi.uploadDocumento(tipo || "RG", s3Url);
 
       Alert.alert("Sucesso", "Documento enviado com sucesso!", [
         {
@@ -153,6 +174,7 @@ export default function UploadScreen() {
       const message = err instanceof ApiError ? err.message : "Erro ao enviar documento";
       setError(message);
       Alert.alert("Erro", message);
+      console.error("Upload error:", err);
     } finally {
       setUploading(false);
     }

@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Body, Param, UseGuards } from "@nestjs/common";
+import { Controller, Post, Get, Patch, Body, Param, Query, UseGuards } from "@nestjs/common";
 import { KycService } from "./kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -52,5 +52,14 @@ export class KycController {
   @Get("verificar")
   async verificarKycCompleto(@UsuarioAtual() u: IUsuario) {
     return this.kyc.verificarKycCompleto(u.id);
+  }
+
+  @Post("presigned-url")
+  async gerarPresignedUrl(
+    @UsuarioAtual() u: IUsuario,
+    @Query("tipo") tipo: string,
+    @Query("mimeType") mimeType: string
+  ) {
+    return this.kyc.gerarUrlUpload(u.id, tipo, mimeType);
   }
 }

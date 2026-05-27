@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { kycApi, type KycDocumento, ApiError } from "../../lib/api";
+import { kycApi, type KycDocumento, ApiError } from "@/lib/api";
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   PENDENTE: { bg: "#fef3c7", text: "#92400e", label: "Pendente de análise" },

@@ -3,8 +3,10 @@ import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
+import { StorageService } from "../storage/storage.service";
 import { KycDocumentoStatus } from "@prisma/client";
 import { escapeHtml } from "../../common/utils/html-escape";
+import { randomUUID } from "crypto";
 
 @Injectable()
 export class KycService {
@@ -12,7 +14,8 @@ export class KycService {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
+    private readonly storage: StorageService
   ) {}
 
   async uploadDocumento(usuarioId: string, tipo: string, url: string) {
@@ -170,5 +173,41 @@ export class KycService {
     }
 
     return { completo, documentos };
+  }
+
+  async gerarUrlUpload(usuarioId: string, tipo: string, mimeType: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { usuarioId },
+    });
+    if (!usuario) throw new NotFoundException("Usuário não encontrado");
+
+    // Validate document type
+    const tiposValidos = ["RG", "CPF", "CARTEIRA_MOTORISTA", "PASSPORT", "COMPROVANTE_ENDERECO"];
+    if (!tiposValidos.includes(tipo)) {
+      throw new BadRequestException(`Tipo de documento inválido: ${tipo}`);
+    }
+
+    // Generate S3 key
+    const docId = randomUUID();
+    const extension = this.getExtensionFromMimeType(mimeType);
+    const key = `kyc/${usuarioId}/${tipo}/${docId}${extension}`;
+
+    // Get signed URL for upload
+    const uploadUrl = await this.storage.getSignedUploadUrl(key, mimeType);
+
+    return {
+      uploadUrl,
+      key,
+      expiresIn: 3600, // 1 hour
+    };
+  }
+
+  private getExtensionFromMimeType(mimeType: string): string {
+    const mimeToExt: Record<string, string> = {
+      "image/jpeg": ".jpg",
+      "image/png": ".png",
+      "application/pdf": ".pdf",
+    };
+    return mimeToExt[mimeType] || "";
   }
 }

@@ -27,6 +27,20 @@ export const creditoApi = {
     const token = await getToken();
     return apiClient.get<Credito[]>("/api/v1/credito/meus", token ?? undefined);
   },
+  solicitar: async (params: {
+    valorSolicitado: number;
+    prazoMeses: number;
+    tipoObra: "RESIDENCIAL" | "COMERCIAL" | "MISTO";
+    finalidade: string;
+    rendaMensalDeclarada: number;
+  }) => {
+    const token = await getToken();
+    return apiClient.post<{ creditoId: string; status: string }>(
+      "/api/v1/credito/solicitar",
+      params,
+      token ?? undefined
+    );
+  },
 };
 
 export const scoreApi = {
@@ -57,6 +71,15 @@ export const kycApi = {
   verificarCompleto: async () => {
     const token = await getToken();
     return apiClient.get<{ completo: boolean; documentos: KycDocumento[] }>("/api/v1/kyc/verificar", token ?? undefined);
+  },
+
+  gerarPresignedUrl: async (tipo: string, mimeType: string) => {
+    const token = await getToken();
+    return apiClient.post<{ uploadUrl: string; key: string; expiresIn: number }>(
+      `/api/v1/kyc/presigned-url?tipo=${tipo}&mimeType=${mimeType}`,
+      {},
+      token ?? undefined
+    );
   },
 
   uploadDocumento: async (tipo: string, url: string) => {
