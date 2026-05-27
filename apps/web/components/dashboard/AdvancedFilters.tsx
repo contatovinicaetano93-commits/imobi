@@ -48,15 +48,24 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
     filters.obraType;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-4">
+    <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between text-left hover:bg-gray-50 p-2 rounded-lg transition-colors"
+        className="w-full flex items-center justify-between text-left hover:bg-gray-50 p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        aria-expanded={isExpanded}
+        aria-label="Mostrar filtros avançados"
       >
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-gray-900">Filtros Avançados</span>
+          <span className="font-semibold text-xs sm:text-sm text-gray-900">Filtros Avançados</span>
           {hasActiveFilters && (
-            <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full">
+            <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full" aria-label={`${
+                [
+                  filters.status !== "todas" ? 1 : 0,
+                  filters.dataInicio ? 1 : 0,
+                  filters.dataFim ? 1 : 0,
+                  filters.obraType ? 1 : 0,
+                ].reduce((a, b) => a + b, 0)
+              } filtros ativos`}>
               {[
                 filters.status !== "todas" ? 1 : 0,
                 filters.dataInicio ? 1 : 0,
@@ -67,10 +76,11 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
           )}
         </div>
         <svg
-          className={`w-5 h-5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+          className={`w-5 h-5 transition-transform flex-shrink-0 ${isExpanded ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <path
             strokeLinecap="round"
@@ -82,11 +92,12 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
       </button>
 
       {isExpanded && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100">
           {/* Status Filter */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Status</label>
+            <label htmlFor="status-filter" className="text-xs sm:text-sm font-medium text-gray-700">Status</label>
             <select
+              id="status-filter"
               value={filters.status}
               onChange={(e) =>
                 handleFilterChange(
@@ -94,7 +105,8 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
                   e.target.value as FilterState["status"]
                 )
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
+              aria-label="Filtrar por status"
             >
               <option value="todas">Todas</option>
               <option value="pendente">Pendente</option>
@@ -105,41 +117,47 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
 
           {/* Date Range - Start */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label htmlFor="start-date" className="text-xs sm:text-sm font-medium text-gray-700">
               Data Início
             </label>
             <input
+              id="start-date"
               type="date"
               value={filters.dataInicio}
               onChange={(e) =>
                 handleFilterChange("dataInicio", e.target.value)
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
+              aria-label="Selecionar data de início"
             />
           </div>
 
           {/* Date Range - End */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label htmlFor="end-date" className="text-xs sm:text-sm font-medium text-gray-700">
               Data Fim
             </label>
             <input
+              id="end-date"
               type="date"
               value={filters.dataFim}
               onChange={(e) => handleFilterChange("dataFim", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
+              aria-label="Selecionar data de fim"
             />
           </div>
 
           {/* Obra Type Filter */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label htmlFor="obra-type" className="text-xs sm:text-sm font-medium text-gray-700">
               Tipo Obra
             </label>
             <select
+              id="obra-type"
               value={filters.obraType}
               onChange={(e) => handleFilterChange("obraType", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
+              aria-label="Filtrar por tipo de obra"
             >
               <option value="">Todos</option>
               <option value="residencial">Residencial</option>
@@ -151,10 +169,11 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
 
           {/* Reset Button */}
           {hasActiveFilters && (
-            <div className="flex items-end">
+            <div className="flex items-end sm:col-span-2 lg:col-span-1">
               <button
                 onClick={handleReset}
-                className="w-full px-3 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                className="w-full px-3 py-2 text-xs sm:text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-10"
+                aria-label="Limpar todos os filtros"
               >
                 Limpar Filtros
               </button>
