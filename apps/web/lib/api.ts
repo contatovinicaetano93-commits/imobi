@@ -1,7 +1,3 @@
-"use client";
-
-import { cookies } from "next/headers";
-
 const API_URL = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
 
 export class ApiError extends Error {
@@ -11,17 +7,17 @@ export class ApiError extends Error {
 }
 
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const jar = await cookies();
-  const token = jar.get("access_token")?.value;
-
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  // In a browser context, credentials: 'include' will automatically send cookies
+  // In SSR context, the request context already includes cookies
 
   const res = await fetch(`${API_URL}/api/v1${path}`, {
     ...init,
     headers,
     cache: "no-store",
+    credentials: "include",
   });
 
   if (!res.ok) {

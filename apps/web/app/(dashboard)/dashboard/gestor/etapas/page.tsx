@@ -1,5 +1,7 @@
 "use client";
 
+
+
 import { useEffect, useState } from "react";
 import { managerApi, type EtapaPendente } from "@/lib/api";
 import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions";
