@@ -13,14 +13,29 @@ export class ScoreService {
    * - Pagamento em dia: +200
    * - Tempo como cliente: +100
    * - Documentação validada (KYC): +200
+   *
+   * Otimizado: 1 query consolidada com relacionamentos (antes: 4 queries separadas)
    */
   async calcularScore(usuarioId: string): Promise<number> {
-    const [obras, creditos] = await Promise.all([
-      this.prisma.obra.findMany({ where: { usuarioId } }),
-      this.prisma.credito.findMany({ where: { usuarioId } }),
-    ]);
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { usuarioId },
+      select: {
+        criadoEm: true,
+        kycStatus: true,
+        obras: {
+          select: { status: true },
+        },
+        creditos: {
+          select: { status: true },
+        },
+      },
+    });
 
-    let score = 600; // Base mínima para usuário novo
+    if (!usuario) return 0;
+
+    let score = 600;
+    const obras = usuario.obras;
+    const creditos = usuario.creditos;
 
     // 1. Obras concluídas (+200)
     const obrasConcluidasNoPrazo = obras.filter((o) => o.status === "CONCLUIDA").length;
@@ -39,21 +54,11 @@ export class ScoreService {
     if (creditosSemAtraso > 0) score += Math.min(200, creditosSemAtraso * 100);
 
     // 4. Tempo como cliente (+100)
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { usuarioId },
-      select: { criadoEm: true },
-    });
-    if (usuario) {
-      const mesesComo = (Date.now() - usuario.criadoEm.getTime()) / (1000 * 60 * 60 * 24 * 30);
-      score += Math.min(100, Math.round(mesesComo * 5));
-    }
+    const mesesComo = (Date.now() - usuario.criadoEm.getTime()) / (1000 * 60 * 60 * 24 * 30);
+    score += Math.min(100, Math.round(mesesComo * 5));
 
     // 5. KYC aprovado (+200)
-    const kyc = await this.prisma.usuario.findUnique({
-      where: { usuarioId },
-      select: { kycStatus: true },
-    });
-    if (kyc?.kycStatus === "APROVADO") score += 200;
+    if (usuario.kycStatus === "APROVADO") score += 200;
 
     return Math.min(1000, Math.max(0, score));
   }

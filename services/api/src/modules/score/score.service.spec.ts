@@ -7,12 +7,6 @@ describe('ScoreService', () => {
   let prisma: jest.Mocked<PrismaService>;
 
   const mockPrismaService = {
-    obra: {
-      findMany: jest.fn(),
-    },
-    credito: {
-      findMany: jest.fn(),
-    },
     usuario: {
       findUnique: jest.fn(),
     },
@@ -43,12 +37,12 @@ describe('ScoreService', () => {
     it('should return base score of 600 for new user with no works', async () => {
       const usuarioId = 'user-123';
 
-      prisma.obra.findMany.mockResolvedValue([]);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'NAO_INICIADO',
+        obras: [],
+        creditos: [],
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -59,16 +53,16 @@ describe('ScoreService', () => {
     it('should add points for completed works', async () => {
       const usuarioId = 'user-123';
 
-      prisma.obra.findMany.mockResolvedValue([
-        { status: 'CONCLUIDA', usuarioId, obraId: '1' } as any,
-        { status: 'CONCLUIDA', usuarioId, obraId: '2' } as any,
-        { status: 'EM_CONSTRUCAO', usuarioId, obraId: '3' } as any,
-      ]);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'NAO_INICIADO',
+        obras: [
+          { status: 'CONCLUIDA' } as any,
+          { status: 'CONCLUIDA' } as any,
+          { status: 'EM_CONSTRUCAO' } as any,
+        ],
+        creditos: [],
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -85,12 +79,12 @@ describe('ScoreService', () => {
         obraId: `${i}`,
       }));
 
-      prisma.obra.findMany.mockResolvedValue(obras as any);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'NAO_INICIADO',
+        obras: obras as any,
+        creditos: [],
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -102,16 +96,16 @@ describe('ScoreService', () => {
     it('should calculate completion rate (0-300 points)', async () => {
       const usuarioId = 'user-123';
 
-      prisma.obra.findMany.mockResolvedValue([
-        { status: 'CONCLUIDA', usuarioId, obraId: '1' } as any,
-        { status: 'CONCLUIDA', usuarioId, obraId: '2' } as any,
-        { status: 'EM_CONSTRUCAO', usuarioId, obraId: '3' } as any,
-      ]);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'NAO_INICIADO',
+        obras: [
+          { status: 'CONCLUIDA' } as any,
+          { status: 'CONCLUIDA' } as any,
+          { status: 'EM_CONSTRUCAO' } as any,
+        ],
+        creditos: [],
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -123,12 +117,12 @@ describe('ScoreService', () => {
     it('should award 0 points for completion rate when no works', async () => {
       const usuarioId = 'user-123';
 
-      prisma.obra.findMany.mockResolvedValue([]);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'NAO_INICIADO',
+        obras: [],
+        creditos: [],
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -139,15 +133,15 @@ describe('ScoreService', () => {
     it('should add points for on-time credits (ATIVO or QUITADO)', async () => {
       const usuarioId = 'user-123';
 
-      prisma.obra.findMany.mockResolvedValue([]);
-      prisma.credito.findMany.mockResolvedValue([
-        { status: 'ATIVO', usuarioId } as any,
-        { status: 'QUITADO', usuarioId } as any,
-      ]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'NAO_INICIADO',
+        obras: [],
+        creditos: [
+          { status: 'ATIVO' } as any,
+          { status: 'QUITADO' } as any,
+        ],
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -163,12 +157,12 @@ describe('ScoreService', () => {
         usuarioId,
       }));
 
-      prisma.obra.findMany.mockResolvedValue([]);
-      prisma.credito.findMany.mockResolvedValue(creditos as any);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'NAO_INICIADO',
+        obras: [],
+        creditos: creditos as any,
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -181,12 +175,12 @@ describe('ScoreService', () => {
       const createdDate = new Date();
       createdDate.setMonth(createdDate.getMonth() - 24);
 
-      prisma.obra.findMany.mockResolvedValue([]);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: createdDate,
         kycStatus: 'NAO_INICIADO',
+        obras: [],
+        creditos: [],
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -197,12 +191,12 @@ describe('ScoreService', () => {
     it('should add 200 points for approved KYC', async () => {
       const usuarioId = 'user-123';
 
-      prisma.obra.findMany.mockResolvedValue([]);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'APROVADO',
+        obras: [],
+        creditos: [],
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -213,12 +207,12 @@ describe('ScoreService', () => {
     it('should not add KYC points for non-approved KYC', async () => {
       const usuarioId = 'user-123';
 
-      prisma.obra.findMany.mockResolvedValue([]);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'PENDENTE',
+        obras: [],
+        creditos: [],
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -242,12 +236,12 @@ describe('ScoreService', () => {
         usuarioId,
       }));
 
-      prisma.obra.findMany.mockResolvedValue(obras as any);
-      prisma.credito.findMany.mockResolvedValue(creditos as any);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: createdDate,
         kycStatus: 'APROVADO',
+        obras: obras as any,
+        creditos: creditos as any,
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -258,8 +252,6 @@ describe('ScoreService', () => {
     it('should ensure score never goes below 0', async () => {
       const usuarioId = 'user-123';
 
-      prisma.obra.findMany.mockResolvedValue([]);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue(null);
 
       const score = await service.calcularScore(usuarioId);
@@ -272,19 +264,19 @@ describe('ScoreService', () => {
       const createdDate = new Date();
       createdDate.setMonth(createdDate.getMonth() - 12);
 
-      prisma.obra.findMany.mockResolvedValue([
-        { status: 'CONCLUIDA', usuarioId, obraId: '1' } as any,
-        { status: 'CONCLUIDA', usuarioId, obraId: '2' } as any,
-        { status: 'EM_CONSTRUCAO', usuarioId, obraId: '3' } as any,
-      ]);
-      prisma.credito.findMany.mockResolvedValue([
-        { status: 'ATIVO', usuarioId } as any,
-        { status: 'QUITADO', usuarioId } as any,
-      ]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: createdDate,
         kycStatus: 'APROVADO',
+        obras: [
+          { status: 'CONCLUIDA' } as any,
+          { status: 'CONCLUIDA' } as any,
+          { status: 'EM_CONSTRUCAO' } as any,
+        ],
+        creditos: [
+          { status: 'ATIVO' } as any,
+          { status: 'QUITADO' } as any,
+        ],
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -296,12 +288,12 @@ describe('ScoreService', () => {
     it('should return numeric score value', async () => {
       const usuarioId = 'user-123';
 
-      prisma.obra.findMany.mockResolvedValue([]);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'NAO_INICIADO',
+        obras: [],
+        creditos: [],
       } as any);
 
       const score = await service.calcularScore(usuarioId);
@@ -315,12 +307,12 @@ describe('ScoreService', () => {
     it('should calculate and return current score', async () => {
       const usuarioId = 'user-123';
 
-      prisma.obra.findMany.mockResolvedValue([]);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'NAO_INICIADO',
+        obras: [],
+        creditos: [],
       } as any);
       prisma.scoreHistorico.create.mockResolvedValue({
         historicoId: 'hist-1',
@@ -338,12 +330,12 @@ describe('ScoreService', () => {
     it('should record score in history with automatic calculation reason', async () => {
       const usuarioId = 'user-123';
 
-      prisma.obra.findMany.mockResolvedValue([]);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'NAO_INICIADO',
+        obras: [],
+        creditos: [],
       } as any);
       prisma.scoreHistorico.create.mockResolvedValue({
         historicoId: 'hist-1',
@@ -367,12 +359,12 @@ describe('ScoreService', () => {
     it('should always create history entry', async () => {
       const usuarioId = 'user-123';
 
-      prisma.obra.findMany.mockResolvedValue([]);
-      prisma.credito.findMany.mockResolvedValue([]);
       prisma.usuario.findUnique.mockResolvedValue({
         usuarioId,
         criadoEm: new Date(),
         kycStatus: 'APROVADO',
+        obras: [],
+        creditos: [],
       } as any);
       prisma.scoreHistorico.create.mockResolvedValue({
         historicoId: 'hist-1',
