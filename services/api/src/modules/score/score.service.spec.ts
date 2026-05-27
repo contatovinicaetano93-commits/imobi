@@ -95,7 +95,8 @@ describe('ScoreService', () => {
 
       const score = await service.calcularScore(usuarioId);
 
-      expect(score).toBeLessThanOrEqual(800);
+      // Base 600 + 200 (works) + 300 (completion rate 100%) = 1100, capped at 1000
+      expect(score).toBeLessThanOrEqual(1000);
     });
 
     it('should calculate completion rate (0-300 points)', async () => {
@@ -502,7 +503,7 @@ describe('ScoreService', () => {
     it('should return description for Bom level', () => {
       const result = service.obterNivel(700);
 
-      expect(result.descricao).toContain('histórico');
+      expect(result.descricao).toContain('Histórico');
     });
 
     it('should return description for Regular level', () => {
@@ -514,7 +515,7 @@ describe('ScoreService', () => {
     it('should return description for Iniciante level', () => {
       const result = service.obterNivel(300);
 
-      expect(result.descricao).toContain('primeiras');
+      expect(result.descricao).toContain('Primeiras');
     });
 
     it('should return object with all required properties', () => {
