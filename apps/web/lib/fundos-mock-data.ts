@@ -1,0 +1,180 @@
+export const mockPortfolioKPIs = {
+  totalPortfolio: 250000000,
+  obrasAtivas: 87,
+  valorDesembolsado: 200000000,
+  retornoEsperado: 24000000,
+  retornoEsperadoTaxa: 0.12,
+  inadimplenciaTotal: 5600000,
+  inadimplenciaTaxa: 0.028,
+  roiRealizadoYTD: 0.083,
+};
+
+export const mockPortfolioWorks = [
+  {
+    id: "OB-001",
+    constructor: "Construtora ABC",
+    amount: 5000000,
+    status: "EM_EXECUCAO" as const,
+    progress: 65,
+    riskScore: 2,
+    location: "SP",
+    startDate: "2026-01-15",
+    expectedEnd: "2026-07-15",
+    monthlyRate: 0.0099,
+  },
+  {
+    id: "OB-002",
+    constructor: "Empreiteiro XYZ",
+    amount: 3200000,
+    status: "CONCLUIDA" as const,
+    progress: 100,
+    riskScore: 0,
+    location: "SP",
+    startDate: "2025-08-20",
+    expectedEnd: "2026-02-20",
+    monthlyRate: 0.0099,
+  },
+  {
+    id: "OB-003",
+    constructor: "PME Construções",
+    amount: 8000000,
+    status: "ATRASADA" as const,
+    progress: 45,
+    riskScore: 3,
+    location: "SP",
+    startDate: "2025-12-01",
+    expectedEnd: "2026-06-01",
+    monthlyRate: 0.0119,
+  },
+  {
+    id: "OB-004",
+    constructor: "Obras Premium",
+    amount: 12000000,
+    status: "EM_EXECUCAO" as const,
+    progress: 72,
+    riskScore: 1,
+    location: "Curitiba",
+    startDate: "2026-02-10",
+    expectedEnd: "2026-10-10",
+    monthlyRate: 0.0099,
+  },
+  {
+    id: "OB-005",
+    constructor: "Construtora Sul",
+    amount: 4500000,
+    status: "EM_EXECUCAO" as const,
+    progress: 38,
+    riskScore: 2,
+    location: "Curitiba",
+    startDate: "2026-03-01",
+    expectedEnd: "2026-09-01",
+    monthlyRate: 0.0099,
+  },
+  {
+    id: "OB-006",
+    constructor: "Rio Engenharia",
+    amount: 7500000,
+    status: "EM_EXECUCAO" as const,
+    progress: 55,
+    riskScore: 1,
+    location: "RJ",
+    startDate: "2026-01-20",
+    expectedEnd: "2026-08-20",
+    monthlyRate: 0.0099,
+  },
+  {
+    id: "OB-007",
+    constructor: "MG Construtora",
+    amount: 3800000,
+    status: "CONCLUIDA" as const,
+    progress: 100,
+    riskScore: 0,
+    location: "MG",
+    startDate: "2025-11-10",
+    expectedEnd: "2026-05-10",
+    monthlyRate: 0.0099,
+  },
+  {
+    id: "OB-008",
+    constructor: "Obras Rápidas",
+    amount: 2500000,
+    status: "EM_EXECUCAO" as const,
+    progress: 88,
+    riskScore: 0,
+    location: "SP",
+    startDate: "2026-02-15",
+    expectedEnd: "2026-06-15",
+    monthlyRate: 0.0099,
+  },
+];
+
+export const mockPerformanceMetrics = {
+  ticketMedio: 2800000,
+  taxaMedia: 0.0099,
+  prazoMedio: 12,
+  defaultRate: 0.028,
+  recoveryRate: 0.85,
+  jurosAcumulados: 24000000,
+  provisaoPaRisco: 7000000,
+  roiProjetado: 0.11,
+};
+
+export const mockRegionPerformance = [
+  {
+    region: "SP",
+    portfolio: 120000000,
+    works: 87,
+    roi: 0.085,
+    defaultRate: 0.025,
+  },
+  {
+    region: "Curitiba",
+    portfolio: 80000000,
+    works: 55,
+    roi: 0.082,
+    defaultRate: 0.028,
+  },
+  {
+    region: "RJ",
+    portfolio: 30000000,
+    works: 22,
+    roi: 0.078,
+    defaultRate: 0.032,
+  },
+  {
+    region: "MG",
+    portfolio: 20000000,
+    works: 15,
+    roi: 0.075,
+    defaultRate: 0.035,
+  },
+];
+
+export const mockROIHistory = [
+  { month: "Jan", roi: 0.065 },
+  { month: "Fev", roi: 0.071 },
+  { month: "Mar", roi: 0.075 },
+  { month: "Abr", roi: 0.079 },
+  { month: "Mai", roi: 0.083 },
+];
+
+export const mockStatusDistribution = [
+  { status: "Ativa", value: 87, color: "#3b82f6" },
+  { status: "Concluída", value: 45, color: "#10b981" },
+  { status: "Atrasada", value: 8, color: "#ef4444" },
+];
+
+export const mockDefaultHistory = [
+  { month: "Jan", rate: 0.035 },
+  { month: "Fev", rate: 0.032 },
+  { month: "Mar", rate: 0.030 },
+  { month: "Abr", rate: 0.029 },
+  { month: "Mai", rate: 0.028 },
+];
+
+export const riskLevels = {
+  0: { label: "Muito Baixo", color: "bg-green-100 text-green-800", badge: "✅" },
+  1: { label: "Baixo", color: "bg-blue-100 text-blue-800", badge: "✓" },
+  2: { label: "Médio", color: "bg-yellow-100 text-yellow-800", badge: "⚠️" },
+  3: { label: "Alto", color: "bg-red-100 text-red-800", badge: "⚠️" },
+};
