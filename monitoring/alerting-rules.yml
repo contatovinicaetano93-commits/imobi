@@ -1,0 +1,330 @@
+# Prometheus Alerting Rules para Imbobi
+# Regras de alerta compiladas pelo Prometheus
+# Formato: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+
+groups:
+  # ========================================================================
+  # GRUPO 1: Performance & Latência
+  # ========================================================================
+  - name: performance.rules
+    interval: 30s
+    rules:
+      - alert: HTTPLatencyP95High
+        expr: histogram_quantile(0.95, rate(http_request_duration_ms_bucket[5m])) > 500
+        for: 5m
+        labels:
+          severity: warning
+          priority: P1
+        annotations:
+          summary: "HTTP Latency P95 > 500ms (current: {{ $value }}ms)"
+          description: "API latency P95 has exceeded 500ms threshold. Current value: {{ $value }}ms. Check database and cache performance."
+          runbook: "https://wiki.imbobi.io/runbooks/latency-high"
+
+      - alert: HTTPLatencyP99High
+        expr: histogram_quantile(0.99, rate(http_request_duration_ms_bucket[5m])) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "HTTP Latency P99 > 1000ms"
+          description: "P99 latency: {{ $value }}ms. Worst-case scenarios affected."
+
+      - alert: DatabaseQueryLatencyHigh
+        expr: histogram_quantile(0.95, rate(db_query_duration_ms_bucket[5m])) > 300
+        for: 5m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "DB Query P95 > 300ms"
+          description: "Database query latency elevated. Check slow query log."
+
+  # ========================================================================
+  # GRUPO 2: Taxa de Erro
+  # ========================================================================
+  - name: errors.rules
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_errors_total[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 5m
+        labels:
+          severity: critical
+          priority: P1
+        annotations:
+          summary: "HTTP Error Rate > 5%"
+          description: "Error rate: {{ $value }}%. Threshold: 5%. Check logs immediately."
+          runbook: "https://wiki.imbobi.io/runbooks/high-error-rate"
+
+      - alert: DatabaseConnectionErrors
+        expr: rate(db_connection_errors_total[1m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          priority: P0
+        annotations:
+          summary: "Database Connection Errors Detected"
+          description: "{{ $value }} DB connection errors in last minute. Service may be degraded."
+          runbook: "https://wiki.imbobi.io/runbooks/db-connection-errors"
+
+      - alert: QueueJobFailureRate
+        expr: rate(queue_jobs_failed_total[5m]) / (rate(queue_jobs_successful_total[5m]) + rate(queue_jobs_failed_total[5m])) * 100 > 1
+        for: 5m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "Queue Job Failure Rate > 1%"
+          description: "Background job failures: {{ $value }}%. Check BullMQ logs."
+
+      - alert: S3UploadFailures
+        expr: increase(http_requests_errors_total{endpoint="/fotos"}[5m]) > 3
+        for: 5m
+        labels:
+          severity: critical
+          priority: P1
+        annotations:
+          summary: "S3 Upload Failures"
+          description: "{{ $value }} upload failures in 5 minutes. Users cannot upload photos."
+          runbook: "https://wiki.imbobi.io/runbooks/s3-failures"
+
+      - alert: DeadLetterQueueNotEmpty
+        expr: queue_jobs_dead_letter_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          priority: P1
+        annotations:
+          summary: "Dead Letter Queue Has Messages"
+          description: "{{ $value }} unprocessable jobs in dead letter queue. Business operations impacted."
+          runbook: "https://wiki.imbobi.io/runbooks/dead-letter-queue"
+
+  # ========================================================================
+  # GRUPO 3: Cache & Memory
+  # ========================================================================
+  - name: cache.rules
+    interval: 30s
+    rules:
+      - alert: LowCacheHitRate
+        expr: cache_hit_rate < 50
+        for: 10m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "Cache Hit Rate < 50%"
+          description: "Hit rate: {{ $value }}%. Cache performance degraded."
+          runbook: "https://wiki.imbobi.io/runbooks/low-cache-rate"
+
+      - alert: HighRedisMemoryUsage
+        expr: redis_memory_usage_bytes / redis_memory_limit_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "Redis Memory Usage > 80%"
+          description: "Memory: {{ $value }}%. Risk of evictions."
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "System Memory > 85%"
+          description: "Memory usage: {{ $value }}%. Monitor for OOM."
+
+  # ========================================================================
+  # GRUPO 4: Infraestrutura & Recursos
+  # ========================================================================
+  - name: infrastructure.rules
+    interval: 30s
+    rules:
+      - alert: DiskSpaceRunningOut
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+          priority: P1
+        annotations:
+          summary: "Disk Space < 10%"
+          description: "Available: {{ $value }}%. Storage filling up rapidly."
+          runbook: "https://wiki.imbobi.io/runbooks/disk-space-critical"
+
+      - alert: DiskWillBeFull
+        expr: predict_linear(node_filesystem_avail_bytes{mountpoint="/"}[1h], 4*3600) < 0
+        for: 1m
+        labels:
+          severity: warning
+          priority: P1
+        annotations:
+          summary: "Disk Will Be Full in 4 Hours"
+          description: "Estimated full in 4 hours. Take immediate action."
+
+      - alert: HighCPULoad
+        expr: node_load1 > 3.0
+        for: 5m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "CPU Load Average > 3.0"
+          description: "Load: {{ $value }}. System may be under stress."
+
+  # ========================================================================
+  # GRUPO 5: Database (PostgreSQL)
+  # ========================================================================
+  - name: database.rules
+    interval: 30s
+    rules:
+      - alert: DatabaseDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          priority: P0
+        annotations:
+          summary: "PostgreSQL Database Down"
+          description: "Database unreachable. Critical service impact."
+          runbook: "https://wiki.imbobi.io/runbooks/database-down"
+
+      - alert: HighDatabaseConnections
+        expr: pg_stat_activity_count / pg_settings_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          priority: P1
+        annotations:
+          summary: "Database Connections > 80%"
+          description: "Used connections: {{ $value }}%. Risk of pool exhaustion."
+
+      - alert: DatabaseConnectionPoolExhausted
+        expr: pg_connection_pool_queued > 10
+        for: 1m
+        labels:
+          severity: critical
+          priority: P0
+        annotations:
+          summary: "Database Connection Pool Exhausted"
+          description: "Queued: {{ $value }} connections. Scale immediately."
+          runbook: "https://wiki.imbobi.io/runbooks/db-pool-exhausted"
+
+      - alert: SlowQueries
+        expr: increase(pg_slow_queries_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "High Number of Slow Queries"
+          description: "{{ $value }} slow queries in 5 minutes. Optimize queries."
+
+      - alert: ReplicationLagHigh
+        expr: pg_replication_lag_bytes / 1024 / 1024 > 100
+        for: 1m
+        labels:
+          severity: warning
+          priority: P1
+        annotations:
+          summary: "Database Replication Lag > 100MB"
+          description: "Replica lag: {{ $value }}MB. Data consistency risk."
+
+  # ========================================================================
+  # GRUPO 6: Uptime & SLA
+  # ========================================================================
+  - name: sla.rules
+    interval: 30s
+    rules:
+      - alert: UptimeSLABreach
+        expr: (increase(http_requests_errors_total[3600]) / increase(http_requests_total[3600])) * 100 > 5
+        for: 1m
+        labels:
+          severity: critical
+          priority: P0
+        annotations:
+          summary: "Uptime SLA Breach (>5% errors in 1h)"
+          description: "Error rate: {{ $value }}%. SLA target breached."
+          runbook: "https://wiki.imbobi.io/runbooks/sla-breach"
+
+      - alert: ServiceDown
+        expr: up{job="imbobi-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          priority: P0
+        annotations:
+          summary: "API Service Down"
+          description: "imbobi-api unreachable. Immediate action required."
+          runbook: "https://wiki.imbobi.io/runbooks/service-down"
+
+  # ========================================================================
+  # GRUPO 7: Business Metrics
+  # ========================================================================
+  - name: business.rules
+    interval: 60s
+    rules:
+      - alert: PaymentSuccessRateHigh
+        expr: (increase(payment_processed_success_total[1h]) / increase(payment_processed_total[1h])) * 100 < 95
+        for: 10m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "Payment Success Rate < 95%"
+          description: "Success rate: {{ $value }}%. Investigate payment processor."
+
+  # ========================================================================
+  # GRUPO 8: Security
+  # ========================================================================
+  - name: security.rules
+    interval: 30s
+    rules:
+      - alert: AuthenticationFailureSpike
+        expr: increase(http_requests_errors_total{status_code="401,403"}[5m]) > 20
+        for: 5m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "Authentication Failures Spike"
+          description: "{{ $value }} auth failures in 5 minutes. Possible attack."
+          runbook: "https://wiki.imbobi.io/runbooks/auth-failures"
+
+  # ========================================================================
+  # GRUPO 9: Monitoring & Infrastructure
+  # ========================================================================
+  - name: monitoring.rules
+    interval: 30s
+    rules:
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "Prometheus Down"
+          description: "Prometheus service unreachable. Metrics collection affected."
+
+      - alert: AlertmanagerDown
+        expr: up{job="alertmanager"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "AlertManager Down"
+          description: "AlertManager unreachable. Alert routing may fail."
+
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          priority: P2
+        annotations:
+          summary: "Grafana Down"
+          description: "Grafana dashboard unreachable. Visibility impaired."

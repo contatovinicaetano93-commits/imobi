@@ -1,0 +1,222 @@
+version: "3.8"
+
+# Docker Compose com Datadog Agent para monitoramento local
+# Deploy: docker-compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d
+
+services:
+  # ========================================================================
+  # Datadog Agent (APM + Logs + Metrics)
+  # ========================================================================
+  datadog-agent:
+    image: gcr.io/datadoghq/agent:latest
+    container_name: imbobi_datadog_agent
+    environment:
+      # Credenciais
+      DD_API_KEY: ${DATADOG_API_KEY}
+      DD_SITE: datadoghq.com  # ou datadoghq.eu
+
+      # Agente
+      DD_HOSTNAME: imbobi-api-prod
+      DD_AGENT_MAJOR_VERSION: 7
+      DD_ENV: production
+      DD_SERVICE: imbobi-api
+      DD_VERSION: ${APP_VERSION}
+
+      # APM (Tracer)
+      DD_APM_ENABLED: "true"
+      DD_APM_BIND_HOST: 0.0.0.0
+      DD_APM_NON_LOCAL_TRAFFIC: "true"
+      DD_TRACE_SAMPLE_RATE: "1.0"  # 100% em dev, 0.1-0.5 em prod
+
+      # Logs
+      DD_LOGS_ENABLED: "true"
+      DD_LOGS_CONFIG_PROCESSING_RULES: |
+        [
+          {
+            "type": "exclude_at_match",
+            "name": "exclude_health_checks",
+            "pattern": "GET /health"
+          }
+        ]
+
+      # Metrics
+      DD_DOGSTATSD_NON_LOCAL_TRAFFIC: "true"
+      DD_DOGSTATSD_PORT: 8125
+      DD_DOGSTATSD_TAGS: "env:production,service:imbobi"
+
+      # Integrações
+      DD_INTEGRATIONS_POSTGRES_ENABLED: "true"
+      DD_INTEGRATIONS_POSTGRES_PORT: 5432
+      DD_INTEGRATIONS_REDIS_ENABLED: "true"
+      DD_INTEGRATIONS_REDIS_PORT: 6379
+
+      # Profiling (Python)
+      DD_PROFILING_ENABLED: "true"
+
+      # Container
+      DD_PROCESS_AGENT_ENABLED: "true"
+      DD_SYSTEM_PROBE_ENABLED: "true"
+      DD_CONTAINER_LABEL_TAGS: "true"
+
+    ports:
+      - "8126:8126/tcp"   # APM Tracer
+      - "8125:8125/udp"   # DogStatsD
+      - "5000:5000/tcp"   # Agent API
+
+    volumes:
+      # Docker socket para container monitoring
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+
+      # Configs customizadas
+      - ./monitoring/datadog-configs:/etc/datadog-agent/conf.d:ro
+
+    networks:
+      - imbobi_network
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ========================================================================
+  # Fluent Bit para Log Aggregation
+  # ========================================================================
+  fluent-bit:
+    image: fluent/fluent-bit:latest
+    container_name: imbobi_fluent_bit
+    environment:
+      DATADOG_API_KEY: ${DATADOG_API_KEY}
+      LOG_LEVEL: info
+
+    volumes:
+      - ./monitoring/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+
+    networks:
+      - imbobi_network
+
+    depends_on:
+      - datadog-agent
+
+  # ========================================================================
+  # Prometheus (métrica alternativa, opcional)
+  # ========================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: imbobi_prometheus
+    environment:
+      TZ: UTC
+
+    ports:
+      - "9090:9090"
+
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerting-rules.yml:/etc/prometheus/alerting-rules.yml:ro
+      - prometheus_data:/prometheus
+
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+
+    networks:
+      - imbobi_network
+
+  # ========================================================================
+  # AlertManager (gerenciador de alertas)
+  # ========================================================================
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: imbobi_alertmanager
+
+    ports:
+      - "9093:9093"
+
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+
+    networks:
+      - imbobi_network
+
+  # ========================================================================
+  # Grafana (Dashboard + Visualization)
+  # ========================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: imbobi_grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
+      GF_SERVER_ROOT_URL: http://localhost:3000
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+      TZ: UTC
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-provisioning:/etc/grafana/provisioning:ro
+
+    networks:
+      - imbobi_network
+
+    depends_on:
+      - prometheus
+      - datadog-agent
+
+  # ========================================================================
+  # Jaeger (Distributed Tracing, alternativa ao Datadog APM)
+  # ========================================================================
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: imbobi_jaeger
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: :9411
+      SPAN_STORAGE_TYPE: badger
+      BADGER_EPHEMERAL: "false"
+      BADGER_DIRECTORY_VALUE: /badger/data
+      BADGER_DIRECTORY_KEY: /badger/key
+
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"  # UI
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+
+    volumes:
+      - jaeger_data:/badger
+
+    networks:
+      - imbobi_network
+
+volumes:
+  prometheus_data:
+  alertmanager_data:
+  grafana_data:
+  jaeger_data:
+
+networks:
+  imbobi_network:
+    external: true

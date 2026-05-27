@@ -1,0 +1,271 @@
+# AlertManager Configuration para Imbobi (Fallback para Prometheus)
+# Deploy: docker-compose exec alertmanager alertmanager --config.file=/etc/alertmanager/alertmanager.yml
+
+global:
+  resolve_timeout: 5m
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# Templates de notificação
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Configuração de rotas (roteamento de alertas)
+route:
+  # Receptor padrão
+  receiver: 'slack-default'
+
+  # Agrupar alertas com mesmas labels
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s          # Aguardar 10s para agrupar alertas
+  group_interval: 10s      # Aguardar 10s antes de enviar novo alerta do mesmo grupo
+  repeat_interval: 12h     # Reenviar alertas não resolvidos a cada 12h
+
+  # Sub-rotas com prioridades
+  routes:
+    # ========================================================================
+    # P0 - CRÍTICO (PagerDuty + Slack + Email)
+    # ========================================================================
+    - match:
+        severity: 'critical'
+        priority: 'P0'
+      receiver: 'pagerduty-critical'
+      group_wait: 0s         # Enviar imediatamente
+      repeat_interval: 5m    # Reenviar a cada 5 min
+      continue: true         # Continuar roteamento
+
+    - match:
+        severity: 'critical'
+      receiver: 'slack-critical'
+      group_wait: 0s
+      repeat_interval: 5m
+
+    # ========================================================================
+    # P1 - ALTO (Slack + Email)
+    # ========================================================================
+    - match:
+        severity: 'warning'
+        priority: 'P1'
+      receiver: 'slack-warnings'
+      group_wait: 30s
+      repeat_interval: 1h
+
+    - match:
+        severity: 'warning'
+      receiver: 'slack-warnings'
+      group_wait: 30s
+      repeat_interval: 1h
+
+    # ========================================================================
+    # P2 - AVISO (Slack)
+    # ========================================================================
+    - match:
+        severity: 'info'
+        priority: 'P2'
+      receiver: 'slack-info'
+      group_wait: 60s
+      repeat_interval: 4h
+
+    # ========================================================================
+    # Alertas de Infraestrutura (Node Exporter, etc)
+    # ========================================================================
+    - match_re:
+        alertname: 'Node.*|Docker.*'
+      receiver: 'slack-infrastructure'
+      group_wait: 30s
+      repeat_interval: 2h
+
+    # ========================================================================
+    # Alertas de Database
+    # ========================================================================
+    - match:
+        alertname: 'PostgresDown|HighConnectionCount|SlowQueries'
+      receiver: 'slack-database'
+      group_wait: 0s
+      repeat_interval: 30m
+
+    # ========================================================================
+    # Alertas de Business (não críticos)
+    # ========================================================================
+    - match_re:
+        alertname: 'Obras|Parcelas|Fotos|Payment'
+      receiver: 'slack-business'
+      group_wait: 5m
+      repeat_interval: 1h
+
+# ============================================================================
+# RECEPTORES - Onde enviar notificações
+# ============================================================================
+
+receivers:
+  # ========================================================================
+  # Slack
+  # ========================================================================
+  - name: 'slack-critical'
+    slack_configs:
+      - channel: '#critical-alerts'
+        title: '🚨 CRITICAL ALERT - {{.GroupLabels.alertname}}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        actions:
+          - type: button
+            text: 'View in Grafana'
+            url: 'http://grafana:3000'
+          - type: button
+            text: 'View in Datadog'
+            url: 'https://app.datadoghq.com'
+        fields:
+          - title: 'Alert'
+            value: '{{ .GroupLabels.alertname }}'
+            short: true
+          - title: 'Severity'
+            value: '{{ .GroupLabels.severity }}'
+            short: true
+          - title: 'Service'
+            value: '{{ .GroupLabels.service }}'
+            short: true
+          - title: 'Status'
+            value: '{{ .Status }}'
+            short: true
+          - title: 'Firing'
+            value: '{{ .Alerts.Firing | len }}'
+            short: true
+          - title: 'Resolved'
+            value: '{{ .Alerts.Resolved | len }}'
+            short: true
+
+  - name: 'slack-warnings'
+    slack_configs:
+      - channel: '#alerts-imbobi'
+        title: '⚠️ WARNING - {{.GroupLabels.alertname}}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+        color: 'warning'
+
+  - name: 'slack-info'
+    slack_configs:
+      - channel: '#alerts-imbobi'
+        title: 'ℹ️ INFO - {{.GroupLabels.alertname}}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: false
+
+  - name: 'slack-infrastructure'
+    slack_configs:
+      - channel: '#infrastructure'
+        title: '🔧 Infrastructure - {{.GroupLabels.alertname}}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+
+  - name: 'slack-database'
+    slack_configs:
+      - channel: '#database'
+        title: '🗄️ Database - {{.GroupLabels.alertname}}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+        fields:
+          - title: 'Alert'
+            value: '{{ .GroupLabels.alertname }}'
+          - title: 'Instance'
+            value: '{{ .GroupLabels.instance }}'
+
+  - name: 'slack-business'
+    slack_configs:
+      - channel: '#business-metrics'
+        title: '📊 Business Metric - {{.GroupLabels.alertname}}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: false
+
+  # ========================================================================
+  # PagerDuty (Critical Only)
+  # ========================================================================
+  - name: 'pagerduty-critical'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_SERVICE_KEY}'
+        routing_key: '${PAGERDUTY_ROUTING_KEY}'
+        description: '{{ .GroupLabels.alertname }}: {{ .Alerts.Firing | len }} firing'
+        client_url: 'https://grafana.imbobi.io'
+        links:
+          - href: 'https://app.datadoghq.com'
+            text: 'View in Datadog'
+
+  # ========================================================================
+  # Email (P0 + P1)
+  # ========================================================================
+  - name: 'email-devops'
+    email_configs:
+      - to: 'devops@imbobi.com'
+        from: 'alertmanager@imbobi.com'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: '${SMTP_USERNAME}'
+        auth_password: '${SMTP_PASSWORD}'
+        headers:
+          Subject: '{{ .GroupLabels.alertname }} - {{ .Status | upper }}'
+        html: |
+          <h2>{{ .GroupLabels.alertname }}</h2>
+          <p><strong>Status:</strong> {{ .Status }}</p>
+          <p><strong>Severity:</strong> {{ .GroupLabels.severity }}</p>
+          <p><strong>Service:</strong> {{ .GroupLabels.service }}</p>
+
+          <h3>Alerts</h3>
+          <ul>
+          {{ range .Alerts }}
+            <li>
+              <strong>{{ .Labels.alertname }}</strong>
+              <br />{{ .Annotations.description }}
+              <br />{{ .Annotations.runbook }}
+            </li>
+          {{ end }}
+          </ul>
+
+          <p><a href="https://grafana.imbobi.io">View in Grafana</a></p>
+
+  # ============================================================================
+  # Webhook genérico (para custom integrations)
+  # ============================================================================
+  - name: 'webhook-generic'
+    webhook_configs:
+      - url: '${ALERTMANAGER_WEBHOOK_URL}'
+        send_resolved: true
+        headers:
+          Authorization: 'Bearer ${WEBHOOK_TOKEN}'
+
+  # ============================================================================
+  # Null receiver (silenciar alertas de teste)
+  # ============================================================================
+  - name: 'null'
+
+# ============================================================================
+# INHIBITION RULES (inibir alertas redundantes)
+# ============================================================================
+
+inhibit_rules:
+  # Se o serviço está down, não alertar sobre métricas individuais
+  - source_match:
+      severity: 'critical'
+      alertname: 'ServiceDown'
+    target_match_re:
+      alertname: 'High.*|Slow.*'
+    equal: ['service', 'instance']
+
+  # Se database está down, não alertar sobre conexões
+  - source_match:
+      alertname: 'PostgresDown'
+    target_match:
+      alertname: 'HighConnectionCount'
+    equal: ['instance']
+
+  # Se disco está crítico, não alertar sobre uso de memoria
+  - source_match:
+      alertname: 'DiskLow'
+      severity: 'critical'
+    target_match:
+      alertname: 'MemoryHigh'
+    equal: ['instance']
+
+  # Se já há um alerta de uptime SLA, não alertar sobre error rate
+  - source_match:
+      alertname: 'UptimeSLABreach'
+    target_match:
+      alertname: 'HighErrorRate'
+    equal: ['service']

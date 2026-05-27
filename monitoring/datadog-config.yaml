@@ -1,0 +1,414 @@
+# Datadog Monitoring Configuration para Imbobi
+# Deploy: docker-compose exec api bash -c "npm run monitoring:setup-dd"
+
+datadog:
+  # API Key e APP Key configuradas via variáveis de ambiente
+  api_key: ${DATADOG_API_KEY}
+  app_key: ${DATADOG_APP_KEY}
+  site: datadoghq.com # US. Para EU usar: datadoghq.eu
+
+monitoring:
+  # Tags globais para todos os recursos
+  tags:
+    - "env:production"
+    - "service:imbobi"
+    - "team:platform"
+    - "version:${APP_VERSION}"
+
+  # Namespaces para organizar métricas
+  namespace: "imbobi"
+
+# ============================================================================
+# INSTRUMENTAÇÃO - Código da API
+# ============================================================================
+instrumentation:
+  apm:
+    enabled: true
+    trace_sample_rate: 1.0  # 100% em prod com Datadog (custos)
+    # Para reduzir custos, usar 0.1 (10%) após estabilizar
+
+  logs:
+    enabled: true
+    level: "INFO"  # DEBUG em staging, INFO em prod
+    json_format: true
+
+  metrics:
+    enabled: true
+    interval_ms: 30000  # 30 segundos
+
+# ============================================================================
+# MÉTRICA: LATÊNCIA E PERFORMANCE
+# ============================================================================
+metrics:
+  latency:
+    - name: "http.request.duration"
+      histogram: true
+      unit: "millisecond"
+      quantiles: [0.5, 0.75, 0.95, 0.99]  # p50, p75, p95, p99
+
+    - name: "db.query.duration"
+      histogram: true
+      unit: "millisecond"
+      tags: ["db_type:postgres", "operation:select"]
+
+    - name: "cache.operation.duration"
+      histogram: true
+      unit: "millisecond"
+      tags: ["operation:get|set|delete"]
+
+    - name: "s3.operation.duration"
+      histogram: true
+      unit: "millisecond"
+      tags: ["operation:upload|download"]
+
+    - name: "queue.job.processing_time"
+      histogram: true
+      unit: "millisecond"
+      tags: ["job_type:liberacao-parcela"]
+
+  throughput:
+    - name: "http.requests.total"
+      type: "count"
+      tags: ["method", "endpoint", "status_code"]
+
+    - name: "db.queries.total"
+      type: "count"
+      tags: ["operation", "table"]
+
+    - name: "cache.operations.total"
+      type: "count"
+      tags: ["operation"]
+
+  errors:
+    - name: "http.requests.errors"
+      type: "count"
+      tags: ["status_code", "endpoint"]
+
+    - name: "http.requests.error_rate"
+      type: "gauge"
+      unit: "percent"
+
+    - name: "db.connection.errors"
+      type: "count"
+
+    - name: "queue.jobs.failed"
+      type: "count"
+      tags: ["job_type"]
+
+    - name: "queue.jobs.dead_letter"
+      type: "count"
+      tags: ["job_type"]
+
+  resource_utilization:
+    - name: "system.load.1"
+      type: "gauge"
+
+    - name: "system.memory.percent"
+      type: "gauge"
+      unit: "percent"
+
+    - name: "system.disk.percent"
+      type: "gauge"
+      unit: "percent"
+      tags: ["mount_point"]
+
+    - name: "process.memory.rss"
+      type: "gauge"
+      unit: "byte"
+
+    - name: "nodejs.handles"
+      type: "gauge"
+      tags: ["type"]  # timers, fs, sockets
+
+  database:
+    - name: "db.connection_pool.size"
+      type: "gauge"
+      tags: ["pool_name"]
+
+    - name: "db.connection_pool.available"
+      type: "gauge"
+      tags: ["pool_name"]
+
+    - name: "db.connection_pool.queued"
+      type: "gauge"
+      tags: ["pool_name"]
+
+    - name: "db.replication.lag"
+      type: "gauge"
+      unit: "millisecond"
+      tags: ["replica_id"]
+
+    - name: "db.slow_queries.total"
+      type: "count"
+      tags: ["query_pattern"]
+
+  cache:
+    - name: "cache.hit_rate"
+      type: "gauge"
+      unit: "percent"
+      tags: ["cache_name:redis"]
+
+    - name: "cache.hits"
+      type: "count"
+      tags: ["cache_name"]
+
+    - name: "cache.misses"
+      type: "count"
+      tags: ["cache_name"]
+
+    - name: "redis.memory.percent"
+      type: "gauge"
+      unit: "percent"
+
+    - name: "redis.connected_clients"
+      type: "gauge"
+
+  business:
+    - name: "obras.created.total"
+      type: "count"
+      tags: ["status"]
+
+    - name: "parcelas.liberadas.total"
+      type: "count"
+
+    - name: "parcelas.liberadas.value"
+      type: "gauge"
+      unit: "reais"
+
+    - name: "fotos.uploaded.total"
+      type: "count"
+      tags: ["tipo"]
+
+    - name: "payment.processed.total"
+      type: "count"
+      tags: ["status", "method"]
+
+# ============================================================================
+# ALERTAS - Critical Threshold
+# ============================================================================
+alerts:
+
+  # Error Rate > 5%
+  - id: "error_rate_high"
+    name: "HTTP Error Rate > 5%"
+    metric: "http.requests.error_rate"
+    threshold: 85  # 85% = 5% errors
+    condition: "below"  # below 85% = above 5% error
+    duration: 300  # 5 minutos
+    alert_type: "error"
+    priority: "P1"
+    tags: ["critical"]
+
+  # Latência P95 > 500ms
+  - id: "latency_p95_high"
+    name: "HTTP Latency P95 > 500ms"
+    metric: "http.request.duration"
+    quantile: 0.95
+    threshold: 500
+    condition: "above"
+    duration: 300  # 5 minutos
+    alert_type: "warning"
+    priority: "P1"
+    tags: ["performance"]
+
+  # DB Connection Pool Exhausted
+  - id: "db_pool_exhausted"
+    name: "Database Connection Pool Exhausted"
+    metric: "db.connection_pool.queued"
+    threshold: 10
+    condition: "above"
+    duration: 60
+    alert_type: "critical"
+    priority: "P0"
+    tags: ["database", "critical"]
+    notification: "PagerDuty"
+
+  # DB Connection Failures
+  - id: "db_connection_error"
+    name: "Database Connection Errors Detected"
+    metric: "db.connection.errors"
+    threshold: 0
+    condition: "above"
+    duration: 60
+    alert_type: "critical"
+    priority: "P0"
+    tags: ["database", "critical"]
+    notification: "PagerDuty"
+
+  # Memory > 85%
+  - id: "memory_high"
+    name: "Memory Usage > 85%"
+    metric: "system.memory.percent"
+    threshold: 85
+    condition: "above"
+    duration: 300
+    alert_type: "warning"
+    priority: "P2"
+    tags: ["resource"]
+
+  # Disk < 10%
+  - id: "disk_low"
+    name: "Disk Space < 10% Available"
+    metric: "system.disk.percent"
+    threshold: 90
+    condition: "above"
+    duration: 300
+    alert_type: "critical"
+    priority: "P1"
+    tags: ["resource", "critical"]
+    notification: "PagerDuty"
+
+  # Redis Memory > 80%
+  - id: "redis_memory_high"
+    name: "Redis Memory Usage > 80%"
+    metric: "redis.memory.percent"
+    threshold: 80
+    condition: "above"
+    duration: 300
+    alert_type: "warning"
+    priority: "P2"
+    tags: ["cache"]
+
+  # Cache Hit Rate < 50%
+  - id: "cache_hit_rate_low"
+    name: "Cache Hit Rate < 50%"
+    metric: "cache.hit_rate"
+    threshold: 50
+    condition: "below"
+    duration: 600
+    alert_type: "warning"
+    priority: "P2"
+    tags: ["performance"]
+
+  # Queue Jobs Failed > 1% de taxa
+  - id: "queue_failure_rate"
+    name: "Queue Job Failure Rate > 1%"
+    metric: "queue.jobs.failed"
+    threshold: 1  # percent
+    condition: "above"
+    duration: 300
+    alert_type: "warning"
+    priority: "P2"
+    tags: ["queue"]
+
+  # Queue Dead Letter Queue > 0
+  - id: "queue_dead_letter"
+    name: "Dead Letter Queue Has Messages"
+    metric: "queue.jobs.dead_letter"
+    threshold: 0
+    condition: "above"
+    duration: 60
+    alert_type: "critical"
+    priority: "P1"
+    tags: ["queue", "critical"]
+    notification: "Slack"
+
+  # API Response Timeout (>10 requests stuck)
+  - id: "requests_timeout"
+    name: "Requests Timeout Spike"
+    metric: "http.requests.total"
+    threshold: 10
+    condition: "above"
+    duration: 120
+    alert_type: "warning"
+    priority: "P2"
+    tags: ["performance"]
+
+  # Slow Database Queries
+  - id: "slow_queries"
+    name: "Slow Database Queries Detected"
+    metric: "db.slow_queries.total"
+    threshold: 5
+    condition: "above"
+    duration: 300
+    alert_type: "warning"
+    priority: "P2"
+    tags: ["database", "performance"]
+
+  # S3 Upload Failures
+  - id: "s3_failure"
+    name: "S3 Upload Failures Detected"
+    metric: "http.requests.errors"
+    filter: "endpoint:/fotos OR endpoint:/uploads"
+    threshold: 3
+    condition: "above"
+    duration: 300
+    alert_type: "critical"
+    priority: "P1"
+    tags: ["s3", "critical"]
+
+  # Auth Failures Spike
+  - id: "auth_failures"
+    name: "Authentication Failures Spike"
+    metric: "http.requests.errors"
+    filter: "endpoint:/auth status_code:401|403"
+    threshold: 20
+    condition: "above"
+    duration: 300
+    alert_type: "warning"
+    priority: "P2"
+    tags: ["security"]
+
+  # Uptime SLA Breach (< 99.5%)
+  - id: "uptime_sla_breach"
+    name: "Uptime SLA Breach Alert"
+    metric: "http.requests.error_rate"
+    threshold: 5
+    condition: "above"
+    duration: 3600  # 1 hora
+    alert_type: "critical"
+    priority: "P0"
+    tags: ["sla", "critical"]
+    notification: "PagerDuty"
+
+# ============================================================================
+# NOTIFICAÇÕES
+# ============================================================================
+notifications:
+  slack:
+    enabled: true
+    webhook_url: ${SLACK_WEBHOOK_URL}
+    channel: "#alerts-imbobi"
+    mention_on_critical: "@devops-team"
+    mention_on_p0: "@engineering"
+
+  pagerduty:
+    enabled: true
+    api_key: ${PAGERDUTY_API_KEY}
+    service_id: ${PAGERDUTY_SERVICE_ID}
+    escalation_policy: "critical"
+
+  email:
+    enabled: true
+    recipients:
+      - "devops@imbobi.com"
+      - "engineering@imbobi.com"
+    on_priority: ["P0", "P1"]
+
+# ============================================================================
+# SLA TARGETS
+# ============================================================================
+sla:
+  uptime:
+    target: 99.5  # percent
+    measurement_window: "30 days"
+    allowed_downtime_minutes: 21.6  # ~21 minutos/mês
+
+  latency_p95:
+    target: 200  # ms
+    measurement_window: "24 hours"
+
+  error_rate:
+    target: 0.5  # percent (máximo 0.5% de erros)
+    measurement_window: "24 hours"
+
+  availability_zones: 2  # redundância mínima
+
+# ============================================================================
+# RETENTION POLICIES
+# ============================================================================
+retention:
+  metrics: 15  # dias
+  logs: 30  # dias
+  traces: 7  # dias
+  audit_logs: 90  # dias

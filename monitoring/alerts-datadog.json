@@ -1,0 +1,227 @@
+[
+  {
+    "name": "HTTP Error Rate > 5%",
+    "type": "metric alert",
+    "query": "avg:http.requests.error_rate{env:production}",
+    "condition": "above",
+    "threshold": 5,
+    "duration": "300",
+    "tags": ["critical", "performance"],
+    "priority": "P1",
+    "notify_no_data": true,
+    "no_data_timeframe": 900,
+    "message": "@slack-imbobi @devops-team\nError rate exceeded threshold\n\nCurrent: {{value}}%\nThreshold: 5%\nWindow: 5 minutes\n\nAction items:\n1. Check logs in Datadog\n2. Identify affected endpoints\n3. Rollback if recent deploy\n\n{{#is_alert}}\n  PagerDuty escalation activated\n{{/is_alert}}",
+    "escalation_message": "@pagerduty-imbobi Error rate breach - immediate action required",
+    "thresholds": {
+      "critical": 5,
+      "warning": 2
+    },
+    "notify_audit": true
+  },
+  {
+    "name": "HTTP Latency P95 > 500ms",
+    "type": "metric alert",
+    "query": "p95:http.request.duration{env:production}",
+    "condition": "above",
+    "threshold": 500,
+    "duration": "300",
+    "tags": ["performance"],
+    "priority": "P1",
+    "notify_no_data": false,
+    "message": "@slack-imbobi\nAPI latency degradation detected\n\nCurrent P95: {{value}}ms\nThreshold: 500ms\nWindow: 5 minutes\n\nAction items:\n1. Check database performance\n2. Verify cache hit rate\n3. Check S3 operations\n4. Review recent deployments"
+  },
+  {
+    "name": "Database Connection Pool Exhausted",
+    "type": "metric alert",
+    "query": "avg:db.connection_pool.queued{pool_name:prisma,env:production}",
+    "condition": "above",
+    "threshold": 10,
+    "duration": "60",
+    "tags": ["database", "critical"],
+    "priority": "P0",
+    "notify_no_data": false,
+    "message": "@slack-imbobi @devops-team @pagerduty-imbobi\n🚨 CRITICAL: Database connection pool exhausted\n\nQueued connections: {{value}}\nThreshold: 10\nService: Prisma\n\nImmediate actions:\n1. Check database connectivity\n2. Terminate idle connections\n3. Scale read replicas\n4. Prepare for failover\n\nESCALATE to on-call DBA",
+    "escalation_message": "@pagerduty-imbobi CRITICAL: DB connection pool exhausted - requires immediate attention"
+  },
+  {
+    "name": "Database Connection Errors",
+    "type": "metric alert",
+    "query": "sum:db.connection.errors{env:production}",
+    "condition": "above",
+    "threshold": 0,
+    "duration": "60",
+    "tags": ["database", "critical"],
+    "priority": "P0",
+    "notify_no_data": false,
+    "message": "@slack-imbobi @devops-team @pagerduty-imbobi\n🚨 CRITICAL: Database connection failures detected\n\nErrors in last minute: {{value}}\n\nImmediate actions:\n1. Verify database status\n2. Check network connectivity\n3. Review recent schema changes\n4. Prepare rollback plan\n\nTrigger incident response",
+    "escalation_message": "@pagerduty-imbobi CRITICAL: Database connection failures"
+  },
+  {
+    "name": "Disk Space Critical < 10%",
+    "type": "metric alert",
+    "query": "avg:system.disk.percent{mount_point:/,env:production}",
+    "condition": "above",
+    "threshold": 90,
+    "duration": "300",
+    "tags": ["resource", "critical"],
+    "priority": "P1",
+    "notify_no_data": false,
+    "message": "@slack-imbobi @devops-team @pagerduty-imbobi\n🚨 CRITICAL: Disk space critically low\n\nUsage: {{value}}%\nAvailable: <10%\n\nImmediate actions:\n1. Scale EBS volume\n2. Archive old logs\n3. Clean temporary files\n4. Monitor growth rate\n\nEstimated time to full: ~6 hours (estimate)",
+    "escalation_message": "@pagerduty-imbobi CRITICAL: Disk space at {{value}}%"
+  },
+  {
+    "name": "Dead Letter Queue Has Messages",
+    "type": "metric alert",
+    "query": "sum:queue.jobs.dead_letter{env:production}",
+    "condition": "above",
+    "threshold": 0,
+    "duration": "60",
+    "tags": ["queue", "critical"],
+    "priority": "P1",
+    "notify_no_data": false,
+    "message": "@slack-imbobi @devops-team\n🚨 CRITICAL: Dead letter queue has unprocessable jobs\n\nDead letters: {{value}}\nJob types: liberacao-parcela\n\nActions:\n1. Investigate job failures\n2. Review BullMQ logs\n3. Identify root cause\n4. Implement fix\n5. Reprocess from DLQ\n\nThis impacts financial operations!",
+    "escalation_message": "@slack-imbobi Dead letter queue at {{value}} messages"
+  },
+  {
+    "name": "Memory Usage > 85%",
+    "type": "metric alert",
+    "query": "avg:system.memory.percent{service:imbobi-api,env:production}",
+    "condition": "above",
+    "threshold": 85,
+    "duration": "300",
+    "tags": ["resource"],
+    "priority": "P2",
+    "notify_no_data": false,
+    "message": "@slack-imbobi\nMemory usage exceeding safe threshold\n\nCurrent: {{value}}%\nThreshold: 85%\n\nActions:\n1. Check for memory leaks\n2. Monitor garbage collection\n3. Review recent deployments\n4. Scale if sustained"
+  },
+  {
+    "name": "Redis Memory > 80%",
+    "type": "metric alert",
+    "query": "avg:redis.memory.percent{env:production}",
+    "condition": "above",
+    "threshold": 80,
+    "duration": "300",
+    "tags": ["cache"],
+    "priority": "P2",
+    "notify_no_data": false,
+    "message": "@slack-imbobi\nRedis memory usage high\n\nCurrent: {{value}}%\nThreshold: 80%\n\nActions:\n1. Analyze eviction policy\n2. Check cache TTLs\n3. Monitor hit rate\n4. Scale if needed"
+  },
+  {
+    "name": "Cache Hit Rate < 50%",
+    "type": "metric alert",
+    "query": "avg:cache.hit_rate{cache_name:redis,env:production}",
+    "condition": "below",
+    "threshold": 50,
+    "duration": "600",
+    "tags": ["performance"],
+    "priority": "P2",
+    "notify_no_data": false,
+    "message": "@slack-imbobi\nCache hit rate degradation\n\nCurrent: {{value}}%\nThreshold: 50%\n\nActions:\n1. Review cache keys\n2. Check TTL policies\n3. Analyze cache misses\n4. Optimize cache strategy"
+  },
+  {
+    "name": "Queue Job Failure Rate > 1%",
+    "type": "metric alert",
+    "query": "avg:queue.jobs.failed{env:production}",
+    "condition": "above",
+    "threshold": 1,
+    "duration": "300",
+    "tags": ["queue"],
+    "priority": "P2",
+    "notify_no_data": false,
+    "message": "@slack-imbobi\nQueue job failure rate elevated\n\nFailure rate: {{value}}%\nThreshold: 1%\n\nActions:\n1. Check job logs\n2. Verify Redis connectivity\n3. Review retry logic\n4. Investigate failed jobs"
+  },
+  {
+    "name": "S3 Upload Failures Detected",
+    "type": "metric alert",
+    "query": "sum:http.requests.errors{endpoint:/fotos,env:production}",
+    "condition": "above",
+    "threshold": 3,
+    "duration": "300",
+    "tags": ["s3", "critical"],
+    "priority": "P1",
+    "notify_no_data": false,
+    "message": "@slack-imbobi @devops-team\n🚨 CRITICAL: S3 upload failures detected\n\nErrors in 5 min: {{value}}\nThreshold: 3\n\nImpact: Users cannot upload project photos\n\nActions:\n1. Verify AWS credentials\n2. Check S3 bucket permissions\n3. Monitor S3 rate limits\n4. Check network connectivity\n\nPriority: HIGH - impacts core business"
+  },
+  {
+    "name": "Authentication Failures Spike",
+    "type": "metric alert",
+    "query": "sum:http.requests.errors{status_code:401 OR status_code:403,env:production}",
+    "condition": "above",
+    "threshold": 20,
+    "duration": "300",
+    "tags": ["security"],
+    "priority": "P2",
+    "notify_no_data": false,
+    "message": "@slack-imbobi\nSuspicious authentication failures\n\nAuth errors (5 min): {{value}}\nThreshold: 20\n\nPossible causes:\n1. Credential rotation\n2. Token expiration issue\n3. Permission changes\n4. Brute force attempt\n\nActions:\n1. Review auth logs\n2. Check token validity\n3. Verify JWT secrets\n4. Alert security team if suspicious"
+  },
+  {
+    "name": "DB Slow Queries Detected",
+    "type": "metric alert",
+    "query": "sum:db.slow_queries.total{env:production}",
+    "condition": "above",
+    "threshold": 5,
+    "duration": "300",
+    "tags": ["database", "performance"],
+    "priority": "P2",
+    "notify_no_data": false,
+    "message": "@slack-imbobi\nSlow database queries detected\n\nSlow queries (5 min): {{value}}\nThreshold: 5\n\nActions:\n1. Identify slow query patterns\n2. Check query plans\n3. Add indexes if needed\n4. Review table statistics"
+  },
+  {
+    "name": "Uptime SLA Breach Alert",
+    "type": "metric alert",
+    "query": "avg:http.requests.error_rate{env:production}",
+    "condition": "above",
+    "threshold": 5,
+    "duration": "3600",
+    "tags": ["sla", "critical"],
+    "priority": "P0",
+    "notify_no_data": false,
+    "message": "@slack-imbobi @devops-team @pagerduty-imbobi\n🚨 CRITICAL: SLA BREACH DETECTED\n\nUptime Target: 99.5% (21.6 min downtime/week)\nCurrent Error Rate: {{value}}%\nWindow: Last hour\n\nThis triggers:\n- PagerDuty escalation\n- Incident declaration\n- Management notification\n- Customer SLA credits\n\nImmediate response required",
+    "escalation_message": "@pagerduty-imbobi CRITICAL: SLA BREACH - Error rate {{value}}%"
+  },
+  {
+    "name": "Connection Pool Available < 10%",
+    "type": "metric alert",
+    "query": "avg:db.connection_pool.available{pool_name:prisma,env:production}",
+    "condition": "below",
+    "threshold": 2,
+    "duration": "60",
+    "tags": ["database", "critical"],
+    "priority": "P1",
+    "notify_no_data": false,
+    "message": "@slack-imbobi @devops-team\nDatabase connection pool running out of available connections\n\nAvailable: {{value}} of ~20\nThreshold: 2\n\nActions:\n1. Scale connection pool\n2. Identify long-running queries\n3. Terminate idle connections\n4. Monitor active connections"
+  },
+  {
+    "name": "Request Latency Spike Detected",
+    "type": "metric alert",
+    "query": "p95:http.request.duration{env:production}",
+    "condition": "above",
+    "threshold": 1000,
+    "duration": "120",
+    "tags": ["performance"],
+    "priority": "P2",
+    "notify_no_data": false,
+    "message": "@slack-imbobi\nUnusual latency spike detected\n\nCurrent P95: {{value}}ms (2x normal)\nThreshold: 1000ms\nWindow: Last 2 minutes\n\nPotential causes:\n1. Database overload\n2. External API slowness\n3. GC pause\n4. Memory pressure\n\nActions:\n1. Check traces for bottlenecks\n2. Monitor resource usage\n3. Review recent changes"
+  },
+  {
+    "name": "Service Degradation (Error Rate + Latency)",
+    "type": "composite alert",
+    "condition": "all",
+    "rules": [
+      {
+        "query": "avg:http.requests.error_rate{env:production}",
+        "operator": "above",
+        "threshold": 2
+      },
+      {
+        "query": "p95:http.request.duration{env:production}",
+        "operator": "above",
+        "threshold": 500
+      }
+    ],
+    "duration": "300",
+    "tags": ["critical", "sla"],
+    "priority": "P1",
+    "message": "@slack-imbobi @devops-team\n⚠️ ALERT: Service degradation detected\n\nBoth conditions met:\n- Error rate: {{error_rate}}% (>2%)\n- Latency P95: {{latency}}ms (>500ms)\n\nThis indicates potential cascade failure\n\nImmediate actions:\n1. Check service health\n2. Review auto-scaling metrics\n3. Identify root cause\n4. Prepare rollback if needed"
+  }
+]

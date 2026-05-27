@@ -1,0 +1,342 @@
+{
+  "dashboards": [
+    {
+      "id": "overview",
+      "title": "Imbobi - Overview (SLA Dashboard)",
+      "description": "Visão geral da saúde do sistema e cumprimento de SLA",
+      "refresh_interval": 60,
+      "widgets": [
+        {
+          "type": "timeseries",
+          "title": "Uptime vs Target (99.5%)",
+          "query": "avg:http.requests.error_rate{env:production}",
+          "time_range": "1d",
+          "show_legend": true,
+          "position": { "x": 0, "y": 0, "width": 6, "height": 3 }
+        },
+        {
+          "type": "gauge",
+          "title": "Current Uptime %",
+          "query": "100 - avg:http.requests.error_rate{env:production}",
+          "target_min": 99.5,
+          "target_max": 100,
+          "position": { "x": 6, "y": 0, "width": 3, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "HTTP Latency P95 vs Target (200ms)",
+          "query": "p95:http.request.duration{env:production}",
+          "alert_threshold": 200,
+          "time_range": "1d",
+          "position": { "x": 9, "y": 0, "width": 3, "height": 3 }
+        },
+        {
+          "type": "big_number",
+          "title": "Error Rate %",
+          "query": "avg:http.requests.error_rate{env:production}",
+          "threshold": 5,
+          "threshold_color": "red",
+          "position": { "x": 0, "y": 3, "width": 3, "height": 2 }
+        },
+        {
+          "type": "big_number",
+          "title": "Request Rate (req/s)",
+          "query": "rate(sum:http.requests.total{env:production})",
+          "position": { "x": 3, "y": 3, "width": 3, "height": 2 }
+        },
+        {
+          "type": "big_number",
+          "title": "Avg Latency (ms)",
+          "query": "avg:http.request.duration{env:production}",
+          "position": { "x": 6, "y": 3, "width": 3, "height": 2 }
+        },
+        {
+          "type": "status_timeline",
+          "title": "Incident Timeline",
+          "query": "events_with_tags:incident:true",
+          "position": { "x": 9, "y": 3, "width": 3, "height": 2 }
+        }
+      ]
+    },
+    {
+      "id": "performance",
+      "title": "Imbobi - Performance Metrics",
+      "description": "Análise detalhada de latência, throughput e resource utilization",
+      "refresh_interval": 30,
+      "widgets": [
+        {
+          "type": "timeseries",
+          "title": "HTTP Latency Distribution (p50, p75, p95, p99)",
+          "queries": [
+            { "legend": "p50", "query": "p50:http.request.duration{env:production}" },
+            { "legend": "p75", "query": "p75:http.request.duration{env:production}" },
+            { "legend": "p95", "query": "p95:http.request.duration{env:production}", "alert": 500 },
+            { "legend": "p99", "query": "p99:http.request.duration{env:production}" }
+          ],
+          "time_range": "1h",
+          "position": { "x": 0, "y": 0, "width": 6, "height": 3 }
+        },
+        {
+          "type": "heatmap",
+          "title": "Request Latency Heatmap",
+          "query": "http.request.duration{env:production}",
+          "position": { "x": 6, "y": 0, "width": 6, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "Database Query Duration",
+          "query": "avg:db.query.duration{env:production}",
+          "show_legend": true,
+          "position": { "x": 0, "y": 3, "width": 4, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "Cache Hit Rate (%)",
+          "query": "avg:cache.hit_rate{cache_name:redis}",
+          "alert_threshold": 50,
+          "position": { "x": 4, "y": 3, "width": 4, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "S3 Upload Duration",
+          "query": "avg:s3.operation.duration{operation:upload}",
+          "position": { "x": 8, "y": 3, "width": 4, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "Memory Usage %",
+          "queries": [
+            { "legend": "API", "query": "avg:system.memory.percent{service:imbobi-api}" },
+            { "legend": "Target", "query": "85" }
+          ],
+          "position": { "x": 0, "y": 6, "width": 4, "height": 2 }
+        },
+        {
+          "type": "timeseries",
+          "title": "CPU Usage %",
+          "query": "avg:system.load.1{env:production}",
+          "position": { "x": 4, "y": 6, "width": 4, "height": 2 }
+        },
+        {
+          "type": "timeseries",
+          "title": "Disk Usage %",
+          "query": "avg:system.disk.percent{mount_point:/}",
+          "alert_threshold": 90,
+          "position": { "x": 8, "y": 6, "width": 4, "height": 2 }
+        }
+      ]
+    },
+    {
+      "id": "database",
+      "title": "Imbobi - Database Health",
+      "description": "Monitoramento de conexões, queries lentas e replicação",
+      "refresh_interval": 30,
+      "widgets": [
+        {
+          "type": "timeseries",
+          "title": "Database Connection Pool",
+          "queries": [
+            { "legend": "Size", "query": "avg:db.connection_pool.size{pool_name:prisma}" },
+            { "legend": "Available", "query": "avg:db.connection_pool.available{pool_name:prisma}" },
+            { "legend": "Queued (alert >10)", "query": "avg:db.connection_pool.queued{pool_name:prisma}" }
+          ],
+          "position": { "x": 0, "y": 0, "width": 6, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "Slow Queries",
+          "query": "sum:db.slow_queries.total{env:production}",
+          "position": { "x": 6, "y": 0, "width": 6, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "DB Connection Errors",
+          "query": "sum:db.connection.errors{env:production}",
+          "alert": true,
+          "position": { "x": 0, "y": 3, "width": 4, "height": 2 }
+        },
+        {
+          "type": "table",
+          "title": "Top 10 Slowest Queries",
+          "query": "select query_name, avg(duration) as avg_duration from db.slow_queries group by query_name order by avg_duration desc limit 10",
+          "position": { "x": 4, "y": 3, "width": 8, "height": 4 }
+        }
+      ]
+    },
+    {
+      "id": "cache_redis",
+      "title": "Imbobi - Redis/Cache",
+      "description": "Health check de cache e Redis",
+      "refresh_interval": 30,
+      "widgets": [
+        {
+          "type": "timeseries",
+          "title": "Redis Memory Usage %",
+          "query": "avg:redis.memory.percent{env:production}",
+          "alert_threshold": 80,
+          "position": { "x": 0, "y": 0, "width": 4, "height": 3 }
+        },
+        {
+          "type": "big_number",
+          "title": "Redis Connected Clients",
+          "query": "avg:redis.connected_clients{env:production}",
+          "position": { "x": 4, "y": 0, "width": 4, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "Cache Operations/sec",
+          "queries": [
+            { "legend": "Hits", "query": "rate(sum:cache.hits{env:production})" },
+            { "legend": "Misses", "query": "rate(sum:cache.misses{env:production})" }
+          ],
+          "position": { "x": 8, "y": 0, "width": 4, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "Cache Operation Duration",
+          "queries": [
+            { "legend": "GET", "query": "avg:cache.operation.duration{operation:get}" },
+            { "legend": "SET", "query": "avg:cache.operation.duration{operation:set}" },
+            { "legend": "DELETE", "query": "avg:cache.operation.duration{operation:delete}" }
+          ],
+          "position": { "x": 0, "y": 3, "width": 12, "height": 3 }
+        }
+      ]
+    },
+    {
+      "id": "queue_jobs",
+      "title": "Imbobi - Queue & Background Jobs",
+      "description": "Monitoramento de BullMQ e processamento de jobs",
+      "refresh_interval": 30,
+      "widgets": [
+        {
+          "type": "timeseries",
+          "title": "Job Processing Time (ms)",
+          "query": "avg:queue.job.processing_time{job_type:liberacao-parcela}",
+          "position": { "x": 0, "y": 0, "width": 6, "height": 3 }
+        },
+        {
+          "type": "big_number",
+          "title": "Failed Jobs (liberacao-parcela)",
+          "query": "sum:queue.jobs.failed{job_type:liberacao-parcela}",
+          "position": { "x": 6, "y": 0, "width": 3, "height": 3 }
+        },
+        {
+          "type": "big_number",
+          "title": "Dead Letter Queue",
+          "query": "sum:queue.jobs.dead_letter{job_type:liberacao-parcela}",
+          "threshold": 0,
+          "threshold_color": "red",
+          "position": { "x": 9, "y": 0, "width": 3, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "Job Success Rate %",
+          "query": "100 * sum:queue.jobs.successful{job_type:liberacao-parcela} / (sum:queue.jobs.successful{job_type:liberacao-parcela} + sum:queue.jobs.failed{job_type:liberacao-parcela})",
+          "position": { "x": 0, "y": 3, "width": 12, "height": 3 }
+        }
+      ]
+    },
+    {
+      "id": "business",
+      "title": "Imbobi - Business Metrics",
+      "description": "KPIs de negócio: obras criadas, parcelas liberadas, fotos, pagamentos",
+      "refresh_interval": 60,
+      "widgets": [
+        {
+          "type": "big_number",
+          "title": "Obras Criadas (24h)",
+          "query": "sum:obras.created.total{env:production} offset 24h",
+          "position": { "x": 0, "y": 0, "width": 3, "height": 2 }
+        },
+        {
+          "type": "big_number",
+          "title": "Parcelas Liberadas (24h)",
+          "query": "sum:parcelas.liberadas.total{env:production} offset 24h",
+          "position": { "x": 3, "y": 0, "width": 3, "height": 2 }
+        },
+        {
+          "type": "big_number",
+          "title": "Valor Liberado (R$, 24h)",
+          "query": "sum:parcelas.liberadas.value{env:production} offset 24h",
+          "formatting": "currency",
+          "position": { "x": 6, "y": 0, "width": 3, "height": 2 }
+        },
+        {
+          "type": "big_number",
+          "title": "Fotos Enviadas (24h)",
+          "query": "sum:fotos.uploaded.total{env:production} offset 24h",
+          "position": { "x": 9, "y": 0, "width": 3, "height": 2 }
+        },
+        {
+          "type": "timeseries",
+          "title": "Obras Criadas (7 dias)",
+          "query": "sum:obras.created.total{env:production}",
+          "time_range": "7d",
+          "position": { "x": 0, "y": 2, "width": 6, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "Valor Liberado Total (7 dias)",
+          "query": "sum:parcelas.liberadas.value{env:production}",
+          "time_range": "7d",
+          "position": { "x": 6, "y": 2, "width": 6, "height": 3 }
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Imbobi - Security & Errors",
+      "description": "Monitoramento de segurança, autenticação e erros",
+      "refresh_interval": 30,
+      "widgets": [
+        {
+          "type": "timeseries",
+          "title": "Auth Failures (401/403)",
+          "query": "sum:http.requests.errors{status_code:401|403}",
+          "position": { "x": 0, "y": 0, "width": 6, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "All HTTP Errors by Status Code",
+          "query": "sum:http.requests.errors{env:production} by {status_code}",
+          "position": { "x": 6, "y": 0, "width": 6, "height": 3 }
+        },
+        {
+          "type": "timeseries",
+          "title": "Error Rate by Endpoint",
+          "query": "avg:http.requests.error_rate{env:production} by {endpoint}",
+          "position": { "x": 0, "y": 3, "width": 12, "height": 3 }
+        },
+        {
+          "type": "table",
+          "title": "Top 10 Error Endpoints",
+          "query": "select endpoint, status_code, count(*) as count from http_errors group by endpoint, status_code order by count desc limit 10",
+          "position": { "x": 0, "y": 6, "width": 12, "height": 3 }
+        }
+      ]
+    },
+    {
+      "id": "trace_analysis",
+      "title": "Imbobi - Trace Analysis (APM)",
+      "description": "Análise de traces distribuídos e bottlenecks",
+      "refresh_interval": 30,
+      "widgets": [
+        {
+          "type": "service_map",
+          "title": "Service Dependencies",
+          "query": "service_name:(imbobi-api OR imbobi-web OR postgres OR redis)",
+          "position": { "x": 0, "y": 0, "width": 12, "height": 4 }
+        },
+        {
+          "type": "trace_list",
+          "title": "Slowest Traces (p99)",
+          "query": "service:imbobi-api resource_name:*",
+          "sort_by": "duration",
+          "limit": 20,
+          "position": { "x": 0, "y": 4, "width": 12, "height": 4 }
+        }
+      ]
+    }
+  ]
+}

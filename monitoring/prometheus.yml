@@ -1,0 +1,100 @@
+# Prometheus Configuration para Imbobi
+# Scrapping de métricas Prometheus
+# Use junto com Datadog ou como alternativa (Datadog é recomendado para prod)
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    monitor: 'imbobi-prometheus'
+    env: production
+    service: imbobi
+
+# Alertas
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'localhost:9093'
+
+# Regras de alerta
+rule_files:
+  - 'alerting-rules.yml'
+
+# ============================================================================
+# SCRAPE CONFIGS
+# ============================================================================
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # API (metrics exportadas via /metrics)
+  - job_name: 'imbobi-api'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['localhost:3000']
+        labels:
+          service: api
+          instance: api-1
+
+  # PostgreSQL (via postgres_exporter)
+  - job_name: 'postgres'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['localhost:9187']  # postgres_exporter
+        labels:
+          service: postgres
+          instance: primary
+
+  # Redis (via redis_exporter)
+  - job_name: 'redis'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['localhost:9121']  # redis_exporter
+        labels:
+          service: redis
+          instance: primary
+
+  # Node Exporter (system metrics)
+  - job_name: 'node'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['localhost:9100']
+        labels:
+          service: host
+          instance: primary
+
+  # Docker Container Metrics
+  - job_name: 'docker'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['localhost:9323']
+        labels:
+          service: docker
+          instance: primary
+
+  # Jaeger (traces)
+  - job_name: 'jaeger'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['localhost:14269']
+        labels:
+          service: jaeger
+
+  # AlertManager
+  - job_name: 'alertmanager'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['localhost:9093']
+
+  # Service Discovery (opcional - para Kubernetes/Consul)
+  # - job_name: 'kubernetes-apiservers'
+  #   kubernetes_sd_configs:
+  #     - role: endpoints
+  #   scheme: https
+  #   tls_config:
+  #     ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
