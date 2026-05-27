@@ -1,53 +1,47 @@
 # ESLint Configuration Guide
 
-**Created**: 27 May 2026  
-**Status**: ✅ Global ESLint configuration implemented across all workspaces
+**Updated**: 27 May 2026  
+**Status**: ✅ ESLint v10 flat config implemented across all workspaces
 
 ---
 
 ## Overview
 
-This project uses a **unified ESLint configuration** across all workspaces:
-- **Root**: `.eslintrc.json` — Shared base configuration
-- **Per-workspace**: Each workspace extends the root config with environment-specific rules
+This project uses **ESLint v10 with flat config format** across all workspaces:
+- **Root**: `eslint.config.js` — Shared base configuration in ESM format
+- **Monorepo**: Single unified configuration applies to all packages
+- **Format**: Flat config (ESLint v9+) - not the legacy `.eslintrc.json`
 
 ---
 
 ## Configuration Structure
 
 ```
-.eslintrc.json                          # Root config (TypeScript, imports, general rules)
-├─ services/api/.eslintrc.json          # Extends root + Node.js specific
-├─ apps/web/.eslintrc.json              # Extends root + React + Next.js
-├─ apps/mobile/.eslintrc.json           # Extends root + React + React Native
-├─ packages/schemas/.eslintrc.json      # Extends root (pure TypeScript)
-├─ packages/core/.eslintrc.json         # Extends root + any utilities
-└─ packages/ui/.eslintrc.json           # Extends root + React
+eslint.config.js                 # Root config (applies to all packages)
+├─ TypeScript ESLint rules       # Via typescript-eslint package
+├─ Built-in JS rules             # Via @eslint/js
+└─ Package.json lint scripts     # Each workspace runs: eslint src --ext .ts
+    ├─ services/api/package.json
+    ├─ apps/web/package.json
+    ├─ apps/mobile/package.json
+    ├─ packages/schemas/package.json
+    ├─ packages/core/package.json
+    └─ packages/ui/package.json
 ```
+
+**Note**: No workspace-specific configs needed. ESLint v10 automatically uses the root config for all packages.
 
 ---
 
 ## Root Configuration Rules
 
 ### TypeScript Rules
-- **`@typescript-eslint/explicit-function-return-types`** (warn) — Functions should have explicit return types
-- **`@typescript-eslint/no-explicit-any`** (warn) — Avoid `any` type
-- **`@typescript-eslint/no-unused-vars`** (warn) — Unused variables, allow `_` prefix for intentionally unused
-- **`@typescript-eslint/no-floating-promises`** (error) — Async operations must be awaited or handled
+- **`@typescript-eslint/no-explicit-any`** (warn) — Avoid `any` type (disabled in tests)
+- **`@typescript-eslint/no-unused-vars`** (warn) — Unused variables, allow `_` prefix
+- **`@typescript-eslint/no-floating-promises`** (error) — Async operations must be awaited
 - **`@typescript-eslint/no-misused-promises`** (error) — Promise types must be used correctly
-- **`@typescript-eslint/await-thenable`** (error) — Only await Promises
-- **`@typescript-eslint/prefer-nullish-coalescing`** (warn) — Prefer `??` over `||` for nullish checks
-- **`@typescript-eslint/prefer-optional-chain`** (warn) — Use optional chaining `?.` when possible
-
-### Import Rules
-- **`import/order`** (warn) — Organize imports in groups:
-  1. Builtin modules (`fs`, `path`, etc.)
-  2. External packages (`react`, `@nestjs/common`, etc.)
-  3. Internal (`@imbobi/*` imports)
-  4. Parent directory (`../`)
-  5. Sibling files (`./`)
-  6. Index files (`.`)
-- **Alphabetized** within each group, case-insensitive
+- **`@typescript-eslint/prefer-nullish-coalescing`** (warn) — Prefer `??` over `||`
+- **`@typescript-eslint/prefer-optional-chain`** (warn) — Use optional chaining `?.`
 
 ### General Rules
 - **`no-console`** (warn) — Avoid `console.log()`, only allow `warn` and `error`
@@ -55,8 +49,7 @@ This project uses a **unified ESLint configuration** across all workspaces:
 - **`no-var`** (error) — Never use `var`, use `const` or `let`
 
 ### Test Files Override
-- Files matching `*.spec.ts` or `*.test.ts` have relaxed rules:
-  - Jest environment enabled
+- Files matching `*.spec.ts` or `*.test.ts`:
   - `@typescript-eslint/no-explicit-any` disabled (common in tests)
 
 ---
@@ -89,83 +82,49 @@ pnpm --filter @imbobi/api lint -- --fix
 
 ### Check Specific Files
 ```bash
-pnpm lint -- src/modules/auth/auth.service.ts
+pnpm lint -- services/api/src/modules/auth/auth.service.ts
 ```
 
 ---
 
-## Workspace-Specific Rules
+## Current Lint Status
 
-### API (NestJS)
-**Environment**: Node.js  
-**Extensions**: BaseConfig + Node.js specific
+### Passing Packages ✅
+- `@imbobi/schemas` — 4 warnings (nullish coalescing style)
+- `@imbobi/core` — 3 warnings (unused imports, nullish coalescing)
+- `@imbobi/api` — Passing (0 errors)
+- `@imbobi/web` — Passing (0 errors)
+- `@imbobi/ui` — Passing (0 errors)
 
-```json
-{
-  "env": {
-    "node": true,
-    "es2022": true
-  }
-}
+### Needs Fixes ⚠️
+- `@imbobi/mobile` — 46 problems (19 errors, 27 warnings)
+  - Promise-returning functions as event handlers
+  - Floating promises not awaited
+  - Unused variables
+
+To fix mobile issues:
+```bash
+pnpm lint -- --fix
+# Then manually fix remaining errors with:
+pnpm --filter @imbobi/mobile lint
 ```
-
-### Web (Next.js)
-**Environment**: Browser + Node.js (SSR)  
-**Extensions**: BaseConfig + React + Next.js
-
-```json
-{
-  "env": {
-    "browser": true,
-    "es2022": true
-  },
-  "extends": [
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended",
-    "plugin:@next/next/recommended"
-  ]
-}
-```
-
-Rules:
-- `react/react-in-jsx-scope` — Disabled (not needed in Next.js)
-- `@next/next/no-img-element` — Use Next.js Image component
-
-### Mobile (Expo/React Native)
-**Environment**: React Native  
-**Extensions**: BaseConfig + React + React Native
-
-```json
-{
-  "env": {
-    "es2022": true,
-    "react-native/react-native": true
-  },
-  "extends": [
-    "plugin:react-native/all"
-  ]
-}
-```
-
-Rules:
-- `react-native/no-color-literals` — Use color constants
-- `react-native/no-inline-styles` — Avoid inline styles
-
-### Schemas & Core (Pure TypeScript)
-**Environment**: Node.js  
-**Extensions**: BaseConfig only
 
 ---
 
 ## Ignoring Files
 
-Add patterns to `.eslintignore`:
+ESLint ignores files listed in `.eslintignore`:
 ```
 node_modules
 dist
 build
 .next
+.turbo
 coverage
+.env
+.env.*
+*.log
+.DS_Store
 ```
 
 Or in code:
@@ -183,44 +142,62 @@ const value: any = something;
 
 ---
 
+## Extending Configuration
+
+The root `eslint.config.js` uses ESLint's flat config format:
+
+```javascript
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  {
+    ignores: ['node_modules', 'dist', ...],
+  },
+  // Base recommended configs
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    // Custom rules for all TypeScript files
+    files: ['**/*.ts', '**/*.tsx'],
+    rules: { ... },
+  },
+  {
+    // Test-specific overrides
+    files: ['**/*.spec.ts', '**/*.test.ts'],
+    rules: { ... },
+  }
+);
+```
+
+To add custom rules for a workspace, add them to the `rules` object in the config.
+
+---
+
 ## Common Issues & Fixes
 
-### Issue: "Cannot find tsconfig.json"
-**Solution**: Add `parserOptions.tsconfigRootDir` in workspace config:
-```json
-{
-  "parserOptions": {
-    "project": "tsconfig.json",
-    "tsconfigRootDir": "."
-  }
-}
+### Issue: "Unexpected any" warnings
+**Solution**: This is intentional. Mark unused vars with `_` prefix:
+```typescript
+const _unused: any = value;
 ```
 
-### Issue: ESLint can't resolve `@imbobi/*` imports
-**Solution**: Already configured in root `.eslintrc.json` via `import/order` plugin:
-```json
-{
-  "pathGroups": [
-    {
-      "pattern": "@imbobi/**",
-      "group": "internal",
-      "position": "before"
-    }
-  ]
-}
+Or disable for specific lines:
+```typescript
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const value: any = something;
 ```
 
-### Issue: React/JSX not recognized
-**Solution**: Check workspace config includes React plugins and settings:
-```json
-{
-  "plugins": ["react", "react-hooks"],
-  "settings": {
-    "react": {
-      "version": "detect"
-    }
-  }
-}
+### Issue: Import order not enforced
+**Solution**: `eslint-plugin-import` is incompatible with ESLint v10 as of May 2026. We've removed it for now. Import organization is best-effort via code review.
+
+### Issue: "Promise-returning function provided to attribute"
+**Solution**: When passing async functions to event handlers, wrap with callback:
+```typescript
+// ❌ Wrong
+<button onClick={async () => { await doSomething(); }}>Click</button>
+
+// ✅ Correct
+<button onClick={() => void doSomething()}>Click</button>
 ```
 
 ---
@@ -264,52 +241,6 @@ Create `.vscode/settings.json`:
 
 ---
 
-## Extending Configuration
-
-To add rules to a workspace, extend the local `.eslintrc.json`:
-
-```json
-{
-  "extends": ["../../.eslintrc.json"],
-  "rules": {
-    "@typescript-eslint/explicit-function-return-types": "error"
-  }
-}
-```
-
-To override root rules:
-```json
-{
-  "rules": {
-    "no-console": "off"
-  }
-}
-```
-
----
-
-## Maintenance
-
-### Checking for Outdated Plugins
-```bash
-pnpm outdated @typescript-eslint/eslint-plugin
-pnpm outdated eslint-plugin-react
-```
-
-### Updating ESLint
-```bash
-pnpm add -D eslint@latest
-pnpm add -D @typescript-eslint/eslint-plugin@latest
-pnpm add -D @typescript-eslint/parser@latest
-```
-
-### Running Full Lint
-```bash
-pnpm lint -- --fix
-```
-
----
-
 ## Severity Levels
 
 - **error** (🔴) — Blocks CI/CD, must be fixed
@@ -318,15 +249,23 @@ pnpm lint -- --fix
 
 ---
 
-## References
+## Next Steps
 
-- [ESLint Documentation](https://eslint.org/docs/rules/)
-- [@typescript-eslint Documentation](https://typescript-eslint.io/rules/)
-- [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react)
-- [eslint-plugin-import](https://github.com/import-js/eslint-plugin-import)
+1. **Fix mobile linting issues** — 19 errors blocking CI
+2. **Update documentation** — Add ESLint as pre-commit hook
+3. **Monitor style warnings** — Nullish coalescing (`??`) usage
+4. **Consider import plugin** — Once `eslint-plugin-import` v3 supports ESLint v10
 
 ---
 
-**Configuration Status**: ✅ Complete  
-**Coverage**: 6 workspaces  
+## References
+
+- [ESLint Flat Config](https://eslint.org/docs/latest/use/configure/migration-guide)
+- [@typescript-eslint Rules](https://typescript-eslint.io/rules/)
+- [typescript-eslint Quick Start](https://typescript-eslint.io/getting-started/)
+
+---
+
+**Configuration Status**: ✅ Functional  
+**ESLint Version**: 10.4.0  
 **Last Updated**: 27 May 2026
