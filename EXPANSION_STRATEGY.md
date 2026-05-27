@@ -5,21 +5,29 @@
 
 ---
 
-## **FASE 1: SÃO PAULO (Base)** 🏢
+## **FASE 1: DUAL BASES (São Paulo + Curitiba)** 🏢🏢
 
 **Timeline:** Meses 1-6  
-**Foco:** Consolidar modelo, provar validação tripla, build de parceiros
+**Foco:** Consolidar modelo em 2 cidades, provar validação tripla, build de parceiros regionais
 
-### **Operações:**
-- **Engenheiros próprios em SP** (2-3 eng.)
+### **Base 1: São Paulo** 🌃
+- **Engenheiros próprios** (2-3 eng.)
   - Raio: Grande São Paulo (até 100km)
   - Validações presenciais: créditos >R$100k
   - Tempo médio: 3-5 dias por visita
-  
-- **Volume alvo:**
-  - Mes 1-2: 50 créditos/mês (GPS digital)
-  - Mes 3-4: 150 créditos/mês (50% GPS, 50% eng.)
-  - Mes 5-6: 300 créditos/mês (30% GPS, 60% eng., 10% parceiros SP)
+  - **Mercado:** Maior volume de construção, maior ticket
+
+### **Base 2: Curitiba** 🌳
+- **Engenheiros próprios** (2 eng.)
+  - Raio: Curitiba + região metropolitana (até 80km)
+  - Validações presenciais: créditos >R$100k
+  - Tempo médio: 3-5 dias por visita
+  - **Mercado:** Forte em obras, permite expansão Sul
+
+### **Volume alvo (Combinado):**
+- Mes 1-2: 80 créditos/mês (50 SP + 30 Curitiba)
+- Mes 3-4: 250 créditos/mês (150 SP + 100 Curitiba)
+- Mes 5-6: 450 créditos/mês (280 SP + 170 Curitiba)
 
 - **Métricas esperadas:**
   - Taxa de aprovação: 75-80%
@@ -35,51 +43,66 @@
 - 🔜 Security audit completo
 - 🔜 Dashboard de parceiros (agendamento + reports)
 
-### **KPIs Fase 1:**
+### **KPIs Fase 1 (SP + Curitiba):**
 ```
-- Volume: 300 créditos/mês (target final)
+- Volume: 450 créditos/mês (target final)
+- Distribuição: SP 280 + Curitiba 170
 - Ticket médio: R$80k
 - Taxa média: 0.99% a.m.
-- Receita mensal: ~R$24k (0.99% × 300 × 80k / 12)
-- Custo eng.: ~R$15k/mês (salário + viagens)
-- Margem: ~R$9k/mês (ops + tech + marketing)
+- Receita mensal: ~R$36k (0.99% × 450 × 80k / 12)
+- Custo eng.: ~R$20k/mês (4 eng. × R$5k each + viagens)
+- Margem: ~R$5k/mês (ops + tech + marketing)
 ```
 
 ---
 
-## **FASE 2: REGIÃO SUDESTE** 🌐
+## **FASE 2: REGIÃO SUL + SUDESTE** 🌐
 
 **Timeline:** Meses 6-12  
-**Foco:** Expandir com parceiros regionais (RJ, MG, ES)
+**Foco:** Expandir com parceiros regionais (SC, RS + RJ, MG, ES)
 
-### **Estratégia de Parceiros:**
+### **Expansão Sul (a partir de Curitiba):**
+- **Santa Catarina** (Mês 7)
+  - 3-5 eng. parceiros (Florianópolis + interior)
+  - Cobertura: região metropolitana
+  - Modelo: Contrato por validação (~R$500-800/visita)
+  
+- **Rio Grande do Sul** (Mês 8)
+  - 3-5 eng. parceiros (Porto Alegre + região)
+  - Foco: obras maiores
+  
+- **Reforço em Curitiba** (Mês 8)
+  - +1 eng. próprio (agora 3 eng. em Curitiba)
+  - Supervisão de parceiros SC/RS
+
+### **Expansão Sudeste (a partir de SP):**
 - **Rio de Janeiro** (Mês 7)
   - 3-5 eng. parceiros locais
   - Cobertura: Rio + região metropolitana
-  - Modelo: Contrato por validação (~R$500-800/visita)
   
 - **Minas Gerais** (Mês 8)
   - 3-5 eng. parceiros (Belo Horizonte + interior)
-  - Foco: obras maiores (R$200k+)
   
 - **Espírito Santo** (Mês 9)
   - 2-3 eng. parceiros
-  - Foco: Vitória + região
 
 ### **Volume Esperado:**
 ```
-SP:  400 créditos/mês (crescimento 30%)
-RJ:  150 créditos/mês (novo)
-MG:  100 créditos/mês (novo)
+SP:   400 créditos/mês (crescimento 30%)
+Curitiba: 200 créditos/mês (crescimento 20%)
+SC:   80 créditos/mês (novo)
+RS:   70 créditos/mês (novo)
+RJ:   120 créditos/mês (novo)
+MG:   80 créditos/mês (novo)
 ES:   50 créditos/mês (novo)
 ─────────────────────────
-Tot: 700 créditos/mês
+Tot: 1.000 créditos/mês
 ```
 
 ### **Operações:**
-- **1-2 eng. próprios** em cada estado (supervisão)
-- **3-5 parceiros por estado** (validações)
-- **Garantia de qualidade:** Eng. próprio supervisiona 10% das validações
+- **Bases próprias:** SP (3 eng.) + Curitiba (3 eng.)
+- **Parceiros regionais:** 15-20 eng. distribuídos em 5 estados
+- **Garantia de qualidade:** Eng. de base supervisiona 10% das validações
 
 ### **Infraestrutura:**
 - 🔜 Dashboard de parceiros com:
@@ -97,29 +120,37 @@ Tot: 700 créditos/mês
 ## **FASE 3: BRASIL TODO** 🇧🇷
 
 **Timeline:** Meses 12+  
-**Foco:** Cobertura nacional, escala máxima, automação
+**Foco:** Cobertura nacional a partir das 2 bases, escala máxima, automação
 
-### **Regiões-Alvo (Ordem):**
-1. **Nordeste** (Salvador, Recife, Fortaleza)
-2. **Centro-Oeste** (Brasília, Goiânia)
-3. **Sul** (São Paulo expandido: Curitiba, Porto Alegre)
-4. **Norte** (Manaus - later)
+### **Modelo Hub & Spoke (2 Bases Principais):**
 
-### **Modelo Nacional:**
-- **HQ em São Paulo** (tech + compliance)
-- **Regional offices** em capitais (1-2 pessoas)
-- **Rede de parceiros** em cada estado (5-15 eng. por estado)
-- **Algoritmo de matching:** GPS coordenadas → eng. mais perto
+**Hub SP:** Cobre Sudeste + Centro-Oeste
+- HQ e operações (tech + compliance)
+- 3+ eng. próprios
+- Parceiros em: RJ, MG, ES, DF, GO, MT, MS
+
+**Hub Curitiba:** Cobre Sul + Nordeste
+- Regional office (operações + compliance)
+- 3+ eng. próprios
+- Parceiros em: SC, RS + BA, PE, CE, RN, PB (depois)
+
+### **Regiões-Alvo (Ordem de Expansão):**
+1. **Sul** (SC, RS) — Mês 7-8 ✓
+2. **Sudeste** (RJ, MG, ES) — Mês 7-9 ✓
+3. **Centro-Oeste** (DF, GO, MT, MS) — Mês 10-12
+4. **Nordeste** (BA, PE, CE, RN, PB, MA, PI, AL, SE) — Mês 12-18
+5. **Norte** (AM, RO, AC, PA, TO, AP) — Mês 18+ (lower priority)
 
 ### **Volume Alvo Nacional (Ano 2):**
 ```
-Fase 2 (6m): 700 créditos/mês  × 6 = 4.200 créditos
-Fase 3 (12m): 2.000 créditos/mês × 12 = 24.000 créditos
-─────────────────────────────────────────────────
-Total Ano 2: ~28.000 créditos
+Fase 1 (6m): 450 créditos/mês (SP + Curitiba)
+Fase 2 (6m): 1.000 créditos/mês (SP + Curitiba + 5 estados)
+Fase 3 (6m+): 3.000 créditos/mês (Brasil)
 
-Receita Ano 2: ~R$22.4M 
-(28.000 créditos × R$80k média × 0.99% × 12 meses / 12)
+Total Ano 2: ~42.000 créditos
+
+Receita Ano 2: ~R$33.6M 
+(42.000 créditos × R$80k média × 0.99% / 12 × 12)
 ```
 
 ### **Infraestrutura Nacional:**
@@ -163,49 +194,51 @@ Throughput: Máximo
 
 ---
 
-## **MODEL ECONÔMICO**
+## **MODELO ECONÔMICO**
 
-### **Fase 1: SP (Base)**
+### **Fase 1: SP + Curitiba (Dual Bases)**
 ```
-Receita:  R$24k/mês (300 créditos × R$80k × 0.99% / 12)
+Receita:  R$36k/mês (450 créditos × R$80k × 0.99% / 12)
 Custos:
-  - Eng. próprios (2): R$15k/mês
-  - Tech/ops: R$5k/mês
-  - Marketing: R$3k/mês
-  ─────────────────────
-  Total: R$23k/mês
+  - Eng. próprios (4: 2 SP + 2 Curitiba): R$20k/mês
+  - Tech/ops: R$6k/mês
+  - Marketing/partnerships: R$5k/mês
+  ──────────────────────────────────
+  Total: R$31k/mês
 
-Margem: ~R$1k/mês (breakeven, investindo em base sólida)
+Margem: ~R$5k/mês (breakeven, investindo em 2 bases sólidas)
 ```
 
-### **Fase 2: Sudeste (Escalando)**
+### **Fase 2: Sul + Sudeste (Escalando com Parceiros)**
 ```
-Receita:  R$112k/mês (700 créditos)
+Receita:  R$160k/mês (1.000 créditos)
 Custos:
-  - Eng. próprios (5): R$35k/mês
-  - Parceiros RJ/MG/ES: R$40k/mês (R$500-800 por validação)
-  - Tech/ops: R$10k/mês
-  - Marketing: R$10k/mês
-  ────────────────────────
-  Total: R$95k/mês
+  - Eng. próprios (6: 3 SP + 3 Curitiba): R$30k/mês
+  - Parceiros regionais (15 eng.): R$80k/mês (R$500-800 por validação)
+  - Tech/ops/compliance: R$15k/mês
+  - Marketing/partnerships: R$15k/mês
+  ──────────────────────────────────
+  Total: R$140k/mês
 
-Margem: ~R$17k/mês (15% gross margin)
+Margem: ~R$20k/mês (12.5% gross margin)
 ```
 
-### **Fase 3: Brasil (Máxima Escala)**
+### **Fase 3: Brasil (Máxima Escala Hub & Spoke)**
 ```
-Receita:  R$267k/mês (2.000 créditos)
+Receita:  R$480k/mês (3.000 créditos)
 Custos:
-  - Eng. próprios (15): R$105k/mês
-  - Parceiros nacionais: R$160k/mês (rede de ~100 eng.)
-  - Tech/ops/compliance: R$25k/mês
-  - Marketing: R$20k/mês
-  ────────────────────────
-  Total: R$310k/mês
+  - Eng. próprios (8: 4 SP + 4 Curitiba): R$40k/mês
+  - Parceiros nacionais (80+ eng.): R$280k/mês
+  - Tech/ops/compliance: R$35k/mês
+  - Marketing/partnerships: R$30k/mês
+  ──────────────────────────────────
+  Total: R$385k/mês
 
-Margem: -R$43k/mês (precisa mais volume ou aumentar taxa)
+Margem: ~R$95k/mês (20% gross margin)
+
+Com 3.500 créditos/mês → R$560k/mês receita
   ↓
-COM 3.000 créditos/mês → margem positiva
+Margem: ~R$175k/mês (31% gross margin)
 ```
 
 ---
@@ -246,13 +279,25 @@ COM 3.000 créditos/mês → margem positiva
 ## **TIMELINE MACRO**
 
 ```
-Mês 1-6 (2026):   SP Base consolidado (300 créditos/mês)
-Mês 6-12:         Sudeste escalando (700 créditos/mês)
-Mês 12-18 (2027): Brasil expandindo (1.500+ créditos/mês)
-Mês 18+ (2027):   Máxima escala (2.000+ créditos/mês)
+2026 - Fase 1: Consolidação Dual Base
+├─ Mês 1-3:   SP + Curitiba setup (80-250 créditos/mês)
+├─ Mês 3-6:   Crescimento paralelo (250-450 créditos/mês)
+└─ Breakeven: Mês 6 (com volume 450 créditos/mês)
 
-Break-even: Mês 8-9 (Fase 2)
-Lucro positivo: Mês 12+ (Fase 3 iniciando)
+2026-2027 - Fase 2: Expansão Regional (SP/Curitiba como hubs)
+├─ Mês 6-8:   Sul (SC, RS) + Sudeste (RJ, MG, ES)
+├─ Mês 8-12:  Consolidação (700-1.000 créditos/mês)
+├─ Lucro positivo: Mês 8-9
+└─ Target: R$20k/mês margem
+
+2027+ - Fase 3: Cobertura Nacional (Hub & Spoke)
+├─ Mês 12-18: Centro-Oeste + Nordeste
+├─ Mês 18+:   Norte (se rentável)
+├─ Máxima escala: 3.000+ créditos/mês
+└─ Target: R$95k+/mês margem
+
+Timeline curto: Break-even em Mês 6-8 (Fase 1)
+Timeline longo: R$1M+ receita mensal em 24 meses (Fase 3)
 ```
 
 ---
