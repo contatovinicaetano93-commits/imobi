@@ -13,7 +13,7 @@ function StatCard({ label, value, color, href }: { label: string; value: number;
   const textColor = color === "red" ? "text-red-600" : color === "yellow" ? "text-yellow-600" : "text-green-600";
 
   return (
-    <Link href={href}>
+    <Link href={href as any}>
       <div className={`${bgColor} rounded-2xl border border-gray-100 p-6 cursor-pointer hover:shadow-md transition-shadow`}>
         <p className="text-sm text-gray-600 mb-2">{label}</p>
         <p className={`text-3xl font-bold ${textColor}`}>{value}</p>

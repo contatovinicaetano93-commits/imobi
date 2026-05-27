@@ -1,6 +1,7 @@
 "use client";
 
-import { useSimuladorCredito } from "@imbobi/core";
+// Import hooks directly from the dedicated hooks export file
+import { useSimuladorCredito } from "@imbobi/core/src/hooks";
 import { formatarBRL, formatarPercentual } from "@imbobi/core";
 
 export default function SimuladorPage() {

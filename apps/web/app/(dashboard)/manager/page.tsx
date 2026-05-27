@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { managerApi } from "@/lib/api";
+import { ManagerKPICards } from "./manager-kpi-cards";
 
 export const metadata: Metadata = { title: "Painel do Manager — imbobi" };
 
@@ -16,44 +17,7 @@ export default async function ManagerDashboardPage() {
       <h1 className="text-2xl font-bold text-gray-900">Painel do Manager</h1>
 
       {/* Cards KPI */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            label: "Etapas Pendentes",
-            value: String(stats.filaAprovacoes),
-            sub: "aguardando vistoria",
-            href: "/dashboard/manager/etapas"
-          },
-          {
-            label: "KYC Pendentes",
-            value: String(stats.filaKyc),
-            sub: "documentos",
-            href: "/dashboard/manager/kyc"
-          },
-          {
-            label: "Créditos Ativos",
-            value: String(stats.creditosAtivos),
-            sub: "em andamento",
-            href: undefined
-          },
-          {
-            label: "Obras Ativas",
-            value: String(stats.obrasAtivas),
-            sub: "em execução",
-            href: undefined
-          },
-        ].map((kpi) => (
-          <div
-            key={kpi.label}
-            className={`bg-white rounded-2xl p-6 border border-gray-100 shadow-sm ${kpi.href ? 'hover:shadow-md cursor-pointer transition-shadow' : ''}`}
-            onClick={() => kpi.href && (window.location.href = kpi.href)}
-          >
-            <p className="text-sm text-gray-500 mb-1">{kpi.label}</p>
-            <p className="text-2xl font-bold text-gray-900">{kpi.value}</p>
-            <p className="text-xs text-gray-400 mt-1">{kpi.sub}</p>
-          </div>
-        ))}
-      </div>
+      <ManagerKPICards stats={stats} />
 
       {/* Action Buttons */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
