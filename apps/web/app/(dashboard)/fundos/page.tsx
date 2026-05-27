@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { PortfolioOverview } from "@/components/fundos/PortfolioOverview";
 import { SimpleLineChart } from "@/components/fundos/SimpleLineChart";
 import { SimpleBarChart } from "@/components/fundos/SimpleBarChart";
@@ -7,10 +6,6 @@ import {
   mockStatusDistribution,
   mockPortfolioWorks,
 } from "@/lib/fundos-mock-data";
-
-export const metadata: Metadata = {
-  title: "Dashboard de Fundos — imbobi",
-};
 
 export default function FundosOverviewPage() {
   const ativasCount = mockPortfolioWorks.filter((o) => o.status === "EM_EXECUCAO").length;

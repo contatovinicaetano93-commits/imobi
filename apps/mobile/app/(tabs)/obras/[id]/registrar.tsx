@@ -7,9 +7,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
-import { useGeoValidation } from "@imbobi/core";
-
-type GeoStatus = "idle" | "checking" | "inside_radius" | "outside_radius" | "poor_accuracy" | "permission_denied" | "unavailable";
+import { useGeoValidation, type GeoStatus } from "@imbobi/core";
 
 const STATUS_META: Record<GeoStatus, { emoji: string; bg: string; text: string }> = {
   idle:             { emoji: "📍", bg: "#f3f4f6", text: "#374151" },
