@@ -4,6 +4,8 @@ import {
 import { EvidenciasService } from "./evidencias.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { Throttle } from "../../common/decorators/throttle.decorator";
+import { UserThrottlerGuard } from "../../common/guards/user-throttler.guard";
 
 @UseGuards(JwtAuthGuard)
 @Controller("evidencias")
@@ -11,6 +13,8 @@ export class EvidenciasController {
   constructor(private readonly evidencias: EvidenciasService) {}
 
   @Post()
+  @UseGuards(UserThrottlerGuard)
+  @Throttle(30, 86400000) // 30 requests per day per user
   upload(
     @UsuarioAtual() u: IUsuario,
     @Body() body: any
