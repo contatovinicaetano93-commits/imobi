@@ -1,0 +1,200 @@
+"use client";
+
+import { useState } from "react";
+import { Download, Loader2, FileText, FileJson } from "lucide-react";
+import { RegionalMetrics, RoiDataPoint, InadimplenciaDataPoint, generateCSVReport, ReportTemplate } from "./fundos-utils";
+import { CreditoResumo } from "@/lib/api";
+
+interface ReportExportProps {
+  regional: RegionalMetrics[];
+  roiData: RoiDataPoint[];
+  inadimplenciaData: InadimplenciaDataPoint[];
+  creditos: CreditoResumo[];
+}
+
+export function ReportExport({
+  regional,
+  roiData,
+  inadimplenciaData,
+  creditos,
+}: ReportExportProps) {
+  const [isExporting, setIsExporting] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate>("detailed");
+  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
+
+  const handleCSVExport = async (template: ReportTemplate = "detailed") => {
+    setIsExporting(true);
+    try {
+      const csv = generateCSVReport(regional, roiData, inadimplenciaData, creditos, template);
+      const element = document.createElement("a");
+      const file = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      element.href = URL.createObjectURL(file);
+      element.download = `fundos-report-${template}-${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      setShowTemplateMenu(false);
+    } catch (error) {
+      console.error("Erro ao exportar relatório:", error);
+      alert("Erro ao exportar relatório. Tente novamente.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExcelExport = async (template: ReportTemplate = "detailed") => {
+    setIsExporting(true);
+    try {
+      // Excel export with format
+      const csv = generateCSVReport(regional, roiData, inadimplenciaData, creditos, template);
+      const element = document.createElement("a");
+      const file = new Blob([csv], { type: "text/plain;charset=utf-8" });
+      element.href = URL.createObjectURL(file);
+      element.download = `fundos-report-${template}-${new Date().toISOString().split("T")[0]}.xlsx`;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      setShowTemplateMenu(false);
+    } catch (error) {
+      console.error("Erro ao exportar Excel:", error);
+      alert("Erro ao exportar Excel. Tente novamente.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handlePDFExport = async () => {
+    setIsExporting(true);
+    try {
+      window.print();
+    } catch (error) {
+      console.error("Erro ao exportar PDF:", error);
+      alert("Erro ao exportar PDF. Tente novamente.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleJSONExport = async () => {
+    setIsExporting(true);
+    try {
+      const data = {
+        exportedAt: new Date().toISOString(),
+        summary: {
+          totalAprovado: creditos.reduce((acc, c) => acc + Number(c.valorAprovado ?? 0), 0),
+          totalLiberado: creditos.reduce((acc, c) => acc + Number(c.valorLiberado ?? 0), 0),
+          creditosCount: creditos.length,
+          regionesCount: regional.length,
+        },
+        regional,
+        roiTimeline: roiData,
+        inadimplencia: inadimplenciaData,
+      };
+
+      const element = document.createElement("a");
+      const file = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+      element.href = URL.createObjectURL(file);
+      element.download = `fundos-report-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    } catch (error) {
+      console.error("Erro ao exportar JSON:", error);
+      alert("Erro ao exportar dados. Tente novamente.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <div className="bg-gradient-to-r from-brand-50 to-brand-100 rounded-2xl border border-brand-200 p-6">
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold text-brand-900 mb-2">Exportar Relatório</h3>
+          <p className="text-sm text-brand-700">
+            Baixe um relatório completo do seu portfólio em diferentes formatos
+          </p>
+        </div>
+
+        {/* Template Selection */}
+        <div>
+          <p className="text-xs font-medium text-brand-800 mb-2">Selecionar Template:</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button
+              onClick={() => setSelectedTemplate("executive")}
+              className={`text-xs px-3 py-2 rounded-lg transition-colors ${
+                selectedTemplate === "executive"
+                  ? "bg-brand-700 text-white"
+                  : "bg-white text-brand-700 border border-brand-300 hover:bg-brand-50"
+              }`}
+            >
+              Executivo
+            </button>
+            <button
+              onClick={() => setSelectedTemplate("detailed")}
+              className={`text-xs px-3 py-2 rounded-lg transition-colors ${
+                selectedTemplate === "detailed"
+                  ? "bg-brand-700 text-white"
+                  : "bg-white text-brand-700 border border-brand-300 hover:bg-brand-50"
+              }`}
+            >
+              Detalhado
+            </button>
+            <button
+              onClick={() => setSelectedTemplate("minimal")}
+              className={`text-xs px-3 py-2 rounded-lg transition-colors ${
+                selectedTemplate === "minimal"
+                  ? "bg-brand-700 text-white"
+                  : "bg-white text-brand-700 border border-brand-300 hover:bg-brand-50"
+              }`}
+            >
+              Mínimo
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <button
+            onClick={() => handleCSVExport(selectedTemplate)}
+            disabled={isExporting}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-brand-700 border border-brand-300 rounded-lg hover:bg-brand-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            <span className="text-xs">CSV</span>
+          </button>
+
+          <button
+            onClick={() => handleExcelExport(selectedTemplate)}
+            disabled={isExporting}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-brand-700 border border-brand-300 rounded-lg hover:bg-brand-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+            <span className="text-xs">Excel</span>
+          </button>
+
+          <button
+            onClick={handleJSONExport}
+            disabled={isExporting}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-brand-700 border border-brand-300 rounded-lg hover:bg-brand-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileJson className="w-4 h-4" />}
+            <span className="text-xs">JSON</span>
+          </button>
+
+          <button
+            onClick={handlePDFExport}
+            disabled={isExporting}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            <span className="text-xs">PDF</span>
+          </button>
+        </div>
+
+        <p className="text-xs text-brand-600 mt-3">
+          Os relatórios contêm informações consolidadas de todos os seus fundos, ROI esperado vs real, distribuição regional e análise de risco.
+        </p>
+      </div>
+    </div>
+  );
+}

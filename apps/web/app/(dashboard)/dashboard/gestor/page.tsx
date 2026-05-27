@@ -125,7 +125,7 @@ export default function GestorPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <h2 className="font-bold text-gray-900 mb-4">Dicas</h2>
           <div className="space-y-2 text-sm text-gray-600">
-            <p>• Priorize itens na fila vermelha (> 24h)</p>
+            <p>• Priorize itens na fila vermelha ({`>`} 24h)</p>
             <p>• Revise com atenção às geolocalização</p>
             <p>• Documente motivos de rejeição</p>
             <p>• Valide completude de KYC antes de aprovar</p>
