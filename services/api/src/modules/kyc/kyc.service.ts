@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
@@ -17,6 +17,15 @@ export class KycService {
     private readonly pushNotificacoes: PushNotificacoesService,
     private readonly storage: StorageService
   ) {}
+
+  async verificarPermissao(usuarioId: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { usuarioId },
+    });
+    if (!usuario || (usuario.tipo !== "GESTOR_OBRA" && usuario.tipo !== "ADMIN")) {
+      throw new ForbiddenException("Acesso negado. Apenas gestores podem acessar.");
+    }
+  }
 
   async uploadDocumento(usuarioId: string, tipo: string, url: string) {
     const usuario = await this.prisma.usuario.findUnique({

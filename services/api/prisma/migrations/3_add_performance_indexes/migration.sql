@@ -1,22 +1,22 @@
--- Add performance indexes for geographic queries and KYC status filtering
--- Phase 1 of performance optimization: Database Indexing
+-- Performance Indexes - Phase 1 Optimization
+-- These indexes accelerate critical queries in the imbobi platform
 
--- Composite index for geographic bounds queries (GPS validation)
--- This is critical for the evidencia.validarGPS() function
-CREATE INDEX idx_obra_geo_location ON "Obra"("geoLatitude", "geoLongitude");
+-- Credito queries by usuarioId + status
+-- Used in: buscarPorUsuario() with status filtering
+CREATE INDEX "idx_credito_usuario_status" ON "Credito"("usuarioId", "status");
 
--- Index for KYC status filtering in score calculations
--- This accelerates queries like: WHERE kycStatus = 'APROVADO'
-CREATE INDEX idx_usuario_kyc_status ON "Usuario"("kycStatus");
+-- LiberacaoParcela workflow queries
+-- Used in: release tracking and status monitoring
+CREATE INDEX "idx_liberacao_credito_status" ON "LiberacaoParcela"("creditoId", "status");
 
--- Index for commonly filtered evidence queries
--- Speeds up: WHERE validada = true/false
-CREATE INDEX idx_evidencia_validada_status ON "EvidenciaEtapa"("validada", "criadoEm");
+-- Notificacao unread counts
+-- Used in: dashboard KPIs and notification queries
+CREATE INDEX "idx_notificacao_usuario_nao_lida" ON "Notificacao"("usuarioId", "lida");
 
--- Index for etapa status + createdAt filtering (approval workflows)
--- Used in: WHERE status = 'AGUARDANDO_VISTORIA' ORDER BY criadoEm
-CREATE INDEX idx_etapa_status_tempo ON "EtapaObra"("status", "criadoEm");
+-- Score history ordering
+-- Used in: score history retrieval with DESC ordering
+CREATE INDEX "idx_score_usuario_ordem" ON "ScoreHistorico"("usuarioId", "criadoEm" DESC);
 
--- Index for obra status filtering (dashboard queries)
--- Used in: WHERE status = 'EM_EXECUCAO' OR status = 'CONCLUIDA'
-CREATE INDEX idx_obra_status ON "Obra"("status");
+-- Etapa queries by obra + status
+-- Used in: progressoGeral() and etapa listing with filtering
+CREATE INDEX "idx_etapa_obra_status" ON "EtapaObra"("obraId", "status");

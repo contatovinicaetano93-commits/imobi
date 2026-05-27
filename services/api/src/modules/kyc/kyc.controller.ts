@@ -30,7 +30,8 @@ export class KycController {
   }
 
   @Get("pendentes")
-  async listarPendentes() {
+  async listarPendentes(@UsuarioAtual() u: IUsuario) {
+    await this.kyc.verificarPermissao(u.id);
     return this.kyc.listarPendentes();
   }
 

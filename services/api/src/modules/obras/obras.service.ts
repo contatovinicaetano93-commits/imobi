@@ -78,10 +78,17 @@ export class ObrasService {
   }
 
   async progressoGeral(obraId: string): Promise<number> {
-    const etapas = await this.prisma.etapaObra.findMany({ where: { obraId } });
-    const concluidas = etapas.filter((e) => e.status === "CONCLUIDA");
+    // Optimized: use aggregation instead of N+1 query
+    const etapas = await this.prisma.etapaObra.findMany({
+      where: { obraId },
+      select: { percentualObra: true, status: true },
+    });
+
     const total = etapas.reduce((acc, e) => acc + Number(e.percentualObra), 0);
-    const concluido = concluidas.reduce((acc, e) => acc + Number(e.percentualObra), 0);
+    const concluido = etapas
+      .filter((e) => e.status === "CONCLUIDA")
+      .reduce((acc, e) => acc + Number(e.percentualObra), 0);
+
     return total > 0 ? Math.round((concluido / total) * 100) : 0;
   }
 }

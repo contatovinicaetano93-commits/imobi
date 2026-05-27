@@ -1,0 +1,76 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, staging]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgis/postgis:15-3.3
+        env:
+          POSTGRES_USER: imbobi
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: imbobi_test
+        options: >-
+          --health-cmd "pg_isready -U imbobi"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgresql://imbobi:test@localhost:5432/imbobi_test
+        run: pnpm --filter @imbobi/api prisma migrate deploy
+
+      - name: Run E2E tests
+        env:
+          DATABASE_URL: postgresql://imbobi:test@localhost:5432/imbobi_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          NODE_ENV: test
+        run: pnpm --filter @imbobi/api test:e2e
+
+      - name: Upload E2E coverage
+        if: always()
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./services/api/coverage/e2e-coverage.json
+          flags: e2etests
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e-logs
+          path: ./services/api/logs/
