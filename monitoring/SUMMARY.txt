@@ -1,0 +1,299 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                  IMBOBI MONITORING & ALERTING - COMPLETE SETUP            ║
+║                     Production-Ready Configuration                         ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📦 DELIVERY CONTENTS
+════════════════════════════════════════════════════════════════════════════
+
+✅ DOCUMENTATION (52 KB)
+   ├─ MONITORING_PLAN.md (14K)      → Complete monitoring strategy
+   ├─ SLA_TARGETS.md (10K)          → SLA definitions & calculations
+   ├─ RUNBOOKS.md (15K)             → On-call procedures (P0-P2)
+   ├─ DEPLOYMENT_GUIDE.md (2K)      → Step-by-step deployment (THIS FILE)
+   └─ README.md (11K)               → Quick start & reference
+
+✅ CONFIGURATIONS (38 KB)
+   ├─ datadog-config.yaml (10K)     → Datadog main config
+   ├─ alerts-datadog.json (11K)     → 16 production alerts
+   ├─ dashboards.json (13K)         → 8 comprehensive dashboards
+   └─ docker-compose.monitoring.yml → Stack orchestration
+
+✅ INSTRUMENTATION (38 KB)
+   ├─ instrumentation.ts (8K)       → Datadog SDK for API
+   ├─ fluent-bit.conf (5K)          → Log aggregation pipeline
+   ├─ prometheus.yml (2K)           → Prometheus scrape config
+   ├─ alertmanager.yml (9K)         → Alert routing & notifications
+   └─ alerting-rules.yml (12K)      → 35+ Prometheus alert rules
+
+✅ AUTOMATION (12 KB)
+   └─ setup-monitoring.sh           → One-command deployment script
+
+TOTAL: 180 KB of production-ready configuration
+
+
+🎯 SLA TARGETS
+════════════════════════════════════════════════════════════════════════════
+
+Uptime:             99.5%  (21.6 min downtime/month)
+Latency P95:        <200ms (95% of requests complete in <200ms)
+Error Rate:         <0.5%  (99.5%+ success rate)
+Database:           99.9%  (43.2 min downtime/month)
+Cache Hit Rate:     >80%   (non-blocking requirement)
+
+
+🚨 CRITICAL ALERTS (P0 + P1)
+════════════════════════════════════════════════════════════════════════════
+
+P0 - CRITICAL (Auto-escalate PagerDuty + Slack + Email)
+├─ DB Connection Pool Exhausted     → Queued > 10 for 1 min
+├─ Database Connection Failures     → Any connection error
+├─ Disk Space Critical              → <10% available
+├─ Dead Letter Queue Has Messages   → >0 unprocessable jobs
+└─ Uptime SLA Breach               → Error rate >5% for 1h
+
+P1 - HIGH (Slack + Email)
+├─ HTTP Error Rate > 5%             → 5% errors for 5 min
+├─ Latency P95 > 500ms              → Degraded performance
+├─ S3 Upload Failures               → >3 failures in 5 min
+├─ Auth Failures Spike              → >20 failures in 5 min
+└─ Slow Database Queries            → >5 slow queries in 5 min
+
+
+📊 DASHBOARDS (8 Pre-Built)
+════════════════════════════════════════════════════════════════════════════
+
+1. Overview (SLA Dashboard)
+   └─ Uptime %, Latency P95, Error Rate vs Targets
+
+2. Performance Metrics
+   └─ Latency distribution, DB queries, Cache, S3, Resources
+
+3. Database Health
+   └─ Connection pool, Slow queries, Replication lag
+
+4. Cache & Redis
+   └─ Hit rate, Memory usage, Operations/sec
+
+5. Queue & Jobs
+   └─ Job processing, Failures, Dead letter queue
+
+6. Business Metrics
+   └─ Obras, Parcelas, Fotos, Payments (KPIs)
+
+7. Security & Errors
+   └─ Auth failures, Error by endpoint, Top errors
+
+8. APM Traces (Distributed Tracing)
+   └─ Service dependencies, Slowest traces, Bottlenecks
+
+
+🔧 MONITORING STACK
+════════════════════════════════════════════════════════════════════════════
+
+Primary Stack (Production):
+├─ Datadog Agent          → APM, Metrics, Logs, Traces
+├─ Fluent Bit             → Log aggregation & shipping
+└─ S3 Backup             → Log retention 90 days
+
+Fallback Stack (Disaster Recovery):
+├─ Prometheus             → Metrics collection
+├─ AlertManager           → Alert routing & notifications
+├─ Grafana                → Dashboard visualization
+└─ Jaeger                 → Distributed tracing (optional)
+
+
+📈 KEY METRICS MONITORED
+════════════════════════════════════════════════════════════════════════════
+
+Performance:
+├─ http.request.duration (p50, p75, p95, p99)
+├─ db.query.duration
+├─ cache.operation.duration
+└─ s3.operation.duration
+
+Errors:
+├─ http.requests.error_rate (%)
+├─ db.connection.errors
+├─ queue.jobs.failed
+└─ queue.jobs.dead_letter
+
+Resources:
+├─ system.memory.percent
+├─ system.disk.percent
+├─ system.load.1
+└─ redis.memory.percent
+
+Business:
+├─ obras.created.total
+├─ parcelas.liberadas.total
+├─ fotos.uploaded.total
+└─ payment.processed.total
+
+
+🚀 DEPLOYMENT (30 minutes)
+════════════════════════════════════════════════════════════════════════════
+
+1. Setup Credentials (5 min)
+   └─ Datadog API keys, Slack webhook, PagerDuty API key
+
+2. Deploy Stack (10 min)
+   └─ Run: ./monitoring/setup-monitoring.sh datadog
+
+3. Instrument API (5 min)
+   └─ Import instrumentation.ts in API main.ts
+
+4. Configure Alerts (5 min)
+   └─ Import alerts-datadog.json in Datadog
+
+5. Import Dashboards (5 min)
+   └─ Import dashboards.json in Datadog
+
+6. Test & Verify (5 min)
+   └─ Trigger test alert, verify notifications
+
+
+💰 ESTIMATED COSTS
+════════════════════════════════════════════════════════════════════════════
+
+Datadog:           $216/month (metrics, APM, logs, monitoring)
+AWS Infrastructure: $52/month  (EC2, S3, data transfer)
+────────────────────────────
+Total:             ~$270/month
+
+
+📞 SUPPORT & CONTACTS
+════════════════════════════════════════════════════════════════════════════
+
+On-Call:           PagerDuty (https://imbobi.pagerduty.com)
+Slack Alerts:      #critical-alerts, #alerts-imbobi
+DevOps Lead:       devops@imbobi.com
+Engineering Lead:  engineering@imbobi.com
+CTO:               cto@imbobi.com
+
+
+✅ QUICK START CHECKLIST
+════════════════════════════════════════════════════════════════════════════
+
+Before Deployment:
+  □ Datadog account created
+  □ Credencials documented (.env)
+  □ Slack webhook tested
+  □ AWS S3 bucket created
+  □ Docker/Docker-Compose installed
+
+During Deployment:
+  □ Execute setup script
+  □ Verify containers running
+  □ Import alerts in Datadog
+  □ Import dashboards
+  □ Instrument API code
+
+After Deployment:
+  □ Metrics flowing to Datadog
+  □ Alerts firing correctly
+  □ Notifications working (Slack, Email)
+  □ Test PagerDuty escalation
+  □ Runbooks documented & shared
+
+
+📚 DOCUMENTATION GUIDE
+════════════════════════════════════════════════════════════════════════════
+
+New to the team?
+  → Start with: README.md (quick start)
+
+On-call duty?
+  → Reference: RUNBOOKS.md (procedures for each alert)
+
+Questions about SLA?
+  → Check: SLA_TARGETS.md (definitions & calculations)
+
+Need complete strategy?
+  → Read: MONITORING_PLAN.md (comprehensive guide)
+
+Deploying to production?
+  → Follow: DEPLOYMENT_GUIDE.md (step-by-step)
+
+
+🎓 NEXT STEPS
+════════════════════════════════════════════════════════════════════════════
+
+Immediate:
+  1. Run setup script: ./monitoring/setup-monitoring.sh datadog
+  2. Verify metrics flowing in Datadog
+  3. Test alert notifications
+
+Short-term (7 days):
+  4. Train team on runbooks (RUNBOOKS.md)
+  5. Setup on-call schedules in PagerDuty
+  6. Adjust alert thresholds if needed
+
+Long-term (30+ days):
+  7. Optimize slow queries based on metrics
+  8. Implement caching strategies
+  9. Plan capacity based on trends
+  10. Disaster recovery testing
+
+
+📄 FILES AT A GLANCE
+════════════════════════════════════════════════════════════════════════════
+
+Configuration Files:
+  datadog-config.yaml              ← Datadog configuration
+  alerts-datadog.json              ← 16 production alerts
+  dashboards.json                  ← 8 dashboards
+  docker-compose.monitoring.yml    ← Stack composition
+  fluent-bit.conf                  ← Log aggregation
+  prometheus.yml                   ← Prometheus config
+  alertmanager.yml                 ← Alert routing
+  alerting-rules.yml               ← 35+ alert rules
+
+Documentation Files:
+  README.md                        ← START HERE (quick reference)
+  MONITORING_PLAN.md               ← Complete strategy
+  SLA_TARGETS.md                   ← SLA definitions
+  RUNBOOKS.md                      ← On-call procedures
+  DEPLOYMENT_GUIDE.md              ← Step-by-step deploy
+
+Automation:
+  setup-monitoring.sh              ← One-command setup
+  instrumentation.ts               ← API SDK
+
+
+🌟 KEY FEATURES
+════════════════════════════════════════════════════════════════════════════
+
+✓ Enterprise-grade monitoring (Datadog)
+✓ Fallback stack for disaster recovery (Prometheus)
+✓ 16 pre-configured production alerts
+✓ 8 pre-built comprehensive dashboards
+✓ Automatic log aggregation (Fluent Bit)
+✓ Distributed tracing (APM)
+✓ Business metrics monitoring
+✓ SLA compliance tracking (99.5% target)
+✓ On-call runbooks & procedures
+✓ One-click automated deployment
+✓ Comprehensive documentation
+✓ Cost-effective setup (~$270/month)
+
+
+════════════════════════════════════════════════════════════════════════════
+
+🎉 READY TO DEPLOY?
+
+Execute: ./monitoring/setup-monitoring.sh datadog
+
+In 30 minutes you'll have enterprise monitoring in production! 
+
+For detailed instructions, see: DEPLOYMENT_GUIDE.md
+For on-call procedures, see: RUNBOOKS.md
+For SLA info, see: SLA_TARGETS.md
+
+════════════════════════════════════════════════════════════════════════════
+
+Version: 1.0
+Date: 2026-05-27
+Next Review: 2026-08-27
+
+Questions? Check README.md or contact devops@imbobi.com
