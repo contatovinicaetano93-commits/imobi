@@ -19,22 +19,14 @@ export function PortfolioChart({ data }: PortfolioChartProps) {
   };
 
   return (
-    <div className="w-full h-64 sm:h-80 md:h-96" role="img" aria-label="Gráfico de evolução de ROI esperado vs real ao longo do tempo">
+    <div className="w-full h-96">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+        <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis
-            dataKey="mes"
-            stroke="#6b7280"
-            tick={{ fontSize: 12 }}
-            angle={-45}
-            textAnchor="end"
-            height={80}
-          />
+          <XAxis dataKey="mes" stroke="#6b7280" />
           <YAxis
             stroke="#6b7280"
             tickFormatter={formatCurrency}
-            tick={{ fontSize: 12 }}
           />
           <Tooltip
             formatter={(value) => formatCurrency(value as number)}
@@ -42,21 +34,17 @@ export function PortfolioChart({ data }: PortfolioChartProps) {
               backgroundColor: "#ffffff",
               border: "1px solid #e5e7eb",
               borderRadius: "0.5rem",
-              fontSize: "12px",
             }}
           />
-          <Legend
-            wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }}
-          />
+          <Legend />
           <Line
             type="monotone"
             dataKey="esperado"
             stroke="#10b981"
             strokeWidth={2}
             name="ROI Esperado"
-            dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
-            isAnimationActive={true}
+            dot={{ r: 4 }}
+            activeDot={{ r: 6 }}
           />
           <Line
             type="monotone"
@@ -64,9 +52,8 @@ export function PortfolioChart({ data }: PortfolioChartProps) {
             stroke="#3b82f6"
             strokeWidth={2}
             name="ROI Real"
-            dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
-            isAnimationActive={true}
+            dot={{ r: 4 }}
+            activeDot={{ r: 6 }}
           />
         </LineChart>
       </ResponsiveContainer>
