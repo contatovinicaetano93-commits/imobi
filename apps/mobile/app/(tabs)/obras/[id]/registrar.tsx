@@ -9,7 +9,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
 import { useGeoValidation } from "@imbobi/core";
 
-declare const process: { env: Record<string, string | undefined> } | undefined;
+declare const process: { env: Record<string, string | undefined> };
 
 type GeoStatus = "idle" | "checking" | "inside_radius" | "outside_radius" | "poor_accuracy" | "permission_denied" | "unavailable";
 
