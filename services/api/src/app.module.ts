@@ -1,7 +1,10 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
-import { ThrottlerModule } from "@nestjs/throttler";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { CacheModule } from "@nestjs/cache-manager";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { CacheInterceptor } from "@nestjs/cache-manager";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsuariosModule } from "./modules/usuarios/usuarios.module";
@@ -22,7 +25,19 @@ import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ThrottlerModule.forRoot([
+      { ttl: 60000, limit: 100 }, // General: 100 req/min
+      { ttl: 60000, limit: 10, name: "auth" }, // Auth endpoints: 10 req/min
+      { ttl: 60000, limit: 5, name: "upload" }, // File uploads: 5 req/min
+      { ttl: 60000, limit: 20, name: "manager" }, // Manager ops: 20 req/min
+    ]),
+    CacheModule.register({
+      isGlobal: true,
+      store: "redis",
+      host: process.env["REDIS_HOST"] ?? "localhost",
+      port: Number(process.env["REDIS_PORT"] ?? 6379),
+      ttl: 300, // 5 min default TTL
+    }),
     BullModule.forRoot({
       redis: {
         host: process.env["REDIS_HOST"] ?? "localhost",
@@ -45,6 +60,16 @@ import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
     MarketplaceModule,
     ParceirosModule,
   ],
-  providers: [LiberacaoParcelaWorker],
+  providers: [
+    LiberacaoParcelaWorker,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CacheInterceptor,
+    },
+  ],
 })
 export class AppModule {}

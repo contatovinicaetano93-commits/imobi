@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, UseGuards, UseInterceptors } from "@nestjs/common";
+import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
 import { ObrasService } from "./obras.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -19,6 +20,8 @@ export class ObrasController {
   }
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(300) // 5 min
   listar(@UsuarioAtual() u: IUsuario) {
     return this.obras.listar(u.id);
   }

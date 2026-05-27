@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { managerApi, type KycPendente } from "@/lib/api";
+import { KycBatchActions } from "@/components/dashboard/KycBatchActions";
 import Link from "next/link";
 
 function formatDate(date: string) {
@@ -26,6 +27,9 @@ export default function KycPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const limit = 20;
 
   useEffect(() => {
@@ -63,34 +67,123 @@ export default function KycPage() {
   const pages = Math.ceil(data.total / limit);
   const currentPage = offset / limit + 1;
 
+  const handleSelectDoc = (docId: string) => {
+    setSelectedDocs((prev) =>
+      prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    setSelectedDocs((prev) =>
+      prev.length === data.documentos.length ? [] : data.documentos.map((d) => d.kycDocumentoId)
+    );
+  };
+
+  const handleBulkSuccess = () => {
+    setSuccessMessage(`${selectedDocs.length} documento(s) aprovado(s) com sucesso!`);
+    setSelectedDocs([]);
+    setOffset(0);
+    setTimeout(() => setSuccessMessage(null), 5000);
+  };
+
+  const handleError = (message: string) => {
+    setError(message);
+  };
+
+  const filteredDocs = data.documentos.filter(
+    (doc) =>
+      doc.usuario.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.usuario.cpf.includes(searchQuery) ||
+      doc.usuario.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center justify-between">
+          <p className="text-green-800 text-sm font-medium">{successMessage}</p>
+          <button
+            onClick={() => setSuccessMessage(null)}
+            className="text-green-600 hover:text-green-700"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">KYC Pendentes</h1>
           <p className="text-gray-500 text-sm mt-1">
             {data.total} documento{data.total !== 1 ? "s" : ""} aguardando análise
+            {selectedDocs.length > 0 && ` — ${selectedDocs.length} selecionado(s)`}
           </p>
         </div>
       </div>
 
-      {data.documentos.length === 0 ? (
+      {/* Search */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-4">
+        <input
+          type="text"
+          placeholder="Buscar por nome, CPF ou email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      {filteredDocs.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <p className="text-4xl mb-4">🎉</p>
-          <p className="text-gray-500">Nenhum documento KYC pendente no momento</p>
+          <p className="text-gray-500">
+            {searchQuery
+              ? "Nenhum documento encontrado com essa busca"
+              : "Nenhum documento KYC pendente no momento"}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {data.documentos.map((doc) => {
+          {/* Selection Toolbar */}
+          {filteredDocs.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={selectedDocs.length === filteredDocs.length && filteredDocs.length > 0}
+                  onChange={handleSelectAll}
+                  className="w-5 h-5 rounded border-gray-300 text-brand-600 cursor-pointer"
+                  title="Selecionar/desselecionar todos"
+                />
+                <span className="text-sm text-gray-700">
+                  {selectedDocs.length === 0
+                    ? "Selecionar documentos"
+                    : `${selectedDocs.length} de ${filteredDocs.length} selecionados`}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {filteredDocs.map((doc) => {
             const horas = hoursAgo(doc.criadoEm);
             const urgente = horas >= 48;
+            const isSelected = selectedDocs.includes(doc.kycDocumentoId);
 
             return (
               <div
                 key={doc.kycDocumentoId}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow"
+                className={`bg-white rounded-2xl border shadow-sm p-6 transition-all ${
+                  isSelected ? "border-brand-300 bg-brand-50" : "border-gray-100 hover:shadow-md"
+                }`}
               >
                 <div className="flex items-start gap-4">
+                  {/* Checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => handleSelectDoc(doc.kycDocumentoId)}
+                    className="w-5 h-5 rounded border-gray-300 text-brand-600 cursor-pointer mt-0.5 shrink-0"
+                  />
+
                   {/* Urgência */}
                   <div
                     className={`w-1.5 h-full self-stretch rounded-full ${
@@ -149,6 +242,13 @@ export default function KycPage() {
           })}
         </div>
       )}
+
+      <KycBatchActions
+        selectedDocs={selectedDocs}
+        onSuccess={handleBulkSuccess}
+        onError={handleError}
+        isDisabled={loading}
+      />
 
       {/* Paginação */}
       {pages > 1 && (

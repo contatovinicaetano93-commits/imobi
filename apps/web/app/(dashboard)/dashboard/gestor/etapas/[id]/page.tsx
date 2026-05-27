@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { managerApi, type EtapaDetalhe } from "@/lib/api";
-
+import { managerApi, type EtapaDetalhe, evidenciasApi } from "@/lib/api";
+import { GpsValidationStatus } from "@/components/dashboard/GpsValidationStatus";
 import Image from "next/image";
 
 function brl(v: number) {
@@ -18,22 +18,27 @@ export default function EtapaDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [etapa, setEtapa] = useState<EtapaDetalhe | null>(null);
+  const [gpsData, setGpsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionForm, setShowRejectionForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   const etapaId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   useEffect(() => {
-    managerApi
-      .obterEtapaDetalhe(etapaId)
-      .then((data) => {
-        if (!data) {
+    Promise.all([
+      managerApi.obterEtapaDetalhe(etapaId),
+      evidenciasApi.listarPorEtapa(etapaId).catch(() => []),
+    ])
+      .then(([etapaData, gpsDataResult]) => {
+        if (!etapaData) {
           setError("Etapa não encontrada");
         } else {
-          setEtapa(data);
+          setEtapa(etapaData);
+          setGpsData(gpsDataResult);
         }
       })
       .catch((err) => setError(err.message))
@@ -133,6 +138,24 @@ export default function EtapaDetailPage() {
             </div>
           </div>
 
+          {/* GPS Validation */}
+          {gpsData.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <h2 className="font-bold text-gray-900 mb-4">Validação GPS</h2>
+              <GpsValidationStatus
+                pontos={gpsData.map((g) => ({
+                  latitude: g.latCaptura,
+                  longitude: g.lngCaptura,
+                  accuracy: g.accuracyMetros,
+                  distanciaObra: g.distanciaObra,
+                }))}
+                obraLatitude={etapa.obra.geoLatitude || 0}
+                obraLongitude={etapa.obra.geoLongitude || 0}
+                raioValidacaoMetros={etapa.obra.raioValidacaoMetros || 50}
+              />
+            </div>
+          )}
+
           {/* Fotos/Evidências */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
             <h2 className="font-bold text-gray-900 mb-4">
@@ -143,7 +166,12 @@ export default function EtapaDetailPage() {
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 {etapa.evidencias.map((ev, idx) => (
-                  <div key={idx} className="space-y-2">
+                  <button
+                    key={idx}
+                    onClick={() => setExpandedImage(ev.fotoUrl)}
+                    className="space-y-2 hover:opacity-80 transition-opacity text-left"
+                    aria-label={`Expandir foto ${idx + 1}`}
+                  >
                     <div className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden">
                       <Image
                         src={ev.fotoUrl}
@@ -153,7 +181,7 @@ export default function EtapaDetailPage() {
                       />
                     </div>
                     <p className="text-xs text-gray-500">{formatDate(ev.criadoEm)}</p>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -231,6 +259,33 @@ export default function EtapaDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Expanded Image Modal */}
+      {expandedImage && (
+        <div
+          className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4"
+          onClick={() => setExpandedImage(null)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[80vh] w-full h-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setExpandedImage(null)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 text-2xl"
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+            <Image
+              src={expandedImage}
+              alt="Foto expandida"
+              fill
+              className="object-contain"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
