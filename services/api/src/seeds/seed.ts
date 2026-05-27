@@ -281,8 +281,13 @@ async function seedEtapas(
   ];
 
   const etapasMap = new Map<string, string[]>();
+  const obraIds: string[] = [];
 
-  for (const [obraIndex, obraId] of obraMap) {
+  obraMap.forEach((obraId) => {
+    obraIds.push(obraId);
+  });
+
+  for (const obraId of obraIds) {
     console.log(`  Creating 9 stages for obra: ${obraId}`);
 
     const etapasIds: string[] = [];
@@ -504,7 +509,14 @@ async function seedNotificacoes(
   ];
 
   // Create 2-3 notifications for first 5 users
-  const usersToNotify = Array.from(usuarioMap.values()).slice(0, 5);
+  const usersToNotify: string[] = [];
+  let count = 0;
+  usuarioMap.forEach((usuarioId) => {
+    if (count < 5) {
+      usersToNotify.push(usuarioId);
+      count++;
+    }
+  });
 
   for (const usuarioId of usersToNotify) {
     const notificationCount = Math.floor(Math.random() * 2) + 2; // 2-3 notifications
