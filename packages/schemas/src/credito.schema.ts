@@ -24,7 +24,7 @@ export const SimulacaoCreditoSchema = z.object({
 
 export const SolicitacaoCreditoSchema = SimulacaoCreditoSchema.extend({
   obraId: z.string().uuid().optional(),
-  finalidade: z.string().max(500),
+  finalidade: z.string().max(500).transform(v => v.trim()),
   rendaMensalDeclarada: z.number().positive(),
 });
 
@@ -32,7 +32,7 @@ export const LiberacaoParcelaSchema = z.object({
   creditoId: z.string().uuid(),
   etapaId: z.string().uuid(),
   valorLiberacao: z.number().positive(),
-  observacaoGestor: z.string().max(1000).optional(),
+  observacaoGestor: z.string().max(1000).optional().transform(v => v?.trim() || undefined),
 });
 
 export type StatusCredito = z.infer<typeof StatusCreditoEnum>;

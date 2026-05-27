@@ -6,6 +6,7 @@ import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
+import { escapeHtml } from "../../common/utils/html-escape";
 
 @Injectable()
 export class EtapasService {
@@ -98,15 +99,18 @@ export class EtapasService {
       data: { status: "REPROVADA" },
     });
 
+    // Escape HTML para prevenir XSS em notificações
+    const motivoEscapado = escapeHtml(motivo);
+
     await this.notificacoes.criar(
       etapa.obra.usuarioId,
       "ETAPA_REPROVADA",
       `Etapa reprovada: ${etapa.nome}`,
-      `A etapa "${etapa.nome}" foi reprovada. Motivo: ${motivo}`,
+      `A etapa "${etapa.nome}" foi reprovada. Motivo: ${motivoEscapado}`,
       `/dashboard/obras/${etapa.obra.obraId}`
     );
 
-    return { ok: true, motivo };
+    return { ok: true, motivo: motivoEscapado };
   }
 
   async atualizarStatus(etapaId: string, status: string) {

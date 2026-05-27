@@ -41,8 +41,14 @@ export const UpdateUsuarioSchema = CadastroUsuarioSchema.omit({
   cpf: true,
 }).partial();
 
+export const AtualizarPerfilSchema = z.object({
+  nome: z.string().min(3).max(120).optional(),
+  telefone: z.string().regex(/^\d{10,11}$/, "Telefone inválido").optional(),
+});
+
 export type TipoUsuario = z.infer<typeof TipoUsuarioEnum>;
 export type KycStatus = z.infer<typeof KycStatusEnum>;
 export type CadastroUsuarioInput = z.infer<typeof CadastroUsuarioSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
 export type UpdateUsuarioInput = z.infer<typeof UpdateUsuarioSchema>;
+export type AtualizarPerfilInput = z.infer<typeof AtualizarPerfilSchema>;

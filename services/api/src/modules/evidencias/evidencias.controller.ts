@@ -6,6 +6,8 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import { Throttle } from "../../common/decorators/throttle.decorator";
 import { UserThrottlerGuard } from "../../common/guards/user-throttler.guard";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { UploadEvidenciaSchema, ValidarEvidenciaSchema } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
 @Controller("evidencias")
@@ -17,9 +19,9 @@ export class EvidenciasController {
   @Throttle(30, 86400000) // 30 requests per day per user
   upload(
     @UsuarioAtual() u: IUsuario,
-    @Body() body: any
+    @Body(new ZodPipe(UploadEvidenciaSchema)) body: unknown
   ) {
-    return this.evidencias.upload(u.id, body, Buffer.alloc(0), "image/jpeg");
+    return this.evidencias.upload(u.id, body as never, Buffer.alloc(0), "image/jpeg");
   }
 
   @Get("etapa/:etapaId")
@@ -31,9 +33,9 @@ export class EvidenciasController {
   validar(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
-    @Body("aprovado") aprovado: boolean,
-    @Body("observacao") obs?: string
+    @Body(new ZodPipe(ValidarEvidenciaSchema)) body: unknown
   ) {
-    return this.evidencias.validar(u.id, id, aprovado, obs);
+    const validated = body as { evidenciaId: string; aprovado: boolean; observacao?: string };
+    return this.evidencias.validar(u.id, validated.evidenciaId, validated.aprovado, validated.observacao);
   }
 }

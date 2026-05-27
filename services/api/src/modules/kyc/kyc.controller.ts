@@ -2,6 +2,8 @@ import { Controller, Post, Get, Patch, Body, Param, UseGuards } from "@nestjs/co
 import { KycService } from "./kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { UploadDocumentoSchema, RejeitarDocumentoSchema } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
 @Controller("kyc")
@@ -11,9 +13,10 @@ export class KycController {
   @Post("upload")
   async uploadDocumento(
     @UsuarioAtual() u: IUsuario,
-    @Body() body: { tipo: string; url: string }
+    @Body(new ZodPipe(UploadDocumentoSchema)) body: unknown
   ) {
-    return this.kyc.uploadDocumento(u.id, body.tipo, body.url);
+    const validated = body as { tipo: string; url: string };
+    return this.kyc.uploadDocumento(u.id, validated.tipo, validated.url);
   }
 
   @Get("documentos")
@@ -40,9 +43,10 @@ export class KycController {
   async rejeitarDocumento(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
-    @Body() body: { motivo: string }
+    @Body(new ZodPipe(RejeitarDocumentoSchema)) body: unknown
   ) {
-    return this.kyc.rejeitarDocumento(id, u.id, body.motivo);
+    const validated = body as { motivo: string };
+    return this.kyc.rejeitarDocumento(id, u.id, validated.motivo);
   }
 
   @Get("verificar")

@@ -45,7 +45,7 @@ export const CriarObraSchema = z.object({
 export const CriarEtapaSchema = z.object({
   obraId: z.string().uuid(),
   nome: z.string().min(2).max(100),
-  descricao: z.string().max(1000).optional(),
+  descricao: z.string().max(1000).optional().transform(v => v?.trim() || undefined),
   ordem: z.number().int().positive(),
   percentualObra: z.number().min(0.01).max(100),
   dataInicio: z.string().datetime().optional(),

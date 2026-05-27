@@ -4,6 +4,7 @@ import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { KycDocumentoStatus } from "@prisma/client";
+import { escapeHtml } from "../../common/utils/html-escape";
 
 @Injectable()
 export class KycService {
@@ -105,13 +106,16 @@ export class KycService {
       throw new BadRequestException("Motivo da rejeição é obrigatório");
     }
 
+    // Escape HTML para prevenir XSS em emails e notificações
+    const motivoEscapado = escapeHtml(motivo);
+
     const atualizado = await this.prisma.kycDocumento.update({
       where: { kycDocumentoId },
       data: {
         status: "REJEITADO",
         analisadoPor: gestorId,
         analisadoEm: new Date(),
-        motivo_rejeicao: motivo,
+        motivo_rejeicao: motivo, // Armazenar original sem escape (Prisma trata isso)
       },
     });
 
@@ -120,7 +124,7 @@ export class KycService {
       documento.usuarioId,
       "KYC_REJEITADO",
       "Documento KYC rejeitado",
-      `Seu documento "${documento.tipo}" foi rejeitado. Motivo: ${motivo}. Por favor, envie um novo documento.`,
+      `Seu documento "${documento.tipo}" foi rejeitado. Motivo: ${motivoEscapado}. Por favor, envie um novo documento.`,
       "/dashboard/perfil"
     );
 
@@ -128,14 +132,14 @@ export class KycService {
     this.pushNotificacoes.enviarPush({
       usuarioId: documento.usuarioId,
       titulo: "Documentação Rejeitada",
-      mensagem: `Seu documento foi rejeitado. Motivo: ${motivo}`,
+      mensagem: `Seu documento foi rejeitado. Motivo: ${motivoEscapado}`,
       tipo: "KYC_REJEITADO",
-      dados: { motivo },
+      dados: { motivo: motivoEscapado },
     }).catch(() => {});
 
-    // Envia email
+    // Envia email (passa escapado)
     this.email
-      .kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo)
+      .kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivoEscapado)
       .catch(() => {});
 
     return atualizado;

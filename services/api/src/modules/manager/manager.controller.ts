@@ -4,6 +4,9 @@ import { EtapasService } from "../etapas/etapas.service";
 import { KycService } from "../kyc/kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { RejeitarDocumentoSchema } from "@imbobi/schemas";
+import { z } from "zod";
 
 @UseGuards(JwtAuthGuard)
 @Controller("manager")
@@ -56,20 +59,24 @@ export class ManagerController {
   async aprovarEtapa(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
-    @Body("observacao") observacao?: string
+    @Body() body: { observacao?: string }
   ) {
     await this.manager.verificarPermissao(u.id);
-    return this.etapas.aprovar(u.id, id, observacao);
+    // Validar e sanitizar observacao
+    const schema = z.object({ observacao: z.string().max(1000).optional() });
+    const validated = schema.parse(body);
+    return this.etapas.aprovar(u.id, id, validated.observacao);
   }
 
   @Patch("etapas/:id/rejeitar")
   async rejeitarEtapa(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
-    @Body("motivo") motivo: string
+    @Body(new ZodPipe(RejeitarDocumentoSchema)) body: unknown
   ) {
     await this.manager.verificarPermissao(u.id);
-    return this.etapas.rejeitar(u.id, id, motivo);
+    const validated = body as { motivo: string };
+    return this.etapas.rejeitar(u.id, id, validated.motivo);
   }
 
   @Patch("kyc/:id/aprovar")
@@ -82,9 +89,10 @@ export class ManagerController {
   async rejeitarKyc(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
-    @Body("motivo") motivo: string
+    @Body(new ZodPipe(RejeitarDocumentoSchema)) body: unknown
   ) {
     await this.manager.verificarPermissao(u.id);
-    return this.kyc.rejeitarDocumento(id, u.id, motivo);
+    const validated = body as { motivo: string };
+    return this.kyc.rejeitarDocumento(id, u.id, validated.motivo);
   }
 }

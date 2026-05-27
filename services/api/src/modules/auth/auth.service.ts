@@ -2,18 +2,29 @@ import { Injectable, UnauthorizedException, ConflictException } from "@nestjs/co
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
+import { CpfEncryptionService } from "../encryption/cpf-encryption.service";
+import { PhoneEncryptionService } from "../encryption/phone-encryption.service";
 import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwt: JwtService
+    private readonly jwt: JwtService,
+    private readonly cpfEncryption: CpfEncryptionService,
+    private readonly phoneEncryption: PhoneEncryptionService,
   ) {}
 
   async registrar(input: CadastroUsuarioInput) {
+    // Encrypt CPF and generate hash for lookup
+    const { cpfEncrypted, cpfHash } = this.cpfEncryption.encryptAndHash(input.cpf);
+
+    // Encrypt phone number
+    const telefoneEncrypted = this.phoneEncryption.encrypt(input.telefone);
+
+    // Check for existing user by email or CPF hash
     const existe = await this.prisma.usuario.findFirst({
-      where: { OR: [{ email: input.email }, { cpf: input.cpf }] },
+      where: { OR: [{ email: input.email }, { cpfHash }] },
     });
     if (existe) throw new ConflictException("E-mail ou CPF já cadastrado.");
 
@@ -22,8 +33,9 @@ export class AuthService {
       data: {
         nome: input.nome,
         email: input.email,
-        cpf: input.cpf,
-        telefone: input.telefone,
+        cpf: cpfEncrypted,        // Encrypted CPF
+        cpfHash,                   // Hash for lookups
+        telefone: telefoneEncrypted, // Encrypted phone
         passwordHash,
       },
       select: { usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true },

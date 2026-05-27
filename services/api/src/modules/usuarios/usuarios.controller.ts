@@ -2,6 +2,8 @@ import { Controller, Get, Patch, UseGuards, Body } from "@nestjs/common";
 import { UsuariosService } from "./usuarios.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { AtualizarPerfilSchema } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
 @Controller("usuarios")
@@ -16,8 +18,8 @@ export class UsuariosController {
   @Patch("meu-perfil")
   async atualizarPerfil(
     @UsuarioAtual() u: IUsuario,
-    @Body() data: { nome?: string; telefone?: string }
+    @Body(new ZodPipe(AtualizarPerfilSchema)) data: unknown
   ) {
-    return this.usuarios.atualizarPerfil(u.id, data);
+    return this.usuarios.atualizarPerfil(u.id, data as never);
   }
 }

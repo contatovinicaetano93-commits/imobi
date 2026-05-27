@@ -8,13 +8,13 @@ export const UploadEvidenciaSchema = z.object({
     .number()
     .max(15, "Precisão GPS insuficiente. Aguarde sinal melhor."),
   timestampCaptura: z.string().datetime(),
-  descricao: z.string().max(500).optional(),
+  descricao: z.string().max(500).optional().transform(v => v?.trim() || undefined),
 });
 
 export const ValidarEvidenciaSchema = z.object({
   evidenciaId: z.string().uuid(),
   aprovado: z.boolean(),
-  observacao: z.string().max(1000).optional(),
+  observacao: z.string().max(1000).optional().transform(v => v?.trim() || undefined),
 });
 
 export const FiltroEvidenciaSchema = z.object({
