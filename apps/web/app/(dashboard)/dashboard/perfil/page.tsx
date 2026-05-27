@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-export const dynamic = "force-dynamic";
-import { usuariosApi } from "@/lib/api";
+import { usuariosApi, type UsuarioPerfil } from "@/lib/api";
 import { formatarCPF, formatarTelefone } from "@imbobi/core";
 import { PerfilForm } from "./perfil-form";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Perfil — imbobi" };
 
@@ -21,7 +22,17 @@ const USER_TYPE_MAP: Record<string, string> = {
 };
 
 export default async function PerfilPage() {
-  const usuario = await usuariosApi.meuPerfil();
+  const usuario = await usuariosApi.meuPerfil().catch((): UsuarioPerfil => ({
+    usuarioId: "",
+    nome: "Carregando...",
+    tipo: "TOMADOR",
+    email: "carregando@example.com",
+    cpf: "00000000000",
+    telefone: "",
+    kycStatus: "PENDENTE",
+    criadoEm: new Date().toISOString(),
+    atualizadoEm: new Date().toISOString(),
+  }));
   const kycInfo = KYC_STATUS_MAP[usuario.kycStatus] || KYC_STATUS_MAP.PENDENTE;
 
   return (
@@ -101,14 +112,6 @@ export default async function PerfilPage() {
           )}
         </div>
       )}
-
-      {/* Security */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Segurança</h2>
-        <button className="w-full border border-gray-300 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition-colors">
-          Alterar Senha
-        </button>
-      </div>
     </div>
   );
 }

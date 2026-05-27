@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ScoreService } from './score.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { CacheService } from '../cache/cache.service';
 
 describe('ScoreService', () => {
   let service: ScoreService;
@@ -16,6 +17,12 @@ describe('ScoreService', () => {
     },
   };
 
+  const mockCacheService = {
+    obterScoreComCache: jest.fn((usuarioId, callback) => callback()),
+    set: jest.fn(),
+    get: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -25,6 +32,10 @@ describe('ScoreService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: CacheService,
+          useValue: mockCacheService,
         },
       ],
     }).compile();
