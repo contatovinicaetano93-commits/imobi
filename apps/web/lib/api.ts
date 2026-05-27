@@ -179,6 +179,11 @@ export type EtapaPendente = {
 export type EtapaDetalhe = EtapaPendente & {
   status: string;
   evidencias: Array<{ evidenciaId: string; fotoUrl: string; criadoEm: string }>;
+  obra: EtapaPendente["obra"] & {
+    geoLatitude?: number;
+    geoLongitude?: number;
+    raioValidacaoMetros?: number;
+  };
 };
 
 export type KycPendente = {

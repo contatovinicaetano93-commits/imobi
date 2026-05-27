@@ -1,4 +1,6 @@
-import { Controller, Get, Patch, Param, Query, Body, UseGuards } from "@nestjs/common";
+import { Controller, Get, Patch, Param, Query, Body, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
+import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
 import { ManagerService } from "./manager.service";
 import { EtapasService } from "../etapas/etapas.service";
 import { KycService } from "../kyc/kyc.service";
@@ -15,12 +17,16 @@ export class ManagerController {
   ) {}
 
   @Get("dashboard")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async dashboard(@UsuarioAtual() u: IUsuario) {
     await this.manager.verificarPermissao(u.id);
     return this.manager.obterEstatisticas();
   }
 
   @Get("etapas-pendentes")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(120) // 2 min
   async listarEtapasPendentes(
     @UsuarioAtual() u: IUsuario,
     @Query("limit") limit: string = "20",
@@ -31,6 +37,9 @@ export class ManagerController {
   }
 
   @Get("kyc-pendentes")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(120) // 2 min
   async listarKycPendentes(
     @UsuarioAtual() u: IUsuario,
     @Query("limit") limit: string = "20",
