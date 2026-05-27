@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificacoesService } from '../notificacoes/notificacoes.service';
 import { EmailService } from '../email/email.service';
 import { PushNotificacoesService } from '../push-notificacoes/push-notificacoes.service';
+import { StorageService } from '../storage/storage.service';
 
 describe('KycService', () => {
   let service: KycService;
@@ -12,6 +13,7 @@ describe('KycService', () => {
   let notificacoes: jest.Mocked<NotificacoesService>;
   let email: jest.Mocked<EmailService>;
   let pushNotificacoes: jest.Mocked<PushNotificacoesService>;
+  let storage: jest.Mocked<StorageService>;
 
   const mockPrismaService = {
     usuario: {
@@ -39,6 +41,11 @@ describe('KycService', () => {
     enviarPush: jest.fn(),
   };
 
+  const mockStorageService = {
+    uploadarDocumento: jest.fn(),
+    deletarDocumento: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -61,6 +68,10 @@ describe('KycService', () => {
           provide: PushNotificacoesService,
           useValue: mockPushNotificacoesService,
         },
+        {
+          provide: StorageService,
+          useValue: mockStorageService,
+        },
       ],
     }).compile();
 
@@ -69,6 +80,7 @@ describe('KycService', () => {
     notificacoes = module.get(NotificacoesService) as jest.Mocked<NotificacoesService>;
     email = module.get(EmailService) as jest.Mocked<EmailService>;
     pushNotificacoes = module.get(PushNotificacoesService) as jest.Mocked<PushNotificacoesService>;
+    storage = module.get(StorageService) as jest.Mocked<StorageService>;
 
     mockEmailService.kycAprovadoEmail.mockResolvedValue(undefined);
     mockEmailService.kycRejeitadoEmail.mockResolvedValue(undefined);

@@ -97,6 +97,9 @@ import { APP_GUARD } from "@nestjs/core";
   ],
   providers: [
     LiberacaoParcelaWorker,
+    CustomThrottlerGuard,
+    IpThrottlerGuard,
+    UserThrottlerGuard,
     {
       provide: APP_GUARD,
       useClass: CustomThrottlerGuard,
