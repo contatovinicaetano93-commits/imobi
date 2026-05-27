@@ -1,5 +1,7 @@
 import type { ExpoConfig } from "expo/config";
 
+declare const process: { env: Record<string, string | undefined> } | undefined;
+
 const config: ExpoConfig = {
   name: "imbobi",
   slug: "imbobi",

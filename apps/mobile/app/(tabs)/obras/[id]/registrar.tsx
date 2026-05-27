@@ -9,6 +9,8 @@ import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
 import { useGeoValidation } from "@imbobi/core";
 
+declare const process: { env: Record<string, string | undefined> } | undefined;
+
 type GeoStatus = "idle" | "checking" | "inside_radius" | "outside_radius" | "poor_accuracy" | "permission_denied" | "unavailable";
 
 const STATUS_META: Record<GeoStatus, { emoji: string; bg: string; text: string }> = {
