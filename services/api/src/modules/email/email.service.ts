@@ -34,6 +34,30 @@ export class EmailService {
   }
 
   private initializeTransporter() {
+    // Check for SendGrid API key (preferred)
+    const sendgridApiKey = process.env["SENDGRID_API_KEY"];
+    if (sendgridApiKey) {
+      try {
+        this.transporter = nodemailer.createTransport({
+          host: "smtp.sendgrid.net",
+          port: 587,
+          secure: false,
+          auth: {
+            user: "apikey",
+            pass: sendgridApiKey,
+          },
+        });
+
+        this.logger.log("Email service initialized with SendGrid");
+        return;
+      } catch (error) {
+        this.logger.error(
+          `Failed to initialize SendGrid transporter: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    }
+
+    // Fallback to generic SMTP configuration
     const smtpHost = process.env["SMTP_HOST"];
     const smtpPort = process.env["SMTP_PORT"];
     const smtpUser = process.env["SMTP_USER"];
