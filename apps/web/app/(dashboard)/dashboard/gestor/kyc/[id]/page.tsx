@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { managerApi, type KycPendente } from "@/lib/api";
 
-import Image from "next/image";
 
 function getTipoLabel(tipo: string): string {
   const tipos: Record<string, string> = {
@@ -143,12 +142,7 @@ export default function KycDetailPage() {
             <h2 className="font-bold text-gray-900 mb-4">{getTipoLabel(doc.tipo)}</h2>
             <div className="space-y-4">
               <div className="relative w-full bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: "4/3" }}>
-                <Image
-                  src={doc.url}
-                  alt={`Documento ${getTipoLabel(doc.tipo)}`}
-                  fill
-                  className="object-cover"
-                />
+                      <img src={doc.url} alt="Documento ${getTipoLabel(doc.tipo)}" className="object-cover w-full h-full" />
               </div>
               <div className="text-sm text-gray-600">
                 Enviado em {formatDate(doc.criadoEm)}

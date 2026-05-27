@@ -15,6 +15,12 @@ importers:
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.41
+      '@types/react':
+        specifier: ^18.3
+        version: 18.3.29
+      '@types/react-dom':
+        specifier: ^18.3
+        version: 18.3.7(@types/react@18.3.29)
       turbo:
         specifier: ^2.0.0
         version: 2.9.14

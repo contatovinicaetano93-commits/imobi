@@ -13,7 +13,7 @@ interface PushPayload {
 @Injectable()
 export class PushNotificacoesService {
   private readonly logger = new Logger(PushNotificacoesService.name);
-  private messaging: admin.messaging.Messaging;
+  private messaging: admin.messaging.Messaging | null = null;
 
   constructor(private readonly prisma: PrismaService) {
     this.initializeFirebase();
@@ -34,7 +34,7 @@ export class PushNotificacoesService {
       this.logger.debug("Firebase initialized");
     } catch (error) {
       this.logger.warn(`Firebase not configured: ${error}`);
-      this.messaging = null;
+      this.messaging = null as any;
     }
   }
 

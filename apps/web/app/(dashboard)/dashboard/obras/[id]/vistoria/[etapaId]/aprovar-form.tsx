@@ -18,21 +18,23 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
 
   const acao = async (aprovado: boolean) => {
     setErro(null);
-    startTransition(async () => {
-      const res = await fetch(`/api/etapas/${etapaId}/validar`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ observacao: obs }),
-      });
+    startTransition(() => {
+      (async () => {
+        const res = await fetch(`/api/etapas/${etapaId}/validar`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ observacao: obs }),
+        });
 
-      if (!res.ok) {
-        const body = await res.json() as { message?: string };
-        setErro(body.message ?? "Erro ao processar.");
-        return;
-      }
+        if (!res.ok) {
+          const body = await res.json() as { message?: string };
+          setErro(body.message ?? "Erro ao processar.");
+          return;
+        }
 
-      router.push(`/dashboard/obras/${obraId}`);
-      router.refresh();
+        router.push(`/dashboard/obras/${obraId}`);
+        router.refresh();
+      })();
     });
   };
 

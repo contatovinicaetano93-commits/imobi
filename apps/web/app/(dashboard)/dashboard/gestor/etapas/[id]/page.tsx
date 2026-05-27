@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { managerApi, type EtapaDetalhe } from "@/lib/api";
 
-import Image from "next/image";
 
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -145,12 +144,7 @@ export default function EtapaDetailPage() {
                 {etapa.evidencias.map((ev, idx) => (
                   <div key={idx} className="space-y-2">
                     <div className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                      <Image
-                        src={ev.fotoUrl}
-                        alt={`Evidência ${idx + 1}`}
-                        fill
-                        className="object-cover"
-                      />
+                      <img src={ev.fotoUrl} alt="Evidência ${idx + 1}" className="object-cover w-full h-full" />
                     </div>
                     <p className="text-xs text-gray-500">{formatDate(ev.criadoEm)}</p>
                   </div>

@@ -42,20 +42,22 @@ export function PerfilForm({ usuario }: Props) {
     setErro(null);
     setSucesso(false);
 
-    startTransition(async () => {
-      try {
-        await usuariosApi.atualizarPerfil({
-          nome: data.nome,
-          telefone: data.telefone,
-        });
-        setSucesso(true);
-        setTimeout(() => setSucesso(false), 3000);
-        router.refresh();
-      } catch (err) {
-        setErro(
-          err instanceof Error ? err.message : "Erro ao atualizar perfil"
-        );
-      }
+    startTransition(() => {
+      (async () => {
+        try {
+          await usuariosApi.atualizarPerfil({
+            nome: data.nome,
+            telefone: data.telefone,
+          });
+          setSucesso(true);
+          setTimeout(() => setSucesso(false), 3000);
+          router.refresh();
+        } catch (err) {
+          setErro(
+            err instanceof Error ? err.message : "Erro ao atualizar perfil"
+          );
+        }
+      })();
     });
   };
 
