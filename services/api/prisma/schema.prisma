@@ -15,9 +15,10 @@ datasource db {
 model Usuario {
   usuarioId     String   @id @default(uuid())
   nome          String
-  cpf           String   @unique
-  email         String   @unique
-  telefone      String
+  cpf           String   @unique // ENCRYPTED at application level
+  cpfHash       String   @unique // Hash for lookups (SHA-256)
+  email         String   @unique // NOT encrypted - used for authentication
+  telefone      String   // ENCRYPTED at application level
   passwordHash  String
   tipo          UsuarioTipo @default(TOMADOR)
   kycStatus     KycStatus @default(PENDENTE)
@@ -33,7 +34,7 @@ model Usuario {
   fcmTokens     UsuarioFcmToken[]
 
   @@index([email])
-  @@index([cpf])
+  @@index([cpfHash])
   @@index([kycStatus])
 }
 
