@@ -114,7 +114,6 @@ export function ValidationFormClient({
       setGeoStatus("success");
       setGeoMessage("Localização validada! Abra a câmera para capturar a foto.");
 
-      // Open camera using input
       const input = document.getElementById(`camera-input-${visitaId}`) as HTMLInputElement;
       input?.click();
     } catch (err) {
@@ -144,7 +143,6 @@ export function ValidationFormClient({
       setGeoStatus("idle");
       setGeoMessage("");
       
-      // Reset input
       const input = document.getElementById(`camera-input-${visitaId}`) as HTMLInputElement;
       if (input) input.value = "";
     } catch (err) {
