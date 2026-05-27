@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { obrasApi, creditoApi, type ObraResumo, type CreditoResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { PortfolioChart } from "./_components/PortfolioChart";
 import { RegionalDistribution } from "./_components/RegionalDistribution";
 import { InadimplenciaMetrics } from "./_components/InadimplenciaMetrics";
 import { ReportExport } from "./_components/ReportExport";
+import { LoadingSkeleton } from "./_components/LoadingSkeleton";
 import {
   aggregateByRegion,
   calculateRoiTimeline,
@@ -14,7 +16,7 @@ import {
 
 export const metadata: Metadata = { title: "Fundos — imbobi" };
 
-export default async function FundosPage() {
+async function FundosPageContent() {
   const [obras, creditos] = await Promise.all([
     obrasApi.listar().catch(() => [] as ObraResumo[]),
     creditoApi.meus().catch(() => [] as CreditoResumo[]),
@@ -240,5 +242,13 @@ export default async function FundosPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function FundosPage() {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <FundosPageContent />
+    </Suspense>
   );
 }
