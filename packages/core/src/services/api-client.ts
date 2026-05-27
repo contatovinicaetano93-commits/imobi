@@ -1,3 +1,5 @@
+declare const process: any;
+
 const BASE_URL =
   typeof process !== "undefined"
     ? (process.env["NEXT_PUBLIC_API_URL"] ?? process.env["EXPO_PUBLIC_API_URL"] ?? "")

@@ -1,15 +1,17 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
     "target": "ES2021",
     "lib": ["ES2021"],
+    "jsx": "react-native",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "declaration": true,
     "outDir": "./dist",
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
       "@imbobi/*": ["../../packages/*/src"],
-      "@/*": ["src/*"]
+      "@/*": ["./*"]
     },
     "strict": true,
     "esModuleInterop": true,
@@ -18,11 +20,9 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
     "moduleResolution": "node",
-    "noImplicitAny": false
+    "types": ["expo"]
   },
-  "include": ["src/**/*"],
+  "include": ["app/**/*", "lib/**/*", "*.ts"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.e2e.spec.ts"]
 }

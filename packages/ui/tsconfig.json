@@ -1,14 +1,12 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
     "target": "ES2021",
-    "lib": ["ES2021"],
+    "lib": ["ES2021", "dom", "dom.iterable"],
     "declaration": true,
     "outDir": "./dist",
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "@imbobi/*": ["../../packages/*/src"],
       "@/*": ["src/*"]
     },
     "strict": true,
@@ -18,10 +16,9 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
     "moduleResolution": "node",
-    "noImplicitAny": false
+    "module": "ESNext",
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.e2e.spec.ts"]
