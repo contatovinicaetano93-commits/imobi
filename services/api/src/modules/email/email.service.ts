@@ -9,10 +9,25 @@ interface EmailOptions {
   text?: string;
 }
 
+/**
+ * Retry strategy with exponential backoff
+ * - Attempt 1: immediate
+ * - Attempt 2: 2 seconds (2^1)
+ * - Attempt 3: 4 seconds (2^2)
+ */
+interface RetryConfig {
+  maxAttempts: number;
+  delays: number[]; // Delays in milliseconds for each attempt
+}
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private transporter: Transporter | null = null;
+  private readonly retryConfig: RetryConfig = {
+    maxAttempts: 3,
+    delays: [0, 2000, 4000], // 0ms, 2s, 4s (exponential backoff)
+  };
 
   constructor() {
     this.initializeTransporter();
@@ -23,44 +38,99 @@ export class EmailService {
     const smtpPort = process.env["SMTP_PORT"];
     const smtpUser = process.env["SMTP_USER"];
     const smtpPass = process.env["SMTP_PASS"];
-    const fromEmail = process.env["SMTP_FROM"] || "noreply@imbobi.com";
 
     if (!smtpHost || !smtpPort) {
-      this.logger.warn("SMTP configuration not found - using console mode");
+      this.logger.warn(
+        "SMTP configuration not found - emails will be logged to console only"
+      );
       return;
     }
 
-    this.transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: parseInt(smtpPort),
-      secure: parseInt(smtpPort) === 465,
-      auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
-    });
-
-    this.logger.debug(`Email configured: ${smtpHost}:${smtpPort}`);
-  }
-
-  async enviarEmail(opcoes: EmailOptions): Promise<boolean> {
     try {
-      if (!this.transporter) {
-        this.logger.debug(`[EMAIL-CONSOLE] ${opcoes.to} - ${opcoes.subject}`);
-        return true;
-      }
-
-      await this.transporter.sendMail({
-        from: process.env["SMTP_FROM"] || "noreply@imbobi.com",
-        to: opcoes.to,
-        subject: opcoes.subject,
-        html: opcoes.html,
-        text: opcoes.text,
+      this.transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: parseInt(smtpPort, 10),
+        secure: parseInt(smtpPort, 10) === 465,
+        auth:
+          smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
       });
 
-      this.logger.debug(`Email enviado para ${opcoes.to}`);
-      return true;
+      this.logger.log(
+        `Email service initialized: ${smtpHost}:${smtpPort} (secure: ${parseInt(smtpPort, 10) === 465})`
+      );
     } catch (error) {
-      this.logger.error(`Erro ao enviar email: ${error}`);
-      return false;
+      this.logger.error(
+        `Failed to initialize email transporter: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
+  }
+
+  /**
+   * Delays execution for the specified milliseconds
+   */
+  private async delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Sends email with exponential backoff retry logic
+   * On failure, logs error but does not throw exception (graceful degradation)
+   */
+  async enviarEmail(opcoes: EmailOptions): Promise<boolean> {
+    // Fallback to console mode if SMTP not configured
+    if (!this.transporter) {
+      this.logger.debug(
+        `[EMAIL-CONSOLE] To: ${opcoes.to} | Subject: ${opcoes.subject}`
+      );
+      return true;
+    }
+
+    const fromEmail = process.env["SMTP_FROM"] || "noreply@imbobi.com";
+
+    // Retry loop with exponential backoff
+    for (let attempt = 0; attempt < this.retryConfig.maxAttempts; attempt++) {
+      try {
+        // Wait before retry (0ms on first attempt)
+        if (attempt > 0) {
+          const delayMs = this.retryConfig.delays[attempt];
+          this.logger.debug(
+            `Email retry attempt ${attempt + 1}/${this.retryConfig.maxAttempts} - waiting ${delayMs}ms`
+          );
+          await this.delay(delayMs);
+        }
+
+        await this.transporter.sendMail({
+          from: fromEmail,
+          to: opcoes.to,
+          subject: opcoes.subject,
+          html: opcoes.html,
+          text: opcoes.text,
+        });
+
+        this.logger.log(
+          `Email successfully sent to ${opcoes.to} (${opcoes.subject})`
+        );
+        return true;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+
+        if (attempt === this.retryConfig.maxAttempts - 1) {
+          // Last attempt failed
+          this.logger.error(
+            `Failed to send email to ${opcoes.to} after ${this.retryConfig.maxAttempts} attempts: ${errorMessage}`
+          );
+          return false;
+        }
+
+        // Log the attempt failure but continue retrying
+        this.logger.warn(
+          `Email send attempt ${attempt + 1}/${this.retryConfig.maxAttempts} failed for ${opcoes.to}: ${errorMessage}`
+        );
+      }
+    }
+
+    return false;
   }
 
   async bemVindoEmail(nome: string, email: string): Promise<boolean> {
