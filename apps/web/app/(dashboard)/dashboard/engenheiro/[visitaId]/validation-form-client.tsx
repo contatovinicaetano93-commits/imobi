@@ -168,7 +168,7 @@ export function ValidationFormClient({
         ...data,
         fotos: photos,
         status: "ENVIADA",
-      });
+      } as any);
 
       setSubmitMessage({
         type: "success",

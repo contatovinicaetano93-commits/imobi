@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +21,7 @@ interface Props {
 
 export function PerfilForm({ usuario }: Props) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState(false);
 
@@ -41,22 +41,23 @@ export function PerfilForm({ usuario }: Props) {
   const onSubmit = async (data: FormData) => {
     setErro(null);
     setSucesso(false);
+    setIsPending(true);
 
-    startTransition(async () => {
-      try {
-        await usuariosApi.atualizarPerfil({
-          nome: data.nome,
-          telefone: data.telefone,
-        });
-        setSucesso(true);
-        setTimeout(() => setSucesso(false), 3000);
-        router.refresh();
-      } catch (err) {
-        setErro(
-          err instanceof Error ? err.message : "Erro ao atualizar perfil"
-        );
-      }
-    });
+    try {
+      await usuariosApi.atualizarPerfil({
+        nome: data.nome,
+        telefone: data.telefone,
+      });
+      setSucesso(true);
+      setTimeout(() => setSucesso(false), 3000);
+      router.refresh();
+    } catch (err) {
+      setErro(
+        err instanceof Error ? err.message : "Erro ao atualizar perfil"
+      );
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (

@@ -322,13 +322,15 @@ export const engenheirosApi = {
     }),
   gerarRelatorioPDF: (visitaId: string) =>
     apiFetch<{ url: string }>(`/engenheiros/validacoes/${visitaId}/relatorio`),
-  fazerUploadFoto: (visitaId: string, formData: FormData) =>
-    fetch(`${API_URL}/api/v1/engenheiros/validacoes/${visitaId}/fotos`, {
+  fazerUploadFoto: async (visitaId: string, formData: FormData) => {
+    const cookieStore = await cookies();
+    return fetch(`${API_URL}/api/v1/engenheiros/validacoes/${visitaId}/fotos`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${(await cookies()).get("access_token")?.value ?? ""}`,
+        Authorization: `Bearer ${cookieStore.get("access_token")?.value ?? ""}`,
       },
       body: formData,
-    }).then((res) => (res.ok ? res.json() : Promise.reject(res))),
+    }).then((res) => (res.ok ? res.json() : Promise.reject(res)));
+  },
 };
 
