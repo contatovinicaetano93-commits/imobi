@@ -43,6 +43,58 @@ export const pushApi = {
   },
 };
 
+export const kycApi = {
+  listarDocumentos: async () => {
+    const token = await getToken();
+    return apiClient.get<KycDocumento[]>("/api/v1/kyc/documentos", token ?? undefined);
+  },
+
+  obterStatus: async () => {
+    const token = await getToken();
+    return apiClient.get<KycStatus>("/api/v1/kyc/status", token ?? undefined);
+  },
+
+  verificarCompleto: async () => {
+    const token = await getToken();
+    return apiClient.get<{ completo: boolean; documentos: KycDocumento[] }>("/api/v1/kyc/verificar", token ?? undefined);
+  },
+
+  uploadDocumento: async (tipo: string, url: string) => {
+    const token = await getToken();
+    return apiClient.post<KycDocumento>("/api/v1/kyc/upload", { tipo, url }, token ?? undefined);
+  },
+};
+
+export const simuladorApi = {
+  simular: async (params: { valorSolicitado: number; prazoMeses: number; tipoObra: "RESIDENCIAL" | "COMERCIAL" | "MISTO" }) => {
+    const token = await getToken();
+    return apiClient.post<SimulacaoApiResult>("/api/v1/credito/simular", params, token ?? undefined);
+  },
+};
+
+export const evidenciasApi = {
+  upload: async (formData: FormData, etapaId: string) => {
+    const token = await getToken();
+    const baseUrl = typeof process !== "undefined" ? (process.env.EXPO_PUBLIC_API_URL ?? "") : "";
+    const res = await fetch(`${baseUrl}/api/v1/evidencias/${etapaId}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token ?? ""}`,
+      },
+      body: formData,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({})) as { message?: string };
+      throw new ApiError(res.status, body.message ?? res.statusText);
+    }
+    return res.json() as Promise<{ evidenciaId: string }>;
+  },
+  listar: async (obraId: string) => {
+    const token = await getToken();
+    return apiClient.get<Evidencia[]>(`/api/v1/obras/${obraId}/evidencias`, token ?? undefined);
+  },
+};
+
 // Types
 export type Obra = {
   obraId: string;
@@ -90,4 +142,34 @@ export type ScoreData = {
   nivel: string;
   cor: string;
   descricao: string;
+};
+
+export type KycDocumento = {
+  kycDocumentoId: string;
+  usuarioId: string;
+  tipo: string;
+  url: string;
+  status: "PENDENTE" | "APROVADO" | "REJEITADO";
+  analisadoEm?: string;
+  analisadoPor?: string;
+  motivo_rejeicao?: string;
+  criadoEm: string;
+};
+
+export type KycStatus = {
+  usuarioId: string;
+  status: "NENHUM" | "ENVIADO" | "APROVADO";
+  documentos: KycDocumento[];
+  resumo: {
+    pendentes: number;
+    aprovados: number;
+    rejeitados: number;
+  };
+};
+
+export type SimulacaoApiResult = {
+  parcelaMensal: number;
+  totalPago: number;
+  totalJuros: number;
+  cet: number;
 };

@@ -104,8 +104,18 @@ export class CacheService {
     if (limit) {
       await this.cacheManager.del(`${CACHE_KEYS.SCORE_HISTORY(usuarioId)}:${limit}`);
     } else {
-      // Clear all score history for this user (wildcard delete)
-      await this.cacheManager.reset();
+      // Clear all score history for this user - pattern-based approach
+      // Since cache-manager doesn't have reset for patterns, we'll need to clear manually
+      const patterns = [
+        CACHE_KEYS.SCORE_HISTORY(usuarioId),
+      ];
+      for (const pattern of patterns) {
+        try {
+          await this.cacheManager.del(pattern);
+        } catch (e) {
+          // Pattern might not exist, continue
+        }
+      }
     }
   }
 
