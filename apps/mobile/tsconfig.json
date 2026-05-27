@@ -7,7 +7,6 @@
     "moduleResolution": "node",
     "declaration": true,
     "outDir": "./dist",
-    "rootDir": ".",
     "baseUrl": ".",
     "paths": {
       "@imbobi/*": ["../../packages/*/src"],
@@ -20,8 +19,7 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "types": ["expo"]
+    "types": ["expo", "node"]
   },
   "include": ["app/**/*", "lib/**/*", "*.ts"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.e2e.spec.ts"]

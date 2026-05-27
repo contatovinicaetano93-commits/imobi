@@ -7,7 +7,14 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@react-native-community/slider':
+        specifier: ^5.2.0
+        version: 5.2.0
     devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.41
       turbo:
         specifier: ^2.0.0
         version: 2.9.14
@@ -2032,6 +2039,9 @@ packages:
     resolution: {integrity: sha512-V7rt2N5JY7M4dJFgdNfR164r3hZdR/Z7V54dv85TFQHRbdwF4QrkG+GeagAU54qrkK/OU8OH3AF2+mKuiNWpGA==}
     engines: {node: '>=18'}
     hasBin: true
+
+  '@react-native-community/slider@5.2.0':
+    resolution: {integrity: sha512-484sH8aWEaSjxaZ7HT3YZ8CKDcNes2synko1vdEz5DFEdvKAduxKJTj22L/qBMD7rtIkfbX69DMzWDAGbOAV6w==}
 
   '@react-native/assets-registry@0.74.81':
     resolution: {integrity: sha512-ms+D6pJ6l30epm53pwnAislW79LEUHJxWfe1Cu0LWyTTBlg1OFoqXfB3eIbpe4WyH3nrlkQAh0yyk4huT2mCvw==}
@@ -9576,6 +9586,8 @@ snapshots:
       - encoding
       - supports-color
       - utf-8-validate
+
+  '@react-native-community/slider@5.2.0': {}
 
   '@react-native/assets-registry@0.74.81': {}
 

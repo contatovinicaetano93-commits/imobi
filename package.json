@@ -18,6 +18,7 @@
     "db:studio": "pnpm --filter @imbobi/api prisma studio"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "turbo": "^2.0.0",
     "typescript": "^5.5.0"
   },
@@ -25,5 +26,8 @@
     "apps/*",
     "packages/*",
     "services/*"
-  ]
+  ],
+  "dependencies": {
+    "@react-native-community/slider": "^5.2.0"
+  }
 }
