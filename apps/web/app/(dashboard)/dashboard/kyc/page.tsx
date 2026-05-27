@@ -1,5 +1,7 @@
 "use client";
 
+
+
 import { useEffect, useState } from "react";
 import { kycApi, type KycStatus, type KycDocumento } from "@/lib/api";
 

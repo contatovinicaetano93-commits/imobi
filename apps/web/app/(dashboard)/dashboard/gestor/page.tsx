@@ -1,5 +1,7 @@
 "use client";
 
+
+
 import { useEffect, useState } from "react";
 import { managerApi, type ManagerStats } from "@/lib/api";
 import Link from "next/link";
@@ -14,7 +16,7 @@ function StatCard({ label, value, color, href }: { label: string; value: number;
   const borderColor = color === "red" ? "border-red-100 focus:ring-red-500" : color === "yellow" ? "border-yellow-100 focus:ring-yellow-500" : "border-green-100 focus:ring-green-500";
 
   return (
-    <Link href={href}>
+    <Link href={href as any}>
       <div className={`${bgColor} rounded-2xl border border-gray-100 p-4 sm:p-6 cursor-pointer hover:shadow-md transition-shadow min-h-32 sm:min-h-auto flex flex-col justify-center focus:outline-none focus:ring-2 ${borderColor} focus:ring-offset-2`} role="link" tabIndex={0} aria-label={`${label}: ${value} itens`}>
         <p className="text-xs sm:text-sm text-gray-600 mb-2">{label}</p>
         <p className={`text-2xl sm:text-3xl font-bold ${textColor}`}>{value}</p>

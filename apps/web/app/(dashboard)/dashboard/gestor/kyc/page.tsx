@@ -1,5 +1,7 @@
 "use client";
 
+
+
 import { useEffect, useState } from "react";
 import { managerApi, type KycPendente } from "@/lib/api";
 import { KycBatchActions } from "@/components/dashboard/KycBatchActions";
