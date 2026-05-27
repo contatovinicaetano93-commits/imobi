@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-
 import type {
   ObraResumo,
   CreditoResumo,
@@ -25,18 +24,18 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Client-side API fetch - token is automatically sent via cookies
- * in the browser (credentials: 'include')
- */
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const jar = await cookies();
+  const token = jar.get("access_token")?.value;
+
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
+  if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const res = await fetch(`${API_URL}/api/v1${path}`, {
     ...init,
-    credentials: "include",
     headers,
+    cache: "no-store",
   });
 
   if (!res.ok) {
