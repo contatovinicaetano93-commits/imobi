@@ -21,6 +21,7 @@ import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
+import { HealthController } from "./common/health.controller";
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
     MarketplaceModule,
     ParceirosModule,
   ],
+  controllers: [HealthController],
   providers: [
     LiberacaoParcelaWorker,
     {
