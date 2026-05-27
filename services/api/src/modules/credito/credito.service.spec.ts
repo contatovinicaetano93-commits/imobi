@@ -625,4 +625,231 @@ describe('CreditoService', () => {
       expect(result.valorLiberado).toBe(0);
     });
   });
+
+  describe('Monthly Rate Calculation - 0.99%', () => {
+    it('should use fixed monthly rate of 0.0099', () => {
+      const mockResult = {
+        parcelaMensal: 1000,
+        totalPago: 12000,
+        totalJuros: 2000,
+        cet: 12.0,
+      };
+      (creditoUtils.simularCredito as jest.Mock).mockReturnValue(mockResult);
+
+      service.simular({
+        valorSolicitado: 10000,
+        prazoMeses: 12,
+      });
+
+      const calls = (creditoUtils.simularCredito as jest.Mock).mock.calls;
+      expect(calls[0][1]).toBe(0.0099);
+    });
+
+    it('should consistently apply 0.99% rate across different amounts', () => {
+      const mockResult = {
+        parcelaMensal: 1000,
+        totalPago: 12000,
+        totalJuros: 2000,
+        cet: 12.0,
+      };
+      (creditoUtils.simularCredito as jest.Mock).mockReturnValue(mockResult);
+
+      const amounts = [5000, 10000, 50000, 100000];
+
+      for (const amount of amounts) {
+        service.simular({
+          valorSolicitado: amount,
+          prazoMeses: 12,
+        });
+      }
+
+      const calls = (creditoUtils.simularCredito as jest.Mock).mock.calls;
+      calls.forEach(call => {
+        expect(call[1]).toBe(0.0099);
+      });
+    });
+  });
+
+  describe('Credit Minimum/Maximum Values', () => {
+    it('should handle minimum credit values', () => {
+      const mockResult = {
+        parcelaMensal: 100,
+        totalPago: 1200,
+        totalJuros: 200,
+        cet: 12.0,
+      };
+      (creditoUtils.simularCredito as jest.Mock).mockReturnValue(mockResult);
+
+      const result = service.simular({
+        valorSolicitado: 1000,
+        prazoMeses: 12,
+      });
+
+      expect(result).toBeDefined();
+      expect(result.parcelaMensal).toBeGreaterThan(0);
+    });
+
+    it('should handle maximum credit values', () => {
+      const mockResult = {
+        parcelaMensal: 875000,
+        totalPago: 10500000,
+        totalJuros: 500000,
+        cet: 12.0,
+      };
+      (creditoUtils.simularCredito as jest.Mock).mockReturnValue(mockResult);
+
+      const result = service.simular({
+        valorSolicitado: 10000000,
+        prazoMeses: 12,
+      });
+
+      expect(result).toBeDefined();
+      expect(result.totalPago).toBeGreaterThan(result.parcelaMensal);
+    });
+  });
+
+  describe('Credit Approval/Rejection Logic', () => {
+    it('should mark new credit as ATIVO status', async () => {
+      const usuarioId = 'user-123';
+      const input = { valorSolicitado: 50000, prazoMeses: 12 };
+      const mockCredit = {
+        creditoId: 'credit-123',
+        usuarioId,
+        valorAprovado: 50000,
+        valorLiberado: 0,
+        taxaMensal: 0.0099,
+        prazoMeses: 12,
+        status: 'ATIVO',
+        criadoEm: new Date(),
+        atualizadoEm: new Date(),
+      };
+
+      prisma.credito.create.mockResolvedValue(mockCredit);
+
+      const result = await service.solicitar(usuarioId, input);
+
+      expect(result.status).toBe('ATIVO');
+    });
+
+    it('should approve full requested amount initially', async () => {
+      const usuarioId = 'user-123';
+      const valorSolicitado = 75000;
+      const input = { valorSolicitado, prazoMeses: 12 };
+
+      const mockCredit = {
+        creditoId: 'credit-123',
+        usuarioId,
+        valorAprovado: valorSolicitado,
+        valorLiberado: 0,
+        taxaMensal: 0.0099,
+        prazoMeses: 12,
+        status: 'ATIVO',
+        criadoEm: new Date(),
+        atualizadoEm: new Date(),
+      };
+
+      prisma.credito.create.mockResolvedValue(mockCredit);
+
+      const result = await service.solicitar(usuarioId, input);
+
+      expect(result.valorAprovado).toBe(valorSolicitado);
+    });
+
+    it('should initialize valor liberado as zero', async () => {
+      const usuarioId = 'user-123';
+      const input = { valorSolicitado: 50000, prazoMeses: 12 };
+
+      const mockCredit = {
+        creditoId: 'credit-123',
+        usuarioId,
+        valorAprovado: 50000,
+        valorLiberado: 0,
+        taxaMensal: 0.0099,
+        prazoMeses: 12,
+        status: 'ATIVO',
+        criadoEm: new Date(),
+        atualizadoEm: new Date(),
+      };
+
+      prisma.credito.create.mockResolvedValue(mockCredit);
+
+      const result = await service.solicitar(usuarioId, input);
+
+      expect(result.valorLiberado).toBe(0);
+    });
+  });
+
+  describe('Terms and Conditions', () => {
+    it('should accept 12-month terms', () => {
+      const mockResult = {
+        parcelaMensal: 4512,
+        totalPago: 54144,
+        totalJuros: 4144,
+        cet: 12.5,
+      };
+      (creditoUtils.simularCredito as jest.Mock).mockReturnValue(mockResult);
+
+      service.simular({
+        valorSolicitado: 50000,
+        prazoMeses: 12,
+      });
+
+      expect(creditoUtils.simularCredito).toHaveBeenCalledWith(50000, 0.0099, 12);
+    });
+
+    it('should accept 24-month terms', () => {
+      const mockResult = {
+        parcelaMensal: 2300,
+        totalPago: 55200,
+        totalJuros: 5200,
+        cet: 12.8,
+      };
+      (creditoUtils.simularCredito as jest.Mock).mockReturnValue(mockResult);
+
+      service.simular({
+        valorSolicitado: 50000,
+        prazoMeses: 24,
+      });
+
+      expect(creditoUtils.simularCredito).toHaveBeenCalledWith(50000, 0.0099, 24);
+    });
+
+    it('should accept 36-month terms', () => {
+      const mockResult = {
+        parcelaMensal: 1600,
+        totalPago: 57600,
+        totalJuros: 7600,
+        cet: 13.1,
+      };
+      (creditoUtils.simularCredito as jest.Mock).mockReturnValue(mockResult);
+
+      service.simular({
+        valorSolicitado: 50000,
+        prazoMeses: 36,
+      });
+
+      expect(creditoUtils.simularCredito).toHaveBeenCalledWith(50000, 0.0099, 36);
+    });
+
+    it('should preserve user ID in credit request', async () => {
+      const usuarioId = 'user-abc-123';
+      const input = { valorSolicitado: 50000, prazoMeses: 12 };
+
+      prisma.credito.create.mockResolvedValue({
+        creditoId: 'credit-123',
+        usuarioId,
+        valorAprovado: 50000,
+        valorLiberado: 0,
+        taxaMensal: 0.0099,
+        prazoMeses: 12,
+        status: 'ATIVO',
+        criadoEm: new Date(),
+        atualizadoEm: new Date(),
+      });
+
+      const result = await service.solicitar(usuarioId, input);
+
+      expect(result.usuarioId).toBe(usuarioId);
+    });
+  });
 });
