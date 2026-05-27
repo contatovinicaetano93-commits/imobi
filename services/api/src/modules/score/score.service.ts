@@ -1,9 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { CacheService } from "../cache/cache.service";
 
 @Injectable()
 export class ScoreService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   /**
    * Calcula score de construtibilidade (0-1000) baseado no histórico de obras.
@@ -17,50 +21,52 @@ export class ScoreService {
    * Otimizado: 1 query consolidada com relacionamentos (antes: 4 queries separadas)
    */
   async calcularScore(usuarioId: string): Promise<number> {
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { usuarioId },
-      select: {
-        criadoEm: true,
-        kycStatus: true,
-        obras: {
-          select: { status: true },
+    return this.cacheService.obterScoreComCache(usuarioId, async () => {
+      const usuario = await this.prisma.usuario.findUnique({
+        where: { usuarioId },
+        select: {
+          criadoEm: true,
+          kycStatus: true,
+          obras: {
+            select: { status: true },
+          },
+          creditos: {
+            select: { status: true },
+          },
         },
-        creditos: {
-          select: { status: true },
-        },
-      },
+      });
+
+      if (!usuario) return 0;
+
+      let score = 600;
+      const obras = usuario.obras;
+      const creditos = usuario.creditos;
+
+      // 1. Obras concluídas (+200)
+      const obrasConcluidasNoPrazo = obras.filter((o) => o.status === "CONCLUIDA").length;
+      if (obrasConcluidasNoPrazo > 0) score += Math.min(200, obrasConcluidasNoPrazo * 50);
+
+      // 2. Taxa média de conclusão (+300)
+      const taxaConclusao = obras.length > 0
+        ? obras.filter((o) => o.status === "CONCLUIDA").length / obras.length
+        : 0;
+      score += Math.round(taxaConclusao * 300);
+
+      // 3. Créditos sem atrasos (+200)
+      const creditosSemAtraso = creditos.filter(
+        (c) => c.status === "ATIVO" || c.status === "QUITADO"
+      ).length;
+      if (creditosSemAtraso > 0) score += Math.min(200, creditosSemAtraso * 100);
+
+      // 4. Tempo como cliente (+100)
+      const mesesComo = (Date.now() - usuario.criadoEm.getTime()) / (1000 * 60 * 60 * 24 * 30);
+      score += Math.min(100, Math.round(mesesComo * 5));
+
+      // 5. KYC aprovado (+200)
+      if (usuario.kycStatus === "APROVADO") score += 200;
+
+      return Math.min(1000, Math.max(0, score));
     });
-
-    if (!usuario) return 0;
-
-    let score = 600;
-    const obras = usuario.obras;
-    const creditos = usuario.creditos;
-
-    // 1. Obras concluídas (+200)
-    const obrasConcluidasNoPrazo = obras.filter((o) => o.status === "CONCLUIDA").length;
-    if (obrasConcluidasNoPrazo > 0) score += Math.min(200, obrasConcluidasNoPrazo * 50);
-
-    // 2. Taxa média de conclusão (+300)
-    const taxaConclusao = obras.length > 0
-      ? obras.filter((o) => o.status === "CONCLUIDA").length / obras.length
-      : 0;
-    score += Math.round(taxaConclusao * 300);
-
-    // 3. Créditos sem atrasos (+200)
-    const creditosSemAtraso = creditos.filter(
-      (c) => c.status === "ATIVO" || c.status === "QUITADO"
-    ).length;
-    if (creditosSemAtraso > 0) score += Math.min(200, creditosSemAtraso * 100);
-
-    // 4. Tempo como cliente (+100)
-    const mesesComo = (Date.now() - usuario.criadoEm.getTime()) / (1000 * 60 * 60 * 24 * 30);
-    score += Math.min(100, Math.round(mesesComo * 5));
-
-    // 5. KYC aprovado (+200)
-    if (usuario.kycStatus === "APROVADO") score += 200;
-
-    return Math.min(1000, Math.max(0, score));
   }
 
   async buscarScoreAtual(usuarioId: string) {

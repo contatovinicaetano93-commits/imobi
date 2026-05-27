@@ -2,6 +2,8 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
 import { ThrottlerModule } from "@nestjs/throttler";
+import { CacheModule } from "@nestjs/cache-manager";
+import * as redisStore from "cache-manager-redis-store";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsuariosModule } from "./modules/usuarios/usuarios.module";
@@ -69,6 +71,13 @@ import { APP_GUARD } from "@nestjs/core";
         host: process.env["REDIS_HOST"] ?? "localhost",
         port: Number(process.env["REDIS_PORT"] ?? 6379),
       },
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      store: redisStore,
+      host: process.env["REDIS_HOST"] ?? "localhost",
+      port: Number(process.env["REDIS_PORT"] ?? 6379),
+      ttl: 600000, // Default TTL: 10 minutes
     }),
     PrismaModule,
     AuthModule,

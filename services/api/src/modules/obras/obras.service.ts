@@ -1,14 +1,18 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { CacheService } from "../cache/cache.service";
 import type { CriarObraInput } from "@imbobi/schemas";
 import { ETAPAS_PADRAO } from "./etapas-padrao";
 
 @Injectable()
 export class ObrasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async criar(usuarioId: string, input: CriarObraInput) {
-    return this.prisma.$transaction(async (tx) => {
+    const resultado = await this.prisma.$transaction(async (tx) => {
       const obra = await tx.obra.create({
         data: {
           usuarioId,
@@ -37,13 +41,17 @@ export class ObrasService {
         include: { etapas: { orderBy: { ordem: "asc" } } },
       });
     });
+    await this.cacheService.invalidarObras(usuarioId);
+    return resultado;
   }
 
   async listar(usuarioId: string) {
-    return this.prisma.obra.findMany({
-      where: { usuarioId },
-      include: { etapas: { select: { etapaId: true, nome: true, status: true, ordem: true } } },
-      orderBy: { criadoEm: "desc" },
+    return this.cacheService.obterObrasComCache(usuarioId, async () => {
+      return this.prisma.obra.findMany({
+        where: { usuarioId },
+        include: { etapas: { select: { etapaId: true, nome: true, status: true, ordem: true } } },
+        orderBy: { criadoEm: "desc" },
+      });
     });
   }
 
