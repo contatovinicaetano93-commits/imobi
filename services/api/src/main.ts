@@ -3,14 +3,34 @@ import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
+import fastifyHelmet from "@fastify/helmet";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { validateEnvironment } from "./common/validators/env.validator";
 
 async function bootstrap() {
+  // Validate environment variables before starting the application
+  validateEnvironment();
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({ logger: process.env["NODE_ENV"] !== "production" })
   );
+
+  // Security headers via Helmet.js
+  await app.register(fastifyHelmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
+    },
+    hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+    noSniff: true,
+    xssFilter: true,
+  });
 
   // ThrottlerGuard is registered via AppModule providers
   app.useGlobalFilters(new HttpExceptionFilter());
@@ -19,6 +39,8 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env["CORS_ORIGIN"]?.split(",") ?? ["http://localhost:3000"],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   });
 
   const port = Number(process.env["PORT"] ?? 4000);
