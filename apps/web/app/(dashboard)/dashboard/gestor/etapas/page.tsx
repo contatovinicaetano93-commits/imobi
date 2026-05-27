@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { managerApi, type EtapaPendente } from "@/lib/api";
-import { BulkApprovalActions } from "@/(dashboard)/_components/BulkApprovalActions";
-import { AdvancedFilters, type FilterState } from "@/(dashboard)/_components/AdvancedFilters";
+import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions";
+import { AdvancedFilters, type FilterState } from "@/components/dashboard/AdvancedFilters";
 import Link from "next/link";
 
 function brl(v: number) {
@@ -117,7 +117,7 @@ export default function EtapasPage() {
       </div>
 
       <AdvancedFilters
-        onFilter={(newFilters) => {
+        onFilter={(newFilters: FilterState) => {
           setFilters(newFilters);
           setOffset(0);
         }}

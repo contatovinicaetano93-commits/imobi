@@ -36,6 +36,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 export type ObraResumo = {
   id: string; nome: string; status: string;
   geoLatitude: number; geoLongitude: number; raioValidacaoMetros: number;
+  endereco?: string;
   progresso?: number;
   credito?: { id: string; valorAprovado: number; valorLiberado: number; status: string } | null;
   etapas?: EtapaResumo[];
@@ -221,6 +222,35 @@ export const managerApi = {
     apiFetch(`/manager/kyc/${id}/aprovar`, { method: "PATCH" }),
   rejeitarKyc: (id: string, motivo: string) =>
     apiFetch(`/manager/kyc/${id}/rejeitar`, { method: "PATCH", body: JSON.stringify({ motivo }) }),
+};
+
+// ── Engenheiros ──────────────────────────────────────────────────────
+
+export type Visita = {
+  visitaId: string;
+  status: "AGENDADA" | "INICIADA" | "CONCLUIDA";
+  etapaId: string;
+  etapaNome: string;
+  obraId: string;
+  obraNome: string;
+  dataAgendada: string;
+  dataInicio?: string;
+  dataConclusao?: string;
+  observacoes?: string;
+  obra: {
+    nome: string;
+    endereco?: string;
+  };
+  criadoEm: string;
+};
+
+export const engenheirosApi = {
+  listarVisitas: () => apiFetch<Visita[]>("/engenheiros/visitas"),
+  atualizarValidacao: (visitaId: string, data: { status?: string; dataAgendada?: string; observacoes?: string }) =>
+    apiFetch(`/engenheiros/visitas/${visitaId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
 };
 
 // ── Notificações ──────────────────────────────────────────────────────

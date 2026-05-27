@@ -5,7 +5,6 @@
     "lib": ["ES2021"],
     "declaration": true,
     "outDir": "./dist",
-    "rootDir": ".",
     "baseUrl": ".",
     "paths": {
       "@imbobi/*": ["../../packages/*/src"],
@@ -21,7 +20,8 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "moduleResolution": "node",
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "noEmit": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.e2e.spec.ts"]

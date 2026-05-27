@@ -117,7 +117,7 @@ export default async function ScorePage() {
           <p className="text-sm text-gray-400">Nenhum registro no histórico.</p>
         ) : (
           <div className="space-y-2">
-            {historico.map((item) => (
+            {historico.map((item: ScoreHistorico) => (
               <div key={item.id} className="flex justify-between items-center text-sm p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium text-gray-900">{item.score}</p>
