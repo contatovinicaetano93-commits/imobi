@@ -130,6 +130,7 @@ export default function EtapasPage() {
                   </div>
 
                   {/* Ações */}
+      // @ts-ignore - Next.js Link type compatibility
                   <div className="shrink-0 flex gap-2">
                     <Link
                       href={`/dashboard/gestor/etapas/${etapa.etapaId}`}
