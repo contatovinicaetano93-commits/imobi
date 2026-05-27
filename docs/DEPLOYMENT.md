@@ -1,480 +1,271 @@
-# Deployment Guide — imbobi
-
-This document covers deploying the imbobi platform to Render and Vercel, including the NestJS API, PostgreSQL database with PostGIS, and Redis cache.
+# Vercel Deployment Guide
 
 ## Overview
 
-The deployment architecture consists of:
-- **API Service**: NestJS/Fastify application (services/api) → Render
-- **Database**: PostgreSQL 15 with PostGIS extension → Render
-- **Cache**: Redis for BullMQ job queues → Upstash
-- **Web Frontend**: Next.js application (apps/web) → Vercel
-- **Storage**: AWS S3 for evidence photos
+This document outlines the setup and deployment process for the **alagami-site** Next.js 14 web application on Vercel for staging and production environments.
 
-## Infrastructure Overview
+## Deployment Architecture
 
-| Component | Service | Environment | Status |
-|-----------|---------|-------------|--------|
-| Web App | Vercel | Staging + Production | ✓ Complete |
-| API | Render | Staging + Production | ✓ Complete |
-| Database (PostgreSQL 15) | Render Postgres | Staging + Production | ✓ Complete |
-| Cache/Queue (Redis) | Upstash | Staging + Production | ✓ Complete |
-| Object Storage | AWS S3 / Cloudflare R2 | Staging + Production | - |
+- **Platform**: Vercel
+- **Repository**: [contatovinicaetano93-commits/alagami-site](https://github.com/contatovinicaetano93-commits/alagami-site)
+- **Framework**: Next.js 14 (App Router)
+- **Root Directory**: `apps/web`
+- **Package Manager**: pnpm
 
----
+## Initial Setup
 
-## 1. PostgreSQL Database Setup (Render)
+### 1. Connect Repository to Vercel
 
-### Create PostgreSQL Instance
+1. Go to [https://vercel.com/new](https://vercel.com/new)
+2. Click "Continue with GitHub"
+3. Select repository: **contatovinicaetano93-commits/alagami-site**
+4. Click "Import"
 
-1. Go to https://dashboard.render.com/
-2. Click **"New +"** → Select **"PostgreSQL"**
-3. Configure the database:
-   - **Name**: `alagami-postgres-staging`
-   - **PostgreSQL Version**: `15` (includes PostGIS support)
-   - **Region**: São Paulo (`America/Sao_Paulo`) or closest available
-   - **Pricing Plan**: Standard or choose based on needs
-4. Click **"Create Database"**
-5. Wait for provisioning (5-10 minutes)
+### 2. Configure Build Settings
 
-### Enable PostGIS Extension
-
-Once the database is provisioned:
-
-1. Copy the **External Database URL** from Render dashboard
-2. Connect via psql:
-   ```bash
-   psql "postgresql://user:password@hostname.render.com:5432/dbname"
-   ```
-3. Enable PostGIS extensions:
-   ```sql
-   CREATE EXTENSION IF NOT EXISTS postgis;
-   CREATE EXTENSION IF NOT EXISTS postgis_topology;
-   SELECT postgis_version();
-   ```
-4. Verify installation:
-   ```sql
-   \dx postgis
-   ```
-
-### Database Connection URLs
-
-- **Internal URL** (Render-to-Render): Use for API service within Render
-- **External URL** (Local/External): Use from local machine or external services
-
-Example URL format:
-```
-postgresql://user:password@hostname.render.com:5432/database_name
-```
-
----
-
-## 2. NestJS API Service Setup (Render)
-
-### Create Web Service
-
-1. Go to https://dashboard.render.com/
-2. Click **"New +"** → Select **"Web Service"**
-3. Click **"Connect Repository"**
-   - Search: `contatovinicaetano93-commits/alagami-site`
-   - Click **"Connect"**
-
-### Configure Service Settings
-
-**Basic Configuration:**
-- **Name**: `alagami-api-staging`
-- **Root Directory**: `services/api`
-- **Runtime**: Node
-- **Build Command**:
-  ```bash
-  pnpm install && pnpm db:generate && pnpm db:migrate && pnpm build
-  ```
-- **Start Command**:
-  ```bash
-  node dist/main.js
-  ```
-
-### Add Environment Variables
-
-In Render Dashboard, add the following environment variables:
-
-```bash
-# Database (from PostgreSQL setup)
-DATABASE_URL=postgresql://user:password@hostname.render.com:5432/dbname
-
-# Environment
-NODE_ENV=production
-PORT=4000
-CORS_ORIGIN=https://alagami-web-staging.onrender.com
-
-# JWT Authentication
-JWT_SECRET=<generate-64+-char-random-string>
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
-
-# Redis Cache (from Upstash or Render Redis)
-REDIS_URL=redis://default:password@hostname:port
-
-# AWS S3
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=<your-key>
-AWS_SECRET_ACCESS_KEY=<your-secret>
-S3_BUCKET=imbobi-evidencias-staging
-
-# Email Configuration
-EMAIL_PROVIDER=sendgrid
-SENDGRID_API_KEY=<your-sendgrid-key>
-SMTP_FROM=noreply-staging@imbobi.com
-APP_URL=https://alagami-web-staging.onrender.com
-
-# External Integrations
-UNICO_API_KEY=<kyc-api-key>
-SERPRO_TOKEN=<serpro-token>
-
-# Firebase (Push Notifications)
-FIREBASE_PROJECT_ID=<project-id>
-FIREBASE_PRIVATE_KEY=<private-key>
-FIREBASE_CLIENT_EMAIL=<service-account-email>
-```
-
-### Deployment Settings
-
-- **Region**: São Paulo (Brazil) or US East (depends on your preference)
-- **Auto-Deploy**: Enable (deploy on every push)
-- **Health Check Path**: `/health`
-
-### Generate JWT Secret
-
-Create a strong 64+ character secret:
-
-```bash
-# Option 1: OpenSSL
-openssl rand -base64 48
-
-# Option 2: Node.js
-node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
-```
-
----
-
-## 3. Run Migrations After Deployment
-
-### Option A: Using Render Shell
-
-1. Go to API service on Render dashboard
-2. Click **"Shell"** tab
-3. Run:
-   ```bash
-   pnpm db:migrate
-   ```
-
-### Option B: One-Off Job
-
-1. In Render API service, go to **"One-Off Jobs"**
-2. Create job with command: `pnpm db:migrate`
-3. Schedule after initial deployment
-
-### Seed Data (Optional)
-
-If seed script is available:
-```bash
-pnpm seed
-```
-
----
-
-## 4. Redis Cache Setup
-
-### Using Upstash (Recommended for Staging)
-
-1. Go to https://console.upstash.com/
-2. Sign up with email (free tier available)
-3. Create Database:
-   - **Name**: `alagami-redis-staging`
-   - **Region**: São Paulo
-   - **Database Type**: Redis
-   - **Tier**: FREE
-4. Copy connection string
-5. Add to API environment variables:
-   ```
-   REDIS_URL=redis://default:password@hostname:port
-   ```
-
-### Using Render Redis
-
-1. From Render dashboard, click **"New +"** → **"Redis"**
-2. Configure and connect to API service
-3. Add to environment variables
-
----
-
-## 5. Web App Deployment (Vercel)
-
-### Initial Setup
-
-1. Go to https://vercel.com/new
-2. Click **"Continue with GitHub"**
-3. Select: `contatovinicaetano93-commits/alagami-site`
-4. Click **"Import"**
-
-### Configure Build Settings
+During the import process, configure:
 
 | Setting | Value |
 |---------|-------|
-| Framework Preset | Next.js |
-| Project Name | alagami-site |
-| Root Directory | `apps/web` |
-| Build Command | `pnpm build` |
-| Install Command | `pnpm install` |
+| **Framework Preset** | Next.js |
+| **Project Name** | alagami-site (or your preference) |
+| **Root Directory** | `apps/web` |
+| **Build Command** | `pnpm build` |
+| **Install Command** | `pnpm install` |
+| **Output Directory** | `.next` (auto-detected) |
 
-### Add Environment Variables
+### 3. Environment Variables
 
-In Vercel Settings > Environment Variables:
+Add the following environment variables to the Vercel dashboard under **Settings > Environment Variables**:
+
+#### Required for Staging
 
 ```
 NEXT_PUBLIC_API_URL=https://alagami-api-staging.onrender.com
 ```
 
-For production:
+#### Optional (if needed for image optimization)
+
+These are configured in `next.config.ts` for AWS S3 and Cloudflare R2:
+- Remote image patterns are pre-configured for `*.amazonaws.com` and `*.r2.cloudflarestorage.com`
+
+### 4. Deploy
+
+Click the **Deploy** button to trigger the first deployment. Vercel will:
+1. Install dependencies via `pnpm install`
+2. Build the project with `pnpm build`
+3. Generate the `.next` output directory
+4. Deploy to the edge network
+
+## Post-Deployment
+
+### Vercel URL
+
+Once deployment is successful, you'll receive a URL in the format:
 ```
-NEXT_PUBLIC_API_URL=https://api.alagami.com
+https://alagami-site.vercel.app
 ```
 
-### Deploy
+(Actual URL will be available in the Vercel dashboard after first deployment)
 
-Click **"Deploy"** button. Vercel automatically handles:
-- Dependency installation
-- Build optimization
-- CDN deployment
+### Domain Configuration
 
----
+To add a custom domain:
+1. Go to Vercel Dashboard > Settings > Domains
+2. Add your custom domain
+3. Update DNS records as shown by Vercel
 
-## 6. Verification & Testing
+## Automatic Deployments
 
-### Health Check
+### Trigger Rules
 
-Test API is running:
+- **Automatic**: Every push to connected branch
+- **Manual**: Available in Vercel Dashboard > Deployments > Redeploy
+
+### Branch Deployments
+
+By default, Vercel creates preview deployments for:
+- All pull requests
+- Non-main branches (if configured)
+
+Configure in **Settings > Git > Deploy Contexts**:
+- **Production Branch**: `main` or `develop` (as per your workflow)
+- **Preview Branches**: All others (default)
+
+## Environment Configuration
+
+### Environment Variable Management
+
+1. **Development** (local)
+   ```bash
+   # .env.local (git-ignored)
+   NEXT_PUBLIC_API_URL=http://localhost:4000
+   ```
+
+2. **Staging** (Vercel)
+   ```
+   NEXT_PUBLIC_API_URL=https://alagami-api-staging.onrender.com
+   ```
+
+3. **Production** (Vercel)
+   ```
+   NEXT_PUBLIC_API_URL=https://api.alagami.com  # Update when ready
+   ```
+
+### Sensitive Variables
+
+- Use Vercel's **Sensitive** toggle for tokens and keys
+- Never commit `.env` files to git
+- Reference template: `.env.example`
+
+## Build and Deployment Process
+
+### What Happens During Deploy
+
+1. **Install Phase**
+   - `pnpm install` installs all workspace dependencies
+   - Includes: `@imbobi/core`, `@imbobi/schemas`, `@imbobi/ui`
+
+2. **Build Phase**
+   - `pnpm build` from `apps/web` directory
+   - TypeScript compilation
+   - Next.js optimization and bundling
+   - Tailwind CSS processing
+
+3. **Output Phase**
+   - `.next` directory uploaded to Vercel's edge network
+   - Static assets optimized and cached
+
+### Build Duration
+
+- Expected: 2-5 minutes for initial deployment
+- Subsequent builds: 1-3 minutes (with cache)
+
+## Troubleshooting
+
+### Common Issues
+
+#### 1. Build Fails: "Cannot find module @imbobi/..."
+
+**Solution**: Ensure monorepo workspace resolution works
+- Check `pnpm-workspace.yaml` exists at root
+- Verify package paths in root `package.json`
+- Run `pnpm install` locally to test
+
+#### 2. API Calls Fail (CORS errors)
+
+**Solution**: Verify environment variable is set
 ```bash
-curl https://alagami-api-staging.onrender.com/health
+# Check Vercel Dashboard > Settings > Environment Variables
+NEXT_PUBLIC_API_URL=https://alagami-api-staging.onrender.com
 ```
 
-Expected response:
-```json
-{
-  "status": "ok",
-  "timestamp": "2026-05-27T..."
+#### 3. Image Optimization Errors
+
+**Solution**: Remote image patterns are configured for:
+- AWS S3: `*.amazonaws.com`
+- Cloudflare R2: `*.r2.cloudflarestorage.com`
+
+Add additional patterns in `apps/web/next.config.ts` if needed:
+```typescript
+images: {
+  remotePatterns: [
+    { protocol: "https", hostname: "**.example.com" },
+  ],
 }
 ```
 
-### API Documentation
+#### 4. Workspace Dependencies Not Found
 
-If Swagger is enabled:
-```
-https://alagami-api-staging.onrender.com/api/docs
-```
-
-### Database Connection (Local)
-
-From your machine:
+**Solution**: Verify monorepo structure
 ```bash
-psql postgresql://user:password@hostname.render.com:5432/dbname
+# Root directory structure
+- apps/web        # Next.js app
+- apps/mobile     # Expo app
+- packages/       # Shared packages
+- services/       # Backend services
 ```
 
-Test PostGIS:
-```sql
-SELECT ST_AsText(ST_Point(0, 0));
-```
+### View Logs
 
----
+1. Vercel Dashboard > Deployments > [Deployment] > Logs
+2. Check Build, Preview, and Production logs
+3. Download full logs if needed
 
-## 7. Environment Variables Reference
+### Rollback
 
-### Required Variables
+To rollback to a previous deployment:
+1. Vercel Dashboard > Deployments
+2. Find previous successful deployment
+3. Click the three dots > Promote to Production
 
-| Variable | Value | Notes |
-|----------|-------|-------|
-| `DATABASE_URL` | `postgresql://...` | Must have PostGIS extension |
-| `NODE_ENV` | `production` | Environment mode |
-| `PORT` | `4000` | API port |
-| `CORS_ORIGIN` | Frontend URL | `https://alagami-web-staging...` |
-| `JWT_SECRET` | 64+ random chars | Use `openssl rand -base64 48` |
-| `REDIS_URL` | `redis://...` | BullMQ queue connection |
+## Monitoring
 
-### Optional Variables
+### After Deployment
 
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `AWS_REGION` | S3 region | `us-east-1` |
-| `AWS_ACCESS_KEY_ID` | S3 auth | From AWS IAM |
-| `AWS_SECRET_ACCESS_KEY` | S3 auth | From AWS IAM |
-| `S3_BUCKET` | S3 bucket | `imbobi-evidencias-staging` |
-| `EMAIL_PROVIDER` | Email service | `sendgrid` or `smtp` |
-| `SENDGRID_API_KEY` | SendGrid auth | From SendGrid console |
-| `UNICO_API_KEY` | KYC service | From Unico |
-| `SERPRO_TOKEN` | CPF validation | From Serpro |
-| `FIREBASE_PROJECT_ID` | Firebase auth | From Firebase console |
-| `FIREBASE_PRIVATE_KEY` | Firebase auth | From Firebase console |
-| `FIREBASE_CLIENT_EMAIL` | Firebase auth | From Firebase console |
+1. **Check Deployment Status**: Vercel Dashboard > Deployments
+2. **View Analytics**: Settings > Analytics (if enabled)
+3. **Monitor Performance**: Vercel Metrics dashboard
+4. **Check Logs**: Settings > Runtime Logs
 
----
+### Health Check
 
-## 8. Monitoring & Logs
-
-### Render Logs
-
-1. API service dashboard → **"Logs"** tab
-2. View real-time logs and past deployments
-3. Filter by log level and search terms
-
-### Set Up Alerts
-
-1. Service Settings → **"Notifications"**
-2. Configure email for:
-   - Deployment failures
-   - Service crashes
-   - High resource usage
-
-### Vercel Logs
-
-1. Vercel Dashboard → **"Deployments"**
-2. Click deployment → **"Logs"**
-3. View build and runtime logs
-
----
-
-## 9. Continuous Deployment
-
-### Auto-Deploy Configuration
-
-- **Trigger**: Every push to selected branch
-- **Automatic**: On by default in Render and Vercel
-
-### Manual Deploy
-
-**Render:**
-1. API service page → **"Manual Deploy"**
-2. Click **"Deploy latest commit"**
-
-**Vercel:**
-1. Deployments tab → **"Redeploy"**
-
----
-
-## 10. Production Deployment Checklist
-
-Infrastructure:
-- [ ] PostgreSQL 15 created with PostGIS
-- [ ] Database migrations successful
-- [ ] Redis connection working
-- [ ] All environment variables configured
-- [ ] JWT secret is 64+ characters and strong
-
-API Service:
-- [ ] Service deployed and running
-- [ ] Health check endpoint returns 200
-- [ ] API documentation accessible
-- [ ] Migrations completed
-- [ ] CORS_ORIGIN matches frontend URL
-
-Database:
-- [ ] Backups enabled
-- [ ] PostGIS extension verified
-- [ ] Connection pool optimized
-
-Monitoring:
-- [ ] Logs accessible
-- [ ] Alerts configured
-- [ ] Error tracking enabled
-
----
-
-## 11. Troubleshooting
-
-### Build Fails: pnpm Not Found
-
-Use this build command:
+After deployment, verify:
 ```bash
-npm install -g pnpm && pnpm install && pnpm db:generate && pnpm db:migrate && pnpm build
+# Check application loads
+curl https://alagami-site.vercel.app/
+
+# Check API connectivity (should have NEXT_PUBLIC_API_URL configured)
+# Open browser console and check network requests
 ```
 
-### Database Connection Timeout
+## Security Considerations
 
-- Verify DATABASE_URL uses external URL from Render
-- Check firewall rules
-- Confirm PostgreSQL version is 15+
+1. **Never commit `.env` files** to git
+2. **Use sensitive toggle** in Vercel for secrets
+3. **Rotate secrets regularly** (JWT, API keys)
+4. **Restrict domain access** if needed via WAF rules
+5. **Enable security headers** in `next.config.ts` if required
 
-### PostGIS Extension Errors
+## Performance Optimization
 
-- Verify PostgreSQL version: `SELECT version();`
-- Create extension: `CREATE EXTENSION postgis;`
-- Check migration files in `services/api/prisma/migrations/`
+### Next.js Built-in Features (Enabled by Default)
 
-### CORS Errors
+- ✅ Image optimization with `next/image`
+- ✅ Automatic code splitting
+- ✅ CSS module support
+- ✅ Tree-shaking of unused code
+- ✅ Static generation (ISG) where possible
 
-- Update `CORS_ORIGIN` to match frontend URL
-- For multiple origins: `https://web1.com,https://web2.com`
-- Verify frontend has `NEXT_PUBLIC_API_URL` set
+### Vercel Edge Network
 
-### Service Crashes After Deploy
+- Global CDN for fast content delivery
+- Automatic caching of static assets
+- Vercel Edge Functions for serverless API routes
 
-1. Check Render logs for errors
-2. Verify all required env vars are set
-3. Test locally: `NODE_ENV=production pnpm build && pnpm start`
-4. Check migration status
+### Recommended Optimizations
 
-### Redis Connection Issues
+1. Use `next/image` for all images
+2. Implement `<Suspense>` for streaming responses
+3. Optimize Core Web Vitals
+4. Consider incremental static regeneration for dynamic routes
 
-- Verify `REDIS_URL` format: `redis://default:password@host:port`
-- Test connection: `redis-cli`
-- Check IP whitelist on Upstash
+## References
 
----
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Vercel Deployment Guide](https://vercel.com/docs/concepts/deployments/overview)
+- [Vercel Environment Variables](https://vercel.com/docs/concepts/projects/environment-variables)
+- [Next.js Image Optimization](https://nextjs.org/docs/app/building-your-application/optimizing/images)
 
-## 12. Performance Optimization
+## Support
 
-### Database
-
-- Enable query logging: `log_statement = 'all'`
-- Monitor slow queries (>1000ms)
-- Use connection pooling
-
-### API
-
-- Enable request caching headers
-- Use Redis for session/cache
-- Implement rate limiting (Throttler enabled)
-
-### Frontend
-
-- Image optimization with `next/image`
-- Code splitting and lazy loading
-- Vercel CDN caching
-
----
-
-## 13. Related Documentation
-
-- [API Endpoints](./API_ENDPOINTS.md)
-- [Integration Guide](./INTEGRATION_GUIDE.md)
-- [Performance Optimization](./PERFORMANCE.md)
-- [Project Architecture](../CLAUDE.md)
-
----
-
-## 14. Support & Resources
-
-- **Render Docs**: https://render.com/docs
-- **Vercel Docs**: https://vercel.com/docs
-- **Upstash Docs**: https://upstash.com/docs
-- **PostgreSQL Docs**: https://www.postgresql.org/docs/15/
-- **PostGIS Docs**: https://postgis.net/docs/
-
-**Contact**: contato.vinicaetano93@gmail.com
+For deployment issues:
+1. Check Vercel logs: Dashboard > Deployments > Logs
+2. Review build command and environment variables
+3. Test locally with `pnpm dev` and `pnpm build`
+4. Check GitHub Actions or CI/CD pipeline status
 
 ---
 
 **Last Updated**: 2026-05-27  
-**Deployment Environment**: Render + Vercel  
-**Database**: PostgreSQL 15 + PostGIS  
-**API Framework**: NestJS 10 + Fastify  
-**Documentation Version**: 2.0
+**Documentation Version**: 1.0
