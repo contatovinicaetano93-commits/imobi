@@ -1,6 +1,16 @@
 import type { Metadata } from "next";
 import { obrasApi, creditoApi } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
+import { PortfolioChart } from "./_components/PortfolioChart";
+import { RegionalDistribution } from "./_components/RegionalDistribution";
+import { InadimplenciaMetrics } from "./_components/InadimplenciaMetrics";
+import { ReportExport } from "./_components/ReportExport";
+import {
+  aggregateByRegion,
+  calculateRoiTimeline,
+  calculateInadimplenciaRate,
+  calculatePortfolioPerformance,
+} from "./_components/fundos-utils";
 
 export const metadata: Metadata = { title: "Fundos — imbobi" };
 
@@ -41,6 +51,12 @@ export default async function FundosPage() {
 
   // Taxa de inadimplência (placeholder)
   const inadimplenciaRate = 0; // Seria calculado com dados de pagamentos
+
+  // Agregação de dados para componentes
+  const regionalMetrics = aggregateByRegion(obras, creditos);
+  const roiTimeline = calculateRoiTimeline(creditos);
+  const inadimplenciaData = calculateInadimplenciaRate(creditos);
+  const portfolioPerformance = calculatePortfolioPerformance(obras);
 
   return (
     <div className="space-y-8">
@@ -125,57 +141,51 @@ export default async function FundosPage() {
         </div>
       </div>
 
+      {/* Timeline de ROI (Esperado vs Real) */}
+      <section>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Evolução de ROI
+        </h2>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <PortfolioChart data={roiTimeline} />
+        </div>
+      </section>
+
+      {/* Inadimplência */}
+      <section>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Taxa de Inadimplência
+        </h2>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <InadimplenciaMetrics data={inadimplenciaData} />
+        </div>
+      </section>
+
       {/* Portfolio por região */}
       <section>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Distribuição por região
         </h2>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-500 mb-6">
             Agrupamento de obras por localização geográfica
           </p>
-          {obrasProgresso.length === 0 ? (
+          {regionalMetrics.length === 0 ? (
             <p className="text-gray-400 text-sm">Nenhuma obra em progresso.</p>
           ) : (
-            <div className="space-y-3">
-              {obrasProgresso.slice(0, 5).map((obra) => (
-                <div
-                  key={obra.id}
-                  className="flex items-center justify-between pb-3 border-b border-gray-50 last:border-b-0"
-                >
-                  <a
-                    href={`/dashboard/obras/${obra.id}`}
-                    className="flex-1 hover:opacity-75 transition-opacity"
-                  >
-                    <p className="font-medium text-gray-900">{obra.nome}</p>
-                    <p className="text-xs text-gray-500">
-                      {obra.credito
-                        ? formatarBRL(Number(obra.credito.valorLiberado)) +
-                          " / " +
-                          formatarBRL(Number(obra.credito.valorAprovado))
-                        : "sem crédito"}
-                    </p>
-                  </a>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-gray-700">
-                      {obra.progresso ?? 0}%
-                    </p>
-                  </div>
-                </div>
-              ))}
-              {obrasProgresso.length > 5 && (
-                <div className="pt-3 border-t border-gray-50">
-                  <a
-                    href="/dashboard/obras"
-                    className="text-sm text-brand-600 font-medium hover:text-brand-700"
-                  >
-                    Ver todas as {obrasProgresso.length} obras →
-                  </a>
-                </div>
-              )}
-            </div>
+            <RegionalDistribution data={regionalMetrics} />
           )}
         </div>
+      </section>
+
+      {/* Exportação de relatórios */}
+      <section>
+        <ReportExport
+          regional={regionalMetrics}
+          roiData={roiTimeline}
+          inadimplenciaData={inadimplenciaData}
+          creditos={creditos}
+        />
       </section>
 
       {/* Resumo de créditos */}

@@ -255,3 +255,80 @@ export const notificacoesApi = {
   deletar: (id: string) =>
     apiFetch(`/notificacoes/${id}`, { method: "DELETE" }),
 };
+
+// ── Engenheiro (Inspector) ────────────────────────────────────────────
+
+export type Visita = {
+  visitaId: string;
+  etapaId: string;
+  obra: {
+    id: string;
+    nome: string;
+    endereco: string;
+    geoLatitude: number;
+    geoLongitude: number;
+    raioValidacaoMetros: number;
+  };
+  dataAgendada: string;
+  status: "AGENDADA" | "INICIADA" | "CONCLUIDA" | "CANCELADA";
+  observacoes?: string;
+  criadoEm: string;
+};
+
+export type ValidacaoForm = {
+  visitaId: string;
+  etapaId: string;
+  obraCondicoes: {
+    estruturaOk: boolean;
+    fundacaoOk: boolean;
+    coberturaPlanejada: boolean;
+    observacoes?: string;
+  };
+  conformidade: {
+    protetoresPresentes: boolean;
+    sinalizacaoOk: boolean;
+    acessoSeguro: boolean;
+    observacoes?: string;
+  };
+  observacoesGerais?: string;
+  fotos: {
+    id: string;
+    url: string;
+    latCaptura: number;
+    lngCaptura: number;
+    accuracyMetros: number;
+    descricao?: string;
+  }[];
+  status: "RASCUNHO" | "ENVIADA" | "REJEITADA" | "APROVADA";
+  submissaoEm?: string;
+};
+
+export const engenheirosApi = {
+  listarVisitas: (filtroStatus?: string) =>
+    apiFetch<Visita[]>(`/engenheiros/visitas${filtroStatus ? `?status=${filtroStatus}` : ""}`),
+  obterVisita: (visitaId: string) =>
+    apiFetch<Visita>(`/engenheiros/visitas/${visitaId}`),
+  obterValidacao: (visitaId: string) =>
+    apiFetch<ValidacaoForm>(`/engenheiros/validacoes/${visitaId}`),
+  submeterValidacao: (visitaId: string, data: Omit<ValidacaoForm, "visitaId" | "etapaId">) =>
+    apiFetch<ValidacaoForm>(`/engenheiros/validacoes/${visitaId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  atualizarValidacao: (visitaId: string, data: Partial<ValidacaoForm>) =>
+    apiFetch<ValidacaoForm>(`/engenheiros/validacoes/${visitaId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  gerarRelatorioPDF: (visitaId: string) =>
+    apiFetch<{ url: string }>(`/engenheiros/validacoes/${visitaId}/relatorio`),
+  fazerUploadFoto: (visitaId: string, formData: FormData) =>
+    fetch(`${API_URL}/api/v1/engenheiros/validacoes/${visitaId}/fotos`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${(await cookies()).get("access_token")?.value ?? ""}`,
+      },
+      body: formData,
+    }).then((res) => (res.ok ? res.json() : Promise.reject(res))),
+};
+
