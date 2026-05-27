@@ -14,7 +14,9 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
-import { useLocationCapture, useCameraCapture, calcularDistanciaMetros } from "@imbobi/core";
+import { useLocationCapture } from "@imbobi/core/src/hooks/useLocationCapture";
+import { useCameraCapture } from "@imbobi/core/src/hooks/useCameraCapture";
+import { calcularDistanciaMetros } from "@imbobi/core";
 import { UploadEvidenciaSchema } from "@imbobi/schemas";
 import { evidenciasApi, ApiError } from "../../../../lib/api";
 

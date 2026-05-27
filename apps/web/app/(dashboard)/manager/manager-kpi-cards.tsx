@@ -11,35 +11,48 @@ interface ManagerKPICardsProps {
   };
 }
 
+interface KPI {
+  label: string;
+  value: string;
+  sub: string;
+  href: "/dashboard/gestor/etapas" | "/dashboard/gestor/kyc" | null;
+}
+
 export function ManagerKPICards({ stats }: ManagerKPICardsProps) {
   const router = useRouter();
 
-  const kpis = [
+  const kpis: KPI[] = [
     {
       label: "Etapas Pendentes",
       value: String(stats.filaAprovacoes),
       sub: "aguardando vistoria",
-      href: "/dashboard/manager/etapas"
+      href: "/dashboard/gestor/etapas"
     },
     {
       label: "KYC Pendentes",
       value: String(stats.filaKyc),
       sub: "documentos",
-      href: "/dashboard/manager/kyc"
+      href: "/dashboard/gestor/kyc"
     },
     {
       label: "Créditos Ativos",
       value: String(stats.creditosAtivos),
       sub: "em andamento",
-      href: undefined
+      href: null
     },
     {
       label: "Obras Ativas",
       value: String(stats.obrasAtivas),
       sub: "em execução",
-      href: undefined
+      href: null
     },
   ];
+
+  const handleClick = (href: "/dashboard/gestor/etapas" | "/dashboard/gestor/kyc" | null) => {
+    if (href) {
+      router.push(href);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -47,7 +60,7 @@ export function ManagerKPICards({ stats }: ManagerKPICardsProps) {
         <div
           key={kpi.label}
           className={`bg-white rounded-2xl p-6 border border-gray-100 shadow-sm ${kpi.href ? 'hover:shadow-md cursor-pointer transition-shadow' : ''}`}
-          onClick={() => kpi.href && router.push(kpi.href)}
+          onClick={() => handleClick(kpi.href)}
         >
           <p className="text-sm text-gray-500 mb-1">{kpi.label}</p>
           <p className="text-2xl font-bold text-gray-900">{kpi.value}</p>

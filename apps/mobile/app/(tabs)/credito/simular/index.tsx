@@ -9,7 +9,8 @@ import {
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useSimuladorCredito, formatarBRL, formatarPercentual } from "@imbobi/core";
+import { useSimuladorCredito } from "@imbobi/core/src/hooks/useSimuladorCredito";
+import { formatarBRL, formatarPercentual } from "@imbobi/core";
 import { SimulacaoCreditoSchema } from "@imbobi/schemas";
 import { simuladorApi, ApiError } from "../../../../lib/api";
 import Slider from "@react-native-community/slider";

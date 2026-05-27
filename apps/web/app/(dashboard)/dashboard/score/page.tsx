@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { scoreApi, type ScoreAtual, type ScoreHistorico } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = { title: "Score de Construtibilidade — imbobi" };
 
 function getNivelThresholds(nivel: string): { proximo: string; proximoScore: number; progresso: number } {
