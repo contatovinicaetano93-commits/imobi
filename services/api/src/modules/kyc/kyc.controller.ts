@@ -1,6 +1,8 @@
 import { Controller, Post, Get, Patch, Body, Param, Query, UseGuards } from "@nestjs/common";
 import { KycService } from "./kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { RolesGuard } from "../../common/guards/roles.guard";
+import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { UploadDocumentoSchema, RejeitarDocumentoSchema } from "@imbobi/schemas";
@@ -29,9 +31,10 @@ export class KycController {
     return this.kyc.obterStatus(u.id);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles("ADMIN")
   @Get("pendentes")
   async listarPendentes(@UsuarioAtual() u: IUsuario) {
-    await this.kyc.verificarPermissao(u.id);
     return this.kyc.listarPendentes();
   }
 

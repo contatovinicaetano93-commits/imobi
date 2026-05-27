@@ -28,80 +28,66 @@ export const CACHE_KEYS = {
 export class CacheService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
-  // Score caching (1 hour = 3600000ms)
-  async obterScoreComCache<T>(usuarioId: string, fn: () => Promise<T>): Promise<T> {
-    const cacheKey = CACHE_KEYS.SCORE(usuarioId);
+  private async withCache<T>(
+    cacheKey: string,
+    ttl: number,
+    metricName: string,
+    fn: () => Promise<T>
+  ): Promise<T> {
     const inicio = performance.now();
     const cached = await this.cacheManager.get<T>(cacheKey);
 
     if (cached) {
       const duracao = performance.now() - inicio;
-      globalMetrics.record("score", duracao, true);
+      globalMetrics.record(metricName, duracao, true);
       return cached;
     }
 
     const resultado = await fn();
     const duracao = performance.now() - inicio;
-    globalMetrics.record("score", duracao, false);
-    await this.cacheManager.set(cacheKey, resultado, 3600000);
+    globalMetrics.record(metricName, duracao, false);
+    await this.cacheManager.set(cacheKey, resultado, ttl);
     return resultado;
+  }
+
+  // Score caching (1 hour = 3600000ms)
+  async obterScoreComCache<T>(usuarioId: string, fn: () => Promise<T>): Promise<T> {
+    return this.withCache(
+      CACHE_KEYS.SCORE(usuarioId),
+      3600000,
+      "score",
+      fn
+    );
   }
 
   // Profile caching (15 min = 900000ms)
   async obterPerfilComCache<T>(usuarioId: string, fn: () => Promise<T>): Promise<T> {
-    const cacheKey = CACHE_KEYS.PERFIL_USUARIO(usuarioId);
-    const inicio = performance.now();
-    const cached = await this.cacheManager.get<T>(cacheKey);
-
-    if (cached) {
-      const duracao = performance.now() - inicio;
-      globalMetrics.record("profile", duracao, true);
-      return cached;
-    }
-
-    const resultado = await fn();
-    const duracao = performance.now() - inicio;
-    globalMetrics.record("profile", duracao, false);
-    await this.cacheManager.set(cacheKey, resultado, 900000);
-    return resultado;
+    return this.withCache(
+      CACHE_KEYS.PERFIL_USUARIO(usuarioId),
+      900000,
+      "profile",
+      fn
+    );
   }
 
   // Works list caching (5 min = 300000ms)
   async obterObrasComCache<T>(usuarioId: string, fn: () => Promise<T>): Promise<T> {
-    const cacheKey = CACHE_KEYS.OBRAS_USUARIO(usuarioId);
-    const inicio = performance.now();
-    const cached = await this.cacheManager.get<T>(cacheKey);
-
-    if (cached) {
-      const duracao = performance.now() - inicio;
-      globalMetrics.record("works", duracao, true);
-      return cached;
-    }
-
-    const resultado = await fn();
-    const duracao = performance.now() - inicio;
-    globalMetrics.record("works", duracao, false);
-    await this.cacheManager.set(cacheKey, resultado, 300000);
-    return resultado;
+    return this.withCache(
+      CACHE_KEYS.OBRAS_USUARIO(usuarioId),
+      300000,
+      "works",
+      fn
+    );
   }
 
   // Score history caching (1 hour = 3600000ms)
   async obterHistoricoComCache<T>(usuarioId: string, limit: number, fn: () => Promise<T>): Promise<T> {
-    const cacheKey = `${CACHE_KEYS.SCORE_HISTORY(usuarioId)}:${limit}`;
-    const inicio = performance.now();
-    const cached = await this.cacheManager.get<T>(cacheKey);
-
-    if (cached) {
-      const duracao = performance.now() - inicio;
-      globalMetrics.record("scoreHistory", duracao, true);
-      return cached;
-    }
-
-    const resultado = await fn();
-    const duracao = performance.now() - inicio;
-    globalMetrics.record("scoreHistory", duracao, false);
-    await this.cacheManager.set(cacheKey, resultado, 3600000);
-    return resultado;
+    return this.withCache(
+      `${CACHE_KEYS.SCORE_HISTORY(usuarioId)}:${limit}`,
+      3600000,
+      "scoreHistory",
+      fn
+    );
   }
 
   // Cache invalidation methods

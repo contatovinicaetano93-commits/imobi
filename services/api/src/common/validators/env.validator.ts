@@ -25,8 +25,8 @@ export function validateEnvironment(): void {
   const databaseUrl = process.env['DATABASE_URL'];
   if (!databaseUrl) {
     errors.push('DATABASE_URL is not set');
-  } else if (!databaseUrl.includes('postgresql://')) {
-    errors.push('DATABASE_URL must be a PostgreSQL connection string');
+  } else if (!databaseUrl.startsWith('postgresql://') && !databaseUrl.startsWith('postgres://')) {
+    errors.push('DATABASE_URL must be a PostgreSQL connection string (postgresql:// or postgres://)');
   }
 
   // Redis configuration
