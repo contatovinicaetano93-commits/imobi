@@ -30,6 +30,7 @@
     "services/*"
   ],
   "dependencies": {
-    "@react-native-community/slider": "^5.2.0"
+    "@react-native-community/slider": "^5.2.0",
+    "class-transformer": "^0.5.1"
   }
 }
