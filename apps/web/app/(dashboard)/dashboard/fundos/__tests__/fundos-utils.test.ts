@@ -25,8 +25,8 @@ describe("fundos-utils", () => {
           credito: {
             id: "c1",
             status: "ATIVO",
-            valorAprovado: BigInt(100000),
-            valorLiberado: BigInt(50000),
+            valorAprovado: 100000,
+            valorLiberado: 50000,
             taxaMensal: 0.02,
             prazoMeses: 12,
           } as CreditoResumo,
@@ -73,8 +73,8 @@ describe("fundos-utils", () => {
           status: "EM_ANDAMENTO",
           progresso: 40,
           credito: {
-            valorAprovado: BigInt(100000),
-            valorLiberado: BigInt(50000),
+            valorAprovado: 100000,
+            valorLiberado: 50000,
           } as CreditoResumo,
         } as ObraResumo,
         {
@@ -84,8 +84,8 @@ describe("fundos-utils", () => {
           status: "EM_ANDAMENTO",
           progresso: 60,
           credito: {
-            valorAprovado: BigInt(100000),
-            valorLiberado: BigInt(50000),
+            valorAprovado: 100000,
+            valorLiberado: 50000,
           } as CreditoResumo,
         } as ObraResumo,
       ];
@@ -135,8 +135,8 @@ describe("fundos-utils", () => {
           status: "EM_ANDAMENTO",
           progresso: 50,
           credito: {
-            valorAprovado: BigInt(100000),
-            valorLiberado: BigInt(50000),
+            valorAprovado: 100000,
+            valorLiberado: 50000,
           } as CreditoResumo,
         } as ObraResumo,
       ];

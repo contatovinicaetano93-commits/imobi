@@ -25,5 +25,5 @@
     "suppressImplicitAnyIndexErrors": false
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", ".next"]
+  "exclude": ["node_modules", ".next", "**/__tests__/**"]
 }
