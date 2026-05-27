@@ -13,6 +13,15 @@ export const CACHE_KEYS = {
 
   // Works list caching (5 min TTL)
   OBRAS_USUARIO: (usuarioId: string) => `obras:${usuarioId}`,
+
+  // Credits caching (10 min TTL)
+  CREDITOS_USUARIO: (usuarioId: string) => `creditos:${usuarioId}`,
+
+  // Work details caching (5 min TTL)
+  OBRA_DETALHE: (obraId: string) => `obra_detalhe:${obraId}`,
+
+  // Work steps caching (5 min TTL)
+  ETAPAS_OBRA: (obraId: string) => `etapas_obra:${obraId}`,
 };
 
 @Injectable()
