@@ -12,7 +12,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { formatarBRL, formatarPercentual } from "@imbobi/core";
 import { SolicitacaoCreditoSchema } from "@imbobi/schemas";
-import { creditoApi, ApiError } from "../../lib/api";
+import { creditoApi, ApiError } from "../../../lib/api";
 
 interface ParcelaInfo {
   numero: number;
@@ -110,7 +110,7 @@ export default function ResultadoSimulacaoScreen() {
         },
       ]);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Erro ao solicitar crédito";
+      const message = err instanceof ApiError ? err.message : (err instanceof Error ? err.message : "Erro ao solicitar crédito");
       setError(message);
       Alert.alert("Erro", message);
     } finally {

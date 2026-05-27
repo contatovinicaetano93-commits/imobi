@@ -14,7 +14,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
-import * as MediaLibrary from "expo-media-library";
 import { useLocationCapture, useCameraCapture, calcularDistanciaMetros } from "@imbobi/core";
 import { UploadEvidenciaSchema } from "@imbobi/schemas";
 import { evidenciasApi, ApiError } from "../../../../lib/api";
@@ -141,11 +140,6 @@ export default function UploadEvidenciaScreen() {
     try {
       setError(null);
 
-      const permission = await MediaLibrary.requestPermissionsAsync();
-      if (!permission.granted) {
-        setError("Permissão de galeria negada");
-        return;
-      }
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -338,8 +332,8 @@ export default function UploadEvidenciaScreen() {
         <View
           style={[
             styles.statusCard,
-            location && styles.statusCardSuccess,
-            locationError && styles.statusCardError,
+            location ? styles.statusCardSuccess : null,
+            locationError ? styles.statusCardError : null,
           ]}
         >
           <View>
@@ -358,13 +352,13 @@ export default function UploadEvidenciaScreen() {
         {/* Geo Validation */}
         {geoValidation.status !== "idle" && (
           <View
-            style={[
-              styles.validationCard,
-              geoValidation.status === "valid" &&
-                styles.validationCardSuccess,
-              geoValidation.status === "invalid" &&
-                styles.validationCardError,
-            ]}
+            style={
+              geoValidation.status === "valid"
+                ? [styles.validationCard, styles.validationCardSuccess]
+                : geoValidation.status === "invalid"
+                  ? [styles.validationCard, styles.validationCardError]
+                  : styles.validationCard
+            }
           >
             <View style={styles.validationIcon}>
               <Text style={styles.validationIconText}>

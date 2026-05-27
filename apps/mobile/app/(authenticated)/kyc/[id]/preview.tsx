@@ -10,7 +10,7 @@ import {
   Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { kycApi, type KycDocumento, ApiError } from "../../../lib/api";
+import { kycApi, type KycDocumento, ApiError } from "@/lib/api";
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   PENDENTE: { bg: "#fef3c7", text: "#92400e", label: "Pendente de análise" },

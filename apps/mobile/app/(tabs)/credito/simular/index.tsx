@@ -11,7 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import { useSimuladorCredito, formatarBRL, formatarPercentual } from "@imbobi/core";
 import { SimulacaoCreditoSchema } from "@imbobi/schemas";
-import { simuladorApi, ApiError } from "../../../lib/api";
+import { simuladorApi, ApiError } from "../../../../lib/api";
 import Slider from "@react-native-community/slider";
 
 const TIPO_OBRA_OPTIONS = ["RESIDENCIAL", "COMERCIAL", "MISTO"] as const;
@@ -63,7 +63,7 @@ export default function SimularCreditoScreen() {
         },
       });
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Erro ao simular crédito";
+      const message = err instanceof ApiError ? err.message : (err instanceof Error ? err.message : "Erro ao simular crédito");
       setError(message);
       Alert.alert("Erro", message);
     } finally {
