@@ -12,7 +12,7 @@ export const THROTTLER_TTL = "throttler_ttl";
  * @Throttle(5, 15 * 60 * 1000) // 5 requests per 15 minutes
  */
 export const Throttle = (limit: number, ttl: number) => {
-  return (target: any, propertyKey?: string, descriptor?: PropertyDescriptor) => {
+  return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     SetMetadata(THROTTLER_LIMIT, limit)(target, propertyKey, descriptor);
     return SetMetadata(THROTTLER_TTL, ttl)(target, propertyKey, descriptor);
   };
