@@ -102,6 +102,8 @@ export class PrometheusMetricsService {
   recordDbQuery(operation: string, table: string, status: string, duration: number) {
     this.dbQueryDuration.labels(operation, table).observe(duration);
     this.dbQueryTotal.labels(operation, table, status).inc();
+    // Ensure we return early to satisfy type checking
+    return;
   }
 
   /**
@@ -157,7 +159,7 @@ export class PrometheusMetricsService {
   /**
    * Get all metrics in Prometheus format
    */
-  getMetrics(): string {
+  async getMetrics(): Promise<string> {
     return register.metrics();
   }
 
