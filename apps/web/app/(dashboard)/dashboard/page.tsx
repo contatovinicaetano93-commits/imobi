@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { obrasApi, creditoApi, type ObraResumo, type CreditoResumo, type EtapaResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = { title: "Dashboard — imbobi" };
 
 export default async function DashboardPage() {

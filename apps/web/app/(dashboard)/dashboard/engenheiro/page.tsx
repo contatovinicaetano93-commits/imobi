@@ -4,6 +4,8 @@ import { formatarBRL } from "@imbobi/core";
 import { VisitQueue } from "./_components/VisitQueue";
 import { DynamicVisitQueueClient } from "./_components/DynamicVisitQueueClient";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = { title: "Portal do Engenheiro — imbobi" };
 
 export default async function EngenheiroPortalPage() {

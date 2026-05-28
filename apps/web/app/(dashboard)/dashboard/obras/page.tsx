@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { obrasApi, type ObraResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = { title: "Minhas Obras — imbobi" };
 
 const STATUS_STYLE: Record<string, string> = {

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { obrasApi, type EtapaResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = { title: "Detalhe da Obra — imbobi" };
 
 const STATUS_STYLE: Record<string, string> = {
