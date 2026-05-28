@@ -24,8 +24,8 @@ export function getRedisConfig(): RedisConfig {
     };
   }
 
-  // Fallback for development only
-  if (nodeEnv === 'development') {
+  // Fallback for development and test environments
+  if (nodeEnv === 'development' || nodeEnv === 'test') {
     return {
       host: 'localhost',
       port: 6379,

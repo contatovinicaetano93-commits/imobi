@@ -1,6 +1,7 @@
 export function validateEnvironment(config: Record<string, any>): string[] {
   const errorMessages: string[] = [];
   const nodeEnv = config.NODE_ENV || 'development';
+  const isDev = nodeEnv === 'development' || nodeEnv === 'test';
 
   // Critical: DATABASE_URL always required
   if (!config.DATABASE_URL) {
@@ -11,7 +12,7 @@ export function validateEnvironment(config: Record<string, any>): string[] {
   const hasRedisUrl = !!config.REDIS_URL;
   const hasRedisHostPort = config.REDIS_HOST && config.REDIS_PORT;
 
-  if (!hasRedisUrl && !hasRedisHostPort && nodeEnv !== 'development') {
+  if (!hasRedisUrl && !hasRedisHostPort && !isDev) {
     errorMessages.push(
       'Redis configuration missing. Either set REDIS_URL or both REDIS_HOST and REDIS_PORT',
     );
@@ -24,19 +25,19 @@ export function validateEnvironment(config: Record<string, any>): string[] {
   if (
     emailProviderLower === 'sendgrid' &&
     !config.SENDGRID_API_KEY &&
-    nodeEnv !== 'development'
+    !isDev
   ) {
     errorMessages.push('SENDGRID_API_KEY is required when EMAIL_PROVIDER=sendgrid');
   }
 
   if (emailProviderLower === 'ses') {
-    if (!config.AWS_REGION && nodeEnv !== 'development') {
+    if (!config.AWS_REGION && !isDev) {
       errorMessages.push('AWS_REGION is required when EMAIL_PROVIDER=ses');
     }
-    if (!config.AWS_ACCESS_KEY_ID && nodeEnv !== 'development') {
+    if (!config.AWS_ACCESS_KEY_ID && !isDev) {
       errorMessages.push('AWS_ACCESS_KEY_ID is required when EMAIL_PROVIDER=ses');
     }
-    if (!config.AWS_SECRET_ACCESS_KEY && nodeEnv !== 'development') {
+    if (!config.AWS_SECRET_ACCESS_KEY && !isDev) {
       errorMessages.push('AWS_SECRET_ACCESS_KEY is required when EMAIL_PROVIDER=ses');
     }
   }
@@ -44,7 +45,7 @@ export function validateEnvironment(config: Record<string, any>): string[] {
   if (
     emailProviderLower === 'smtp' &&
     (!config.SMTP_HOST || !config.SMTP_PORT) &&
-    nodeEnv !== 'development'
+    !isDev
   ) {
     errorMessages.push('SMTP_HOST and SMTP_PORT are required when EMAIL_PROVIDER=smtp');
   }
@@ -55,7 +56,7 @@ export function validateEnvironment(config: Record<string, any>): string[] {
     !config.FIREBASE_PRIVATE_KEY ||
     !config.FIREBASE_CLIENT_EMAIL
   ) {
-    if (nodeEnv !== 'development') {
+    if (!isDev) {
       errorMessages.push(
         'Firebase credentials (FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL) are required in production',
       );
@@ -64,7 +65,7 @@ export function validateEnvironment(config: Record<string, any>): string[] {
 
   // S3 validation (required for evidence storage)
   if (!config.AWS_S3_BUCKET || !config.AWS_S3_REGION) {
-    if (nodeEnv !== 'development') {
+    if (!isDev) {
       errorMessages.push('AWS_S3_BUCKET and AWS_S3_REGION are required in production');
     }
   }
