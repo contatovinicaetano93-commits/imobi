@@ -1,0 +1,92 @@
+global:
+  resolve_timeout: 5m
+  slack_api_url: 'YOUR_SLACK_WEBHOOK_URL'
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# Default email configuration
+smtp_smarthost: 'smtp.gmail.com:587'
+smtp_auth_username: 'your-email@gmail.com'
+smtp_auth_password: 'your-app-password'
+smtp_from: 'alerts@imbobi.com'
+
+# The root route with all parameters
+route:
+  receiver: 'default-receiver'
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  # Sub-routes for different alert types
+  routes:
+    # Critical alerts go to PagerDuty
+    - match:
+        severity: critical
+      receiver: 'pagerduty-on-call'
+      group_wait: 10s
+      repeat_interval: 2h
+
+    # Warning alerts go to Slack
+    - match:
+        severity: warning
+      receiver: 'slack-alerts'
+      repeat_interval: 12h
+
+    # Database alerts with custom handling
+    - match:
+        alertname: 'DatabaseQueryLatency'
+      receiver: 'database-team'
+      repeat_interval: 6h
+
+# Receivers
+receivers:
+  # Default receiver (email to team)
+  - name: 'default-receiver'
+    email_configs:
+      - to: 'team@imbobi.com'
+        from: 'alerts@imbobi.com'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'your-email@gmail.com'
+        auth_password: 'your-app-password'
+
+  # PagerDuty for critical incidents
+  - name: 'pagerduty-on-call'
+    pagerduty_configs:
+      - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+        description: '{{ .GroupLabels.alertname }}'
+        client: 'Prometheus'
+        client_url: '{{ .ExternalURL }}'
+
+  # Slack for notifications
+  - name: 'slack-alerts'
+    slack_configs:
+      - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+        channel: '#alerts'
+        title: 'Imbobi Alert: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+
+  # Database team specific receiver
+  - name: 'database-team'
+    email_configs:
+      - to: 'database-team@imbobi.com'
+        from: 'alerts@imbobi.com'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'your-email@gmail.com'
+        auth_password: 'your-app-password'
+
+# Inhibition rules - suppress certain alerts
+inhibit_rules:
+  # Don't send warning alerts if the corresponding critical alert is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'service', 'cluster']
+
+  # Don't send recovery alerts if an alert is still firing
+  - source_match:
+      severity: 'critical'
+    target_match_re:
+      alertstate: '^resolved$'
+    equal: ['alertname', 'cluster', 'service']
