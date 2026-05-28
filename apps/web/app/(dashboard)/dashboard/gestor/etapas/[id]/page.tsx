@@ -49,6 +49,22 @@ export default function EtapaDetailPage() {
       .finally(() => setLoading(false));
   }, [etapaId]);
 
+  useEffect(() => {
+    setAuditLoading(true);
+    managerApi
+      .obterEtapaAuditLog(etapaId)
+      .then((logs) => {
+        setAuditLogs(logs);
+        setAuditError(null);
+      })
+      .catch((err) => {
+        setAuditError(
+          err instanceof Error ? err.message : "Erro ao carregar histórico"
+        );
+      })
+      .finally(() => setAuditLoading(false));
+  }, [etapaId]);
+
   const handleApprove = async () => {
     if (!etapa) return;
     setSubmitting(true);
