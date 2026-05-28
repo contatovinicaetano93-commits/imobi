@@ -1,5 +1,6 @@
 # Lighthouse Performance Baseline
 
+**Baseline Created**: 2026-05-28T03:35Z  
 **Date**: 2026-05-28  
 **Project**: imbobi — Construction Finance Platform  
 **Environment**: Development (local)
@@ -19,15 +20,24 @@ This document establishes the performance baseline for the imbobi web applicatio
 
 ## Performance Targets
 
+Baseline validation targets established **2026-05-28T03:35Z**.
+
+### Lighthouse Score Targets
 | Metric | Desktop Target | Mobile Target |
 |--------|---|---|
 | Performance | >= 80 | >= 60 |
 | Accessibility | >= 90 | >= 90 |
 | Best Practices | >= 90 | >= 90 |
 | SEO | >= 90 | >= 90 |
+
+### Core Web Vitals Targets
+| Metric | Desktop Target | Mobile Target |
+|--------|---|---|
 | LCP | < 2.5s | < 4.0s |
 | FID | < 100ms | < 100ms |
 | CLS | < 0.1 | < 0.1 |
+
+**Note**: These targets should be validated manually via Chrome DevTools Lighthouse audit on both desktop and mobile viewports. Test on throttled networks (Simulated Fast 4G) with cache disabled for accuracy.
 
 ## Critical User Flows
 
@@ -339,9 +349,25 @@ POST /api/v1/vistoria/{id}/aprovar: < 500ms
 
 ---
 
+## How to Capture Scores
+
+### Manual Testing via Chrome DevTools
+1. Open each URL in Chrome: `https://imbobi.vercel.app/`
+2. Open DevTools (F12) → Lighthouse tab
+3. Configure: Desktop/Mobile mode, Simulated Fast 4G, Cache disabled
+4. Click "Analyze page load"
+5. Record scores for Performance, Accessibility, Best Practices, SEO
+6. Document Core Web Vitals: LCP, FID, CLS
+7. Replace TBD values in sections above with actual scores
+
+### Batch Testing via Lighthouse CI
+- Configure `.lighthouse.json` with URLs and thresholds
+- Run: `lighthouse-ci autorun`
+- Integrate with GitHub Actions for continuous monitoring
+
 ## Next Steps
 
-1. Run Lighthouse audit for all 5 critical pages
+1. Run Lighthouse audit for all 5 critical pages (manual or CI)
 2. Document actual scores in this baseline
 3. Identify top 3 optimization opportunities per page
 4. Implement performance optimizations in priority order
