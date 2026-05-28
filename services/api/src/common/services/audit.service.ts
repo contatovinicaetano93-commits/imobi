@@ -41,7 +41,7 @@ interface AdminAuditLog {
 export class AuditService {
   private readonly logger = new Logger(AuditService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma?: PrismaService) {}
 
   log(auditLog: AuditLog): void {
     this.logger.log(
@@ -51,6 +51,14 @@ export class AuditService {
   }
 
   async registrar(log: AdminAuditLog): Promise<void> {
+    if (!this.prisma) {
+      this.logger.warn(
+        `PrismaService not available for audit logging`,
+        AuditService.name
+      );
+      return;
+    }
+
     try {
       await this.prisma.auditLog.create({
         data: {

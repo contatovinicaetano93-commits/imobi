@@ -27,6 +27,7 @@ import { IpThrottlerGuard } from "./common/guards/ip-throttler.guard";
 import { UserThrottlerGuard } from "./common/guards/user-throttler.guard";
 import { CsrfGuard } from "./common/guards/csrf.guard";
 import { AuditService } from "./common/services/audit.service";
+import { MonitoringModule } from "./common/modules/monitoring.module";
 import { APP_GUARD } from "@nestjs/core";
 
 @Module({
@@ -100,6 +101,7 @@ import { APP_GUARD } from "@nestjs/core";
     MarketplaceModule,
     ParceirosModule,
     AnalyticsModule,
+    MonitoringModule,
   ],
   providers: [
     LiberacaoParcelaWorker,
