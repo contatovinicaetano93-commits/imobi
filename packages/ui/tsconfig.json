@@ -20,6 +20,6 @@
     "module": "ESNext",
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*"],
+  "include": ["web/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.e2e.spec.ts"]
 }

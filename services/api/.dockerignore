@@ -1,0 +1,51 @@
+# Build and version control
+.git
+.gitignore
+.env
+.env.local
+.env.*.local
+.DS_Store
+
+# Dependencies (handled by Docker)
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Build artifacts
+dist
+build
+coverage
+.turbo
+.next
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Tests
+jest.setup.js
+test/
+__tests__/
+*.test.ts
+*.test.js
+jest.config.js
+jest-e2e.config.js
+
+# Documentation
+README.md
+docs/
+DEPLOYMENT_READINESS.md
+PERFORMANCE.md
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# OS
+.DS_Store
+Thumbs.db

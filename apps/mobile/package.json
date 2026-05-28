@@ -21,7 +21,8 @@
     "update:android": "eas update --platform android",
     "update:all": "eas update",
     "credentials": "eas credentials",
-    "lint": "eslint app --ext .ts,.tsx",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

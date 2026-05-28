@@ -12,6 +12,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
     "db:generate": "pnpm --filter @imbobi/api prisma generate",

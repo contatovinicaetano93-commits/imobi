@@ -142,6 +142,20 @@ export default function ObrasScreen() {
         }}
         scrollIndicatorInsets={{ right: 1 }}
       />
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => {
+          haptics.impact();
+          router.push("/(tabs)/obras/criar");
+        }}
+        accessibilityLabel="Criar nova obra"
+        accessibilityRole="button"
+        accessibilityHint="Toca para criar uma nova obra"
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -241,5 +255,25 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: 12,
     color: "#6b7280",
+  },
+  fab: {
+    position: "absolute",
+    bottom: 24,
+    right: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#16a34a",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  fabText: {
+    fontSize: 32,
+    fontWeight: "300",
+    color: "#fff",
   },
 });

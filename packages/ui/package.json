@@ -4,6 +4,10 @@
   "private": true,
   "main": "./web/index.ts",
   "types": "./web/index.ts",
+  "scripts": {
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix"
+  },
   "exports": {
     ".": {
       "import": "./web/index.ts",
