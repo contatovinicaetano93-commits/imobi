@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { managerApi, type KycPendente } from "@/lib/api";
-
+import { managerApi, type KycPendente, type KycAuditEntry } from "@/lib/api";
+import { ApprovalAuditTrail } from "@/components/dashboard/ApprovalAuditTrail";
 import Image from "next/image";
 
 function getTipoLabel(tipo: string): string {
@@ -23,8 +23,11 @@ export default function KycDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [doc, setDoc] = useState<KycPendente | null>(null);
+  const [auditLogs, setAuditLogs] = useState<KycAuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [auditLoading, setAuditLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [auditError, setAuditError] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionForm, setShowRejectionForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
