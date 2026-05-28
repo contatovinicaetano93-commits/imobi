@@ -1,19 +1,7 @@
 {
   "buildCommand": "pnpm install && pnpm build",
-  "outputDirectory": ".",
+  "outputDirectory": "apps/web/.next",
   "framework": "nextjs",
-  "serverless": {
-    "routes": [
-      {
-        "src": "/api/v1(.*)",
-        "dest": "services/api/src/main.ts"
-      },
-      {
-        "src": "/(.*)",
-        "dest": "apps/web/.next/standalone/apps/web/server.js"
-      }
-    ]
-  },
   "env": {
     "NODE_ENV": "production",
     "NEXT_PUBLIC_API_URL": "https://api.imobi.com",
