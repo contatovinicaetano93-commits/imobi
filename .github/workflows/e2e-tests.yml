@@ -1,0 +1,127 @@
+name: E2E Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feat/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: imobi_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate Prisma Client
+        run: cd services/api && pnpm run db:generate
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/imobi_test
+          NODE_ENV: test
+        run: cd services/api && npx prisma migrate deploy
+
+      - name: Run E2E tests
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/imobi_test
+          REDIS_URL: redis://localhost:6379
+          NODE_ENV: test
+          JWT_SECRET: test-jwt-secret-key-for-testing-purposes-only
+          CORS_ORIGINS: http://localhost:3000,http://localhost:3001
+          API_PORT: 4000
+        run: cd services/api && npm test -- --testPathPattern="e2e" --forceExit --detectOpenHandles
+
+      - name: Upload coverage reports
+        if: always()
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./services/api/coverage/coverage-final.json
+          flags: e2e
+          name: E2E Coverage
+
+      - name: Comment PR with test results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const testResultFile = './services/api/test-results.json';
+
+            if (fs.existsSync(testResultFile)) {
+              const results = JSON.parse(fs.readFileSync(testResultFile, 'utf8'));
+              const summary = `
+              ## E2E Test Results
+
+              - **Total Tests**: ${results.numTotalTests}
+              - **Passed**: ${results.numPassedTests}
+              - **Failed**: ${results.numFailedTests}
+              - **Skipped**: ${results.numPendingTests}
+              - **Duration**: ${(results.testResults[0]?.perfStats?.end - results.testResults[0]?.perfStats?.start) / 1000}s
+              `;
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: summary
+              });
+            }
