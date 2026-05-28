@@ -10,7 +10,7 @@ export class CsrfGuard implements CanActivate {
 
   constructor(private readonly csrf: CsrfService) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<FastifyRequest>();
 
     // Passe em métodos GET/HEAD/OPTIONS
@@ -24,13 +24,14 @@ export class CsrfGuard implements CanActivate {
       throw new BadRequestException("CSRF token is required");
     }
 
-    // Validate token against CSRF service
-    if (!this.csrf.validateToken(csrfToken)) {
+    // Validate token against CSRF service (now async with Redis)
+    const isValid = await this.csrf.validateToken(csrfToken);
+    if (!isValid) {
       throw new BadRequestException("Invalid or expired CSRF token");
     }
 
     // Consume token (one-time use)
-    this.csrf.consumeToken(csrfToken);
+    await this.csrf.consumeToken(csrfToken);
 
     return true;
   }
