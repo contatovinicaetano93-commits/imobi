@@ -14,7 +14,7 @@ export class StorageService {
     },
   });
 
-  private readonly bucket = process.env["S3_BUCKET"] ?? "imbobi-evidencias";
+  private readonly bucket = process.env["AWS_S3_BUCKET"] ?? "imbobi-evidencias";
 
   async upload(buffer: Buffer, mimeType: string, etapaId: string) {
     const key = `evidencias/${etapaId}/${randomUUID()}`;

@@ -19,8 +19,15 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");
 
+  const nodeEnv = process.env["NODE_ENV"] || "development";
+  const corsOrigins = process.env["CORS_ORIGIN"]?.split(",");
+
+  if (nodeEnv === "production" && !corsOrigins) {
+    throw new Error("CORS_ORIGIN is required in production mode. Please set it as a comma-separated list of allowed origins.");
+  }
+
   app.enableCors({
-    origin: process.env["CORS_ORIGIN"]?.split(",") ?? ["http://localhost:3000"],
+    origin: corsOrigins ?? ["http://localhost:3000"],
     credentials: true,
   });
 

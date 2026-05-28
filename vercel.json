@@ -1,0 +1,39 @@
+{
+  "buildCommand": "pnpm install && pnpm build",
+  "outputDirectory": ".",
+  "framework": "nextjs",
+  "serverless": {
+    "routes": [
+      {
+        "src": "/api/v1(.*)",
+        "dest": "services/api/src/main.ts"
+      },
+      {
+        "src": "/(.*)",
+        "dest": "apps/web/.next/standalone/apps/web/server.js"
+      }
+    ]
+  },
+  "env": {
+    "NODE_ENV": "production",
+    "NEXT_PUBLIC_API_URL": "https://api.imobi.com",
+    "DATABASE_URL": "@database_url",
+    "REDIS_URL": "@redis_url",
+    "JWT_SECRET": "@jwt_secret",
+    "AWS_S3_BUCKET": "@aws_s3_bucket",
+    "AWS_S3_REGION": "@aws_s3_region",
+    "AWS_ACCESS_KEY_ID": "@aws_access_key_id",
+    "AWS_SECRET_ACCESS_KEY": "@aws_secret_access_key",
+    "CORS_ORIGIN": "https://imobi.vercel.app",
+    "EMAIL_PROVIDER": "sendgrid",
+    "SENDGRID_API_KEY": "@sendgrid_api_key",
+    "FIREBASE_PROJECT_ID": "@firebase_project_id",
+    "FIREBASE_PRIVATE_KEY": "@firebase_private_key",
+    "FIREBASE_CLIENT_EMAIL": "@firebase_client_email"
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": false
+    }
+  }
+}

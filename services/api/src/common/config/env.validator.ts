@@ -70,6 +70,17 @@ export function validateEnvironment(config: Record<string, any>): string[] {
     }
   }
 
+  // APP_URL validation (prevent localhost fallback in production)
+  const appUrl = config.APP_URL;
+  if (appUrl && appUrl.includes('localhost')) {
+    if (!isDev) {
+      errorMessages.push('APP_URL must not contain localhost in production');
+    }
+  }
+  if (!appUrl && !isDev) {
+    errorMessages.push('APP_URL is required in production to generate correct email links');
+  }
+
   return errorMessages;
 }
 
