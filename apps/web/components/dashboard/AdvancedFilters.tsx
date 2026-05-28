@@ -168,12 +168,26 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
             </select>
           </div>
 
-          {/* Reset Button */}
+            {/* Reset Button */}
+            {hasActiveFilters && (
+              <div>
+                <button
+                  onClick={handleReset}
+                  className="w-full sm:w-auto px-4 py-2 text-xs sm:text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-10"
+                  aria-label="Limpar todos os filtros"
+                >
+                  Limpar Filtros
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Reset Button - Fallback for mobile */}
           {hasActiveFilters && (
-            <div className="flex items-end sm:col-span-2 lg:col-span-1">
+            <div className="mt-3 sm:mt-4">
               <button
                 onClick={handleReset}
-                className="w-full px-3 py-2 text-xs sm:text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-10"
+                className="w-full sm:w-auto px-4 py-2 text-xs sm:text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-10"
                 aria-label="Limpar todos os filtros"
               >
                 Limpar Filtros
