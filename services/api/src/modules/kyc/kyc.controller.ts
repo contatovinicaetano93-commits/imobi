@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Body, Param, UseGuards } from "@nestjs/common";
+import { Controller, Post, Get, Patch, Body, Param, UseGuards, ForbiddenException } from "@nestjs/common";
 import { KycService } from "./kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -27,7 +27,10 @@ export class KycController {
   }
 
   @Get("pendentes")
-  async listarPendentes() {
+  async listarPendentes(@UsuarioAtual() u: IUsuario) {
+    if (u.tipo !== "ADMIN" && u.tipo !== "GESTOR_OBRA") {
+      throw new ForbiddenException("Acesso restrito apenas para ADMIN e GESTOR_OBRA.");
+    }
     return this.kyc.listarPendentes();
   }
 

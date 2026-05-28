@@ -40,6 +40,7 @@ export class EvidenciasService {
       );
     }
 
+    // Parameterized query: Prisma $queryRaw with template literals automatically escapes parameters
     const result = await this.prisma.$queryRaw<Array<{ dentro: boolean }>>`
       SELECT ST_DWithin(
         ST_SetSRID(ST_MakePoint(${input.longitude}, ${input.latitude}), 4326)::geography,
