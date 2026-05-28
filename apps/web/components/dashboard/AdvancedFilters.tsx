@@ -92,10 +92,11 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
       </button>
 
       {isExpanded && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100">
-          {/* Status Filter */}
-          <div className="space-y-2">
-            <label htmlFor="status-filter" className="text-xs sm:text-sm font-medium text-gray-700">Status</label>
+        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {/* Status Filter */}
+            <div className="space-y-2">
+              <label htmlFor="status-filter" className="text-xs sm:text-sm font-medium text-gray-700">Status</label>
             <select
               id="status-filter"
               value={filters.status}

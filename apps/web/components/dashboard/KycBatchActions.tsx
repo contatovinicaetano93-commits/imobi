@@ -138,8 +138,8 @@ export function KycBatchActions({
 
       {/* Rejection Confirmation Modal */}
       {showConfirm === "reject" && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-xl flex flex-col">
             <h2 className="text-lg font-bold text-gray-900 mb-2">
               Rejeitar em lote
             </h2>
@@ -152,7 +152,7 @@ export function KycBatchActions({
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder="Exemplo: Documentos ilegíveis, Dados inválidos, etc."
-              className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+              className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none flex-1 min-h-[100px]"
               rows={4}
               disabled={isProcessing}
             />
