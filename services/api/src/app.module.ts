@@ -21,6 +21,7 @@ import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
+import { WebhookModule } from "./modules/webhook/webhook.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
 import { IpThrottlerGuard } from "./common/guards/ip-throttler.guard";
@@ -101,6 +102,7 @@ import { APP_GUARD } from "@nestjs/core";
     MarketplaceModule,
     ParceirosModule,
     AnalyticsModule,
+    WebhookModule,
     MonitoringModule,
   ],
   providers: [

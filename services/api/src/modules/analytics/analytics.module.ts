@@ -1,10 +1,11 @@
 import { Module } from "@nestjs/common";
 import { AnalyticsController } from "./analytics.controller";
-import { AnalyticsService } from "../../common/services/analytics.service";
+import { AnalyticsService } from "./analytics.service";
 import { PrismaModule } from "../prisma/prisma.module";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, ScheduleModule.forRoot()],
   controllers: [AnalyticsController],
   providers: [AnalyticsService],
   exports: [AnalyticsService],
