@@ -13,12 +13,9 @@ async function bootstrap() {
 
   validateEnvironmentOrThrow();
 
-  // Configure Fastify adapter with proper host handling
   const fastifyOptions: any = {
     logger: process.env["NODE_ENV"] !== "production",
-    // Trust proxy headers from load balancers (Render, Vercel, AWS ALB)
-    // In production with Vercel, requests come through their proxy infrastructure
-    trust: true,
+    trust: true, // Trust proxy headers from Render load balancer
     bodyLimit: 104857600, // 100MB for file uploads
   };
 

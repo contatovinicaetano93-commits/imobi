@@ -7,6 +7,7 @@ export type FilterState = {
   dataInicio: string;
   dataFim: string;
   obraType: string;
+  priority?: "todas" | "urgente" | "intermediaria" | "normal";
 };
 
 export type AdvancedFiltersProps = {
@@ -20,6 +21,7 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
     dataInicio: "",
     dataFim: "",
     obraType: "",
+    priority: "todas",
   });
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -36,6 +38,7 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
       dataInicio: "",
       dataFim: "",
       obraType: "",
+      priority: "todas",
     };
     setFilters(resetFilters);
     onReset();
@@ -45,7 +48,8 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
     filters.status !== "todas" ||
     filters.dataInicio ||
     filters.dataFim ||
-    filters.obraType;
+    filters.obraType ||
+    filters.priority !== "todas";
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4">
@@ -64,6 +68,7 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
                   filters.dataInicio ? 1 : 0,
                   filters.dataFim ? 1 : 0,
                   filters.obraType ? 1 : 0,
+                  filters.priority !== "todas" ? 1 : 0,
                 ].reduce((a, b) => a + b, 0)
               } filtros ativos`}>
               {[
@@ -71,6 +76,7 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
                 filters.dataInicio ? 1 : 0,
                 filters.dataFim ? 1 : 0,
                 filters.obraType ? 1 : 0,
+                filters.priority !== "todas" ? 1 : 0,
               ].reduce((a, b) => a + b, 0)}
             </span>
           )}
@@ -93,7 +99,7 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
 
       {isExpanded && (
         <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* Status Filter */}
             <div className="space-y-2">
               <label htmlFor="status-filter" className="text-xs sm:text-sm font-medium text-gray-700">Status</label>
@@ -165,6 +171,27 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
                 <option value="comercial">Comercial</option>
                 <option value="industrial">Industrial</option>
                 <option value="reforma">Reforma</option>
+              </select>
+            </div>
+
+            {/* Priority Filter */}
+            <div className="space-y-2">
+              <label htmlFor="priority-filter" className="text-xs sm:text-sm font-medium text-gray-700">
+                Prioridade
+              </label>
+              <select
+                id="priority-filter"
+                value={filters.priority || "todas"}
+                onChange={(e) =>
+                  handleFilterChange("priority", e.target.value as any)
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
+                aria-label="Filtrar por prioridade"
+              >
+                <option value="todas">Todas</option>
+                <option value="urgente">Urgente (+24h)</option>
+                <option value="intermediaria">Intermediária (12-24h)</option>
+                <option value="normal">Normal (&lt;12h)</option>
               </select>
             </div>
           </div>

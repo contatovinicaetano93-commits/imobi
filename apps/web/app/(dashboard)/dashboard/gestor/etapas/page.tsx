@@ -32,6 +32,7 @@ export default function EtapasPage() {
     dataInicio: "",
     dataFim: "",
     obraType: "",
+    priority: "todas",
   });
   const limit = 20;
 
@@ -94,6 +95,9 @@ export default function EtapasPage() {
     setError(message);
   };
 
+  // Use data.etapas directly - filtering is now handled by the API
+  const filteredEtapas = data.etapas;
+
   return (
     <div className="space-y-6">
       {successMessage && (
@@ -114,6 +118,7 @@ export default function EtapasPage() {
           <p className="text-gray-500 text-sm mt-1">
             {data.total} etapa{data.total !== 1 ? "s" : ""} aguardando aprovação
             {selectedEtapas.length > 0 && ` — ${selectedEtapas.length} selecionada(s)`}
+            {filters.priority && filters.priority !== "todas" && ` — Filtrando por: ${filters.priority}`}
           </p>
         </div>
       </div>
@@ -124,39 +129,47 @@ export default function EtapasPage() {
           setOffset(0);
         }}
         onReset={() => {
-          setFilters({ status: "todas", dataInicio: "", dataFim: "", obraType: "" });
+          setFilters({ status: "todas", dataInicio: "", dataFim: "", obraType: "", priority: "todas" });
           setOffset(0);
         }}
       />
 
-      {data.etapas.length === 0 ? (
+      {filteredEtapas.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <p className="text-4xl mb-4">🎉</p>
-          <p className="text-gray-500">Nenhuma etapa pendente no momento</p>
+          <p className="text-gray-500">
+            {data.etapas.length === 0
+              ? "Nenhuma etapa pendente no momento"
+              : "Nenhuma etapa corresponde aos filtros selecionados"}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
           {/* Selection Toolbar */}
-          {data.etapas.length > 0 && (
+          {filteredEtapas.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
-                  checked={selectedEtapas.length === data.etapas.length && data.etapas.length > 0}
-                  onChange={handleSelectAll}
+                  checked={selectedEtapas.length === filteredEtapas.length && filteredEtapas.length > 0}
+                  onChange={() => {
+                    setSelectedEtapas((prev) =>
+                      prev.length === filteredEtapas.length ? [] : filteredEtapas.map((e) => e.etapaId)
+                    );
+                  }}
                   className="w-5 h-5 rounded border-gray-300 text-brand-600 cursor-pointer"
                   title="Selecionar/desselecionar todos"
                 />
                 <span className="text-sm text-gray-700">
                   {selectedEtapas.length === 0
                     ? "Selecionar etapas"
-                    : `${selectedEtapas.length} de ${data.etapas.length} selecionadas`}
+                    : `${selectedEtapas.length} de ${filteredEtapas.length} selecionadas`}
                 </span>
               </div>
             </div>
           )}
 
-          {data.etapas.map((etapa) => {
+          {filteredEtapas.map((etapa) => {
             const horas = hoursAgo(etapa.criadoEm);
             const urgente = horas >= 24;
             const isSelected = selectedEtapas.includes(etapa.etapaId);
