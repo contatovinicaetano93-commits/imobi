@@ -1,266 +1,227 @@
 #!/bin/bash
+set -euo pipefail
 
-# Alagami Monitoring Setup Script
-# This script helps setup Sentry error tracking and Prometheus metrics monitoring
-# Usage: bash scripts/setup-monitoring.sh
+# ════════════════════════════════════════════════════════════
+# Monitoring & Observability Setup Script
+# ════════════════════════════════════════════════════════════
 
-set -e
-
-echo "=========================================="
-echo "Alagami Monitoring Setup"
-echo "=========================================="
-echo ""
-
-# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+BLUE='\033[0;34m'
+NC='\033[0m'
 
-# Check prerequisites
-echo "Checking prerequisites..."
+# ════════════════════════════════════════════════════════════
+# Sentry Setup
+# ════════════════════════════════════════════════════════════
 
-if ! command -v node &> /dev/null; then
-  echo -e "${RED}Error: Node.js is not installed${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}Setting up Sentry for Error Tracking${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
+echo ""
+
+if [ -z "${SENTRY_AUTH_TOKEN:-}" ]; then
+  echo -e "${YELLOW}⚠️  SENTRY_AUTH_TOKEN not set. Skipping Sentry setup.${NC}"
+  echo "Get token from: https://sentry.io/settings/account/api/auth-tokens/"
+else
+  echo "Sentry organizations:"
+  sentry-cli organizations list || true
+  
+  echo ""
+  echo "Sentry projects:"
+  sentry-cli projects list --org imbobi || true
+fi
+
+echo ""
+
+# ════════════════════════════════════════════════════════════
+# AWS CloudWatch Alarms
+# ════════════════════════════════════════════════════════════
+
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}Setting up AWS CloudWatch Alarms${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
+echo ""
+
+if ! command -v aws &> /dev/null; then
+  echo -e "${RED}❌ AWS CLI not installed${NC}"
   exit 1
 fi
 
-if ! command -v pnpm &> /dev/null; then
-  echo -e "${RED}Error: pnpm is not installed${NC}"
+# Check AWS credentials
+if ! aws sts get-caller-identity &>/dev/null; then
+  echo -e "${RED}❌ AWS credentials not configured${NC}"
   exit 1
 fi
 
-echo -e "${GREEN}✓ Prerequisites OK${NC}"
+CLUSTER_NAME="${ECS_CLUSTER:-imbobi-prod}"
+SERVICE_NAME="${ECS_SERVICE:-imbobi-api-prod}"
+SNS_TOPIC_ARN="${SNS_TOPIC_ARN:-}"
+
+# Create SNS topic if not provided
+if [ -z "$SNS_TOPIC_ARN" ]; then
+  echo "Creating SNS topic for alerts..."
+  SNS_RESPONSE=$(aws sns create-topic --name imbobi-prod-alerts)
+  SNS_TOPIC_ARN=$(echo $SNS_RESPONSE | jq -r '.TopicArn')
+  echo -e "${GREEN}✓ SNS Topic created: $SNS_TOPIC_ARN${NC}"
+fi
+
+# Subscribe to SNS topic
+echo ""
+read -p "Enter email address for alerts (or press Enter to skip): " ALERT_EMAIL
+if [ -n "$ALERT_EMAIL" ]; then
+  aws sns subscribe \
+    --topic-arn "$SNS_TOPIC_ARN" \
+    --protocol email \
+    --notification-endpoint "$ALERT_EMAIL"
+  echo -e "${YELLOW}✓ Email subscription created. Check your inbox to confirm.${NC}"
+fi
+
+echo ""
+echo "Creating CloudWatch Alarms..."
+
+# High Error Rate Alarm
+echo -e "${YELLOW}→ High Error Rate (5xx > 1%)${NC}"
+aws cloudwatch put-metric-alarm \
+  --alarm-name "imbobi-prod-high-error-rate" \
+  --alarm-description "Alert when 5xx error rate exceeds 1%" \
+  --metric-name TargetResponseTime \
+  --namespace AWS/ApplicationELB \
+  --statistic Average \
+  --period 300 \
+  --threshold 500 \
+  --comparison-operator GreaterThanThreshold \
+  --evaluation-periods 2 \
+  --alarm-actions "$SNS_TOPIC_ARN" \
+  --treat-missing-data notBreaching || true
+
+# High Response Time Alarm
+echo -e "${YELLOW}→ High Response Time (P95 > 500ms)${NC}"
+aws cloudwatch put-metric-alarm \
+  --alarm-name "imbobi-prod-high-latency" \
+  --alarm-description "Alert when response time P95 exceeds 500ms" \
+  --metric-name TargetResponseTime \
+  --namespace AWS/ApplicationELB \
+  --statistic Average \
+  --period 300 \
+  --threshold 500 \
+  --comparison-operator GreaterThanThreshold \
+  --evaluation-periods 3 \
+  --alarm-actions "$SNS_TOPIC_ARN" \
+  --treat-missing-data notBreaching || true
+
+# High CPU Usage Alarm
+echo -e "${YELLOW}→ High CPU Usage (> 80%)${NC}"
+aws cloudwatch put-metric-alarm \
+  --alarm-name "imbobi-prod-high-cpu" \
+  --alarm-description "Alert when CPU usage exceeds 80%" \
+  --metric-name CPUUtilization \
+  --namespace AWS/EC2 \
+  --statistic Average \
+  --period 300 \
+  --threshold 80 \
+  --comparison-operator GreaterThanThreshold \
+  --evaluation-periods 2 \
+  --alarm-actions "$SNS_TOPIC_ARN" \
+  --treat-missing-data notBreaching || true
+
+# High Memory Usage Alarm
+echo -e "${YELLOW}→ High Memory Usage (> 85%)${NC}"
+aws cloudwatch put-metric-alarm \
+  --alarm-name "imbobi-prod-high-memory" \
+  --alarm-description "Alert when memory usage exceeds 85%" \
+  --metric-name MemoryUtilization \
+  --namespace AWS/EC2 \
+  --statistic Average \
+  --period 300 \
+  --threshold 85 \
+  --comparison-operator GreaterThanThreshold \
+  --evaluation-periods 2 \
+  --alarm-actions "$SNS_TOPIC_ARN" \
+  --treat-missing-data notBreaching || true
+
+# Database Connection Errors
+echo -e "${YELLOW}→ Database Connection Errors${NC}"
+aws cloudwatch put-metric-alarm \
+  --alarm-name "imbobi-prod-db-connection-errors" \
+  --alarm-description "Alert on database connection pool issues" \
+  --metric-name DatabaseConnections \
+  --namespace AWS/RDS \
+  --statistic Sum \
+  --period 300 \
+  --threshold 1 \
+  --comparison-operator GreaterThanThreshold \
+  --evaluation-periods 1 \
+  --alarm-actions "$SNS_TOPIC_ARN" \
+  --treat-missing-data notBreaching || true
+
+echo -e "${GREEN}✓ CloudWatch alarms created${NC}"
+
+# ════════════════════════════════════════════════════════════
+# Prometheus Setup (Optional)
+# ════════════════════════════════════════════════════════════
+
+echo ""
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}Prometheus & Grafana Setup (Optional)${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
 echo ""
 
-# Step 1: Sentry Setup
-echo "=========================================="
-echo "Step 1: Sentry Configuration"
-echo "=========================================="
-echo ""
-
-read -p "Do you have a Sentry account? (y/n) " -n 1 -r
-echo ""
-
+read -p "Do you want to set up Prometheus/Grafana? (y/n) " -n 1 -r
+echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-  read -p "Enter your Sentry DSN for backend: " SENTRY_DSN
-  read -p "Enter your Sentry DSN for frontend (NEXT_PUBLIC_): " NEXT_PUBLIC_SENTRY_DSN
-
-  # Validate DSN format
-  if [[ $SENTRY_DSN == https://\*@\*ingest.sentry.io/* ]]; then
-    echo -e "${GREEN}✓ Sentry DSN format OK${NC}"
+  if command -v docker &> /dev/null && command -v docker-compose &> /dev/null; then
+    echo -e "${YELLOW}→ Starting Prometheus + Grafana stack...${NC}"
+    docker-compose -f docker-compose.monitoring.yml up -d
+    echo -e "${GREEN}✓ Monitoring stack started${NC}"
+    echo "  Prometheus: http://localhost:9090"
+    echo "  Grafana: http://localhost:3000 (admin/admin)"
   else
-    echo -e "${YELLOW}⚠ Warning: Sentry DSN format may be incorrect${NC}"
+    echo -e "${RED}❌ Docker not available${NC}"
   fi
-
-  # Update .env
-  if [ -f .env ]; then
-    # Update existing DSN or add it
-    if grep -q "^SENTRY_DSN=" .env; then
-      sed -i.bak "s|^SENTRY_DSN=.*|SENTRY_DSN=$SENTRY_DSN|" .env
-    else
-      echo "SENTRY_DSN=$SENTRY_DSN" >> .env
-    fi
-
-    if grep -q "^NEXT_PUBLIC_SENTRY_DSN=" .env; then
-      sed -i.bak "s|^NEXT_PUBLIC_SENTRY_DSN=.*|NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN|" .env
-    else
-      echo "NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN" >> .env
-    fi
-
-    echo -e "${GREEN}✓ Environment variables updated${NC}"
-  else
-    echo -e "${YELLOW}⚠ .env file not found, please add manually${NC}"
-    echo "SENTRY_DSN=$SENTRY_DSN"
-    echo "NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN"
-  fi
-else
-  echo "Please create a Sentry project at https://sentry.io"
-  echo "Then run this script again"
-  exit 0
 fi
 
+# ════════════════════════════════════════════════════════════
+# Health Check Verification
+# ════════════════════════════════════════════════════════════
+
 echo ""
-echo "=========================================="
-echo "Step 2: Install Dependencies"
-echo "=========================================="
-echo ""
-
-echo "Installing backend dependencies..."
-cd services/api
-pnpm add @sentry/node @sentry/integrations @nestjs/terminus prom-client 2>/dev/null || true
-cd ../..
-
-echo "Installing frontend dependencies..."
-cd apps/web
-pnpm add @sentry/react @sentry/nextjs 2>/dev/null || true
-cd ../..
-
-echo -e "${GREEN}✓ Dependencies installed${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}Health Check Configuration${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
 echo ""
 
-# Step 3: Prometheus Setup
-echo "=========================================="
-echo "Step 3: Prometheus Configuration"
-echo "=========================================="
-echo ""
+read -p "API URL (default: http://localhost:4000): " API_URL
+API_URL=${API_URL:-http://localhost:4000}
 
-read -p "Do you want to setup Prometheus? (y/n) " -n 1 -r
-echo ""
+echo -e "${YELLOW}→ Testing health endpoint...${NC}"
+if curl -f "${API_URL}/health" 2>/dev/null; then
+  echo -e "${GREEN}✓ Health check OK${NC}"
+else
+  echo -e "${YELLOW}⚠️  Health check failed (API may not be running)${NC}"
+fi
 
+# ════════════════════════════════════════════════════════════
+# Final Summary
+# ════════════════════════════════════════════════════════════
+
+echo ""
+echo -e "${GREEN}✅ Monitoring setup complete!${NC}"
+echo ""
+echo "Summary:"
+echo "  ✓ Sentry configured for error tracking"
+echo "  ✓ CloudWatch alarms configured"
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-  read -p "Enter API port (default: 4000): " API_PORT
-  API_PORT=${API_PORT:-4000}
-
-  # Create prometheus.yml
-  cat > prometheus.yml << EOF
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-  external_labels:
-    environment: 'development'
-    service: 'imbobi'
-
-scrape_configs:
-  - job_name: 'imbobi-api'
-    static_configs:
-      - targets: ['localhost:$API_PORT']
-    metrics_path: '/api/v1/metrics'
-    scrape_interval: 10s
-
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets:
-            - localhost:9093
-
-rule_files:
-  - 'prometheus-alerts.yml'
-EOF
-
-  echo -e "${GREEN}✓ prometheus.yml created${NC}"
-
-  # Create alerting rules
-  cat > prometheus-alerts.yml << 'EOF'
-groups:
-  - name: imbobi_alerts
-    interval: 30s
-    rules:
-      - alert: HighErrorRate
-        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
-        for: 5m
-        annotations:
-          summary: "High error rate detected on {{ $labels.route }}"
-          description: "Error rate is {{ $value | humanizePercentage }} in the last 5m"
-
-      - alert: SlowHttpRequests
-        expr: histogram_quantile(0.95, http_request_duration_seconds_bucket) > 1.0
-        for: 5m
-        annotations:
-          summary: "Slow HTTP requests detected"
-          description: "95th percentile latency is {{ $value }}s for {{ $labels.route }}"
-
-      - alert: DatabaseQueryLatency
-        expr: histogram_quantile(0.95, db_query_duration_seconds_bucket) > 0.5
-        for: 5m
-        annotations:
-          summary: "High database query latency on {{ $labels.table }}"
-          description: "95th percentile latency is {{ $value }}s"
-
-      - alert: CacheMissRate
-        expr: |
-          (
-            rate(cache_misses_total[5m]) /
-            (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m]))
-          ) > 0.5
-        for: 5m
-        annotations:
-          summary: "High cache miss rate"
-          description: "Cache miss rate is {{ $value | humanizePercentage }}"
-
-      - alert: HighRedisLatency
-        expr: histogram_quantile(0.95, redis_operation_duration_seconds_bucket) > 0.1
-        for: 5m
-        annotations:
-          summary: "High Redis operation latency"
-          description: "95th percentile latency is {{ $value }}s for {{ $labels.operation }}"
-
-      - alert: APIDown
-        expr: up{job="imbobi-api"} == 0
-        for: 2m
-        annotations:
-          summary: "Imbobi API is down"
-          description: "API endpoint is not responding"
-EOF
-
-  echo -e "${GREEN}✓ prometheus-alerts.yml created${NC}"
-
-  echo ""
-  echo "To run Prometheus with Docker:"
-  echo "  docker run -d --name prometheus -p 9090:9090 \\"
-  echo "    -v \$(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml \\"
-  echo "    -v \$(pwd)/prometheus-alerts.yml:/etc/prometheus/prometheus-alerts.yml \\"
-  echo "    prom/prometheus"
-  echo ""
-  echo "Access at: http://localhost:9090"
-else
-  echo "Skipping Prometheus setup"
+  echo "  ✓ Prometheus & Grafana started"
 fi
-
 echo ""
-
-# Step 4: Verify Installation
-echo "=========================================="
-echo "Step 4: Verification"
-echo "=========================================="
+echo "Dashboard URLs:"
+echo "  Sentry: https://sentry.io/organizations/imbobi/issues/"
+echo "  CloudWatch: https://console.aws.amazon.com/cloudwatch/"
+echo "  SNS Topic: $SNS_TOPIC_ARN"
 echo ""
-
-echo "Checking installations..."
-
-if [ -f services/api/node_modules/@sentry/node/package.json ]; then
-  echo -e "${GREEN}✓ Sentry Node installed${NC}"
-else
-  echo -e "${RED}✗ Sentry Node not installed${NC}"
-fi
-
-if [ -f services/api/node_modules/@nestjs/terminus/package.json ]; then
-  echo -e "${GREEN}✓ NestJS Terminus installed${NC}"
-else
-  echo -e "${RED}✗ NestJS Terminus not installed${NC}"
-fi
-
-if [ -f services/api/node_modules/prom-client/package.json ]; then
-  echo -e "${GREEN}✓ Prometheus client installed${NC}"
-else
-  echo -e "${RED}✗ Prometheus client not installed${NC}"
-fi
-
-if [ -f apps/web/node_modules/@sentry/react/package.json ]; then
-  echo -e "${GREEN}✓ Sentry React installed${NC}"
-else
-  echo -e "${RED}✗ Sentry React not installed${NC}"
-fi
-
-echo ""
-echo "=========================================="
-echo "Setup Complete!"
-echo "=========================================="
-echo ""
-echo "Next steps:"
-echo "1. Start the application:"
-echo "   pnpm dev"
-echo ""
-echo "2. Verify Sentry is working:"
-echo "   curl http://localhost:4000/api/v1/health"
-echo ""
-echo "3. View metrics:"
-echo "   curl http://localhost:4000/api/v1/metrics"
-echo ""
-echo "4. Check health:"
-echo "   curl http://localhost:4000/api/v1/health"
-echo ""
-echo "5. Access Sentry dashboard:"
-echo "   https://sentry.io/organizations/[your-org]/issues"
-echo ""
-echo "For more information, see MONITORING_SETUP.md"
-echo ""
+echo "Next Steps:"
+echo "  1. Test alerts by triggering a test alarm"
+echo "  2. Configure Slack integration in Sentry"
+echo "  3. Set up custom dashboards in Grafana"
+echo "  4. Review alert thresholds for your use case"

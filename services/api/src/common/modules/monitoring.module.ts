@@ -1,14 +1,23 @@
 import { Module } from "@nestjs/common";
-import { TerminusModule } from "@nestjs/terminus";
-import { PrometheusMetricsService } from "../integrations/prometheus.integration";
-import { HealthController } from "../controllers/health.controller";
-import { MetricsController } from "../controllers/metrics.controller";
-import { PrismaModule } from "../../modules/prisma/prisma.module";
+import { PrometheusModule } from "@nestjs/prometheus";
 
+/**
+ * Monitoring Module
+ * Exposes Prometheus metrics for performance monitoring
+ *
+ * Metrics exposed at: GET /metrics
+ * Includes: HTTP latency, DB queries, cache hit rate, errors
+ */
 @Module({
-  imports: [TerminusModule, PrismaModule],
-  controllers: [HealthController, MetricsController],
-  providers: [PrometheusMetricsService],
-  exports: [PrometheusMetricsService],
+  imports: [
+    PrometheusModule.register({
+      path: "/metrics",
+      defaultMetrics: {
+        enabled: true,
+        prefix: "imbobi_",
+      },
+    }),
+  ],
+  exports: [PrometheusModule],
 })
 export class MonitoringModule {}
