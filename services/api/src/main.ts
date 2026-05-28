@@ -13,9 +13,15 @@ async function bootstrap() {
 
   validateEnvironmentOrThrow();
 
+  const fastifyOptions: any = {
+    logger: process.env["NODE_ENV"] !== "production",
+    trust: true, // Trust proxy headers from Render load balancer
+    bodyLimit: 104857600, // 100MB for file uploads
+  };
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ logger: process.env["NODE_ENV"] !== "production" })
+    new FastifyAdapter(fastifyOptions)
   );
 
   // ThrottlerGuard is registered via AppModule providers
