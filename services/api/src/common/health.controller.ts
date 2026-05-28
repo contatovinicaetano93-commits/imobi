@@ -9,6 +9,11 @@ interface HealthCheck {
   database: { configured: boolean };
 }
 
+/**
+ * Health check endpoint
+ * Route: GET /api/health (excluded from api/v1 prefix)
+ * No authentication required - accessible for load balancers and monitoring
+ */
 @Controller("health")
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);

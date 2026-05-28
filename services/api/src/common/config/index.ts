@@ -2,12 +2,14 @@
  * Production-ready configuration module
  *
  * Centralized configuration for:
+ * - APM & Monitoring (New Relic)
  * - Redis (cache + job queues)
  * - Rate limiting
  * - Email (SendGrid, AWS SES, SMTP)
  * - Firebase/FCM (push notifications)
  */
 
+export * from "./newrelic.config";
 export * from "./redis.config";
 export * from "./rate-limit.config";
 export * from "./email.config";
@@ -18,6 +20,13 @@ export * from "./firebase.config";
  */
 export const validateProductionEnv = (): string[] => {
   const errors: string[] = [];
+
+  // JWT_SECRET is ALWAYS required
+  if (!process.env["JWT_SECRET"] || process.env["JWT_SECRET"].length < 32) {
+    errors.push(
+      "JWT_SECRET must be set and at least 32 characters long (use openssl rand -base64 48)"
+    );
+  }
 
   // Redis is required in production
   if (process.env["NODE_ENV"] === "production") {

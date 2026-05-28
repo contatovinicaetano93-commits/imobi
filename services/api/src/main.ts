@@ -1,3 +1,7 @@
+// Initialize New Relic APM BEFORE any other imports
+import { initializeNewRelic } from "./common/config/newrelic.config";
+initializeNewRelic();
+
 import { NestFactory } from "@nestjs/core";
 import {
   FastifyAdapter,
@@ -28,7 +32,11 @@ async function bootstrap() {
 
   // ThrottlerGuard is registered via AppModule providers
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.setGlobalPrefix("api/v1");
+
+  // Set global prefix with health endpoint excluded (health checks must be accessible without auth)
+  app.setGlobalPrefix("api/v1", {
+    exclude: ["health", "api/health"],
+  });
 
   app.enableCors({
     origin: process.env["CORS_ORIGIN"]?.split(",") ?? ["http://localhost:3000"],

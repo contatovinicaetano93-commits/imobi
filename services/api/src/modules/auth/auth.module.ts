@@ -9,7 +9,11 @@ import { JwtStrategy } from "./jwt.strategy";
   imports: [
     PassportModule,
     JwtModule.register({
-      secret: process.env["JWT_SECRET"],
+      secret: process.env["JWT_SECRET"] || (() => {
+        throw new Error(
+          "JWT_SECRET is required for authentication. Set JWT_SECRET environment variable (min 32 characters)"
+        );
+      })(),
       signOptions: { expiresIn: "15m" },
     }),
   ],
