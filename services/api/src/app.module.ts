@@ -5,6 +5,7 @@ import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { CacheModule } from "@nestjs/cache-manager";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { CacheInterceptor } from "@nestjs/cache-manager";
+import { CacheService } from "./cache.service";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsuariosModule } from "./modules/usuarios/usuarios.module";
@@ -63,6 +64,7 @@ import { HealthController } from "./common/health.controller";
   ],
   controllers: [HealthController],
   providers: [
+    CacheService,
     LiberacaoParcelaWorker,
     {
       provide: APP_GUARD,

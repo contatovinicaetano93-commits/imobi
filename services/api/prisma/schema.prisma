@@ -133,6 +133,8 @@ model Obra {
   @@index([usuarioId])
   @@index([creditoId])
   @@index([status])
+  @@index([status, atualizadoEm])
+  @@index([geoLatitude, geoLongitude])
 }
 
 enum ObraStatus {
@@ -164,6 +166,7 @@ model EtapaObra {
   @@unique([obraId, ordem])
   @@index([obraId])
   @@index([status])
+  @@index([status, criadoEm])
 }
 
 enum EtapaStatus {
@@ -195,6 +198,7 @@ model EvidenciaEtapa {
   @@index([etapaId])
   @@index([obraId])
   @@index([validada])
+  @@index([validada, criadoEm])
 }
 
 // ── Liberações de Parcelas ────────────────────────────────────────────
