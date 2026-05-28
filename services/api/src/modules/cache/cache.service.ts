@@ -80,6 +80,26 @@ export class CacheService {
     );
   }
 
+  // Credit statement caching (5 min = 300000ms)
+  async obterExtratoComCache<T>(creditoId: string, fn: () => Promise<T>): Promise<T> {
+    return this.withCache(
+      `credito:extrato:${creditoId}`,
+      300000,
+      "creditoExtrato",
+      fn
+    );
+  }
+
+  // Work bounds caching (1 hour = 3600000ms)
+  async obterObraBoundsComCache<T>(obraId: string, fn: () => Promise<T>): Promise<T> {
+    return this.withCache(
+      `obra:bounds:${obraId}`,
+      3600000,
+      "obraBounds",
+      fn
+    );
+  }
+
   // Score history caching (1 hour = 3600000ms)
   async obterHistoricoComCache<T>(usuarioId: string, limit: number, fn: () => Promise<T>): Promise<T> {
     return this.withCache(

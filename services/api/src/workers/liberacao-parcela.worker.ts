@@ -95,34 +95,33 @@ export class LiberacaoParcelaWorker {
   @OnQueueFailed()
   onFailed(job: Job, err: Error) {
     this.logger.error(`Job ${job.id} falhou: ${err.message}`);
+    this.handleFailure(job).catch((e) =>
+      this.logger.error(`Erro ao processar falha de liberação: ${e}`)
+    );
+  }
 
-    // Registra a falha no banco de dados e notifica
-    this.prisma.credito
-      .findUnique({
-        where: { creditoId: job.data.creditoId },
-        include: { obras: true },
-      })
-      .then(async (credito) => {
-        if (!credito) return;
+  private async handleFailure(job: Job<LiberacaoJob>) {
+    const credito = await this.prisma.credito.findUnique({
+      where: { creditoId: job.data.creditoId },
+      include: { obras: true },
+    });
+    if (!credito) return;
 
-        await this.prisma.liberacaoParcela.updateMany({
-          where: { creditoId: job.data.creditoId, status: "PENDENTE" },
-          data: { status: "FALHA", processadoEm: new Date() },
-        });
+    await this.prisma.liberacaoParcela.updateMany({
+      where: { creditoId: job.data.creditoId, status: "PENDENTE" },
+      data: { status: "FALHA", processadoEm: new Date() },
+    });
 
-        // Notifica usuário sobre falha
-        const obra = credito.obras?.[0];
-        await this.notificacoes
-          .criar(
-            credito.usuarioId,
-            "PARCELA_FALHA",
-            "Erro na liberação da parcela",
-            `Ocorreu um erro ao processar a liberação para ${obra?.nome || "sua obra"}. Por favor, contate o suporte.`,
-            obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
-          )
-          .catch((e) => this.logger.error(`Erro ao notificar falha: ${e}`));
-      })
-      .catch((e) => this.logger.error(`Erro ao processar falha de liberação: ${e}`));
+    const obra = credito.obras?.[0];
+    await this.notificacoes
+      .criar(
+        credito.usuarioId,
+        "PARCELA_FALHA",
+        "Erro na liberação da parcela",
+        `Ocorreu um erro ao processar a liberação para ${obra?.nome || "sua obra"}. Por favor, contate o suporte.`,
+        obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
+      )
+      .catch((e) => this.logger.error(`Erro ao notificar falha: ${e}`));
   }
 
   @OnQueueCompleted()

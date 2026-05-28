@@ -46,19 +46,31 @@ export class KycService {
   }
 
   async obterStatus(usuarioId: string) {
-    const documentos = await this.prisma.kycDocumento.findMany({
-      where: { usuarioId },
-    });
+    const [documentos, countByStatus] = await Promise.all([
+      this.prisma.kycDocumento.findMany({
+        where: { usuarioId },
+        orderBy: { criadoEm: "desc" },
+      }),
+      this.prisma.kycDocumento.groupBy({
+        by: ["status"],
+        where: { usuarioId },
+        _count: true,
+      }),
+    ]);
 
-    const pendentes = documentos.filter((d) => d.status === "PENDENTE").length;
-    const aprovados = documentos.filter((d) => d.status === "APROVADO").length;
-    const rejeitados = documentos.filter((d) => d.status === "REJEITADO").length;
+    const statusMap = Object.fromEntries(
+      countByStatus.map((item) => [item.status, item._count])
+    );
 
     return {
       usuarioId,
       status: documentos.length === 0 ? "NENHUM" : "ENVIADO",
       documentos,
-      resumo: { pendentes, aprovados, rejeitados },
+      resumo: {
+        pendentes: statusMap["PENDENTE"] || 0,
+        aprovados: statusMap["APROVADO"] || 0,
+        rejeitados: statusMap["REJEITADO"] || 0,
+      },
     };
   }
 
@@ -166,13 +178,14 @@ export class KycService {
   }
 
   async verificarKycCompleto(usuarioId: string) {
+    const tiposRequeridos = ["RG", "Selfie"];
+
     const documentos = await this.prisma.kycDocumento.findMany({
       where: { usuarioId, status: "APROVADO" },
     });
 
-    const tiposRequeridos = ["RG", "Selfie"];
-    const tiposPresentes = documentos.map((d) => d.tipo);
-    const completo = tiposRequeridos.every((tipo) => tiposPresentes.includes(tipo));
+    const tiposPresentes = new Set(documentos.map((d) => d.tipo));
+    const completo = tiposRequeridos.every((tipo) => tiposPresentes.has(tipo));
 
     if (completo) {
       await this.prisma.usuario.update({
@@ -187,6 +200,7 @@ export class KycService {
   async gerarUrlUpload(usuarioId: string, tipo: string, mimeType: string) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId },
+      select: { usuarioId: true },
     });
     if (!usuario) throw new NotFoundException("Usuário não encontrado");
 

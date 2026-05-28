@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { CacheService } from "../cache/cache.service";
 import { StorageService } from "../storage/storage.service";
 import { calcularDistanciaMetros } from "@imbobi/core";
 import type { UploadEvidenciaInput } from "@imbobi/schemas";
@@ -15,6 +16,7 @@ const MAX_ACCURACY_METROS = 15;
 export class EvidenciasService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
     private readonly storage: StorageService
   ) {}
 
@@ -26,7 +28,7 @@ export class EvidenciasService {
   ) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId: input.etapaId },
-      include: { obra: true },
+      select: { etapaId: true, obraId: true, obra: { select: { usuarioId: true } } },
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
@@ -40,14 +42,16 @@ export class EvidenciasService {
       );
     }
 
+    const obraBounds = await this.getObraBounds(etapa.obraId);
+
     const result = await this.prisma.$queryRaw<Array<{ dentro: boolean }>>`
       SELECT ST_DWithin(
         ST_SetSRID(ST_MakePoint(${input.longitude}, ${input.latitude}), 4326)::geography,
         ST_SetSRID(ST_MakePoint(
-          ${Number(etapa.obra.geoLongitude)},
-          ${Number(etapa.obra.geoLatitude)}
+          ${Number(obraBounds.geoLongitude)},
+          ${Number(obraBounds.geoLatitude)}
         ), 4326)::geography,
-        ${etapa.obra.raioValidacaoMetros}
+        ${obraBounds.raioValidacaoMetros}
       ) AS dentro
     `;
     const dentro = result[0]?.dentro ?? false;
@@ -55,14 +59,14 @@ export class EvidenciasService {
     const distanciaObra = calcularDistanciaMetros(
       { latitude: input.latitude, longitude: input.longitude },
       {
-        latitude: Number(etapa.obra.geoLatitude),
-        longitude: Number(etapa.obra.geoLongitude),
+        latitude: Number(obraBounds.geoLatitude),
+        longitude: Number(obraBounds.geoLongitude),
       }
     );
 
     if (!dentro) {
       throw new ForbiddenException(
-        `Localização inválida. Você está a ${Math.round(distanciaObra)}m da obra. Máximo permitido: ${etapa.obra.raioValidacaoMetros}m.`
+        `Localização inválida. Você está a ${Math.round(distanciaObra)}m da obra. Máximo permitido: ${obraBounds.raioValidacaoMetros}m.`
       );
     }
 
@@ -71,7 +75,7 @@ export class EvidenciasService {
     return this.prisma.evidenciaEtapa.create({
       data: {
         etapaId: input.etapaId,
-        obraId: etapa.obra.obraId,
+        obraId: etapa.obraId,
         fotoUrl: url,
         latCaptura: input.latitude,
         lngCaptura: input.longitude,
@@ -79,6 +83,21 @@ export class EvidenciasService {
         distanciaObra,
         observacao: input.descricao,
       },
+    });
+  }
+
+  private async getObraBounds(obraId: string) {
+    return this.cache.obterObraBoundsComCache(obraId, async () => {
+      const obra = await this.prisma.obra.findUnique({
+        where: { obraId },
+        select: {
+          geoLatitude: true,
+          geoLongitude: true,
+          raioValidacaoMetros: true,
+        },
+      });
+      if (!obra) throw new NotFoundException("Obra não encontrada.");
+      return obra;
     });
   }
 
