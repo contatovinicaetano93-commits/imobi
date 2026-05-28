@@ -22,7 +22,7 @@ export function initializeSentry() {
     tracesSampleRate: environment === "production" ? 0.1 : 1.0,
     // Enable automatic capturing of performance metrics
     integrations: [
-      Sentry.httpIntegration({ tracing: true }),
+      Sentry.httpIntegration(),
     ],
     // Ignore health check endpoints to reduce noise
     ignoreErrors: [
@@ -40,19 +40,17 @@ export function initializeSentry() {
 
 /**
  * Setup Sentry error handler middleware for Fastify
+ * Note: Fastify integration is automatic via Sentry SDK
  */
-export function setupSentryMiddleware(app: NestFastifyApplication) {
+export function setupSentryMiddleware(_app: NestFastifyApplication) {
   const sentryDsn = process.env["SENTRY_DSN"];
 
   if (!sentryDsn) {
     return;
   }
 
-  // Request handler must be the first middleware
-  app.use(Sentry.expressRequestHandler() as any);
-
-  // Error handler must be last
-  app.use(Sentry.expressErrorHandler() as any);
+  // Sentry automatically integrates with Fastify via the HTTP integration
+  // No additional middleware setup required
 }
 
 /**

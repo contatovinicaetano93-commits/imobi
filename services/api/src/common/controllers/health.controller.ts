@@ -1,29 +1,36 @@
-import { Controller, Get, Inject } from "@nestjs/common";
-import { HealthCheck, HealthCheckService, PrismaHealthIndicator, HttpHealthIndicator } from "@nestjs/terminus";
+import { Controller, Get } from "@nestjs/common";
 import { PrismaService } from "../../modules/prisma/prisma.service";
 
 @Controller("health")
 export class HealthController {
-  constructor(
-    private health: HealthCheckService,
-    private http: HttpHealthIndicator,
-    private db: PrismaHealthIndicator,
-    @Inject("PRISMA_SERVICE") private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   @Get()
-  @HealthCheck()
-  check() {
-    return this.health.check([
+  async check() {
+    try {
       // Check database connectivity
-      () =>
-        this.db.pingCheck("database", this.prisma, {
-          isolated: true,
-        }),
-      // Check API endpoint
-      () =>
-        this.http.pingCheck("api", `http://localhost:${process.env["PORT"] || 4000}/api/v1/health`),
-    ]);
+      await this.prisma.$queryRaw`SELECT 1`;
+      return {
+        status: "up",
+        timestamp: new Date().toISOString(),
+        checks: {
+          database: {
+            status: "up",
+          },
+        },
+      };
+    } catch (error) {
+      return {
+        status: "down",
+        timestamp: new Date().toISOString(),
+        checks: {
+          database: {
+            status: "down",
+            error: error instanceof Error ? error.message : "Unknown error",
+          },
+        },
+      };
+    }
   }
 
   @Get("liveness")

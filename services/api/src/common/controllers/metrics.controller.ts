@@ -6,7 +6,7 @@ export class MetricsController {
   constructor(private metricsService: PrometheusMetricsService) {}
 
   @Get()
-  metrics(): string {
+  async metrics(): Promise<string> {
     return this.metricsService.getMetrics();
   }
 }

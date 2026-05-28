@@ -92,8 +92,8 @@ export class PrometheusMetricsService {
    * Record HTTP request metrics
    */
   recordHttpRequest(method: string, route: string, status: number, duration: number) {
-    this.httpRequestDuration.labels(method, route, status).observe(duration);
-    this.httpRequestTotal.labels(method, route, status).inc();
+    this.httpRequestDuration.labels(method, route, String(status)).observe(duration);
+    this.httpRequestTotal.labels(method, route, String(status)).inc();
   }
 
   /**
