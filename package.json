@@ -25,5 +25,11 @@
     "apps/*",
     "packages/*",
     "services/*"
-  ]
+  ],
+  "dependencies": {
+    "@sentry/nextjs": "^10.54.0",
+    "@sentry/node": "^10.54.0",
+    "@sentry/profiling-node": "^10.54.0",
+    "newrelic": "^14.0.0"
+  }
 }
