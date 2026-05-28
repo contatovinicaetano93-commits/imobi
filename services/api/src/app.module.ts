@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
@@ -23,6 +23,7 @@ import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notific
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { HealthController } from "./common/health.controller";
 import { getRedisConfig } from "./common/config";
+import { ProductionMiddleware } from "./common/middleware/production.middleware";
 
 @Module({
   imports: [
@@ -83,4 +84,11 @@ import { getRedisConfig } from "./common/config";
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    const nodeEnv = process.env.NODE_ENV || 'development';
+    if (nodeEnv === 'production') {
+      consumer.apply(ProductionMiddleware).forRoutes('*');
+    }
+  }
+}
