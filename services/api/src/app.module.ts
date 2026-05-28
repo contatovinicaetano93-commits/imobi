@@ -5,7 +5,9 @@ import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { CacheModule } from "@nestjs/cache-manager";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { CacheInterceptor } from "@nestjs/cache-manager";
+import { redisStore } from "cache-manager-redis-yet";
 import { PrismaModule } from "./modules/prisma/prisma.module";
+import { getBullRedisConfig } from "./common/config";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsuariosModule } from "./modules/usuarios/usuarios.module";
 import { CreditoModule } from "./modules/credito/credito.module";
@@ -32,18 +34,23 @@ import { HealthController } from "./common/health.controller";
       { ttl: 60000, limit: 5, name: "upload" }, // File uploads: 5 req/min
       { ttl: 60000, limit: 20, name: "manager" }, // Manager ops: 20 req/min
     ]),
-    CacheModule.register({
+    CacheModule.registerAsync({
       isGlobal: true,
-      store: "redis",
-      host: process.env["REDIS_HOST"] ?? "localhost",
-      port: Number(process.env["REDIS_PORT"] ?? 6379),
-      ttl: 300, // 5 min default TTL
+      useFactory: async () => {
+        const redisUrl =
+          process.env["REDIS_URL"] ||
+          `redis://${process.env["REDIS_PASSWORD"] ? `:${process.env["REDIS_PASSWORD"]}@` : ""}${process.env["REDIS_HOST"] ?? "localhost"}:${process.env["REDIS_PORT"] ?? 6379}/${process.env["REDIS_DB"] ?? 0}`;
+
+        return {
+          store: await redisStore({
+            url: redisUrl,
+            ttl: 300, // 5 min default TTL
+          }),
+        };
+      },
     }),
     BullModule.forRoot({
-      redis: {
-        host: process.env["REDIS_HOST"] ?? "localhost",
-        port: Number(process.env["REDIS_PORT"] ?? 6379),
-      },
+      redis: getBullRedisConfig(),
     }),
     PrismaModule,
     AuthModule,
