@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Patch, Body, Param, UseGuards, ForbiddenException } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { KycService } from "./kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -35,11 +36,13 @@ export class KycController {
   }
 
   @Patch(":id/aprovar")
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   async aprovarDocumento(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     return this.kyc.aprovarDocumento(id, u.id);
   }
 
   @Patch(":id/rejeitar")
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   async rejeitarDocumento(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,

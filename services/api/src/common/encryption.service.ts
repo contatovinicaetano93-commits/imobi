@@ -8,13 +8,18 @@ export class EncryptionService {
 
   constructor() {
     const masterKey = process.env.ENCRYPTION_KEY || '';
+    const isProduction = process.env.NODE_ENV === 'production';
+
     if (!masterKey || masterKey.length < 32) {
-      console.warn(
-        'WARNING: ENCRYPTION_KEY not set or too short. Sensitive data is NOT encrypted. ' +
-        'Set ENCRYPTION_KEY to 32+ random bytes (base64 encoded) for production.\n' +
-        'Generate with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'base64\'))"'
-      );
+      const message = 'ENCRYPTION_KEY not set or too short (must be 32+ bytes, base64 encoded).\n' +
+        'Generate with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'base64\'))"';
+
+      if (isProduction) {
+        throw new Error('CRITICAL: ' + message + '\nEncryption is required in production.');
+      }
+      console.warn('WARNING: ' + message + '\nSensitive data is NOT encrypted in development.');
     }
+
     this.encryptionKey = masterKey
       ? Buffer.from(masterKey, 'base64').subarray(0, 32)
       : Buffer.alloc(32, 0);
