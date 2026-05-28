@@ -31,6 +31,8 @@ async function bootstrap() {
     hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
     noSniff: true,
     xssFilter: true,
+    frameguard: { action: "deny" },
+    referrerPolicy: { policy: "strict-no-referrer" },
   });
 
   // Apply global CSRF protection
