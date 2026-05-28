@@ -1,5 +1,5 @@
 import {
-  Controller, Post, Get, Patch, Param, Body, UseGuards,
+  Controller, Post, Get, Patch, Param, Body, UseGuards, ForbiddenException,
 } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { EvidenciasService } from "./evidencias.service";
@@ -21,8 +21,8 @@ export class EvidenciasController {
   }
 
   @Get("etapa/:etapaId")
-  listar(@Param("etapaId") etapaId: string) {
-    return this.evidencias.listarPorEtapa(etapaId);
+  async listar(@UsuarioAtual() u: IUsuario, @Param("etapaId") etapaId: string) {
+    return this.evidencias.listarPorEtapaComValidacao(u.id, u.tipo, etapaId);
   }
 
   @Patch(":id/validar")

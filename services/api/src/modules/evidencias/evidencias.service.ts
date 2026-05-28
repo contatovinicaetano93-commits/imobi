@@ -90,6 +90,26 @@ export class EvidenciasService {
     });
   }
 
+  async listarPorEtapaComValidacao(usuarioId: string, usuarioTipo: string, etapaId: string) {
+    const etapa = await this.prisma.etapaObra.findUnique({
+      where: { etapaId },
+      include: { obra: { select: { usuarioId: true } } },
+    });
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+
+    const ehOwner = etapa.obra.usuarioId === usuarioId;
+    const ehGestor = usuarioTipo === "ADMIN" || usuarioTipo === "GESTOR_OBRA";
+
+    if (!ehOwner && !ehGestor) {
+      throw new ForbiddenException("Acesso negado a esta etapa.");
+    }
+
+    return this.prisma.evidenciaEtapa.findMany({
+      where: { etapaId },
+      orderBy: { criadoEm: "desc" },
+    });
+  }
+
   async validar(gestorId: string, evidenciaId: string, aprovado: boolean, observacao?: string) {
     const evidencia = await this.prisma.evidenciaEtapa.findUnique({
       where: { evidenciaId },

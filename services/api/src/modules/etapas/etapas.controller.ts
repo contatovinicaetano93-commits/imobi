@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Body, UseGuards } from "@nestjs/common";
+import { Controller, Get, Patch, Param, Body, UseGuards, ForbiddenException } from "@nestjs/common";
 import { EtapasService } from "./etapas.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -9,8 +9,8 @@ export class EtapasController {
   constructor(private readonly etapas: EtapasService) {}
 
   @Get("obra/:obraId")
-  listar(@Param("obraId") obraId: string) {
-    return this.etapas.listarPorObra(obraId);
+  async listar(@UsuarioAtual() u: IUsuario, @Param("obraId") obraId: string) {
+    return this.etapas.listarPorObraComValidacao(u.id, u.tipo, obraId);
   }
 
   @Patch(":id/aprovar")
@@ -23,7 +23,10 @@ export class EtapasController {
   }
 
   @Patch(":id/status")
-  status(@Param("id") id: string, @Body("status") status: string) {
+  async status(@UsuarioAtual() u: IUsuario, @Param("id") id: string, @Body("status") status: string) {
+    if (u.tipo !== "ADMIN" && u.tipo !== "GESTOR_OBRA") {
+      throw new ForbiddenException("Apenas ADMIN e GESTOR_OBRA podem alterar status de etapas.");
+    }
     return this.etapas.atualizarStatus(id, status);
   }
 }
