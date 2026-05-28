@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { EtapaAuditEntry, KycAuditEntry } from "@/lib/api";
+import { CheckCircle2, XCircle, Edit3, Clock, User, Mail } from "lucide-react";
 
 type AuditEntry = EtapaAuditEntry | KycAuditEntry;
 
@@ -37,18 +38,18 @@ function getStatusBadgeColor(acaoTipo: string): string {
   }
 }
 
-function getStatusIcon(acaoTipo: string): string {
+function getStatusIcon(acaoTipo: string) {
   switch (acaoTipo) {
     case "APROVADA":
     case "APROVADO":
-      return "✓";
+      return <CheckCircle2 className="w-6 h-6" />;
     case "REJEITADA":
     case "REJEITADO":
-      return "✕";
+      return <XCircle className="w-6 h-6" />;
     case "EDITADA":
-      return "✎";
+      return <Edit3 className="w-6 h-6" />;
     default:
-      return "•";
+      return <Clock className="w-6 h-6" />;
   }
 }
 
@@ -101,77 +102,122 @@ export function ApprovalAuditTrail({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6">
-      <h2 className="font-bold text-gray-900 mb-6">Histórico de Aprovações</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-bold text-gray-900 text-lg">Histórico de Aprovações</h2>
+        <span className="text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
+          {auditLogs.length} evento{auditLogs.length !== 1 ? "s" : ""}
+        </span>
+      </div>
 
-      <div className="space-y-6">
-        {auditLogs.map((log, idx) => {
-          const badgeColor = getStatusBadgeColor(log.acaoTipo);
-          const icon = getStatusIcon(log.acaoTipo);
-          const label = getStatusLabel(log.acaoTipo);
-          const isLastItem = idx === auditLogs.length - 1;
-          const observacao =
-            "observacoes" in log
-              ? log.observacoes
-              : "motivo" in log
-                ? log.motivo
-                : null;
+      <div className="relative">
+        {/* Vertical timeline line */}
+        <div className="absolute left-5 top-0 bottom-0 w-1 bg-gradient-to-b from-gray-200 via-gray-200 to-transparent" />
 
-          return (
-            <div key={log.auditId} className="relative">
-              {/* Timeline line */}
-              {!isLastItem && (
-                <div className="absolute left-6 top-12 w-1 h-12 bg-gray-200" />
-              )}
+        <div className="space-y-6 relative z-10">
+          {auditLogs.map((log, idx) => {
+            const badgeColor = getStatusBadgeColor(log.acaoTipo);
+            const icon = getStatusIcon(log.acaoTipo);
+            const label = getStatusLabel(log.acaoTipo);
+            const isLastItem = idx === auditLogs.length - 1;
+            const observacao =
+              "observacoes" in log
+                ? log.observacoes
+                : "motivo" in log
+                  ? log.motivo
+                  : null;
 
-              <div className="flex gap-4">
+            const iconColor =
+              log.acaoTipo === "APROVADA" || log.acaoTipo === "APROVADO"
+                ? "text-green-600"
+                : log.acaoTipo === "REJEITADA" ||
+                    log.acaoTipo === "REJEITADO"
+                  ? "text-red-600"
+                  : "text-blue-600";
+
+            return (
+              <div key={log.auditId} className="flex gap-4">
                 {/* Timeline dot with icon */}
                 <div
-                  className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center font-bold text-white z-10 ${
+                  className={`flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center font-bold text-white z-20 relative bg-white border-2 ${
                     log.acaoTipo === "APROVADA" || log.acaoTipo === "APROVADO"
-                      ? "bg-green-600"
+                      ? "border-green-600 bg-green-50"
                       : log.acaoTipo === "REJEITADA" ||
                           log.acaoTipo === "REJEITADO"
-                        ? "bg-red-600"
-                        : "bg-blue-600"
+                        ? "border-red-600 bg-red-50"
+                        : "border-blue-600 bg-blue-50"
                   }`}
                 >
-                  {icon}
+                  <span className={iconColor}>{icon}</span>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 pt-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-sm font-semibold border ${badgeColor}`}
-                    >
-                      {label}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {formatDate(log.criadoEm)}
-                    </span>
-                  </div>
-
-                  <div className="text-sm text-gray-700 mb-2">
-                    <p className="font-medium">{log.gerenciador}</p>
-                    <p className="text-xs text-gray-500">{log.gerenciadorEmail}</p>
-                  </div>
-
-                  {observacao && (
-                    <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 border border-gray-200">
-                      <p className="font-semibold text-gray-900 mb-1">
-                        {log.acaoTipo === "REJEITADA" ||
-                        log.acaoTipo === "REJEITADO"
-                          ? "Motivo da rejeição:"
-                          : "Observações:"}
-                      </p>
-                      <p>{observacao}</p>
+                <div className="flex-1 pt-1.5 pb-6">
+                  <div className="space-y-2">
+                    {/* Action and timestamp header */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${badgeColor}`}
+                      >
+                        {label}
+                      </span>
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Clock className="w-3 h-3" />
+                        {formatDate(log.criadoEm)}
+                      </div>
                     </div>
-                  )}
+
+                    {/* Manager info */}
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div className="space-y-2 text-xs">
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-gray-600" />
+                          <span className="font-semibold text-gray-900">{log.gerenciador}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-gray-600" />
+                          <span className="text-gray-600">{log.gerenciadorEmail}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Reason/Observation */}
+                    {observacao && (
+                      <div className={`rounded-lg p-4 text-sm border ${
+                        log.acaoTipo === "REJEITADA" ||
+                        log.acaoTipo === "REJEITADO"
+                          ? "bg-red-50 border-red-200"
+                          : "bg-blue-50 border-blue-200"
+                      }`}>
+                        <p className={`font-semibold mb-2 ${
+                          log.acaoTipo === "REJEITADA" ||
+                          log.acaoTipo === "REJEITADO"
+                            ? "text-red-900"
+                            : "text-blue-900"
+                        }`}>
+                          {log.acaoTipo === "REJEITADA" ||
+                          log.acaoTipo === "REJEITADO"
+                            ? "Motivo da rejeição:"
+                            : "Observações:"}
+                        </p>
+                        <p className="text-gray-700 whitespace-pre-wrap">{observacao}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Summary footer */}
+      <div className="mt-8 pt-6 border-t border-gray-200">
+        <p className="text-xs text-gray-500 text-center">
+          {auditLogs.length === 1
+            ? "Uma ação registrada"
+            : `${auditLogs.length} ações registradas no histórico`
+          }
+        </p>
       </div>
     </div>
   );
