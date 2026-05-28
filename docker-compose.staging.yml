@@ -1,0 +1,105 @@
+version: "3.8"
+
+services:
+  # PostgreSQL + PostGIS (Staging)
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: imbobi_postgres_staging
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: imbobi_staging
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d imbobi_staging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - imbobi_staging_network
+
+  # Redis (Staging)
+  redis:
+    image: redis:7-alpine
+    container_name: imbobi_redis_staging
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_staging_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - imbobi_staging_network
+
+  # NestJS API (Staging)
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+      target: production
+    container_name: imbobi_api_staging
+    environment:
+      NODE_ENV: staging
+      PORT: 4000
+      # Load from .env.staging
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.staging
+    volumes:
+      - api_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/api/v1/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - imbobi_staging_network
+
+  # Next.js Web (Staging - Optional for testing)
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: production
+    container_name: imbobi_web_staging
+    environment:
+      NODE_ENV: staging
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    env_file:
+      - .env.staging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - imbobi_staging_network
+
+volumes:
+  postgres_staging_data:
+  redis_staging_data:
+  api_logs:
+
+networks:
+  imbobi_staging_network:
+    driver: bridge
