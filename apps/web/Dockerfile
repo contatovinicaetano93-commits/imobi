@@ -1,51 +1,47 @@
-# Multi-stage build for Next.js Web App
-# Stage 1: Dependencies & Build
+# Build stage
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 # Install pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@9
 
-# Copy monorepo files
-COPY pnpm-workspace.yaml pnpm-lock.yaml ./
+# Copy workspace files
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY apps/web/package.json ./apps/web/
 COPY packages ./packages
-COPY apps/web ./apps/web
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build Next.js app
-RUN cd apps/web && pnpm build
+# Copy source
+COPY apps/web ./apps/web
+COPY tsconfig.json ./
 
-# Stage 2: Production Runtime
-FROM node:20-alpine AS production
+# Build
+RUN pnpm --filter @imbobi/web build
+
+# Runtime stage
+FROM node:20-alpine AS runtime
 
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@9
 
-# Copy monorepo files
-COPY pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY packages ./packages
-COPY apps/web ./apps/web
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY apps/web/package.json ./apps/web/
 
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --prod --frozen-lockfile
 
-# Copy built application from builder
 COPY --from=builder /app/apps/web/.next ./apps/web/.next
 COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY apps/web/next.config.js ./apps/web/
+COPY apps/web/tsconfig.json ./apps/web/
 
-WORKDIR /app/apps/web
+# Non-root user
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+USER nodejs
 
-# Health check
-HEALTHCHECK --interval=15s --timeout=10s --start-period=30s --retries=5 \
-    CMD wget --quiet --tries=1 --spider http://localhost:${PORT:-3000} || exit 1
+EXPOSE 3000
 
-# Expose port
-EXPOSE ${PORT:-3000}
-
-# Start application
-CMD ["pnpm", "start"]
+CMD ["pnpm", "--filter", "@imbobi/web", "start"]
