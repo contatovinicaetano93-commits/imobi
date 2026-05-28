@@ -1,42 +1,35 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
 import { randomBytes } from "crypto";
+import { Redis } from "ioredis";
 
 @Injectable()
 export class CsrfService {
-  private csrfTokens = new Map<string, { token: string; expiresAt: Date }>();
-  private readonly TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+  private readonly TOKEN_EXPIRY_SECONDS = 24 * 60 * 60; // 24 hours
+  private readonly CSRF_TOKEN_PREFIX = "csrf_token:";
 
-  generateToken(): string {
+  constructor(@Inject("REDIS") private readonly redis: Redis) {}
+
+  async generateToken(): Promise<string> {
     const token = randomBytes(32).toString("hex");
-    this.csrfTokens.set(token, {
+    const key = `${this.CSRF_TOKEN_PREFIX}${token}`;
+
+    // Store token in Redis with TTL (24 hours)
+    await this.redis.setex(key, this.TOKEN_EXPIRY_SECONDS, JSON.stringify({
       token,
-      expiresAt: new Date(Date.now() + this.TOKEN_EXPIRY_MS),
-    });
+      createdAt: new Date().toISOString(),
+    }));
+
     return token;
   }
 
-  validateToken(token: string): boolean {
-    const stored = this.csrfTokens.get(token);
-    if (!stored) return false;
-
-    if (stored.expiresAt < new Date()) {
-      this.csrfTokens.delete(token);
-      return false;
-    }
-
-    return true;
+  async validateToken(token: string): Promise<boolean> {
+    const key = `${this.CSRF_TOKEN_PREFIX}${token}`;
+    const stored = await this.redis.get(key);
+    return stored !== null;
   }
 
-  consumeToken(token: string): void {
-    this.csrfTokens.delete(token);
-  }
-
-  private cleanupExpiredTokens(): void {
-    const now = new Date();
-    for (const [token, data] of this.csrfTokens.entries()) {
-      if (data.expiresAt < now) {
-        this.csrfTokens.delete(token);
-      }
-    }
+  async consumeToken(token: string): Promise<void> {
+    const key = `${this.CSRF_TOKEN_PREFIX}${token}`;
+    await this.redis.del(key);
   }
 }
