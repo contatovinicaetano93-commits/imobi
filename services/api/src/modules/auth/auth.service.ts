@@ -2,13 +2,15 @@ import { Injectable, UnauthorizedException, ConflictException } from "@nestjs/co
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
+import { EncryptionService } from "../../common/encryption.service";
 import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwt: JwtService
+    private readonly jwt: JwtService,
+    private readonly encryption: EncryptionService
   ) {}
 
   async registrar(input: CadastroUsuarioInput) {
@@ -48,12 +50,24 @@ export class AuthService {
   }
 
   async renovarToken(refreshToken: string) {
-    const sessao = await this.prisma.sessaoToken.findUnique({
-      where: { refreshToken },
+    const decoded = this.jwt.decode(refreshToken) as any;
+    if (!decoded?.sub) {
+      throw new UnauthorizedException("Token inválido.");
+    }
+
+    const sessao = await this.prisma.sessaoToken.findFirst({
+      where: { usuarioId: decoded.sub },
+      orderBy: { criadoEm: "desc" },
     });
     if (!sessao || sessao.revogadoEm || sessao.expiresAt < new Date()) {
       throw new UnauthorizedException("Sessão inválida ou expirada.");
     }
+
+    const decryptedToken = this.encryption.decrypt(sessao.refreshToken);
+    if (decryptedToken !== refreshToken) {
+      throw new UnauthorizedException("Token não corresponde.");
+    }
+
     await this.prisma.sessaoToken.update({
       where: { sessionId: sessao.sessionId },
       data: { revogadoEm: new Date() },
@@ -62,8 +76,11 @@ export class AuthService {
   }
 
   async revogarToken(refreshToken: string) {
+    const decoded = this.jwt.decode(refreshToken) as any;
+    if (!decoded?.sub) return;
+
     await this.prisma.sessaoToken.updateMany({
-      where: { refreshToken },
+      where: { usuarioId: decoded.sub },
       data: { revogadoEm: new Date() },
     });
   }
@@ -71,11 +88,12 @@ export class AuthService {
   private gerarTokens(usuarioId: string) {
     const accessToken = this.jwt.sign({ sub: usuarioId }, { expiresIn: "15m" });
     const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
+    const encryptedToken = this.encryption.encrypt(refreshToken);
 
     void this.prisma.sessaoToken.create({
       data: {
         usuarioId,
-        refreshToken,
+        refreshToken: encryptedToken,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });
