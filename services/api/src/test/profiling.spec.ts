@@ -8,8 +8,8 @@
  */
 
 import { Test, TestingModule } from "@nestjs/testing";
-import { AppModule } from "../src/app.module";
-import { PrismaService } from "../src/modules/prisma/prisma.service";
+import { AppModule } from "../app.module";
+import { PrismaService } from "../modules/prisma/prisma.service";
 import { runProfilingAnalysis } from "./profiling.util";
 
 describe("Database & Cache Performance Profiling", () => {
