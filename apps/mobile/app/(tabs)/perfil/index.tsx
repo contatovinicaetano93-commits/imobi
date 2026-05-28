@@ -1,76 +1,158 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from "react-native";
-import { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import { useState, useEffect } from "react";
+import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
 import { apiClient } from "@imbobi/core";
 
-type UsuarioPerfil = {
-  usuarioId: string;
-  nome: string;
-  email: string;
-  cpf: string;
-  telefone: string;
+interface KycDocument {
+  kycDocumentoId: string;
   tipo: string;
-  kycStatus: string;
+  url: string;
+  status: "PENDENTE" | "APROVADO" | "REJEITADO";
   criadoEm: string;
-};
+  motivo_rejeicao?: string;
+}
+
+interface KycStatus {
+  usuarioId: string;
+  status: "NENHUM" | "ENVIADO" | "APROVADO" | "REJEITADO";
+  documentos: KycDocument[];
+  resumo: {
+    pendentes: number;
+    aprovados: number;
+    rejeitados: number;
+  };
+}
 
 export default function PerfilScreen() {
-  const router = useRouter();
-  const [usuario, setUsuario] = useState<UsuarioPerfil | null>(null);
+  const [usuario, setUsuario] = useState<{ nome: string; email: string } | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [kycStatus, setKycStatus] = useState<KycStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loggingOut, setLoggingOut] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    const carregarPerfil = async () => {
-      try {
-        const token = await SecureStore.getItemAsync("accessToken");
-        if (token) {
-          const data = await apiClient.get<UsuarioPerfil>("/api/v1/usuarios/me", token);
-          setUsuario(data);
-        }
-      } catch (e: any) {
-        console.error("Erro ao carregar perfil:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    carregarPerfil();
+    carregarDados();
   }, []);
 
-  const handleLogout = async () => {
-    Alert.alert("Sair", "Tem certeza que deseja sair da sua conta?", [
-      {
-        text: "Cancelar",
-        onPress: () => {},
-        style: "cancel",
-      },
-      {
-        text: "Sair",
-        onPress: async () => {
-          setLoggingOut(true);
-          try {
-            const refreshToken = await SecureStore.getItemAsync("refreshToken");
-            if (refreshToken) {
-              await apiClient.post("/auth/logout", { refreshToken });
-            }
-          } catch (e) {
-            console.error("Erro ao fazer logout:", e);
-          } finally {
-            await SecureStore.deleteItemAsync("accessToken");
-            await SecureStore.deleteItemAsync("refreshToken");
-            router.replace("/(auth)/login");
-          }
+  const carregarDados = async () => {
+    try {
+      setLoading(true);
+      const accessToken = await SecureStore.getItemAsync("accessToken");
+      if (!accessToken) {
+        Alert.alert("Erro", "Não autenticado");
+        return;
+      }
+      setToken(accessToken);
+
+      const usuarioJson = await SecureStore.getItemAsync("usuario");
+      if (usuarioJson) {
+        setUsuario(JSON.parse(usuarioJson));
+      }
+
+      await carregarKycStatus(accessToken);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const carregarKycStatus = async (accessToken: string) => {
+    try {
+      const data = await apiClient.get<KycStatus>("/api/v1/kyc/status", accessToken);
+      setKycStatus(data);
+    } catch (error) {
+      console.error("Erro ao carregar KYC:", error);
+      Alert.alert("Erro", "Não foi possível carregar status KYC");
+    }
+  };
+
+  const selecionarDocumento = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.8,
+      });
+
+      if (result.canceled) return;
+
+      const file = result.assets[0];
+      await enviarDocumento(file);
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível selecionar o arquivo");
+    }
+  };
+
+  const enviarDocumento = async (file: any) => {
+    try {
+      setUploading(true);
+
+      if (!token) {
+        Alert.alert("Erro", "Não autenticado");
+        return;
+      }
+
+      const tipoDocumento = selecionarTipoDocumento();
+      if (!tipoDocumento) {
+        Alert.alert("Erro", "Selecione um tipo de documento");
+        return;
+      }
+
+      await apiClient.post(
+        "/api/v1/kyc/upload",
+        {
+          tipo: tipoDocumento,
+          url: file.uri,
         },
-        style: "destructive",
-      },
-    ]);
+        token
+      );
+
+      Alert.alert("Sucesso", "Documento enviado com sucesso!");
+      await carregarKycStatus(token);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao enviar documento";
+      Alert.alert("Erro", message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const selecionarTipoDocumento = (): string | null => {
+    const tipos = ["RG", "CPF", "Comprovante de Renda", "Selfie"];
+    return tipos[0];
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "APROVADO":
+        return "#16a34a";
+      case "PENDENTE":
+        return "#f97316";
+      case "REJEITADO":
+        return "#dc2626";
+      default:
+        return "#6b7280";
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "APROVADO":
+        return "Aprovado";
+      case "PENDENTE":
+        return "Pendente";
+      case "REJEITADO":
+        return "Rejeitado";
+      default:
+        return status;
+    }
   };
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#16a34a" />
       </View>
     );
@@ -78,121 +160,173 @@ export default function PerfilScreen() {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Meu Perfil</Text>
+      {/* Cabeçalho */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Meu Perfil</Text>
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>{usuario?.nome}</Text>
+          <Text style={styles.userEmail}>{usuario?.email}</Text>
+        </View>
+      </View>
 
-      {usuario && (
-        <>
-          <View style={styles.card}>
-            <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{usuario.nome.charAt(0).toUpperCase()}</Text>
-              </View>
-            </View>
-
-            <Text style={styles.name}>{usuario.nome}</Text>
-            <Text style={styles.email}>{usuario.email}</Text>
+      {/* Status KYC */}
+      <View style={styles.kycCard}>
+        <View style={styles.kycHeader}>
+          <Text style={styles.sectionTitle}>Documentação (KYC)</Text>
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: getStatusColor(kycStatus?.status || "NENHUM") },
+            ]}
+          >
+            <Text style={styles.statusText}>{getStatusText(kycStatus?.status || "NENHUM")}</Text>
           </View>
+        </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Informações Pessoais</Text>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>CPF</Text>
-              <Text style={styles.value}>
-                {usuario.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
-              </Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Telefone</Text>
-              <Text style={styles.value}>
-                {usuario.telefone.replace(/(\d{2})(\d{4,5})(\d{4})/, "($1) $2-$3")}
-              </Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Tipo de Usuário</Text>
-              <Text style={styles.value}>
-                {usuario.tipo === "TOMADOR"
-                  ? "Tomador"
-                  : usuario.tipo === "GESTOR_OBRA"
-                  ? "Gestor de Obra"
-                  : usuario.tipo}
-              </Text>
-            </View>
+        {/* Resumo */}
+        {kycStatus?.resumo && (
+          <View style={styles.resumo}>
+            <ResumoItem
+              label="Pendentes"
+              value={kycStatus.resumo.pendentes}
+              color="#f97316"
+            />
+            <ResumoItem
+              label="Aprovados"
+              value={kycStatus.resumo.aprovados}
+              color="#16a34a"
+            />
+            <ResumoItem
+              label="Rejeitados"
+              value={kycStatus.resumo.rejeitados}
+              color="#dc2626"
+            />
           </View>
+        )}
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Verificação</Text>
-
-            <View style={styles.kycRow}>
-              <Text style={styles.label}>Status KYC</Text>
-              <View
-                style={[
-                  styles.badge,
-                  usuario.kycStatus === "APROVADO"
-                    ? styles.badgeAprovado
-                    : usuario.kycStatus === "EM_ANALISE"
-                    ? styles.badgeAnalise
-                    : styles.badgePendente,
-                ]}
-              >
-                <Text
+        {/* Documentos */}
+        {kycStatus?.documentos && kycStatus.documentos.length > 0 && (
+          <View style={styles.documentosList}>
+            <Text style={styles.subsectionTitle}>Documentos Enviados</Text>
+            {kycStatus.documentos.map((doc) => (
+              <View key={doc.kycDocumentoId} style={styles.documentoItem}>
+                <View style={styles.documentoInfo}>
+                  <Text style={styles.documentoTipo}>{doc.tipo}</Text>
+                  <Text style={styles.documentoData}>
+                    {new Date(doc.criadoEm).toLocaleDateString("pt-BR")}
+                  </Text>
+                </View>
+                <View
                   style={[
-                    styles.badgeText,
-                    usuario.kycStatus === "APROVADO"
-                      ? styles.badgeTextAprovado
-                      : usuario.kycStatus === "EM_ANALISE"
-                      ? styles.badgeTextAnalise
-                      : styles.badgeTextPendente,
+                    styles.documentoStatus,
+                    { backgroundColor: getStatusColor(doc.status) },
                   ]}
                 >
-                  {usuario.kycStatus === "APROVADO"
-                    ? "Aprovado"
-                    : usuario.kycStatus === "EM_ANALISE"
-                    ? "Em análise"
-                    : usuario.kycStatus === "REJEITADO"
-                    ? "Rejeitado"
-                    : "Pendente"}
-                </Text>
+                  <Text style={styles.documentoStatusText}>
+                    {getStatusText(doc.status)}
+                  </Text>
+                </View>
               </View>
-            </View>
+            ))}
+            {kycStatus.documentos.some((d) => d.status === "REJEITADO") && (
+              <View style={styles.motivo}>
+                <Text style={styles.motivoLabel}>Motivo da rejeição:</Text>
+                {kycStatus.documentos
+                  .filter((d) => d.status === "REJEITADO")
+                  .map((d) => (
+                    <Text key={d.kycDocumentoId} style={styles.motivoText}>
+                      {d.tipo}: {d.motivo_rejeicao}
+                    </Text>
+                  ))}
+              </View>
+            )}
           </View>
+        )}
 
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} disabled={loggingOut}>
-            <Text style={styles.logoutBtnText}>{loggingOut ? "Saindo..." : "Sair da Conta"}</Text>
-          </TouchableOpacity>
-        </>
-      )}
+        {/* Botão Upload */}
+        <TouchableOpacity
+          style={styles.uploadButton}
+          onPress={selecionarDocumento}
+          disabled={uploading}
+        >
+          {uploading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.uploadButtonText}>+ Enviar Documento</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Info */}
+      <View style={styles.infoBox}>
+        <Text style={styles.infoTitle}>Documentos Obrigatórios</Text>
+        <Text style={styles.infoText}>• RG (frente e verso)</Text>
+        <Text style={styles.infoText}>• Selfie segurando documento</Text>
+        <Text style={styles.infoText}>• Comprovante de endereço</Text>
+      </View>
     </ScrollView>
+  );
+}
+
+function ResumoItem({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <View style={styles.resumoItem}>
+      <View style={[styles.resumoColor, { backgroundColor: color }]} />
+      <View>
+        <Text style={styles.resumoLabel}>{label}</Text>
+        <Text style={styles.resumoValue}>{value}</Text>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: "#f9fafb" },
-  container: { padding: 16, paddingTop: 56, paddingBottom: 40 },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  title: { fontSize: 22, fontWeight: "700", color: "#111827", marginBottom: 20 },
-  card: { backgroundColor: "#fff", borderRadius: 16, padding: 24, alignItems: "center", marginBottom: 24, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-  avatarContainer: { marginBottom: 16 },
-  avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: "#16a34a", justifyContent: "center", alignItems: "center" },
-  avatarText: { fontSize: 32, fontWeight: "700", color: "#fff" },
-  name: { fontSize: 20, fontWeight: "700", color: "#111827" },
-  email: { fontSize: 14, color: "#6b7280", marginTop: 4 },
-  section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 16, fontWeight: "600", color: "#111827", marginBottom: 12 },
-  infoRow: { backgroundColor: "#fff", borderRadius: 12, padding: 14, marginBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  kycRow: { backgroundColor: "#fff", borderRadius: 12, padding: 14, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  label: { fontSize: 14, color: "#6b7280" },
-  value: { fontSize: 14, fontWeight: "600", color: "#111827" },
-  badge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  badgeAprovado: { backgroundColor: "#dcfce7" },
-  badgeAnalise: { backgroundColor: "#dbeafe" },
-  badgePendente: { backgroundColor: "#f3f4f6" },
-  badgeText: { fontSize: 12, fontWeight: "600" },
-  badgeTextAprovado: { color: "#166534" },
-  badgeTextAnalise: { color: "#1d4ed8" },
-  badgeTextPendente: { color: "#6b7280" },
-  logoutBtn: { backgroundColor: "#ef4444", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 16 },
-  logoutBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  container: { padding: 20, paddingTop: 56, gap: 16 },
+  centerContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+
+  // Header
+  header: { backgroundColor: "#fff", borderRadius: 16, padding: 20, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8 },
+  title: { fontSize: 24, fontWeight: "700", color: "#111827", marginBottom: 12 },
+  userInfo: { gap: 4 },
+  userName: { fontSize: 16, fontWeight: "600", color: "#374151" },
+  userEmail: { fontSize: 14, color: "#9ca3af" },
+
+  // KYC Card
+  kycCard: { backgroundColor: "#fff", borderRadius: 16, padding: 20, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8, gap: 16 },
+  kycHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  sectionTitle: { fontSize: 18, fontWeight: "700", color: "#111827" },
+  statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  statusText: { color: "#fff", fontSize: 12, fontWeight: "600" },
+
+  // Resumo
+  resumo: { gap: 8 },
+  resumoItem: { flexDirection: "row", alignItems: "center", gap: 12 },
+  resumoColor: { width: 4, height: 40, borderRadius: 2 },
+  resumoLabel: { fontSize: 13, color: "#6b7280" },
+  resumoValue: { fontSize: 20, fontWeight: "700", color: "#111827" },
+
+  // Documentos
+  documentosList: { gap: 12, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 16 },
+  subsectionTitle: { fontSize: 14, fontWeight: "600", color: "#374151" },
+  documentoItem: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#f3f4f6" },
+  documentoInfo: { flex: 1 },
+  documentoTipo: { fontSize: 14, fontWeight: "600", color: "#111827" },
+  documentoData: { fontSize: 12, color: "#9ca3af", marginTop: 2 },
+  documentoStatus: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+  documentoStatusText: { color: "#fff", fontSize: 11, fontWeight: "600" },
+
+  // Motivo
+  motivo: { backgroundColor: "#fef2f2", borderRadius: 8, padding: 12, borderLeftWidth: 4, borderLeftColor: "#dc2626" },
+  motivoLabel: { fontSize: 12, fontWeight: "600", color: "#991b1b" },
+  motivoText: { fontSize: 12, color: "#7f1d1d", marginTop: 4 },
+
+  // Upload Button
+  uploadButton: { backgroundColor: "#16a34a", borderRadius: 12, paddingVertical: 12, alignItems: "center", marginTop: 8 },
+  uploadButtonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+
+  // Info Box
+  infoBox: { backgroundColor: "#dbeafe", borderRadius: 12, padding: 16, borderLeftWidth: 4, borderLeftColor: "#3b82f6" },
+  infoTitle: { fontSize: 14, fontWeight: "700", color: "#1e40af", marginBottom: 8 },
+  infoText: { fontSize: 13, color: "#1e3a8a", marginVertical: 2 },
 });
