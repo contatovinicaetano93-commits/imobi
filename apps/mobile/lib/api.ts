@@ -1,11 +1,87 @@
 import * as SecureStore from "expo-secure-store";
 import { apiClient, ApiError } from "@imbobi/core";
+import { ensureCsrfToken, fetchCsrfToken } from "./csrf-token";
 
 async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync("accessToken");
 }
 
 export { ApiError };
+
+// Enhanced API request with CSRF token support for state-changing operations
+declare const process: any;
+
+const BASE_URL =
+  typeof process !== "undefined"
+    ? (process.env.EXPO_PUBLIC_API_URL ?? "")
+    : "";
+
+export async function requestWithCsrf<T>(
+  path: string,
+  method: "POST" | "PUT" | "DELETE" | "PATCH",
+  body: unknown,
+  token?: string,
+  csrfToken?: string
+): Promise<T> {
+  // Ensure we have a CSRF token for state-changing requests
+  const tokenToUse = csrfToken || (await ensureCsrfToken());
+
+  const headers = new Headers();
+  headers.set("Content-Type", "application/json");
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  headers.set("x-csrf-token", tokenToUse);
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  // Handle 403 CSRF errors - fetch new token and retry once
+  if (res.status === 403) {
+    try {
+      const newCsrfToken = await fetchCsrfToken();
+      const retryHeaders = new Headers();
+      retryHeaders.set("Content-Type", "application/json");
+      if (token) retryHeaders.set("Authorization", `Bearer ${token}`);
+      retryHeaders.set("x-csrf-token", newCsrfToken);
+
+      const retryRes = await fetch(`${BASE_URL}${path}`, {
+        method,
+        headers: retryHeaders,
+        body: JSON.stringify(body),
+      });
+
+      if (!retryRes.ok) {
+        const body = (await retryRes.json().catch(() => ({}))) as { message?: string; code?: string };
+        throw new ApiError(retryRes.status, body.message ?? retryRes.statusText, body.code);
+      }
+
+      if (retryRes.status === 204) return undefined as T;
+      return retryRes.json() as Promise<T>;
+    } catch (error) {
+      // If retry fails, fall through to original error handling
+    }
+  }
+
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { message?: string; code?: string };
+    throw new ApiError(res.status, body.message ?? res.statusText, body.code);
+  }
+
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+// Initialize CSRF token on app startup
+export async function initializeCsrfToken(): Promise<void> {
+  try {
+    await ensureCsrfToken();
+  } catch (error) {
+    console.error("Failed to initialize CSRF token:", error);
+    // Don't fail app startup if CSRF token fetch fails
+  }
+}
 
 export const obrasApi = {
   listar: async () => {
@@ -35,8 +111,9 @@ export const creditoApi = {
     rendaMensalDeclarada: number;
   }) => {
     const token = await getToken();
-    return apiClient.post<{ creditoId: string; status: string }>(
+    return requestWithCsrf<{ creditoId: string; status: string }>(
       "/api/v1/credito/solicitar",
+      "POST",
       params,
       token ?? undefined
     );
@@ -53,7 +130,12 @@ export const scoreApi = {
 export const pushApi = {
   registrarToken: async (fcmToken: string) => {
     const token = await getToken();
-    return apiClient.post("/api/v1/push-notificacoes/registrar-token", { token: fcmToken }, token ?? undefined);
+    return requestWithCsrf(
+      "/api/v1/push-notificacoes/registrar-token",
+      "POST",
+      { token: fcmToken },
+      token ?? undefined
+    );
   },
 };
 
@@ -75,8 +157,9 @@ export const kycApi = {
 
   gerarPresignedUrl: async (tipo: string, mimeType: string) => {
     const token = await getToken();
-    return apiClient.post<{ uploadUrl: string; key: string; expiresIn: number }>(
+    return requestWithCsrf<{ uploadUrl: string; key: string; expiresIn: number }>(
       `/api/v1/kyc/presigned-url?tipo=${tipo}&mimeType=${mimeType}`,
+      "POST",
       {},
       token ?? undefined
     );
@@ -84,25 +167,37 @@ export const kycApi = {
 
   uploadDocumento: async (tipo: string, url: string) => {
     const token = await getToken();
-    return apiClient.post<KycDocumento>("/api/v1/kyc/upload", { tipo, url }, token ?? undefined);
+    return requestWithCsrf<KycDocumento>(
+      "/api/v1/kyc/upload",
+      "POST",
+      { tipo, url },
+      token ?? undefined
+    );
   },
 };
 
 export const simuladorApi = {
   simular: async (params: { valorSolicitado: number; prazoMeses: number; tipoObra: "RESIDENCIAL" | "COMERCIAL" | "MISTO" }) => {
     const token = await getToken();
-    return apiClient.post<SimulacaoApiResult>("/api/v1/credito/simular", params, token ?? undefined);
+    return requestWithCsrf<SimulacaoApiResult>(
+      "/api/v1/credito/simular",
+      "POST",
+      params,
+      token ?? undefined
+    );
   },
 };
 
 export const evidenciasApi = {
   upload: async (formData: FormData, etapaId: string) => {
     const token = await getToken();
+    const csrfToken = await ensureCsrfToken();
     const baseUrl = typeof process !== "undefined" ? (process.env.EXPO_PUBLIC_API_URL ?? "") : "";
     const res = await fetch(`${baseUrl}/api/v1/evidencias/${etapaId}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token ?? ""}`,
+        "x-csrf-token": csrfToken,
       },
       body: formData,
     });

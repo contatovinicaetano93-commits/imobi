@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { LoginSchema, type LoginInput } from "@imbobi/schemas";
-import { apiClient } from "@imbobi/core";
+import { requestWithCsrf } from "../../lib/api";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -14,8 +14,9 @@ export default function LoginScreen() {
 
   const onSubmit = async (data: LoginInput) => {
     try {
-      const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
-        "/auth/login",
+      const res = await requestWithCsrf<{ accessToken: string; refreshToken: string; csrfToken?: string }>(
+        "/api/v1/auth/login",
+        "POST",
         data
       );
       await SecureStore.setItemAsync("accessToken", res.accessToken);
