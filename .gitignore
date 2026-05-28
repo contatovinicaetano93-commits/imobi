@@ -19,6 +19,7 @@ android/
 .env
 .env.local
 .env.*.local
+.env.staging
 
 # Turbo
 .turbo/
