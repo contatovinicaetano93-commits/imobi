@@ -565,9 +565,6 @@ async function main(): Promise<void> {
     console.log("\n╔════════════════════════════════════════════════════════╗");
     console.log("║                  Seeding Complete! ✓                    ║");
     console.log("║                                                         ║");
-    console.log("║  Test Credentials:                                      ║");
-    console.log(`║  - Email: admin1@test.com                              ║`);
-    console.log(`║  - Password: ${TEST_PASSWORD.padEnd(44)}║`);
     console.log("║                                                         ║");
     console.log("║  Data Summary:                                          ║");
     console.log(`║  - Users: ${data.usuarios.length}                                             ║`);

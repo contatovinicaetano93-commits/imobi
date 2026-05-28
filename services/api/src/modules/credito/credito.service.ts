@@ -39,6 +39,10 @@ export class CreditoService {
     });
   }
 
+  async buscarPorId(creditoId: string) {
+    return this.prisma.credito.findUnique({ where: { creditoId } });
+  }
+
   async extrato(creditoId: string) {
     const credito = await this.prisma.credito.findUnique({
       where: { creditoId },
