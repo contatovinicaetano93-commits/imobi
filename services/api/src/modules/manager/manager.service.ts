@@ -5,8 +5,25 @@ import { PrismaService } from "../prisma/prisma.service";
 
 const CACHE_KEYS = {
   STATS: "manager:stats",
-  ETAPAS_PENDENTES: (limit: number, offset: number, filters?: string) =>
-    `manager:etapas:${limit}:${offset}:${filters || ""}`,
+  // Normalized cache key generation to improve hit rate
+  // Instead of JSON.stringify(filters) which varies by field order,
+  // build key from individual filter values in consistent order
+  ETAPAS_PENDENTES: (
+    limit: number,
+    offset: number,
+    filters?: {
+      status?: "todas" | "pendente" | "aprovada" | "rejeitada";
+      dataInicio?: string;
+      dataFim?: string;
+      obraType?: string;
+    }
+  ) => {
+    const status = filters?.status || "todas";
+    const dataInicio = filters?.dataInicio || "";
+    const dataFim = filters?.dataFim || "";
+    const obraType = filters?.obraType || "";
+    return `manager:etapas:${limit}:${offset}:${status}:${dataInicio}:${dataFim}:${obraType}`;
+  },
   KYC_PENDENTES: (limit: number, offset: number) => `manager:kyc:${limit}:${offset}`,
 };
 
@@ -36,8 +53,7 @@ export class ManagerService {
       obraType?: string;
     }
   ) {
-    const filterKey = filters ? JSON.stringify(filters) : "";
-    const cacheKey = CACHE_KEYS.ETAPAS_PENDENTES(limit, offset, filterKey);
+    const cacheKey = CACHE_KEYS.ETAPAS_PENDENTES(limit, offset, filters);
     const cached = await this.cacheManager.get(cacheKey);
     if (cached) return cached;
 
@@ -118,7 +134,8 @@ export class ManagerService {
       total,
     };
 
-    await this.cacheManager.set(cacheKey, result, 300000);
+    // Cache TTL: 120 seconds (matches controller CacheTTL decorator)
+    await this.cacheManager.set(cacheKey, result, 120000);
     return result;
   }
 
@@ -151,7 +168,8 @@ export class ManagerService {
     ]);
 
     const result = { documentos, total };
-    await this.cacheManager.set(cacheKey, result, 300000);
+    // Cache TTL: 120 seconds (matches controller CacheTTL decorator)
+    await this.cacheManager.set(cacheKey, result, 120000);
     return result;
   }
 

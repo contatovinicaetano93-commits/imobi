@@ -99,6 +99,12 @@ export default function KycPage() {
       doc.usuario.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Clear selection when search changes
+  useEffect(() => {
+    setSelectedDocs([]);
+    setOffset(0);
+  }, [searchQuery]);
+
   return (
     <div className="space-y-6">
       {successMessage && (

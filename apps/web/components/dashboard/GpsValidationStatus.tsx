@@ -31,9 +31,14 @@ function GpsVisualization({
   const minLng = Math.min(...lngs);
   const maxLng = Math.max(...lngs);
 
-  // Add padding (10% of range)
-  const latRange = maxLat - minLat || 0.01;
-  const lngRange = maxLng - minLng || 0.01;
+  // Add padding (10% of range, minimum 0.01 for edge cases)
+  let latRange = maxLat - minLat;
+  let lngRange = maxLng - minLng;
+
+  // Handle edge case: all points at same location (use minimum padding)
+  if (latRange === 0) latRange = 0.01;
+  if (lngRange === 0) lngRange = 0.01;
+
   const latPad = latRange * 0.1;
   const lngPad = lngRange * 0.1;
 
