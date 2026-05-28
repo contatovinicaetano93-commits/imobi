@@ -1,7 +1,7 @@
 import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
-import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { CacheModule } from "@nestjs/cache-manager";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { CacheInterceptor } from "@nestjs/cache-manager";
@@ -24,6 +24,7 @@ import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { HealthController } from "./common/health.controller";
 import { getRedisConfig } from "./common/config";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
+import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
 
 @Module({
   imports: [
@@ -76,7 +77,7 @@ import { ProductionMiddleware } from "./common/middleware/production.middleware"
     LiberacaoParcelaWorker,
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: CustomThrottlerGuard,
     },
     {
       provide: APP_INTERCEPTOR,
