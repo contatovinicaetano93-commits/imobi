@@ -6,6 +6,7 @@ import {
 import fastifyHelmet from "@fastify/helmet";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { CsrfGuard } from "./common/guards/csrf.guard";
 import { validateEnvironment } from "./common/validators/env.validator";
 
 async function bootstrap() {
@@ -32,6 +33,9 @@ async function bootstrap() {
     xssFilter: true,
   });
 
+  // Apply global CSRF protection
+  app.useGlobalGuards(app.get(CsrfGuard));
+
   // ThrottlerGuard is registered via AppModule providers
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");
@@ -40,7 +44,7 @@ async function bootstrap() {
     origin: process.env["CORS_ORIGIN"]?.split(",") ?? ["http://localhost:3000"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
   });
 
   const port = Number(process.env["PORT"] ?? 4000);

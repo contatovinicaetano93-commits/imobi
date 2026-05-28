@@ -7,6 +7,8 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decora
 import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { RejeitarDocumentoSchema } from "@imbobi/schemas";
 import { z } from "zod";
+import { Throttle } from "../../common/decorators/throttle.decorator";
+import { UserThrottlerGuard } from "../../common/guards/user-throttler.guard";
 
 @UseGuards(JwtAuthGuard)
 @Controller("manager")
@@ -56,6 +58,8 @@ export class ManagerController {
   }
 
   @Patch("etapas/:id/aprovar")
+  @UseGuards(UserThrottlerGuard)
+  @Throttle(50, 3600000) // 50 requests per hour per user (managers can be busy)
   async aprovarEtapa(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
@@ -69,6 +73,8 @@ export class ManagerController {
   }
 
   @Patch("etapas/:id/rejeitar")
+  @UseGuards(UserThrottlerGuard)
+  @Throttle(50, 3600000) // 50 requests per hour per user
   async rejeitarEtapa(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
@@ -80,12 +86,16 @@ export class ManagerController {
   }
 
   @Patch("kyc/:id/aprovar")
+  @UseGuards(UserThrottlerGuard)
+  @Throttle(50, 3600000) // 50 requests per hour per user
   async aprovarKyc(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     await this.manager.verificarPermissao(u.id);
     return this.kyc.aprovarDocumento(id, u.id);
   }
 
   @Patch("kyc/:id/rejeitar")
+  @UseGuards(UserThrottlerGuard)
+  @Throttle(50, 3600000) // 50 requests per hour per user
   async rejeitarKyc(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,

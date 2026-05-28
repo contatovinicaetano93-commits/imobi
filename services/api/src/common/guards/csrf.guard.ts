@@ -1,11 +1,14 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { Injectable, BadRequestException, Inject } from "@nestjs/common";
 import { CanActivate, ExecutionContext } from "@nestjs/common";
 import { FastifyRequest } from "fastify";
+import { CsrfService } from "../../modules/csrf/csrf.service";
 
 @Injectable()
 export class CsrfGuard implements CanActivate {
   private readonly CSRF_HEADER = "x-csrf-token";
   private readonly SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+  constructor(private readonly csrf: CsrfService) {}
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<FastifyRequest>();
@@ -21,11 +24,13 @@ export class CsrfGuard implements CanActivate {
       throw new BadRequestException("CSRF token is required");
     }
 
-    // Validar token contra session (implementado no middleware)
-    const sessionToken = (request as any).session?.csrfToken;
-    if (csrfToken !== sessionToken) {
-      throw new BadRequestException("Invalid CSRF token");
+    // Validate token against CSRF service
+    if (!this.csrf.validateToken(csrfToken)) {
+      throw new BadRequestException("Invalid or expired CSRF token");
     }
+
+    // Consume token (one-time use)
+    this.csrf.consumeToken(csrfToken);
 
     return true;
   }

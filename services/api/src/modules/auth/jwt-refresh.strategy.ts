@@ -11,9 +11,13 @@ interface JwtRefreshPayload {
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, "jwt-refresh") {
   constructor(private readonly prisma: PrismaService) {
+    const jwtRefreshSecret = process.env["JWT_REFRESH_SECRET"];
+    if (!jwtRefreshSecret) {
+      throw new Error("JWT_REFRESH_SECRET is not configured");
+    }
     super({
       jwtFromRequest: ExtractJwt.fromBodyField("refreshToken"),
-      secretOrKey: process.env["JWT_REFRESH_SECRET"] ?? "",
+      secretOrKey: jwtRefreshSecret,
       ignoreExpiration: false,
     });
   }

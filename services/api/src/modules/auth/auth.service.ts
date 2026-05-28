@@ -60,16 +60,29 @@ export class AuthService {
   }
 
   async renovarToken(refreshToken: string) {
+    // Validate refresh token exists in database (prevents token replay)
     const sessao = await this.prisma.sessaoToken.findUnique({
       where: { refreshToken },
+      select: { sessionId: true, usuarioId: true, revogadoEm: true, expiresAt: true },
     });
-    if (!sessao || sessao.revogadoEm || sessao.expiresAt < new Date()) {
+
+    // Reject if: not found, already revoked, or expired
+    if (!sessao) {
       throw new UnauthorizedException("Sessão inválida ou expirada.");
     }
+    if (sessao.revogadoEm) {
+      throw new UnauthorizedException("Token já foi utilizado.");
+    }
+    if (sessao.expiresAt < new Date()) {
+      throw new UnauthorizedException("Sessão expirada.");
+    }
+
+    // Revoke the old token (one-time use)
     await this.prisma.sessaoToken.update({
       where: { sessionId: sessao.sessionId },
       data: { revogadoEm: new Date() },
     });
+
     return this.gerarTokens(sessao.usuarioId);
   }
 

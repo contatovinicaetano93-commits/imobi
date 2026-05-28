@@ -23,6 +23,8 @@ import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
 import { IpThrottlerGuard } from "./common/guards/ip-throttler.guard";
 import { UserThrottlerGuard } from "./common/guards/user-throttler.guard";
+import { CsrfGuard } from "./common/guards/csrf.guard";
+import { AuditService } from "./common/services/audit.service";
 import { APP_GUARD } from "@nestjs/core";
 
 @Module({
@@ -100,11 +102,13 @@ import { APP_GUARD } from "@nestjs/core";
     CustomThrottlerGuard,
     IpThrottlerGuard,
     UserThrottlerGuard,
+    CsrfGuard,
+    AuditService,
     {
       provide: APP_GUARD,
       useClass: CustomThrottlerGuard,
     },
   ],
-  exports: [CustomThrottlerGuard, IpThrottlerGuard, UserThrottlerGuard],
+  exports: [CustomThrottlerGuard, IpThrottlerGuard, UserThrottlerGuard, CsrfGuard, AuditService],
 })
 export class AppModule {}

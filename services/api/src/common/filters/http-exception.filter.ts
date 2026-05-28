@@ -1,7 +1,10 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from "@nestjs/common";
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logger } from "@nestjs/common";
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger("HttpExceptionFilter");
+  private readonly isProduction = process.env["NODE_ENV"] === "production";
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const reply = ctx.getResponse<{ status: (code: number) => { send: (body: unknown) => void } }>();
@@ -21,7 +24,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = exception.message;
       }
     } else if (exception instanceof Error) {
-      message = exception.message;
+      // Log full error details but don't expose them in production
+      this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
+      if (!this.isProduction) {
+        message = exception.message;
+      }
     }
 
     reply.status(status).send({

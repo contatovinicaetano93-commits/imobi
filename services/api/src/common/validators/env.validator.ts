@@ -14,6 +14,13 @@ export function validateEnvironment(): void {
     errors.push(`JWT_SECRET must be at least 64 characters. Current length: ${jwtSecret.length}`);
   }
 
+  const jwtRefreshSecret = process.env['JWT_REFRESH_SECRET'];
+  if (!jwtRefreshSecret) {
+    errors.push('JWT_REFRESH_SECRET is not set');
+  } else if (jwtRefreshSecret.length < 64) {
+    errors.push(`JWT_REFRESH_SECRET must be at least 64 characters. Current length: ${jwtRefreshSecret.length}`);
+  }
+
   const encryptionSecret = process.env['ENCRYPTION_SECRET'];
   if (!encryptionSecret) {
     errors.push('ENCRYPTION_SECRET is not set');
