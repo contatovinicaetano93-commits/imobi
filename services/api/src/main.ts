@@ -5,8 +5,11 @@ import {
 } from "@nestjs/platform-fastify";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { validateEnvironmentOrThrow } from "./common/config";
 
 async function bootstrap() {
+  validateEnvironmentOrThrow();
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({ logger: process.env["NODE_ENV"] !== "production" })
