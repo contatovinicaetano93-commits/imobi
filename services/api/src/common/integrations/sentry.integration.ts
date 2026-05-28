@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/node";
-import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 
 /**
@@ -21,13 +20,9 @@ export function initializeSentry() {
     environment,
     // Set sample rates for production to avoid quota exhaustion
     tracesSampleRate: environment === "production" ? 0.1 : 1.0,
-    profilesSampleRate: environment === "production" ? 0.1 : 1.0,
     // Enable automatic capturing of performance metrics
     integrations: [
-      nodeProfilingIntegration(),
-      new Sentry.Integrations.Http({ tracing: true }),
-      new Sentry.Integrations.OnUncaughtException(),
-      new Sentry.Integrations.OnUnhandledRejection(),
+      Sentry.httpIntegration({ tracing: true }),
     ],
     // Ignore health check endpoints to reduce noise
     ignoreErrors: [
@@ -54,10 +49,10 @@ export function setupSentryMiddleware(app: NestFastifyApplication) {
   }
 
   // Request handler must be the first middleware
-  app.use(Sentry.Handlers.requestHandler() as any);
+  app.use(Sentry.expressRequestHandler() as any);
 
   // Error handler must be last
-  app.use(Sentry.Handlers.errorHandler() as any);
+  app.use(Sentry.expressErrorHandler() as any);
 }
 
 /**
