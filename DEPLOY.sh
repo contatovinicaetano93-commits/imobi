@@ -188,7 +188,7 @@ psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS postgis;" > /dev/null 2>
 
 # Step 10: Run database migrations
 print_step "Running database migrations..."
-NODE_ENV=staging pnpm db:migrate || fail "Database migrations failed"
+NODE_ENV=staging pnpm --filter @imbobi/api prisma migrate deploy || fail "Database migrations failed"
 print_success "Database migrations complete"
 
 # Step 11: Verify Redis connectivity
