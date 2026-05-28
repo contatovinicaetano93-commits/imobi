@@ -1,6 +1,9 @@
-// Initialize New Relic APM BEFORE any other imports
+// Initialize error tracking BEFORE any other imports (order matters!)
 import { initializeNewRelic } from "./common/config/newrelic.config";
-initializeNewRelic();
+import { initSentry } from "./common/config/sentry.config";
+
+initializeNewRelic(); // New Relic APM
+initSentry(); // Sentry error tracking
 
 import { NestFactory } from "@nestjs/core";
 import {
@@ -29,6 +32,10 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({ logger: process.env["NODE_ENV"] !== "production" })
   );
+
+  // Sentry error tracking middleware (must be before other middleware)
+  const { Sentry } = await import("./common/config/sentry.config");
+  app.use(Sentry.fastifyIntegration());
 
   // ThrottlerGuard is registered via AppModule providers
   app.useGlobalFilters(new HttpExceptionFilter());

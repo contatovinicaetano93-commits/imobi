@@ -3,6 +3,7 @@
  *
  * Centralized configuration for:
  * - APM & Monitoring (New Relic)
+ * - Error Tracking (Sentry)
  * - Redis (cache + job queues)
  * - Rate limiting
  * - Email (SendGrid, AWS SES, SMTP)
@@ -10,6 +11,7 @@
  */
 
 export * from "./newrelic.config";
+export * from "./sentry.config";
 export * from "./redis.config";
 export * from "./rate-limit.config";
 export * from "./email.config";
