@@ -109,4 +109,16 @@ export class ManagerController {
     await this.manager.verificarPermissao(u.id);
     return this.kyc.rejeitarDocumento(id, u.id, motivo);
   }
+
+  @Get("etapas/:id/audit-log")
+  async obterEtapaAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
+    await this.manager.verificarPermissao(u.id);
+    return this.manager.obterEtapaAuditLog(id);
+  }
+
+  @Get("kyc/:id/audit-log")
+  async obterKycAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
+    await this.manager.verificarPermissao(u.id);
+    return this.manager.obterKycAuditLog(id);
+  }
 }

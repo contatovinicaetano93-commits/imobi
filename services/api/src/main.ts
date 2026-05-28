@@ -5,9 +5,12 @@ import {
 } from "@nestjs/platform-fastify";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
-import { validateEnvironmentOrThrow } from "./common/config";
+import { validateEnvironmentOrThrow, initSentry } from "./common/config";
 
 async function bootstrap() {
+  // Initialize Sentry before creating the app for error tracking
+  initSentry();
+
   validateEnvironmentOrThrow();
 
   const app = await NestFactory.create<NestFastifyApplication>(

@@ -31,6 +31,8 @@ model Usuario {
   kycDocumentos KycDocumento[] @relation("KycDocumentos")
   notificacoes  Notificacao[]
   fcmTokens     UsuarioFcmToken[]
+  etapaAuditLogs EtapaAuditLog[] @relation("EtapaAuditLogs")
+  kycAuditLogs  KycAuditLog[] @relation("KycAuditLogs")
 
   @@index([email])
   @@index([cpf])
@@ -160,6 +162,7 @@ model EtapaObra {
   atualizadoEm        DateTime @updatedAt
 
   evidencias          EvidenciaEtapa[]
+  auditLogs           EtapaAuditLog[]
 
   @@unique([obraId, ordem])
   @@index([obraId])
@@ -249,6 +252,7 @@ model KycDocumento {
   analisadoEm    DateTime?
   criadoEm       DateTime @default(now())
   atualizadoEm   DateTime @updatedAt
+  auditLogs      KycAuditLog[]
 
   @@index([usuarioId])
   @@index([status])
@@ -291,4 +295,38 @@ enum TipoNotificacao {
   OBRA_CRIADA
   SCORE_ATUALIZADO
   VISTORIA_PENDENTE
+}
+
+// ── Auditoria de Etapas ─────────────────────────────────────────────
+
+model EtapaAuditLog {
+  auditId         String   @id @default(uuid())
+  etapaId         String
+  etapa           EtapaObra @relation(fields: [etapaId], references: [etapaId], onDelete: Cascade)
+  acaoTipo        String   // APROVADA, REJEITADA, EDITADA
+  usuarioId       String
+  usuario         Usuario  @relation("EtapaAuditLogs", fields: [usuarioId], references: [usuarioId], onDelete: Restrict)
+  observacoes     String?
+  criadoEm        DateTime @default(now())
+
+  @@index([etapaId])
+  @@index([usuarioId])
+  @@index([criadoEm])
+}
+
+// ── Auditoria de KYC ────────────────────────────────────────────────
+
+model KycAuditLog {
+  auditId         String      @id @default(uuid())
+  kycDocumentoId  String
+  kyc             KycDocumento @relation(fields: [kycDocumentoId], references: [kycDocumentoId], onDelete: Cascade)
+  acaoTipo        String      // APROVADO, REJEITADO
+  usuarioId       String
+  usuario         Usuario     @relation("KycAuditLogs", fields: [usuarioId], references: [usuarioId], onDelete: Restrict)
+  motivo          String?
+  criadoEm        DateTime @default(now())
+
+  @@index([kycDocumentoId])
+  @@index([usuarioId])
+  @@index([criadoEm])
 }
