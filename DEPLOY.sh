@@ -162,13 +162,24 @@ if [ $attempt -eq $max_attempts ]; then
   fail "Timeout waiting for services"
 fi
 
-# Step 8: Verify database connectivity
+# Step 8: Verify database connectivity (with retry for PostgreSQL startup)
 print_step "Verifying database connectivity..."
 DATABASE_URL=$(grep "^DATABASE_URL=" .env.staging | cut -d'=' -f2-)
-if ! psql "$DATABASE_URL" -c "SELECT version();" > /dev/null 2>&1; then
-  fail "Cannot connect to database. Check DATABASE_URL in .env.staging"
+max_db_attempts=30
+db_attempt=0
+
+while [ $db_attempt -lt $max_db_attempts ]; do
+  if psql "$DATABASE_URL" -c "SELECT version();" > /dev/null 2>&1; then
+    print_success "Database connected"
+    break
+  fi
+  db_attempt=$((db_attempt + 1))
+  [ $db_attempt -lt $max_db_attempts ] && sleep 2
+done
+
+if [ $db_attempt -eq $max_db_attempts ]; then
+  fail "Cannot connect to database after $max_db_attempts attempts. Check DATABASE_URL in .env.staging"
 fi
-print_success "Database connected"
 
 # Step 9: Enable PostGIS extension
 print_step "Enabling PostGIS extension..."
