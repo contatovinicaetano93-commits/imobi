@@ -5,7 +5,8 @@ import { PrismaService } from "../prisma/prisma.service";
 
 const CACHE_KEYS = {
   STATS: "manager:stats",
-  ETAPAS_PENDENTES: (limit: number, offset: number) => `manager:etapas:${limit}:${offset}`,
+  ETAPAS_PENDENTES: (limit: number, offset: number, filters?: string) =>
+    `manager:etapas:${limit}:${offset}:${filters || ""}`,
   KYC_PENDENTES: (limit: number, offset: number) => `manager:kyc:${limit}:${offset}`,
 };
 
@@ -25,14 +26,56 @@ export class ManagerService {
     }
   }
 
-  async listarEtapasPendentes(limit = 20, offset = 0) {
-    const cacheKey = CACHE_KEYS.ETAPAS_PENDENTES(limit, offset);
+  async listarEtapasPendentes(
+    limit = 20,
+    offset = 0,
+    filters?: {
+      status?: "todas" | "pendente" | "aprovada" | "rejeitada";
+      dataInicio?: string;
+      dataFim?: string;
+      obraType?: string;
+    }
+  ) {
+    const filterKey = filters ? JSON.stringify(filters) : "";
+    const cacheKey = CACHE_KEYS.ETAPAS_PENDENTES(limit, offset, filterKey);
     const cached = await this.cacheManager.get(cacheKey);
     if (cached) return cached;
 
+    const where: any = {};
+
+    // Status filter
+    if (filters?.status && filters.status !== "todas") {
+      const statusMap = {
+        pendente: "AGUARDANDO_VISTORIA",
+        aprovada: "APROVADA",
+        rejeitada: "REJEITADA",
+      };
+      where.status = statusMap[filters.status] || "AGUARDANDO_VISTORIA";
+    } else {
+      where.status = "AGUARDANDO_VISTORIA";
+    }
+
+    // Date range filter
+    if (filters?.dataInicio || filters?.dataFim) {
+      where.criadoEm = {};
+      if (filters.dataInicio) {
+        where.criadoEm.gte = new Date(filters.dataInicio);
+      }
+      if (filters.dataFim) {
+        const endDate = new Date(filters.dataFim);
+        endDate.setHours(23, 59, 59, 999);
+        where.criadoEm.lte = endDate;
+      }
+    }
+
+    // Obra type filter
+    if (filters?.obraType) {
+      where.obra = { tipo: filters.obraType };
+    }
+
     const [etapas, total] = await Promise.all([
       this.prisma.etapaObra.findMany({
-        where: { status: "AGUARDANDO_VISTORIA" },
+        where,
         include: {
           obra: {
             include: {
@@ -49,9 +92,7 @@ export class ManagerService {
         take: limit,
         skip: offset,
       }),
-      this.prisma.etapaObra.count({
-        where: { status: "AGUARDANDO_VISTORIA" },
-      }),
+      this.prisma.etapaObra.count({ where }),
     ]);
 
     const result = {

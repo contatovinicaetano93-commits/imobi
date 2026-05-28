@@ -38,11 +38,11 @@ export default function EtapasPage() {
   useEffect(() => {
     setLoading(true);
     managerApi
-      .listarEtapasPendentes(limit, offset)
+      .listarEtapasPendentes(limit, offset, filters)
       .then(setData)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [offset]);
+  }, [offset, filters]);
 
   if (loading) {
     return (

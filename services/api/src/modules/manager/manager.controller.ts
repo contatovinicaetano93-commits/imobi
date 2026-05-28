@@ -30,10 +30,23 @@ export class ManagerController {
   async listarEtapasPendentes(
     @UsuarioAtual() u: IUsuario,
     @Query("limit") limit: string = "20",
-    @Query("offset") offset: string = "0"
+    @Query("offset") offset: string = "0",
+    @Query("status") status?: "todas" | "pendente" | "aprovada" | "rejeitada",
+    @Query("dataInicio") dataInicio?: string,
+    @Query("dataFim") dataFim?: string,
+    @Query("obraType") obraType?: string
   ) {
     await this.manager.verificarPermissao(u.id);
-    return this.manager.listarEtapasPendentes(Number(limit), Number(offset));
+    return this.manager.listarEtapasPendentes(
+      Number(limit),
+      Number(offset),
+      {
+        status,
+        dataInicio,
+        dataFim,
+        obraType,
+      }
+    );
   }
 
   @Get("kyc-pendentes")

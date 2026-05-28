@@ -207,10 +207,29 @@ export type ManagerStats = {
 
 export const managerApi = {
   dashboard: () => apiFetch<ManagerStats>("/manager/dashboard"),
-  listarEtapasPendentes: (limit?: number, offset?: number) =>
-    apiFetch<{ etapas: EtapaPendente[]; total: number }>(
-      `/manager/etapas-pendentes${limit || offset ? `?limit=${limit ?? 20}&offset=${offset ?? 0}` : ""}`
-    ),
+  listarEtapasPendentes: (
+    limit?: number,
+    offset?: number,
+    filters?: {
+      status?: "todas" | "pendente" | "aprovada" | "rejeitada";
+      dataInicio?: string;
+      dataFim?: string;
+      obraType?: string;
+    }
+  ) => {
+    const params = new URLSearchParams();
+    if (limit) params.set("limit", String(limit));
+    if (offset) params.set("offset", String(offset));
+    if (filters?.status && filters.status !== "todas") params.set("status", filters.status);
+    if (filters?.dataInicio) params.set("dataInicio", filters.dataInicio);
+    if (filters?.dataFim) params.set("dataFim", filters.dataFim);
+    if (filters?.obraType) params.set("obraType", filters.obraType);
+
+    const queryString = params.toString();
+    return apiFetch<{ etapas: EtapaPendente[]; total: number }>(
+      `/manager/etapas-pendentes${queryString ? `?${queryString}` : ""}`
+    );
+  },
   listarKycPendentes: (limit?: number, offset?: number) =>
     apiFetch<{ documentos: KycPendente[]; total: number }>(
       `/manager/kyc-pendentes${limit || offset ? `?limit=${limit ?? 20}&offset=${offset ?? 0}` : ""}`
