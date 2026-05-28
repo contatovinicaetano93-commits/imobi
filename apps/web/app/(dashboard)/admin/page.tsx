@@ -156,6 +156,24 @@ export default function AdminDashboard() {
                 Aprovar etapas em lote
               </p>
             </a>
+            <a
+              href="/admin/analytics"
+              className="block p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+            >
+              <h4 className="font-semibold text-slate-900">Analytics</h4>
+              <p className="text-sm text-slate-600 mt-1">
+                Dashboard de métricas e exportação de dados
+              </p>
+            </a>
+            <a
+              href="/admin/monitoring"
+              className="block p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+            >
+              <h4 className="font-semibold text-slate-900">Monitoramento</h4>
+              <p className="text-sm text-slate-600 mt-1">
+                Acompanhar saúde do sistema
+              </p>
+            </a>
           </div>
         </CardContent>
       </Card>
