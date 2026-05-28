@@ -25,5 +25,8 @@
     "apps/*",
     "packages/*",
     "services/*"
-  ]
+  ],
+  "dependencies": {
+    "ioredis": "^5.11.0"
+  }
 }
