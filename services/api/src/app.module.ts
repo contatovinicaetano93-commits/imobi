@@ -23,6 +23,7 @@ import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { HealthController } from "./common/health.controller";
+import { CsrfService } from "./common/csrf.service";
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { HealthController } from "./common/health.controller";
   controllers: [HealthController],
   providers: [
     CacheService,
+    CsrfService,
     LiberacaoParcelaWorker,
     {
       provide: APP_GUARD,

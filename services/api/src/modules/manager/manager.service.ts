@@ -155,7 +155,6 @@ export class ManagerService {
             usuarioId: true,
             nome: true,
             email: true,
-            cpf: true,
             kycStatus: true,
             criadoEm: true,
           },
