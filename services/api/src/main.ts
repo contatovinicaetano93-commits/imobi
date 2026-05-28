@@ -32,7 +32,6 @@ async function bootstrap() {
     noSniff: true,
     xssFilter: true,
     frameguard: { action: "deny" },
-    referrerPolicy: { policy: "strict-no-referrer" },
   });
 
   // Apply global CSRF protection
