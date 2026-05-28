@@ -1,7 +1,7 @@
 const BASE_URL =
   typeof process !== "undefined"
-    ? (process.env["NEXT_PUBLIC_API_URL"] ?? process.env["EXPO_PUBLIC_API_URL"] ?? "")
-    : "";
+    ? (process.env["NEXT_PUBLIC_API_URL"] ?? process.env["EXPO_PUBLIC_API_URL"] ?? "http://localhost:4000")
+    : "http://localhost:4000";
 
 interface RequestOptions extends RequestInit {
   token?: string;

@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
@@ -21,54 +21,72 @@ export default function LoginScreen() {
       await SecureStore.setItemAsync("accessToken", res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
       router.replace("/(tabs)/obras");
-    } catch {
-      Alert.alert("Erro", "E-mail ou senha inválidos.");
+    } catch (e: any) {
+      Alert.alert("Erro de autenticação", e.message ?? "E-mail ou senha inválidos.");
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>imbobi</Text>
-      <Text style={styles.subtitle}>Acesse sua conta</Text>
+      <View style={styles.header}>
+        <Text style={styles.logo}>imbobi</Text>
+        <Text style={styles.subtitle}>Acesse sua conta</Text>
+      </View>
 
-      <Controller
-        control={control}
-        name="email"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={[styles.input, errors.email && styles.inputError]}
-            placeholder="E-mail"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            onChangeText={onChange}
-            value={value}
-          />
-        )}
-      />
+      <View style={styles.form}>
+        <Controller
+          control={control}
+          name="email"
+          render={({ field: { onChange, value } }) => (
+            <>
+              <TextInput
+                style={[styles.input, errors.email && styles.inputError]}
+                placeholder="E-mail"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                onChangeText={onChange}
+                value={value}
+                editable={!isSubmitting}
+                placeholderTextColor="#9ca3af"
+              />
+              {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
+            </>
+          )}
+        />
 
-      <Controller
-        control={control}
-        name="senha"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={[styles.input, errors.senha && styles.inputError]}
-            placeholder="Senha"
-            secureTextEntry
-            onChangeText={onChange}
-            value={value}
-          />
-        )}
-      />
+        <Controller
+          control={control}
+          name="senha"
+          render={({ field: { onChange, value } }) => (
+            <>
+              <TextInput
+                style={[styles.input, errors.senha && styles.inputError]}
+                placeholder="Senha"
+                secureTextEntry
+                onChangeText={onChange}
+                value={value}
+                editable={!isSubmitting}
+                placeholderTextColor="#9ca3af"
+              />
+              {errors.senha && <Text style={styles.errorText}>{errors.senha.message}</Text>}
+            </>
+          )}
+        />
 
-      <TouchableOpacity
-        style={[styles.button, isSubmitting && styles.buttonLoading]}
-        onPress={handleSubmit(onSubmit)}
-        disabled={isSubmitting}
-      >
-        <Text style={styles.buttonText}>{isSubmitting ? "Entrando..." : "Entrar"}</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.button, isSubmitting && styles.buttonLoading]}
+          onPress={handleSubmit(onSubmit)}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Entrar</Text>
+          )}
+        </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity onPress={() => router.push("/(auth)/cadastro")}>
+      <TouchableOpacity onPress={() => router.push("/(auth)/cadastro")} disabled={isSubmitting}>
         <Text style={styles.link}>Não tem conta? Cadastre-se</Text>
       </TouchableOpacity>
     </View>
@@ -76,13 +94,16 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 28, justifyContent: "center", gap: 14 },
-  logo: { fontSize: 36, fontWeight: "800", color: "#16a34a", textAlign: "center", marginBottom: 4 },
-  subtitle: { fontSize: 16, color: "#6b7280", textAlign: "center", marginBottom: 12 },
+  container: { flex: 1, backgroundColor: "#fff", padding: 28, justifyContent: "space-between" },
+  header: { justifyContent: "center", alignItems: "center", marginTop: 40 },
+  logo: { fontSize: 44, fontWeight: "800", color: "#16a34a", marginBottom: 8 },
+  subtitle: { fontSize: 16, color: "#6b7280" },
+  form: { gap: 16 },
   input: { borderWidth: 1.5, borderColor: "#e5e7eb", borderRadius: 14, padding: 14, fontSize: 15, color: "#111827" },
   inputError: { borderColor: "#ef4444" },
-  button: { backgroundColor: "#16a34a", borderRadius: 14, padding: 16, alignItems: "center" },
+  errorText: { color: "#ef4444", fontSize: 12, marginTop: -12, marginBottom: 4 },
+  button: { backgroundColor: "#16a34a", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 8 },
   buttonLoading: { opacity: 0.6 },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  link: { textAlign: "center", color: "#16a34a", fontSize: 14, fontWeight: "500" },
+  link: { textAlign: "center", color: "#16a34a", fontSize: 14, fontWeight: "500", marginBottom: 20 },
 });

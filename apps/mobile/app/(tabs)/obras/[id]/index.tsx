@@ -88,7 +88,16 @@ export default function ObraDetailScreen() {
               {podeEnviar && (
                 <TouchableOpacity
                   style={styles.enviarBtn}
-                  onPress={() => router.push(`/(tabs)/obras/${obra.obraId}/etapa/${etapa.etapaId}`)}
+                  onPress={() => router.push({
+                    pathname: `/(tabs)/obras/${obra.obraId}/registrar`,
+                    params: {
+                      etapaId: etapa.etapaId,
+                      etapaNome: etapa.nome,
+                      geoLat: String(obra.geoLatitude),
+                      geoLng: String(obra.geoLongitude),
+                      raio: String(obra.raioValidacaoMetros),
+                    },
+                  })}
                 >
                   <Text style={styles.enviarBtnText}>Enviar evidência</Text>
                 </TouchableOpacity>
