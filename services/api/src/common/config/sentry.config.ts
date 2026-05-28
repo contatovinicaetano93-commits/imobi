@@ -1,10 +1,9 @@
 import * as Sentry from "@sentry/node";
-import { nodeProfilingIntegration } from "@sentry/profiling-node";
+import { httpIntegration, onUncaughtExceptionIntegration, onUnhandledRejectionIntegration } from "@sentry/node";
 
 export function initSentry(): void {
   const dsn = process.env.SENTRY_DSN;
   const environment = process.env.NODE_ENV || "development";
-  const enableProfiler = process.env.SENTRY_ENABLE_PROFILER === "true";
 
   // Only initialize Sentry if DSN is provided
   if (!dsn) {
@@ -18,14 +17,12 @@ export function initSentry(): void {
     dsn,
     environment,
     integrations: [
-      new Sentry.Integrations.Http({ tracing: true }),
-      new Sentry.Integrations.OnUncaughtException(),
-      new Sentry.Integrations.OnUnhandledRejection(),
-      ...(enableProfiler ? [nodeProfilingIntegration()] : []),
+      httpIntegration({ tracing: true }),
+      onUncaughtExceptionIntegration(),
+      onUnhandledRejectionIntegration(),
     ],
     // Performance Monitoring
     tracesSampleRate: environment === "production" ? 0.1 : 1.0,
-    profilesSampleRate: environment === "production" ? 0.1 : 1.0,
     // Release tracking (optional, set via CI/CD)
     release: process.env.SENTRY_RELEASE,
     // Attachment capture
