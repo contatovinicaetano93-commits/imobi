@@ -97,92 +97,79 @@ export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
             {/* Status Filter */}
             <div className="space-y-2">
               <label htmlFor="status-filter" className="text-xs sm:text-sm font-medium text-gray-700">Status</label>
-            <select
-              id="status-filter"
-              value={filters.status}
-              onChange={(e) =>
-                handleFilterChange(
-                  "status",
-                  e.target.value as FilterState["status"]
-                )
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
-              aria-label="Filtrar por status"
-            >
-              <option value="todas">Todas</option>
-              <option value="pendente">Pendente</option>
-              <option value="aprovada">Aprovada</option>
-              <option value="rejeitada">Rejeitada</option>
-            </select>
+              <select
+                id="status-filter"
+                value={filters.status}
+                onChange={(e) =>
+                  handleFilterChange(
+                    "status",
+                    e.target.value as FilterState["status"]
+                  )
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
+                aria-label="Filtrar por status"
+              >
+                <option value="todas">Todas</option>
+                <option value="pendente">Pendente</option>
+                <option value="aprovada">Aprovada</option>
+                <option value="rejeitada">Rejeitada</option>
+              </select>
+            </div>
+
+            {/* Date Range - Start */}
+            <div className="space-y-2">
+              <label htmlFor="start-date" className="text-xs sm:text-sm font-medium text-gray-700">
+                Data Início
+              </label>
+              <input
+                id="start-date"
+                type="date"
+                value={filters.dataInicio}
+                onChange={(e) =>
+                  handleFilterChange("dataInicio", e.target.value)
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
+                aria-label="Selecionar data de início"
+              />
+            </div>
+
+            {/* Date Range - End */}
+            <div className="space-y-2">
+              <label htmlFor="end-date" className="text-xs sm:text-sm font-medium text-gray-700">
+                Data Fim
+              </label>
+              <input
+                id="end-date"
+                type="date"
+                value={filters.dataFim}
+                onChange={(e) => handleFilterChange("dataFim", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
+                aria-label="Selecionar data de fim"
+              />
+            </div>
+
+            {/* Obra Type Filter */}
+            <div className="space-y-2">
+              <label htmlFor="obra-type" className="text-xs sm:text-sm font-medium text-gray-700">
+                Tipo Obra
+              </label>
+              <select
+                id="obra-type"
+                value={filters.obraType}
+                onChange={(e) => handleFilterChange("obraType", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
+                aria-label="Filtrar por tipo de obra"
+              >
+                <option value="">Todos</option>
+                <option value="residencial">Residencial</option>
+                <option value="comercial">Comercial</option>
+                <option value="industrial">Industrial</option>
+                <option value="reforma">Reforma</option>
+              </select>
+            </div>
           </div>
 
-          {/* Date Range - Start */}
-          <div className="space-y-2">
-            <label htmlFor="start-date" className="text-xs sm:text-sm font-medium text-gray-700">
-              Data Início
-            </label>
-            <input
-              id="start-date"
-              type="date"
-              value={filters.dataInicio}
-              onChange={(e) =>
-                handleFilterChange("dataInicio", e.target.value)
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
-              aria-label="Selecionar data de início"
-            />
-          </div>
-
-          {/* Date Range - End */}
-          <div className="space-y-2">
-            <label htmlFor="end-date" className="text-xs sm:text-sm font-medium text-gray-700">
-              Data Fim
-            </label>
-            <input
-              id="end-date"
-              type="date"
-              value={filters.dataFim}
-              onChange={(e) => handleFilterChange("dataFim", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
-              aria-label="Selecionar data de fim"
-            />
-          </div>
-
-          {/* Obra Type Filter */}
-          <div className="space-y-2">
-            <label htmlFor="obra-type" className="text-xs sm:text-sm font-medium text-gray-700">
-              Tipo Obra
-            </label>
-            <select
-              id="obra-type"
-              value={filters.obraType}
-              onChange={(e) => handleFilterChange("obraType", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
-              aria-label="Filtrar por tipo de obra"
-            >
-              <option value="">Todos</option>
-              <option value="residencial">Residencial</option>
-              <option value="comercial">Comercial</option>
-              <option value="industrial">Industrial</option>
-              <option value="reforma">Reforma</option>
-            </select>
-          </div>
-
-            {/* Reset Button */}
-            {hasActiveFilters && (
-              <div>
-                <button
-                  onClick={handleReset}
-                  className="w-full sm:w-auto px-4 py-2 text-xs sm:text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-10"
-                  aria-label="Limpar todos os filtros"
-                >
-                  Limpar Filtros
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Reset Button - Fallback for mobile */}
+          {/* Reset Button */}
           {hasActiveFilters && (
             <div className="mt-3 sm:mt-4">
               <button
