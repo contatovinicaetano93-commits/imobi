@@ -3,6 +3,7 @@ import { usuariosApi } from "@/lib/api";
 import { formatarCPF, formatarTelefone } from "@imbobi/core";
 import { PerfilForm } from "./perfil-form";
 
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: "Perfil — imbobi" };
 
 const KYC_STATUS_MAP: Record<string, { label: string; cor: string; icone: string }> = {

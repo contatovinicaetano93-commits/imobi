@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { creditoApi, type CreditoResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: "Crédito — imbobi" };
 
 function gerarCalendarioPagamento(

@@ -4,6 +4,7 @@ import { obrasApi, evidenciasApi, type EvidenciaDetalhe } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { AprovarEtapaForm } from "./aprovar-form";
 
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: "Vistoria — imbobi" };
 
 export default async function VistoriaPage({

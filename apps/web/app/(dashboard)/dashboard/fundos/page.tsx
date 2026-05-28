@@ -11,6 +11,7 @@ import {
   calculateInadimplenciaRate,
 } from "./_components/fundos-utils";
 
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: "Fundos — imbobi" };
 
 export default async function FundosPage() {
