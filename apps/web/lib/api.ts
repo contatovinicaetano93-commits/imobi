@@ -233,6 +233,7 @@ export const managerApi = {
       dataInicio?: string;
       dataFim?: string;
       obraType?: string;
+      priority?: "todas" | "urgente" | "intermediaria" | "normal";
     }
   ) => {
     const params = new URLSearchParams();
@@ -242,6 +243,7 @@ export const managerApi = {
     if (filters?.dataInicio) params.set("dataInicio", filters.dataInicio);
     if (filters?.dataFim) params.set("dataFim", filters.dataFim);
     if (filters?.obraType) params.set("obraType", filters.obraType);
+    if (filters?.priority && filters.priority !== "todas") params.set("priority", filters.priority);
 
     const queryString = params.toString();
     return apiFetch<{ etapas: EtapaPendente[]; total: number }>(
