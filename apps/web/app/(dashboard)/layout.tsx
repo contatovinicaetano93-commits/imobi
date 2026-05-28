@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -22,6 +24,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
 const NAV_ITEMS = [
   { label: "Início", href: "/dashboard" },
+  { label: "Fundos", href: "/dashboard/fundos" },
   { label: "Minhas Obras", href: "/dashboard/obras" },
   { label: "Crédito", href: "/dashboard/credito" },
   { label: "Score", href: "/dashboard/score" },

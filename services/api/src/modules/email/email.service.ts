@@ -9,21 +9,89 @@ interface EmailOptions {
   text?: string;
 }
 
+interface RetryConfig {
+  maxAttempts: number;
+  delayMs: number;
+  backoffMultiplier: number;
+}
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private transporter: Transporter | null = null;
+  private readonly provider: string;
+  private readonly retryConfig: RetryConfig = {
+    maxAttempts: 3,
+    delayMs: 1000,
+    backoffMultiplier: 2,
+  };
 
   constructor() {
+    this.provider = process.env["EMAIL_PROVIDER"] || "smtp";
     this.initializeTransporter();
   }
 
   private initializeTransporter() {
+    const provider = this.provider.toLowerCase();
+
+    if (provider === "sendgrid") {
+      this.initializeSendGrid();
+    } else if (provider === "ses") {
+      this.initializeAwsSes();
+    } else {
+      this.initializeSmtp();
+    }
+  }
+
+  private initializeSendGrid() {
+    const apiKey = process.env["SENDGRID_API_KEY"];
+
+    if (!apiKey) {
+      this.logger.warn("SendGrid API key not found - using console mode");
+      return;
+    }
+
+    this.transporter = nodemailer.createTransport({
+      host: "smtp.sendgrid.net",
+      port: 587,
+      auth: {
+        user: "apikey",
+        pass: apiKey,
+      },
+    });
+
+    this.logger.debug("SendGrid email provider configured");
+  }
+
+  private initializeAwsSes() {
+    const region = process.env["AWS_REGION"];
+    const accessKeyId = process.env["AWS_ACCESS_KEY_ID"];
+    const secretAccessKey = process.env["AWS_SECRET_ACCESS_KEY"];
+
+    if (!region || !accessKeyId || !secretAccessKey) {
+      this.logger.warn("AWS SES credentials not found - using console mode");
+      return;
+    }
+
+    // Para SES, usamos nodemailer com o driver SMTP
+    this.transporter = nodemailer.createTransport({
+      host: `email-smtp.${region}.amazonaws.com`,
+      port: 587,
+      secure: false,
+      auth: {
+        user: accessKeyId,
+        pass: secretAccessKey,
+      },
+    });
+
+    this.logger.debug("AWS SES email provider configured");
+  }
+
+  private initializeSmtp() {
     const smtpHost = process.env["SMTP_HOST"];
     const smtpPort = process.env["SMTP_PORT"];
     const smtpUser = process.env["SMTP_USER"];
     const smtpPass = process.env["SMTP_PASS"];
-    const fromEmail = process.env["SMTP_FROM"] || "noreply@imbobi.com";
 
     if (!smtpHost || !smtpPort) {
       this.logger.warn("SMTP configuration not found - using console mode");
@@ -37,30 +105,47 @@ export class EmailService {
       auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
     });
 
-    this.logger.debug(`Email configured: ${smtpHost}:${smtpPort}`);
+    this.logger.debug(`SMTP email provider configured: ${smtpHost}:${smtpPort}`);
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async enviarEmail(opcoes: EmailOptions): Promise<boolean> {
-    try {
-      if (!this.transporter) {
-        this.logger.debug(`[EMAIL-CONSOLE] ${opcoes.to} - ${opcoes.subject}`);
-        return true;
-      }
-
-      await this.transporter.sendMail({
-        from: process.env["SMTP_FROM"] || "noreply@imbobi.com",
-        to: opcoes.to,
-        subject: opcoes.subject,
-        html: opcoes.html,
-        text: opcoes.text,
-      });
-
-      this.logger.debug(`Email enviado para ${opcoes.to}`);
+    if (!this.transporter) {
+      this.logger.debug(`[EMAIL-CONSOLE] ${opcoes.to} - ${opcoes.subject}`);
       return true;
-    } catch (error) {
-      this.logger.error(`Erro ao enviar email: ${error}`);
-      return false;
     }
+
+    let lastError: Error | null = null;
+    let delayMs = this.retryConfig.delayMs;
+
+    for (let attempt = 1; attempt <= this.retryConfig.maxAttempts; attempt++) {
+      try {
+        await this.transporter.sendMail({
+          from: process.env["SMTP_FROM"] || "noreply@imbobi.com",
+          to: opcoes.to,
+          subject: opcoes.subject,
+          html: opcoes.html,
+          text: opcoes.text,
+        });
+
+        this.logger.debug(`Email enviado para ${opcoes.to} (attempt ${attempt}/${this.retryConfig.maxAttempts})`);
+        return true;
+      } catch (error) {
+        lastError = error as Error;
+        this.logger.warn(`Email send attempt ${attempt} failed for ${opcoes.to}: ${lastError.message}`);
+
+        if (attempt < this.retryConfig.maxAttempts) {
+          await this.sleep(delayMs);
+          delayMs *= this.retryConfig.backoffMultiplier;
+        }
+      }
+    }
+
+    this.logger.error(`Email failed after ${this.retryConfig.maxAttempts} attempts for ${opcoes.to}: ${lastError?.message}`);
+    return false;
   }
 
   async bemVindoEmail(nome: string, email: string): Promise<boolean> {
