@@ -48,6 +48,22 @@ export default function KycDetailPage() {
       .finally(() => setLoading(false));
   }, [docId]);
 
+  useEffect(() => {
+    setAuditLoading(true);
+    managerApi
+      .obterKycAuditLog(docId)
+      .then((logs) => {
+        setAuditLogs(logs);
+        setAuditError(null);
+      })
+      .catch((err) => {
+        setAuditError(
+          err instanceof Error ? err.message : "Erro ao carregar histórico"
+        );
+      })
+      .finally(() => setAuditLoading(false));
+  }, [docId]);
+
   const handleApprove = async () => {
     if (!doc) return;
     setSubmitting(true);
@@ -230,6 +246,13 @@ export default function KycDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Audit Trail */}
+      <ApprovalAuditTrail
+        auditLogs={auditLogs}
+        loading={auditLoading}
+        error={auditError}
+      />
     </div>
   );
 }
