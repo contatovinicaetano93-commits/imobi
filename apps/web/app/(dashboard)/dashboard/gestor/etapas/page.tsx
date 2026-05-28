@@ -95,20 +95,8 @@ export default function EtapasPage() {
     setError(message);
   };
 
-  // Filter etapas by priority if selected
-  const filteredEtapas = (() => {
-    if (!filters.priority || filters.priority === "todas") {
-      return data.etapas;
-    }
-
-    return data.etapas.filter((etapa) => {
-      const horas = Math.floor((Date.now() - new Date(etapa.criadoEm).getTime()) / (1000 * 60 * 60));
-      if (filters.priority === "urgente") return horas >= 24;
-      if (filters.priority === "intermediaria") return horas >= 12 && horas < 24;
-      if (filters.priority === "normal") return horas < 12;
-      return true;
-    });
-  })();
+  // Use data.etapas directly - filtering is now handled by the API
+  const filteredEtapas = data.etapas;
 
   return (
     <div className="space-y-6">
