@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown, ChevronUp, MapPin, AlertCircle, CheckCircle } from "lucide-react";
 
 export type GpsPoint = {
   latitude: number;
@@ -153,44 +154,70 @@ function GpsVisualization({
         </svg>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-4 text-xs">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-          <span className="text-gray-700">Centro obra</span>
+      <div className="mt-4 space-y-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+            <span className="text-gray-700">Centro obra</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span className="text-gray-700">Validado</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <span className="text-gray-700">Inválido</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-3 bg-blue-500" style={{ background: "linear-gradient(90deg, transparent, #3b82f6, transparent)" }}></div>
+            <span className="text-gray-700">Raio ativo</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-green-500"></div>
-          <span className="text-gray-700">Ponto validado</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-red-500"></div>
-          <span className="text-gray-700">Fora da zona</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-3 bg-blue-500" style={{ background: "linear-gradient(90deg, transparent, #3b82f6, transparent)" }}></div>
-          <span className="text-gray-700">Raio de validação</span>
-        </div>
+        <p className="text-xs text-gray-500 italic">Hover sobre os pontos para ver detalhes de acurácia e confiança</p>
       </div>
 
       {hoveredPoint !== null && (
-        <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200 text-sm">
-          <p className="font-semibold text-gray-900 mb-1">Ponto #{hoveredPoint + 1}</p>
-          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+        <div className="mt-3 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 text-sm">
+          <div className="flex items-start justify-between mb-3">
+            <p className="font-semibold text-gray-900">Ponto #{hoveredPoint + 1}</p>
+            <MapPin className="w-4 h-4 text-blue-600" />
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <span className="text-gray-500">Latitude:</span>
-              <p className="font-mono">{pontos[hoveredPoint].latitude.toFixed(6)}</p>
+              <span className="text-gray-600">Latitude:</span>
+              <p className="font-mono font-semibold text-gray-900">{pontos[hoveredPoint].latitude.toFixed(6)}</p>
             </div>
             <div>
-              <span className="text-gray-500">Longitude:</span>
-              <p className="font-mono">{pontos[hoveredPoint].longitude.toFixed(6)}</p>
+              <span className="text-gray-600">Longitude:</span>
+              <p className="font-mono font-semibold text-gray-900">{pontos[hoveredPoint].longitude.toFixed(6)}</p>
             </div>
-            <div>
-              <span className="text-gray-500">Acurácia:</span>
-              <p>{pontos[hoveredPoint].accuracy.toFixed(1)}m</p>
+            <div className="col-span-2 pt-2 border-t border-blue-200">
+              <span className="text-gray-600">Acurácia (raio confiança):</span>
+              <p className="font-semibold text-indigo-700">{pontos[hoveredPoint].accuracy.toFixed(1)}m</p>
+              <p className="text-xs text-gray-500 mt-1">Margem de erro do equipamento GPS do dispositivo</p>
             </div>
-            <div>
-              <span className="text-gray-500">Distância:</span>
-              <p>{Math.round(pontos[hoveredPoint].distanciaObra ?? 0)}m</p>
+            <div className="col-span-2">
+              <span className="text-gray-600">Distância até obra:</span>
+              <p className={`font-semibold text-lg ${
+                (pontos[hoveredPoint].distanciaObra ?? 0) <= 50 ? "text-green-600" : "text-red-600"
+              }`}>
+                {Math.round(pontos[hoveredPoint].distanciaObra ?? 0)}m
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-blue-200">
+            <div className="flex items-center gap-2">
+              {(pontos[hoveredPoint].distanciaObra ?? 0) <= 50 ? (
+                <>
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span className="text-green-700 font-medium">Dentro da zona válida</span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-4 h-4 text-red-600" />
+                  <span className="text-red-700 font-medium">Fora da zona de validação</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -205,6 +232,8 @@ export function GpsValidationStatus({
   obraLongitude,
   raioValidacaoMetros,
 }: GpsValidationStatusProps) {
+  const [expandedDetails, setExpandedDetails] = useState(false);
+
   if (pontos.length === 0) {
     return (
       <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-4">
@@ -264,69 +293,107 @@ export function GpsValidationStatus({
           raioValidacaoMetros={raioValidacaoMetros}
         />
 
-        {/* Detailed list */}
-        <div className="space-y-2 text-sm">
-          <div className="font-semibold text-gray-700 px-2 py-1">Detalhes dos pontos GPS:</div>
-          {pontos.map((p, idx) => {
-            const isValid = (p.distanciaObra ?? 0) <= raioValidacaoMetros;
-            const distancia = Math.round(p.distanciaObra ?? 0);
-            const margemErro = raioValidacaoMetros - distancia;
+        {/* Detailed list toggle */}
+        <button
+          onClick={() => setExpandedDetails(!expandedDetails)}
+          className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors"
+        >
+          <span className="font-semibold text-gray-700 text-sm">Detalhes dos {pontos.length} ponto{pontos.length !== 1 ? "s" : ""} GPS</span>
+          {expandedDetails ? (
+            <ChevronUp className="w-5 h-5 text-gray-600" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-600" />
+          )}
+        </button>
 
-            return (
-              <div
-                key={idx}
-                className={`p-3 bg-white rounded border ${
-                  isValid ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"
-                }`}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
+        {/* Detailed list */}
+        {expandedDetails && (
+          <div className="space-y-2 text-sm">
+            {pontos.map((p, idx) => {
+              const isValid = (p.distanciaObra ?? 0) <= raioValidacaoMetros;
+              const distancia = Math.round(p.distanciaObra ?? 0);
+              const margemErro = raioValidacaoMetros - distancia;
+              const confidenceScore = Math.max(0, Math.min(100, 100 - (p.accuracy / 10)));
+
+              return (
+                <div
+                  key={idx}
+                  className={`p-4 bg-white rounded-lg border ${
+                    isValid ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`text-xs font-bold w-8 h-8 rounded-full flex items-center justify-center text-white ${
+                          isValid ? "bg-green-600" : "bg-red-600"
+                        }`}
+                      >
+                        {idx + 1}
+                      </span>
+                      <div>
+                        <p className="text-gray-900 font-semibold">Ponto {idx + 1}</p>
+                        <p className="text-xs text-gray-600 font-mono">
+                          {p.latitude.toFixed(6)}, {p.longitude.toFixed(6)}
+                        </p>
+                      </div>
+                    </div>
                     <span
-                      className={`text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center text-white ${
-                        isValid ? "bg-green-600" : "bg-red-600"
+                      className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                        isValid
+                          ? "bg-green-200 text-green-800"
+                          : "bg-red-200 text-red-800"
                       }`}
                     >
-                      {idx + 1}
+                      {isValid ? "✓ Válido" : "✕ Inválido"}
                     </span>
-                    <div>
-                      <p className="text-gray-900 font-medium">Ponto {idx + 1}</p>
-                      <p className="text-xs text-gray-600">
-                        {p.latitude.toFixed(6)}, {p.longitude.toFixed(6)}
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
+                    <div className="bg-white bg-opacity-60 p-2 rounded">
+                      <span className="text-gray-600 block">Distância</span>
+                      <p className="font-bold text-gray-900 text-sm">{distancia}m</p>
+                    </div>
+                    <div className="bg-white bg-opacity-60 p-2 rounded">
+                      <span className="text-gray-600 block">Acurácia GPS</span>
+                      <p className="font-bold text-gray-900 text-sm">{p.accuracy.toFixed(1)}m</p>
+                    </div>
+                    <div className="bg-white bg-opacity-60 p-2 rounded">
+                      <span className="text-gray-600 block">{isValid ? "Margem" : "Excesso"}</span>
+                      <p className={`font-bold text-sm ${isValid ? "text-green-700" : "text-red-700"}`}>
+                        {Math.abs(margemErro)}m
                       </p>
                     </div>
+                    <div className="bg-white bg-opacity-60 p-2 rounded">
+                      <span className="text-gray-600 block">Confiança</span>
+                      <p className="font-bold text-gray-900 text-sm">{Math.round(confidenceScore)}%</p>
+                    </div>
                   </div>
-                  <span
-                    className={`text-xs font-semibold px-2 py-1 rounded ${
-                      isValid
-                        ? "bg-green-200 text-green-800"
-                        : "bg-red-200 text-red-800"
-                    }`}
-                  >
-                    {isValid ? "✓ OK" : "✕ Inválido"}
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div>
-                    <span className="text-gray-600">Distância</span>
-                    <p className="font-semibold text-gray-900">{distancia}m</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Acurácia</span>
-                    <p className="font-semibold text-gray-900">{p.accuracy.toFixed(1)}m</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">
-                      {isValid ? "Margem" : "Excesso"}
-                    </span>
-                    <p className={`font-semibold ${isValid ? "text-green-700" : "text-red-700"}`}>
-                      {Math.abs(margemErro)}m
-                    </p>
+
+                  {/* Confidence bar */}
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-gray-600">Nível de confiança</span>
+                      <span className="text-gray-700 font-semibold">{Math.round(confidenceScore)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-full transition-all ${
+                          confidenceScore >= 80
+                            ? "bg-green-500"
+                            : confidenceScore >= 50
+                              ? "bg-yellow-500"
+                              : "bg-red-500"
+                        }`}
+                        style={{ width: `${confidenceScore}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         <div className="p-4 bg-blue-50 rounded border border-blue-200">
           <div className="grid grid-cols-2 gap-4 text-sm">
