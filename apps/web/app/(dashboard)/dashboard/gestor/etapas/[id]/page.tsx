@@ -280,6 +280,13 @@ export default function EtapaDetailPage() {
         </div>
       </div>
 
+      {/* Audit Trail */}
+      <ApprovalAuditTrail
+        auditLogs={auditLogs}
+        loading={auditLoading}
+        error={auditError}
+      />
+
       {/* Expanded Image Modal */}
       {expandedImage && (
         <div
