@@ -246,4 +246,42 @@ export class ManagerService {
     await this.cacheManager.set(cacheKey, result, 60000);
     return result;
   }
+
+  async obterEtapaAuditLog(etapaId: string) {
+    const auditLogs = await this.prisma.etapaAuditLog.findMany({
+      where: { etapaId },
+      include: {
+        usuario: { select: { usuarioId: true, nome: true, email: true } },
+      },
+      orderBy: { criadoEm: "desc" },
+    });
+
+    return auditLogs.map((log) => ({
+      auditId: log.auditId,
+      acaoTipo: log.acaoTipo,
+      gerenciador: log.usuario.nome,
+      gerenciadorEmail: log.usuario.email,
+      observacoes: log.observacoes,
+      criadoEm: log.criadoEm,
+    }));
+  }
+
+  async obterKycAuditLog(kycDocumentoId: string) {
+    const auditLogs = await this.prisma.kycAuditLog.findMany({
+      where: { kycDocumentoId },
+      include: {
+        usuario: { select: { usuarioId: true, nome: true, email: true } },
+      },
+      orderBy: { criadoEm: "desc" },
+    });
+
+    return auditLogs.map((log) => ({
+      auditId: log.auditId,
+      acaoTipo: log.acaoTipo,
+      gerenciador: log.usuario.nome,
+      gerenciadorEmail: log.usuario.email,
+      motivo: log.motivo,
+      criadoEm: log.criadoEm,
+    }));
+  }
 }

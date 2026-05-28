@@ -205,6 +205,24 @@ export type ManagerStats = {
   obrasAtivas: number;
 };
 
+export type EtapaAuditEntry = {
+  auditId: string;
+  acaoTipo: string;
+  gerenciador: string;
+  gerenciadorEmail: string;
+  observacoes?: string;
+  criadoEm: string;
+};
+
+export type KycAuditEntry = {
+  auditId: string;
+  acaoTipo: string;
+  gerenciador: string;
+  gerenciadorEmail: string;
+  motivo?: string;
+  criadoEm: string;
+};
+
 export const managerApi = {
   dashboard: () => apiFetch<ManagerStats>("/manager/dashboard"),
   listarEtapasPendentes: (
@@ -244,6 +262,8 @@ export const managerApi = {
     apiFetch(`/manager/kyc/${id}/aprovar`, { method: "PATCH" }),
   rejeitarKyc: (id: string, motivo: string) =>
     apiFetch(`/manager/kyc/${id}/rejeitar`, { method: "PATCH", body: JSON.stringify({ motivo }) }),
+  obterEtapaAuditLog: (id: string) => apiFetch<EtapaAuditEntry[]>(`/manager/etapas/${id}/audit-log`),
+  obterKycAuditLog: (id: string) => apiFetch<KycAuditEntry[]>(`/manager/kyc/${id}/audit-log`),
 };
 
 // ── Engenheiros ──────────────────────────────────────────────────────

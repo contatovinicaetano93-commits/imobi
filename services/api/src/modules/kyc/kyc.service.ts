@@ -65,6 +65,15 @@ export class KycService {
       },
     });
 
+    // Create audit log entry
+    await this.prisma.kycAuditLog.create({
+      data: {
+        kycDocumentoId,
+        acaoTipo: "APROVADO",
+        usuarioId: gestorId,
+      },
+    });
+
     // Notifica usuário
     await this.notificacoes.criar(
       documento.usuarioId,
@@ -112,6 +121,16 @@ export class KycService {
         analisadoPor: gestorId,
         analisadoEm: new Date(),
         motivo_rejeicao: motivo,
+      },
+    });
+
+    // Create audit log entry
+    await this.prisma.kycAuditLog.create({
+      data: {
+        kycDocumentoId,
+        acaoTipo: "REJEITADO",
+        usuarioId: gestorId,
+        motivo,
       },
     });
 

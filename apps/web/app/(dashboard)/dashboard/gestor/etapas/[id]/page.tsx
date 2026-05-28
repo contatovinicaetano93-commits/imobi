@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { managerApi, type EtapaDetalhe, evidenciasApi } from "@/lib/api";
+import { managerApi, type EtapaDetalhe, type EtapaAuditEntry, evidenciasApi } from "@/lib/api";
 import { GpsValidationStatus } from "@/components/dashboard/GpsValidationStatus";
+import { ApprovalAuditTrail } from "@/components/dashboard/ApprovalAuditTrail";
 import Image from "next/image";
 
 function brl(v: number) {
@@ -19,8 +20,11 @@ export default function EtapaDetailPage() {
   const router = useRouter();
   const [etapa, setEtapa] = useState<EtapaDetalhe | null>(null);
   const [gpsData, setGpsData] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<EtapaAuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [auditLoading, setAuditLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [auditError, setAuditError] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionForm, setShowRejectionForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -43,6 +47,22 @@ export default function EtapaDetailPage() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  }, [etapaId]);
+
+  useEffect(() => {
+    setAuditLoading(true);
+    managerApi
+      .obterEtapaAuditLog(etapaId)
+      .then((logs) => {
+        setAuditLogs(logs);
+        setAuditError(null);
+      })
+      .catch((err) => {
+        setAuditError(
+          err instanceof Error ? err.message : "Erro ao carregar histórico"
+        );
+      })
+      .finally(() => setAuditLoading(false));
   }, [etapaId]);
 
   const handleApprove = async () => {
@@ -259,6 +279,13 @@ export default function EtapaDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Audit Trail */}
+      <ApprovalAuditTrail
+        auditLogs={auditLogs}
+        loading={auditLoading}
+        error={auditError}
+      />
 
       {/* Expanded Image Modal */}
       {expandedImage && (
