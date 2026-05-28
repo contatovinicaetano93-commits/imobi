@@ -17,7 +17,7 @@ export class CreditoService {
   }
 
   async solicitar(usuarioId: string, input: SolicitacaoCreditoInput) {
-    return this.prisma.credito.create({
+    const credito = await this.prisma.credito.create({
       data: {
         usuarioId,
         valorAprovado: input.valorSolicitado,
@@ -26,20 +26,25 @@ export class CreditoService {
         prazoMeses: input.prazoMeses,
       },
     });
+    // Invalidate user's credits cache
+    await this.cache.invalidarTudo(usuarioId);
+    return credito;
   }
 
   async buscarPorUsuario(usuarioId: string) {
-    return this.prisma.credito.findMany({
-      where: { usuarioId },
-      include: {
-        obras: { select: { obraId: true, nome: true, status: true } },
-        liberacoes: {
-          select: { liberacaoId: true, valor: true, status: true, processadoEm: true },
-          orderBy: { criadoEm: "desc" },
-          take: 10,
+    return this.cache.obterExtratoComCache(`creditos:${usuarioId}`, async () => {
+      return this.prisma.credito.findMany({
+        where: { usuarioId },
+        include: {
+          obras: { select: { obraId: true, nome: true, status: true } },
+          liberacoes: {
+            select: { liberacaoId: true, valor: true, status: true, processadoEm: true },
+            orderBy: { criadoEm: "desc" },
+            take: 10,
+          },
         },
-      },
-      orderBy: { criadoEm: "desc" },
+        orderBy: { criadoEm: "desc" },
+      });
     });
   }
 

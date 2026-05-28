@@ -75,14 +75,18 @@ export class ScoreService {
     await this.prisma.scoreHistorico.create({
       data: { usuarioId, score, motivo: "Cálculo automático" },
     });
+    // Invalidate score history cache when new record is created
+    await this.cacheService.invalidarHistoricoScore(usuarioId);
     return score;
   }
 
   async buscarHistorico(usuarioId: string, limit = 12) {
-    return this.prisma.scoreHistorico.findMany({
-      where: { usuarioId },
-      orderBy: { criadoEm: "desc" },
-      take: limit,
+    return this.cacheService.obterHistoricoComCache(usuarioId, limit, async () => {
+      return this.prisma.scoreHistorico.findMany({
+        where: { usuarioId },
+        orderBy: { criadoEm: "desc" },
+        take: limit,
+      });
     });
   }
 

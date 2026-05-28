@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException 
 import { InjectQueue } from "@nestjs/bull";
 import { Queue } from "bull";
 import { PrismaService } from "../prisma/prisma.service";
+import { CacheService } from "../cache/cache.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
@@ -12,6 +13,7 @@ import { escapeHtml } from "../../common/utils/html-escape";
 export class EtapasService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
     private readonly pushNotificacoes: PushNotificacoesService,
@@ -81,6 +83,9 @@ export class EtapasService {
       await this.liberacaoQueue.add({ creditoId: credito.creditoId, etapaId, valor: valorLiberacao });
     }
 
+    // Invalidate caches for affected obra and user
+    await this.cacheService.invalidarTudo(etapa.obra.usuarioId);
+
     return { ok: true, observacao };
   }
 
@@ -109,6 +114,9 @@ export class EtapasService {
       `A etapa "${etapa.nome}" foi reprovada. Motivo: ${motivoEscapado}`,
       `/dashboard/obras/${etapa.obra.obraId}`
     );
+
+    // Invalidate caches for affected obra and user
+    await this.cacheService.invalidarTudo(etapa.obra.usuarioId);
 
     return { ok: true, motivo: motivoEscapado };
   }
