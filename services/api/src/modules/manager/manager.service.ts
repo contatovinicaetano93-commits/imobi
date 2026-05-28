@@ -36,7 +36,7 @@ export class ManagerService {
         include: {
           obra: {
             include: {
-              usuario: { select: { usuarioId: true, nome: true, email: true, cpf: true } },
+              usuario: { select: { usuarioId: true, nome: true, email: true } },
               credito: true,
             },
           },
@@ -95,7 +95,6 @@ export class ManagerService {
               usuarioId: true,
               nome: true,
               email: true,
-              cpf: true,
               kycStatus: true,
             },
           },
@@ -120,7 +119,7 @@ export class ManagerService {
       include: {
         obra: {
           include: {
-            usuario: { select: { usuarioId: true, nome: true, email: true, cpf: true } },
+            usuario: { select: { usuarioId: true, nome: true, email: true } },
             credito: true,
           },
         },
