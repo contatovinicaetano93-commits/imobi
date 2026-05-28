@@ -18,7 +18,7 @@ import { useLocationCapture } from "@imbobi/core/src/hooks/useLocationCapture";
 import { useCameraCapture } from "@imbobi/core/src/hooks/useCameraCapture";
 import { calcularDistanciaMetros } from "@imbobi/core";
 import { UploadEvidenciaSchema } from "@imbobi/schemas";
-import { evidenciasApi, ApiError } from "../../../../lib/api";
+import { evidenciasApi, obrasApi, ApiError } from "../../../../lib/api";
 
 interface ObraInfo {
   geoLatitude: number;
@@ -35,7 +35,21 @@ interface LocationInfo {
 
 export default function UploadEvidenciaScreen() {
   const router = useRouter();
-  const { obraId, etapaId } = useLocalSearchParams<{ obraId: string; etapaId: string }>();
+  const {
+    obraId,
+    etapaId,
+    photoUri: initialPhotoUri,
+    latitude: initialLatitude,
+    longitude: initialLongitude,
+    accuracy: initialAccuracy,
+  } = useLocalSearchParams<{
+    obraId: string;
+    etapaId: string;
+    photoUri?: string;
+    latitude?: string;
+    longitude?: string;
+    accuracy?: string;
+  }>();
 
   const [selectedImage, setSelectedImage] = useState<{
     uri: string;
@@ -60,21 +74,47 @@ export default function UploadEvidenciaScreen() {
   const [error, setError] = useState<string | null>(null);
   const [descricao, setDescricao] = useState("");
 
-  // Load obra info from navigation params or API
+  // Load obra info and photo from navigation params
   useEffect(() => {
-    // For now, use default values. In production, fetch from API
-    setObraInfo({
-      geoLatitude: -23.5505,
-      geoLongitude: -46.6333,
-      raioValidacaoMetros: 50,
-      nome: "Obra em Construção",
-    });
-  }, []);
+    // Load obra info from API
+    if (obraId) {
+      obrasApi.buscar(obraId)
+        .then((obra) => {
+          setObraInfo({
+            geoLatitude: obra.geoLatitude,
+            geoLongitude: obra.geoLongitude,
+            raioValidacaoMetros: obra.raioValidacaoMetros,
+            nome: obra.nome,
+          });
+        })
+        .catch(() => {
+          // Fallback to defaults
+          setObraInfo({
+            geoLatitude: -23.5505,
+            geoLongitude: -46.6333,
+            raioValidacaoMetros: 50,
+            nome: "Obra em Construção",
+          });
+        });
+    }
 
-  // Capture location on mount
+    // If camera capture was used, use the passed location
+    if (initialPhotoUri && initialLatitude && initialLongitude && initialAccuracy) {
+      setSelectedImage({ uri: initialPhotoUri, size: 0 });
+      setLocation({
+        latitude: parseFloat(initialLatitude),
+        longitude: parseFloat(initialLongitude),
+        accuracy: parseFloat(initialAccuracy),
+      });
+    }
+  }, [obraId, initialPhotoUri, initialLatitude, initialLongitude, initialAccuracy]);
+
+  // Capture location on mount (only if not from camera)
   useEffect(() => {
-    requestLocation();
-  }, []);
+    if (!initialPhotoUri) {
+      requestLocation();
+    }
+  }, [initialPhotoUri]);
 
   const requestLocation = useCallback(async () => {
     try {

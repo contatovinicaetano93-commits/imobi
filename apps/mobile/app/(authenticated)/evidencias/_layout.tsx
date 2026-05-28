@@ -15,6 +15,20 @@ export default function EvidenciasLayout() {
       }}
     >
       <Stack.Screen
+        name="[obraId]/index"
+        options={{
+          title: "Evidências",
+          headerBackTitle: "Voltar",
+        }}
+      />
+      <Stack.Screen
+        name="[obraId]/capture"
+        options={{
+          title: "Capturar Foto",
+          headerBackTitle: "Voltar",
+        }}
+      />
+      <Stack.Screen
         name="[obraId]/upload"
         options={{
           title: "Registrar Evidência",

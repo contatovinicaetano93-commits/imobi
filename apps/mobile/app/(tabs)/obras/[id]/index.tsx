@@ -41,8 +41,21 @@ export default function ObraDetailScreen() {
         <Text style={styles.backText}>← Voltar</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>{obra.nome}</Text>
-      <Text style={styles.sub}>{obra.endereco}</Text>
+      <View style={styles.headerActions}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.title}>{obra.nome}</Text>
+          <Text style={styles.sub}>{obra.endereco}</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.evidenciasButton}
+          onPress={() => router.push({
+            pathname: "/(authenticated)/evidencias/[obraId]/index",
+            params: { obraId: obra.obraId },
+          })}
+        >
+          <Text style={styles.evidenciasButtonText}>📸</Text>
+        </TouchableOpacity>
+      </View>
 
       {credito && (
         <View style={styles.creditoCard}>
@@ -108,8 +121,12 @@ const styles = StyleSheet.create({
   error: { color: "#dc2626" },
   back: { marginBottom: 16 },
   backText: { color: "#2563eb", fontSize: 15 },
+  headerActions: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 },
+  headerLeft: { flex: 1 },
   title: { fontSize: 22, fontWeight: "700", color: "#111827", marginBottom: 4 },
-  sub: { fontSize: 13, color: "#6b7280", marginBottom: 16 },
+  sub: { fontSize: 13, color: "#6b7280", marginBottom: 0 },
+  evidenciasButton: { backgroundColor: "#16a34a", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
+  evidenciasButtonText: { fontSize: 18 },
   creditoCard: { backgroundColor: "#eff6ff", borderRadius: 16, padding: 16, marginBottom: 16 },
   creditoRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
   creditoLabel: { fontSize: 13, color: "#6b7280" },
