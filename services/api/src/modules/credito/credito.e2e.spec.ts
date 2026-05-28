@@ -26,13 +26,13 @@ describe("Credito E2E", () => {
     const email = `credito-test-${Date.now()}@imbobi.com`;
     await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
-      .send({ email, password: "Senha@123", nome: "Test" });
+      .send({ email, senha: "Senha@123", nome: "Test", cpf: "12345678901", telefone: "11999999999" });
 
     const loginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email, password: "Senha@123" });
+      .send({ email, senha: "Senha@123" });
 
-    token = loginRes.body.access_token;
+    token = loginRes.body.accessToken;
   });
 
   afterAll(async () => {

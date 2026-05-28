@@ -9,8 +9,11 @@ describe("Auth E2E", () => {
   let prisma: PrismaService;
   const testUser = {
     email: `test-${Date.now()}@imbobi.com`,
-    password: "Senha@123",
+    senha: "Senha@123",
     nome: "Test User",
+    cpf: "12345678901",
+    telefone: "11999999999",
+    tipo: "TOMADOR",
   };
 
   beforeAll(async () => {
@@ -38,9 +41,9 @@ describe("Auth E2E", () => {
         .send(testUser)
         .expect(201);
 
-      expect(registerRes.body).toHaveProperty("usuarioId");
-      expect(registerRes.body).toHaveProperty("email", testUser.email);
-      expect(registerRes.body).toHaveProperty("nome", testUser.nome);
+      expect(registerRes.body.usuario).toHaveProperty("usuarioId");
+      expect(registerRes.body.usuario).toHaveProperty("email", testUser.email);
+      expect(registerRes.body.usuario).toHaveProperty("nome", testUser.nome);
     });
 
     it("Register user - reject duplicate email", async () => {
@@ -56,8 +59,10 @@ describe("Auth E2E", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email: "invalid-email",
-          password: "Senha@123",
+          senha: "Senha@123",
           nome: "Test",
+          cpf: "12345678901",
+          telefone: "11999999999",
         });
 
       expect(res.status).toBe(400);
@@ -68,8 +73,10 @@ describe("Auth E2E", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email: `weak-${Date.now()}@imbobi.com`,
-          password: "123",
+          senha: "123",
           nome: "Test",
+          cpf: "12345678901",
+          telefone: "11999999999",
         });
 
       expect(res.status).toBe(400);
@@ -80,7 +87,7 @@ describe("Auth E2E", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email: `test-${Date.now()}@imbobi.com`,
-          // Missing password and nome
+          // Missing senha, nome, cpf, telefone
         });
 
       expect(res.status).toBe(400);
@@ -93,13 +100,13 @@ describe("Auth E2E", () => {
         .post("/api/v1/auth/login")
         .send({
           email: testUser.email,
-          password: testUser.password,
+          senha: testUser.senha,
         })
         .expect(200);
 
-      expect(loginRes.body).toHaveProperty("access_token");
-      expect(loginRes.body).toHaveProperty("refresh_token");
-      expect(typeof loginRes.body.access_token).toBe("string");
+      expect(loginRes.body).toHaveProperty("accessToken");
+      expect(loginRes.body).toHaveProperty("refreshToken");
+      expect(typeof loginRes.body.accessToken).toBe("string");
     });
 
     it("Login user - reject wrong password", async () => {
@@ -107,7 +114,7 @@ describe("Auth E2E", () => {
         .post("/api/v1/auth/login")
         .send({
           email: testUser.email,
-          password: "WrongPassword123",
+          senha: "WrongPassword123",
         });
 
       expect(res.status).toBe(401);
@@ -118,7 +125,7 @@ describe("Auth E2E", () => {
         .post("/api/v1/auth/login")
         .send({
           email: `nonexistent-${Date.now()}@imbobi.com`,
-          password: "Senha@123",
+          senha: "Senha@123",
         });
 
       expect(res.status).toBe(401);
@@ -141,8 +148,10 @@ describe("Auth E2E", () => {
       const email = `profile-test-${Date.now()}@imbobi.com`;
       const userData = {
         email,
-        password: "Senha@123",
+        senha: "Senha@123",
         nome: "Profile Test User",
+        cpf: "12345678901",
+        telefone: "11999999999",
       };
 
       // Register
@@ -151,20 +160,20 @@ describe("Auth E2E", () => {
         .send(userData)
         .expect(201);
 
-      expect(registerRes.body).toHaveProperty("usuarioId");
-      const userId = registerRes.body.usuarioId;
+      expect(registerRes.body.usuario).toHaveProperty("usuarioId");
+      const userId = registerRes.body.usuario.usuarioId;
 
       // Login
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
         .send({
           email,
-          password: "Senha@123",
+          senha: "Senha@123",
         })
         .expect(200);
 
-      expect(loginRes.body).toHaveProperty("access_token");
-      const token = loginRes.body.access_token;
+      expect(loginRes.body).toHaveProperty("accessToken");
+      const token = loginRes.body.accessToken;
 
       // Get Profile
       const profileRes = await request(app.getHttpServer())
@@ -200,14 +209,14 @@ describe("Auth E2E", () => {
         .post("/api/v1/auth/login")
         .send({
           email: testUser.email,
-          password: testUser.password,
+          senha: testUser.senha,
         })
         .expect(200);
 
-      expect(loginRes.body).toHaveProperty("access_token");
-      expect(loginRes.body).toHaveProperty("refresh_token");
-      expect(loginRes.body.access_token).not.toBe(
-        loginRes.body.refresh_token
+      expect(loginRes.body).toHaveProperty("accessToken");
+      expect(loginRes.body).toHaveProperty("refreshToken");
+      expect(loginRes.body.accessToken).not.toBe(
+        loginRes.body.refreshToken
       );
     });
 
@@ -216,11 +225,11 @@ describe("Auth E2E", () => {
         .post("/api/v1/auth/login")
         .send({
           email: testUser.email,
-          password: testUser.password,
+          senha: testUser.senha,
         })
         .expect(200);
 
-      const token = loginRes.body.access_token;
+      const token = loginRes.body.accessToken;
       const parts = token.split(".");
       expect(parts.length).toBe(3); // JWT format: header.payload.signature
     });

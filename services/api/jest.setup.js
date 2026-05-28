@@ -12,7 +12,30 @@ process.env.CORS_ORIGIN = 'http://localhost:3000';
 process.env.PORT = '4000';
 
 // Mock PrismaClient to avoid database connection errors in tests
-jest.mock('@prisma/client', () => {
+const createMockPrismaClient = () => {
+  const mockUsuario = {
+    create: jest.fn(async (args) => {
+      return {
+        usuarioId: 'test-usuario-id',
+        email: args.data.email,
+        nome: args.data.nome,
+        cpf: args.data.cpf,
+        cpfHash: 'test-hash',
+        telefone: args.data.telefone,
+        passwordHash: args.data.passwordHash,
+        tipo: args.data.tipo || 'TOMADOR',
+        kycStatus: 'PENDENTE',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    }),
+    findFirst: jest.fn(async () => null),
+    findUnique: jest.fn(async () => null),
+    findMany: jest.fn(async () => []),
+    deleteMany: jest.fn(async () => ({ count: 0 })),
+    update: jest.fn(async (args) => args.data),
+  };
+
   const mockPrismaClient = {
     $connect: jest.fn().mockResolvedValue(undefined),
     $disconnect: jest.fn().mockResolvedValue(undefined),
@@ -20,10 +43,38 @@ jest.mock('@prisma/client', () => {
     $executeRawUnsafe: jest.fn(),
     $queryRaw: jest.fn(),
     $queryRawUnsafe: jest.fn(),
+    usuario: mockUsuario,
+    kycDocumento: {
+      deleteMany: jest.fn(async () => ({ count: 0 })),
+      findMany: jest.fn(async () => []),
+      create: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    obra: {
+      create: jest.fn(),
+      findMany: jest.fn(async () => []),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+    },
+    etapaObra: {
+      createMany: jest.fn(async () => ({ count: 0 })),
+      findMany: jest.fn(async () => []),
+      findFirst: jest.fn(),
+    },
+    sessaoToken: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+    },
   };
 
+  return mockPrismaClient;
+};
+
+jest.mock('@prisma/client', () => {
   return {
-    PrismaClient: jest.fn(() => mockPrismaClient),
+    PrismaClient: jest.fn(() => createMockPrismaClient()),
   };
 });
 

@@ -26,16 +26,16 @@ describe("Obras E2E", () => {
 
     // Setup: Register and login
     email = `obras-test-${Date.now()}@imbobi.com`;
-    await request(app.getHttpServer())
+    const regRes = await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
-      .send({ email, password: "Senha@123", nome: "Test User" });
+      .send({ email, senha: "Senha@123", nome: "Test User", cpf: "12345678901", telefone: "11999999999" });
 
     const loginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email, password: "Senha@123" });
+      .send({ email, senha: "Senha@123" });
 
-    token = loginRes.body.access_token;
-    usuarioId = loginRes.body.usuarioId;
+    token = loginRes.body.accessToken;
+    usuarioId = loginRes.body.usuario?.usuarioId || regRes.body.usuario?.usuarioId;
   });
 
   afterAll(async () => {

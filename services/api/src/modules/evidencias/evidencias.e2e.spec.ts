@@ -26,16 +26,16 @@ describe("Evidencias E2E", () => {
 
     // Setup: Register user
     const email = `evidencia-test-${Date.now()}@imbobi.com`;
-    await request(app.getHttpServer())
+    const regRes = await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
-      .send({ email, password: "Senha@123", nome: "Test User" });
+      .send({ email, senha: "Senha@123", nome: "Test User", cpf: "12345678901", telefone: "11999999999" });
 
     const loginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email, password: "Senha@123" });
+      .send({ email, senha: "Senha@123" });
 
-    token = loginRes.body.access_token;
-    userId = loginRes.body.usuario.usuarioId;
+    token = loginRes.body.accessToken;
+    userId = loginRes.body.usuario?.usuarioId || regRes.body.usuario?.usuarioId;
 
     // Setup: Create obra with etapa
     const obraRes = await request(app.getHttpServer())
