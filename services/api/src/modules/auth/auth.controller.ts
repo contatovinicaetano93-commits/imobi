@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode } from "@nestjs/common";
+import { Controller, Post, Body, HttpCode, Res } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { CadastroUsuarioSchema, LoginSchema } from "@imbobi/schemas";
@@ -10,27 +10,57 @@ export class AuthController {
 
   @Post("registrar")
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  registrar(@Body(new ZodPipe(CadastroUsuarioSchema)) body: unknown) {
-    return this.auth.registrar(body as never);
+  async registrar(
+    @Body(new ZodPipe(CadastroUsuarioSchema)) body: unknown,
+    @Res() res: any
+  ) {
+    const result = await this.auth.registrar(body as never);
+    this.setRefreshTokenCookie(res, result.refreshToken);
+    return res.send({ usuario: result.usuario, accessToken: result.accessToken });
   }
 
   @Post("login")
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  login(@Body(new ZodPipe(LoginSchema)) body: unknown) {
-    return this.auth.login(body as never);
+  async login(
+    @Body(new ZodPipe(LoginSchema)) body: unknown,
+    @Res() res: any
+  ) {
+    const result = await this.auth.login(body as never);
+    this.setRefreshTokenCookie(res, result.refreshToken);
+    return res.send({ usuario: result.usuario, accessToken: result.accessToken });
   }
 
   @Post("renovar")
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  renovar(@Body("refreshToken") token: string) {
-    return this.auth.renovarToken(token);
+  async renovar(
+    @Body("refreshToken") token: string,
+    @Res() res: any
+  ) {
+    const result = await this.auth.renovarToken(token);
+    this.setRefreshTokenCookie(res, result.refreshToken);
+    return res.send({ accessToken: result.accessToken });
   }
 
   @Post("logout")
   @HttpCode(204)
-  logout(@Body("refreshToken") token: string) {
-    return this.auth.revogarToken(token);
+  async logout(
+    @Body("refreshToken") token: string,
+    @Res() res: any
+  ) {
+    await this.auth.revogarToken(token);
+    res.clearCookie("refreshToken");
+    return res.send();
+  }
+
+  private setRefreshTokenCookie(res: any, token: string): void {
+    const isProduction = process.env.NODE_ENV === "production";
+    res.setCookie("refreshToken", token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
   }
 }
