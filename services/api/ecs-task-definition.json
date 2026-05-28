@@ -1,0 +1,116 @@
+{
+  "family": "imbobi-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [
+    {
+      "name": "imbobi-api",
+      "image": "{{ACCOUNT_ID}}.dkr.ecr.us-east-1.amazonaws.com/imbobi-api:v1.0.0",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 4000,
+          "hostPort": 4000,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/imbobi-api",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PORT",
+          "value": "4000"
+        },
+        {
+          "name": "LOG_LEVEL",
+          "value": "info"
+        },
+        {
+          "name": "CORS_ORIGIN",
+          "value": "https://app.imbobi.com,https://www.imbobi.com"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:{{ACCOUNT_ID}}:secret:imbobi-api/production:DATABASE_URL::"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:{{ACCOUNT_ID}}:secret:imbobi-api/production:JWT_SECRET::"
+        },
+        {
+          "name": "JWT_REFRESH_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:{{ACCOUNT_ID}}:secret:imbobi-api/production:JWT_REFRESH_SECRET::"
+        },
+        {
+          "name": "ENCRYPTION_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:{{ACCOUNT_ID}}:secret:imbobi-api/production:ENCRYPTION_SECRET::"
+        },
+        {
+          "name": "REDIS_HOST",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:{{ACCOUNT_ID}}:secret:imbobi-api/production:REDIS_HOST::"
+        },
+        {
+          "name": "REDIS_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:{{ACCOUNT_ID}}:secret:imbobi-api/production:REDIS_PASSWORD::"
+        },
+        {
+          "name": "SENDGRID_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:{{ACCOUNT_ID}}:secret:imbobi-api/production:SENDGRID_API_KEY::"
+        },
+        {
+          "name": "AWS_ACCESS_KEY_ID",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:{{ACCOUNT_ID}}:secret:imbobi-api/production:AWS_ACCESS_KEY_ID::"
+        },
+        {
+          "name": "AWS_SECRET_ACCESS_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:{{ACCOUNT_ID}}:secret:imbobi-api/production:AWS_SECRET_ACCESS_KEY::"
+        },
+        {
+          "name": "FIREBASE_PRIVATE_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:{{ACCOUNT_ID}}:secret:imbobi-api/production:FIREBASE_PRIVATE_KEY::"
+        },
+        {
+          "name": "SENTRY_DSN",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:{{ACCOUNT_ID}}:secret:imbobi-api/production:SENTRY_DSN::"
+        }
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:4000/api/v1/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ],
+  "executionRoleArn": "arn:aws:iam::{{ACCOUNT_ID}}:role/ecsTaskExecutionRole-imbobi",
+  "taskRoleArn": "arn:aws:iam::{{ACCOUNT_ID}}:role/ecsTaskRole-imbobi",
+  "tags": [
+    {
+      "key": "Environment",
+      "value": "production"
+    },
+    {
+      "key": "Application",
+      "value": "imbobi-api"
+    },
+    {
+      "key": "ManagedBy",
+      "value": "CloudFormation"
+    }
+  ]
+}
