@@ -8,6 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { haptics } from "../../../lib/haptics";
 
 const KYC_TIPOS = [
   { id: "RG", label: "Documento de Identidade (RG)", icon: "🪪", descricao: "Frente e verso" },
@@ -22,6 +23,7 @@ export default function NovoDocumentoScreen() {
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
   const handleSelect = (tipoId: string) => {
+    haptics.tap();
     setSelectedType(tipoId);
     // Navigate to upload screen
     router.push({
@@ -34,7 +36,16 @@ export default function NovoDocumentoScreen() {
     <View style={styles.container}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => {
+              haptics.tap();
+              router.back();
+            }}
+            accessibilityLabel="Voltar"
+            accessibilityRole="button"
+            accessibilityHint="Toca para voltar à tela anterior"
+          >
             <Text style={styles.backButtonText}>← Voltar</Text>
           </TouchableOpacity>
         </View>
@@ -53,13 +64,16 @@ export default function NovoDocumentoScreen() {
                 selectedType === tipo.id && styles.tipoCardSelected,
               ]}
               onPress={() => handleSelect(tipo.id)}
+              accessibilityLabel={tipo.label}
+              accessibilityRole="button"
+              accessibilityHint={`${tipo.descricao}. Toca para selecionar este tipo de documento`}
             >
-              <Text style={styles.tipoIcon}>{tipo.icon}</Text>
+              <Text style={styles.tipoIcon} accessible={false}>{tipo.icon}</Text>
               <View style={styles.tipoContent}>
                 <Text style={styles.tipoLabel}>{tipo.label}</Text>
                 <Text style={styles.tipoDescricao}>{tipo.descricao}</Text>
               </View>
-              <Text style={styles.tipoArrow}>→</Text>
+              <Text style={styles.tipoArrow} accessible={false}>→</Text>
             </TouchableOpacity>
           ))}
         </View>

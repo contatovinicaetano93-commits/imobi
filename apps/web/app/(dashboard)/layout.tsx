@@ -27,6 +27,7 @@ const NAV_ITEMS = [
   { label: "Score", href: "/dashboard/score" },
   { label: "Simulador", href: "/dashboard/simulador" },
   { label: "Painel do Gestor", href: "/dashboard/gestor" },
+  { label: "Analytics", href: "/analytics/overview" },
   { label: "Relatórios", href: "/dashboard/relatorios" },
   { label: "Perfil", href: "/dashboard/perfil" },
   { label: "KYC", href: "/dashboard/kyc" },

@@ -22,6 +22,9 @@ model Usuario {
   passwordHash  String
   tipo          UsuarioTipo @default(TOMADOR)
   kycStatus     KycStatus @default(PENDENTE)
+  bloqueado     Boolean   @default(false) // Admin can block/unblock
+  motivoBloqueio String?
+  bloqueadoEm   DateTime?
   criadoEm      DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt
 
@@ -32,10 +35,13 @@ model Usuario {
   kycDocumentos KycDocumento[] @relation("KycDocumentos")
   notificacoes  Notificacao[]
   fcmTokens     UsuarioFcmToken[]
+  auditLogs     AuditLog[] @relation("AuditLogUser")
+  auditLogsAdmin AuditLog[] @relation("AuditLogAdmin")
 
   @@index([email])
   @@index([cpfHash])
   @@index([kycStatus])
+  @@index([bloqueado])
 }
 
 enum UsuarioTipo {
@@ -297,4 +303,26 @@ enum TipoNotificacao {
   OBRA_CRIADA
   SCORE_ATUALIZADO
   VISTORIA_PENDENTE
+}
+
+// ── Audit Logs ────────────────────────────────────────────────────────
+
+model AuditLog {
+  logId         String   @id @default(uuid())
+  usuarioId     String   // User being affected
+  usuario       Usuario  @relation("AuditLogUser", fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  adminId       String   // Admin performing the action
+  admin         Usuario  @relation("AuditLogAdmin", fields: [adminId], references: [usuarioId], onDelete: Cascade)
+  acao          String   // e.g., "BLOQUEAR_USUARIO", "APROVAR_KYC", "REJEITAR_CREDITO"
+  descricao     String?
+  mudancasAntes Json?    // Previous state
+  mudancasDepois Json?   // New state
+  ipAddress     String?
+  userAgent     String?
+  criadoEm      DateTime @default(now())
+
+  @@index([usuarioId])
+  @@index([adminId])
+  @@index([acao])
+  @@index([criadoEm])
 }

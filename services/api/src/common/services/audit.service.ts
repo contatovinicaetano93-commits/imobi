@@ -1,14 +1,20 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../modules/prisma/prisma.service";
 
 export enum AuditEvent {
+  USER_SIGNUP = "USER_SIGNUP",
+  USER_LOGIN = "USER_LOGIN",
+  KYC_UPLOAD = "KYC_UPLOAD",
   KYC_APPROVAL = "KYC_APPROVAL",
   KYC_REJECTION = "KYC_REJECTION",
+  CREDIT_REQUESTED = "CREDIT_REQUESTED",
+  CREDIT_APPROVED = "CREDIT_APPROVED",
+  PAYMENT_RELEASED = "PAYMENT_RELEASED",
+  STAGE_COMPLETED = "STAGE_COMPLETED",
   EVIDENCE_UPLOAD = "EVIDENCE_UPLOAD",
-  PAYMENT_RELEASE = "PAYMENT_RELEASE",
   STAGE_APPROVAL = "STAGE_APPROVAL",
   STAGE_REJECTION = "STAGE_REJECTION",
   TOKEN_REFRESH = "TOKEN_REFRESH",
-  USER_LOGIN = "USER_LOGIN",
   USER_REGISTRATION = "USER_REGISTRATION",
 }
 
@@ -20,9 +26,22 @@ interface AuditLog {
   ipAddress?: string;
 }
 
+interface AdminAuditLog {
+  usuarioId: string;
+  adminId: string;
+  acao: string;
+  descricao?: string;
+  mudancasAntes?: Record<string, unknown>;
+  mudancasDepois?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
 @Injectable()
 export class AuditService {
   private readonly logger = new Logger(AuditService.name);
+
+  constructor(private readonly prisma: PrismaService) {}
 
   log(auditLog: AuditLog): void {
     this.logger.log(
@@ -31,22 +50,119 @@ export class AuditService {
     );
   }
 
-  logKycApproval(usuarioId: string, documentoId: string, ipAddress?: string): void {
+  async registrar(log: AdminAuditLog): Promise<void> {
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          usuarioId: log.usuarioId,
+          adminId: log.adminId,
+          acao: log.acao,
+          descricao: log.descricao,
+          mudancasAntes: log.mudancasAntes ? JSON.stringify(log.mudancasAntes) : null,
+          mudancasDepois: log.mudancasDepois ? JSON.stringify(log.mudancasDepois) : null,
+          ipAddress: log.ipAddress,
+          userAgent: log.userAgent,
+        },
+      });
+
+      this.logger.log(
+        `[ADMIN_AUDIT] Admin: ${log.adminId} | Action: ${log.acao} | User: ${log.usuarioId}`,
+        AuditService.name
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to register audit log: ${error}`,
+        AuditService.name
+      );
+    }
+  }
+
+  logUserSignup(usuarioId: string, email: string, ipAddress?: string): void {
     this.log({
-      event: AuditEvent.KYC_APPROVAL,
+      event: AuditEvent.USER_SIGNUP,
       usuarioId,
       timestamp: new Date(),
-      details: { documentoId },
+      details: { email },
       ipAddress,
     });
   }
 
-  logKycRejection(usuarioId: string, documentoId: string, motivo: string, ipAddress?: string): void {
+  logUserLogin(usuarioId: string, email: string, ipAddress?: string): void {
+    this.log({
+      event: AuditEvent.USER_LOGIN,
+      usuarioId,
+      timestamp: new Date(),
+      details: { email },
+      ipAddress,
+    });
+  }
+
+  logKycUpload(usuarioId: string, documentoId: string, tipo: string, ipAddress?: string): void {
+    this.log({
+      event: AuditEvent.KYC_UPLOAD,
+      usuarioId,
+      timestamp: new Date(),
+      details: { documentoId, tipo },
+      ipAddress,
+    });
+  }
+
+  logKycApproval(usuarioId: string, documentoId: string, gestorId?: string, ipAddress?: string): void {
+    this.log({
+      event: AuditEvent.KYC_APPROVAL,
+      usuarioId,
+      timestamp: new Date(),
+      details: { documentoId, gestorId },
+      ipAddress,
+    });
+  }
+
+  logKycRejection(usuarioId: string, documentoId: string, motivo: string, gestorId?: string, ipAddress?: string): void {
     this.log({
       event: AuditEvent.KYC_REJECTION,
       usuarioId,
       timestamp: new Date(),
-      details: { documentoId, motivo },
+      details: { documentoId, motivo, gestorId },
+      ipAddress,
+    });
+  }
+
+  logCreditRequested(usuarioId: string, creditoId: string, valorSolicitado: number, prazoMeses: number, ipAddress?: string): void {
+    this.log({
+      event: AuditEvent.CREDIT_REQUESTED,
+      usuarioId,
+      timestamp: new Date(),
+      details: { creditoId, valorSolicitado, prazoMeses },
+      ipAddress,
+    });
+  }
+
+  logCreditApproved(usuarioId: string, creditoId: string, valorAprovado: number, ipAddress?: string): void {
+    this.log({
+      event: AuditEvent.CREDIT_APPROVED,
+      usuarioId,
+      timestamp: new Date(),
+      details: { creditoId, valorAprovado },
+      ipAddress,
+    });
+  }
+
+  logPaymentReleased(usuarioId: string, creditoId: string, parcelaNum: number, valor: number, ipAddress?: string): void {
+    this.log({
+      event: AuditEvent.PAYMENT_RELEASED,
+      usuarioId,
+      timestamp: new Date(),
+      details: { creditoId, parcelaNum, valor },
+      ipAddress,
+    });
+  }
+
+  logStageCompleted(usuarioId: string, etapaId: string, obraId: string, ipAddress?: string): void {
+    this.log({
+      event: AuditEvent.STAGE_COMPLETED,
+      usuarioId,
+      timestamp: new Date(),
+      details: { etapaId, obraId },
       ipAddress,
     });
   }
@@ -57,16 +173,6 @@ export class AuditService {
       usuarioId,
       timestamp: new Date(),
       details: { obraId },
-      ipAddress,
-    });
-  }
-
-  logPaymentRelease(usuarioId: string, creditoId: string, parcelaNum: number, ipAddress?: string): void {
-    this.log({
-      event: AuditEvent.PAYMENT_RELEASE,
-      usuarioId,
-      timestamp: new Date(),
-      details: { creditoId, parcelaNum },
       ipAddress,
     });
   }
@@ -97,16 +203,6 @@ export class AuditService {
       usuarioId,
       timestamp: new Date(),
       details: {},
-      ipAddress,
-    });
-  }
-
-  logUserLogin(usuarioId: string, email: string, ipAddress?: string): void {
-    this.log({
-      event: AuditEvent.USER_LOGIN,
-      usuarioId,
-      timestamp: new Date(),
-      details: { email },
       ipAddress,
     });
   }

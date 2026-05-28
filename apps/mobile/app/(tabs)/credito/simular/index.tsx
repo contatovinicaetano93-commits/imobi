@@ -13,6 +13,7 @@ import { useSimuladorCredito } from "@imbobi/core/src/hooks/useSimuladorCredito"
 import { formatarBRL, formatarPercentual } from "@imbobi/core";
 import { SimulacaoCreditoSchema } from "@imbobi/schemas";
 import { simuladorApi, ApiError } from "../../../../lib/api";
+import { haptics } from "../../../../lib/haptics";
 import Slider from "@react-native-community/slider";
 
 const TIPO_OBRA_OPTIONS = ["RESIDENCIAL", "COMERCIAL", "MISTO"] as const;
@@ -30,6 +31,7 @@ export default function SimularCreditoScreen() {
     try {
       setLoading(true);
       setError(null);
+      await haptics.impact();
 
       // Validate inputs with Zod schema
       const validado = SimulacaoCreditoSchema.safeParse({
@@ -39,7 +41,9 @@ export default function SimularCreditoScreen() {
       });
 
       if (!validado.success) {
-        setError(validado.error.errors[0]?.message || "Dados inválidos");
+        const errorMsg = validado.error.errors[0]?.message || "Dados inválidos";
+        setError(errorMsg);
+        await haptics.error();
         return;
       }
 
@@ -50,6 +54,7 @@ export default function SimularCreditoScreen() {
         tipoObra,
       });
 
+      await haptics.success();
       // Navigate to resultado with data
       router.push({
         pathname: "/credito/resultado",
@@ -66,6 +71,7 @@ export default function SimularCreditoScreen() {
     } catch (err) {
       const message = err instanceof ApiError ? err.message : (err instanceof Error ? err.message : "Erro ao simular crédito");
       setError(message);
+      await haptics.error();
       Alert.alert("Erro", message);
     } finally {
       setLoading(false);
@@ -95,9 +101,15 @@ export default function SimularCreditoScreen() {
             maximumValue={1000000}
             step={5000}
             value={valorSolicitado}
-            onValueChange={setValorSolicitado}
+            onValueChange={(val) => {
+              setValorSolicitado(val);
+              haptics.selection();
+            }}
             minimumTrackTintColor="#16a34a"
             thumbTintColor="#16a34a"
+            accessible={true}
+            accessibilityLabel="Valor desejado"
+            accessibilityHint={`Deslize para ajustar o valor: ${formatarBRL(valorSolicitado)}`}
           />
           <View style={styles.sliderRange}>
             <Text style={styles.rangeText}>R$ 10.000</Text>
@@ -116,9 +128,15 @@ export default function SimularCreditoScreen() {
             maximumValue={180}
             step={12}
             value={prazoMeses}
-            onValueChange={setPrazoMeses}
+            onValueChange={(val) => {
+              setPrazoMeses(val);
+              haptics.selection();
+            }}
             minimumTrackTintColor="#16a34a"
             thumbTintColor="#16a34a"
+            accessible={true}
+            accessibilityLabel="Prazo em meses"
+            accessibilityHint={`Deslize para ajustar o prazo: ${Math.round(prazoMeses)} meses`}
           />
           <View style={styles.sliderRange}>
             <Text style={styles.rangeText}>12 meses</Text>
@@ -137,7 +155,14 @@ export default function SimularCreditoScreen() {
                   styles.buttonOption,
                   tipoObra === tipo && styles.buttonOptionActive,
                 ]}
-                onPress={() => setTipoObra(tipo)}
+                onPress={() => {
+                  setTipoObra(tipo);
+                  haptics.selection();
+                }}
+                accessibilityLabel={`Tipo de obra: ${tipo}`}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: tipoObra === tipo }}
+                accessibilityHint={`Toca para selecionar ${tipo}`}
               >
                 <Text
                   style={[
@@ -167,6 +192,10 @@ export default function SimularCreditoScreen() {
         style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
         onPress={handleSimular}
         disabled={loading}
+        accessibilityLabel="Simular Crédito"
+        accessibilityRole="button"
+        accessibilityHint="Toca para simular o crédito com os valores definidos"
+        accessibilityState={{ disabled: loading }}
       >
         {loading ? (
           <ActivityIndicator color="#fff" size="small" />
@@ -177,8 +206,15 @@ export default function SimularCreditoScreen() {
 
       <TouchableOpacity
         style={styles.secondaryButton}
-        onPress={() => router.back()}
+        onPress={() => {
+          haptics.tap();
+          router.back();
+        }}
         disabled={loading}
+        accessibilityLabel="Voltar"
+        accessibilityRole="button"
+        accessibilityHint="Toca para voltar à tela anterior"
+        accessibilityState={{ disabled: loading }}
       >
         <Text style={styles.secondaryButtonText}>Voltar</Text>
       </TouchableOpacity>

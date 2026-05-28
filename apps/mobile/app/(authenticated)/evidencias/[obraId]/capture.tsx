@@ -13,6 +13,7 @@ import * as Location from "expo-location";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { calcularDistanciaMetros } from "@imbobi/core";
 import { obrasApi, type ObraDetalhe } from "../../../../lib/api";
+import { haptics } from "../../../../lib/haptics";
 
 interface LocationInfo {
   latitude: number;
@@ -143,21 +144,25 @@ export default function CaptureEvidenciaScreen() {
   const handleCapture = async () => {
     if (!cameraRef.current) return;
     if (geoValidation.status !== "valid") {
+      await haptics.error();
       Alert.alert("Erro", "Posicione-se dentro da área da obra");
       return;
     }
     if (!location) {
+      await haptics.error();
       Alert.alert("Erro", "Localização não disponível");
       return;
     }
 
     try {
       setCapturing(true);
+      await haptics.impact();
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.8,
       });
 
       if (photo) {
+        await haptics.success();
         // Pass the photo URI and location to the upload screen
         router.push({
           pathname: "/(authenticated)/evidencias/[obraId]/upload",
@@ -173,6 +178,7 @@ export default function CaptureEvidenciaScreen() {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Erro ao capturar foto";
+      await haptics.error();
       Alert.alert("Erro", message);
     } finally {
       setCapturing(false);
@@ -232,7 +238,15 @@ export default function CaptureEvidenciaScreen() {
           {/* Top Section */}
           <View style={[styles.overlaySection, styles.overlayTop]}>
             <View style={styles.topBar}>
-              <TouchableOpacity onPress={() => router.back()}>
+              <TouchableOpacity
+                onPress={() => {
+                  haptics.tap();
+                  router.back();
+                }}
+                accessibilityLabel="Fechar câmera"
+                accessibilityRole="button"
+                accessibilityHint="Toca para fechar a câmera e voltar"
+              >
                 <Text style={styles.topBarText}>✕ Fechar</Text>
               </TouchableOpacity>
               <Text style={styles.workTitle}>{obra.nome}</Text>
@@ -330,6 +344,12 @@ export default function CaptureEvidenciaScreen() {
               ]}
               onPress={handleCapture}
               disabled={capturing || geoValidation.status !== "valid"}
+              accessibilityLabel="Capturar foto"
+              accessibilityRole="button"
+              accessibilityHint="Toca para capturar a foto da evidência"
+              accessibilityState={{
+                disabled: capturing || geoValidation.status !== "valid",
+              }}
             >
               {capturing ? (
                 <ActivityIndicator color="#fff" />

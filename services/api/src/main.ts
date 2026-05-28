@@ -6,10 +6,15 @@ import {
 import fastifyHelmet from "@fastify/helmet";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { SentryExceptionFilter } from "./common/filters/sentry-exception.filter";
 import { CsrfGuard } from "./common/guards/csrf.guard";
 import { validateEnvironment } from "./common/validators/env.validator";
+import { initializeSentry, setupSentryMiddleware } from "./common/integrations/sentry.integration";
 
 async function bootstrap() {
+  // Initialize Sentry before everything else
+  initializeSentry();
+
   // Validate environment variables before starting the application
   validateEnvironment();
 
@@ -17,6 +22,9 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({ logger: process.env["NODE_ENV"] !== "production" })
   );
+
+  // Setup Sentry middleware as first middleware
+  setupSentryMiddleware(app);
 
   // Security headers via Helmet.js
   await app.register(fastifyHelmet, {
@@ -38,7 +46,8 @@ async function bootstrap() {
   app.useGlobalGuards(app.get(CsrfGuard));
 
   // ThrottlerGuard is registered via AppModule providers
-  app.useGlobalFilters(new HttpExceptionFilter());
+  // Use Sentry exception filter before the HTTP exception filter
+  app.useGlobalFilters(new SentryExceptionFilter(), new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");
 
   app.enableCors({

@@ -14,11 +14,13 @@ import { EvidenciasModule } from "./modules/evidencias/evidencias.module";
 import { ScoreModule } from "./modules/score/score.module";
 import { KycModule } from "./modules/kyc/kyc.module";
 import { ManagerModule } from "./modules/manager/manager.module";
+import { AdminModule } from "./modules/admin/admin.module";
 import { EmailModule } from "./modules/email/email.module";
 import { MarketplaceModule } from "./modules/marketplace/marketplace.module";
 import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
+import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
 import { IpThrottlerGuard } from "./common/guards/ip-throttler.guard";
@@ -91,11 +93,13 @@ import { APP_GUARD } from "@nestjs/core";
     ScoreModule,
     KycModule,
     ManagerModule,
+    AdminModule,
     EmailModule,
     NotificacoesModule,
     PushNotificacoesModule,
     MarketplaceModule,
     ParceirosModule,
+    AnalyticsModule,
   ],
   providers: [
     LiberacaoParcelaWorker,
