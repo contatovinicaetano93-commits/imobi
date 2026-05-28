@@ -69,7 +69,7 @@ check_command() {
 log_step "[1/5] PRE-FLIGHT CHECKS"
 
 log_info "Checking prerequisites..."
-for cmd in git pnpm docker docker-compose node curl; do
+for cmd in git pnpm docker docker node curl; do
     check_command "$cmd"
 done
 log_info "All required commands available"
@@ -133,11 +133,11 @@ fi
 log_step "[4/5] DOCKER SERVICES SETUP"
 
 log_info "Stopping existing containers..."
-docker-compose -f "$DOCKER_COMPOSE_FILE" -p imbobi_staging down 2>&1 | tee -a "$LOG_FILE" || true
+docker compose -f "$DOCKER_COMPOSE_FILE" -p imbobi_staging down 2>&1 | tee -a "$LOG_FILE" || true
 log_info "Cleaned up previous deployment"
 
 log_info "Building Docker images..."
-if docker-compose -f "$DOCKER_COMPOSE_FILE" -p imbobi_staging build 2>&1 | tee -a "$LOG_FILE"; then
+if docker compose -f "$DOCKER_COMPOSE_FILE" -p imbobi_staging build 2>&1 | tee -a "$LOG_FILE"; then
     log_info "Docker images built successfully"
 else
     log_error "Docker build failed"
@@ -146,12 +146,12 @@ else
 fi
 
 log_info "Starting services (PostgreSQL, Redis, API, Web)..."
-if docker-compose -f "$DOCKER_COMPOSE_FILE" -p imbobi_staging up -d 2>&1 | tee -a "$LOG_FILE"; then
+if docker compose -f "$DOCKER_COMPOSE_FILE" -p imbobi_staging up -d 2>&1 | tee -a "$LOG_FILE"; then
     log_info "Containers started"
 else
     log_error "Failed to start containers"
     log_to_file "Container startup failed at $(date)"
-    docker-compose -f "$DOCKER_COMPOSE_FILE" -p imbobi_staging logs
+    docker compose -f "$DOCKER_COMPOSE_FILE" -p imbobi_staging logs
     exit 1
 fi
 
@@ -159,7 +159,7 @@ fi
 log_info "Waiting for services to become healthy (max 60s)..."
 sleep 5
 for i in {1..12}; do
-    if docker-compose -f "$DOCKER_COMPOSE_FILE" -p imbobi_staging ps | grep -q "healthy\|running"; then
+    if docker compose -f "$DOCKER_COMPOSE_FILE" -p imbobi_staging ps | grep -q "healthy\|running"; then
         log_info "Services are ready"
         break
     fi
@@ -238,13 +238,13 @@ log_info "Log File: $LOG_FILE"
 echo ""
 
 log_info "Service Status:"
-docker-compose -f "$DOCKER_COMPOSE_FILE" -p imbobi_staging ps
+docker compose -f "$DOCKER_COMPOSE_FILE" -p imbobi_staging ps
 
 echo ""
 echo -e "${YELLOW}Next steps:${NC}"
 echo "  1. Test API:        ${BLUE}curl http://localhost:4000/api/v1/health${NC}"
 echo "  2. View Web:        ${BLUE}open http://localhost:3000${NC}"
-echo "  3. Check Logs:      ${BLUE}docker-compose -f docker-compose.staging.yml -p imbobi_staging logs -f${NC}"
+echo "  3. Check Logs:      ${BLUE}docker compose -f docker-compose.staging.yml -p imbobi_staging logs -f${NC}"
 echo "  4. Run E2E Tests:   ${BLUE}bash scripts/staging-e2e.sh${NC}"
 echo "  5. Validation:      ${BLUE}See STAGING_VALIDATION_CHECKLIST.md${NC}"
 echo ""

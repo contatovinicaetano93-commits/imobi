@@ -326,3 +326,38 @@ model AuditLog {
   @@index([acao])
   @@index([criadoEm])
 }
+
+// ── Webhooks ───────────────────────────────────────────────────────────
+
+model Webhook {
+  webhookId     String   @id @default(uuid())
+  url           String
+  secret        String   // HMAC secret for signing payloads
+  eventos       String[] // Array of event types to subscribe to
+  ativo         Boolean  @default(true)
+  criadoEm      DateTime @default(now())
+  atualizadoEm  DateTime @updatedAt
+
+  logs          WebhookLog[]
+
+  @@index([ativo])
+  @@index([criadoEm])
+}
+
+model WebhookLog {
+  logId         String   @id @default(uuid())
+  webhookId     String
+  webhook       Webhook  @relation(fields: [webhookId], references: [webhookId], onDelete: Cascade)
+  evento        String   // Event type that was triggered
+  payload       Json     // The event payload sent
+  status        Int?     // HTTP status code
+  resposta      String?  // Response body
+  tentativas    Int      @default(1)
+  proxImagem    DateTime? // Next retry time
+  timestamp     DateTime @default(now())
+
+  @@index([webhookId])
+  @@index([evento])
+  @@index([timestamp])
+  @@index([webhookId, timestamp])
+}
