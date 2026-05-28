@@ -5,7 +5,7 @@
  * Can be used during tests or in production monitoring.
  */
 
-import { PrismaService } from "../src/modules/prisma/prisma.service";
+import { PrismaService } from "../modules/prisma/prisma.service";
 
 export interface QueryProfile {
   query: string;
