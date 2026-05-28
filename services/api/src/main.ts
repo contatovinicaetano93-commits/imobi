@@ -13,9 +13,17 @@ async function bootstrap() {
 
   validateEnvironmentOrThrow();
 
+  // Configure Fastify adapter with proper host handling
+  const fastifyOptions: any = {
+    logger: process.env["NODE_ENV"] !== "production",
+    // Trust proxy headers from load balancers (Render, Vercel, AWS ALB)
+    trust: ["127.0.0.1"],
+    bodyLimit: 104857600, // 100MB for file uploads
+  };
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ logger: process.env["NODE_ENV"] !== "production" })
+    new FastifyAdapter(fastifyOptions)
   );
 
   // ThrottlerGuard is registered via AppModule providers
@@ -35,6 +43,12 @@ async function bootstrap() {
   });
 
   const port = Number(process.env["PORT"] ?? 4000);
+
+  // Log deployment info for debugging
+  console.log(`[STARTUP] Node ENV: ${nodeEnv}`);
+  console.log(`[STARTUP] Port: ${port}`);
+  console.log(`[STARTUP] CORS Origins: ${corsOrigins?.join(", ") || "localhost:3000"}`);
+
   await app.listen(port, "0.0.0.0");
   console.log(`imbobi API running on port ${port}`);
 }
