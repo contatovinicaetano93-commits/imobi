@@ -123,7 +123,7 @@ case $EMAIL_CHOICE in
   1)
     EMAIL_PROVIDER="sendgrid"
     read -p "SendGrid API Key (format: SG...): " SENDGRID_API_KEY
-    while [ -z "$SENDGRID_API_KEY" ]; then
+    while [ -z "$SENDGRID_API_KEY" ]; do
       echo "SendGrid API Key is required"
       read -p "SendGrid API Key: " SENDGRID_API_KEY
     done
