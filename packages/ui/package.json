@@ -13,5 +13,8 @@
       "import": "./web/index.ts",
       "require": "./web/index.ts"
     }
+  },
+  "dependencies": {
+    "ioredis": "^5.11.0"
   }
 }

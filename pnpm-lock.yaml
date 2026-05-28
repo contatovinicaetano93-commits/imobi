@@ -102,6 +102,9 @@ importers:
       expo-secure-store:
         specifier: ~13.0.0
         version: 13.0.2(expo@51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0))
+      ioredis:
+        specifier: ^5.11.0
+        version: 5.11.0
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -160,6 +163,9 @@ importers:
       clsx:
         specifier: ^2.1.0
         version: 2.1.1
+      ioredis:
+        specifier: ^5.11.0
+        version: 5.11.0
       lucide-react:
         specifier: ^0.390.0
         version: 0.390.0(react@18.3.1)
@@ -212,6 +218,9 @@ importers:
       '@imbobi/schemas':
         specifier: workspace:*
         version: link:../schemas
+      ioredis:
+        specifier: ^5.11.0
+        version: 5.11.0
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -228,6 +237,9 @@ importers:
 
   packages/schemas:
     dependencies:
+      ioredis:
+        specifier: ^5.11.0
+        version: 5.11.0
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -236,7 +248,11 @@ importers:
         specifier: ^5.5.0
         version: 5.9.3
 
-  packages/ui: {}
+  packages/ui:
+    dependencies:
+      ioredis:
+        specifier: ^5.11.0
+        version: 5.11.0
 
   services/api:
     dependencies:
@@ -321,6 +337,9 @@ importers:
       firebase-admin:
         specifier: ^13.10.0
         version: 13.10.0
+      ioredis:
+        specifier: ^5.11.0
+        version: 5.11.0
       nodemailer:
         specifier: ^8.0.9
         version: 8.0.9

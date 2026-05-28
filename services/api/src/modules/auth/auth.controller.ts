@@ -15,8 +15,8 @@ export class AuthController {
   ) {}
 
   @Get("csrf-token")
-  csrfToken() {
-    const token = this.csrf.generateToken();
+  async csrfToken() {
+    const token = await this.csrf.generateToken();
     return { csrfToken: token };
   }
 
@@ -25,7 +25,8 @@ export class AuthController {
   @Throttle(3, 3600000) // 3 requests per hour per IP
   async registrar(@Body(new ZodPipe(CadastroUsuarioSchema)) body: unknown) {
     const result = await this.auth.registrar(body as never);
-    return { ...result, csrfToken: this.csrf.generateToken() };
+    const csrfToken = await this.csrf.generateToken();
+    return { ...result, csrfToken };
   }
 
   @Post("login")
@@ -34,7 +35,8 @@ export class AuthController {
   @HttpCode(200)
   async login(@Body(new ZodPipe(LoginSchema)) body: unknown) {
     const result = await this.auth.login(body as never);
-    return { ...result, csrfToken: this.csrf.generateToken() };
+    const csrfToken = await this.csrf.generateToken();
+    return { ...result, csrfToken };
   }
 
   @Post("renovar")
