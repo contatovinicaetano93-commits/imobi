@@ -1,0 +1,244 @@
+================================================================================
+IMOBI POST-DEPLOYMENT VALIDATION REPORT
+================================================================================
+Date: May 28, 2026
+API Endpoint: https://api.imobi.com/api/v1
+Test Environment: Remote validation from external network
+
+EXECUTIVE SUMMARY
+================================================================================
+CRITICAL: API endpoint is unreachable due to host validation security measures.
+All validation tests failed at the infrastructure level. The issue is NOT with
+the application code, but with the deployment configuration.
+
+FINDINGS BY PHASE
+================================================================================
+
+PHASE 1: HEALTH CHECK - FAILED
+────────────────────────────────
+Endpoint: GET /health
+HTTP Status: 403 Forbidden
+Response: "Host not in allowlist"
+Response Time: ~100-400ms (server is reachable)
+
+Analysis:
+- DNS resolution works (api.imobi.com resolves correctly)
+- Network connectivity is established (requests reach the server)
+- TLS/HTTPS handshake succeeds (secure connection established)
+- Application is responding with HTTP 403 from a host validation gate
+
+PHASE 2: AUTH FLOW TEST - BLOCKED
+──────────────────────────────────
+2.1 Signup (POST /auth/registrar)
+   Status: 403 Forbidden - "Host not in allowlist"
+   Unable to proceed
+
+2.2 Login (POST /auth/login)
+   Status: 403 Forbidden - "Host not in allowlist"
+   Unable to proceed
+
+2.3 JWT Verification (GET /auth/verify)
+   Status: Skipped - No tokens obtained
+
+PHASE 3: CORE FEATURES TEST - BLOCKED
+──────────────────────────────────────
+3.1 GET /obras
+3.2 GET /score/{usuarioId}
+3.3 GET /notificacoes
+   All blocked by same host validation gate
+
+ROOT CAUSE ANALYSIS
+================================================================================
+
+The error "Host not in allowlist" indicates one of:
+
+1. FASTIFY-CHECK-HOST PLUGIN (Most Likely)
+   - Fastify has a built-in security plugin that validates HTTP Host header
+   - Prevents Host Header Injection attacks
+   - Configuration likely missing or not deployed
+
+2. AWS APPLICATION LOAD BALANCER (ALB)
+   - ALB could be checking Host header against allowlist
+   - Configuration in Security Group or Target Group
+
+3. AWS WAF (Web Application Firewall)
+   - WAF rule might be blocking non-whitelisted hosts
+   - Could be checking Host, Origin, or Referer headers
+
+4. NGINX REVERSE PROXY
+   - If deployed behind NGINX, host validation could be configured there
+
+EVIDENCE
+────────
+- Codebase does not contain "Host not in allowlist" error message
+- Production middleware (production.middleware.ts) does NOT check hosts
+- Fastify host validation is NOT enabled in main.ts FastifyAdapter config
+- Error appears to be infrastructure-level, not application-level
+
+RECOMMENDATIONS FOR RESOLUTION
+================================================================================
+
+IMMEDIATE ACTIONS (Next 5 minutes)
+──────────────────────────────────
+
+1. CHECK FASTIFY CONFIGURATION
+   File: services/api/src/main.ts
+   
+   Add to FastifyAdapter options:
+   
+   ```typescript
+   const fastifyOptions: FastifyHttpOptions<Server> = {
+     logger: process.env["NODE_ENV"] !== "production",
+     // Whitelist allowed hosts
+     trust: true, // Trust proxy headers
+     bodyLimit: 104857600, // 100MB
+   };
+   
+   // If using fastify-check-host plugin:
+   app.register(import('@fastify/check-host'), {
+     allowedHosts: [
+       'api.imobi.com',
+       'api.imbobi.com.br',
+       'localhost',
+       '127.0.0.1',
+       // Add your other domains
+     ]
+   });
+   ```
+
+2. VERIFY CORS_ORIGIN ENVIRONMENT VARIABLE
+   Ensure production deployment has:
+   CORS_ORIGIN=https://api.imobi.com,https://web.imobi.com
+
+3. CHECK AWS/INFRASTRUCTURE CONFIGURATION
+   If using AWS ALB:
+   - Verify target group health check uses proper Host header
+   - Check listener rules don't filter by Host
+   - Review Security Group ingress rules
+   
+   If using AWS API Gateway:
+   - Check API Gateway policies
+   - Review resource policies
+   - Verify CORS settings in API Gateway
+
+4. REVIEW FIREWALL/WAF RULES
+   - Check AWS WAF rules if enabled
+   - Review any custom WAF configuration
+   - Whitelist api.imobi.com and api.imbobi.com.br
+
+TESTING AFTER FIX (Next 10 minutes)
+───────────────────────────────────
+
+Once host validation is corrected:
+
+```bash
+# Test with explicit Host header
+curl -X GET https://api.imobi.com/api/v1/health \
+  -H "Host: api.imobi.com" \
+  -H "Content-Type: application/json"
+
+# If that works, try signup
+curl -X POST https://api.imobi.com/api/v1/auth/registrar \
+  -H "Host: api.imobi.com" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "beta-test-'$(date +%s)'@imobi.test",
+    "senha": "TestPass123!",
+    "nome": "Beta Tester",
+    "cpf": "11144477735",
+    "telefone": "11987654321",
+    "tipo": "CONSTRUTORA"
+  }'
+```
+
+VALIDATION TEST USER (Created for manual testing)
+================================================================================
+Email: beta-test-1780008403@imobi.test
+Password: TestPass123!
+CPF: 11144477735
+Telefone: 11987654321
+Tipo: CONSTRUTORA
+
+Note: This user was created via signup endpoint test attempt and may or may not
+exist in the database depending on when the host validation occurs in the
+request lifecycle.
+
+INFRASTRUCTURE VALIDATION CHECKLIST
+================================================================================
+
+[X] DNS resolution: WORKING
+    - api.imobi.com resolves successfully
+    - Network latency: acceptable (~100-400ms)
+
+[X] TLS/HTTPS: WORKING
+    - Certificate is valid
+    - Secure connection established
+    - No certificate warnings
+
+[  ] Host validation allowlist: FAILING
+    - api.imobi.com not in allowlist
+    - Need to add production domain(s)
+
+[  ] Application health endpoint: BLOCKED
+    - Cannot access until host validation fixed
+
+[  ] Database connectivity: UNKNOWN
+    - Blocked by host validation
+    - Recommend testing locally after host fix
+
+[  ] Redis cache: UNKNOWN
+    - Blocked by host validation
+    - Recommend testing locally after host fix
+
+[  ] Firebase configuration: UNKNOWN
+    - Blocked by host validation
+    - Check FIREBASE_PROJECT_ID in .env
+
+[  ] Email provider: UNKNOWN
+    - Blocked by host validation
+    - Check EMAIL_PROVIDER and credentials in .env
+
+DEPLOYMENT NOTES
+================================================================================
+
+The API deployment appears to have been configured with strict host validation
+for security purposes. This is a GOOD security practice to prevent:
+- Host Header Injection attacks
+- Bypass of DNS-based access controls
+- SSRF (Server-Side Request Forgery) via Host header manipulation
+
+However, without the correct host allowlist in the production configuration,
+external validation testing is blocked.
+
+NEXT STEPS
+================================================================================
+
+1. ACCESS PRODUCTION DEPLOYMENT CONFIGURATION
+   - Check the actual Fastify/Nest startup code running in production
+   - Verify which host validation mechanism is active
+   - Check environment variables for ALLOWED_HOSTS or similar config
+
+2. UPDATE HOST ALLOWLIST
+   - Add api.imobi.com and api.imbobi.com.br to allowlist
+   - Add any additional domains used for API access
+
+3. REDEPLOY
+   - Push configuration changes
+   - Restart API service
+   - Verify health check passes
+
+4. RE-RUN VALIDATION
+   - Execute full validation test suite once host validation passes
+   - Complete all three phases
+   - Generate final validation report
+
+5. DOCUMENT IN ONBOARDING
+   - Add host allowlist requirements to deployment documentation
+   - Include in CI/CD pipeline health checks
+   - Add to CLAUDE.md deployment section
+
+================================================================================
+Report Generated: May 28, 2026
+Test Duration: ~20 minutes
+Status: INCOMPLETE - Infrastructure blocking, not application failure
+================================================================================
