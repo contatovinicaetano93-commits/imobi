@@ -22,6 +22,7 @@ import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { HealthController } from "./common/health.controller";
+import { getRedisConfig } from "./common/config";
 
 @Module({
   imports: [
@@ -32,19 +33,27 @@ import { HealthController } from "./common/health.controller";
       { ttl: 60000, limit: 5, name: "upload" }, // File uploads: 5 req/min
       { ttl: 60000, limit: 20, name: "manager" }, // Manager ops: 20 req/min
     ]),
-    CacheModule.register({
-      isGlobal: true,
-      store: "redis",
-      host: process.env["REDIS_HOST"] ?? "localhost",
-      port: Number(process.env["REDIS_PORT"] ?? 6379),
-      ttl: 300, // 5 min default TTL
-    }),
-    BullModule.forRoot({
-      redis: {
-        host: process.env["REDIS_HOST"] ?? "localhost",
-        port: Number(process.env["REDIS_PORT"] ?? 6379),
-      },
-    }),
+    (() => {
+      const redisConfig = getRedisConfig();
+      return CacheModule.register({
+        isGlobal: true,
+        store: "redis",
+        host: redisConfig.host,
+        port: redisConfig.port,
+        ...(redisConfig.password && { password: redisConfig.password }),
+        ttl: 300, // 5 min default TTL
+      });
+    })(),
+    (() => {
+      const redisConfig = getRedisConfig();
+      return BullModule.forRoot({
+        redis: {
+          host: redisConfig.host,
+          port: redisConfig.port,
+          ...(redisConfig.password && { password: redisConfig.password }),
+        },
+      });
+    })(),
     PrismaModule,
     AuthModule,
     UsuariosModule,
