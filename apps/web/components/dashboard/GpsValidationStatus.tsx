@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 export type GpsPoint = {
   latitude: number;
   longitude: number;
@@ -20,6 +22,8 @@ function GpsVisualization({
   obraLongitude,
   raioValidacaoMetros,
 }: GpsValidationStatusProps) {
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+
   if (pontos.length === 0) return null;
 
   // Calculate bounds with padding
@@ -47,8 +51,8 @@ function GpsVisualization({
   const viewMinLng = minLng - lngPad;
   const viewMaxLng = maxLng + lngPad;
 
-  const mapWidth = 400;
-  const mapHeight = 300;
+  const mapWidth = 500;
+  const mapHeight = 350;
 
   const latToY = (lat: number) => {
     const ratio = (viewMaxLat - lat) / (viewMaxLat - viewMinLat);
@@ -69,52 +73,128 @@ function GpsVisualization({
 
   return (
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-      <p className="text-xs font-semibold text-gray-700 mb-3">Mapa de Validação GPS</p>
-      <svg width={mapWidth} height={mapHeight} className="border border-gray-300 rounded bg-white">
-        {/* Validation radius circle */}
-        <circle cx={obraX} cy={obraY} r={radiusPixels} fill="rgba(59, 130, 246, 0.1)" stroke="#3b82f6" strokeWidth="1" strokeDasharray="4,4" />
+      <p className="text-xs font-semibold text-gray-700 mb-3">Mapa de Validação GPS (raio: {raioValidacaoMetros}m)</p>
+      <div className="relative inline-block w-full">
+        <svg width="100%" height={mapHeight} viewBox={`0 0 ${mapWidth} ${mapHeight}`} className="border border-gray-300 rounded bg-white w-full" style={{ minHeight: `${mapHeight}px` }}>
+          {/* Grid background */}
+          <defs>
+            <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+              <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#e5e7eb" strokeWidth="0.5" />
+            </pattern>
+          </defs>
+          <rect width={mapWidth} height={mapHeight} fill="url(#grid)" />
 
-        {/* GPS Points */}
-        {pontos.map((p, idx) => {
-          const x = lngToX(p.longitude);
-          const y = latToY(p.latitude);
-          const isValid = (p.distanciaObra ?? 0) <= raioValidacaoMetros;
+          {/* Validation radius circle */}
+          <circle cx={obraX} cy={obraY} r={radiusPixels} fill="rgba(59, 130, 246, 0.1)" stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="4,4" />
 
-          return (
-            <g key={idx}>
-              {/* Accuracy circle */}
-              <circle cx={x} cy={y} r={Math.max(2, (p.accuracy / metersPerDegree) * (mapWidth / (viewMaxLng - viewMinLng)))} fill="rgba(0,0,0,0.05)" />
-              {/* Point marker */}
-              <circle cx={x} cy={y} r="4" fill={isValid ? "#10b981" : "#ef4444"} stroke="white" strokeWidth="1.5" />
-              {/* Label */}
-              <text x={x} y={y} textAnchor="middle" dy="0.3em" fontSize="10" fill="white" fontWeight="bold">
-                {idx + 1}
-              </text>
-            </g>
-          );
-        })}
+          {/* GPS Points */}
+          {pontos.map((p, idx) => {
+            const x = lngToX(p.longitude);
+            const y = latToY(p.latitude);
+            const isValid = (p.distanciaObra ?? 0) <= raioValidacaoMetros;
+            const isHovered = hoveredPoint === idx;
 
-        {/* Obra center */}
-        <circle cx={obraX} cy={obraY} r="6" fill="#f59e0b" stroke="white" strokeWidth="2" />
-        <text x={obraX} y={obraY} textAnchor="middle" dy="0.3em" fontSize="11" fontWeight="bold" fill="white">
-          O
-        </text>
-      </svg>
+            return (
+              <g key={idx} onMouseEnter={() => setHoveredPoint(idx)} onMouseLeave={() => setHoveredPoint(null)}>
+                {/* Accuracy circle */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={Math.max(2, (p.accuracy / metersPerDegree) * (mapWidth / (viewMaxLng - viewMinLng)))}
+                  fill={isHovered ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.05)"}
+                  opacity="0.6"
+                />
+                {/* Validation line if needed */}
+                {!isValid && (
+                  <line
+                    x1={obraX}
+                    y1={obraY}
+                    x2={x}
+                    y2={y}
+                    stroke="#fca5a5"
+                    strokeWidth="1"
+                    strokeDasharray="2,2"
+                    opacity="0.5"
+                  />
+                )}
+                {/* Point marker */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={isHovered ? "6" : "4"}
+                  fill={isValid ? "#10b981" : "#ef4444"}
+                  stroke="white"
+                  strokeWidth={isHovered ? "2.5" : "1.5"}
+                  style={{ transition: "r 0.2s, stroke-width 0.2s" }}
+                  className="cursor-pointer"
+                />
+                {/* Label */}
+                <text
+                  x={x}
+                  y={y}
+                  textAnchor="middle"
+                  dy="0.3em"
+                  fontSize={isHovered ? "11" : "10"}
+                  fill="white"
+                  fontWeight="bold"
+                  style={{ transition: "font-size 0.2s", pointerEvents: "none" }}
+                >
+                  {idx + 1}
+                </text>
+              </g>
+            );
+          })}
 
-      <div className="mt-3 flex gap-4 text-xs">
+          {/* Obra center */}
+          <circle cx={obraX} cy={obraY} r="7" fill="#f59e0b" stroke="white" strokeWidth="2.5" />
+          <text x={obraX} y={obraY} textAnchor="middle" dy="0.3em" fontSize="12" fontWeight="bold" fill="white" style={{ pointerEvents: "none" }}>
+            O
+          </text>
+        </svg>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-4 text-xs">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-          <span className="text-gray-700">Obra</span>
+          <span className="text-gray-700">Centro obra</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-green-500"></div>
-          <span className="text-gray-700">Válido</span>
+          <span className="text-gray-700">Ponto validado</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-red-500"></div>
-          <span className="text-gray-700">Inválido</span>
+          <span className="text-gray-700">Fora da zona</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-3 bg-blue-500" style={{ background: "linear-gradient(90deg, transparent, #3b82f6, transparent)" }}></div>
+          <span className="text-gray-700">Raio de validação</span>
         </div>
       </div>
+
+      {hoveredPoint !== null && (
+        <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200 text-sm">
+          <p className="font-semibold text-gray-900 mb-1">Ponto #{hoveredPoint + 1}</p>
+          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+            <div>
+              <span className="text-gray-500">Latitude:</span>
+              <p className="font-mono">{pontos[hoveredPoint].latitude.toFixed(6)}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Longitude:</span>
+              <p className="font-mono">{pontos[hoveredPoint].longitude.toFixed(6)}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Acurácia:</span>
+              <p>{pontos[hoveredPoint].accuracy.toFixed(1)}m</p>
+            </div>
+            <div>
+              <span className="text-gray-500">Distância:</span>
+              <p>{Math.round(pontos[hoveredPoint].distanciaObra ?? 0)}m</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -186,52 +266,84 @@ export function GpsValidationStatus({
 
         {/* Detailed list */}
         <div className="space-y-2 text-sm">
+          <div className="font-semibold text-gray-700 px-2 py-1">Detalhes dos pontos GPS:</div>
           {pontos.map((p, idx) => {
             const isValid = (p.distanciaObra ?? 0) <= raioValidacaoMetros;
             const distancia = Math.round(p.distanciaObra ?? 0);
+            const margemErro = raioValidacaoMetros - distancia;
 
             return (
               <div
                 key={idx}
-                className="flex items-center justify-between p-2 bg-white rounded border border-gray-200"
+                className={`p-3 bg-white rounded border ${
+                  isValid ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"
+                }`}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center text-white ${
+                        isValid ? "bg-green-600" : "bg-red-600"
+                      }`}
+                    >
+                      {idx + 1}
+                    </span>
+                    <div>
+                      <p className="text-gray-900 font-medium">Ponto {idx + 1}</p>
+                      <p className="text-xs text-gray-600">
+                        {p.latitude.toFixed(6)}, {p.longitude.toFixed(6)}
+                      </p>
+                    </div>
+                  </div>
                   <span
-                    className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ${
+                    className={`text-xs font-semibold px-2 py-1 rounded ${
                       isValid
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
+                        ? "bg-green-200 text-green-800"
+                        : "bg-red-200 text-red-800"
                     }`}
                   >
-                    {idx + 1}
-                  </span>
-                  <span className="text-gray-700">
-                    {p.latitude.toFixed(6)}, {p.longitude.toFixed(6)}
+                    {isValid ? "✓ OK" : "✕ Inválido"}
                   </span>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-600">
-                    {distancia}m away (accuracy: {p.accuracy.toFixed(1)}m)
-                  </p>
-                  {!isValid && (
-                    <p className="text-xs text-red-600 font-semibold">
-                      Fora do raio
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div>
+                    <span className="text-gray-600">Distância</span>
+                    <p className="font-semibold text-gray-900">{distancia}m</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Acurácia</span>
+                    <p className="font-semibold text-gray-900">{p.accuracy.toFixed(1)}m</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">
+                      {isValid ? "Margem" : "Excesso"}
+                    </span>
+                    <p className={`font-semibold ${isValid ? "text-green-700" : "text-red-700"}`}>
+                      {Math.abs(margemErro)}m
                     </p>
-                  )}
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="p-3 bg-white rounded border border-gray-200 text-sm">
-          <p className="text-gray-700">
-            <span className="font-semibold">Obra localizada em:</span>{" "}
-            {obraLatitude.toFixed(6)}, {obraLongitude.toFixed(6)}
-          </p>
-          <p className="text-gray-600 text-xs mt-1">
-            Raio de validação: {raioValidacaoMetros}m
-          </p>
+        <div className="p-4 bg-blue-50 rounded border border-blue-200">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-xs text-blue-600 font-semibold mb-1">Centro da obra</p>
+              <p className="font-mono text-gray-900 text-sm">
+                {obraLatitude.toFixed(6)}
+              </p>
+              <p className="font-mono text-gray-900 text-sm">
+                {obraLongitude.toFixed(6)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-blue-600 font-semibold mb-1">Raio de validação</p>
+              <p className="text-2xl font-bold text-blue-700">{raioValidacaoMetros}m</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

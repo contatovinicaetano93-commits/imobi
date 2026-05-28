@@ -10,6 +10,14 @@ export type BulkApprovalActionsProps = {
   isDisabled: boolean;
 };
 
+const REJECTION_PRESETS = [
+  "Documentação incompleta",
+  "GPS inválido",
+  "Obra parada",
+  "Fotos com qualidade inadequada",
+  "Outro motivo",
+];
+
 export function BulkApprovalActions({
   selectedEtapas,
   onSuccess,
@@ -19,6 +27,7 @@ export function BulkApprovalActions({
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirm, setShowConfirm] = useState<"approve" | "reject" | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
 
   const handleBulkApprove = async () => {
     setIsProcessing(true);
@@ -57,12 +66,23 @@ export function BulkApprovalActions({
       onSuccess();
       setShowConfirm(null);
       setRejectReason("");
+      setSelectedPreset(null);
     } catch (error) {
       onError(
         error instanceof Error ? error.message : "Erro ao rejeitar etapas"
       );
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handlePresetSelect = (preset: string) => {
+    if (preset === "Outro motivo") {
+      setSelectedPreset(preset);
+      setRejectReason("");
+    } else {
+      setSelectedPreset(preset);
+      setRejectReason(preset);
     }
   };
 
@@ -145,7 +165,7 @@ export function BulkApprovalActions({
       {/* Rejection Modal */}
       {showConfirm === "reject" && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-xl flex flex-col">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-xl flex flex-col">
             <h2 className="text-lg font-bold text-gray-900 mb-2">
               Rejeitar em lote
             </h2>
@@ -154,18 +174,55 @@ export function BulkApprovalActions({
               {selectedEtapas.length !== 1 ? "s" : ""}:
             </p>
 
-            <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Exemplo: Documentação incompleta, Fotos com qualidade inadequada, etc."
-              className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none flex-1 min-h-[100px]"
-              rows={4}
-              disabled={isProcessing}
-            />
+            {/* Preset Buttons */}
+            <div className="mb-4 space-y-2">
+              <p className="text-xs font-medium text-gray-700">Motivos rápidos:</p>
+              <div className="grid grid-cols-2 gap-2">
+                {REJECTION_PRESETS.map((preset) => (
+                  <button
+                    key={preset}
+                    onClick={() => handlePresetSelect(preset)}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                      selectedPreset === preset
+                        ? "bg-red-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                    disabled={isProcessing}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            <div className="mt-6 flex gap-3">
+            {/* Custom Reason Textarea */}
+            <div className="mb-6">
+              <label htmlFor="reject-reason" className="text-xs font-medium text-gray-700 block mb-2">
+                {selectedPreset === "Outro motivo" ? "Informe o motivo:" : "Ou customize o motivo:"}
+              </label>
+              <textarea
+                id="reject-reason"
+                value={rejectReason}
+                onChange={(e) => {
+                  setRejectReason(e.target.value);
+                  if (selectedPreset !== "Outro motivo") {
+                    setSelectedPreset(null);
+                  }
+                }}
+                placeholder="Descreva o motivo da rejeição..."
+                className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none flex-1 min-h-[80px]"
+                rows={3}
+                disabled={isProcessing}
+              />
+            </div>
+
+            <div className="flex gap-3">
               <button
-                onClick={() => setShowConfirm(null)}
+                onClick={() => {
+                  setShowConfirm(null);
+                  setRejectReason("");
+                  setSelectedPreset(null);
+                }}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
                 disabled={isProcessing}
               >
