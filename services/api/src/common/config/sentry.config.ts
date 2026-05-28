@@ -17,7 +17,7 @@ export function initSentry(): void {
     dsn,
     environment,
     integrations: [
-      httpIntegration({ tracing: true }),
+      httpIntegration(),
       onUncaughtExceptionIntegration(),
       onUnhandledRejectionIntegration(),
     ],
