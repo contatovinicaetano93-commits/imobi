@@ -174,5 +174,5 @@ export const FCM_TOKEN_REGEX =
 export const isValidFCMToken = (token: string): boolean => {
   if (!token || typeof token !== "string") return false;
   // FCM tokens are typically long alphanumeric strings
-  return token.length > 100 && /^[a-zA-Z0-9_-:]+$/.test(token);
+  return token.length > 100 && /^[a-zA-Z0-9_:\-]+$/.test(token);
 };

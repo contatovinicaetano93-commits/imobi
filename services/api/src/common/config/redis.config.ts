@@ -1,4 +1,3 @@
-import { CacheStore } from "cache-manager";
 import { redisStore } from "cache-manager-redis-yet";
 
 /**
@@ -8,7 +7,7 @@ import { redisStore } from "cache-manager-redis-yet";
  * 1. Connection string (REDIS_URL) - Recommended for cloud deployments
  * 2. Individual vars (REDIS_HOST, REDIS_PORT, etc) - For traditional setups
  */
-export const getRedisConfig = async () => {
+export const getRedisConfig = async (): Promise<{ store: any }> => {
   const redisUrl =
     process.env["REDIS_URL"] ||
     `redis://${process.env["REDIS_PASSWORD"] ? `:${process.env["REDIS_PASSWORD"]}@` : ""}${process.env["REDIS_HOST"] ?? "localhost"}:${process.env["REDIS_PORT"] ?? 6379}/${process.env["REDIS_DB"] ?? 0}`;
@@ -16,10 +15,7 @@ export const getRedisConfig = async () => {
   return {
     store: await redisStore({
       url: redisUrl,
-      password: process.env["REDIS_PASSWORD"],
-      db: Number(process.env["REDIS_DB"] ?? 0),
       ttl: 300, // 5 min default TTL
-      isGlobal: true,
     }),
   };
 };
