@@ -2,6 +2,7 @@ import { Controller, Post, Get, Patch, Body, Param, UseGuards } from "@nestjs/co
 import { KycService } from "./kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { RateLimit } from "../../common/decorators/rate-limit.decorator";
 
 @UseGuards(JwtAuthGuard)
 @Controller("kyc")
@@ -9,6 +10,7 @@ export class KycController {
   constructor(private readonly kyc: KycService) {}
 
   @Post("upload")
+  @RateLimit(10, 5) /* 10 req/5min */
   async uploadDocumento(
     @UsuarioAtual() u: IUsuario,
     @Body() body: { tipo: string; url: string }
@@ -46,6 +48,7 @@ export class KycController {
   }
 
   @Get("verificar")
+  @RateLimit(10, 5) /* 10 req/5min */
   async verificarKycCompleto(@UsuarioAtual() u: IUsuario) {
     return this.kyc.verificarKycCompleto(u.id);
   }

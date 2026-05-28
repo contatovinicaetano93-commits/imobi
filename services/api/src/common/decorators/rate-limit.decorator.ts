@@ -1,9 +1,13 @@
 import { SetMetadata } from "@nestjs/common";
 
-export type ThrottlerName = "general" | "auth" | "upload" | "manager" | "api-key" | "password-reset";
+export type ThrottlerName = "general" | "auth" | "kyc" | "marketplace" | "upload" | "manager" | "api-key" | "password-reset";
 
 /**
  * Decorator to specify rate limit throttler for specific endpoints
+ *
+ * Supports two formats:
+ * 1. Named throttler: @RateLimit('auth')
+ * 2. Custom limits: @RateLimit(limit, windowMinutes)
  *
  * @example
  * @Post('login')
@@ -11,12 +15,21 @@ export type ThrottlerName = "general" | "auth" | "upload" | "manager" | "api-key
  * async login() { ... }
  *
  * @example
- * @Post('upload')
- * @RateLimit('upload')
- * async upload() { ... }
+ * @Post('kyc/validate')
+ * @RateLimit(10, 5) // 10 requests per 5 minutes
+ * async validate() { ... }
  */
-export const RateLimit = (throttler: ThrottlerName) =>
-  SetMetadata("throttler:key", throttler);
+export const RateLimit = (throttlerOrLimit: ThrottlerName | number, windowMinutes?: number) => {
+  if (typeof throttlerOrLimit === "number") {
+    // Custom limit format: RateLimit(limit, windowMinutes)
+    return SetMetadata("throttler:custom", {
+      limit: throttlerOrLimit,
+      ttl: (windowMinutes ?? 1) * 60 * 1000, // Convert minutes to milliseconds
+    });
+  }
+  // Named throttler format: RateLimit('auth')
+  return SetMetadata("throttler:key", throttlerOrLimit);
+};
 
 /**
  * Decorator to skip rate limiting for specific endpoints
@@ -24,7 +37,7 @@ export const RateLimit = (throttler: ThrottlerName) =>
  *
  * @example
  * @Get('health')
- * @SkipThrottle()
+ * @SkipRateLimit()
  * async health() { ... }
  */
 export const SkipRateLimit = () => SetMetadata("throttler:skip", true);
