@@ -23,6 +23,7 @@ import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { HealthController } from "./common/health.controller";
+import { HealthService } from "./common/health.service";
 import { CsrfService } from "./common/csrf.service";
 import { EncryptionService } from "./common/encryption.service";
 
@@ -69,6 +70,7 @@ import { EncryptionService } from "./common/encryption.service";
     CacheService,
     CsrfService,
     EncryptionService,
+    HealthService,
     LiberacaoParcelaWorker,
     {
       provide: APP_GUARD,

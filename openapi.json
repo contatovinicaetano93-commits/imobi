@@ -1,0 +1,170 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "imobi API",
+    "description": "Complete API specification for imobi platform",
+    "version": "1.0.0",
+    "contact": {
+      "name": "imobi Support",
+      "email": "support@imbobi.com.br"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000/api/v1",
+      "description": "Development"
+    },
+    {
+      "url": "https://staging-api.imbobi.com.br/api/v1",
+      "description": "Staging"
+    },
+    {
+      "url": "https://api.imbobi.com.br/api/v1",
+      "description": "Production"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Usuario": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "cpf": { "type": "string", "pattern": "^\\d{11}$" },
+          "telefone": { "type": "string", "pattern": "^\\d{11}$" },
+          "tipo": { "type": "string", "enum": ["TOMADOR", "GESTOR_OBRA", "ADMIN"] },
+          "dataCriacao": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": { "type": "string" },
+          "refreshToken": { "type": "string" }
+        }
+      },
+      "Obra": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "titulo": { "type": "string" },
+          "descricao": { "type": "string" },
+          "valor": { "type": "number" },
+          "status": { "type": "string", "enum": ["PLANEJAMENTO", "EM_ANDAMENTO", "CONCLUIDA"] },
+          "localizacao": {
+            "type": "object",
+            "properties": {
+              "latitude": { "type": "number" },
+              "longitude": { "type": "number" }
+            }
+          }
+        }
+      },
+      "KYCStatus": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["NENHUM", "ENVIADO", "APROVADO", "REJEITADO"] },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "type": { "type": "string" },
+                "status": { "type": "string" },
+                "url": { "type": "string", "format": "uri" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/registrar": {
+      "post": {
+        "summary": "Register new user",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "cpf": { "type": "string", "pattern": "^\\d{11}$" },
+                  "telefone": { "type": "string", "pattern": "^\\d{11}$" },
+                  "senha": { "type": "string", "minLength": 8 },
+                  "tipo": { "type": "string", "enum": ["TOMADOR", "GESTOR_OBRA"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login user",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "senha": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login successful", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } }
+        }
+      }
+    },
+    "/kyc/status": {
+      "get": {
+        "summary": "Get KYC status",
+        "tags": ["KYC"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "KYC status", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/KYCStatus" } } } }
+        }
+      }
+    },
+    "/obras": {
+      "get": {
+        "summary": "List works",
+        "tags": ["Works"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } }
+        ],
+        "responses": {
+          "200": { "description": "Works list", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Obra" } } } } }
+        }
+      }
+    }
+  }
+}
