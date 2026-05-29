@@ -28,7 +28,6 @@ export default function EtapasPage() {
   const [offset, setOffset] = useState(0);
   const [selectedEtapas, setSelectedEtapas] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [lastAction, setLastAction] = useState<"approve" | "reject" | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     status: "todas",
     dataInicio: "",
@@ -104,7 +103,6 @@ export default function EtapasPage() {
   };
 
   const handleBulkSuccess = (action: "approve" | "reject") => {
-    setLastAction(action);
     const actionText = action === "approve" ? "aprovada(s)" : "rejeitada(s)";
     setSuccessMessage(`${selectedEtapas.length} etapa(s) ${actionText} com sucesso!`);
     setSelectedEtapas([]);
