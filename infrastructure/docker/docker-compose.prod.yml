@@ -1,0 +1,94 @@
+version: "3.8"
+
+services:
+  # PostgreSQL with automated backups
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: imbobi_postgres_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-imbobi}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?error}
+      POSTGRES_DB: ${DATABASE_NAME:-imbobi_prod}
+      POSTGRES_INITDB_ARGS: "-c max_connections=200 -c shared_buffers=256MB -c effective_cache_size=1GB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c work_mem=1280kB -c min_wal_size=2GB -c max_wal_size=4GB"
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_backups:/var/backups/imobi/postgres
+      - ./postgres.conf:/etc/postgresql/postgresql.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-imbobi} -d ${DATABASE_NAME:-imbobi_prod}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - imbobi_network
+
+  # Redis with persistence (RDB + AOF)
+  redis:
+    image: redis:7-alpine
+    container_name: imbobi_redis_prod
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf
+    environment:
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+      - redis_backups:/var/backups/imobi/redis
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - imbobi_network
+
+  # Optional: Backup scheduler (runs backup scripts on schedule)
+  backup-scheduler:
+    image: mcuadros/ofelia:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/backups/imobi:/var/backups/imobi
+      - /var/log/imobi:/var/log/imobi
+    command:
+      - "daemon"
+      - "--docker"
+    networks:
+      - imbobi_network
+    labels:
+      # PostgreSQL backup: Daily at 2:00 AM UTC
+      ofelia: "enabled"
+      ofelia.enabled: "true"
+      ofelia.test-pg-backup.type: "job"
+      ofelia.test-pg-backup.schedule: "@daily"
+      ofelia.test-pg-backup.image: "postgres:15"
+      ofelia.test-pg-backup.command: "/bin/sh -c 'cd /app && bash infrastructure/scripts/backup-postgres.sh production'"
+
+      # Redis backup: Daily at 2:30 AM UTC
+      ofelia.test-redis-backup.type: "job"
+      ofelia.test-redis-backup.schedule: "@daily"
+      ofelia.test-redis-backup.image: "redis:7-alpine"
+      ofelia.test-redis-backup.command: "/bin/sh -c 'cd /app && bash infrastructure/scripts/backup-redis.sh production'"
+
+volumes:
+  postgres_data:
+    driver: local
+  postgres_backups:
+    driver: local
+  redis_data:
+    driver: local
+  redis_backups:
+    driver: local
+
+networks:
+  imbobi_network:
+    name: imbobi_network
+    driver: bridge
