@@ -25,6 +25,9 @@ export class AuthController {
 
   @Post("login")
   @HttpCode(200)
+  @ApiOperation({ summary: "Login de usuário" })
+  @ApiResponse({ status: 200, description: "Login bem-sucedido" })
+  @ApiResponse({ status: 401, description: "Credenciais inválidas" })
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async login(
     @Body(new ZodPipe(LoginSchema)) body: unknown,
