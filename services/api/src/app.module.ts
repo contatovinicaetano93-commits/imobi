@@ -24,6 +24,7 @@ import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notific
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { HealthController } from "./common/health.controller";
 import { CsrfService } from "./common/csrf.service";
+import { EncryptionService } from "./common/encryption.service";
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { CsrfService } from "./common/csrf.service";
   providers: [
     CacheService,
     CsrfService,
+    EncryptionService,
     LiberacaoParcelaWorker,
     {
       provide: APP_GUARD,

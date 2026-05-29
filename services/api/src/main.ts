@@ -1,8 +1,10 @@
 // Setup module aliases for workspace packages before any imports
 const moduleAlias = require("module-alias");
 const path = require("path");
-// Use cwd() as it should be the project root when running from dist
-const projectRoot = process.cwd();
+// Navigate from dist/services/api/src/main.js up to project root
+// __dirname at runtime = /home/user/imobi/services/api/dist/services/api/src
+// Need to go up 6 levels: src -> api -> services -> dist -> api -> services -> imobi
+const projectRoot = path.resolve(__dirname, "../../../../../../");
 moduleAlias.addAlias("@imbobi/schemas", path.join(projectRoot, "packages/schemas/dist"));
 moduleAlias.addAlias("@imbobi/core", path.join(projectRoot, "packages/core/dist"));
 moduleAlias.addAlias("@imbobi/ui", path.join(projectRoot, "packages/ui/dist"));
