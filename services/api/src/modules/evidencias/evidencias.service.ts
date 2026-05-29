@@ -10,6 +10,8 @@ import { calcularDistanciaMetros } from "@imbobi/core";
 import type { UploadEvidenciaInput } from "@imbobi/schemas";
 
 const MAX_ACCURACY_METROS = 15;
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/heic', 'image/webp'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 @Injectable()
 export class EvidenciasService {
@@ -18,12 +20,27 @@ export class EvidenciasService {
     private readonly storage: StorageService
   ) {}
 
+  private validateFile(mimeType: string, fileSize: number): void {
+    if (!ALLOWED_MIME.includes(mimeType)) {
+      throw new BadRequestException(
+        `Invalid image format. Allowed: ${ALLOWED_MIME.join(', ')}`
+      );
+    }
+    if (fileSize > MAX_FILE_SIZE) {
+      throw new BadRequestException(
+        `File size exceeds 10MB limit. Got: ${(fileSize / 1024 / 1024).toFixed(2)}MB`
+      );
+    }
+  }
+
   async upload(
     usuarioId: string,
     input: UploadEvidenciaInput,
     fileBuffer: Buffer,
     mimeType: string
   ) {
+    this.validateFile(mimeType, fileBuffer.length);
+
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId: input.etapaId },
       include: { obra: true },
