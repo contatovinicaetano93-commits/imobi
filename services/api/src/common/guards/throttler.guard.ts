@@ -1,11 +1,15 @@
 import { Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { ThrottlerGuard } from "@nestjs/throttler";
+import { ThrottlerGuard, ThrottlerModuleOptions, ThrottlerStorage } from "@nestjs/throttler";
 
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
-  constructor(private reflector: Reflector) {
-    super();
+  constructor(
+    protected readonly options: ThrottlerModuleOptions,
+    protected readonly storageService: ThrottlerStorage,
+    protected readonly reflector: Reflector,
+  ) {
+    super(options, storageService, reflector);
   }
 
   async getTracker(req: Record<string, any>): Promise<string> {
