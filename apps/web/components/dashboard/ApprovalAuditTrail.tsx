@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import type { EtapaAuditEntry, KycAuditEntry } from "@/lib/api";
 import { CheckCircle2, XCircle, Edit3, Clock, User, Mail, AlertCircle } from "lucide-react";
 
-type AuditEntry = EtapaAuditEntry | KycAuditEntry;
+export type AuditEntry = EtapaAuditEntry | KycAuditEntry;
 
-interface ApprovalAuditTrailProps {
+export interface ApprovalAuditTrailProps {
   auditLogs: AuditEntry[];
   loading?: boolean;
   error?: string | null;
+  title?: string;
 }
 
 function formatDate(date: string) {
@@ -68,11 +69,12 @@ export function ApprovalAuditTrail({
   auditLogs,
   loading = false,
   error = null,
+  title = "Histórico de Aprovações",
 }: ApprovalAuditTrailProps) {
   if (loading) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <h2 className="font-bold text-gray-900 mb-4">Histórico de Aprovações</h2>
+        <h2 className="font-bold text-gray-900 mb-4">{title}</h2>
         <div className="text-gray-500 text-center py-8">
           <div className="inline-block animate-spin">
             <Clock className="w-5 h-5" />
@@ -159,28 +161,28 @@ export function ApprovalAuditTrail({
                 <div className="flex-1 pt-1.5 pb-6">
                   <div className="space-y-2">
                     {/* Action and timestamp header */}
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                       <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${badgeColor}`}
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-bold border w-fit ${badgeColor}`}
                       >
                         {label}
                       </span>
                       <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Clock className="w-3 h-3" />
-                        {formatDate(log.criadoEm)}
+                        <Clock className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{formatDate(log.criadoEm)}</span>
                       </div>
                     </div>
 
                     {/* Manager info */}
                     <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                       <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-gray-600" />
-                          <span className="font-semibold text-gray-900">{log.gerenciador}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <User className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                          <span className="font-semibold text-gray-900 truncate">{log.gerenciador}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-gray-600" />
-                          <span className="text-gray-600">{log.gerenciadorEmail}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Mail className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                          <span className="text-gray-600 truncate">{log.gerenciadorEmail}</span>
                         </div>
                       </div>
                     </div>
