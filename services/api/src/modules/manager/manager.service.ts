@@ -146,7 +146,7 @@ export class ManagerService {
           },
         },
       })),
-      total: filtered.length,
+      total,
     };
 
     // Cache TTL: 120 seconds (matches controller CacheTTL decorator)
