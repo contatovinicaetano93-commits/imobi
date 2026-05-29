@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { managerApi, type EtapaPendente } from "@/lib/api";
 import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions";
@@ -19,7 +19,7 @@ function hoursAgo(date: string): number {
   return Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60));
 }
 
-export default function EtapasPage() {
+function EtapasContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [data, setData] = useState<{ etapas: EtapaPendente[]; total: number } | null>(null);
@@ -324,5 +324,13 @@ export default function EtapasPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function EtapasPage() {
+  return (
+    <Suspense fallback={<div className="space-y-6"><div><h1 className="text-2xl font-bold text-gray-900">Etapas Pendentes</h1><p className="text-gray-500 text-sm mt-1">Carregando...</p></div></div>}>
+      <EtapasContent />
+    </Suspense>
   );
 }
