@@ -20,6 +20,38 @@ HEALTHY=0
 WARNINGS=0
 CRITICAL=0
 
+# Check for bc availability, provide fallback for floating point comparisons
+# bc is preferred but not required - we use bash arithmetic as fallback
+float_compare() {
+    # Compare two floats: $1 operator $2
+    # Operators: lt, le, gt, ge, eq, ne
+    local num1=$1 op=$2 num2=$3
+
+    if command -v bc >/dev/null 2>&1; then
+        case "$op" in
+            lt) [ "$(echo "$num1 < $num2" | bc -l)" = "1" ] && return 0 || return 1 ;;
+            le) [ "$(echo "$num1 <= $num2" | bc -l)" = "1" ] && return 0 || return 1 ;;
+            gt) [ "$(echo "$num1 > $num2" | bc -l)" = "1" ] && return 0 || return 1 ;;
+            ge) [ "$(echo "$num1 >= $num2" | bc -l)" = "1" ] && return 0 || return 1 ;;
+            eq) [ "$(echo "$num1 == $num2" | bc -l)" = "1" ] && return 0 || return 1 ;;
+            ne) [ "$(echo "$num1 != $num2" | bc -l)" = "1" ] && return 0 || return 1 ;;
+        esac
+    else
+        # Fallback using bash arithmetic (integer comparison)
+        # Convert floats to integers by removing decimal point
+        num1=${num1%.*}
+        num2=${num2%.*}
+        case "$op" in
+            lt) [ "$num1" -lt "$num2" ] && return 0 || return 1 ;;
+            le) [ "$num1" -le "$num2" ] && return 0 || return 1 ;;
+            gt) [ "$num1" -gt "$num2" ] && return 0 || return 1 ;;
+            ge) [ "$num1" -ge "$num2" ] && return 0 || return 1 ;;
+            eq) [ "$num1" -eq "$num2" ] && return 0 || return 1 ;;
+            ne) [ "$num1" -ne "$num2" ] && return 0 || return 1 ;;
+        esac
+    fi
+}
+
 run_checks() {
     HEALTHY=0
     WARNINGS=0
@@ -88,10 +120,10 @@ run_checks() {
     echo -n "📊 Error Rate... "
     ERROR_RATE=$(curl -s --connect-timeout $TIMEOUT "$API_URL/api/v1/metrics" 2>/dev/null | jq -r '.error_rate' 2>/dev/null || echo "unknown")
     if [ "$ERROR_RATE" != "unknown" ]; then
-        if (( $(echo "$ERROR_RATE < 1" | bc -l 2>/dev/null || echo "1") )); then
+        if float_compare "$ERROR_RATE" "lt" "1"; then
             echo -e "${GREEN}✓ ${ERROR_RATE}%${NC}"
             HEALTHY=$((HEALTHY+1))
-        elif (( $(echo "$ERROR_RATE < 5" | bc -l 2>/dev/null || echo "1") )); then
+        elif float_compare "$ERROR_RATE" "lt" "5"; then
             echo -e "${YELLOW}⚠ ${ERROR_RATE}%${NC}"
             WARNINGS=$((WARNINGS+1))
         else

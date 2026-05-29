@@ -31,7 +31,9 @@ success "New version deployed"
 # Step 3: Run database migrations
 log "Step 3: Running database migrations..."
 cd /opt/imobi/app
-export $(cat .env | grep -v '^#' | xargs)
+set -a
+source .env
+set +a
 npm run db:migrate || error "Database migration failed"
 success "Database migration completed"
 
