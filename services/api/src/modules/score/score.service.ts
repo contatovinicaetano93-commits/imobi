@@ -78,6 +78,21 @@ export class ScoreService {
     return score;
   }
 
+  async recalcularScore(usuarioId: string) {
+    const cacheKey = `score:${usuarioId}`;
+    const score = await this.calcularScore(usuarioId);
+
+    // Registra no histórico com motivo de recálculo automático
+    await this.prisma.scoreHistorico.create({
+      data: { usuarioId, score, motivo: "Recálculo automático diário" },
+    });
+
+    // Invalida cache para forçar recálculo próximo acesso
+    await this.cache.delete(cacheKey);
+
+    return score;
+  }
+
   async buscarHistorico(usuarioId: string, limit = 12) {
     return this.prisma.scoreHistorico.findMany({
       where: { usuarioId },
