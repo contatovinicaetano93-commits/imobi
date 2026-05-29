@@ -5,8 +5,7 @@ import { PrismaService } from "../modules/prisma/prisma.service";
 import { NotificacoesService } from "../modules/notificacoes/notificacoes.service";
 import { EmailService } from "../modules/email/email.service";
 import { PushNotificacoesService } from "../modules/push-notificacoes/push-notificacoes.service";
-
-export const QUEUE_LIBERACAO = "liberacao-parcela";
+import { QUEUE_LIBERACAO } from "../common/constants";
 
 export interface LiberacaoJob {
   creditoId: string;
