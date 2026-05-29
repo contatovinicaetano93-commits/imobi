@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export type FilterState = {
   status: "todas" | "pendente" | "aprovada" | "rejeitada";
@@ -11,18 +11,28 @@ export type FilterState = {
 };
 
 export type AdvancedFiltersProps = {
+  filters?: FilterState;
   onFilter: (filters: FilterState) => void;
   onReset: () => void;
 };
 
-export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
-  const [filters, setFilters] = useState<FilterState>({
-    status: "todas",
-    dataInicio: "",
-    dataFim: "",
-    obraType: "",
-    priority: "todas",
-  });
+export function AdvancedFilters({ filters: initialFilters, onFilter, onReset }: AdvancedFiltersProps) {
+  const [filters, setFilters] = useState<FilterState>(
+    initialFilters || {
+      status: "todas",
+      dataInicio: "",
+      dataFim: "",
+      obraType: "",
+      priority: "todas",
+    }
+  );
+
+  // Update local state when initialFilters changes (from URL)
+  useEffect(() => {
+    if (initialFilters) {
+      setFilters(initialFilters);
+    }
+  }, [initialFilters]);
 
   const [isExpanded, setIsExpanded] = useState(false);
 

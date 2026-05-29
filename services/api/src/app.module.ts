@@ -3,8 +3,9 @@ import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { CacheModule } from "@nestjs/cache-manager";
-import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR, Reflector } from "@nestjs/core";
 import { CacheInterceptor } from "@nestjs/cache-manager";
+import { ThrottlerStorage } from "@nestjs/throttler";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsuariosModule } from "./modules/usuarios/usuarios.module";
@@ -44,6 +45,8 @@ import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
         port: redisConfig.port,
         ...(redisConfig.password && { password: redisConfig.password }),
         ttl: 300, // 5 min default TTL
+        lazyConnect: true, // Connect lazily to avoid blocking app initialization
+        retryStrategy: (times: number) => Math.min(times * 50, 2000), // Retry with exponential backoff
       });
     })(),
     (() => {
@@ -53,6 +56,9 @@ import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
           host: redisConfig.host,
           port: redisConfig.port,
           ...(redisConfig.password && { password: redisConfig.password }),
+          maxRetriesPerRequest: null, // Required for async operations
+          enableReadyCheck: false, // Don't block on ready
+          retryStrategy: (times: number) => Math.min(times * 50, 2000), // Retry with exponential backoff
         },
       });
     })(),
@@ -76,12 +82,17 @@ import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
   providers: [
     LiberacaoParcelaWorker,
     {
-      provide: APP_GUARD,
-      useClass: CustomThrottlerGuard,
-    },
-    {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
+    },
+    {
+      provide: APP_GUARD,
+      useFactory: (
+        options: any,
+        storageService: ThrottlerStorage,
+        reflector: Reflector,
+      ) => new CustomThrottlerGuard(options, storageService, reflector),
+      inject: ["THROTTLER:MODULE_OPTIONS", ThrottlerStorage, Reflector],
     },
   ],
 })

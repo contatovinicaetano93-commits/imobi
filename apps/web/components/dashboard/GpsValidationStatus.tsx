@@ -2,12 +2,20 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronUp, MapPin, AlertCircle, CheckCircle } from "lucide-react";
+import { GpsValidationMap } from "./GpsValidationMap";
 
 export type GpsPoint = {
   latitude: number;
   longitude: number;
   accuracy: number;
   distanciaObra?: number;
+};
+
+export type GpsValidationStats = {
+  totalPontos: number;
+  pontosValidos: number;
+  percentualValidacao: number;
+  confiancaMedia: number;
 };
 
 export type GpsValidationStatusProps = {
@@ -233,6 +241,7 @@ export function GpsValidationStatus({
   raioValidacaoMetros,
 }: GpsValidationStatusProps) {
   const [expandedDetails, setExpandedDetails] = useState(false);
+  const [viewMode, setViewMode] = useState<'svg' | 'map'>('svg');
 
   if (pontos.length === 0) {
     return (
@@ -285,13 +294,52 @@ export function GpsValidationStatus({
       </div>
 
       <div className="space-y-4">
-        {/* Visual map */}
-        <GpsVisualization
-          pontos={pontos}
-          obraLatitude={obraLatitude}
-          obraLongitude={obraLongitude}
-          raioValidacaoMetros={raioValidacaoMetros}
-        />
+        {/* Visual map with toggle */}
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm font-semibold text-gray-900">Visualização GPS</p>
+            <div className="flex gap-2 bg-gray-100 p-1 rounded-lg border border-gray-200 w-fit">
+              <button
+                onClick={() => setViewMode('svg')}
+                className={`px-3 py-1 rounded text-xs font-medium transition-all whitespace-nowrap ${
+                  viewMode === 'svg'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Padrão
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`px-3 py-1 rounded text-xs font-medium transition-all whitespace-nowrap ${
+                  viewMode === 'map'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Mapa
+              </button>
+            </div>
+          </div>
+
+          {viewMode === 'svg' ? (
+            <GpsVisualization
+              pontos={pontos}
+              obraLatitude={obraLatitude}
+              obraLongitude={obraLongitude}
+              raioValidacaoMetros={raioValidacaoMetros}
+            />
+          ) : (
+            <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+              <GpsValidationMap
+                pontos={pontos}
+                obraLatitude={obraLatitude}
+                obraLongitude={obraLongitude}
+                raioValidacaoMetros={raioValidacaoMetros}
+              />
+            </div>
+          )}
+        </div>
 
         {/* Detailed list toggle */}
         <button

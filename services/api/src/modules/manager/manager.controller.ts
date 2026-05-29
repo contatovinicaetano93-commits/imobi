@@ -34,7 +34,8 @@ export class ManagerController {
     @Query("status") status?: "todas" | "pendente" | "aprovada" | "rejeitada",
     @Query("dataInicio") dataInicio?: string,
     @Query("dataFim") dataFim?: string,
-    @Query("obraType") obraType?: string
+    @Query("obraType") obraType?: string,
+    @Query("priority") priority?: "todas" | "urgente" | "intermediaria" | "normal"
   ) {
     await this.manager.verificarPermissao(u.id);
     return this.manager.listarEtapasPendentes(
@@ -45,6 +46,7 @@ export class ManagerController {
         dataInicio,
         dataFim,
         obraType,
+        priority,
       }
     );
   }

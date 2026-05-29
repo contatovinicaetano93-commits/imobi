@@ -1,8 +1,7 @@
 "use client";
 
-
-
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { managerApi, type EtapaPendente } from "@/lib/api";
 import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions";
 import { AdvancedFilters, type FilterState } from "@/components/dashboard/AdvancedFilters";
@@ -21,6 +20,8 @@ function hoursAgo(date: string): number {
 }
 
 export default function EtapasPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [data, setData] = useState<{ etapas: EtapaPendente[]; total: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +36,23 @@ export default function EtapasPage() {
     priority: "todas",
   });
   const limit = 20;
+
+  // Initialize filters from URL query params
+  useEffect(() => {
+    const status = (searchParams.get("status") as FilterState["status"]) || "todas";
+    const dataInicio = searchParams.get("dataInicio") || "";
+    const dataFim = searchParams.get("dataFim") || "";
+    const obraType = searchParams.get("obraType") || "";
+    const priority = (searchParams.get("priority") as FilterState["priority"]) || "todas";
+
+    setFilters({
+      status,
+      dataInicio,
+      dataFim,
+      obraType,
+      priority,
+    });
+  }, [searchParams]);
 
   useEffect(() => {
     setLoading(true);
@@ -84,8 +102,9 @@ export default function EtapasPage() {
     );
   };
 
-  const handleBulkSuccess = () => {
-    setSuccessMessage(`${selectedEtapas.length} etapa(s) aprovada(s) com sucesso!`);
+  const handleBulkSuccess = (action: "approve" | "reject") => {
+    const actionText = action === "approve" ? "aprovada(s)" : "rejeitada(s)";
+    setSuccessMessage(`${selectedEtapas.length} etapa(s) ${actionText} com sucesso!`);
     setSelectedEtapas([]);
     setOffset(0);
     setTimeout(() => setSuccessMessage(null), 5000);
@@ -124,13 +143,35 @@ export default function EtapasPage() {
       </div>
 
       <AdvancedFilters
+        filters={filters}
         onFilter={(newFilters: FilterState) => {
           setFilters(newFilters);
           setOffset(0);
+          // Update URL query params
+          const params = new URLSearchParams();
+          if (newFilters.status && newFilters.status !== "todas") {
+            params.set("status", newFilters.status);
+          }
+          if (newFilters.dataInicio) {
+            params.set("dataInicio", newFilters.dataInicio);
+          }
+          if (newFilters.dataFim) {
+            params.set("dataFim", newFilters.dataFim);
+          }
+          if (newFilters.obraType) {
+            params.set("obraType", newFilters.obraType);
+          }
+          if (newFilters.priority && newFilters.priority !== "todas") {
+            params.set("priority", newFilters.priority);
+          }
+          const queryString = params.toString();
+          router.push(`?${queryString}`);
         }}
         onReset={() => {
           setFilters({ status: "todas", dataInicio: "", dataFim: "", obraType: "", priority: "todas" });
           setOffset(0);
+          // Clear URL query params
+          router.push("?");
         }}
       />
 
