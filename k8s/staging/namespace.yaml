@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: staging
+  labels:
+    environment: staging
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: imbobi-secrets
+  namespace: staging
+type: Opaque
+stringData:
+  database-url: "postgresql://user:pass@postgres:5432/imbobi_staging"
+  jwt-secret: "generate-secure-key-32-chars-minimum"
+  encryption-key: "generate-secure-key-base64"
+  aws-access-key: "your-aws-access-key"
+  aws-secret-key: "your-aws-secret-key"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: imbobi-api
+  namespace: staging
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: imbobi-api
+  namespace: staging
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: imbobi-api
+  namespace: staging
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: imbobi-api
+subjects:
+- kind: ServiceAccount
+  name: imbobi-api
+  namespace: staging
