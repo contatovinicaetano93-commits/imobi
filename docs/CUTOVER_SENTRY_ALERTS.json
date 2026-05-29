@@ -1,0 +1,131 @@
+{
+  "description": "Configuração de alertas Sentry para cutover imobi 2026-06-02",
+  "created_at": "2026-05-29T00:00:00Z",
+  "cutover_date": "2026-06-02T00:00:00Z",
+  "alert_rules": [
+    {
+      "name": "P1: Error Rate > 5%",
+      "type": "issue_alert",
+      "condition": {
+        "metric": "error_rate",
+        "value": "> 5%",
+        "time_window": "5 minutes",
+        "environment": "production"
+      },
+      "actions": [
+        "notify_slack_channel:#ops-critical",
+        "trigger_pagerduty_incident",
+        "email:devops@imobi.com.br"
+      ],
+      "severity": "critical",
+      "escalation_email": "cto@imobi.com.br"
+    },
+    {
+      "name": "P2: Latency p95 > 200ms",
+      "type": "metric_alert",
+      "condition": {
+        "metric": "transaction.duration",
+        "percentile": 95,
+        "operator": ">",
+        "value": 200,
+        "unit": "milliseconds",
+        "time_window": "10 minutes",
+        "environment": "production"
+      },
+      "actions": [
+        "notify_slack_channel:#ops-critical"
+      ],
+      "severity": "warning"
+    },
+    {
+      "name": "P2: New Error Type Detected",
+      "type": "issue_alert",
+      "condition": {
+        "type": "new_error",
+        "environment": "production"
+      },
+      "actions": [
+        "notify_slack_channel:#ops-critical",
+        "email:backend@imobi.com.br"
+      ],
+      "severity": "warning"
+    },
+    {
+      "name": "P3: High Error Count in Single Transaction",
+      "type": "issue_alert",
+      "condition": {
+        "metric": "error_count",
+        "value": "> 10",
+        "time_window": "1 minute",
+        "environment": "production"
+      },
+      "actions": [
+        "notify_slack_channel:#ops-monitoring"
+      ],
+      "severity": "info"
+    }
+  ],
+  "dashboard_config": {
+    "name": "Cutover Live 2026-06-02",
+    "refresh_interval": "1 minute",
+    "time_range": "last 2 hours",
+    "widgets": [
+      {
+        "type": "time_series",
+        "title": "Error Count (Time Series)",
+        "query": "event.type:error",
+        "metric": "count",
+        "interval": "1 minute",
+        "group_by": "none"
+      },
+      {
+        "type": "table",
+        "title": "Top 5 Errors",
+        "query": "event.type:error",
+        "group_by": "issue",
+        "sort_by": "count",
+        "limit": 5
+      },
+      {
+        "type": "histogram",
+        "title": "Transaction Duration Distribution",
+        "metric": "transaction.duration",
+        "group_by": "endpoint"
+      },
+      {
+        "type": "bar_chart",
+        "title": "Browser Performance Metrics",
+        "metric": "browser",
+        "breakdown": "browser_type"
+      },
+      {
+        "type": "comparison",
+        "title": "Release Comparison (Current vs Previous)",
+        "compare": "release",
+        "metrics": ["error_rate", "transaction.duration"]
+      }
+    ]
+  },
+  "slack_integration": {
+    "workspace": "imobi",
+    "channel": "#ops-critical",
+    "message_template": "Error Alert from Sentry: {error_type} | Rate: {error_rate} | Link: {sentry_url}"
+  },
+  "custom_tags": {
+    "deployment_stage": "production",
+    "version": "1.0.0",
+    "browser": "all",
+    "environment": "production"
+  },
+  "filters": {
+    "environment": "production",
+    "exclude_health_checks": true,
+    "min_error_count": 1
+  },
+  "notes": [
+    "Todos os alertas devem estar testados ANTES das 23:00 UTC de 2026-06-01",
+    "Integração Slack deve estar ativa e testada",
+    "PagerDuty (se usar) deve ter escalation policy configurada",
+    "Dashboard deve ser aberto e visível durante todo o cutover"
+  ]
+}
