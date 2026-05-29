@@ -14,7 +14,10 @@ import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import helmet from "helmet";
+import fs from "fs";
+import path from "path";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { validateJwtSecret } from "./common/validators/jwt-secret.validator";
@@ -52,6 +55,29 @@ async function bootstrap() {
     allowedHeaders: ["Content-Type", "Authorization"],
     maxAge: 3600,
   });
+
+  // Swagger documentation (development only)
+  if (process.env.NODE_ENV !== "production") {
+    const config = new DocumentBuilder()
+      .setTitle("imobi API")
+      .setDescription("Fintech de crédito para construção civil")
+      .setVersion("1.0.0")
+      .addBearerAuth()
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup("docs", app, document);
+
+    // Generate openapi.json for CI/CD
+    const distDir = path.resolve(__dirname);
+    if (!fs.existsSync(distDir)) {
+      fs.mkdirSync(distDir, { recursive: true });
+    }
+    fs.writeFileSync(
+      path.join(distDir, "openapi.json"),
+      JSON.stringify(document, null, 2)
+    );
+  }
 
   const port = Number(process.env["PORT"] ?? 4000);
   await app.listen(port, "0.0.0.0");

@@ -94,6 +94,7 @@ import { QUEUE_LIBERACAO } from "./common/constants";
     EncryptionService,
     HealthService,
     LiberacaoParcelaWorker,
+    ScoreUpdateWorker,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
