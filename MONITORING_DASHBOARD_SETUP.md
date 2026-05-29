@@ -1,37 +1,61 @@
-# MONITORING_DASHBOARD_SETUP — Cutover imobi 2026-06-02
+# MONITORING_DASHBOARD_SETUP — imobi Cutover 2026-06-02
 
-**Data de Go-Live:** 2026-06-02  
-**Horário Estimado:** 01:00 UTC (22:00 BRT 01 de junho)  
-**Documento Atualizado:** 2026-05-29  
-**Owner:** DevOps + Tech Lead  
+**Documento de configuração e operação de monitoramento em tempo real para o cutover de produção do imobi.**
+
+**Data de cutover**: 2026-06-02 (00:00 UTC)  
+**Owner**: DevOps/CTO  
+**Atualizado**: 2026-05-29  
+**Documento crítico** — Deve estar 100% configurado ANTES das 23:00 UTC do dia 01/06.
 
 ---
 
 ## Índice
 
-1. [Visão Geral](#visão-geral)
+1. [Visão Geral e Objetivos](#visão-geral-e-objetivos)
 2. [Dashboards a Configurar](#dashboards-a-configurar)
-3. [Setup por Plataforma](#setup-por-plataforma)
-4. [Health Checks Customizados](#health-checks-customizados)
-5. [Integrações Slack](#integrações-slack)
-6. [Timeline de Monitoramento](#timeline-de-monitoramento)
-7. [Escalation Matrix](#escalation-matrix)
-8. [Checklist Pré-Cutover](#checklist-pré-cutover)
-9. [Checklist Pós-Cutover](#checklist-pós-cutover)
-10. [Runbook de Rollback](#runbook-de-rollback)
+3. [Setup Detalhado por Plataforma](#setup-detalhado-por-plataforma)
+4. [Scripts de Health Check](#scripts-de-health-check)
+5. [Alertas e Escalação](#alertas-e-escalação)
+6. [Timeline de Operação](#timeline-de-operação)
+7. [Checklist Pré-Cutover](#checklist-pré-cutover)
+8. [Troubleshooting Rápido](#troubleshooting-rápido)
 
 ---
 
-## Visão Geral
+## Visão Geral e Objetivos
 
-Durante o cutover do imobi, precisamos monitorar em tempo real:
-- **Erros & Performance** (Sentry)
-- **Build & Deployment** (Vercel)
-- **Infraestrutura** (CloudWatch + RDS + ElastiCache)
-- **Health das Dependências** (Custom health checks)
-- **Carga & Latência** (Load testing pré-cutover)
+### O que monitorar durante o cutover?
 
-**Objetivo:** Detectar e escalar problemas antes que afetem usuários.
+Durante o cutover, você NÃO quer descobrir problemas por:
+- Usuários reclamando no Slack/WhatsApp
+- Support team abrindo tickets
+- Demora de carregamento perceptível
+- Erros aleatórios em produção
+
+### Objetivos críticos
+
+| Objetivo | Métrica | Target |
+|----------|---------|--------|
+| **Detectar erros cedo** | Error rate | < 1% nos primeiros 60 min |
+| **Performance aceitável** | Latency p95 | < 150ms |
+| **Cache efetivo** | Cache hit ratio | > 80% |
+| **Sem 5xx errors** | HTTP 500+ | 0 durante primeira hora |
+| **Health checks passando** | All endpoints `/health` | 200 OK em < 100ms |
+| **Infraestrutura OK** | CPU/Memory/Connections | CPU < 70%, Mem < 80% |
+
+### O que você vai fazer
+
+```
+23:00 UTC 01/06  → Todos os dashboards ligados, operadores prontos
+00:00 UTC 02/06  → CUTOVER! Build deploy, tráfego começa
+00:15 UTC        → Olhar para Sentry + CloudWatch (canary metrics)
+00:30 UTC        → Health check sweep completo
+00:45 UTC        → Load test validation
+01:00 UTC        → Avaliação: sucesso ou rollback?
+02:00 UTC        → Estável. Ramp up gradual se houver
+03:00 UTC        → Check final. Declare "Mission Accomplished"
+04:00 UTC        → Handoff para on-call team
+```
 
 ---
 
@@ -39,1467 +63,1454 @@ Durante o cutover do imobi, precisamos monitorar em tempo real:
 
 ### 1. Sentry Error Tracking Dashboard
 
-**Propósito:** Monitorar erros, performance e comportamento de browsers em tempo real.
+**Propósito**: Detectar erros em TEMPO REAL, não horas depois.
 
-**Métricas Principais:**
-- Error rate (alvo: < 1%)
-- Transaction duration (alvo p95: < 150ms)
+**O que monitorar**:
+- Error rate (% de requests que resultam em erro)
+- Transaction duration (latência por endpoint)
 - Browser performance (FCP, LCP, CLS)
-- Top errors by type
-- Affected users count
+- Top errors by frequency
+- Error trend (está piorando ou melhorando?)
 
-**Configuração:**
-```
-URL: https://sentry.io/organizations/[ORG]/issues/
-Environment: production
-Time range: Last 1 hour (configurado como padrão)
-Custom tags: deployment_stage=production, version=cutover-2026-06-02
-```
+**Dashboards padrão Sentry**:
+1. **Issues** — Lista de erros agrupados
+   - URL: `https://sentry.io/organizations/[ORG]/issues/`
+   - Filter: `is:unresolved environment:production`
+   - Sort by: Frequency (últimas 24h)
 
-**Alert Rule - P1 (Critical):**
-```
-Condition: Error rate > 5% em qualquer 5-minute window
-Action: Slack #ops-critical + PagerDuty (if configured)
-Threshold: IMEDIATO
-```
+2. **Performance** — Latência por rota
+   - URL: `https://sentry.io/organizations/[ORG]/performance/`
+   - Filter: `environment:production`
+   - Show: p50, p95, p99 latency
+   - Breakdown by: endpoint
 
-**Alert Rule - P2 (Warning):**
-```
-Condition: Transaction latency p95 > 200ms
-Action: Slack #ops-warning
-Threshold: 10 minutos sustentado
-```
+3. **Custom Dashboard** (recomendado para cutover)
+   - Criar via: `https://sentry.io/organizations/[ORG]/dashboards/new/`
+   - Widgets:
+     - [x] Error rate (time series, últimas 2 horas)
+     - [x] Top 5 errors (table)
+     - [x] Transaction duration (histogram)
+     - [x] Browser errors (bar chart)
+     - [x] Release comparison (se houver versão anterior)
 
-**Dashboard Customizado:**
-1. Login em sentry.io
-2. Acesse: Settings → Dashboards → New Dashboard
-3. Nome: `imobi-cutover-2026-06-02`
-4. Adicione widgets:
-   - Error Rate (Last 1h)
-   - Transaction Duration Distribution
-   - Browser Performance (FCP, LCP, CLS)
-   - Top 10 Errors
-   - Affected Users
-5. Defina refresh para 30 segundos
-6. Salve e pin to team dashboards
-
----
+**Alertas Sentry** (CRÍTICO):
+- P1: Error rate > 5% em 5 min → Slack #ops-critical + PagerDuty
+- P2: Latency p95 > 200ms em 10 min → Slack #ops-critical
+- P2: New error type detected → Slack #ops-critical
 
 ### 2. Vercel Deployment Dashboard
 
-**Propósito:** Monitorar deploy real-time, build progress, Core Web Vitals.
+**Propósito**: Watch build deploy ao vivo, detect early issues.
 
-**Métricas Principais:**
-- Build status (success/failed)
-- Build duration (alvo: < 10 minutos)
-- Function execution time (alvo: < 100ms p95)
-- Edge cache hit ratio (alvo: > 80%)
+**O que monitorar**:
+- Build progress (está compilando?)
+- Build status (passou nas checks?)
+- Deployment status (está live?)
+- Edge cache hit ratio
 - Core Web Vitals (FCP, LCP, CLS)
+- Function execution time
 
-**Acesso:**
-```
-URL: https://vercel.com/[TEAM]/imobi/deployments
-Settings: https://vercel.com/[TEAM]/imobi/settings
-```
+**Checklist Vercel**:
+- [ ] Ter link para deployments aberto: `https://vercel.com/[TEAM]/imobi/deployments`
+- [ ] Anotar SHA do commit da versão atual (antes do deploy)
+- [ ] Ter rollback link pronto: `https://vercel.com/[TEAM]/imobi/settings/git`
+- [ ] Monitorar build logs em tempo real (auto-refresh activado)
+- [ ] Verificar Core Web Vitals ANTES vs DEPOIS do deploy
 
-**Pre-Cutover Checklist:**
-- [ ] Anote commit SHA atual em produção: `git rev-parse main`
-- [ ] Verifique que `main` branch está selecionado em "Git"
-- [ ] Confirme que auto-deployment está ATIVADO
-- [ ] Teste rollback link: Vercel → Settings → Git → "Create Deployment from Git"
+**Métricas importantes**:
+- Build time: < 5 min (alerta se > 10 min)
+- Deployment latency: < 2 min após build
+- Edge cache hit ratio: > 80%
+- Core Web Vitals:
+  - FCP (First Contentful Paint): < 1.8s
+  - LCP (Largest Contentful Paint): < 2.5s
+  - CLS (Cumulative Layout Shift): < 0.1
 
-**Durante Cutover:**
-1. Abra aba: https://vercel.com/[TEAM]/imobi/deployments
-2. Assista logs em tempo real (auto-refresh a cada 5s)
-3. Valide:
-   - Build completou com sucesso
-   - Não há warnings críticos
-   - Deploy para production foi ativado
-   - Core Web Vitals aparecem dentro de 2 minutos
+### 3. CloudWatch Metrics Dashboard
 
-**Rollback Rápido (< 1 min):**
-```
-1. Vercel Dashboard → Settings → Git
-2. Clique "Create Deployment from Git"
-3. Selecione commit SHA anterior
-4. Confirme deploy
-```
+**Propósito**: Infraestrutura (RDS, ElastiCache, Lambda) em um painel.
 
----
+**Criar dashboard AWS CloudWatch**:
 
-### 3. CloudWatch Metrics Dashboard (AWS)
+Acessar: `https://console.aws.amazon.com/cloudwatch/home`
 
-**Propósito:** Visibilidade de saúde infraestrutural em tempo real.
+Nome: `imobi-production-cutover`
 
-**Componentes a Monitorar:**
+**Widgets essenciais**:
 
 #### RDS (PostgreSQL + PostGIS)
-- CPU utilization (alvo: < 70%, warn > 80%)
-- Database connections (alvo: < 80 de 100 max, warn > 95)
-- Memory utilization (alvo: < 80%, warn > 85%)
-- Read latency (alvo p95: < 20ms)
-- Write latency (alvo p95: < 50ms)
-- Replica lag (if read replicas exist, alvo: < 100ms)
+- **CPU Utilization**: Target < 70%
+  - Alerta: > 80% → Scale up
+- **Database Connections**: Target < 95/100
+  - Alerta: > 95 → Investigate connection leak
+- **Memory Utilization**: Target < 80%
+- **Read/Write Latency**: Target < 10ms
+- **Storage**: Monitor for space (target > 20% free)
 
 #### ElastiCache (Redis)
-- Memory used (alvo: < 80% of provisioned)
-- Evictions/sec (alvo: 0, warn > 10)
-- Cache hit ratio (alvo: > 80%)
-- CPU utilization (alvo: < 70%)
-- Network bytes in/out
-- Swap usage (alvo: 0)
+- **Memory Usage**: Target < 80%
+  - Alerta: > 90% → Clear old cache keys
+- **Evictions/sec**: Target 0
+  - Alerta: > 100/sec → Increase memory
+- **Hit Ratio**: Target > 80%
+  - Low hit ratio → Adjust TTL ou cache strategy
+- **Network bytes in/out**: Monitor for spikes
 
-#### Lambda (if used)
-- Invocations count
-- Duration distribution (alvo p95: < 500ms)
-- Errors count (alvo: 0)
-- Throttles (alvo: 0)
+#### Lambda (se usar serverless functions)
+- **Invocations**: Monitor for sudden spikes
+- **Duration**: p95 < 1s
+- **Errors**: 0 during cutover
+- **Throttles**: 0 (alerta se > 0)
 
-#### Custom Metrics (via CloudWatch Logs)
-- API error rate by endpoint
-- API latency percentiles (p50, p95, p99)
-- Job queue depth (BullMQ)
-- Worker processing time
+#### Application Logs (CloudWatch Logs)
+- **Error count/min** (grep: `ERROR`, `FATAL`): Target 0
+- **Warning count/min**: Monitor for spikes
+- **Latency percentiles** (p50, p95, p99)
 
-**Setup:**
+**Configurar auto-refresh**: 1 minuto (refresh a cada 60s)
 
-```bash
-# 1. Login AWS Console
-# URL: https://console.aws.amazon.com/cloudwatch
+**Exemplo JSON (CloudWatch Dashboard)**:
 
-# 2. Crie dashboard "imobi-production-cutover"
-# Dashboards → Create dashboard → Name: imobi-production-cutover
-
-# 3. Adicione widgets para RDS
-# RDS → DB Instances → imbobi-prod-db
-# - CPU Utilization
-# - Database Connections
-# - Free Storable Memory
-
-# 4. Adicione widgets para ElastiCache
-# ElastiCache → Replication Groups → imbobi-redis-prod
-# - CacheHits
-# - CacheMisses
-# - EvictionsMM (Memcached mismatches)
-# - Memory Usage
-# - CPU Utilization
-
-# 5. Configure Alarms
-# Alarms → Create alarm
-# Metric: RDS CPU > 80% OR ElastiCache Evictions > 100/sec
-# State: ALARM
-# Action: SNS topic → imbobi-ops-critical → Slack webhook
+```json
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          ["AWS/RDS", "CPUUtilization", {"stat": "Average", "period": 60}],
+          ["AWS/RDS", "DatabaseConnections", {"stat": "Sum", "period": 60}],
+          ["AWS/ElastiCache", "EngineCPUUtilization", {"stat": "Average"}],
+          ["AWS/ElastiCache", "Evictions", {"stat": "Sum"}],
+          ["AWS/ElastiCache", "CacheHits", {"stat": "Sum"}]
+        ],
+        "period": 300,
+        "stat": "Average",
+        "region": "us-east-1",
+        "title": "Infrastructure Health"
+      }
+    }
+  ]
+}
 ```
-
-**Auto-Refresh:** Defina dashboard para refresh a cada 1 minuto.
-
----
 
 ### 4. Custom Health Check Dashboard
 
-**Propósito:** Validar conectividade com todas as dependências críticas.
+**Propósito**: Verificação de liveness de componentes críticos a cada 5 segundos.
 
-**Endpoints Health Check (implementados em `services/api/src/common/health.controller.ts`):**
+**Checks implementados**:
+
+1. **API /health endpoint**
+   - URL: `https://api.imobi.com.br/health`
+   - Expected: HTTP 200 + JSON
+   - Timeout: 5s
+
+2. **Database connectivity**
+   - Via: `https://api.imobi.com.br/health` (inclui database)
+   - Expected: `"database": { "configured": true }`
+   - Latency: < 100ms
+
+3. **Redis connectivity**
+   - Via: `https://api.imobi.com.br/health` (inclui redis)
+   - Expected: `"redis": { "status": "connected" }`
+   - Latency: < 10ms
+
+4. **S3 bucket access**
+   - Command: `aws s3api head-bucket --bucket imbobi-evidencias-prod`
+   - Expected: Success (no error)
+
+5. **DNS resolution**
+   - Command: `nslookup api.imobi.com.br`
+   - Expected: Returns IP (< 100ms)
+
+6. **Vercel web deployment**
+   - URL: `https://imobi.com.br` (or canary URL)
+   - Expected: HTTP 200, page loads < 3s
+
+7. **Push notifications**
+   - Via: `https://api.imobi.com.br/health`
+   - Expected: `"firebase": { "configured": true }`
+
+**Dashboard simples (terminal)**:
 
 ```
-GET https://api.imbobi.com.br/health
+╔════════════════════════════════════════════════════════════════╗
+║             IMOBI CUTOVER HEALTH CHECK DASHBOARD               ║
+║                                                                ║
+║  Time: 2026-06-02 01:30:45 UTC                               ║
+║  Uptime: 1h 30m                                               ║
+║                                                                ║
+║  API Health                        ✅ 200 OK (45ms)           ║
+║  Database                          ✅ Connected (12ms)        ║
+║  Redis Cache                       ✅ Connected (3ms)         ║
+║  S3 Evidências Bucket              ✅ Accessible              ║
+║  DNS Resolution                    ✅ Resolved (8ms)          ║
+║  Web Frontend                      ✅ 200 OK (542ms)          ║
+║  Firebase Messaging                ✅ Configured              ║
+║                                                                ║
+║  Overall Status: 🟢 ALL SYSTEMS OPERATIONAL                   ║
+║                                                                ║
+║  Last check: 2026-06-02 01:30:45 UTC                          ║
+║  Next check: 2026-06-02 01:30:50 UTC (in 5s)                 ║
+╚════════════════════════════════════════════════════════════════╝
 ```
 
-**Resposta esperada:**
-```json
-{
-  "status": "ok",
-  "timestamp": "2026-06-02T01:15:30Z",
-  "redis": {
-    "status": "connected",
-    "host": "redis.imbobi.internal",
-    "port": 6379
-  },
-  "email": {
-    "provider": "sendgrid",
-    "configured": true
-  },
-  "firebase": {
-    "configured": true
-  },
-  "database": {
-    "configured": true
-  }
-}
+### 5. Load Testing Dashboard (Pré-Cutover)
+
+**Propósito**: Validar que infraestrutura aguenta carga esperada ANTES do cutover.
+
+**Executar**: 24h antes do cutover (2026-06-01 00:00 UTC)
+
+**Load profile**:
+- Duration: 10 minutos
+- Target: 1000 concurrent users
+- Ramp up: 100 users/min (leva 10 min para 1000)
+- Ramp down: 10 min
+- Think time: 2-5s between requests
+- Endpoints: Mix realista (60% GET, 30% POST, 10% PUT/DELETE)
+
+**Ferramentas suportadas**:
+- k6 (recomendado, open-source)
+- Apache JMeter
+- Artillery
+- Locust
+
+**Success criteria**:
+- p95 latency < 200ms
+- p99 latency < 500ms
+- Error rate < 1%
+- No timeouts
+- No 5xx errors
+- Cache hit ratio > 80%
+
+**Relatório esperado**:
 ```
+Load Test Results (2026-06-01 00:00 UTC)
+========================================
+Duration:        10 min
+Target RPS:      ~1500 (1000 concurrent users)
+Actual RPS:      1480 (98% of target)
+Errors:          0.8% (within tolerance)
 
-**Health Checks Adicionais:**
+Latency (ms):
+  p50:    45
+  p95:    125
+  p99:    310
+  max:    1250
 
-#### 4a. Database Connectivity
-```bash
-curl -s https://api.imbobi.com.br/db-health
-# Esperado: { "status": "ok", "latency_ms": 5 }
-```
+Database:
+  Connections:   87 / 100
+  CPU:           52%
+  Memory:        65%
 
-**Implementação (adicione ao `health.controller.ts`):**
-```typescript
-@Get('db-health')
-async getDbHealth() {
-  const start = Date.now();
-  try {
-    await this.prisma.$queryRaw`SELECT 1`;
-    return {
-      status: 'ok',
-      latency_ms: Date.now() - start,
-      timestamp: new Date().toISOString(),
-    };
-  } catch (error) {
-    return {
-      status: 'error',
-      error: error instanceof Error ? error.message : 'Unknown',
-      timestamp: new Date().toISOString(),
-    };
-  }
-}
-```
+Cache:
+  Hit ratio:     84%
+  Evictions:     0
 
-#### 4b. Redis Connectivity
-```bash
-curl -s https://api.imbobi.com.br/cache-health
-# Esperado: { "status": "ok", "latency_ms": 2 }
-```
-
-**Implementação:**
-```typescript
-@Get('cache-health')
-async getCacheHealth() {
-  const start = Date.now();
-  try {
-    await this.cacheManager.get('_health_check');
-    return {
-      status: 'ok',
-      latency_ms: Date.now() - start,
-      timestamp: new Date().toISOString(),
-    };
-  } catch (error) {
-    return {
-      status: 'error',
-      error: error instanceof Error ? error.message : 'Unknown',
-      timestamp: new Date().toISOString(),
-    };
-  }
-}
-```
-
-#### 4c. S3 Bucket Access
-```bash
-aws s3api head-bucket \
-  --bucket imbobi-evidencias-prod \
-  --region us-east-1
-# Esperado: HTTP 200 (silenciosamente bem-sucedido)
-```
-
-#### 4d. DNS Resolution
-```bash
-nslookup api.imbobi.com.br
-nslookup imbobi.com.br
-# Esperado: IP resolve corretamente
-```
-
----
-
-## Setup por Plataforma
-
-### A. Sentry Setup
-
-**Pré-requisito:** Conta Sentry já configurada com DSN em `.env`
-
-**Steps:**
-
-#### 1. Criar Alert Rule - P1 (Error Rate > 5%)
-```
-1. Sentry Dashboard → Alerts
-2. Create Alert Rule
-3. Name: "imobi-p1-error-spike"
-4. Condition:
-   - Filter: Environment = production
-   - Alert when: Event count > 5% of baseline in 5 minutes
-5. Actions:
-   - Send Slack notification to #ops-critical
-   - (Optional) Send to PagerDuty
-6. Save & Activate
-```
-
-#### 2. Criar Alert Rule - P2 (Latency > 200ms)
-```
-1. Create Alert Rule
-2. Name: "imobi-p2-latency-spike"
-3. Condition:
-   - Filter: Event.transaction_duration > 200ms
-   - Alert when: > 50% of transactions exceed threshold in 10min window
-4. Actions:
-   - Send Slack notification to #ops-warning
-5. Save & Activate
-```
-
-#### 3. Criar Dashboard Customizado
-```
-1. Dashboards → Create Dashboard
-2. Name: "imobi-cutover-monitoring"
-3. Add widgets:
-   - Error Rate (Line chart) - Last 1 hour
-   - Transaction Duration (Heatmap) - Last 1 hour
-   - Top Errors (Table) - Last 1 hour
-   - Browser Performance (Stats) - Last 1 hour
-   - Affected Users (Counter) - Last 1 hour
-4. Set refresh to 30 seconds
-5. Pin to team dashboards
-```
-
-**Teste:**
-```bash
-# Trigger test error para validar alerta
-curl -X POST https://api.imbobi.com.br/test/error
-# Aguarde 30s e valide que Sentry capturou + Slack notificou
+Verdict:        ✅ READY FOR CUTOVER
 ```
 
 ---
 
-### B. Vercel Setup
+## Setup Detalhado por Plataforma
 
-**Pré-requisito:** Projeto já configurado em Vercel com `main` branch linked
+### Sentry Setup
 
-**Steps:**
+#### 1. Criar organização (se ainda não existe)
 
-#### 1. Verificar Git Integration
-```
-Vercel Dashboard → Settings → Git
-- Confirm: Branch = main
-- Confirm: Deploy on push = ON
-- Confirm: Automatic deployments = ON
-```
-
-#### 2. Pre-Cutover Snapshot
 ```bash
-# Anote o commit SHA atual em produção:
-git log -1 --oneline
-
-# Exemplo output:
-# a1b2c3d fix: health check endpoints
-
-# Salve este SHA em local seguro para possível rollback
+# Acessar https://sentry.io
+# Login ou Sign Up
+# Create organization: "imobi"
+# Accept email verification
 ```
 
-#### 3. Validar Deployment Settings
+#### 2. Criar project Sentry
+
 ```
-Vercel Dashboard → Settings → Build & Deployment
-- Framework: Next.js
-- Build Command: pnpm install && pnpm build
-- Output Directory: apps/web/.next
-- Node Version: 20.x (or as configured)
+https://sentry.io/organizations/imobi/projects/new/
 ```
 
-#### 4. Pre-Cutover Test Deploy
+- **Name**: `imobi-api`
+- **Platform**: `Node.js`
+- **Alert Rule**: Yes
+- **Default alert rule**: Yes
+
+#### 3. Obter DSN
+
+```
+Copiar DSN da página:
+https://sentry.io/organizations/imobi/projects/imobi-api/keys/
+```
+
+Exemplo DSN:
+```
+https://examplePublicKey@o123456.ingest.sentry.io/1234567
+```
+
+Adicionar a `.env.production`:
 ```bash
-# Faça um test deploy 30 min antes do cutover
-git push origin main
-# Monitore: https://vercel.com/[TEAM]/imobi/deployments
-# Valide: Build succeeds, no errors, Core Web Vitals appear
+SENTRY_DSN=https://examplePublicKey@o123456.ingest.sentry.io/1234567
+SENTRY_RELEASE=$(git rev-parse --short HEAD)
+SENTRY_ENVIRONMENT=production
 ```
 
-**Rollback Procedure (< 1 min):**
+#### 4. Configurar Alertas Sentry
+
+**Alert Rule 1: Error Rate > 5%**
+
 ```
-1. Vercel Dashboard → Settings → Git
-2. Scroll to "Deployment Settings"
-3. Click "Create Deployment from Git"
-4. Select branch = main, commit = [PREVIOUS_SHA]
-5. Click "Deploy"
-6. Monitor: Deploy completes in ~5 min
-7. Validate: Production URL responds correctly
+https://sentry.io/organizations/imobi/alerts/new/issue/
+```
+
+```
+IF: An issue is seen 50+ times
+    in 5 minutes
+
+THEN: Send a Slack notification to #ops-critical
+      Trigger a PagerDuty incident (if active)
+      Email: devops@imobi.com.br
+```
+
+**Alert Rule 2: Latency > 200ms**
+
+```
+IF: transaction.duration
+    p95 > 200ms
+    for 10 minutes
+
+THEN: Send a Slack notification to #ops-critical
+```
+
+**Alert Rule 3: New Error Type**
+
+```
+IF: A new error is reported
+    in production environment
+
+THEN: Send a Slack notification to #ops-critical
+```
+
+#### 5. Criar Custom Dashboard
+
+```
+https://sentry.io/organizations/imobi/dashboards/new/
+```
+
+**Nome**: `Cutover Live 2026-06-02`
+
+**Widgets**:
+
+1. **Error Count (Time Series)**
+   - Query: `event.type:error`
+   - Interval: 1 minute
+   - Time range: Last 2 hours
+
+2. **Top 5 Errors (Table)**
+   - Query: `event.type:error`
+   - Group by: `issue`
+   - Limit: 5
+   - Sort by: `count`
+
+3. **Transaction Duration (Histogram)**
+   - Query: `type:transaction`
+   - Metric: `transaction.duration`
+   - Breakdown: By endpoint
+
+4. **Browser Performance**
+   - Metric: Core Web Vitals (FCP, LCP, CLS)
+   - Break down by: Browser
+
+5. **Release Comparison** (opcional, se houver rollback anterior)
+   - Compare: Versão atual vs. anterior
+   - Metric: Error rate, latency
+
+#### 6. Integração Slack
+
+```
+https://sentry.io/organizations/imobi/integrations/slack/
+```
+
+1. Click "Install"
+2. Authorize Sentry no workspace Slack
+3. Create channel `#ops-critical` (se não existir)
+4. Config default channel para alerts: `#ops-critical`
+
+**Teste integração**:
+```bash
+# Na página de integração, click "Test Connection"
+# Você deve ver uma mensagem no Slack #ops-critical
 ```
 
 ---
 
-### C. CloudWatch Setup
+### Vercel Setup
 
-**Pré-requisito:** AWS Account com acesso a RDS, ElastiCache, CloudWatch
+#### 1. Acessar Vercel Dashboard
 
-**Steps:**
+```
+https://vercel.com/[TEAM]/imobi/deployments
+```
 
-#### 1. Create Dashboard
+#### 2. Anotar Commit SHA Atual (ANTES do cutover)
+
 ```bash
-# Via AWS Console:
-https://console.aws.amazon.com/cloudwatch/home
+cd /home/user/imobi
+git rev-parse HEAD > /tmp/current_production_sha.txt
 
-# Dashboard → Create dashboard
-# Name: imobi-production-cutover
-# Widget type: Line, Number, Heatmap
+# Output exemplo: abc1234def5678...
+# Guardar esse SHA para rollback se necessário
 ```
 
-#### 2. Add RDS Metrics
+#### 3. Monitorar Build em Tempo Real
+
+Na página `https://vercel.com/[TEAM]/imobi/deployments`:
+
+- [ ] Auto-refresh ativado (canto superior direito)
+- [ ] Visualizar logs do build em tempo real
+- [ ] Buscar erros (Ctrl+F: "error", "fail")
+- [ ] Verificar que todos os checks passaram (verde)
+
+#### 4. Ter Rollback Link Pronto
+
 ```
-Widget: Line Chart
+https://vercel.com/[TEAM]/imobi/settings/git
+```
+
+Se houver problema:
+
+1. Click em "Deployments" na menu esquerda
+2. Encontrar deployment anterior OK
+3. Click em "..." → "Promote to Production"
+
+#### 5. Web Vitals Monitoring
+
+Depois do deploy, acessar:
+
+```
+https://vercel.com/[TEAM]/imobi/analytics
+```
+
+Verificar:
+- [ ] FCP: < 1.8s
+- [ ] LCP: < 2.5s
+- [ ] CLS: < 0.1
+- [ ] Nenhuma regressão comparado com deploy anterior
+
+---
+
+### CloudWatch Setup
+
+#### 1. Acessar AWS CloudWatch
+
+```
+https://console.aws.amazon.com/cloudwatch/
+```
+
+Região: `us-east-1` (ou região sua)
+
+#### 2. Criar Dashboard
+
+```
+CloudWatch → Dashboards → Create Dashboard
+```
+
+Nome: `imobi-production-cutover`
+
+#### 3. Adicionar Widgets
+
+**Widget 1: RDS Metrics**
+
+```
+Metric Type: Line chart
 Metrics:
-- RDS → imbobi-prod-db → CPU Utilization
-  - Label: "RDS CPU %"
-  - Y-axis: 0-100
-  - Alarm threshold: 80%
-  
-- RDS → imbobi-prod-db → Database Connections
-  - Label: "RDS Connections"
-  - Y-axis: 0-100 (assuming max_connections=100)
-  - Alarm threshold: 95
-  
-- RDS → imbobi-prod-db → Free Storable Memory
-  - Label: "RDS Memory Available (GB)"
-  - Alarm threshold: < 2GB
+  - AWS/RDS → CPUUtilization (target < 70%)
+  - AWS/RDS → DatabaseConnections (target < 95)
+  - AWS/RDS → DatabaseMemoryUsage (target < 80%)
+Period: 60 seconds
+Statistic: Average
+Alarm threshold: CPUUtilization > 80
 ```
 
-#### 3. Add ElastiCache Metrics
+**Widget 2: ElastiCache Metrics**
+
 ```
-Widget: Line Chart
+Metric Type: Line chart
 Metrics:
-- ElastiCache → imbobi-redis-prod → CacheHits
-  - Label: "Redis Hits"
-  - Y-axis: log scale
-  
-- ElastiCache → imbobi-redis-prod → CacheMisses
-  - Label: "Redis Misses"
-  - Y-axis: log scale
-  
-- ElastiCache → imbobi-redis-prod → Evictions
-  - Label: "Redis Evictions/sec"
-  - Alarm threshold: > 10
-
-- ElastiCache → imbobi-redis-prod → Memory Usage
-  - Label: "Redis Memory Used (MB)"
-  - Alarm threshold: > 80% of max
-  
-- ElastiCache → imbobi-redis-prod → CPU Utilization
-  - Label: "Redis CPU %"
-  - Alarm threshold: > 80%
+  - AWS/ElastiCache → EngineCPUUtilization
+  - AWS/ElastiCache → DatabaseMemoryUsagePercentage
+  - AWS/ElastiCache → Evictions (target 0, alerta > 100/sec)
+  - AWS/ElastiCache → CacheHits vs CacheMisses
+Period: 60 seconds
+Statistic: Average
 ```
 
-#### 4. Add Custom Metrics (from CloudWatch Logs)
-```
-CloudWatch Logs → Log Groups → /aws/lambda/imbobi-api (or similar)
-Insights Query:
-  fields @timestamp, @duration, @error
-  | stats count() as total_requests,
-          pct(@duration, 50) as p50_latency,
-          pct(@duration, 95) as p95_latency,
-          pct(@duration, 99) as p99_latency,
-          sum(if(@error=true, 1, 0)) as error_count
-  by bin(5m)
+**Widget 3: Application Logs**
 
-Create metric from logs:
-- Name: APILatencyPercentiles
-- Namespace: imobi/api
+```
+Metric Type: Log Insights query
+Query:
+fields @timestamp, @message, @level
+| filter @level = "ERROR" or @level = "FATAL"
+| stats count() as error_count by bin(5m)
 ```
 
-#### 5. Configure Alarms → SNS → Slack
-```bash
-# 1. Create SNS Topic
-aws sns create-topic --name imbobi-ops-critical
-# Output: TopicArn: arn:aws:sns:us-east-1:ACCOUNT:imbobi-ops-critical
+**Widget 4: Lambda (opcional)**
 
-# 2. Create Slack Webhook Integration
-# (Manual in Slack workspace)
-# Slack → Your Workspace → Apps → Incoming Webhooks
-# Create New Webhook
-# Post to: #ops-critical
-# Copy Webhook URL
-
-# 3. Create SNS Topic Subscription
-aws sns subscribe \
-  --topic-arn arn:aws:sns:us-east-1:ACCOUNT:imbobi-ops-critical \
-  --protocol https \
-  --notification-endpoint https://hooks.slack.com/services/YOUR/WEBHOOK/URL
-
-# 4. Create CloudWatch Alarm
-aws cloudwatch put-metric-alarm \
-  --alarm-name imobi-rds-cpu-high \
-  --alarm-description "Alert if RDS CPU > 80%" \
-  --metric-name CPUUtilization \
-  --namespace AWS/RDS \
-  --statistic Average \
-  --period 300 \
-  --threshold 80 \
-  --comparison-operator GreaterThanThreshold \
-  --evaluation-periods 2 \
-  --alarm-actions arn:aws:sns:us-east-1:ACCOUNT:imbobi-ops-critical
+```
+Metric Type: Number
+Metrics:
+  - AWS/Lambda → Invocations
+  - AWS/Lambda → Duration (p95, p99)
+  - AWS/Lambda → Errors (target 0)
+  - AWS/Lambda → Throttles (target 0)
 ```
 
-#### 6. Set Dashboard Refresh
+#### 4. Configurar Auto-Refresh
+
+Dashboard → Refresh rate → 1 minute
+
+#### 5. Criar Alarmes CloudWatch
+
+**Alarme 1: RDS CPU > 80%**
+
 ```
-Dashboard → Auto-refresh → 1 minute
+CloudWatch → Alarms → Create Alarm
+Metric: AWS/RDS CPUUtilization
+Condition: > 80%
+Duration: 5 minutes
+Action: SNS → Topic "imobi-ops-critical" → Slack
 ```
 
-**Validate:**
-```bash
-# Test alarm trigger
-aws cloudwatch set-alarm-state \
-  --alarm-name imobi-rds-cpu-high \
-  --state-value ALARM \
-  --state-reason "Test"
-# Valide: Slack message aparece em #ops-critical em < 30s
+**Alarme 2: ElastiCache Evictions > 100/sec**
+
+```
+CloudWatch → Alarms → Create Alarm
+Metric: AWS/ElastiCache Evictions
+Condition: > 100 (per minute)
+Action: SNS → Topic "imobi-ops-critical" → Slack
+```
+
+**Alarme 3: RDS Connections > 95**
+
+```
+CloudWatch → Alarms → Create Alarm
+Metric: AWS/RDS DatabaseConnections
+Condition: > 95
+Duration: 2 minutes
+Action: SNS → Topic "imobi-ops-critical" → Slack
+```
+
+#### 6. Integração SNS → Slack
+
+```
+AWS SNS → Topics → Imobi-ops-critical
+Subscribe → Slack channel #ops-critical
 ```
 
 ---
 
-## Health Checks Customizados
+## Scripts de Health Check
 
-### Script de Monitoramento Contínuo
+### Script 1: Health Check Simples (Loop a cada 5s)
 
-**Arquivo:** `scripts/health-check-monitor.sh`
+**Arquivo**: `/home/user/imobi/scripts/cutover-health-check.sh`
 
 ```bash
 #!/bin/bash
 
-# ============================================================================
-# imobi Continuous Health Check Monitor
-# Purpose: Run every 5 seconds during cutover to validate all dependencies
-# Usage: ./health-check-monitor.sh
-# ============================================================================
+set -euo pipefail
 
-set -e
-
-API_URL="${API_URL:-https://api.imbobi.com.br}"
-CHECK_INTERVAL=5
-FAILED_CHECKS=0
-PASSED_CHECKS=0
-START_TIME=$(date +%s)
-
-# Color codes
+# Cores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# ============================================================================
-# Function: Check API Health
-# ============================================================================
+# Configuração
+API_URL="${API_URL:-https://api.imobi.com.br}"
+CHECK_INTERVAL="${CHECK_INTERVAL:-5}"
+S3_BUCKET="${S3_BUCKET:-imbobi-evidencias-prod}"
+ALERT_WEBHOOK="${ALERT_WEBHOOK:-}" # Slack webhook (opcional)
+
+# Estado anterior (para detectar mudanças)
+PREV_STATUS=""
+
+log_header() {
+  echo -e "\n${GREEN}=== Health Check $(date '+%Y-%m-%d %H:%M:%S %Z') ===${NC}"
+}
+
 check_api_health() {
-  echo -e "${BLUE}[$(date +'%H:%M:%S')]${NC} Checking API health..."
-  
-  response=$(curl -s -w "\n%{http_code}" "${API_URL}/health" 2>/dev/null || echo -e "\n500")
-  http_code=$(echo "$response" | tail -n 1)
-  body=$(echo "$response" | head -n -1)
-  
-  if [ "$http_code" = "200" ]; then
-    echo -e "${GREEN}✅ API Health:${NC} HTTP 200"
-    echo "$body" | jq '.' 2>/dev/null || echo "$body"
-    ((PASSED_CHECKS++))
+  echo -n "API Health ($API_URL/health): "
+  if response=$(curl -s -m 5 "$API_URL/health" 2>/dev/null); then
+    if echo "$response" | jq -e '.status == "ok" or .status == "degraded"' > /dev/null 2>&1; then
+      latency=$(echo "$response" | jq -r '.timestamp' 2>/dev/null || echo "unknown")
+      echo -e "${GREEN}✅ OK${NC}"
+      return 0
+    else
+      echo -e "${RED}❌ FAIL (invalid response)${NC}"
+      echo "Response: $response"
+      return 1
+    fi
   else
-    echo -e "${RED}❌ API Health:${NC} HTTP $http_code"
-    ((FAILED_CHECKS++))
+    echo -e "${RED}❌ FAIL (timeout/connection error)${NC}"
+    return 1
   fi
 }
 
-# ============================================================================
-# Function: Check Database Connectivity
-# ============================================================================
 check_database() {
-  echo -e "${BLUE}[$(date +'%H:%M:%S')]${NC} Checking database connectivity..."
-  
-  response=$(curl -s -w "\n%{http_code}" "${API_URL}/db-health" 2>/dev/null || echo -e "\n500")
-  http_code=$(echo "$response" | tail -n 1)
-  body=$(echo "$response" | head -n -1)
-  
-  if [ "$http_code" = "200" ]; then
-    latency=$(echo "$body" | jq '.latency_ms' 2>/dev/null || echo "N/A")
-    if [ "$latency" != "N/A" ] && [ "$latency" -lt 100 ]; then
-      echo -e "${GREEN}✅ Database:${NC} Connected (${latency}ms)"
-      ((PASSED_CHECKS++))
+  echo -n "Database connectivity: "
+  if response=$(curl -s -m 5 "$API_URL/health" 2>/dev/null); then
+    if echo "$response" | jq -e '.database.configured == true' > /dev/null 2>&1; then
+      echo -e "${GREEN}✅ Connected${NC}"
+      return 0
     else
-      echo -e "${YELLOW}⚠️  Database:${NC} Slow response (${latency}ms)"
-      ((PASSED_CHECKS++))
+      echo -e "${RED}❌ Not configured${NC}"
+      return 1
     fi
   else
-    echo -e "${RED}❌ Database:${NC} HTTP $http_code"
-    ((FAILED_CHECKS++))
+    echo -e "${RED}❌ FAIL${NC}"
+    return 1
   fi
 }
 
-# ============================================================================
-# Function: Check Redis/Cache
-# ============================================================================
-check_cache() {
-  echo -e "${BLUE}[$(date +'%H:%M:%S')]${NC} Checking Redis cache..."
-  
-  response=$(curl -s -w "\n%{http_code}" "${API_URL}/cache-health" 2>/dev/null || echo -e "\n500")
-  http_code=$(echo "$response" | tail -n 1)
-  body=$(echo "$response" | head -n -1)
-  
-  if [ "$http_code" = "200" ]; then
-    latency=$(echo "$body" | jq '.latency_ms' 2>/dev/null || echo "N/A")
-    if [ "$latency" != "N/A" ] && [ "$latency" -lt 10 ]; then
-      echo -e "${GREEN}✅ Redis Cache:${NC} Connected (${latency}ms)"
-      ((PASSED_CHECKS++))
+check_redis() {
+  echo -n "Redis cache: "
+  if response=$(curl -s -m 5 "$API_URL/health" 2>/dev/null); then
+    redis_status=$(echo "$response" | jq -r '.redis.status' 2>/dev/null || echo "unknown")
+    if [ "$redis_status" = "connected" ]; then
+      echo -e "${GREEN}✅ Connected${NC}"
+      return 0
     else
-      echo -e "${YELLOW}⚠️  Redis Cache:${NC} Slow response (${latency}ms)"
-      ((PASSED_CHECKS++))
+      redis_error=$(echo "$response" | jq -r '.redis.error // "unknown error"' 2>/dev/null)
+      echo -e "${RED}❌ $redis_error${NC}"
+      return 1
     fi
   else
-    echo -e "${RED}❌ Redis Cache:${NC} HTTP $http_code"
-    ((FAILED_CHECKS++))
+    echo -e "${RED}❌ FAIL${NC}"
+    return 1
   fi
 }
 
-# ============================================================================
-# Function: Check S3 Bucket Access
-# ============================================================================
 check_s3() {
-  echo -e "${BLUE}[$(date +'%H:%M:%S')]${NC} Checking S3 bucket access..."
-  
-  if aws s3api head-bucket --bucket imbobi-evidencias-prod --region us-east-1 2>/dev/null; then
-    echo -e "${GREEN}✅ S3 Bucket:${NC} Accessible"
-    ((PASSED_CHECKS++))
+  echo -n "S3 bucket ($S3_BUCKET): "
+  if aws s3api head-bucket --bucket "$S3_BUCKET" 2>/dev/null; then
+    echo -e "${GREEN}✅ Accessible${NC}"
+    return 0
   else
-    echo -e "${RED}❌ S3 Bucket:${NC} Not accessible"
-    ((FAILED_CHECKS++))
+    echo -e "${RED}❌ Not accessible${NC}"
+    return 1
   fi
 }
 
-# ============================================================================
-# Function: Check DNS Resolution
-# ============================================================================
 check_dns() {
-  echo -e "${BLUE}[$(date +'%H:%M:%S')]${NC} Checking DNS resolution..."
-  
-  api_ip=$(nslookup api.imbobi.com.br 2>/dev/null | grep "Address:" | tail -n 1 | awk '{print $2}')
-  web_ip=$(nslookup imbobi.com.br 2>/dev/null | grep "Address:" | tail -n 1 | awk '{print $2}')
-  
-  if [ ! -z "$api_ip" ] && [ ! -z "$web_ip" ]; then
-    echo -e "${GREEN}✅ DNS Resolution:${NC} api.imbobi.com.br → $api_ip, imbobi.com.br → $web_ip"
-    ((PASSED_CHECKS++))
+  echo -n "DNS resolution (api.imobi.com.br): "
+  if nslookup api.imobi.com.br > /dev/null 2>&1; then
+    echo -e "${GREEN}✅ Resolved${NC}"
+    return 0
   else
-    echo -e "${RED}❌ DNS Resolution:${NC} Failed"
-    ((FAILED_CHECKS++))
+    echo -e "${RED}❌ Failed${NC}"
+    return 1
   fi
 }
 
-# ============================================================================
-# Function: Print Summary
-# ============================================================================
-print_summary() {
-  elapsed=$(($(date +%s) - START_TIME))
-  echo ""
-  echo "════════════════════════════════════════════════════════════════════"
-  echo "HEALTH CHECK SUMMARY"
-  echo "════════════════════════════════════════════════════════════════════"
-  echo -e "${GREEN}✅ Passed:${NC} $PASSED_CHECKS"
-  echo -e "${RED}❌ Failed:${NC} $FAILED_CHECKS"
-  echo "Elapsed: ${elapsed}s"
-  echo "════════════════════════════════════════════════════════════════════"
+check_web() {
+  echo -n "Web frontend (https://imobi.com.br): "
+  if curl -s -m 5 -o /dev/null -w "%{http_code}" "https://imobi.com.br" | grep -q "200"; then
+    echo -e "${GREEN}✅ 200 OK${NC}"
+    return 0
+  else
+    echo -e "${RED}❌ Not responding${NC}"
+    return 1
+  fi
+}
+
+determine_status() {
+  local api=0 db=0 redis=0 s3=0 dns=0 web=0
   
-  if [ $FAILED_CHECKS -gt 0 ]; then
-    echo -e "${RED}⚠️  SOME CHECKS FAILED - ESCALATE TO #ops-critical${NC}"
+  check_api_health && api=1 || api=0
+  check_database && db=1 || db=0
+  check_redis && redis=1 || redis=0
+  check_s3 && s3=1 || s3=0
+  check_dns && dns=1 || dns=0
+  check_web && web=1 || web=0
+  
+  local total=$((api + db + redis + s3 + dns + web))
+  
+  if [ $total -eq 6 ]; then
+    echo -e "\n${GREEN}🟢 ALL SYSTEMS OPERATIONAL${NC}"
+    return 0
+  elif [ $total -ge 4 ]; then
+    echo -e "\n${YELLOW}🟡 DEGRADED ($total/6 checks passing)${NC}"
     return 1
   else
-    echo -e "${GREEN}✅ ALL CHECKS PASSED${NC}"
-    return 0
+    echo -e "\n${RED}🔴 CRITICAL ($total/6 checks passing)${NC}"
+    return 2
   fi
 }
 
-# ============================================================================
-# Main Loop
-# ============================================================================
-main() {
-  echo -e "${BLUE}════════════════════════════════════════════════════════════════════${NC}"
-  echo -e "${BLUE}imobi Health Check Monitor${NC}"
-  echo -e "${BLUE}API URL: $API_URL${NC}"
-  echo -e "${BLUE}Interval: ${CHECK_INTERVAL}s${NC}"
-  echo -e "${BLUE}Start: $(date)${NC}"
-  echo -e "${BLUE}════════════════════════════════════════════════════════════════════${NC}"
-  echo ""
+send_slack_alert() {
+  local status=$1
+  local message=$2
   
-  # Run continuous checks until interrupted
+  if [ -n "$ALERT_WEBHOOK" ]; then
+    local color="warning"
+    [ "$status" = "ok" ] && color="good"
+    [ "$status" = "critical" ] && color="danger"
+    
+    curl -s -X POST "$ALERT_WEBHOOK" \
+      -H 'Content-type: application/json' \
+      -d "{
+        \"attachments\": [{
+          \"color\": \"$color\",
+          \"title\": \"imobi Health Check\",
+          \"text\": \"$message\",
+          \"ts\": $(date +%s)
+        }]
+      }" > /dev/null
+  fi
+}
+
+main() {
+  echo -e "${GREEN}Starting health check loop (interval: ${CHECK_INTERVAL}s)${NC}"
+  echo "Press Ctrl+C to stop"
+  
   while true; do
-    echo ""
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    clear
+    log_header
     
-    check_api_health
-    check_database
-    check_cache
-    check_s3
-    check_dns
+    determine_status
+    status_code=$?
     
-    print_summary || true
+    # Map status code to string
+    case $status_code in
+      0) current_status="ok" ;;
+      1) current_status="degraded" ;;
+      2) current_status="critical" ;;
+    esac
     
-    echo -e "${BLUE}Next check in ${CHECK_INTERVAL}s...${NC}"
-    sleep $CHECK_INTERVAL
+    # Alert only on state change
+    if [ "$PREV_STATUS" != "$current_status" ] && [ -n "$ALERT_WEBHOOK" ]; then
+      send_slack_alert "$current_status" "Status changed from $PREV_STATUS to $current_status"
+    fi
+    
+    PREV_STATUS="$current_status"
+    
+    echo -e "\nNext check in ${CHECK_INTERVAL}s ($(date -u -d "+${CHECK_INTERVAL} seconds" '+%H:%M:%S UTC'))"
+    sleep "$CHECK_INTERVAL"
   done
 }
 
-# Trap Ctrl+C for graceful exit
-trap 'echo ""; print_summary; exit 0' INT
-
+# Executar
 main "$@"
 ```
 
-**Uso:**
+**Como usar**:
 
 ```bash
-# Setup
-chmod +x scripts/health-check-monitor.sh
+# Sem alertas (apenas terminal)
+chmod +x /home/user/imobi/scripts/cutover-health-check.sh
+./scripts/cutover-health-check.sh
 
-# Rodar durante o cutover
-export API_URL="https://api.imbobi.com.br"
-./scripts/health-check-monitor.sh
+# Com alertas Slack (optional)
+export ALERT_WEBHOOK="https://hooks.slack.com/services/YOUR_TEAM/YOUR_CHANNEL
+./scripts/cutover-health-check.sh
 
-# Saída esperada:
-# ════════════════════════════════════════════════════════════════════
-# imobi Health Check Monitor
-# API URL: https://api.imbobi.com.br
-# Interval: 5s
-# ════════════════════════════════════════════════════════════════════
-#
-# ✅ API Health: HTTP 200
-# ✅ Database: Connected (5ms)
-# ✅ Redis Cache: Connected (2ms)
-# ✅ S3 Bucket: Accessible
-# ✅ DNS Resolution: api.imbobi.com.br → 1.2.3.4
-# ✅ ALL CHECKS PASSED
+# Customizar intervalo
+CHECK_INTERVAL=10 ./scripts/cutover-health-check.sh
 ```
 
----
+### Script 2: Health Check Dashboard (Fancy)
 
-## Integrações Slack
-
-### A. Sentry → Slack Webhook
-
-**Setup:**
-
-```
-1. Slack Workspace → Workspace Settings → Manage apps → Build
-2. Create New App → From scratch
-3. Name: "Sentry Alerts", Workspace: your-workspace
-4. Incoming Webhooks → Activate
-5. Add New Webhook to Workspace → Select #ops-critical
-6. Copy Webhook URL
-
-Exemplo URL: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX
-```
-
-**Configurar em Sentry:**
-
-```
-Sentry → Settings → Integrations → Slack
-OR
-Sentry → Alerts → Alert Rule → Add Action → Slack notification
-Select channel: #ops-critical
-```
-
-**Teste:**
-
-```bash
-# Teste manual do webhook
-curl -X POST https://hooks.slack.com/services/YOUR/WEBHOOK/URL \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "text": "🚀 imobi cutover test message",
-    "blocks": [
-      {
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": "*Test Alert from Monitoring Setup*\nIf you see this, Slack integration works!"
-        }
-      }
-    ]
-  }'
-```
-
----
-
-### B. CloudWatch → SNS → Slack Webhook
-
-**Setup (via AWS CLI):**
-
-```bash
-# 1. Create SNS Topic
-aws sns create-topic \
-  --name imbobi-ops-critical \
-  --region us-east-1
-
-# Output: "TopicArn": "arn:aws:sns:us-east-1:123456789012:imbobi-ops-critical"
-
-# 2. Subscribe to Slack
-aws sns subscribe \
-  --topic-arn arn:aws:sns:us-east-1:123456789012:imbobi-ops-critical \
-  --protocol https \
-  --notification-endpoint https://hooks.slack.com/services/YOUR/WEBHOOK/URL \
-  --region us-east-1
-
-# 3. Confirm subscription (Slack will receive confirmation message)
-# Click link in Slack to confirm
-
-# 4. Link CloudWatch Alarms to SNS topic
-# (See CloudWatch section above for alarm configuration)
-```
-
-**Teste:**
-
-```bash
-aws sns publish \
-  --topic-arn arn:aws:sns:us-east-1:123456789012:imbobi-ops-critical \
-  --message "Test alert from CloudWatch monitoring setup" \
-  --subject "imobi Cutover - Test Alert" \
-  --region us-east-1
-```
-
----
-
-### C. Custom Health Check Script → Slack Alerts
-
-**Integrar alerts automáticos:**
+**Arquivo**: `/home/user/imobi/scripts/cutover-dashboard.sh`
 
 ```bash
 #!/bin/bash
-# scripts/health-check-with-slack.sh
 
-SLACK_WEBHOOK="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
-FAILED_THRESHOLD=2  # Escalate after 2 consecutive failures
+# Versão simplificada com display melhorado
+# Requer: jq, curl, figlet (opcional)
 
-failed_count=0
+API_URL="${API_URL:-https://api.imobi.com.br}"
+CHECK_INTERVAL="${CHECK_INTERVAL:-5}"
 
-while true; do
-  # Run health checks
-  if ! ./scripts/health-check-monitor.sh > /tmp/health-check.log 2>&1; then
-    ((failed_count++))
-    
-    if [ $failed_count -ge $FAILED_THRESHOLD ]; then
-      # Alert to Slack
-      curl -X POST "$SLACK_WEBHOOK" \
-        -H 'Content-Type: application/json' \
-        -d "{
-          \"text\": \":warning: Health Check Failed ($failed_count times)\",
-          \"blocks\": [
-            {
-              \"type\": \"section\",
-              \"text\": {
-                \"type\": \"mrkdwn\",
-                \"text\": \"*:warning: Health Check Alert*\nFailed: $failed_count consecutive checks\nTime: $(date)\"
-              }
-            },
-            {
-              \"type\": \"section\",
-              \"text\": {
-                \"type\": \"mrkdwn\",
-                \"text\": \"\`\`\`$(tail -20 /tmp/health-check.log)\`\`\`\"
-              }
-            }
-          ]
-        }"
-      
-      failed_count=0  # Reset counter after alert
-    fi
-  else
-    failed_count=0
-  fi
+# ANSI colors
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# Função para desenhar caixa
+draw_box() {
+  local title="$1"
+  local width=60
   
-  sleep 5
-done
+  printf "┌─── ${BLUE}${title}${NC} "
+  printf '%0.s─' $(( width - ${#title} - 8 ))
+  printf "┐\n"
+}
+
+draw_close_box() {
+  printf "└──────────────────────────────────────────────────────────┘\n"
+}
+
+status_check() {
+  local name="$1"
+  local check_fn="$2"
+  
+  echo -n "  │ $name: "
+  if $check_fn; then
+    echo -e "${GREEN}✅${NC}"
+  else
+    echo -e "${RED}❌${NC}"
+  fi
+}
+
+api_check() {
+  curl -s -m 3 "$API_URL/health" > /dev/null 2>&1
+}
+
+db_check() {
+  curl -s -m 3 "$API_URL/health" | jq -e '.database.configured' > /dev/null 2>&1
+}
+
+redis_check() {
+  curl -s -m 3 "$API_URL/health" | jq -e '.redis.status == "connected"' > /dev/null 2>&1
+}
+
+s3_check() {
+  aws s3api head-bucket --bucket imbobi-evidencias-prod 2>/dev/null
+}
+
+web_check() {
+  curl -s -m 3 -o /dev/null -w "%{http_code}" "https://imobi.com.br" | grep -q "200"
+}
+
+main() {
+  while true; do
+    clear
+    
+    draw_box "IMOBI CUTOVER HEALTH DASHBOARD"
+    echo "  │"
+    echo "  │  Timestamp: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+    echo "  │  API URL: $API_URL"
+    echo "  │"
+    
+    status_check "API Health" api_check
+    status_check "Database" db_check
+    status_check "Redis Cache" redis_check
+    status_check "S3 Storage" s3_check
+    status_check "Web Frontend" web_check
+    
+    echo "  │"
+    echo "  │  Next update: $(date -u -d "+${CHECK_INTERVAL} seconds" '+%H:%M:%S %Z')"
+    draw_close_box
+    
+    sleep "$CHECK_INTERVAL"
+  done
+}
+
+main
+```
+
+### Script 3: Load Testing com k6
+
+**Arquivo**: `/home/user/imobi/scripts/cutover-load-test.js`
+
+```javascript
+import http from 'k6/http';
+import { check, group } from 'k6';
+
+export const options = {
+  // Configuração para 1000 concurrent users
+  stages: [
+    { duration: '2m', target: 100 },   // Ramp up 100 users em 2 min
+    { duration: '3m', target: 500 },   // Ramp up para 500 em 3 min
+    { duration: '5m', target: 1000 },  // Ramp up para 1000 em 5 min
+    { duration: '5m', target: 1000 },  // Manter 1000 por 5 min
+    { duration: '3m', target: 500 },   // Ramp down para 500 em 3 min
+    { duration: '2m', target: 0 },     // Ramp down para 0 em 2 min
+  ],
+  
+  thresholds: {
+    // Thresholds de sucesso
+    'http_req_duration': ['p(95)<200', 'p(99)<500'],
+    'http_req_failed': ['rate<0.01'],  // < 1% errors
+  },
+  
+  setupTimeout: '10s',
+  teardownTimeout: '10s',
+};
+
+const API_BASE = __ENV.API_URL || 'https://api.imobi.com.br';
+
+export function setup() {
+  // Validar conexão com API antes do load test
+  const res = http.get(`${API_BASE}/health`);
+  check(res, {
+    'setup: API is up': (r) => r.status === 200,
+  });
+}
+
+export default function () {
+  // Health check
+  group('Health', () => {
+    const res = http.get(`${API_BASE}/health`);
+    check(res, {
+      'health status is ok or degraded': (r) => {
+        const body = JSON.parse(r.body);
+        return body.status === 'ok' || body.status === 'degraded';
+      },
+      'health response time < 100ms': (r) => r.timings.duration < 100,
+    });
+  });
+  
+  // Simular requests típicas
+  group('API endpoints', () => {
+    // GET exemplo
+    http.get(`${API_BASE}/some-endpoint`);
+    
+    // POST exemplo
+    http.post(`${API_BASE}/some-endpoint`, {
+      data: 'test',
+    });
+  });
+}
+
+export function teardown(data) {
+  // Validar que API ainda está up após load test
+  const res = http.get(`${API_BASE}/health`);
+  check(res, {
+    'teardown: API still up': (r) => r.status === 200,
+  });
+}
+```
+
+**Como executar**:
+
+```bash
+# Instalar k6 (se não tiver)
+# https://k6.io/docs/getting-started/installation/
+
+# Executar load test
+k6 run \
+  -e API_URL=https://api.imobi.com.br \
+  scripts/cutover-load-test.js \
+  --out json=cutover-load-test-results.json
+
+# Visualizar resultados
+cat cutover-load-test-results.json | jq '.metrics'
 ```
 
 ---
 
-## Timeline de Monitoramento
+## Alertas e Escalação
 
-### Cutover Schedule: 2026-06-02 01:00 UTC
+### Slack Channels Essenciais
 
-| Time (UTC) | Time (BRT) | Activity | Tool | Owner | Notes |
-|---|---|---|---|---|---|
-| 2026-06-02 00:30 | 01 Jun 21:30 | **PRE-CUTOVER PREP** | All | Tech Lead | Final validation |
-| 2026-06-02 00:30 | 01 Jun 21:30 | Start monitoring dashboards | Sentry, CloudWatch, Vercel | DevOps | Leave tabs open |
-| 2026-06-02 00:40 | 01 Jun 21:40 | Run load test (1000 concurrent users) | k6/Artillery | DevOps | Validate infrastructure |
-| 2026-06-02 00:50 | 01 Jun 21:50 | Start health check monitor | Custom script | Tech Lead | `./health-check-monitor.sh` |
-| 2026-06-02 00:55 | 01 Jun 21:55 | Final Slack integration test | Slack | DevOps | Confirm #ops-critical receiving messages |
-| **2026-06-02 01:00** | **01 Jun 22:00** | **CUTOVER STARTS** | Deploy | DevOps | Deploy new version to production |
-| 2026-06-02 01:05 | 01 Jun 22:05 | Monitor Vercel build | Vercel | DevOps | Watch build progress |
-| 2026-06-02 01:10 | 01 Jun 22:10 | Vercel deploy complete | Vercel | DevOps | Validate Core Web Vitals appear |
-| 2026-06-02 01:15 | 01 Jun 22:15 | Validate health checks | Custom script | Tech Lead | All checks should return 200/OK |
-| 2026-06-02 01:20 | 01 Jun 22:20 | Canary metrics review | Sentry + CloudWatch | DevOps | Error rate < 1%, latency OK |
-| 2026-06-02 01:30 | 01 Jun 22:30 | First traffic ramp-up (10%) | DNS/ALB | DevOps | Route 10% of traffic to new version |
-| 2026-06-02 01:35 | 01 Jun 22:35 | Monitor error rate increase | Sentry | DevOps | Should still be < 1% |
-| 2026-06-02 01:45 | 01 Jun 22:45 | Second traffic ramp-up (50%) | DNS/ALB | DevOps | Route 50% of traffic to new version |
-| 2026-06-02 01:50 | 01 Jun 22:50 | Post-ramp validation | All dashboards | Tech Lead | Error rate, latency, cache hit ratio |
-| 2026-06-02 02:00 | 02 Jun 23:00 | Full traffic cutover (100%) | DNS/ALB | DevOps | Route all traffic to new version |
-| 2026-06-02 02:05 | 02 Jun 23:05 | Stability check (no errors for 5 min) | Sentry + CloudWatch | Tech Lead | Monitor closely |
-| 2026-06-02 02:30 | 02 Jun 23:30 | Post-deploy validation | Custom script | Tech Lead | Re-run all health checks |
-| 2026-06-02 03:00 | 02 Jun 00:00 | Declare cutover success | CTO + PO | All checks | If all green, declare victory |
-| 2026-06-02 03:00+ | 02 Jun 00:00+ | Continue monitoring (1 hour) | All dashboards | DevOps | Watch for delayed issues |
+Criar canais (se não existirem):
+- [ ] `#ops-critical` — Alertas CRÍTICOS (P1, P2)
+- [ ] `#ops-monitoring` — Notificações gerais
+- [ ] `#cutover-logs` — Log contínuo durante cutover
+- [ ] `#incident-response` — Incident postmortem
+
+### Thresholds de Escalação
+
+| Métrica | Amarelo (Warning) | Vermelho (CRITICAL) | Ação |
+|---------|-------------------|---------------------|------|
+| **Error Rate** | > 1% | > 5% | Investigate / Rollback |
+| **Latency p95** | > 150ms | > 500ms | Scale up / Rollback |
+| **Latency p99** | > 300ms | > 1000ms | Scale up / Rollback |
+| **CPU (RDS)** | > 70% | > 85% | Scale up |
+| **Memory (RDS)** | > 80% | > 95% | Scale up / Clear cache |
+| **DB Connections** | > 80 | > 95 | Investigate connection leak |
+| **Cache Hit Ratio** | < 70% | < 50% | Review cache strategy |
+| **Redis Evictions** | > 10/sec | > 100/sec | Clear cache / Increase memory |
+| **5xx Errors** | 1+ | 5+ | Investigate / Rollback |
+| **HTTP 429 (Rate limit)** | Any | Multiple users | Scale up / Check DDoS |
+
+### Slack Message Templates
+
+**Template 1: Status Update (Every 15 min)**
+
+```
+:green_circle: **CUTOVER STATUS UPDATE** — 2026-06-02 01:45 UTC
+
+**Overall**: 🟢 All Systems Operational
+
+**Metrics** (last 15 min):
+  • Error Rate: 0.3% (✅ Target < 1%)
+  • Latency p95: 125ms (✅ Target < 150ms)
+  • Cache Hit: 82% (✅ Target > 80%)
+  • Errors: 8 (✅ Target 0, acceptable)
+  • Users Online: ~150
+
+**Infrastructure**:
+  • RDS CPU: 45% (✅ Target < 70%)
+  • RDS Memory: 62% (✅ Target < 80%)
+  • DB Connections: 47/100 (✅ Healthy)
+  • Redis Evictions: 0 (✅ Healthy)
+
+**Deployments**:
+  • Vercel Build: ✅ Deployed (02:00 UTC)
+  • Sentry: ✅ Tracking
+  • CloudWatch: ✅ Monitoring
+
+**Next Check**: 15:45 UTC
+
+cc: @devops-team
+```
+
+**Template 2: Alert (Warning)**
+
+```
+:orange_circle: **ALERT (P2)** — 2026-06-02 01:30 UTC
+
+**Issue**: Latency p95 increased to 180ms (threshold: 150ms)
+
+**Context**:
+  • Duration: Last 5 minutes
+  • Affected: /api/obras endpoint
+  • Error Rate: Still < 1% ✅
+
+**Action**:
+  1. Check CloudWatch for RDS CPU/memory
+  2. Review Sentry for errors
+  3. Consider gradual scale-up if trend continues
+
+**Status**: INVESTIGATING
+
+cc: @devops-team
+```
+
+**Template 3: Alert (Critical)**
+
+```
+:red_circle: **CRITICAL ALERT (P1)** — 2026-06-02 01:20 UTC
+
+**Issue**: Error Rate exceeded 5% threshold! 🚨
+
+**Metrics**:
+  • Error Rate: 7.2% (threshold: > 5%)
+  • Errors in last 5 min: 245
+  • Top error: `Database connection timeout`
+  • Latency p95: 850ms (↑ from 125ms)
+
+**Action Required**:
+  1. IMMEDIATE: Check RDS connections (likely exhausted)
+  2. Verify database is responsive
+  3. Consider ROLLBACK if trend continues
+
+**Escalation**: Paging @cto
+
+cc: @devops-team @backend-team
+```
+
+### Escalation Matrix
+
+```
+P1 (CRITICAL)
+├─ Who: CTO + DevOps Lead
+├─ Notify: Slack #ops-critical + PagerDuty
+├─ Timeframe: < 5 min response
+├─ Decision: Rollback if needed
+└─ Actions: Drain traffic, investigate, execute rollback
+
+P2 (WARNING)
+├─ Who: DevOps Lead + SRE
+├─ Notify: Slack #ops-critical
+├─ Timeframe: < 15 min response
+├─ Decision: Scale up, optimize, monitor
+└─ Actions: Adjust resources, optimize queries
+
+P3 (INFO)
+├─ Who: Monitoring team
+├─ Notify: Slack #ops-monitoring
+├─ Timeframe: < 60 min response
+├─ Decision: Observe trend
+└─ Actions: Log for postmortem
+```
 
 ---
 
-## Escalation Matrix
+## Timeline de Operação
 
-### Alert Severity Levels
+### Pré-Cutover (24h antes)
 
-#### P0 (CRITICAL) — Immediate Action
-```
-Condition: Any of:
-- Error rate > 5% for > 5 minutes
-- API latency p95 > 500ms
-- Database connection pool exhausted (> 95 of 100)
-- Redis evictions > 100/sec
-- Health check endpoint returns 5xx
+**Data**: 2026-06-01 00:00 UTC
 
-Action:
-1. Page on-call engineer immediately
-2. Alert #ops-critical Slack channel
-3. Investigate + implement emergency fix or rollback
-4. Timeline: Respond within 5 minutes
-```
+| Hora | Atividade | Owner | Check |
+|------|-----------|-------|-------|
+| 00:00 | Iniciar Load Test (10 min) | DevOps | ✓ Success? |
+| 00:20 | Validar infra após load test | DevOps | ✓ CPU/Mem OK? |
+| 00:30 | Revisar alertas Sentry | SRE | ✓ Configured? |
+| 01:00 | Revisar dashboards CloudWatch | DevOps | ✓ Metrics visible? |
+| 02:00 | Teste de rollback (dry-run) | DevOps | ✓ Procedure OK? |
+| 12:00 | Sync com team (standup) | CTO | ✓ Everyone ready? |
+| 18:00 | Final sanity checks | All | ✓ Everything go? |
+| 23:00 | **FINAL CHECK COMPLETE** | CTO | ✓ READY |
 
-#### P1 (HIGH) — Urgent Investigation
-```
-Condition: Any of:
-- Error rate > 2% for > 10 minutes
-- API latency p95 > 200ms
-- RDS CPU > 80% for > 5 minutes
-- Redis memory > 85% of max
-- Cache hit ratio drops below 60%
+### Durante Cutover (0:00-4:00 UTC 02/06)
 
-Action:
-1. Alert #ops-warning Slack channel
-2. Assign on-call engineer to investigate
-3. Consider scaling up infrastructure
-4. Timeline: Respond within 15 minutes
-```
+| Hora UTC | Atividade | Owner | Duração | Check |
+|----------|-----------|-------|---------|-------|
+| 00:00 | **CUTOVER START** — Deploy iniciado | DevOps | — | ✓ All monitoring on |
+| 00:05 | Monitorar build Vercel | DevOps | 2-5 min | ✓ Build OK? |
+| 00:15 | **CANARY CHECK** — 1% tráfego | DevOps | — | ✓ Errors < 1%? |
+| 00:30 | **HEALTH CHECK SWEEP** | Tech Lead | 10 min | ✓ All 6 checks pass? |
+| 00:40 | Validar latência (p95 < 150ms) | SRE | — | ✓ Latency OK? |
+| 00:45 | Validar cache hit ratio (> 80%) | SRE | — | ✓ Cache warm? |
+| 01:00 | **RAMP TO 50% TRAFFIC** | DevOps | — | ✓ Metrics OK? |
+| 01:15 | Revisar Sentry + CloudWatch | All | 10 min | ✓ No anomalies? |
+| 01:30 | **RAMP TO 100% TRAFFIC** | DevOps | — | ✓ Ready? |
+| 01:45 | **STABILITY CHECK** (10 min) | Tech Lead | 10 min | ✓ All metrics stable? |
+| 02:00 | **POST-DEPLOY VALIDATION** | All | 15 min | ✓ User tests OK? |
+| 02:15 | Monitor for 5xx errors spike | SRE | ongoing | ✓ 0 5xx errors? |
+| 02:30 | CPU/Memory trend analysis | DevOps | — | ✓ Scaling needed? |
+| 03:00 | **FINAL VALIDATION** — Declare Success | CTO | — | ✓ ALL OK? |
+| 03:30 | Handoff para on-call team | DevOps | — | ✓ Documented? |
+| 04:00 | **MISSION ACCOMPLISHED** 🎉 | All | — | ✓ Post-mortem scheduled? |
 
-#### P2 (MEDIUM) — Monitor & Log
-```
-Condition: Any of:
-- Error rate 1-2% (but stable)
-- API latency p95 150-200ms
-- RDS CPU 70-80%
-- Non-critical service degradation
-
-Action:
-1. Log in monitoring system
-2. Monitor trend over 30 minutes
-3. Alert team if trend worsens
-4. No immediate action required
-```
-
-#### P3 (LOW) — Informational
-```
-Condition: Any of:
-- Normal operational metrics
-- Expected spikes during load test
-- Minor service slowdowns (< 100ms)
-
-Action:
-1. Log in monitoring system
-2. Review in post-cutover debrief
-3. No immediate action required
-```
-
-### Escalation Contact List
+### Decisão Callouts (se houver problema)
 
 ```
-On-Call Engineer:
-- Slack: @oncall-eng (paged automatically)
-- Phone: [TO BE FILLED]
-- Email: [TO BE FILLED]
+IF error_rate > 5% FOR 5 minutes THEN
+  → Slack: @cto "Error rate critical, investigating"
+  → Check: RDS CPU, Redis memory, query performance
+  → Decision: Fix or ROLLBACK within 10 min
 
-Tech Lead:
-- Slack: @tech-lead
-- Availability: 01:00 - 04:00 UTC
+IF latency_p95 > 500ms FOR 5 minutes THEN
+  → Slack: @devops "Latency critical, investigating"
+  → Check: RDS load, query plans, cache effectiveness
+  → Decision: Scale up or ROLLBACK within 10 min
 
-DevOps Lead:
-- Slack: @devops-lead
-- Availability: 01:00 - 04:00 UTC
+IF db_connections > 95 FOR 2 minutes THEN
+  → Slack: @backend "Connection leak detected"
+  → Action: Kill stuck connections, check app logs
+  → Decision: Fix or ROLLBACK
 
-CTO:
-- Slack: @cto
-- Availability: On standby (escalate if P0)
-
-Product Owner:
-- Slack: @product
-- Availability: On standby (final decision on rollback)
+IF 5xx_errors > 10 THEN
+  → Slack: @cto "Multiple 5xx errors"
+  → Action: Check Sentry for details, identify pattern
+  → Decision: ROLLBACK if >= 50 errors in 5 min
 ```
 
 ---
 
 ## Checklist Pré-Cutover
 
-### 72 Horas Antes (2026-05-30)
+### 48h Antes (2026-05-31 00:00 UTC)
 
-- [ ] Verificar que todas as dependências (DB, Redis, S3, etc.) estão saudáveis
-- [ ] Confirmar credenciais AWS, Sentry, Vercel estão corretas
-- [ ] Testar Slack webhook integrations
-- [ ] Revisar e atualizar CLAUDE.md com instruções de cutover
-- [ ] Confirmar que o branch `main` contém todas as mudanças para production
+- [ ] Todos dashboards criados e testados
+- [ ] Alertas Sentry configurados e integração Slack OK
+- [ ] CloudWatch dashboard criado
+- [ ] Health check scripts finalizados e testados
+- [ ] Load test executado com sucesso
+- [ ] Slack channels criados (`#ops-critical`, `#ops-monitoring`, `#cutover-logs`)
+- [ ] Team comunicado e schedule confirmado
+- [ ] Rollback plan documentado e testado (dry-run)
+- [ ] S3 bucket access verificado (aws s3api head-bucket)
+- [ ] DNS registros verificados (nslookup)
 
-### 24 Horas Antes (2026-06-01)
+### 24h Antes (2026-06-01 00:00 UTC)
 
-- [ ] Deploy test para staging environment (simular full cutover)
-- [ ] Validar que Sentry está capturando eventos corretamente
-- [ ] Validar que Vercel build succeeds e Core Web Vitals aparecem
-- [ ] Validar CloudWatch dashboards estão acessíveis
-- [ ] Testar scripts de health check contra staging API
-- [ ] Revisar escalation contact list (phone numbers, emails atualizados)
-- [ ] Brief engineering team: cutover schedule, responsibilities, escalation
-- [ ] Prepare rollback procedure documentation
+- [ ] Load test executado novamente
+- [ ] Todos dashboards recarregados e vistos
+- [ ] Credenciais testadas (Sentry, Vercel, AWS)
+- [ ] Slack webhooks testados
+- [ ] Email notificações confirmadas
+- [ ] PagerDuty escalation policy OK (se aplicável)
+- [ ] Commit SHA da produção atual anotado
+- [ ] Vercel rollback procedure confirmado
+- [ ] Team standup — Everyone ready?
 
-### 2 Horas Antes (2026-06-01 22:00 UTC / 19:00 BRT)
+### 1h Antes (2026-06-01 23:00 UTC)
 
-- [ ] All team members online e prontos
-- [ ] Open/pin all monitoring dashboards in tabs
-- [ ] Start health check monitor script (test mode)
-- [ ] Verify all Slack channels are accessible (#ops-critical, #ops-warning, etc.)
-- [ ] Confirm database backups are current
-- [ ] Verify that rollback commit SHA is documented and accessible
-- [ ] Confirm deployment pipeline is ready (no builds in progress)
+- [ ] Todos dashboards abertos em browsers/terminals
+- [ ] Equipe no Slack e chamada de vídeo (Zoom/Teams)
+- [ ] Health check script rodando em terminal separado
+- [ ] CloudWatch aberto em segundo monitor (se tiver)
+- [ ] Vercel deployment page aberto (não fazer deploy ainda!)
+- [ ] Sentry dashboard aberto
+- [ ] Arquivo com rollback procedure impresso/visível
+- [ ] Todos viram "Olá, vamos começar?" no Slack
+- [ ] **DOOR LOCKED** — Ninguém mais commita para main!
 
-### 30 Minutes Before (2026-06-01 23:30 UTC)
+### Deploy Time (2026-06-02 00:00 UTC)
 
-- [ ] Final health check sweep (all systems green)
-- [ ] Run load test against staging (validate infrastructure can handle expected load)
-- [ ] Take snapshot of current production metrics (baseline for comparison)
-- [ ] Confirm all team members have access to monitoring tools
-- [ ] Do final Slack notification test
-- [ ] Double-check that no critical tickets/bugs are pending
-- [ ] Review commit log for any unexpected changes
-
-### 15 Minutes Before (2026-06-01 23:45 UTC)
-
-- [ ] All dashboards open and monitoring (Sentry, Vercel, CloudWatch, custom health checks)
-- [ ] Custom health check monitor running in dedicated terminal
-- [ ] Slack notifications enabled
-- [ ] Team synchronized on Slack (final check-in)
-- [ ] Deployment command ready to execute
-
-### GO-LIVE (2026-06-02 01:00 UTC / 22:00 BRT)
-
-- [ ] Deploy command executed: `git push origin main` (if using Vercel auto-deploy)
-- [ ] OR manual deployment command: `vercel deploy --prod`
-- [ ] Start timer: note exact deploy time
-- [ ] Watch Vercel build progress (should complete in < 10 minutes)
-- [ ] Monitor all dashboards simultaneously
+- [ ] DevOps pessoa: Deploy initiado em Vercel
+- [ ] SRE pessoa: Olhar Sentry, CloudWatch, Health checks
+- [ ] Tech Lead pessoa: Revisar logs, investigar anomalias
+- [ ] CTO pessoa: Decisão final (go/no-go)
+- [ ] Documentar ALL decisions em `#cutover-logs` Slack
 
 ---
 
-## Checklist Pós-Cutover
+## Troubleshooting Rápido
 
-### 0-15 Minutes Post-Deploy
-
-- [ ] Vercel build completed successfully (no errors)
-- [ ] Core Web Vitals metrics appear in dashboard
-- [ ] Health check endpoint returns 200/OK
-- [ ] Sentry shows 0 errors (or minimal, expected ones)
-- [ ] API latency is stable (< 150ms p95)
-- [ ] Database connections are healthy (< 50 of 100)
-- [ ] Redis memory usage is normal (< 60%)
-- [ ] No 5xx errors in logs
-- [ ] Slack integration is receiving alerts correctly
-- [ ] Post message to #ops-cutover: "Deploy completed, monitoring…"
-
-### 15-30 Minutes Post-Deploy
-
-- [ ] Error rate stable and < 1% (for at least 10 minutes)
-- [ ] Latency metrics green (p95 < 150ms)
-- [ ] No spike in error messages or types
-- [ ] Database performance is normal
-- [ ] Redis cache hit ratio > 80%
-- [ ] S3 operations completing normally
-- [ ] Email provider (SendGrid) successfully sending notifications
-- [ ] Firebase Cloud Messaging push notifications working
-- [ ] Health check sweep passes all checks
-- [ ] Post status update to #ops-cutover
-
-### 30-60 Minutes Post-Deploy
-
-- [ ] Sustained 1 hour of stable operation with < 1% error rate
-- [ ] Traffic metrics show normal usage patterns
-- [ ] No performance degradation over time
-- [ ] All infrastructure auto-scaling responding correctly
-- [ ] Backup systems (snapshots, logs) capturing data normally
-- [ ] User feedback channel monitored (no complaints in first 30 min)
-- [ ] Post final success message to #ops-cutover
-- [ ] Declare cutover SUCCESSFUL
-
-### Post-Cutover Review (2026-06-02 04:00 UTC / 01:00 BRT)
-
-- [ ] Archive all monitoring screenshots/logs
-- [ ] Document any issues encountered
-- [ ] Note any optimizations for next cutover
-- [ ] Send post-mortem to engineering team
-- [ ] Update runbooks with learnings
-- [ ] Schedule retrospective meeting
-- [ ] Celebrate successful launch! 🎉
-
----
-
-## Runbook de Rollback
-
-### Quando Fazer Rollback
-
-Rollback é indicado se qualquer um dos seguintes ocorrer:
+### Problema: Error Rate > 5%
 
 ```
-1. Error rate > 5% por > 10 minutos
-2. Latency p95 > 300ms por > 10 minutos
-3. Database connection pool exhausted
-4. Critical service cascading failures
-5. Data corruption or integrity issues
-6. Security incident (unauthorized access, data leak)
-7. Major revenue-impacting issue reported by users
+Diagnóstico rápido:
+1. Abrir Sentry → Top Errors
+2. Procurar padrão (todas mesma erro? ou diverse?)
+3. Check Sentry Stack traces
+
+Se erro é "Database connection timeout":
+  → Check RDS: CPU, Memory, Connections
+  → Kill stuck connections: SELECT * FROM pg_stat_activity;
+  → Consider scale-up ou ROLLBACK
+
+Se erro é "Redis ECONNREFUSED":
+  → Check ElastiCache status
+  → Verify security groups
+  → Restart Redis (if needed)
+  
+Se erro é diverse (múltiplos tipos):
+  → Likely infra issue (CPU, memory, network)
+  → Check CloudWatch RDS/ElastiCache
+  → If degraded: consider ROLLBACK
 ```
 
-### Rollback Procedure (< 5 minutes)
-
-#### Step 1: Declare Rollback (1 min)
-
-```bash
-# Post to Slack immediately
-# @ops-critical @cto — INITIATING ROLLBACK
-# Reason: [specific error]
-# Starting rollback procedure...
-```
-
-#### Step 2: Stop New Deployments (1 min)
-
-```bash
-# Vercel Dashboard → Settings → Git
-# Temporarily disable automatic deployments
-# (prevents accidental re-deploy)
-
-# OR via CLI:
-# (Contact Vercel support if needed for immediate lock)
-```
-
-#### Step 3: Revert to Previous Commit (2 min)
-
-```bash
-# Option A: Via Vercel Dashboard (< 1 min)
-1. Go to: https://vercel.com/[TEAM]/imobi/deployments
-2. Find previous deployment (before cutover)
-3. Click "..." menu → "Promote to Production"
-4. Confirm rollback
-
-# Option B: Via Git + Push (< 1 min)
-git revert HEAD
-# or
-git reset --hard [PREVIOUS_COMMIT_SHA]
-git push origin main
-# Vercel will automatically redeploy
-
-# Option C: Direct Git Revert (if Push Blocked)
-git checkout [PREVIOUS_COMMIT_SHA] -- .
-git commit -m "ROLLBACK: Revert to pre-cutover state"
-git push origin main
-```
-
-#### Step 4: Validate Rollback (1 min)
-
-```bash
-# Monitor Vercel deploy progress
-# Expected: < 5 minutes for full deploy
-
-# Once deployed:
-curl -s https://api.imbobi.com.br/health | jq .
-# Should show: "status": "ok"
-
-# Check Sentry for error rate drop
-# Should see: error rate returning to baseline
-```
-
-#### Step 5: Communicate Rollback (1 min)
-
-```bash
-# Post to Slack
-# @channel ROLLBACK COMPLETE
-# Reason: [specific issue]
-# Time to rollback: [X minutes]
-# Current status: [stable/monitoring]
-# Next steps: [investigation/fix/retry]
-```
-
-### Post-Rollback Investigation
-
-1. **Collect Evidence**
-   - Export Sentry error logs (last 30 min)
-   - Export CloudWatch logs (relevant time window)
-   - Export Vercel build logs
-   - Export database slow query logs
-
-2. **Root Cause Analysis**
-   - Identify exact error/issue
-   - Determine if it's code or infrastructure
-   - Check for incomplete migrations or config issues
-   - Review any third-party service outages
-
-3. **Create Fix**
-   - Fix the identified issue
-   - Write/update tests to catch the bug
-   - Perform code review with team
-
-4. **Re-Deploy**
-   - Test in staging environment first
-   - Run load test again
-   - Schedule new cutover attempt
-
----
-
-## Quick Reference Links
-
-### Dashboards
-
-| Service | URL | Purpose |
-|---------|-----|---------|
-| Sentry | https://sentry.io/organizations/[ORG]/issues/ | Error tracking |
-| Vercel Deployments | https://vercel.com/[TEAM]/imobi/deployments | Build & deploy monitoring |
-| Vercel Settings | https://vercel.com/[TEAM]/imobi/settings | Config & rollback |
-| CloudWatch | https://console.aws.amazon.com/cloudwatch | Infrastructure metrics |
-| RDS Dashboard | https://console.aws.amazon.com/rds | Database health |
-| ElastiCache | https://console.aws.amazon.com/elasticache | Redis health |
-
-### Important Commits & SHAs
-
-```bash
-# Pre-Cutover SHA (save this before deploying)
-git log -1 --oneline
-
-# Example:
-# a1b2c3d fix: health check endpoints for monitoring
-
-# Save in secure location for quick rollback reference
-echo "a1b2c3d" > /tmp/pre-cutover-sha.txt
-```
-
-### Key Contacts
+### Problema: Latency p95 > 200ms
 
 ```
-Tech Lead: @tech-lead (Slack)
-DevOps Lead: @devops-lead (Slack)
-CTO: @cto (Slack)
-Product Owner: @product (Slack)
+Diagnóstico:
+1. Abrir CloudWatch → RDS metrics
+2. Check: CPU (target < 70%), Memory (target < 80%)
+3. Check: Database connections trending up?
+
+Se CPU > 70%:
+  → RDS auto-scaling ativado?
+  → Se não: Manualmente scale-up
+  → Monitor por 5-10 min
+
+Se Connections > 80:
+  → App leak de connections?
+  → Check application logs
+  → Consider restarting app pods
+
+Se Memory > 85%:
+  → Scale up RDS instance
+  → Or clear application cache
 ```
 
-### Critical Files
+### Problema: Cache Hit Ratio < 70%
 
-- Monitoring guide: `/home/user/imobi/MONITORING_DASHBOARD_SETUP.md` (this file)
-- Health check script: `/home/user/imobi/scripts/health-check-monitor.sh`
-- API health endpoint: `/services/api/src/common/health.controller.ts`
-- Deployment config: `/vercel.json`
-- Environment config: `/.env.example`
-
----
-
-## Success Criteria — Final Checklist
-
-**After cutover goes live, validate:**
-
-- [ ] **Error Rate:** < 1% for sustained 1 hour
-- [ ] **Latency:** P95 < 150ms (consistent)
-- [ ] **Cache Hit Ratio:** > 80%
-- [ ] **Zero 5xx Errors:** No server errors in first 30 minutes
-- [ ] **All Health Checks:** Return 200 OK
-- [ ] **User Feedback:** No complaints in #support channel
-- [ ] **Infrastructure:** RDS CPU < 70%, Memory < 80%
-- [ ] **Database:** Connections < 80 of 100, no slow queries
-- [ ] **Redis:** Memory < 80%, evictions = 0
-- [ ] **DNS:** Both api.imbobi.com.br and imbobi.com.br resolve correctly
-- [ ] **S3:** No access errors on evidence photo uploads
-- [ ] **Email:** Notifications being sent successfully
-- [ ] **Firebase:** Push notifications being delivered
-- [ ] **Build:** Vercel deployment completed with no warnings
-
-**If ALL above are green:**
 ```
-✅ CUTOVER SUCCESSFUL ✅
+Diagnóstico:
+1. Abrir CloudWatch → ElastiCache metrics
+2. Checar: Cache size, evictions/sec
 
-- Declare success to stakeholders
-- Continue monitoring for 24 hours
-- Schedule post-launch debrief
-- Update runbooks with learnings
+Se Evictions > 10/sec:
+  → Redis is full, kicking out keys
+  → Aumentar Redis memory
+  → Or optimize cache strategy (TTL)
+
+Se Hit ratio baixo mas não tem evictions:
+  → Cache strategy problema
+  → Revisar: Quais dados estão sendo cached?
+  → Cache TTL muito curta?
+```
+
+### Problema: Database Connection Exhausted
+
+```
+Diagnóstico imediato:
+1. SSH para RDS (via bastian/VPN)
+2. Run: SELECT * FROM pg_stat_activity;
+3. Look for "idle in transaction" ou "idle" connections
+
+Ações:
+1. Kill stuck connections:
+   SELECT pg_terminate_backend(pid) 
+   FROM pg_stat_activity 
+   WHERE state = 'idle' AND query_start < now() - interval '10 min';
+
+2. Check application logs:
+   - Are connections being returned to pool?
+   - Any "connection pool exhausted" errors?
+
+3. Scale up RDS:
+   - Aumentar max_connections parameter
+   - Or upgrade instance type
+
+4. If problem persists: ROLLBACK
+```
+
+### Problema: S3 Upload Fails
+
+```
+Diagnóstico:
+1. Check S3 bucket exists:
+   aws s3api head-bucket --bucket imbobi-evidencias-prod
+
+2. Check IAM permissions:
+   - Lambda/App role has s3:PutObject, s3:GetObject?
+   - Check IAM policy
+
+3. Check bucket policy:
+   - Is it blocking requests?
+   - Check CORS if cross-origin
+
+4. Check network:
+   - VPC endpoint for S3 configured?
+   - Security groups allow HTTPS 443?
+```
+
+### Problema: DNS Resolution Fails
+
+```
+Diagnóstico:
+1. nslookup api.imobi.com.br
+2. nslookup imobi.com.br
+3. dig @8.8.8.8 api.imobi.com.br (test external)
+
+Se resolve OK locally mas falha externally:
+  → DNS propagation issue
+  → Check Route53 TTL
+  → Esperar propagação (< 5 min usually)
+
+Se falha em tudo:
+  → Route53 record issue
+  → Check record type (A, CNAME, etc)
+  → Verify endpoint is correct
+```
+
+### Problema: Vercel Build Fails
+
+```
+Diagnóstico:
+1. Abrir Vercel deployments page
+2. Clicar em build failure → View logs
+3. Procurar error message (output fim do log)
+
+Erros comuns:
+- "pnpm install failed" → Dependencies issue
+  → Check pnpm-lock.yaml
+  → May need to rebuild lock file
+  
+- "Build command failed" → Compilation error
+  → Check TypeScript errors
+  → pnpm type-check
+
+- "Out of memory" → Build system issue
+  → Split build ou upgrade instance
+  
+Se não conseguir fix rapidamente:
+  → ROLLBACK para deployment anterior
+  → Investigate issue offline
+```
+
+### Problema: ROLLBACK (Last Resort)
+
+```
+Procedure (5 min max):
+
+1. ANUNCIAR:
+   Slack #ops-critical: "INITIATING ROLLBACK - [reason]"
+
+2. Vercel rollback:
+   a) https://vercel.com/[TEAM]/imobi/deployments
+   b) Find previous deployment (known good)
+   c) Click "..." → "Promote to Production"
+   d) Confirm
+
+3. Database:
+   a) No rollback needed (data written is OK)
+   b) Revert any schema changes (if done in cutover)
+
+4. Validate:
+   a) Run health checks
+   b) Monitor error rate (should drop to normal)
+   c) Latency should normalize
+
+5. Post-rollback:
+   a) Post in Slack: "Rollback COMPLETE"
+   b) Schedule postmortem meeting
+   c) Document what went wrong
+   d) Plan fixes
+   e) Re-schedule cutover for next window
 ```
 
 ---
 
-## Appendix A: Load Testing Pre-Cutover
+## Tabela de Referência Rápida
 
-**Purpose:** Validate that infrastructure can handle expected concurrent load.
+### URLs Importantes
 
-```bash
-#!/bin/bash
-# scripts/load-test-pre-cutover.sh
+| Serviço | URL |
+|---------|-----|
+| Sentry Dashboard | https://sentry.io/organizations/imobi/issues/ |
+| Sentry Custom Dashboard | https://sentry.io/organizations/imobi/dashboards/ |
+| Vercel Deployments | https://vercel.com/[TEAM]/imobi/deployments |
+| Vercel Settings | https://vercel.com/[TEAM]/imobi/settings/git |
+| CloudWatch Dashboards | https://console.aws.amazon.com/cloudwatch/ |
+| AWS RDS | https://console.aws.amazon.com/rds/home |
+| AWS ElastiCache | https://console.aws.amazon.com/elasticache/home |
+| AWS S3 | https://console.aws.amazon.com/s3/buckets/imbobi-evidencias-prod |
+| API Health | https://api.imobi.com.br/health |
+| Web Frontend | https://imobi.com.br |
 
-# Using k6 (open-source load testing tool)
-# Install: https://k6.io/docs/getting-started/installation/
+### Thresholds Reference
 
-cat > load-test.js << 'EOF'
-import http from 'k6/http';
-import { check } from 'k6';
+| Métrica | GREEN | YELLOW | RED |
+|---------|-------|--------|-----|
+| Error Rate | < 0.5% | 1-5% | > 5% |
+| Latency p95 | < 100ms | 100-200ms | > 200ms |
+| Latency p99 | < 300ms | 300-500ms | > 500ms |
+| CPU RDS | < 60% | 60-80% | > 80% |
+| Memory RDS | < 75% | 75-85% | > 85% |
+| Cache Hit | > 85% | 70-85% | < 70% |
+| DB Connections | < 80 | 80-95 | > 95 |
+| 5xx Errors | 0 | 1-5 | > 5 |
 
-export let options = {
-  vus: 1000,              // 1000 concurrent users
-  duration: '10m',        // 10 minute test
-  rampUp: '1m',           // Ramp up over 1 minute
-  rampDown: '1m',         // Ramp down over 1 minute
-  thresholds: {
-    http_req_duration: ['p(95)<150'],    // P95 latency < 150ms
-    http_req_failed: ['rate<0.01'],      // Error rate < 1%
-  },
-};
+### Emergency Contacts
 
-export default function () {
-  let response = http.get('https://api.imbobi.com.br/health');
-  check(response, {
-    'status is 200': (r) => r.status === 200,
-    'response time < 150ms': (r) => r.timings.duration < 150,
-  });
-}
-EOF
-
-# Run test
-k6 run load-test.js
-
-# Expected output:
-# http_reqs.........................: 600000 reqs  1000 req/sec
-# http_req_duration.................: avg=45ms p(95)=120ms p(99)=180ms
-# http_req_failed....................: 0.00%
 ```
+CTO: [Name] — [Phone] — [Email]
+DevOps Lead: [Name] — [Phone] — [Email]
+SRE: [Name] — [Phone] — [Email]
+Backend Lead: [Name] — [Phone] — [Email]
+Frontend Lead: [Name] — [Phone] — [Email]
+Database Admin: [Name] — [Phone] — [Email]
 
-**Run 30-60 minutes before cutover:**
-
-```bash
-# 30 min before cutover
-export API_URL="https://api.imbobi.com.br"
-./scripts/load-test-pre-cutover.sh
-
-# Monitor during test:
-# - CloudWatch dashboard: RDS CPU, connections, memory
-# - CloudWatch dashboard: ElastiCache memory, evictions
-# - Sentry: Error rate should stay < 0.1%
-# - Custom health checks: All passing
-
-# If test passes with < 1% error rate and P95 < 150ms:
-# Infrastructure is ready for cutover
+Escalation:
+  Level 1: #ops-critical Slack
+  Level 2: PagerDuty
+  Level 3: Call CTO directly
 ```
 
 ---
 
-## Appendix B: Common Issues & Solutions
+## Conclusão & Next Steps
 
-### Issue 1: High Error Rate Post-Deploy
+### Antes de começar cutover, garantir
 
-**Symptom:** Error rate spikes to > 5% immediately after deploy
+✅ **Todos os dashboards funcionando**
+✅ **Todos os alertas testados**
+✅ **Health check script rodando**
+✅ **Team no Slack e vídeo chamada**
+✅ **Rollback procedure testado (dry-run)**
+✅ **Documentação acessível (este arquivo)**
 
-**Diagnosis:**
-```bash
-# Check Sentry for error patterns
-curl -s https://sentry.io/api/0/projects/[ORG]/[PROJECT]/events/ \
-  -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" | jq '.[] | .message'
+### Durante cutover
 
-# Check CloudWatch logs
-aws logs tail /aws/lambda/imbobi-api --follow --since 5m
+✅ **Monitorar ATIVAMENTE** — não deixar desatendido
+✅ **Comunicar no Slack** — status updates a cada 15 min
+✅ **Documentar tudo** — decisions, issues, resolutions
+✅ **Escalate rápido** — não tentar resolver P1 sozinho
 
-# Check database connectivity
-curl https://api.imbobi.com.br/db-health
-# If: "error": "connection refused" → DB migration issue
-```
+### Depois de cutover
 
-**Solution:**
-```
-1. Check if database migrations ran successfully
-2. Verify environment variables are set correctly
-3. Check for breaking changes in code
-4. If unresolvable: INITIATE ROLLBACK (see runbook)
-```
-
-### Issue 2: Slow API Latency Post-Deploy
-
-**Symptom:** Latency p95 > 200ms (was < 100ms before)
-
-**Diagnosis:**
-```bash
-# Check CloudWatch logs for slow queries
-aws logs insights query /aws/rds/imbobi-prod \
-  --query 'fields @duration | stats avg(@duration) by @message'
-
-# Check database connection pool
-aws rds describe-db-instances --db-instance-identifier imbobi-prod-db \
-  | jq '.DBInstances[0].DBParameterGroups'
-
-# Check Redis latency
-curl https://api.imbobi.com.br/cache-health
-```
-
-**Solution:**
-```
-1. If RDS: Check for slow queries, add indexes
-2. If Redis: Check memory usage, clear old keys
-3. If code: Profile with APM (Sentry transaction tracing)
-4. Scale up: RDS instance type or read replica
-```
-
-### Issue 3: Database Connection Pool Exhaustion
-
-**Symptom:** Error rate spikes, "too many connections" errors
-
-**Diagnosis:**
-```bash
-# Check current connections
-aws rds describe-db-instances --db-instance-identifier imbobi-prod-db \
-  | jq '.DBInstances[0].DBInstanceStatus'
-
-# Check application connection pool
-# In health check:
-curl https://api.imbobi.com.br/health
-# Check: "database": { "connections": 98 } (out of 100 max)
-```
-
-**Solution:**
-```
-1. Restart application instances (recycles connection pools)
-2. Increase max_connections in RDS parameter group
-3. Check for connection leaks in code
-4. Scale up: Add read replica or increase RDS instance size
-```
-
-### Issue 4: Redis Evictions Spike
-
-**Symptom:** Cache hit ratio drops below 60%, high eviction rate
-
-**Diagnosis:**
-```bash
-# Check Redis memory usage
-aws elasticache describe-cache-clusters \
-  --cache-cluster-id imbobi-redis-prod \
-  --show-cache-node-info \
-  | jq '.CacheClusters[0].CacheNodes[0].CacheNodeStatus'
-
-# Check eviction rate
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/ElastiCache \
-  --metric-name Evictions \
-  --start-time $(date -u -d '15 minutes ago' +%Y-%m-%dT%H:%M:%S) \
-  --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
-  --period 300 \
-  --statistics Sum \
-  --dimensions Name=CacheClusterId,Value=imbobi-redis-prod
-```
-
-**Solution:**
-```
-1. Clear old cache keys: FLUSHDB (careful - will clear all data)
-2. Increase Redis max memory: AWS console → Modify cluster
-3. Review cache TTLs: Reduce for less critical data
-4. Scale up: Move to larger Redis instance type
-```
+✅ **Postmortem meeting** — 24-48h após
+✅ **Update runbooks** — com o que aprendemos
+✅ **Melhorar alertas** — baseado em falsos positivos/negativos
+✅ **Celebrate!** — team merece 🎉
 
 ---
 
-## Version History
+**Documento preparado**: 2026-05-29  
+**Próxima revisão**: 2026-06-02 04:00 UTC (após cutover)  
+**Dúvidas?** Slack: @devops-team or email: devops@imobi.com.br
 
-| Date | Version | Changes | Author |
-|------|---------|---------|--------|
-| 2026-05-29 | v1.0 | Initial setup guide | DevOps Team |
-
----
-
-**Last Updated:** 2026-05-29  
-**Next Review:** Post-cutover (2026-06-02)  
-**Document Owner:** DevOps Lead  
-**Stakeholders:** CTO, Tech Lead, Product Owner
