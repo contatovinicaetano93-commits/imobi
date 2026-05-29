@@ -187,7 +187,7 @@ export function GpsValidationMap({
       ref={containerRef}
       style={{
         width: '100%',
-        height: '400px',
+        height: 'clamp(300px, 50vh, 500px)',
         borderRadius: '0.5rem',
         overflow: 'hidden',
       }}

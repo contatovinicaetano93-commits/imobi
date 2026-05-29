@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { EtapaAuditEntry, KycAuditEntry } from "@/lib/api";
-import { CheckCircle2, XCircle, Edit3, Clock, User, Mail } from "lucide-react";
+import { CheckCircle2, XCircle, Edit3, Clock, User, Mail, AlertCircle } from "lucide-react";
 
 type AuditEntry = EtapaAuditEntry | KycAuditEntry;
 
@@ -73,7 +73,12 @@ export function ApprovalAuditTrail({
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
         <h2 className="font-bold text-gray-900 mb-4">Histórico de Aprovações</h2>
-        <div className="text-gray-500 text-center py-8">Carregando...</div>
+        <div className="text-gray-500 text-center py-8">
+          <div className="inline-block animate-spin">
+            <Clock className="w-5 h-5" />
+          </div>
+          <p className="mt-2">Carregando histórico...</p>
+        </div>
       </div>
     );
   }
