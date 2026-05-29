@@ -8,7 +8,6 @@ const config: ExpoConfig = {
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "automatic",
-  experiments: { newArchEnabled: false },
   splash: { image: "./assets/splash.png", resizeMode: "contain", backgroundColor: "#15803d" },
   ios: {
     supportsTablet: false,
