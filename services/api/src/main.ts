@@ -1,3 +1,12 @@
+// Setup module aliases for workspace packages before any imports
+const moduleAlias = require("module-alias");
+const path = require("path");
+// Use cwd() as it should be the project root when running from dist
+const projectRoot = process.cwd();
+moduleAlias.addAlias("@imbobi/schemas", path.join(projectRoot, "packages/schemas/dist"));
+moduleAlias.addAlias("@imbobi/core", path.join(projectRoot, "packages/core/dist"));
+moduleAlias.addAlias("@imbobi/ui", path.join(projectRoot, "packages/ui/dist"));
+
 import { NestFactory } from "@nestjs/core";
 import {
   FastifyAdapter,
