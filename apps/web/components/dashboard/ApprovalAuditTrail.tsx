@@ -88,8 +88,9 @@ export function ApprovalAuditTrail({
   if (error) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <h2 className="font-bold text-gray-900 mb-4">Histórico de Aprovações</h2>
-        <div className="bg-red-50 rounded-lg border border-red-200 p-4">
+        <h2 className="font-bold text-gray-900 mb-4">{title}</h2>
+        <div className="bg-red-50 rounded-lg border border-red-200 p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
           <p className="text-red-700 text-sm">{error}</p>
         </div>
       </div>
@@ -99,7 +100,7 @@ export function ApprovalAuditTrail({
   if (!auditLogs || auditLogs.length === 0) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <h2 className="font-bold text-gray-900 mb-4">Histórico de Aprovações</h2>
+        <h2 className="font-bold text-gray-900 mb-4">{title}</h2>
         <div className="text-gray-500 text-center py-8">
           Nenhuma ação registrada ainda
         </div>
@@ -109,9 +110,9 @@ export function ApprovalAuditTrail({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-bold text-gray-900 text-lg">Histórico de Aprovações</h2>
-        <span className="text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <h2 className="font-bold text-gray-900 text-lg">{title}</h2>
+        <span className="text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1 rounded-full w-fit">
           {auditLogs.length} evento{auditLogs.length !== 1 ? "s" : ""}
         </span>
       </div>
