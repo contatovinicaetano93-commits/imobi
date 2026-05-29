@@ -1,342 +1,292 @@
-# Tomorrow Cutover Prep — 2026-06-02
-**Today**: 2026-06-01 (Preparation Day)  
-**Target**: 2026-06-02 02:00 UTC cutover  
-**Brazil Time**: 23:00 (10 PM) June 1st = 02:00 UTC June 2nd
+# Cutover Preparation & Day-of Timeline
+**Cutover Date: 2026-06-02 | Window: 02:00-04:00 UTC (23:00 Jun 01 - 01:00 Jun 02 Brazil)**
 
 ---
 
-## TODAY (2026-06-01) — Final 2-Hour Prep Before 23:00 Brazil Time
+## TODAY: 2026-06-01 (Day Before Cutover)
 
-### PRE-CUTOVER CHECKLIST (Do these TODAY)
+### Before 14:00 UTC (11:00 Brazil)
+- [ ] Complete SIMPLIFIED_TEST_CHECKLIST.md (2 hours)
+- [ ] Verify all test infrastructure ready (staging DB, Redis, API)
+- [ ] Ensure internet/VPN stable for on-call team
 
-**By 18:00 Brazil** (21:00 UTC):
+### 14:00-17:00 UTC (11:00-14:00 Brazil) — Testing Window
+- [ ] Run full test suite from SIMPLIFIED_TEST_CHECKLIST.md
+- [ ] Document all results (PASS/FAIL for each test)
+- [ ] Fix any failures found (max 1 hour remediation)
 
-- [ ] Final backup of production database
-  ```bash
-  ./scripts/backup-prod.sh --tag cutover-2026-06-02
-  ```
-- [ ] Test backup restore in staging
-  ```bash
-  ./scripts/test-backup-restore.sh prod staging
-  ```
-- [ ] Verify git tags exist
-  ```bash
-  git tag -l v2.0.0      # Must exist
-  git tag -l v1.x.x      # Rollback target
-  ```
-- [ ] Pull latest code
-  ```bash
-  git fetch origin
-  git checkout v2.0.0
-  ```
-- [ ] Notify all stakeholders (see Communication section)
-- [ ] Confirm on-call team available
-- [ ] Brief all participants on rollback procedures
+### 17:00 UTC (14:00 Brazil) — Go/No-Go Decision
+- [ ] Fill out GO_NO_GO_DECISION.md decision template
+- [ ] CTO reviews and signs off
+- [ ] If NO-GO: Escalate and reschedule immediately
+- [ ] If GO: Proceed to pre-cutover prep (next section)
 
-**By 20:00 Brazil** (23:00 UTC = 2 hours before cutover):
+### 17:00-21:00 UTC (14:00-18:00 Brazil) — Pre-Cutover Prep
+- [ ] **Backup verification**
+  - Full DB backup complete
+  - Backup restored successfully in staging
+  - Backup stored in AWS S3 + cold storage
+- [ ] **Notification sent to stakeholders**
+  - Engineering team
+  - Operations team
+  - Product managers
+  - External customers (if applicable)
+- [ ] **Review runbooks**
+  - Rollback procedure
+  - Hotfix deployment
+  - Communication escalation
+- [ ] **Verify on-call schedule**
+  - CTO on-call 24-48h post-launch
+  - Support team notified
+  - Customer contact info compiled
 
-- [ ] Run final `pnpm type-check` on current branch
-- [ ] Run final `pnpm build` to verify
-- [ ] Verify all monitoring dashboards open and refreshing:
-  - Grafana: https://monitoring.imobi.app
-  - Sentry: https://sentry.io/organizations/imobi/
-  - CloudWatch: AWS console ready
-- [ ] Test rollback procedures in staging (simulate failure)
-  ```bash
-  # Test API rollback
-  docker pull gcr.io/imobi/api:v1.x.x
-  # Test Vercel rollback
-  vercel rollback --help  # Verify command works
-  ```
-- [ ] Verify database migration scripts
-  ```bash
-  ls -la services/api/prisma/migrations/ | tail -5
-  ```
-- [ ] Confirm DNS propagation (if domain changes)
-  ```bash
-  dig www.imobi.app +short
-  ```
-- [ ] Lock down the codebase (no new merges)
-- [ ] Send final "1 hour before cutover" notification
+### 21:00-23:00 UTC (18:00-20:00 Brazil) — Final Checks
+- [ ] Run `scripts/pre-deployment-health-check.sh` again (5 min)
+- [ ] Verify Vercel build pipeline (deploy button works)
+- [ ] Test rollback procedure in staging (10 min)
+- [ ] Confirm database backup integrity (5 min)
+- [ ] Brief on-call team on known issues/hotfixes (15 min)
 
-**By 22:30 Brazil** (01:30 UTC = 30 min before cutover):
-
-- [ ] All team members in Slack #deployment-status
-- [ ] Verify all systems operational (health checks passing)
-- [ ] Confirm CTO + DevOps leads on call
-- [ ] Final review of rollback runbook
-- [ ] Database backup verified in archive
-- [ ] Redis backup verified in archive
+### 23:00 UTC (20:00 Brazil) — Standby Mode
+- [ ] All team members in Slack #cutover-live channel
+- [ ] Monitoring dashboards (Grafana, Sentry) open
+- [ ] Backup communication channel open (phone lines clear)
+- [ ] Sleep or rest before cutover (1 hour)
 
 ---
 
-## CUTOVER TIMELINE — Minute by Minute
-**Cutover Window**: 2026-06-02 02:00-04:00 UTC (23:00 Brazil June 1 - 01:00 Brazil June 2)
+## CUTOVER DAY: 2026-06-02
 
-### PHASE 1: Preparation (02:00-02:05 UTC)
+### 01:00 UTC (22:00 Jun 01 Brazil) — Final Warning
+- [ ] Post "T-1 hour to cutover" in #cutover-live
+- [ ] Confirm all team members awake and online
+- [ ] Verify no ongoing deployments in Vercel
+- [ ] Last database backup running
 
-| Time | Task | Owner | Status | Rollback? |
-|------|------|-------|--------|-----------|
-| **01:50 UTC** | Send "cutover starting in 10 min" notification | Ops | ⏳ | N/A |
-| **02:00 UTC** | ✅ **BEGIN MAINTENANCE WINDOW** | DevOps | START | N/A |
-| **02:00** | All teams ready, monitoring dashboard open | All | ⏳ | N/A |
-| **02:00** | Verify no current user traffic | Ops | ⏳ | N/A |
-| **02:00** | Start timer for cutover window | Ops | ⏳ | N/A |
+### 02:00 UTC (23:00 Jun 01 Brazil) — CUTOVER STARTS
 
-### PHASE 2: Service Stop & Backup (02:05-02:15 UTC)
+```
+CUTOVER TIMELINE (all times UTC)
+═══════════════════════════════════════════════════════════════
 
-| Time | Task | Owner | Status | Rollback? |
-|------|------|-------|--------|-----------|
-| **02:05** | Stop API service: `docker stop imobi-api` | DevOps | ⏳ | ✅ Restart |
-| **02:05** | Stop web service (Vercel paused) | DevOps | ⏳ | ✅ Instant |
-| **02:10** | ✅ **Create final backup** (DB + Redis) | DBA | ⏳ | ✅ Restore |
-| **02:10** | Verify backup file created: `ls -lh /backups/` | DBA | ⏳ | N/A |
-| **02:15** | Confirm: No incoming traffic | Ops | ⏳ | N/A |
+02:00:00  START: Production traffic paused
+          ACTION: Vercel edge cache cleared
+          VERIFY: No active requests in logs
 
-### PHASE 3: Database Migration (02:15-02:25 UTC)
+02:01:00  DATABASE: Run final migration
+          COMMAND: pnpm db:migrate --prod
+          VERIFY: All migrations complete, 0 errors
+          ROLLBACK: `pnpm db:migrate:rollback` if needed
 
-| Time | Task | Owner | Status | Rollback? |
-|------|------|-------|--------|-----------|
-| **02:15** | ✅ **Run Prisma migrations** | DBA | ⏳ | ✅ `migrate resolve` |
-| **02:15** | Command: `pnpm db:migrate --prod` | DBA | ⏳ | ⏱️ ~5 min |
-| **02:20** | Monitor migration progress (logs) | DBA | ⏳ | Stop if stuck |
-| **02:25** | ✅ Verify migration success | DBA | ⏳ | ✅ Rollback ready |
-| **02:25** | Check: `SELECT version FROM _prisma_migrations ORDER BY finishedAt DESC LIMIT 1;` | DBA | ⏳ | N/A |
+02:03:00  DEPLOY: Push to production branch
+          COMMAND: git push origin main (if not auto-deployed)
+          VERIFY: Vercel build starts, monitor logs
+          EXPECTED: Build completes in 45-60 seconds
 
-**Migration Failure Action**: 
-- If migration fails → `prisma migrate resolve --rolled-back <migration_name>`
-- Restore from backup: `./scripts/disaster-recovery.sh postgres latest`
-- Rollback and reschedule
+02:05:00  BUILD: Vercel build in progress
+          MONITOR: Deployment logs on Vercel dashboard
+          IF FAILS: Rollback immediately (see ROLLBACK below)
 
-### PHASE 4: Deployment (02:25-02:45 UTC)
+02:10:00  SMOKE TEST: Health check API
+          COMMAND: curl https://api.imobi.com/health
+          EXPECTED: Returns 200 { status: "healthy" }
+          IF FAILS: Rollback immediately
 
-| Time | Task | Owner | Status | Rollback? |
-|------|------|-------|--------|-----------|
-| **02:25** | ✅ **Deploy API** (v2.0.0) | DevOps | ⏳ | ✅ v1.x.x |
-| **02:25** | Command: `docker pull gcr.io/imobi/api:v2.0.0 && docker run...` | DevOps | ⏳ | ⏱️ ~5 min |
-| **02:30** | ✅ **Deploy Web** (v2.0.0) | DevOps | ⏳ | ✅ Vercel |
-| **02:30** | Command: `vercel deploy --prod` | DevOps | ⏳ | ⏱️ ~3 min |
-| **02:35** | ✅ **Verify API Health** | DevOps | ⏳ | Check logs |
-| **02:35** | Curl: `http://localhost:3001/health` | DevOps | ⏳ | Must return 200 |
-| **02:40** | ✅ **Verify Web Health** | DevOps | ⏳ | Check Vercel |
-| **02:40** | Open: https://www.imobi.app/api/health | DevOps | ⏳ | Must return 200 |
-| **02:45** | ⚠️ If health checks FAIL → ROLLBACK NOW | DevOps | ⏳ | Execute rollback |
+02:11:00  WARM UP: Trigger cache warming
+          COMMAND: scripts/warm-cache.sh
+          VERIFY: Redis keys populated
+          TIMEOUT: Kill after 2 min if stalled
 
-**Deployment Failure Action**:
-- API fails: `docker pull gcr.io/imobi/api:v1.x.x && docker run...`
-- Web fails: `vercel rollback --prod` (automatic)
-- Check logs: `docker logs imobi-api` for errors
+02:13:00  REDIS: Verify queue system ready
+          COMMAND: redis-cli PING
+          EXPECTED: PONG
+          IF FAILS: Investigate, max 5 min delay tolerance
 
-### PHASE 5: Smoke Tests (02:45-03:15 UTC)
+02:15:00  FINAL: Enable traffic
+          ACTION: Vercel production domain redirects to new version
+          MONITOR: Error rates, response times
+          DURATION: Watch for 5 minutes solid
 
-| Time | Task | Owner | Status | Rollback? |
-|------|------|-------|--------|-----------|
-| **02:45** | ✅ **START SMOKE TESTS** | QA | ⏳ | Check list below |
-| **02:45** | Test: Login (manager@imobi.test) | QA | ⏳ | Stop if fails |
-| **02:50** | Test: Manager dashboard loads | QA | ⏳ | Stop if fails |
-| **02:55** | Test: Etapas list displays | QA | ⏳ | Stop if fails |
-| **03:00** | Test: Approval workflow works | QA | ⏳ | Stop if fails |
-| **03:05** | Test: Payment queue processing | QA | ⏳ | Stop if fails |
-| **03:10** | Test: GPS validation enforced | QA | ⏳ | Stop if fails |
-| **03:15** | ⚠️ If ANY test FAILS → STOP & ROLLBACK | QA | ⏳ | Execute rollback |
+02:20:00  CHECKPOINT 1: Monitor for errors
+          CHECK: Sentry (should be 0 errors)
+          CHECK: Grafana (error rate < 0.1%)
+          CHECK: Customer reports in Slack
+          DECISION: All good? Continue. Issues? See HOTFIX path
 
-**Smoke Test Failure Action**:
-- API: Rollback to v1.x.x (5 min)
-- Web: `vercel rollback --prod` (instant)
-- Database: Restore from backup (15-30 min)
+02:25:00  CHECKPOINT 2: Test critical flows
+          TEST: Manager login at https://app.imobi.com/login
+          TEST: Dashboard loads /dashboard/gestor/etapas
+          TEST: Sample etapa approval
+          EXPECTED: All succeed with no console errors
+          DECISION: All good? Proceed. Issue? See HOTFIX path
 
-### PHASE 6: GO-LIVE Decision (03:15-03:30 UTC)
+02:30:00  CHECKPOINT 3: Database verification
+          QUERY: SELECT COUNT(*) FROM etapas WHERE status='APROVADA'
+          VERIFY: Recent approval records exist
+          DECISION: All good? Proceed. Issue? See HOTFIX path
 
-| Time | Task | Owner | Status | Rollback? |
-|------|------|-------|--------|-----------|
-| **03:15** | ✅ **All smoke tests passed?** | QA | ⏳ | N/A |
-| **03:15** | Review error logs (Sentry) | Ops | ⏳ | Must be clean |
-| **03:20** | CTO reviews metrics (p95, error rate) | CTO | ⏳ | Must be nominal |
-| **03:25** | ✅ **GO-LIVE DECISION** | CTO | ⏳ | ✅ Rollback ready |
-| **03:30** | Decision: **GO** or **NO-GO** | CTO | ⏳ | N/A |
+02:35:00  PUBLISH: Go-live announcement
+          ACTION: Post "#cutover-complete Success!" in #announcements
+          ACTION: Notify customer success team (if applicable)
+          ACTION: Update status page to "operational"
 
-**If NO-GO** (Issues found):
-- Execute rollback immediately (API + Web + DB)
-- Notify all stakeholders
-- Schedule post-mortem within 24h
-- Estimated recovery: 15-30 minutes
+02:40:00  ONGOING MONITORING (next 3h 20min = until 06:00 UTC)
+          FREQUENCY: Check every 5 minutes
+          WATCH FOR: Error spikes, timeouts, database locks
+          DECISION RULES: See MONITORING THRESHOLDS below
 
-### PHASE 7: Traffic Increase (03:30-04:00 UTC)
-
-| Time | Task | Owner | Status | Rollback? |
-|------|------|-------|--------|-----------|
-| **03:30** | ✅ **Send GO-LIVE notification** | Ops | ⏳ | N/A |
-| **03:30** | Enable 10% traffic to production | DevOps | ⏳ | ✅ Revert if issues |
-| **03:35** | Monitor: Error rate, latency | Ops | ⏳ | Watch Grafana |
-| **03:40** | Increase to 50% traffic | DevOps | ⏳ | ✅ Revert if spikes |
-| **03:45** | Monitor for issues | Ops | ⏳ | Watch Grafana |
-| **03:50** | Increase to 100% traffic (full) | DevOps | ⏳ | Rollback available |
-| **04:00** | ✅ **END MAINTENANCE WINDOW** | Ops | DONE | ⏳ Monitor 24h |
-| **04:00** | Send "all systems nominal" notification | Ops | DONE | N/A |
+═══════════════════════════════════════════════════════════════
+```
 
 ---
 
-## CRITICAL CONTACTS & AVAILABILITY
+## ROLLBACK PROCEDURE (If needed during cutover)
 
-**All these people MUST be available 2026-06-01 21:00 UTC through 2026-06-02 04:00 UTC**:
+**Trigger Rollback IF**:
+- Vercel build fails (> 90 seconds)
+- Health check returns non-200
+- Login/dashboard broken on first test
+- Database migration fails
+- Error rate > 5% for 30 seconds
+- Manual CTO decision
 
-| Role | Name | Slack | Phone | Email | Available? |
-|------|------|-------|-------|-------|------------|
-| **CTO** | _________ | @cto | _________ | _________ | ☐ YES |
-| **DevOps Lead** | _________ | @devops | _________ | _________ | ☐ YES |
-| **Database Admin** | _________ | @dba | _________ | _________ | ☐ YES |
-| **On-Call Engineer** | _________ | @on-call | _________ | _________ | ☐ YES |
-| **QA Lead** | _________ | @qa | _________ | _________ | ☐ YES |
+**Rollback Steps** (5 min max):
+1. Revert to previous commit on `main` branch
+   ```bash
+   git revert HEAD --no-edit
+   git push origin main
+   ```
+2. Trigger Vercel redeploy (automatic)
+3. Run database rollback if needed
+   ```bash
+   pnpm db:migrate:rollback
+   ```
+4. Verify health check again
+   ```bash
+   curl https://api.imobi.com/health
+   ```
+5. Post "ROLLBACK COMPLETE" in #cutover-live
+6. Schedule post-mortem within 1 hour
 
-**Conference Bridge**: _________ (Zoom/Meet/Phone)  
-**War Room Slack**: #deployment-status  
-**Status Page**: https://status.imobi.app
+**Expected Rollback Time**: 5 minutes to return to previous stable state
+
+---
+
+## HOTFIX PROCEDURE (If minor issues found post-go-live)
+
+**For non-critical issues** (e.g., UI alignment, missing text):
+
+1. Create hotfix branch from `main`
+   ```bash
+   git checkout -b hotfix/cutover-2026-06-02
+   ```
+2. Apply fix (< 10 lines code change)
+3. Commit with message: `hotfix: [brief description]`
+4. Create PR, request CTO approval (5 min)
+5. Merge to `main`
+6. Vercel deploys automatically (3-4 min)
+7. Verify fix with curl/browser test (2 min)
+8. Post result in #cutover-live
+
+**Total Hotfix Time**: 15 minutes max
+**Limit**: Max 2 hotfixes during 02:00-06:00 window
+
+---
+
+## MONITORING THRESHOLDS (02:00-06:00 UTC)
+
+Check every 5 minutes. If ANY threshold breached, escalate:
+
+| Metric | Green | Yellow | Red | Action |
+|--------|-------|--------|-----|--------|
+| Error Rate | < 0.1% | 0.1-1% | > 1% | Alert CTO |
+| Response Time (p95) | < 300ms | 300-700ms | > 700ms | Investigate |
+| Response Time (p99) | < 800ms | 800-1500ms | > 1500ms | Investigate |
+| Database Connections | < 20 | 20-30 | > 30 | Investigate |
+| Redis Memory | < 500MB | 500-800MB | > 800MB | Clear cache/Hotfix |
+| CPU Usage | < 40% | 40-70% | > 70% | Scale/Investigate |
+| Failed Logins | 0 | 1-5 | > 5 | Hotfix/Rollback |
+
+**Escalation Path**:
+- Yellow (2+ metrics) → CTO reviews within 5 min
+- Red (any metric) → CTO decides Hotfix vs Rollback immediately
 
 ---
 
 ## COMMUNICATION PLAN
 
-### Timeline of Notifications
+### Pre-Cutover (Before 02:00 UTC)
+- [ ] Post countdown in #cutover-live channel
+  - "T-4 hours" at 22:00 UTC
+  - "T-2 hours" at 00:00 UTC
+  - "T-30 min" at 01:30 UTC
+  - "T-5 min" at 01:55 UTC
 
-**2026-06-01 18:00 UTC** (15:00 Brazil):
-```
-Subject: Deployment Scheduled for Tomorrow 02:00 UTC
+### During Cutover (02:00-04:00 UTC)
+- [ ] Live status updates every 5 minutes in #cutover-live
+  - "02:00 STARTED"
+  - "02:10 Build complete"
+  - "02:15 Health check passed"
+  - "02:25 Critical flows OK"
+  - "02:35 CUTOVER SUCCESS" or "ROLLBACK IN PROGRESS"
 
-We will deploy imobi v2.0.0 to production tomorrow (June 2nd) at 02:00 UTC.
+### Post-Cutover (After 04:00 UTC)
+- [ ] Post final status in #announcements + #cutover-live
+- [ ] Announce on-call team will monitor until 06:00 UTC
+- [ ] Document any issues encountered
+- [ ] Schedule post-mortem for next business day
 
-WINDOW: 02:00-04:00 UTC (23:00 June 1 - 01:00 June 2 Brazil time)
-EXPECTED DOWNTIME: 15-20 minutes
-
-All critical systems tested. Rollback ready. Follow #deployment-status for updates.
-```
-
-**2026-06-01 21:00 UTC** (18:00 Brazil):
-```
-Subject: Deployment in 1 hour — Teams on standby
-
-Cutover begins at 02:00 UTC (23:00 Brazil). Join war room.
-All critical personnel confirm availability.
-```
-
-**2026-06-02 01:50 UTC** (22:50 Brazil June 1):
-```
-Deployment starting in 10 minutes. Final status: ALL GO.
-Services will pause for 15-20 min. Monitor Grafana.
-```
-
-**2026-06-02 02:05 UTC** (23:05 Brazil):
-```
-Services paused. Database migration in progress.
-ETA: 3 minutes to deployment.
-```
-
-**2026-06-02 02:30 UTC** (23:30 Brazil):
-```
-API & Web deployed. Running smoke tests.
-ETA: 45 minutes to GO-LIVE decision.
-```
-
-**2026-06-02 03:15 UTC** (00:15 Brazil):
-```
-All smoke tests PASSED. GO-LIVE decision: YES ✅
-Increasing traffic to 100%.
-ETA: 45 minutes to full operation.
-```
-
-**2026-06-02 04:00 UTC** (01:00 Brazil):
-```
-✅ DEPLOYMENT SUCCESS
-All systems operational. Monitoring active for 24 hours.
-Metrics nominal. Zero critical errors.
-```
+**Slack Channels**:
+- `#cutover-live` — Real-time status (private: eng + ops only)
+- `#announcements` — Customer-facing updates
+- `#critical-issues` — If problems require escalation
 
 ---
 
-## ROLLBACK DECISION TREE
+## WHO NEEDS TO BE AVAILABLE
 
-```
-Is cutover failing?
-│
-├─ YES: Health checks failing?
-│       ├─ YES → Rollback immediately (5 min)
-│       └─ NO → Continue smoke tests
-│
-└─ NO: All smoke tests passing?
-        ├─ NO → Rollback immediately (5 min)
-        └─ YES → Proceed to GO-LIVE decision
-                 ├─ CTO says GO → Traffic increase (safe)
-                 └─ CTO says NO-GO → Rollback & reschedule
-```
+| Role | 2026-06-01 | 2026-06-02 01:00 UTC | 2026-06-02 02:00 UTC | 2026-06-02 04:00+ UTC |
+|------|-----------|-------------------|-------------------|----------------------|
+| **CTO** | Testing + approval | Standby | **Active (required)** | On-call 48h |
+| **Eng Lead** | Testing | Standby | **Active (required)** | On-call 24h |
+| **DevOps Lead** | Pre-checks | Standby | **Active (required)** | Available if issue |
+| **QA Lead** | Testing | Standby | Monitoring | Available if issue |
+| **Support Lead** | Briefing | Standby | Monitor for bugs | **Active (required)** |
 
-**Rollback Command Reference**:
-```bash
-# API Rollback (5 min)
-docker pull gcr.io/imobi/api:v1.x.x
-docker stop imobi-api
-docker run -d --name imobi-api \
-  -e DATABASE_URL=$DB_URL \
-  -e REDIS_URL=$REDIS_URL \
-  gcr.io/imobi/api:v1.x.x
-
-# Web Rollback (instant)
-vercel rollback --prod
-
-# Database Rollback (15-30 min if needed)
-./scripts/disaster-recovery.sh postgres 2026-06-02_020000
-```
+**Contact During Cutover**:
+- CTO: +55 _________ / Slack @cto
+- Eng Lead: +55 _________ / Slack @engLead
+- DevOps: +55 _________ / Slack @devops
 
 ---
 
-## SUCCESS CRITERIA (Post-Cutover)
+## CHECKLIST: Ready for 2026-06-02?
 
-✅ **Immediate (by 04:00 UTC)**:
-- [ ] All services responding to health checks
-- [ ] Error rate < 1%
-- [ ] p95 response time < 500ms
-- [ ] No critical Sentry errors
-- [ ] Payment queue processing
-- [ ] User logins succeeding
-- [ ] Manager approvals working
-
-✅ **Continuing (next 24 hours)**:
-- [ ] No escalating error rate
-- [ ] User engagement normal
-- [ ] No database issues
-- [ ] Backup creation succeeded
-- [ ] Performance stable vs baseline
+- [ ] SIMPLIFIED_TEST_CHECKLIST.md completed with all PASS
+- [ ] GO_NO_GO_DECISION.md signed by CTO
+- [ ] Database backup verified and tested
+- [ ] Grafana and Sentry dashboards open and monitored
+- [ ] Vercel deployment button ready (no pending builds)
+- [ ] Team members confirmed available in #cutover-live
+- [ ] Rollback plan reviewed by at least 2 engineers
+- [ ] Phone lines clear, Slack active, backup comms ready
+- [ ] Runbooks printed/accessible offline
+- [ ] Customer communication drafted (if needed)
 
 ---
 
-## CHECKLIST TO RUN NOW (2026-06-01)
+## FILES TO HAVE READY
 
-```bash
-# From /home/user/imobi directory
-
-# 1. Run the automated health check script
-./scripts/pre-deployment-health-check.sh
-
-# 2. Verify builds work
-pnpm type-check && echo "✅ Type check passed"
-pnpm build && echo "✅ Build passed"
-
-# 3. Verify git tags
-git tag -l | grep v2.0.0
-git tag -l | grep v1
-
-# 4. Create backup
-./scripts/backup-prod.sh --tag cutover-2026-06-02
-
-# 5. Test backup restore (in staging, not prod!)
-./scripts/test-backup-restore.sh
-```
+- [ ] `scripts/pre-deployment-health-check.sh` (automated checks)
+- [ ] `scripts/warm-cache.sh` (cache warming after deploy)
+- [ ] Database migration scripts (in Prisma migrations folder)
+- [ ] Rollback script (git revert procedure documented)
+- [ ] Hotfix process documented above
+- [ ] Monitoring dashboard links bookmarked
+- [ ] Support runbook for common cutover issues
 
 ---
 
-## DOCUMENT STATUS
+**FINAL NOTE**: This cutover is **designed to complete in under 2 hours** with minimal customer impact. If you deviate significantly from the timeline above, escalate to CTO immediately. No cutover feature is worth extended downtime — it's better to slow down and get it right than to rush and break things.
 
-- **Created**: 2026-06-01
-- **Owner**: DevOps/QA Lead
-- **Next Review**: 2026-06-02 01:00 UTC (1 hour before cutover)
-- **Approval**: CTO sign-off required before 23:00 Brazil June 1st
-
-**Signature**: _________________ Date: _________________ Time: _________________
+**Next**: Share this timeline with full team 24 hours before cutover.

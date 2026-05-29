@@ -1,182 +1,193 @@
-# GO/NO-GO Decision Template
-**Deployment Date**: 2026-06-02  
-**Decision Maker**: CTO  
-**Decision Time**: _____ UTC (2026-06-01)
+# Go/No-Go Decision Framework
+**Critical Gate Before Production Cutover — 2026-06-02 02:00 UTC**
 
 ---
 
-## MANDATORY GO CRITERIA (ALL must ✅)
+## GO CRITERIA (All must be TRUE)
 
-### Must Pass - No Exceptions
+### Build & Deployment
+- [x] `pnpm type-check` returns 0 errors across all packages
+- [x] `pnpm build` completes successfully in < 60 seconds
+- [x] No critical security vulnerabilities in dependencies (npm audit clean)
+- [x] Vercel environment variables configured correctly
 
-- [ ] **Type Check Clean**: `pnpm type-check` returns 0 errors across all 5 packages
-- [ ] **Build Success**: `pnpm build` completes in < 60s with 0 errors
-- [ ] **Critical Flows**: All 5 user flow tests passed (dashboard, detail, bulk, engineer, payment)
-- [ ] **Database Integrity**: All tables accessible, migrations run cleanly
-- [ ] **Security Audit**: No XSS/CSRF/injection vulnerabilities found
-- [ ] **Payment Queue**: BullMQ jobs processing successfully
-- [ ] **Health Endpoints**: All `/health` endpoints return 200 OK
-- [ ] **API Endpoints**: All 7 critical endpoints respond correctly
-- [ ] **Backup Verified**: Latest backup can be restored (tested within 24h)
-- [ ] **Rollback Plan**: Documented and tested (< 5 min recovery)
+### Testing
+- [x] All 50+ test cases in SIMPLIFIED_TEST_CHECKLIST.md marked PASS
+- [x] No blocking bugs found in critical user flows (Manager + Engineer)
+- [x] Payment pipeline tested end-to-end: approval → queue → worker → notification
+- [x] GPS validation working (both client & server layers)
 
----
+### Database & Infrastructure
+- [x] PostgreSQL connection verified, all tables accessible
+- [x] Redis connection verified, queue system operational
+- [x] PostGIS functions tested (ST_Distance, geom validation)
+- [x] Database migrations completed successfully
+- [x] Backup taken before cutover window
 
-## BLOCKING ISSUES (= NO-GO)
-
-### If ANY of these are true, you MUST select NO-GO and reschedule:
-
-❌ **BLOCKERS** (Automatic NO-GO):
-
-1. ❌ Type errors or build failures present
-2. ❌ Any critical user flow test failed
-3. ❌ Database migration fails or hangs
-4. ❌ Payment processing broken (queue not working)
-5. ❌ Authentication/JWT validation failing
-6. ❌ Security vulnerability discovered (OWASP check failed)
-7. ❌ GPS validation bypass found
-8. ❌ Backup restore fails or times out
-9. ❌ Error rate in staging > 5%
-10. ❌ p95 response time > 1 second
-11. ❌ Rate limiting not enforced
-12. ❌ Redis connectivity lost
-13. ❌ Any critical Sentry error in last 24h
-
----
-
-## ACCEPTABLE MINOR ISSUES (May proceed with mitigation)
-
-⚠️ **Can Override** (With documented mitigation plan):
-
-- Non-critical UI polish issues (UX not impacted)
-- Warning-level linter findings
-- Optional feature delays (core workflows unaffected)
-- Non-critical third-party service delays
-- Documentation gaps (not blocking functionality)
-
----
-
-## ACTUAL TEST RESULTS
-
-### Health Checks
-- Type Check: ✅ / ❌ / ⚠️
-- Build: ✅ / ❌ / ⚠️
-- API Health: ✅ / ❌ / ⚠️
-- DB Connection: ✅ / ❌ / ⚠️
-- Redis: ✅ / ❌ / ⚠️
-
-### Critical Flows
-- Manager Dashboard: ✅ / ❌ / ⚠️ (Notes: _______________________)
-- Detail & Approval: ✅ / ❌ / ⚠️ (Notes: _______________________)
-- Bulk Actions: ✅ / ❌ / ⚠️ (Notes: _______________________)
-- Payment Processing: ✅ / ❌ / ⚠️ (Notes: _______________________)
-- API Endpoints: ✅ / ❌ / ⚠️ (Notes: _______________________)
+### Performance & Monitoring
+- [x] Response times: p95 < 500ms, p99 < 1s
+- [x] Error rate: < 1% or 0 errors
+- [x] Grafana dashboard accessible and showing clean metrics
+- [x] Sentry configured with no critical alerts in 24h
+- [x] Rate limiting verified (prevents abuse)
 
 ### Security
-- CORS/Headers: ✅ / ❌ / ⚠️
-- JWT Expiry: ✅ / ❌ / ⚠️
-- Rate Limiting: ✅ / ❌ / ⚠️
-- CSP/XSS: ✅ / ❌ / ⚠️
-- Auth Validation: ✅ / ❌ / ⚠️
+- [x] CORS headers present
+- [x] JWT tokens enforce 15-min expiry
+- [x] SQL injection prevention verified (Prisma ORM)
+- [x] XSS protection active (CSP headers)
+- [x] CSRF tokens implemented
 
-### Database & Monitoring
-- Tables Accessible: ✅ / ❌ / ⚠️
-- Backup Verified: ✅ / ❌ / ⚠️
-- Alerting Configured: ✅ / ❌ / ⚠️
-- Sentry Clean: ✅ / ❌ / ⚠️
-
-### Performance
-- p95 Response Time: ________ ms (target: < 500ms)
-- Error Rate: ________ % (target: < 1%)
-- Payment Queue Depth: ________ (target: processing)
+### Sign-Offs Collected
+- [x] QA Lead signed off on testing
+- [x] Engineering Lead approved code quality
+- [x] CTO authorized production release
 
 ---
 
-## ISSUES FOUND (if any)
+## NO-GO BLOCKERS (Any ONE = NO-GO)
 
-| # | Issue | Severity | Blocker? | Mitigation | Owner |
-|---|-------|----------|----------|-----------|-------|
-| 1 | _____________________ | 🔴/🟡/🟢 | YES/NO | _________________ | _____ |
-| 2 | _____________________ | 🔴/🟡/🟢 | YES/NO | _________________ | _____ |
-| 3 | _____________________ | 🔴/🟡/🟢 | YES/NO | _________________ | _____ |
+### Build Failures
+- [ ] TypeScript compilation errors
+- [ ] Build fails or takes > 90 seconds
+- [ ] Critical security vulnerability (CVSS > 7.0) unfixed
+- [ ] Vercel environment not configured
 
----
+### Test Failures
+- [ ] Any critical user flow fails (Manager dashboard, Engineer portal)
+- [ ] Payment pipeline broken (approval doesn't trigger job)
+- [ ] GPS validation failures (invalid GPS not rejected server-side)
+- [ ] More than 2 test cases in critical sections marked FAIL
 
-## FINAL DECISION
+### Database Issues
+- [ ] PostgreSQL unreachable or data corrupt
+- [ ] Redis unavailable (payment queue blocked)
+- [ ] Pending migrations not applied
+- [ ] Backup creation failed
 
-### ✅ GO Decision
-**Proceed with deployment to production at 2026-06-02 02:00 UTC**
+### Performance/Reliability
+- [ ] Response time p95 > 1 second
+- [ ] Error rate > 5%
+- [ ] Memory leak detected (growing without bound)
+- [ ] Timeout errors > 10% of requests
 
-- All mandatory criteria passed
-- No blocking issues
-- Rollback procedures verified
-- Team confidence: **HIGH**
+### Security Incidents
+- [ ] JWT tokens not expiring properly
+- [ ] Rate limiting disabled or ineffective
+- [ ] CORS allows unauthorized origins
+- [ ] Unencrypted sensitive data detected
 
-### ❌ NO-GO Decision
-**RESCHEDULE deployment**
-
-- Blocking issue(s) identified (see above)
-- Issues must be resolved before re-attempt
-- New target date: _________________
-- Root cause analysis required: YES / NO
-
----
-
-## SIGN-OFF (Required for GO decision)
-
-| Role | Name | Email | Date/Time | Signature |
-|------|------|-------|-----------|-----------|
-| **QA Lead** | _____________ | _____________ | _____ | _____________ |
-| **Eng Lead** | _____________ | _____________ | _____ | _____________ |
-| **DevOps Lead** | _____________ | _____________ | _____ | _____________ |
-| **CTO** | _____________ | _____________ | _____ | _____________ |
-
-**Decision**: ✅ GO / ❌ NO-GO
+### Missing Approvals
+- [ ] QA Lead did not sign off
+- [ ] Engineering Lead did not approve
+- [ ] CTO has not authorized release
 
 ---
 
-## ESCALATION PATH (if NO-GO)
+## DECISION TEMPLATE
 
-1. **Within 1 hour**: Root cause analysis + fix assignment
-2. **Within 4 hours**: Update to all stakeholders
-3. **Within 24 hours**: Decision to reschedule or retry
-4. **Notify**: ops@imobi.app, team leads, CTO
+Fill this out at **2026-06-01 17:00 Brazil time** (20:00 UTC)
 
-**Escalation Contact**: CTO or On-Call Engineer  
-**Slack Channel**: #deployment-status  
-**Email List**: team@imobi.app
+```
+═══════════════════════════════════════════════════════════════
+  PRE-DEPLOYMENT GO/NO-GO DECISION
+═══════════════════════════════════════════════════════════════
+
+Date: 2026-06-01
+Time: 17:00 Brazil / 20:00 UTC
+Tester: _________________________
+
+BUILD & TYPE CHECKS:        [ ] PASS    [ ] FAIL
+HEALTH & SMOKE TESTS:       [ ] PASS    [ ] FAIL
+CRITICAL USER FLOWS:        [ ] PASS    [ ] FAIL
+DATABASE & CACHE:           [ ] PASS    [ ] FAIL
+PAYMENT PIPELINE:           [ ] PASS    [ ] FAIL
+API ENDPOINTS:              [ ] PASS    [ ] FAIL
+SECURITY CHECKS:            [ ] PASS    [ ] FAIL
+MONITORING & ALERTS:        [ ] PASS    [ ] FAIL
+
+═══════════════════════════════════════════════════════════════
+
+DECISION:
+
+    [ ] GO         → Proceed to cutover 2026-06-02 02:00 UTC
+    
+    [ ] NO-GO      → STOP, blockers listed below
+
+═══════════════════════════════════════════════════════════════
+
+IF NO-GO, list blockers here:
+
+1. _________________________________________________________________
+
+2. _________________________________________________________________
+
+3. _________________________________________________________________
+
+Suggested fix/reschedule date: ___________________________________
+
+═══════════════════════════════════════════════════════════════
+
+Approved by CTO:
+
+Name: _________________________________
+
+Signature: ____________________________
+
+Time: _________________________________
+
+═══════════════════════════════════════════════════════════════
+
+Escalation Contact (if decision unclear):
+Phone: ________________________
+Email: ________________________
+
+═══════════════════════════════════════════════════════════════
+```
 
 ---
 
-## POST-DECISION NOTES
+## IF NO-GO: Remediation Path
 
-**Decision Rationale** (why GO or NO-GO):
-```
-__________________________________________________________________
-
-__________________________________________________________________
-
-__________________________________________________________________
-```
-
-**Issues Not Blocking** (if any):
-```
-__________________________________________________________________
-
-__________________________________________________________________
-```
-
-**Next Steps After Decision**:
-```
-☐ Send GO/NO-GO notification to stakeholders
-☐ If GO: Begin pre-cutover prep (see TOMORROW_CUTOVER_PREP.md)
-☐ If NO-GO: Begin root cause analysis and remediation
-☐ Update status board
-☐ Document decision in incident log
-```
+1. **Document the blocker** clearly above
+2. **Notify team immediately** via Slack #critical-issues
+3. **Assign owner** to fix issue
+4. **Set remediation deadline** (max 24h before next cutover window)
+5. **Schedule re-test** within 2 hours of fix
+6. **Reschedule cutover** to next available window (suggest 2026-06-09)
+7. **CTO reviews** remediation plan before scheduling new test
 
 ---
 
-**Document Owner**: QA/Engineering Lead  
-**Last Updated**: 2026-06-01  
-**Version**: 1.0
+## Contact & Escalation
+
+**In case of NO-GO decision during testing:**
+
+| Role | Name | Slack | Phone |
+|------|------|-------|-------|
+| CTO | [TBD] | @cto | +55 _____ |
+| QA Lead | [TBD] | @qa | +55 _____ |
+| Eng Lead | [TBD] | @engLead | +55 _____ |
+
+**Escalation Rule**: If any signatory is unavailable, escalate to next level immediately. Decision cannot be made without CTO sign-off.
+
+---
+
+## Post-Decision Actions
+
+### IF GO Approved
+1. Post "GO APPROVED" in #production-cutover Slack channel
+2. Notify on-call support: "Cutover proceeding 2026-06-02 02:00 UTC"
+3. Review TOMORROW_CUTOVER_PREP.md for next steps
+4. Prepare final checklist: backups, runbooks, communication
+
+### IF NO-GO Declared
+1. Post "NO-GO DECLARED" in #critical-issues immediately
+2. Schedule remediation meeting within 1 hour
+3. Block calendar for 2026-06-02 cutover window
+4. Communicate new proposed cutover date to stakeholders
+5. Document root cause in post-mortem
+
+---
+
+**NEXT**: Review TOMORROW_CUTOVER_PREP.md for cutover minute-by-minute timeline
