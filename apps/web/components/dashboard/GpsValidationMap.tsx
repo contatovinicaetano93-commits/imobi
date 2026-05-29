@@ -173,9 +173,13 @@ export function GpsValidationMap({
 
     mapRef.current = map;
 
-    // Cleanup
+    // Cleanup: remove map instance properly
     return () => {
       if (mapRef.current) {
+        // Detach all layers before removing
+        mapRef.current.eachLayer((layer) => {
+          mapRef.current?.removeLayer(layer);
+        });
         mapRef.current.remove();
         mapRef.current = null;
       }
