@@ -5,13 +5,8 @@ import type { ThrottlerModuleOptions, ThrottlerStorage } from "@nestjs/throttler
 
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
-  constructor(
-    options: ThrottlerModuleOptions,
-    storageService: ThrottlerStorage,
-    reflector: Reflector,
-  ) {
-    super(options, storageService, reflector);
-  }
+  // Guard is instantiated via factory provider in app.module.ts
+  // Reflector is injected manually to avoid complex DI with parent ThrottlerGuard
 
   async getTracker(req: Record<string, any>): Promise<string> {
     // For authenticated requests, track by user ID from JWT
