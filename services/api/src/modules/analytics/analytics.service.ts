@@ -97,7 +97,7 @@ export class AnalyticsService {
   async getUserTimeline(
     userId: string,
     limit: number = 50,
-  ): Promise<AnalyticsEvent[]> {
+  ): Promise<any[]> {
     const events = await this.prisma.analyticsEvent.findMany({
       where: { usuarioId: userId },
       orderBy: { timestamp: 'desc' },
@@ -106,7 +106,7 @@ export class AnalyticsService {
 
     return events.map((e) => ({
       userId: e.usuarioId,
-      eventType: e.eventType as any,
+      eventType: e.eventType,
       metadata: e.metadata,
       timestamp: e.timestamp,
     }));

@@ -5,7 +5,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
-  services: [AnalyticsService],
+  providers: [AnalyticsService],
   controllers: [AnalyticsController],
   exports: [AnalyticsService],
 })
