@@ -75,10 +75,10 @@ import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
   controllers: [HealthController],
   providers: [
     LiberacaoParcelaWorker,
-    {
-      provide: APP_GUARD,
-      useClass: CustomThrottlerGuard,
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: CustomThrottlerGuard,
+    // },
     {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
