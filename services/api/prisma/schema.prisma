@@ -296,3 +296,17 @@ enum TipoNotificacao {
   SCORE_ATUALIZADO
   VISTORIA_PENDENTE
 }
+
+// ── Analytics ──────────────────────────────────────────────────────
+
+model AnalyticsEvent {
+  eventId    String   @id @default(uuid())
+  usuarioId  String
+  eventType  String
+  metadata   Json?
+  timestamp  DateTime @default(now())
+
+  @@index([usuarioId])
+  @@index([eventType])
+  @@index([timestamp])
+}
