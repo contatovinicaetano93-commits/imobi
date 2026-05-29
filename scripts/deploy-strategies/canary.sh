@@ -16,6 +16,46 @@ success() { echo "✓ $1"; }
 warning() { echo "⚠ $1"; }
 error() { echo "✗ $1"; exit 1; }
 
+# Function to configure traffic split
+configure_traffic_split() {
+    local canary_percent=$1
+    local prod_percent=$2
+
+    if [ -f "/etc/nginx/sites-enabled/imobi" ]; then
+        cat > /etc/nginx/sites-enabled/imobi << EOF
+upstream canary {
+    server localhost:4002;
+}
+
+upstream production {
+    server localhost:4000;
+}
+
+server {
+    listen 80;
+    server_name api.imobi.com;
+
+    location / {
+        if (\$RANDOM > 32767) {
+            proxy_pass http://canary;
+        }
+        proxy_pass http://production;
+    }
+}
+EOF
+        nginx -t && systemctl reload nginx
+        log "  Traffic split: Canary=${canary_percent}% | Production=${prod_percent}%"
+    elif command -v aws >/dev/null 2>&1; then
+        # AWS ALB weighted target groups
+        aws elbv2 modify-listener \
+            --listener-arn "$(aws elbv2 describe-listeners --load-balancer-arn \
+            $(aws elbv2 describe-load-balancers --query 'LoadBalancers[0].LoadBalancerArn' -o text) \
+            --query 'Listeners[0].ListenerArn' -o text)" \
+            --default-actions Type=forward,ForwardConfig="{TargetGroups=[{TargetGroupArn=arn:...:canary,Weight=${canary_percent}},{TargetGroupArn=arn:...:production,Weight=${prod_percent}}]}"
+        log "  Traffic split: Canary=${canary_percent}% | Production=${prod_percent}%"
+    fi
+}
+
 log "Canary Deployment Strategy"
 log "Rolling out new version to 10% → 50% → 100% of traffic"
 
@@ -107,46 +147,6 @@ docker rename "$CANARY_CONTAINER" "$PRODUCTION_CONTAINER"
 
 success "Deployment complete - canary is now production"
 success "Monitoring metrics for rollback capability..."
-
-# Function to configure traffic split
-configure_traffic_split() {
-    local canary_percent=$1
-    local prod_percent=$2
-
-    if [ -f "/etc/nginx/sites-enabled/imobi" ]; then
-        cat > /etc/nginx/sites-enabled/imobi << EOF
-upstream canary {
-    server localhost:4002;
-}
-
-upstream production {
-    server localhost:4000;
-}
-
-server {
-    listen 80;
-    server_name api.imobi.com;
-
-    location / {
-        if (\$RANDOM > 32767) {
-            proxy_pass http://canary;
-        }
-        proxy_pass http://production;
-    }
-}
-EOF
-        nginx -t && systemctl reload nginx
-        log "  Traffic split: Canary=${canary_percent}% | Production=${prod_percent}%"
-    elif command -v aws >/dev/null 2>&1; then
-        # AWS ALB weighted target groups
-        aws elbv2 modify-listener \
-            --listener-arn "$(aws elbv2 describe-listeners --load-balancer-arn \
-            $(aws elbv2 describe-load-balancers --query 'LoadBalancers[0].LoadBalancerArn' -o text) \
-            --query 'Listeners[0].ListenerArn' -o text)" \
-            --default-actions Type=forward,ForwardConfig="{TargetGroups=[{TargetGroupArn=arn:...:canary,Weight=${canary_percent}},{TargetGroupArn=arn:...:production,Weight=${prod_percent}}]}"
-        log "  Traffic split: Canary=${canary_percent}% | Production=${prod_percent}%"
-    fi
-}
 
 log "Canary deployment complete"
 log "Rollback available for next 1 hour"
