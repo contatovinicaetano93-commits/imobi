@@ -127,12 +127,9 @@ export class ManagerService {
       });
       // When priority filter is applied, recalculate total count
       // This is needed because priority is determined by current time, not a DB column
-      const priorityWhere = filters?.priority && filters.priority !== "todas" ? where : where;
-      const allMatching = await this.prisma.etapaObra.count({ where: priorityWhere });
-
-      // Count all items that match priority filter
+      // Count all items that match other filters
       const allEtapas = await this.prisma.etapaObra.findMany({
-        where: priorityWhere,
+        where,
         select: { criadoEm: true },
       });
 
