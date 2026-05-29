@@ -23,6 +23,7 @@ model Usuario {
   kycStatus     KycStatus @default(PENDENTE)
   criadoEm      DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt
+  deletadoEm    DateTime?
 
   sessoes       SessaoToken[]
   creditos      Credito[]
@@ -34,6 +35,7 @@ model Usuario {
 
   @@index([email])
   @@index([cpf])
+  @@index([deletadoEm])
 }
 
 enum UsuarioTipo {
@@ -190,6 +192,8 @@ model EvidenciaEtapa {
   lngCaptura        Float
   accuracyMetros    Float?
   distanciaObra     Float?
+  exifTimestamp     DateTime?
+  fotoKey           String?
   validada          Boolean  @default(false)
   observacao        String?
   criadoEm          DateTime @default(now())
@@ -295,6 +299,21 @@ enum TipoNotificacao {
   OBRA_CRIADA
   SCORE_ATUALIZADO
   VISTORIA_PENDENTE
+}
+
+// ── Job Falhas ────────────────────────────────────────────────────
+
+model JobFalha {
+  jobFalhaId  String   @id @default(uuid())
+  queue       String
+  jobId       String
+  payload     Json
+  erro        String
+  tentativas  Int
+  criadoEm   DateTime @default(now())
+
+  @@index([queue])
+  @@index([criadoEm])
 }
 
 // ── Analytics ──────────────────────────────────────────────────────

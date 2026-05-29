@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
+import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { CacheModule } from "@nestjs/cache-manager";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
@@ -23,10 +24,12 @@ import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
+import { ScoreUpdateWorker } from "./workers/score-update.worker";
 import { HealthController } from "./common/health.controller";
 import { HealthService } from "./common/health.service";
 import { CsrfService } from "./common/csrf.service";
 import { EncryptionService } from "./common/encryption.service";
+import { QUEUE_LIBERACAO } from "./common/constants";
 
 @Module({
   imports: [
@@ -50,6 +53,23 @@ import { EncryptionService } from "./common/encryption.service";
         port: Number(process.env["REDIS_PORT"] ?? 6379),
       },
     }),
+    BullModule.registerQueue(
+      {
+        name: QUEUE_LIBERACAO,
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: {
+            type: "exponential",
+            delay: 2000,
+          },
+          removeOnComplete: true,
+        },
+      },
+      {
+        name: "score-update",
+      }
+    ),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     UsuariosModule,
