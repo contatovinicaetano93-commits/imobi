@@ -2,12 +2,15 @@
   "name": "@imbobi/ui",
   "version": "0.1.0",
   "private": true,
-  "main": "./web/index.ts",
-  "types": "./web/index.ts",
+  "main": "./dist/web/index.js",
+  "types": "./dist/web/index.d.ts",
   "exports": {
     ".": {
-      "import": "./web/index.ts",
-      "require": "./web/index.ts"
+      "import": "./dist/web/index.js",
+      "require": "./dist/web/index.js"
     }
+  },
+  "scripts": {
+    "build": "tsc"
   }
 }
