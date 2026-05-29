@@ -16,13 +16,15 @@ const CACHE_KEYS = {
       dataInicio?: string;
       dataFim?: string;
       obraType?: string;
+      priority?: "todas" | "urgente" | "intermediaria" | "normal";
     }
   ) => {
     const status = filters?.status || "todas";
     const dataInicio = filters?.dataInicio || "";
     const dataFim = filters?.dataFim || "";
     const obraType = filters?.obraType || "";
-    return `manager:etapas:${limit}:${offset}:${status}:${dataInicio}:${dataFim}:${obraType}`;
+    const priority = filters?.priority || "todas";
+    return `manager:etapas:${limit}:${offset}:${status}:${dataInicio}:${dataFim}:${obraType}:${priority}`;
   },
   KYC_PENDENTES: (limit: number, offset: number) => `manager:kyc:${limit}:${offset}`,
 };
@@ -51,6 +53,7 @@ export class ManagerService {
       dataInicio?: string;
       dataFim?: string;
       obraType?: string;
+      priority?: "todas" | "urgente" | "intermediaria" | "normal";
     }
   ) {
     const cacheKey = CACHE_KEYS.ETAPAS_PENDENTES(limit, offset, filters);
@@ -111,8 +114,20 @@ export class ManagerService {
       this.prisma.etapaObra.count({ where }),
     ]);
 
+    // Apply priority filter on the fetched results (based on hours ago)
+    let filtered = etapas;
+    if (filters?.priority && filters.priority !== "todas") {
+      filtered = etapas.filter((e) => {
+        const hoursAgo = Math.floor((Date.now() - new Date(e.criadoEm).getTime()) / (1000 * 60 * 60));
+        if (filters.priority === "urgente") return hoursAgo >= 24;
+        if (filters.priority === "intermediaria") return hoursAgo >= 12 && hoursAgo < 24;
+        if (filters.priority === "normal") return hoursAgo < 12;
+        return true;
+      });
+    }
+
     const result = {
-      etapas: etapas.map((e) => ({
+      etapas: filtered.map((e) => ({
         etapaId: e.etapaId,
         nome: e.nome,
         ordem: e.ordem,
@@ -131,7 +146,7 @@ export class ManagerService {
           },
         },
       })),
-      total,
+      total: filtered.length,
     };
 
     // Cache TTL: 120 seconds (matches controller CacheTTL decorator)
