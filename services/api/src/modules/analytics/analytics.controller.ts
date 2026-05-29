@@ -1,5 +1,5 @@
 import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AnalyticsService } from './analytics.service';
 
 @Controller('api/v1/analytics')
