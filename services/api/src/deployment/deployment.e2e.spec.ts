@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -851,6 +851,8 @@ server {
 
     it('should store backup with timestamp metadata', () => {
       const backupDir = path.join(deployDir, 'backups');
+      fs.mkdirSync(backupDir, { recursive: true });
+
       const metadata = {
         version: '20240528_100000',
         backedUp: new Date().toISOString(),
