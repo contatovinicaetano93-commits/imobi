@@ -23,7 +23,6 @@ import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
-import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ScoreUpdateWorker } from "./workers/score-update.worker";
 import { HealthController } from "./common/health.controller";
 import { HealthService } from "./common/health.service";
@@ -93,7 +92,6 @@ import { QUEUE_LIBERACAO } from "./common/constants";
     CsrfService,
     EncryptionService,
     HealthService,
-    LiberacaoParcelaWorker,
     ScoreUpdateWorker,
     {
       provide: APP_GUARD,
