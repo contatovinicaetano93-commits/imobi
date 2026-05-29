@@ -13,6 +13,7 @@ GREEN_CONTAINER="${GREEN_CONTAINER:-imobi-green}"
 
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"; }
 success() { echo "✓ $1"; }
+warning() { echo "⚠ $1"; }
 error() { echo "✗ $1"; exit 1; }
 
 log "Blue-Green Deployment Strategy"
