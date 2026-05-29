@@ -1,5 +1,6 @@
 import { Controller, Post, Body, HttpCode, Res } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
+import { ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { CadastroUsuarioSchema, LoginSchema } from "@imbobi/schemas";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
@@ -9,6 +10,9 @@ export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
   @Post("registrar")
+  @ApiOperation({ summary: "Registrar novo usuário" })
+  @ApiResponse({ status: 201, description: "Usuário criado com sucesso" })
+  @ApiResponse({ status: 400, description: "Dados inválidos" })
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async registrar(
     @Body(new ZodPipe(CadastroUsuarioSchema)) body: unknown,

@@ -1,14 +1,3 @@
-// Setup module aliases for workspace packages before any imports
-const moduleAlias = require("module-alias");
-const path = require("path");
-// Navigate from dist/main.js up to project root
-// __dirname at runtime = /home/user/imobi/services/api/dist
-// Need to go up 3 levels: dist -> api -> services -> imobi
-const projectRoot = path.resolve(__dirname, "../../../");
-moduleAlias.addAlias("@imbobi/schemas", path.join(projectRoot, "packages/schemas/dist"));
-moduleAlias.addAlias("@imbobi/core", path.join(projectRoot, "packages/core/dist"));
-moduleAlias.addAlias("@imbobi/ui", path.join(projectRoot, "packages/ui/dist"));
-
 import { NestFactory } from "@nestjs/core";
 import {
   FastifyAdapter,
@@ -18,6 +7,16 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import helmet from "helmet";
 import fs from "fs";
 import path from "path";
+
+// Setup module aliases for workspace packages before any imports
+const moduleAlias = require("module-alias");
+// Navigate from dist/main.js up to project root
+// __dirname at runtime = /home/user/imobi/services/api/dist
+// Need to go up 3 levels: dist -> api -> services -> imobi
+const projectRoot = path.resolve(__dirname, "../../../");
+moduleAlias.addAlias("@imbobi/schemas", path.join(projectRoot, "packages/schemas/dist"));
+moduleAlias.addAlias("@imbobi/core", path.join(projectRoot, "packages/core/dist"));
+moduleAlias.addAlias("@imbobi/ui", path.join(projectRoot, "packages/ui/dist"));
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { validateJwtSecret } from "./common/validators/jwt-secret.validator";
