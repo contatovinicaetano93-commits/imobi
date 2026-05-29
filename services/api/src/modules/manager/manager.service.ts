@@ -116,6 +116,7 @@ export class ManagerService {
 
     // Apply priority filter on the fetched results (based on hours ago)
     let filtered = etapas;
+    let filteredTotal = total;
     if (filters?.priority && filters.priority !== "todas") {
       filtered = etapas.filter((e) => {
         const hoursAgo = Math.floor((Date.now() - new Date(e.criadoEm).getTime()) / (1000 * 60 * 60));
@@ -124,6 +125,25 @@ export class ManagerService {
         if (filters.priority === "normal") return hoursAgo < 12;
         return true;
       });
+      // When priority filter is applied, recalculate total count
+      // This is needed because priority is determined by current time, not a DB column
+      const priorityWhere = filters?.priority && filters.priority !== "todas" ? where : where;
+      const allMatching = await this.prisma.etapaObra.count({ where: priorityWhere });
+
+      // Count all items that match priority filter
+      const allEtapas = await this.prisma.etapaObra.findMany({
+        where: priorityWhere,
+        select: { criadoEm: true },
+      });
+
+      const allFiltered = allEtapas.filter((e) => {
+        const hoursAgo = Math.floor((Date.now() - new Date(e.criadoEm).getTime()) / (1000 * 60 * 60));
+        if (filters.priority === "urgente") return hoursAgo >= 24;
+        if (filters.priority === "intermediaria") return hoursAgo >= 12 && hoursAgo < 24;
+        if (filters.priority === "normal") return hoursAgo < 12;
+        return true;
+      });
+      filteredTotal = allFiltered.length;
     }
 
     const result = {
@@ -146,7 +166,7 @@ export class ManagerService {
           },
         },
       })),
-      total,
+      total: filteredTotal,
     };
 
     // Cache TTL: 120 seconds (matches controller CacheTTL decorator)
