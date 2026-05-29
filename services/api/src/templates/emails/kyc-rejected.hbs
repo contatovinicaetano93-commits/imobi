@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KYC Rejeitado - imobi</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .header h1 { margin: 0; font-size: 28px; }
+    .content { background: #f9f9f9; padding: 30px 20px; }
+    .alert { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+    .button { display: inline-block; background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+    .footer { background: #f0f0f0; padding: 20px; text-align: center; font-size: 12px; color: #666; border-radius: 0 0 8px 8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>KYC - Documentos Rejeitados</h1>
+    </div>
+    <div class="content">
+      <p>Olá {{name}},</p>
+      <p>Analisamos seus documentos e encontramos alguns problemas:</p>
+      
+      <div class="alert">
+        <strong>Motivo da rejeição:</strong>
+        <p>{{rejectionReason}}</p>
+      </div>
+      
+      <p>Para continuar, você precisa:</p>
+      <ul>
+        <li>Fazer upload novamente dos documentos solicitados</li>
+        <li>Garantir que os arquivos estejam legíveis e válidos</li>
+        <li>Seguir as orientações de cada documento</li>
+      </ul>
+      
+      <a href="{{appUrl}}/perfil/kyc" class="button">Fazer Upload Novamente</a>
+      
+      <p>Se tiver dúvidas sobre os documentos, entre em contato: support@imbobi.com.br</p>
+    </div>
+    <div class="footer">
+      <p>&copy; 2026 imbobi. Todos os direitos reservados.</p>
+    </div>
+  </div>
+</body>
+</html>

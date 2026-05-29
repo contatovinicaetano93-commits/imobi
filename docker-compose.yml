@@ -1,28 +1,35 @@
-version: "3.8"
+version: "3.9"
 
 services:
+  # PostgreSQL Database
   postgres:
-    image: postgis/postgis:15-3.3
-    container_name: imbobi_postgres
-    environment:
-      POSTGRES_USER: imbobi
-      POSTGRES_PASSWORD: senha
-      POSTGRES_DB: imbobi_dev
+    image: postgis/postgis:16-3.4-alpine
+    container_name: imbobi-postgres
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME:-imbobi_dev}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U imbobi -d imbobi_dev"]
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${DB_USER:-postgres}
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - imbobi-network
 
+  # Redis Cache
   redis:
     image: redis:7-alpine
-    container_name: imbobi_redis
+    container_name: imbobi-redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
     healthcheck:
@@ -30,25 +37,62 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - imbobi-network
 
-  # Optional: LocalStack for S3 simulation (for local development)
-  # Uncomment to use local S3-compatible storage instead of AWS
-  # localstack:
-  #   image: localstack/localstack:latest
-  #   container_name: imbobi_localstack
-  #   environment:
-  #     SERVICES: s3
-  #     DEBUG: 1
-  #     DATA_DIR: /tmp/localstack/data
-  #   ports:
-  #     - "4566:4566"
-  #   volumes:
-  #     - "${TMPDIR}/localstack:/tmp/localstack"
+  # API Service
+  api:
+    build:
+      context: .
+      dockerfile: ./services/api/Dockerfile
+    container_name: imbobi-api
+    ports:
+      - "${API_PORT:-4000}:4000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4000
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-imbobi_dev}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:8081}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - imbobi-network
+    restart: unless-stopped
+
+  # Web Service
+  web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    container_name: imbobi-web
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    depends_on:
+      - api
+    networks:
+      - imbobi-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
+    driver: local
 
 networks:
-  default:
-    name: imbobi_network
+  imbobi-network:
+    driver: bridge

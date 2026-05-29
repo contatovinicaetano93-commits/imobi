@@ -1,0 +1,363 @@
+{
+  "info": {
+    "name": "imobi API Collection",
+    "description": "Complete API test collection for imobi platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Test User\",\n  \"cpf\": \"12345678901\",\n  \"telefone\": \"11999999999\",\n  \"email\": \"test@example.com\",\n  \"senha\": \"Test@1234\",\n  \"tipo\": \"TOMADOR\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/registrar",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "registrar"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"senha\": \"Test@1234\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{refreshToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "KYC",
+      "item": [
+        {
+          "name": "Get KYC Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/kyc/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["kyc", "status"]
+            }
+          }
+        },
+        {
+          "name": "Upload Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "documentType",
+                  "value": "RG",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/kyc/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["kyc", "upload"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Works",
+      "item": [
+        {
+          "name": "List Works",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/obras?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["obras"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Work Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/obras/{{workId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["obras", "{{workId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Credit",
+      "item": [
+        {
+          "name": "Simulate Credit",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/credito/simular?valor=100000&prazo=60",
+              "host": ["{{baseUrl}}"],
+              "path": ["credito", "simular"],
+              "query": [
+                {
+                  "key": "valor",
+                  "value": "100000"
+                },
+                {
+                  "key": "prazo",
+                  "value": "60"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Evidence",
+      "item": [
+        {
+          "name": "Upload Evidence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "obraId",
+                  "value": "{{workId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "-23.5505",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "-46.6333",
+                  "type": "text"
+                },
+                {
+                  "key": "accuracy",
+                  "value": "15",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/evidencias",
+              "host": ["{{baseUrl}}"],
+              "path": ["evidencias"]
+            }
+          }
+        },
+        {
+          "name": "List Evidence",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/evidencias/{{workId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["evidencias", "{{workId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Installments",
+      "item": [
+        {
+          "name": "Get Installments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/parcelas/{{workId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["parcelas", "{{workId}}"]
+            }
+          }
+        },
+        {
+          "name": "Pay Installment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo\": \"PIX\",\n  \"referencia\": \"00020126580014br.gov.bcb.pix...\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parcelas/{{installmentId}}/pagar",
+              "host": ["{{baseUrl}}"],
+              "path": ["parcelas", "{{installmentId}}", "pagar"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api/v1"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "workId",
+      "value": ""
+    },
+    {
+      "key": "installmentId",
+      "value": ""
+    }
+  ]
+}
