@@ -123,7 +123,7 @@ log "Phase 1: Validating Prerequisites"
 separator
 
 # Check required commands
-required_commands=("git" "docker" "docker-compose" "curl" "pnpm" "node")
+required_commands=("git" "docker" "curl" "pnpm" "node")
 
 log "Checking required commands..."
 for cmd in "${required_commands[@]}"; do
@@ -133,6 +133,16 @@ for cmd in "${required_commands[@]}"; do
     VERSION=$($cmd --version 2>/dev/null | head -1)
     success "$cmd: $VERSION"
 done
+
+# Check for docker compose (v2) or docker-compose (v1)
+log "Checking Docker Compose..."
+if docker compose version &> /dev/null; then
+    success "docker compose: $(docker compose version | head -1)"
+elif command -v docker-compose &> /dev/null; then
+    success "docker-compose: $(docker-compose --version)"
+else
+    error "Neither 'docker compose' nor 'docker-compose' is available. Please install Docker Compose."
+fi
 
 # Check Docker daemon
 log "Checking Docker daemon..."
@@ -207,19 +217,19 @@ if [ "$SKIP_DOCKER" = false ]; then
 
     if [ -n "$POSTGRES_EXISTS" ] || [ -n "$REDIS_EXISTS" ]; then
         warning "Docker containers already exist. Skipping container creation."
-        info "To recreate: docker-compose -f docker-compose.staging.yml down && rm -rf $IMOBI_BASE/data"
+        info "To recreate: docker compose -f docker compose.staging.yml down && rm -rf $IMOBI_BASE/data"
     else
         log "Starting Docker services..."
 
         cd "$PROJECT_ROOT"
 
-        # Verify docker-compose file exists
-        if [ ! -f "docker-compose.staging.yml" ]; then
-            error "docker-compose.staging.yml not found in $PROJECT_ROOT"
+        # Verify docker compose file exists
+        if [ ! -f "docker compose.staging.yml" ]; then
+            error "docker compose.staging.yml not found in $PROJECT_ROOT"
         fi
 
         # Start services
-        if docker-compose -f docker-compose.staging.yml up -d; then
+        if docker compose -f docker compose.staging.yml up -d; then
             success "Docker services started"
         else
             error "Failed to start Docker services"
@@ -229,7 +239,7 @@ if [ "$SKIP_DOCKER" = false ]; then
         log "Waiting for PostgreSQL to be ready (timeout: 30s)..."
         RETRIES=0
         MAX_RETRIES=30
-        until docker-compose -f docker-compose.staging.yml exec -T postgres pg_isready -U "$DB_USER" > /dev/null 2>&1; do
+        until docker compose -f docker compose.staging.yml exec -T postgres pg_isready -U "$DB_USER" > /dev/null 2>&1; do
             RETRIES=$((RETRIES + 1))
             if [ $RETRIES -ge $MAX_RETRIES ]; then
                 error "PostgreSQL failed to start within 30 seconds"
@@ -243,7 +253,7 @@ if [ "$SKIP_DOCKER" = false ]; then
         log "Waiting for Redis to be ready..."
         RETRIES=0
         MAX_RETRIES=10
-        until docker-compose -f docker-compose.staging.yml exec -T redis redis-cli ping > /dev/null 2>&1; do
+        until docker compose -f docker compose.staging.yml exec -T redis redis-cli ping > /dev/null 2>&1; do
             RETRIES=$((RETRIES + 1))
             if [ $RETRIES -ge $MAX_RETRIES ]; then
                 error "Redis failed to start within 10 seconds"
@@ -257,13 +267,13 @@ if [ "$SKIP_DOCKER" = false ]; then
 
     # Verify services status
     log "Verifying Docker services status..."
-    if docker-compose -f docker-compose.staging.yml ps | grep -q "postgres.*Up"; then
+    if docker compose -f docker compose.staging.yml ps | grep -q "postgres.*Up"; then
         success "PostgreSQL container is running"
     else
         warning "PostgreSQL container is not running"
     fi
 
-    if docker-compose -f docker-compose.staging.yml ps | grep -q "redis.*Up"; then
+    if docker compose -f docker compose.staging.yml ps | grep -q "redis.*Up"; then
         success "Redis container is running"
     else
         warning "Redis container is not running"
@@ -401,18 +411,18 @@ fi
 
 # Test PostgreSQL
 log "Testing PostgreSQL connection..."
-if docker-compose -f "$PROJECT_ROOT/docker-compose.staging.yml" exec -T postgres pg_isready -h localhost -p 5432 > /dev/null 2>&1; then
+if docker compose -f "$PROJECT_ROOT/docker compose.staging.yml" exec -T postgres pg_isready -h localhost -p 5432 > /dev/null 2>&1; then
     success "PostgreSQL is accessible"
 
     # Verify database exists
-    if docker-compose -f "$PROJECT_ROOT/docker-compose.staging.yml" exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" > /dev/null 2>&1; then
+    if docker compose -f "$PROJECT_ROOT/docker compose.staging.yml" exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" > /dev/null 2>&1; then
         success "Database '$DB_NAME' exists"
     else
         warning "Database '$DB_NAME' does not exist yet (will be created by migrations)"
     fi
 
     # Check PostGIS
-    if docker-compose -f "$PROJECT_ROOT/docker-compose.staging.yml" exec -T postgres psql -U "$DB_USER" -d postgres -c "SELECT 1 FROM pg_extension WHERE extname='postgis'" > /dev/null 2>&1; then
+    if docker compose -f "$PROJECT_ROOT/docker compose.staging.yml" exec -T postgres psql -U "$DB_USER" -d postgres -c "SELECT 1 FROM pg_extension WHERE extname='postgis'" > /dev/null 2>&1; then
         success "PostGIS extension is available"
     else
         warning "PostGIS extension not found (may be loaded during migrations)"
@@ -423,11 +433,11 @@ fi
 
 # Test Redis
 log "Testing Redis connection..."
-if docker-compose -f "$PROJECT_ROOT/docker-compose.staging.yml" exec -T redis redis-cli ping > /dev/null 2>&1; then
+if docker compose -f "$PROJECT_ROOT/docker compose.staging.yml" exec -T redis redis-cli ping > /dev/null 2>&1; then
     success "Redis is accessible"
 
     # Get Redis memory info
-    REDIS_MEM=$(docker-compose -f "$PROJECT_ROOT/docker-compose.staging.yml" exec -T redis redis-cli info memory | grep used_memory_human | cut -d: -f2 | tr -d '\r')
+    REDIS_MEM=$(docker compose -f "$PROJECT_ROOT/docker compose.staging.yml" exec -T redis redis-cli info memory | grep used_memory_human | cut -d: -f2 | tr -d '\r')
     info "Redis memory usage: $REDIS_MEM"
 else
     warning "Redis is not accessible on port 6379"
@@ -529,7 +539,7 @@ echo "     - FIREBASE_* credentials"
 echo "     - UNICO_API_KEY and SERPRO_TOKEN (if using KYC)"
 echo
 echo "2. Verify services are running:"
-echo "   docker-compose -f docker-compose.staging.yml ps"
+echo "   docker compose -f docker compose.staging.yml ps"
 echo
 echo "3. Test connectivity:"
 echo "   curl -s http://localhost:4000/api/v1/health | jq ."
@@ -553,11 +563,11 @@ echo "  - Smoke Tests: scripts/smoke-test.sh"
 echo
 
 info "Useful commands:"
-echo "  View logs:        docker-compose -f docker-compose.staging.yml logs -f api"
+echo "  View logs:        docker compose -f docker compose.staging.yml logs -f api"
 echo "  Database shell:   PGPASSWORD=$DB_PASSWORD psql -h localhost -p $DB_PORT -U $DB_USER -d $DB_NAME"
 echo "  Redis shell:      redis-cli -h localhost -p $REDIS_PORT"
-echo "  Restart services: docker-compose -f docker-compose.staging.yml restart"
-echo "  Stop services:    docker-compose -f docker-compose.staging.yml down"
+echo "  Restart services: docker compose -f docker compose.staging.yml restart"
+echo "  Stop services:    docker compose -f docker compose.staging.yml down"
 echo
 
 success "Setup script completed at $(date)"
