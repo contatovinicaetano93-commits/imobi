@@ -15,31 +15,6 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: imobi_test
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-
     steps:
       - uses: actions/checkout@v4
 
@@ -68,40 +43,26 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Start services with docker-compose
+        run: |
+          echo "🚀 Starting services with docker-compose..."
+          docker-compose -f docker-compose.test.yml up -d
+
+          echo "⏳ Waiting for services to be ready..."
+          max_attempts=30
+          for attempt in $(seq 1 $max_attempts); do
+            if docker-compose -f docker-compose.test.yml exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
+              echo "✅ PostgreSQL is ready"
+              break
+            fi
+            echo "Attempt $attempt/$max_attempts..."
+            sleep 2
+          done
+
+          sleep 2
+
       - name: Install dependencies
         run: pnpm install
-
-      - name: Wait for services to be ready
-        run: |
-          echo "Waiting for PostgreSQL at localhost:5432..."
-          for i in {1..60}; do
-            if timeout 1 bash -c "echo > /dev/tcp/localhost/5432" 2>/dev/null; then
-              echo "✓ PostgreSQL port is open"
-              break
-            fi
-            echo "Attempt $i/60..."
-            sleep 1
-          done
-
-          echo "Waiting for Redis at localhost:6379..."
-          for i in {1..60}; do
-            if timeout 1 bash -c "echo > /dev/tcp/localhost/6379" 2>/dev/null; then
-              echo "✓ Redis port is open"
-              break
-            fi
-            echo "Attempt $i/60..."
-            sleep 1
-          done
-
-          sleep 3
-
-      - name: Verify database connectivity
-        env:
-          PGPASSWORD: test
-        run: |
-          echo "Testing PostgreSQL connection..."
-          psql -h localhost -U postgres -d postgres -c "SELECT version();" || echo "❌ Connection failed"
-          sleep 2
 
       - name: Generate Prisma Client
         run: cd services/api && npx prisma generate
@@ -121,6 +82,12 @@ jobs:
           CORS_ORIGINS: http://localhost:3000,http://localhost:3001
           API_PORT: 4000
         run: cd services/api && npm test -- --forceExit --detectOpenHandles --verbose 2>&1 | tee test-output.log
+
+      - name: Cleanup services
+        if: always()
+        run: |
+          echo "🧹 Stopping docker-compose services..."
+          docker-compose -f docker-compose.test.yml down || true
 
       - name: Upload coverage reports
         if: always()
