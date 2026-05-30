@@ -1,0 +1,98 @@
+name: Security Audit
+
+on:
+  schedule:
+    # Every Thursday at 02:00 UTC
+    - cron: '0 2 * * 4'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run security audit
+        id: audit
+        run: |
+          # Run pnpm audit and capture output
+          pnpm audit --json > audit-report.json 2>&1 || true
+          cat audit-report.json
+
+      - name: Check for vulnerabilities
+        id: check-vulns
+        run: |
+          if grep -q '"severity":"high"\|"severity":"critical"' audit-report.json; then
+            echo "vulnerabilities_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "vulnerabilities_found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create issue for vulnerabilities
+        if: steps.check-vulns.outputs.vulnerabilities_found == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const auditReport = JSON.parse(fs.readFileSync('audit-report.json', 'utf-8'));
+            
+            let vulnerabilities = [];
+            if (auditReport.vulnerabilities) {
+              Object.entries(auditReport.vulnerabilities).forEach(([pkg, vuln]) => {
+                vulnerabilities.push(`- **${pkg}**: ${vuln.via} (${vuln.severity})`);
+              });
+            }
+
+            const body = `## Security Vulnerabilities Detected
+
+**Audit Run:** ${new Date().toISOString()}
+
+### Vulnerabilities Found:
+${vulnerabilities.join('\n')}
+
+### Action Required:
+1. Review the vulnerabilities using: \`pnpm audit\`
+2. Update affected packages: \`pnpm update\`
+3. If updates are not available, consider using \`pnpm audit --fix\`
+
+### Full Report:
+\`\`\`json
+${JSON.stringify(auditReport, null, 2)}
+\`\`\`
+`;
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '[Security] Vulnerabilities detected in dependencies',
+              body: body,
+              labels: ['security', 'dependencies']
+            });
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-report
+          path: audit-report.json
+          retention-days: 30
