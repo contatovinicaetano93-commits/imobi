@@ -30,20 +30,19 @@ done
 echo ""
 echo "🗄️  Setting up database..."
 cd services/api
-npm install > /dev/null 2>&1 || true
 
 # Generate Prisma client with test environment
-NODE_ENV=test npx prisma generate
+NODE_ENV=test pnpm prisma generate
 
 # Run migrations with test environment
-NODE_ENV=test npx prisma migrate deploy
+NODE_ENV=test pnpm prisma migrate deploy
 
 echo "✅ Database ready"
 echo ""
 
 # Step 4: Run E2E tests
 echo "🚀 Running E2E tests..."
-NODE_ENV=test npm test 2>&1 | tail -100
+NODE_ENV=test pnpm test 2>&1 | tail -100
 
 # Step 5: Cleanup
 echo ""
