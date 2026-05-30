@@ -15,7 +15,9 @@
     "test": "turbo run test",
     "db:generate": "pnpm --filter @imbobi/api prisma generate",
     "db:migrate": "pnpm --filter @imbobi/api prisma migrate dev",
-    "db:studio": "pnpm --filter @imbobi/api prisma studio"
+    "db:studio": "pnpm --filter @imbobi/api prisma studio",
+    "setup-hooks": "bash scripts/setup-hooks.sh",
+    "postinstall": "bash scripts/setup-hooks.sh 2>/dev/null || true"
   },
   "devDependencies": {
     "@nestjs/schedule": "^6.1.3",
