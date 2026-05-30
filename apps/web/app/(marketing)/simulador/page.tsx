@@ -3,10 +3,17 @@
 import { useState } from "react";
 import { simuladorApi, type SimuladorResult } from "@/lib/api";
 
+type FormState = {
+  valorEmpreendimento: string;
+  tipoObra: "TERRENO" | "CONSTRUCAO" | "ACABAMENTO" | "COMPRADOR";
+  prazo: number;
+  localizacao: string;
+};
+
 export default function SimuladorPage() {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     valorEmpreendimento: "",
-    tipoObra: "CONSTRUCAO" as const,
+    tipoObra: "CONSTRUCAO",
     prazo: 24,
     localizacao: "",
   });
@@ -62,7 +69,7 @@ export default function SimuladorPage() {
               <label className="block text-slate-300 mb-2">Tipo de Obra</label>
               <select
                 value={form.tipoObra}
-                onChange={(e) => setForm({ ...form, tipoObra: e.target.value })}
+                onChange={(e) => setForm({ ...form, tipoObra: e.target.value as FormState["tipoObra"] })}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white"
               >
                 <option value="TERRENO">Terreno</option>
