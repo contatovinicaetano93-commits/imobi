@@ -1,6 +1,5 @@
 {
   "buildCommand": "turbo run build --filter=@imbobi/web",
-  "outputDirectory": ".next",
   "installCommand": "pnpm install",
   "env": {
     "NODE_ENV": "production",
