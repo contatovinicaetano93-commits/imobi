@@ -49,18 +49,24 @@ curl -s https://app.imbobi.com.br/api/health | jq .
 **Time**: ~2 minutes
 
 ```bash
-# Verify PostgreSQL + PostGIS
-psql -c "SELECT ST_IsValid(ST_GeomFromText('POINT(-46.6333 -23.5505)', 4326))" 
-# Expected: true
+# Run automated verification (requires .env.production with DATABASE_URL)
+bash VERIFY_INFRASTRUCTURE.sh
+```
 
-# Check migrations applied
-SELECT * FROM _prisma_migrations ORDER BY finished_at DESC LIMIT 3;
+**Manual verification if needed**:
+```bash
+# Verify PostgreSQL + PostGIS
+psql "$DATABASE_URL" -c "SELECT ST_IsValid(ST_GeomFromText('POINT(-46.6333 -23.5505)', 4326))"
+# Expected: t (true)
+
+# Check migrations
+psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM _prisma_migrations;"
 ```
 
 **Success Criteria**:
 - ✅ PostgreSQL responding
 - ✅ PostGIS extension active
-- ✅ All migrations applied
+- ✅ All migrations applied (typically 50+)
 
 ---
 
@@ -69,47 +75,45 @@ SELECT * FROM _prisma_migrations ORDER BY finished_at DESC LIMIT 3;
 **Time**: ~1 minute
 
 ```bash
+# Run automated verification (requires REDIS_URL or REDIS_HOST set)
+bash VERIFY_INFRASTRUCTURE.sh  # Verifies both DB and Redis
+```
+
+**Manual verification if needed**:
+```bash
 # Check Redis connectivity
-redis-cli PING
+redis-cli -u $REDIS_URL PING
 # Expected: PONG
 
 # Check BullMQ queues
-redis-cli KEYS "bull:*"
+redis-cli -u $REDIS_URL KEYS "bull:*"
 ```
 
 **Success Criteria**:
 - ✅ Redis responding
-- ✅ BullMQ queues ready
+- ✅ BullMQ queues ready (will auto-create on first job)
 
 ---
 
 ### STEP 4: Smoke Tests (Production)
-**Status**: ⏳ READY  
+**Status**: ⏳ READY (pending Vercel deployment)
 **Time**: ~10 minutes
 
-**TC-020**: Approve without evidence
 ```bash
-curl -X POST https://app.imbobi.com.br/api/v1/manager/etapas/test-id/approve \
-  -H "Authorization: Bearer $JWT" \
-  -H "Content-Type: application/json"
-# Expected: 400 "Etapa precisa ter ao menos uma evidência validada"
+# Set required variables
+export API_BASE_URL="https://api.imobi.com.br"
+export WEB_BASE_URL="https://app.imobi.com.br"
+export JWT_TOKEN="<your-jwt-token>"
+
+# Run all smoke tests
+bash SMOKE_TESTS.sh
 ```
 
-**TC-033**: GPS validation
-```bash
-curl -X POST https://app.imbobi.com.br/api/v1/obras \
-  -H "Authorization: Bearer $JWT" \
-  -H "Content-Type: application/json" \
-  -d '{"geo": {"latitude": 0.0, "longitude": 0.0}}'
-# Expected: 400 "GPS inválido"
-```
-
-**TC-028**: KYC approval email
-```bash
-curl -X POST https://app.imbobi.com.br/api/v1/kyc/test-doc/approve \
-  -H "Authorization: Bearer $JWT"
-# Expected: 200 + email sent to user
-```
+**What it tests**:
+- **TC-020**: Approve without evidence → 400 "Etapa precisa ter ao menos uma evidência validada"
+- **TC-033**: GPS validation with invalid coords (0.0, 0.0) → 400 "GPS inválido"
+- **TC-028**: KYC approval → 200 + email sent (verify in SendGrid logs)
+- **Health checks**: API /health and Web /api/health endpoints
 
 ---
 
