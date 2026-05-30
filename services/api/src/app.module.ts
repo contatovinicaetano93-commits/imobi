@@ -21,6 +21,7 @@ import { MarketplaceModule } from "./modules/marketplace/marketplace.module";
 import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
+import { SimuladorModule } from "./modules/simulador/simulador.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { HealthController } from "./common/health.controller";
 import { getRedisConfig } from "./common/config";
