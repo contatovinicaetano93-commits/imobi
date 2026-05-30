@@ -47,7 +47,15 @@ function parseRedisUrl(url: string): RedisConfig {
     }
 
     const host = parsed.hostname;
-    const port = parsed.port ? Number(parsed.port) : 6379;
+    const nodeEnv = process.env.NODE_ENV || 'development';
+    // Only allow port fallback in dev/test; production must be explicit
+    const port = parsed.port
+      ? Number(parsed.port)
+      : nodeEnv === 'development' || nodeEnv === 'test'
+      ? 6379
+      : (() => {
+          throw new Error('Redis URL must include explicit port for production (e.g., redis://host:6379)');
+        })();
     const password = parsed.password || undefined;
 
     if (!host) {

@@ -45,7 +45,7 @@ export class ProductionMiddleware implements NestMiddleware {
           );
           bodySummary[key] = isSensitive ? '[REDACTED]' : typeof req.body[key];
         });
-        Object.assign(logInfo, { bodyKeys: Object.keys(bodySummary) });
+        Object.assign(logInfo, { bodySummary });
       }
 
       this.logger.debug(`${req.method} ${req.path}`, logInfo);

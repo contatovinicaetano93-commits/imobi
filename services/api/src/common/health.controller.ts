@@ -44,14 +44,17 @@ export class HealthController {
     const hasFirebaseConfig = this.hasFirebaseConfig();
     const hasDatabaseUrl = !!process.env["DATABASE_URL"];
 
-    const allConfigured =
-      redisStatus === "connected" &&
+    const criticalConfigured =
       hasEmailConfig &&
       hasFirebaseConfig &&
       hasDatabaseUrl;
 
+    const allConfigured =
+      criticalConfigured &&
+      redisStatus === "connected";
+
     const health: HealthCheck = {
-      status: allConfigured ? "ok" : redisStatus === "error" ? "error" : "degraded",
+      status: allConfigured ? "ok" : criticalConfigured ? "degraded" : "error",
       timestamp: new Date().toISOString(),
       redis: {
         status: redisStatus,
