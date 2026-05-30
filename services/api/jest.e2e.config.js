@@ -1,6 +1,5 @@
 module.exports = {
   displayName: 'api-e2e',
-  preset: '../../jest.preset.js',
   testEnvironment: 'node',
   transform: {
     '^.+\\.[tj]sx?$': [
