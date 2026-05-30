@@ -1,0 +1,371 @@
+================================================================================
+iMobi MVP — PRODUCTION MONITORING & CUTOVER SIGN-OFF PREPARATION
+================================================================================
+
+DATE: 2026-05-30
+PREPARED FOR: Production Cutover (2026-05-30 03:15 - 07:15 UTC)
+DOCUMENTS CREATED: 3 comprehensive guides
+
+================================================================================
+EXECUTIVE SUMMARY
+================================================================================
+
+Three critical documents have been prepared to manage the 4-hour production
+monitoring window and coordinate sign-offs from DevOps, QA, CTO, and CEO:
+
+1. PRODUCTION_MONITORING_AND_SIGNOFF.md (Detailed operational guide)
+2. MONITORING_QUICK_REFERENCE.md (Quick lookup during incident)
+3. CUTOVER_SIGNOFF_FORM.md (Formal approval matrix)
+
+================================================================================
+KEY METRICS EXTRACTED FROM CUTOVER_EXECUTION_LIVE.md
+================================================================================
+
+MONITORING WINDOW: 4 hours (2026-05-30 03:15 - 07:15 UTC)
+
+ALERT THRESHOLDS:
+├─ Error Rate
+│  ├─ YELLOW (Warning): > 0.5% for 10 minutes
+│  ├─ RED (Critical): > 2% for 5 minutes
+│  └─ Target: < 0.1%
+│
+├─ Latency (P95)
+│  ├─ YELLOW: > 2 seconds for 5 minutes
+│  ├─ RED: > 5 seconds for 2 minutes
+│  └─ Target: < 2000ms
+│
+├─ Database Connection Pool
+│  ├─ YELLOW: > 80% utilization for 5 minutes
+│  ├─ RED: > 90% or timeout > 5/min
+│  ├─ Typical max: 100 connections
+│  └─ Target: < 50% (healthy baseline)
+│
+└─ Redis Memory
+   ├─ YELLOW: > 70% for 5 minutes
+   ├─ RED: > 85% or evicted_keys > 10/min
+   ├─ Max size: 512 MB
+   └─ Target: < 50% (healthy baseline)
+
+================================================================================
+ROLLBACK TRIGGERS (AUTO-TRIGGER — NO CTO APPROVAL NEEDED)
+================================================================================
+
+CRITICAL (Immediate Rollback):
+  ✗ Error rate > 5% for 5+ minutes
+  ✗ P95 latency > 5 seconds for 2+ minutes continuous
+  ✗ Database unavailable (0 connections available)
+  ✗ Multiple critical endpoints returning 500 errors
+  ✗ Data corruption or constraint violations
+
+WARNING (Escalate to CTO within 10 minutes):
+  ! Error rate 1-5% for 10+ minutes
+  ! P95 latency 2-5 seconds for 5+ minutes
+  ! Database connections > 80% for 5+ minutes
+  ! Redis memory > 70% for 5+ minutes
+  ! GPS validation failures
+  ! KYC email not sending
+
+ROLLBACK PROCEDURES:
+  1. Vercel Rollback (< 2 min)
+     → Dashboard: https://vercel.com/contatovinicaetano93-commits/imobi
+     → Click Deployments → Select previous → Rollback
+  
+  2. API Rollback (< 5 min)
+     → Get previous commit: git log --oneline | head -2
+     → Force push: git push origin [COMMIT]:main --force
+     → Monitor deployment
+  
+  3. Database Rollback (< 15 min, requires DevOps)
+     → Contact DevOps immediately
+     → Restore from pre-deployment snapshot
+     → Reapply migrations if needed
+  
+  4. Full System Rollback (Coordinated)
+     → Follow chain: Vercel → API → Database
+     → Verify infrastructure between each step
+
+================================================================================
+SIGN-OFF REQUIREMENTS & APPROVAL MATRIX
+================================================================================
+
+SIGN-OFF #1: DEVOPS LEAD
+├─ Timeline: T+30 min (03:45 UTC target)
+├─ Checklist:
+│  ├─ [ ] Vercel build successful (< 60s)
+│  ├─ [ ] Web health check passing
+│  ├─ [ ] API health check passing
+│  ├─ [ ] PostgreSQL connected + migrations applied
+│  ├─ [ ] PostGIS extension active + GPS validation working
+│  ├─ [ ] Database connection pool < 50%
+│  ├─ [ ] Redis connected + memory < 50%
+│  └─ [ ] BullMQ queues ready
+├─ Success Criteria: All infrastructure checks PASS
+└─ Authority: Can block deployment if failures found
+
+SIGN-OFF #2: QA LEAD
+├─ Timeline: T+50 min (04:05 UTC target)
+├─ Smoke Tests Required:
+│  ├─ TC-020: Approve without evidence → 400 "Etapa precisa..."
+│  ├─ TC-033: GPS validation (0.0, 0.0) → 400 "GPS inválido"
+│  └─ TC-028: KYC approval → 200 OK + email sent
+├─ Additional Checks:
+│  ├─ Login flow working
+│  ├─ Dashboard loads < 2s
+│  ├─ No console errors
+│  └─ Core features responsive
+├─ Success Criteria: 3/3 smoke tests PASS + no regressions
+└─ Authority: Can block deployment if critical failures found
+
+SIGN-OFF #3: CTO / TECH LEAD
+├─ Timeline: T+1h (04:15 UTC target)
+├─ Verification:
+│  ├─ [ ] Code matches approved review (c2e70ac)
+│  ├─ [ ] Type-check passed (5/5 packages)
+│  ├─ [ ] Security audit clean (0 hardcoded secrets)
+│  ├─ [ ] 3 critical bugs verified fixed
+│  ├─ [ ] All 20+ env vars configured
+│  ├─ [ ] Monitoring configured (Sentry, CloudWatch)
+│  └─ [ ] Rollback procedures understood by team
+├─ Success Criteria: Technical green light + risk mitigation confirmed
+└─ Authority: Can block or request conditional approval
+
+SIGN-OFF #4: CEO / FOUNDER
+├─ Timeline: T+1.5h (04:45 UTC target)
+├─ Business Approval:
+│  ├─ [ ] Go-live window confirmed (3:15-7:15 UTC OK)
+│  ├─ [ ] Stakeholders informed
+│  ├─ [ ] Support team briefed + on-call ready
+│  ├─ [ ] Rollback triggers understood
+│  └─ [ ] Success metrics agreed (< 1% error, 100% uptime)
+├─ Success Criteria: Business confidence + support readiness confirmed
+└─ Authority: Final go/no-go decision
+
+UNANIMOUS GO REQUIRED:
+  ✓ DevOps: Green
+  ✓ QA: Green
+  ✓ CTO: Green
+  ✓ CEO: Green
+  → PROCEED TO MONITORING PHASE
+
+ANY RED FLAG:
+  ! Escalate immediately to CTO
+  ! Investigate and resolve
+  ! Decision: Retry or reschedule cutover
+
+================================================================================
+MONITORING CHECKLIST (4-HOUR WINDOW)
+================================================================================
+
+PHASE 1: SENTRY ERROR TRACKING (T+5 to T+240 min)
+  - [ ] Sentry dashboard opened
+  - [ ] Error rate baseline recorded (first 10 minutes)
+  - [ ] Alert configured: Error count > 5 in 5 min → Slack
+  - [ ] Email notifications enabled to contato.vinicaetano93@gmail.com
+  
+  METRICS TO LOG EVERY 30 MINUTES:
+    - Error count (target: 0-2)
+    - Error rate (target: < 0.1%)
+    - Most common error
+    - Top affected endpoint
+
+PHASE 2: CLOUDWATCH LATENCY ALERTS (T+5 to T+240 min)
+  - [ ] CloudWatch dashboard created: "imobi-production"
+  - [ ] API latency metric added (P95 target: < 2000ms)
+  - [ ] Web latency metric added
+  - [ ] Database latency monitored
+  - [ ] Alarms configured:
+       * P95 > 2s for 5 min → YELLOW alert
+       * P95 > 5s for 2 min → RED alert (AUTO-ROLLBACK)
+  
+  METRICS TO LOG EVERY 30 MINUTES:
+    - API P95 latency (baseline at T+5, then every hour)
+    - Web P95 latency
+    - Database query time
+    - Redis latency
+
+PHASE 3: DATABASE CONNECTION POOL (T+5 to T+240 min)
+  - [ ] RDS dashboard opened
+  - [ ] Max connections verified (typically 100)
+  - [ ] Current connections baseline recorded
+  - [ ] Alert configured: > 80% usage
+  
+  METRICS TO LOG EVERY 30 MINUTES:
+    - Current connections / max (X / 100)
+    - Percent utilized (target: < 50%)
+    - Connection timeouts (target: 0)
+    - Slow queries > 1s (target: < 5/min)
+  
+  ACTIONS IF > 80%:
+    - Investigate active queries
+    - Kill idle connections if safe
+    - If sustained > 90%: BEGIN ROLLBACK
+
+PHASE 4: REDIS MEMORY MONITORING (T+5 to T+240 min)
+  - [ ] Redis memory dashboard opened
+  - [ ] Max memory setting verified (512 MB)
+  - [ ] Current usage baseline recorded
+  - [ ] Alert configured: > 70% usage
+  
+  METRICS TO LOG EVERY 30 MINUTES:
+    - Used memory MB / 512 MB
+    - Percent utilized (target: < 50%)
+    - Memory fragmentation ratio (target: < 1.5)
+    - Evicted keys count (target: 0)
+    - BullMQ queue count
+  
+  ACTIONS IF > 70%:
+    - Check BullMQ queue sizes
+    - Monitor for evicted_keys
+    - If > 85%: BEGIN ROLLBACK
+
+================================================================================
+ONE-LINER MONITORING COMMANDS
+================================================================================
+
+Run these commands repeatedly during 4-hour window:
+
+1. API + Web Health:
+   echo "=== API ===" && curl -s https://api.imbobi.com.br/health | jq . && \
+   echo "=== WEB ===" && curl -s https://app.imbobi.com.br/api/health | jq .
+
+2. Database Connections:
+   psql $DATABASE_URL -c "SELECT datname, count(*) FROM pg_stat_activity GROUP BY datname;"
+
+3. Redis Memory:
+   redis-cli -u $REDIS_URL INFO memory | grep -E "used_memory_human|maxmemory|evicted"
+
+4. Error Log:
+   tail -50 /var/log/imbobi/api.log | grep ERROR
+
+5. Full Health Check:
+   bash scripts/cutover-health-check.sh
+
+6. Sentry Stats (with API):
+   curl -s https://sentry.io/api/0/organizations/imobi/stats/ \
+     -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" | jq .
+
+================================================================================
+SUCCESS CRITERIA (At T+4 hours)
+================================================================================
+
+To declare cutover SUCCESSFUL:
+
+  ✓ Error Rate: Stayed < 0.5% entire window (average < 0.1%)
+  ✓ Latency: P95 stayed < 2s (no spikes > 3s)
+  ✓ Database: Connections never exceeded 70%
+  ✓ Redis: Memory never exceeded 60%
+  ✓ Uptime: 100% (no service interruptions)
+  ✓ Smoke Tests: 100% passing (retest at start/middle/end)
+  ✓ No Rollbacks: Zero rollback procedures executed
+  ✓ All Sign-Offs: DevOps ✓, QA ✓, CTO ✓, CEO ✓
+
+POST-SUCCESS ACTIONS:
+  1. Document final metrics in CUTOVER_EXECUTION_LIVE.md
+  2. Transition monitoring to standard on-call rotation
+  3. Post-deployment briefing (45 min)
+  4. 24-hour check-in with team
+  5. Update runbook with lessons learned
+
+================================================================================
+ESCALATION FLOWCHART
+================================================================================
+
+Issue Detected (Metric exceeds threshold)
+    ↓
+[Immediately] Post to #cutover-alerts Slack channel
+    ↓
+[30 seconds] If no resolution → Page QA Lead
+    ↓
+[5 minutes] If still degraded → Page DevOps Lead
+    ↓
+[10 minutes] If still not resolved → Page CTO
+    ↓
+[15 minutes] If multiple systems affected → BEGIN ROLLBACK (no CTO approval needed)
+
+CRITICAL TRIGGERS (Automatic Rollback):
+  • Error rate > 5% for 5 minutes
+  • P95 latency > 5s for 2 minutes continuous
+  • Database unavailable (0 connections)
+  • Multiple 500 errors on critical endpoints
+
+================================================================================
+DOCUMENT LOCATIONS & FILES
+================================================================================
+
+PRIMARY DOCUMENTS (Created):
+  1. /home/user/imobi/PRODUCTION_MONITORING_AND_SIGNOFF.md
+     └─ Comprehensive 180+ line operational guide
+     └─ Includes: Monitoring setup, thresholds, procedures, contacts
+  
+  2. /home/user/imobi/MONITORING_QUICK_REFERENCE.md
+     └─ Single-page quick lookup for on-duty monitor
+     └─ Includes: Current metrics log, escalation tree, one-liners
+  
+  3. /home/user/imobi/CUTOVER_SIGNOFF_FORM.md
+     └─ Formal approval matrix with 4 sign-off sections
+     └─ Includes: DevOps, QA, CTO, CEO checkpoints
+
+SUPPORTING DOCUMENTS (Existing):
+  • /home/user/imobi/CUTOVER_EXECUTION_LIVE.md (Master cutover doc)
+  • /home/user/imobi/scripts/cutover-health-check.sh (Health monitoring)
+  • /home/user/imobi/VERIFY_INFRASTRUCTURE.sh (Infrastructure checks)
+  • /home/user/imobi/SMOKE_TESTS.sh (QA smoke tests)
+  • /home/user/imobi/SMOKE_TEST_CHECKLIST.md (Full QA scenarios)
+
+================================================================================
+NEXT STEPS FOR CUTOVER TEAM
+================================================================================
+
+BEFORE CUTOVER (Execute T+0):
+  1. Review all three monitoring documents (30 min)
+  2. Assign on-duty monitor for 4-hour window
+  3. Brief support team on escalation procedures
+  4. Verify all environment variables are set
+  5. Test health check script: bash scripts/cutover-health-check.sh
+  6. Confirm Sentry, CloudWatch access credentials
+
+DURING CUTOVER (Every 30 minutes):
+  1. Log current metrics using MONITORING_QUICK_REFERENCE.md
+  2. Review alerts in Sentry + CloudWatch dashboards
+  3. Run health check: bash scripts/cutover-health-check.sh
+  4. Check database connections + Redis memory
+  5. If any alert: Follow escalation flowchart in quick reference
+
+AT T+4 HOURS:
+  1. Gather final metrics
+  2. Collect all sign-offs from 4 stakeholders
+  3. Declare success or escalate issues
+  4. Transition to standard monitoring
+  5. Document lessons learned
+
+================================================================================
+CONTACT INFORMATION
+================================================================================
+
+ON-CALL TEAM (Update before cutover):
+  • CTO: contato.vinicaetano93@gmail.com
+  • DevOps Lead: ________________________________
+  • QA Lead: ________________________________
+  • CEO: ________________________________
+
+ESCALATION:
+  1. Slack Channel: #cutover-alerts
+  2. On-call Phone: [Update before cutover]
+  3. Incident Severity Levels:
+     - YELLOW (Warning): Investigate, notify team
+     - ORANGE (Elevated): Page on-call engineer
+     - RED (Critical): Prepare rollback immediately
+
+================================================================================
+DOCUMENT REVISION HISTORY
+================================================================================
+
+Version 1.0 - 2026-05-30 (INITIAL)
+  • Created 3 comprehensive monitoring documents
+  • Extracted metrics from CUTOVER_EXECUTION_LIVE.md
+  • Documented rollback triggers and procedures
+  • Finalized sign-off requirements for 4 stakeholders
+
+================================================================================
+END OF SUMMARY
+================================================================================
