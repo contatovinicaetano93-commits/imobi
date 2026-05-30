@@ -7,11 +7,5 @@
     "NEXT_PUBLIC_API_URL": "https://api.imobi.com",
     "CORS_ORIGIN": "https://imobi.vercel.app,https://api.imobi.com,https://imobi.com.br,http://localhost:3000",
     "EMAIL_PROVIDER": "sendgrid"
-  },
-  "git": {
-    "deploymentEnabled": {
-      "main": true,
-      "claude/serene-pasteur-mB72T": true
-    }
   }
 }
