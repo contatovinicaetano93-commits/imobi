@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm install && pnpm build",
+  "buildCommand": "pnpm install && pnpm build --filter=@imbobi/schemas --filter=@imbobi/core --filter=@imbobi/ui && pnpm build --filter=@imbobi/web",
   "outputDirectory": "apps/web/.next",
   "framework": "nextjs",
   "env": {
