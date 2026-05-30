@@ -1,6 +1,5 @@
 {
   "buildCommand": "turbo run build --filter=@imbobi/web",
-  "outputDirectory": "apps/web/.next",
   "framework": "nextjs",
   "env": {
     "NODE_ENV": "production",
