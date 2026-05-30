@@ -27,6 +27,8 @@ import { getRedisConfig } from "./common/config";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
 import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
 
+const redisConfig = getRedisConfig();
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -36,32 +38,26 @@ import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
       { ttl: 60000, limit: 5, name: "upload" }, // File uploads: 5 req/min
       { ttl: 60000, limit: 20, name: "manager" }, // Manager ops: 20 req/min
     ]),
-    (() => {
-      const redisConfig = getRedisConfig();
-      return CacheModule.register({
-        isGlobal: true,
-        store: "redis",
+    CacheModule.register({
+      isGlobal: true,
+      store: "redis",
+      host: redisConfig.host,
+      port: redisConfig.port,
+      ...(redisConfig.password && { password: redisConfig.password }),
+      ttl: 300, // 5 min default TTL
+      lazyConnect: true,
+      retryStrategy: (times: number) => Math.min(times * 50, 2000),
+    }),
+    BullModule.forRoot({
+      redis: {
         host: redisConfig.host,
         port: redisConfig.port,
         ...(redisConfig.password && { password: redisConfig.password }),
-        ttl: 300, // 5 min default TTL
-        lazyConnect: true, // Connect lazily to avoid blocking app initialization
-        retryStrategy: (times: number) => Math.min(times * 50, 2000), // Retry with exponential backoff
-      });
-    })(),
-    (() => {
-      const redisConfig = getRedisConfig();
-      return BullModule.forRoot({
-        redis: {
-          host: redisConfig.host,
-          port: redisConfig.port,
-          ...(redisConfig.password && { password: redisConfig.password }),
-          maxRetriesPerRequest: null, // Required for async operations
-          enableReadyCheck: false, // Don't block on ready
-          retryStrategy: (times: number) => Math.min(times * 50, 2000), // Retry with exponential backoff
-        },
-      });
-    })(),
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
+        retryStrategy: (times: number) => Math.min(times * 50, 2000),
+      },
+    }),
     PrismaModule,
     AuthModule,
     UsuariosModule,

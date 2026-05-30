@@ -8,10 +8,11 @@ import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { validateEnvironmentOrThrow, initSentry } from "./common/config";
 
 async function bootstrap() {
-  // Initialize Sentry before creating the app for error tracking
-  initSentry();
-
+  // Validate environment first to catch all config errors at startup
   validateEnvironmentOrThrow();
+
+  // Then initialize optional services like Sentry
+  initSentry();
 
   const fastifyOptions: any = {
     logger: process.env["NODE_ENV"] !== "production",
