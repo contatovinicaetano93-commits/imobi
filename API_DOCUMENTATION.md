@@ -1,25 +1,81 @@
 # imobi API Documentation
 
-## Base URL
+**Version:** 1.0.0 | **Status:** 🟢 Production Ready | **Last Updated:** May 2026
+
+## Quick Links
+
+- **Swagger/OpenAPI UI:** `/api/v1/docs` (interactive testing)
+- **Postman Collection:** `dist/imbobi-api.postman_collection.json` (import into Postman)
+- **GitHub Repository:** [imobi](https://github.com/contatovinicaetano93-commits/imobi)
+
+## Base URLs
+
+| Environment | URL |
+|---|---|
+| **Production** | `https://api.imbobi.com/api/v1` |
+| **Staging** | `https://api-staging.imbobi.com/api/v1` |
+| **Development** | `http://localhost:4000/api/v1` |
+
+## Authentication & Authorization
+
+### Token Types
+
+**AccessToken (JWT Bearer)**
+- **Duration:** 15 minutes
+- **Format:** `Authorization: Bearer <token>`
+- **Header:** Sent with every authenticated request
+
+**RefreshToken (HttpOnly Cookie)**
+- **Duration:** 7 days
+- **Storage:** Automatic (HttpOnly, Secure, SameSite=Strict)
+- **Renewal:** Use `/auth/renovar` endpoint
+- **Rotation:** New token issued on every refresh
+
+### Authentication Flow
+
 ```
-Production: https://api.imbobi.com.br/api/v1
-Staging: https://staging-api.imbobi.com.br/api/v1
-Development: http://localhost:4000/api/v1
+1. POST /auth/registrar or /auth/login
+   ↓
+   ← Returns: accessToken (body) + refreshToken (cookie)
+   
+2. Store: accessToken in memory, refreshToken in cookie (automatic)
+   
+3. For each request:
+   GET /protected
+   Headers: Authorization: Bearer <accessToken>
+   Cookies: refreshToken=<token> (sent automatically)
+   
+4. If 401 (token expired):
+   POST /auth/renovar
+   ← Returns: new accessToken
+   
+5. On logout:
+   POST /auth/logout
+   ← Clear tokens and cookies
 ```
 
-## Authentication
-All protected endpoints require a Bearer token in the Authorization header:
-```
-Authorization: Bearer <accessToken>
-```
+## Error Responses
 
-## Error Handling
-All errors follow this format:
+All errors follow this standard format:
+
 ```json
 {
   "statusCode": 400,
-  "message": "Error message",
-  "error": "BadRequest"
+  "message": "Human-readable error message",
+  "error": "ErrorType"
+}
+```
+
+**Example - Validation Error:**
+```json
+{
+  "statusCode": 400,
+  "message": "Validação falhou",
+  "error": "Bad Request",
+  "details": {
+    "email": "Email já registrado",
+    "cpf": "CPF inválido"
+  }
 }
 ```
 
