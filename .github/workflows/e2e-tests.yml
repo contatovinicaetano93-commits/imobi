@@ -45,18 +45,27 @@ jobs:
 
       - name: Start services with docker-compose
         run: |
-          echo "🚀 Starting services with docker-compose..."
-          docker-compose -f docker-compose.test.yml up -d
+          echo "🚀 Checking docker and docker-compose..."
+          docker --version
+          docker-compose --version || docker compose version
+
+          echo "Starting services with docker-compose..."
+          docker-compose -f docker-compose.test.yml up -d || docker compose -f docker-compose.test.yml up -d
 
           echo "⏳ Waiting for services to be ready..."
-          max_attempts=30
+          sleep 5
+
+          docker-compose -f docker-compose.test.yml ps || docker compose -f docker-compose.test.yml ps
+
+          echo "Testing PostgreSQL connectivity..."
+          max_attempts=60
           for attempt in $(seq 1 $max_attempts); do
-            if docker-compose -f docker-compose.test.yml exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
+            echo "Attempt $attempt/$max_attempts..."
+            docker-compose -f docker-compose.test.yml exec -T postgres pg_isready -U postgres && {
               echo "✅ PostgreSQL is ready"
               break
-            fi
-            echo "Attempt $attempt/$max_attempts..."
-            sleep 2
+            } || true
+            sleep 1
           done
 
           sleep 2
