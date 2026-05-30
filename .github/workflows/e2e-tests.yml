@@ -120,7 +120,7 @@ jobs:
           JWT_SECRET: test-jwt-secret-key-for-testing-purposes-only
           CORS_ORIGINS: http://localhost:3000,http://localhost:3001
           API_PORT: 4000
-        run: cd services/api && npm test -- --testPathPattern="e2e" --forceExit --detectOpenHandles 2>&1
+        run: cd services/api && npm test -- --forceExit --detectOpenHandles --verbose 2>&1 | tee test-output.log
 
       - name: Upload coverage reports
         if: always()
