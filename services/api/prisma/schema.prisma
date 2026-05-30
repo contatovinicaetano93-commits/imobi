@@ -21,6 +21,7 @@ model Usuario {
   passwordHash  String
   tipo          UsuarioTipo @default(TOMADOR)
   kycStatus     KycStatus @default(PENDENTE)
+  deletadoEm    DateTime?  // LGPD Article 17 - soft delete timestamp
   criadoEm      DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt
 
@@ -36,6 +37,7 @@ model Usuario {
 
   @@index([email])
   @@index([cpf])
+  @@index([deletadoEm])
 }
 
 enum UsuarioTipo {

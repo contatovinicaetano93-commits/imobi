@@ -270,4 +270,38 @@ export class EmailService {
       html,
     });
   }
+
+  /**
+   * LGPD Article 17 - Account Deletion Confirmation
+   * Sent after 30-day grace period when account is permanently deleted
+   */
+  async contaExcluida(nome: string, email: string): Promise<boolean> {
+    const html = `
+      <h2>Sua Conta foi Permanentemente Excluída</h2>
+      <p>Olá ${nome},</p>
+      <p>Sua conta no imbobi foi permanentemente excluída após o período de graça de 30 dias.</p>
+      <h3>O que foi deletado:</h3>
+      <ul>
+        <li>Seu perfil de usuário</li>
+        <li>Suas solicitações de crédito</li>
+        <li>Seus projetos de construção</li>
+        <li>Seus tokens de sessão</li>
+        <li>Notificações e histórico de transações</li>
+      </ul>
+      <h3>O que foi retido (conforme lei):</h3>
+      <ul>
+        <li>Documentos KYC (5 anos - requisito AML)</li>
+        <li>Logs de auditoria (7 anos - requisito regulatório)</li>
+      </ul>
+      <p>Em conformidade com a Lei Geral de Proteção de Dados (LGPD), seus dados pessoais foram completamente removidos de nossos sistemas.</p>
+      <p>Se tiver dúvidas sobre esta exclusão, entre em contato com nosso time de privacidade: privacidade@imbobi.com.br</p>
+      <p>Obrigado por ter usado o imbobi.</p>
+    `;
+
+    return this.enviarEmail({
+      to: email,
+      subject: "Conta Excluída - Confirmação",
+      html,
+    });
+  }
 }

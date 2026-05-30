@@ -22,6 +22,7 @@ import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
+import { ExcluirUsuarioWorker } from "./workers/excluir-usuario.worker";
 import { HealthController } from "./common/health.controller";
 import { getRedisConfig } from "./common/config";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
@@ -77,6 +78,7 @@ const redisConfig = getRedisConfig();
   controllers: [HealthController],
   providers: [
     LiberacaoParcelaWorker,
+    ExcluirUsuarioWorker,
     {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
