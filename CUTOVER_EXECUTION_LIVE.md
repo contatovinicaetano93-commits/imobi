@@ -28,9 +28,10 @@ git push origin claude/serene-pasteur-mB72T
 # ✅ DONE (2026-05-30 03:40 UTC) - Latest: c2e70ac (embed buildCommand directly)
 
 # 2. Vercel auto-deploys on push (watch: https://vercel.com/contatovinicaetano93-commits/imobi)
-# Previous attempt: bash vercel-build.sh failed (script not found in container)
-# Current attempt: Using embedded command "pnpm install && turbo run build --filter=@imbobi/web"
-# Expected: Build succeeds in <60s, no timeout errors
+# Commit 6942214: Removed outputDirectory, relying on Vercel auto-detection
+# Previous issues: Double pnpm install stripping devDependencies, wrong output path
+# Fixes applied: .npmrc shamefully-hoist, separate install/build commands, removed outputDirectory
+# Expected: Build succeeds in <60s, auto-detects .next output directory
 
 # 3. Verify deployment
 curl -s https://app.imbobi.com.br/api/health | jq .
@@ -169,15 +170,15 @@ tail -f /var/log/imbobi/api.log | grep -E "ERROR|CRITICAL"
 
 ## ✅ Cutover Timeline
 
-| Time (BRT) | Step | Status |
+| Time (UTC) | Step | Status |
 |-----------|------|--------|
-| **03:15** | Pre-deploy checks | ✅ DONE |
-| **03:20** | Vercel deploy | ⏳ IN PROGRESS |
-| **03:25** | DB verify | ⏳ QUEUED |
-| **03:27** | Redis verify | ⏳ QUEUED |
-| **03:30** | Smoke tests | ⏳ QUEUED |
-| **03:45-04:00** | Monitor + document | ⏳ QUEUED |
-| **07:15** | Final sign-off | ⏳ QUEUED |
+| **00:30** | Pre-deploy checks | ✅ DONE |
+| **00:41** | Vercel deploy (6942214) | ⏳ AWAITING BUILD |
+| **00:45** | DB verify | ⏳ READY |
+| **00:47** | Redis verify | ⏳ READY |
+| **00:50** | Smoke tests (TC-020/033/028) | ⏳ READY (pending Vercel) |
+| **01:00-05:00** | Monitor + document | ⏳ READY |
+| **05:00** | Final sign-off | ⏳ READY |
 
 ---
 
