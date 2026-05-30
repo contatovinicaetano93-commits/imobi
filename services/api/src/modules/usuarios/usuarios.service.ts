@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Queue } from "bullmq";
-import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bull";
+import { InjectQueue } from "@nestjs/bull";
 
 @Injectable()
 export class UsuariosService {

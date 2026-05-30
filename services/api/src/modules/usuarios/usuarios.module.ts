@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { BullModule } from "@nestjs/bullmq";
+import { BullModule } from "@nestjs/bull";
 import { UsuariosService } from "./usuarios.service";
 import { UsuariosController } from "./usuarios.controller";
 
