@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { obrasApi, evidenciasApi, type EvidenciaDetalhe } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { AprovarEtapaForm } from "./aprovar-form";
+import { UploadEvidenciaForm } from "./upload-form";
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +45,8 @@ export default async function VistoriaPage({
           <p className="text-2xl font-bold text-brand-600">{formatarBRL(Number(etapa.valorLiberacao))}</p>
         </div>
       </div>
+
+      <UploadEvidenciaForm etapaId={params.etapaId} />
 
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
