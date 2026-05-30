@@ -29,6 +29,31 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// ── Simulador ────────────────────────────────────────────────────────
+
+export type SimuladorInput = {
+  valorEmpreendimento: number;
+  tipoObra: "TERRENO" | "CONSTRUCAO" | "ACABAMENTO" | "COMPRADOR";
+  prazo: number;
+};
+
+export type SimuladorResult = {
+  valorMaximoFinanciavel: number;
+  parcelaMedia: number;
+  taxaMensal: string;
+  taxaAno: string;
+  ltv: string;
+  totalJuros: number;
+};
+
+export const simuladorApi = {
+  calcular: (input: SimuladorInput) =>
+    apiFetch<SimuladorResult>("/simulador/calcular", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+};
+
 // ── Obras ─────────────────────────────────────────────────────────────
 
 export type ObraResumo = {

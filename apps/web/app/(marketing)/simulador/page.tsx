@@ -1,38 +1,36 @@
 "use client";
 
 import { useState } from "react";
+import { simuladorApi, type SimuladorResult } from "@/lib/api";
 
 export default function SimuladorPage() {
   const [form, setForm] = useState({
     valorEmpreendimento: "",
-    tipoObra: "CONSTRUCAO",
+    tipoObra: "CONSTRUCAO" as const,
     prazo: 24,
     localizacao: "",
   });
-  const [resultado, setResultado] = useState<any>(null);
+  const [resultado, setResultado] = useState<SimuladorResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
   const handleSimular = async () => {
     if (!form.valorEmpreendimento) {
-      alert("Preencha o valor do empreendimento");
+      setErro("Preencha o valor do empreendimento");
       return;
     }
 
     setLoading(true);
+    setErro(null);
     try {
-      const res = await fetch("/api/simulador", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          valorEmpreendimento: Number(form.valorEmpreendimento),
-          tipoObra: form.tipoObra,
-          prazo: form.prazo,
-        }),
+      const data = await simuladorApi.calcular({
+        valorEmpreendimento: Number(form.valorEmpreendimento),
+        tipoObra: form.tipoObra,
+        prazo: form.prazo,
       });
-      const data = await res.json();
       setResultado(data);
     } catch (error) {
-      alert("Erro ao simular");
+      setErro(error instanceof Error ? error.message : "Erro ao simular");
     } finally {
       setLoading(false);
     }
@@ -104,6 +102,11 @@ export default function SimuladorPage() {
             >
               {loading ? "Simulando..." : "Simular Crédito"}
             </button>
+            {erro && (
+              <div className="bg-red-950/50 border border-red-700 rounded-lg p-3 text-red-300 text-sm">
+                {erro}
+              </div>
+            )}
           </div>
 
           {/* Resultado */}

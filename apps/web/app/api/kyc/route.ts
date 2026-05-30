@@ -1,26 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
-  const { nome, email, cnpj, tipoObra } = await req.json();
+const API_URL = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
 
-  if (!nome || !email || !cnpj) {
-    return NextResponse.json({ error: "Campos obrigatórios" }, { status: 400 });
+export async function POST(req: NextRequest) {
+  const token = req.cookies.get("access_token")?.value;
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // TODO: Integrar com NestJS backend para persistência
-  const userId = Math.random().toString(36).slice(2);
-  const token = Buffer.from(`${userId}:${Date.now()}`).toString("base64");
+  const body = await req.json();
 
-  const response = NextResponse.json({
-    success: true,
-    userId,
-    message: "KYC iniciado com sucesso",
-  });
+  try {
+    const res = await fetch(`${API_URL}/api/v1/kyc/upload`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
 
-  response.cookies.set("access_token", token, {
-    httpOnly: true,
-    maxAge: 86400 * 7,
-  });
+    if (!res.ok) {
+      const error = await res.json();
+      return NextResponse.json(error, { status: res.status });
+    }
 
-  return response;
+    return NextResponse.json(await res.json());
+  } catch (error) {
+    console.error("KYC API error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
