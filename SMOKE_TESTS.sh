@@ -27,7 +27,7 @@ echo "🧪 TC-020: Approve etapa without evidence"
 echo "Expected: 400 with 'Etapa precisa ter ao menos uma evidência validada'"
 echo ""
 
-RESPONSE=$(curl -s -X POST "$API_BASE_URL/api/v1/manager/etapas/test-id/approve" \
+RESPONSE=$(curl -s -X PATCH "$API_BASE_URL/api/v1/manager/etapas/test-id/approve" \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -w "\n%{http_code}")
@@ -89,7 +89,7 @@ echo "🧪 TC-028: KYC approval with email notification"
 echo "Expected: 200 with email sent"
 echo ""
 
-RESPONSE=$(curl -s -X POST "$API_BASE_URL/api/v1/kyc/test-doc/approve" \
+RESPONSE=$(curl -s -X PATCH "$API_BASE_URL/api/v1/kyc/test-doc/approve" \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -w "\n%{http_code}")
 
