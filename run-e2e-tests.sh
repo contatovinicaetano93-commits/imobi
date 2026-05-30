@@ -32,11 +32,11 @@ echo "🗄️  Setting up database..."
 cd services/api
 npm install > /dev/null 2>&1 || true
 
-# Generate Prisma client
-npx prisma generate
+# Generate Prisma client with test environment
+NODE_ENV=test npx prisma generate
 
-# Run migrations
-npx prisma migrate deploy
+# Run migrations with test environment
+NODE_ENV=test npx prisma migrate deploy
 
 echo "✅ Database ready"
 echo ""
