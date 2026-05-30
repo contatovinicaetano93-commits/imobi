@@ -3,6 +3,9 @@
 import { useSimuladorCredito } from "@imbobi/core";
 import { formatarBRL, formatarPercentual } from "@imbobi/core";
 
+// Desabilita SSG para esta página dinâmica
+export const dynamic = "force-dynamic";
+
 export default function SimuladorPage() {
   const { valorSolicitado, setValorSolicitado, prazoMeses, setPrazoMeses, resultado } =
     useSimuladorCredito();

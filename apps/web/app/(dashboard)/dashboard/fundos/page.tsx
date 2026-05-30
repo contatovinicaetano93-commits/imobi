@@ -12,6 +12,7 @@ import {
 } from "./_components/fundos-utils";
 
 export const metadata: Metadata = { title: "Fundos — imbobi" };
+export const dynamic = "force-dynamic";
 
 export default async function FundosPage() {
   const [obras, creditos] = await Promise.all([
