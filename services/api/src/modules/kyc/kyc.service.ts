@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
@@ -7,6 +7,8 @@ import { KycDocumentoStatus } from "@prisma/client";
 
 @Injectable()
 export class KycService {
+  private readonly logger = new Logger(KycService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
@@ -91,10 +93,12 @@ export class KycService {
       tipo: "KYC_APROVADO",
     }).catch(() => {});
 
-    // Envia email
-    this.email
-      .kycAprovadoEmail(documento.usuario.nome, documento.usuario.email)
-      .catch(() => {});
+    // BUG-003: Ensure email is sent before returning response
+    try {
+      await this.email.kycAprovadoEmail(documento.usuario.nome, documento.usuario.email);
+    } catch (error) {
+      this.logger.warn(`Failed to send KYC approval email: ${error}`);
+    }
 
     return atualizado;
   }
@@ -153,9 +157,11 @@ export class KycService {
     }).catch(() => {});
 
     // Envia email
-    this.email
-      .kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo)
-      .catch(() => {});
+    try {
+      await this.email.kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo);
+    } catch (error) {
+      this.logger.warn(`Failed to send KYC rejection email: ${error}`);
+    }
 
     return atualizado;
   }
