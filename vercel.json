@@ -1,5 +1,6 @@
 {
-  "buildCommand": "turbo run build --filter=@imbobi/web",
+  "buildCommand": "bash vercel-build.sh",
+  "outputDirectory": "apps/web/.next",
   "env": {
     "NODE_ENV": "production",
     "NEXT_PUBLIC_API_URL": "https://api.imobi.com",
