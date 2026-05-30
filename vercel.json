@@ -1,6 +1,7 @@
 {
   "buildCommand": "bash vercel-build.sh",
   "outputDirectory": "apps/web/.next",
+  "installCommand": "pnpm install",
   "env": {
     "NODE_ENV": "production",
     "NEXT_PUBLIC_API_URL": "https://api.imobi.com",
