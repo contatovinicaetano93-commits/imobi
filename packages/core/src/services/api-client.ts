@@ -28,7 +28,7 @@ async function request<T>(
   headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  const res = await fetch(`${BASE_URL}/api/v1${path}`, { ...init, headers });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({})) as { message?: string; code?: string };
