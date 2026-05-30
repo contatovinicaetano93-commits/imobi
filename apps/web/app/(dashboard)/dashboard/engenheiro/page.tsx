@@ -5,6 +5,7 @@ import { VisitQueue } from "./_components/VisitQueue";
 import { DynamicVisitQueueClient } from "./_components/DynamicVisitQueueClient";
 
 export const metadata: Metadata = { title: "Portal do Engenheiro — imbobi" };
+export const dynamic = "force-dynamic";
 
 export default async function EngenheiroPortalPage() {
   const visitas = await engenheirosApi.listarVisitas().catch(() => []);

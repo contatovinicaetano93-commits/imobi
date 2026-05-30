@@ -4,6 +4,7 @@ import { formatarCPF, formatarTelefone } from "@imbobi/core";
 import { PerfilForm } from "./perfil-form";
 
 export const metadata: Metadata = { title: "Perfil — imbobi" };
+export const dynamic = "force-dynamic";
 
 const KYC_STATUS_MAP: Record<string, { label: string; cor: string; icone: string }> = {
   PENDENTE: { label: "Pendente", cor: "text-yellow-600", icone: "⏳" },
