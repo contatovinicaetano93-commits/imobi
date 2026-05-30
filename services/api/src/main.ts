@@ -18,7 +18,9 @@ moduleAlias.addAlias("@imbobi/schemas", path.join(projectRoot, "packages/schemas
 moduleAlias.addAlias("@imbobi/core", path.join(projectRoot, "packages/core/dist"));
 moduleAlias.addAlias("@imbobi/ui", path.join(projectRoot, "packages/ui/dist"));
 import { AppModule } from "./app.module";
-import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { StructuredExceptionFilter } from "./common/filters/structured-exception.filter";
+import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
+import { LoggerService } from "./common/logger.service";
 import { validateJwtSecret } from "./common/validators/jwt-secret.validator";
 
 async function bootstrap() {
@@ -27,6 +29,8 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({ logger: process.env["NODE_ENV"] !== "production" })
   );
+
+  const logger = app.get(LoggerService);
 
   // Security headers
   app.use(helmet({
@@ -43,8 +47,11 @@ async function bootstrap() {
     hsts: { maxAge: 31536000, includeSubDomains: true },
   }));
 
-  // ThrottlerGuard is registered via AppModule providers
-  app.useGlobalFilters(new HttpExceptionFilter());
+  // Request ID middleware for tracing
+  app.use(new RequestIdMiddleware().use.bind(new RequestIdMiddleware()));
+
+  // Structured exception filter and logging
+  app.useGlobalFilters(new StructuredExceptionFilter(logger));
   app.setGlobalPrefix("api/v1");
 
   app.enableCors({

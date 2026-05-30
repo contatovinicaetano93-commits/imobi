@@ -28,6 +28,8 @@ import { HealthController } from "./common/health.controller";
 import { HealthService } from "./common/health.service";
 import { CsrfService } from "./common/csrf.service";
 import { EncryptionService } from "./common/encryption.service";
+import { LoggerService } from "./common/logger.service";
+import { StructuredLoggingInterceptor } from "./common/interceptors/structured-logging.interceptor";
 import { QUEUE_LIBERACAO } from "./common/constants";
 
 @Module({
@@ -92,6 +94,7 @@ import { QUEUE_LIBERACAO } from "./common/constants";
     CsrfService,
     EncryptionService,
     HealthService,
+    LoggerService,
     ScoreUpdateWorker,
     {
       provide: APP_GUARD,
@@ -100,6 +103,10 @@ import { QUEUE_LIBERACAO } from "./common/constants";
     {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: StructuredLoggingInterceptor,
     },
   ],
 })

@@ -12,10 +12,11 @@ export function getSwaggerConfig() {
       "Financiamento com liberação por etapas validadas por GPS e fotos geovalidadas."
     )
     .setVersion("1.0.0")
-    .setContact({
-      name: "imobi Support",
-      email: "api@imbobi.com",
-    })
+    .setContact(
+      "imobi Support",
+      "https://imbobi.com/support",
+      "api@imbobi.com"
+    )
     .setLicense(
       "Commercial",
       "https://imbobi.com/terms"
