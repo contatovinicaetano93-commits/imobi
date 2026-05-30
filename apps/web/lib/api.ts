@@ -322,6 +322,23 @@ export const engenheirosApi = {
     }),
 };
 
+// ── Admin ────────────────────────────────────────────────────────────
+
+export type AdminStats = {
+  usuarios: number;
+  creditos: number;
+  creditosAtivos: number;
+  obras: number;
+  obrasAtivas: number;
+  etapas: number;
+  valorTotalCreditado: number;
+  valorTotalLiberado: number;
+};
+
+export const adminApi = {
+  dashboard: () => apiFetch<AdminStats>("/admin/dashboard"),
+};
+
 // ── Notificações ──────────────────────────────────────────────────────
 
 export type Notificacao = {
