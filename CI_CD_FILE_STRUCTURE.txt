@@ -1,0 +1,259 @@
+================================================================================
+                      CI/CD FILE STRUCTURE
+================================================================================
+
+imobi/
+├── .github/
+│   ├── workflows/                    ← GitHub Actions Workflows
+│   │   ├── type-check.yml           ← TypeScript validation
+│   │   ├── build.yml                ← Build validation + artifacts
+│   │   └── security-audit.yml       ← Weekly security audit
+│   │
+│   ├── dependabot.yml               ← Automated dependency updates
+│   ├── pull_request_template.md     ← PR template with checklist
+│   │
+│   └── [Documentation]
+│       ├── WORKFLOWS.md             ← Complete documentation
+│       ├── SETUP_CHECKLIST.md       ← Setup instructions
+│       └── DEPLOYMENT_SUMMARY.txt   ← Quick reference
+│
+├── scripts/
+│   ├── pre-push.sh                  ← Pre-push type-check hook
+│   └── setup-hooks.sh               ← Hook installer script
+│
+└── [Root Documentation]
+    ├── CI_CD_READY_TO_COMMIT.txt    ← Deployment status
+    └── CI_CD_FILE_STRUCTURE.txt     ← This file
+
+================================================================================
+                      FILES BY CATEGORY
+================================================================================
+
+GITHUB ACTIONS WORKFLOWS (3 files)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ .github/workflows/type-check.yml                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Trigger:   push + pull_request (main/develop/claude/*)                     │
+│ Command:   pnpm type-check                                                  │
+│ Duration:  ~2-3 minutes                                                     │
+│ Purpose:   Validates TypeScript type safety across all packages             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ .github/workflows/build.yml                                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Trigger:   push + pull_request (main/develop/claude/*)                     │
+│ Command:   pnpm build                                                       │
+│ Duration:  ~5-10 minutes                                                    │
+│ Features:  pnpm cache, artifact uploads (5 day retention)                   │
+│ Purpose:   Validates entire monorepo build                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ .github/workflows/security-audit.yml                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Trigger:   Weekly (Thursday 02:00 UTC) + manual workflow_dispatch           │
+│ Command:   pnpm audit                                                       │
+│ Duration:  ~2 minutes                                                       │
+│ Features:  Auto-creates GitHub issues on high/critical vulnerabilities      │
+│ Purpose:   Scans dependencies for security vulnerabilities                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+CONFIGURATION FILES (2 files)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ .github/dependabot.yml                                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ NPM Dependencies:                                                            │
+│   Schedule:      Weekly Monday 03:00 UTC                                    │
+│   Auto-merge:    patch + minor versions (100% compatibility)                │
+│   Limit:         5 open PRs                                                 │
+│   Reviewer:      contato.vinicaetano93@gmail.com                            │
+│                                                                              │
+│ Docker Images:                                                              │
+│   Schedule:      Weekly Monday 04:00 UTC                                    │
+│   Limit:         3 open PRs                                                 │
+│                                                                              │
+│ GitHub Actions:                                                             │
+│   Schedule:      Weekly Monday 05:00 UTC                                    │
+│   Auto-merge:    minor + patch versions                                     │
+│   Limit:         3 open PRs                                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ .github/pull_request_template.md                                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Features:  Auto-applied to all new pull requests                            │
+│ Enforces:  Clear description of changes                                     │
+│            Type of change classification                                    │
+│            Checklist: type-check, build, security, tests                    │
+│            Related issue links                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+GIT HOOKS (2 scripts)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ scripts/pre-push.sh                                                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Trigger:   Before every git push (local)                                    │
+│ Command:   Runs pnpm type-check + optional lint                             │
+│ Duration:  ~2 minutes                                                       │
+│ Purpose:   Prevents TypeScript errors from being committed                  │
+│ Bypass:    git push --no-verify (not recommended)                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ scripts/setup-hooks.sh                                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Purpose:   Installs Git hooks for all developers                            │
+│ Usage:     ./scripts/setup-hooks.sh (run once per developer)                │
+│ Installs:  pre-push hook to .git/hooks/pre-push                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+DOCUMENTATION (4 files, included in repo)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ .github/WORKFLOWS.md                                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Content:  Complete workflow documentation                                   │
+│           Troubleshooting guide                                             │
+│           Setup instructions                                                │
+│           Performance tips                                                  │
+│           Monitoring procedures                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ .github/SETUP_CHECKLIST.md                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Content:  Step-by-step GitHub Settings configuration                        │
+│           Local development setup                                           │
+│           Verification procedures                                           │
+│           Post-setup configuration                                          │
+│           Troubleshooting                                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ .github/DEPLOYMENT_SUMMARY.txt                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Content:  Quick reference summary                                           │
+│           Workflow schedule                                                 │
+│           Branch coverage                                                   │
+│           Status & monitoring                                               │
+│           Troubleshooting                                                   │
+│           Important notes                                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                      TECH STACK INFORMATION
+================================================================================
+
+Node.js:           22.x (LTS)
+pnpm:              9.x
+Monorepo:          Turborepo + pnpm workspaces
+Main Branch:       main (production)
+Staging Branch:    develop
+Feature Branches:  claude/** (current development)
+
+Packages:
+  - @imbobi/api
+  - @imbobi/web
+  - @imbobi/mobile
+  - @imbobi/schemas
+  - @imbobi/core
+
+================================================================================
+                      WORKFLOW SCHEDULE OVERVIEW
+================================================================================
+
+EVERY PUSH & PULL REQUEST:
+  ├─ Type Check (2-3 min)
+  └─ Build (5-10 min)
+     └─ Run in parallel, combined ~10-15 min max
+
+EVERY WEEK:
+  ├─ Monday 03:00 UTC: Dependabot NPM update check
+  ├─ Monday 04:00 UTC: Dependabot Docker update check
+  ├─ Monday 05:00 UTC: Dependabot GitHub Actions check
+  └─ Thursday 02:00 UTC: Security audit + issue creation
+
+LOCAL (BEFORE EVERY PUSH):
+  └─ Pre-push hook: type-check only (2 min)
+
+================================================================================
+                      FILE SIZES & LOCATION
+================================================================================
+
+WORKFLOWS:
+  .github/workflows/type-check.yml           885 bytes   [REQUIRED]
+  .github/workflows/build.yml               1.2 KB      [REQUIRED]
+  .github/workflows/security-audit.yml      2.7 KB      [REQUIRED]
+
+CONFIGURATION:
+  .github/dependabot.yml                    1.4 KB      [REQUIRED]
+  .github/pull_request_template.md          1.3 KB      [REQUIRED]
+
+SCRIPTS:
+  scripts/pre-push.sh                       1.2 KB      [REQUIRED, EXECUTABLE]
+  scripts/setup-hooks.sh                    1.1 KB      [REQUIRED, EXECUTABLE]
+
+DOCUMENTATION:
+  .github/WORKFLOWS.md                      4.6 KB      [REFERENCE]
+  .github/SETUP_CHECKLIST.md                6.9 KB      [REFERENCE]
+  .github/DEPLOYMENT_SUMMARY.txt             10 KB      [REFERENCE]
+  CI_CD_READY_TO_COMMIT.txt                 6.5 KB      [REFERENCE]
+  CI_CD_FILE_STRUCTURE.txt                  [THIS FILE] [REFERENCE]
+
+TOTAL DELIVERABLES: 6 files for commit + comprehensive documentation
+
+================================================================================
+                      COMMIT INSTRUCTIONS
+================================================================================
+
+1. Add all files:
+   git add .github/ scripts/
+
+2. Commit with message:
+   git commit -m "ci: configure github actions and dependabot"
+
+3. Push to GitHub:
+   git push origin claude/happy-goldberg-AFQPj
+
+4. Create Pull Request on GitHub
+
+5. Watch workflows run in Actions tab
+
+================================================================================
+                      WHAT HAPPENS AFTER PUSH
+================================================================================
+
+IMMEDIATELY:
+  1. GitHub detects new workflow files (5 min wait)
+  2. Type-check workflow runs
+  3. Build workflow runs (parallel to type-check)
+  4. Both workflows should complete in ~10-15 minutes
+
+WITHIN 24 HOURS:
+  1. Dependabot runs and creates PRs if updates available
+  2. Auto-merge kicks in for patch/minor updates
+  3. GitHub Actions workflows show up in repository Actions tab
+
+WEEKLY:
+  1. Monday: Dependabot runs (3 update checks, 1 hour apart)
+  2. Thursday: Security audit runs and creates issues if vulnerabilities
+
+================================================================================
+                      STATUS: READY FOR DEPLOYMENT
+================================================================================
+
+All files created:     YES
+All files executable:  YES (scripts have chmod +x)
+All YAML validated:    YES
+Documentation complete: YES
+Ready to commit:       YES
+
+User should now:
+1. Read CI_CD_READY_TO_COMMIT.txt
+2. Follow GitHub Settings configuration
+3. Run ./scripts/setup-hooks.sh locally
+4. Commit and push files
+5. Configure GitHub repository settings
+6. Monitor Actions tab for workflow runs
+
+================================================================================
