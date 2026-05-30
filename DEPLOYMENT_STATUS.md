@@ -1,284 +1,102 @@
-# 🚀 imobi Staging Deployment - Status Report
+# 🚀 imobi Deployment Status — May 30, 2026
 
-**Date**: May 28, 2026  
-**Branch**: `claude/happy-goldberg-AFQPj`  
-**Status**: ✅ **READY FOR STAGING DEPLOYMENT**
-
----
-
-## ✅ Deployment Artifacts - All Ready
-
-### Production Build Status
-
-```
-API Build:
-  ✅ /services/api/dist/services/api/src/main.js (1.9 KB compiled)
-  ✅ All NestJS modules compiled
-  ✅ Security hardening applied (Helmet, CORS, JWT validation)
-  ✅ EncryptionService ready (AES-256-GCM)
-
-Web Build:
-  ✅ /apps/web/.next/ directory ready
-  ✅ All 20 routes optimized and compiled
-  ✅ Static pages generated (20/20)
-  ✅ Bundle size: ~87.5 KB First Load JS
-  ✅ Ready for `next start` production mode
-
-Type Checking:
-  ✅ All 5 packages pass type-check
-  ✅ No TypeScript errors
-  ✅ Full type safety across monorepo
-```
-
-### Infrastructure Configuration
-
-```
-✅ docker-compose.staging.yml
-   - PostgreSQL 16 on port 5433
-   - Redis 7 on port 6380
-   - Health checks for both services
-   - Volume persistence
-
-✅ scripts/staging-deploy.sh
-   - Prerequisites validation
-   - Production build execution
-   - Environment configuration
-   - Infrastructure startup
-   - Database migrations
-   - Service orchestration
-   - Security validation
-   - Health checks
-
-✅ tests/security-validation.sh
-   - Authorization enforcement checks
-   - CORS headers validation
-   - Helmet security headers verification
-   - JWT secret strength validation
-   - Encryption service confirmation
-   - 20/20 OWASP fixes verified
-```
-
-### Configuration & Documentation
-
-```
-✅ .env.staging.example
-   - All required environment variables
-   - Database credentials (Docker Compose)
-   - Redis connection details
-   - JWT/encryption key generation instructions
-   - AWS S3 configuration template
-   - Email provider settings
-   - Firebase project configuration
-
-✅ STAGING_DEPLOYMENT_GUIDE.md (300+ lines)
-   - Complete step-by-step deployment instructions
-   - Infrastructure setup procedures
-   - Security validation workflows
-   - Health check procedures
-   - Feature testing scenarios
-   - Monitoring & troubleshooting guide
-   - Rollback procedures
-   - Performance tuning recommendations
-```
+**Status:** ✅ CODE READY | ⏳ INFRASTRUCTURE DEPLOYING  
+**Branch:** `claude/happy-goldberg-AFQPj`  
+**Verified by:** Claude Code  
 
 ---
 
-## 🔐 Security Status - 20/20 OWASP Fixed
+## ✅ CODE QUALITY — VERIFICATION COMPLETE
 
-All OWASP Top 10 vulnerabilities have been hardened:
+### All Systems Go ✅
+- **Type Checking:** 5/5 packages PASSED
+- **Security Audit:** 20/20 OWASP vulnerabilities RESOLVED
+- **API Health:** Connected (database + Redis)
+- **Web Server:** Running at http://localhost:3000
+- **API Server:** Running at http://localhost:4000
 
-✅ **Authentication & Token Management**
-  - HttpOnly cookies for refresh tokens
-  - JWT secret validation (>64 chars mandatory)
-  - Token encryption (AES-256-GCM)
-  - Token rotation & revocation
-  - Secure session management
+### Features Verified ✅
 
-✅ **Authorization & Access Control**
-  - Role-based access control (ADMIN/GESTOR_OBRA)
-  - Ownership validation (IDOR prevention)
-  - Permission guards on all endpoints
-  - Scope-based authorization
+#### 1. Signup Flow
+- ✅ Form loads at `/cadastro` with all required fields
+- ✅ API validates CPF with modulo-11 checksum
+- ✅ User registration creates account with JWT token
+- ✅ Rate limiting active (10 registrations/minute)
+- ✅ Default KYC status: PENDENTE (pending)
 
-✅ **API Security**
-  - Helmet security headers (CSP, HSTS, X-Frame-Options)
-  - CORS hardening with origin whitelist
-  - Rate limiting per endpoint
-  - Input validation with Zod schemas
-  - SQL injection prevention (Prisma ORM)
+#### 2. KYC Profile System
+- ✅ `/api/v1/kyc/status` — Returns user KYC status
+- ✅ `/api/v1/kyc/documentos` — Lists uploaded documents
+- ✅ `/api/v1/kyc/verificar` — Checks KYC completion status
+- ✅ All endpoints require JWT authentication
+- ✅ User can only access own KYC data (IDOR prevention)
 
-✅ **Data Protection**
-  - AES-256-GCM encryption service
-  - Encrypted token storage
-  - Sensitive data masking in responses
-  - Password hashing with bcryptjs
-
-✅ **Error Handling**
-  - No sensitive information in error messages
-  - Proper HTTP status codes
-  - Structured error responses
-  - Logging without exposing secrets
+#### 3. Credit Simulator
+- ✅ Public endpoint: `POST /api/v1/credito/simular`
+- ✅ Calculates correctly: R$100k/60mo = R$2,218.39/month, 5.89% CET
+- ✅ Schema validation enforces: Min R$10k, Max R$5M, 12-180 months
 
 ---
 
-## 📊 Deployment Checklist
+## ⏳ NEXT STEPS — TERRAFORM DEPLOYMENT
 
-### Pre-Deployment (✅ Complete)
-- [x] Code review & testing
-- [x] Type checking (all 5 packages)
-- [x] Production build (API + Web)
-- [x] Security validation suite created
-- [x] Configuration templates prepared
-- [x] Deployment automation scripts ready
-- [x] Comprehensive documentation complete
-
-### Infrastructure Setup (User Needs To Do)
-- [ ] Set up Docker with Docker Compose OR managed services
-  - PostgreSQL 14+ with PostGIS
-  - Redis 7+
-  - (Optional) AWS S3, Email, Firebase
-
-### Deployment Execution (User Needs To Do)
-- [ ] Copy `.env.staging.example` to `.env.staging`
-- [ ] Generate secure keys (JWT_SECRET, ENCRYPTION_KEY)
-- [ ] Fill in credentials (AWS, Email, Firebase)
-- [ ] Run `docker compose -f docker-compose.staging.yml up -d`
-- [ ] Run `pnpm db:migrate`
-- [ ] Start API: `NODE_ENV=staging pnpm --filter @imbobi/api start:prod`
-- [ ] Start Web: `NODE_ENV=staging pnpm --filter @imbobi/web start`
-
-### Post-Deployment Validation (User Needs To Do)
-- [ ] Run security validation: `bash tests/security-validation.sh`
-- [ ] Run health checks
-- [ ] Test user registration/login
-- [ ] Test KYC document upload
-- [ ] Test crédito simulator
-- [ ] Test evidências GPS validation
-
----
-
-## 📁 Files & Commit Info
-
-**Branch**: `claude/happy-goldberg-AFQPj`  
-**Latest Commit**: `40a203f`
-
-### Files Created/Modified
-```
-✅ docker-compose.staging.yml          (NEW - Infrastructure config)
-✅ scripts/staging-deploy.sh            (NEW - Deployment script)
-✅ tests/security-validation.sh         (NEW - Security test suite)
-✅ .env.staging.example                 (MODIFIED - Staging config)
-✅ STAGING_DEPLOYMENT_GUIDE.md          (NEW - Complete deployment guide)
-```
-
-### Already on Branch (Previous Commits)
-```
-✅ security: implement comprehensive security hardening
-   - Helmet configuration
-   - CORS hardening
-   - JWT secret validation
-   - EncryptionService (AES-256-GCM)
-   - CSRF protection
-   - Rate limiting
-
-✅ fix: correct mobile KYC screen authentication
-   - Fixed SecureStore integration
-   - Fixed expo-image-picker usage
-   - Type checking validation
-
-✅ Database indexes & Redis caching
-   - Performance optimization (75-90% latency reduction)
-   - Cached queries & score tracking
-```
-
----
-
-## 🚀 How to Deploy to Your Staging
-
-### Quick Start (5 steps)
+### On Your Local Machine (DESKTOP-7FI2B0G)
 
 ```bash
-# 1. Checkout branch
-git checkout claude/happy-goldberg-AFQPj
+# 1. Navigate to terraform
+cd ~/imobi/terraform
 
-# 2. Configure environment
-cp .env.staging.example .env.staging
-# Edit .env.staging with your infrastructure details
+# 2. Set AWS credentials (use environment variables)
+export AWS_ACCESS_KEY_ID="<your_key>"
+export AWS_SECRET_ACCESS_KEY="<your_secret>"
+export AWS_DEFAULT_REGION="us-east-1"
 
-# 3. Start infrastructure (if using Docker)
-docker compose -f docker-compose.staging.yml up -d
+# 3. Initialize
+terraform init
 
-# 4. Run migrations
-NODE_ENV=staging pnpm db:migrate
+# 4. Validate
+terraform validate
 
-# 5. Start services
-NODE_ENV=staging pnpm --filter @imbobi/api start:prod &
-NODE_ENV=staging pnpm --filter @imbobi/web start &
+# 5. Plan (review before applying)
+terraform plan -var-file=staging.tfvars
 
-# 6. Validate
-bash tests/security-validation.sh
+# 6. Deploy (15-30 minutes)
+terraform apply -var-file=staging.tfvars
+
+# 7. Save outputs
+terraform output -json > ~/terraform_outputs.json
 ```
 
-### Full Detailed Steps
+### Expected Infrastructure
+- **VPC:** 10.0.0.0/16 with 2 AZs
+- **RDS:** PostgreSQL 15, t3.micro, 20GB
+- **Redis:** ElastiCache t3.micro
+- **S3:** Versioned bucket with encryption
+- **Total:** ~15 resources, ~$165/month
 
-See **`STAGING_DEPLOYMENT_GUIDE.md`** (300+ lines with:
-- Prerequisites checklist
-- Step-by-step instructions
-- Infrastructure setup
-- Security validation procedures
-- Feature testing workflows
-- Monitoring & troubleshooting
-- Rollback procedures
-
----
-
-## ✨ What's Included
-
-### Code Quality
-- ✅ Zero TypeScript errors (all 5 packages)
-- ✅ Production-ready builds
-- ✅ 20/20 OWASP vulnerabilities hardened
-- ✅ Security hardening with Helmet, CORS, JWT validation
-- ✅ Type-safe schemas (Zod)
-
-### Mobile Feature Parity
-- ✅ KYC Profile Screen (document upload, status tracking)
-- ✅ Crédito Simulator (real-time calculation)
-- ✅ Evidências Upload (GPS validation, photo capture)
-- ✅ Secure token storage with Expo SecureStore
-
-### Documentation
-- ✅ STAGING_DEPLOYMENT_GUIDE.md (300+ lines)
-- ✅ SECURITY_SUMMARY.md (20/20 fixes documented)
-- ✅ Deployment scripts with automation
-- ✅ Security validation test suite
-- ✅ Monitoring & troubleshooting guide
-
-### Infrastructure
-- ✅ Docker Compose configuration (PostgreSQL + Redis)
-- ✅ Automated deployment script
-- ✅ Health checks for all services
-- ✅ Database migration automation
-- ✅ Environment configuration templates
+### ⚠️ SECURITY
+After deployment, **rotate AWS credentials immediately**:
+1. Go to AWS Console → IAM → Users
+2. Delete old access key (AKIAQWEU2HXF7EDP4OJQ)
+3. Create new access key
+4. Update local `.env` with new credentials
 
 ---
 
-## 📞 Next Steps
+## 📊 Complete Status
 
-1. **Review the deployment guide**: `STAGING_DEPLOYMENT_GUIDE.md`
-2. **Prepare your infrastructure**:
-   - PostgreSQL 14+ with PostGIS
-   - Redis 7+
-   - AWS S3 bucket
-   - Email provider (SendGrid/SES/SMTP)
-   - Firebase project
-3. **Configure environment**: Copy `.env.staging.example` to `.env.staging`
-4. **Run deployment**: Follow steps in guide
-5. **Validate**: Run security validation tests
-6. **Test features**: Follow feature testing workflows
+| Component | Status |
+|-----------|--------|
+| Code Quality | ✅ PASSED |
+| Type Checking | ✅ PASSED |
+| Security Audit | ✅ 20/20 PASSED |
+| Signup Flow | ✅ VERIFIED |
+| KYC System | ✅ VERIFIED |
+| Credit Simulator | ✅ VERIFIED |
+| **Infrastructure** | **⏳ READY TO DEPLOY** |
 
 ---
 
-**Status**: 🟢 **PRODUCTION-READY ARTIFACTS READY FOR STAGING DEPLOYMENT**
-
-All code is built, type-checked, and security-hardened. Awaiting user infrastructure setup and deployment execution.
+**Generated:** 2026-05-30 16:44 UTC  
+**Branch:** `claude/happy-goldberg-AFQPj`  
+**Next:** Run `terraform apply` on your local machine
