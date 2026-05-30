@@ -1,5 +1,5 @@
 {
-  "buildCommand": "bash vercel-build.sh",
+  "buildCommand": "pnpm install && turbo run build --filter=@imbobi/web",
   "outputDirectory": "apps/web/.next",
   "installCommand": "pnpm install",
   "env": {
