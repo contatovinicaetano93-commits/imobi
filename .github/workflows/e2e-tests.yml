@@ -73,25 +73,27 @@ jobs:
 
       - name: Wait for services to be ready
         run: |
-          echo "Waiting for PostgreSQL..."
-          for i in {1..30}; do
-            if pg_isready -h localhost -p 5432 -U postgres > /dev/null 2>&1; then
-              echo "✓ PostgreSQL is ready"
+          echo "Waiting for PostgreSQL at localhost:5432..."
+          for i in {1..60}; do
+            if timeout 1 bash -c "echo > /dev/tcp/localhost/5432" 2>/dev/null; then
+              echo "✓ PostgreSQL port is open"
               break
             fi
-            echo "Attempt $i/30..."
-            sleep 2
+            echo "Attempt $i/60..."
+            sleep 1
           done
 
-          echo "Waiting for Redis..."
-          for i in {1..30}; do
-            if redis-cli -h localhost -p 6379 ping > /dev/null 2>&1; then
-              echo "✓ Redis is ready"
+          echo "Waiting for Redis at localhost:6379..."
+          for i in {1..60}; do
+            if timeout 1 bash -c "echo > /dev/tcp/localhost/6379" 2>/dev/null; then
+              echo "✓ Redis port is open"
               break
             fi
-            echo "Attempt $i/30..."
-            sleep 2
+            echo "Attempt $i/60..."
+            sleep 1
           done
+
+          sleep 3
 
       - name: Generate Prisma Client
         run: cd services/api && npx prisma generate
