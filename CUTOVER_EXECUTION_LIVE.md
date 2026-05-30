@@ -25,10 +25,11 @@
 ```bash
 # 1. Push final code to Vercel-linked repo
 git push origin claude/serene-pasteur-mB72T
-# ✅ DONE (2026-05-30 03:20 UTC)
+# ✅ DONE (2026-05-30 03:20 UTC) - Latest: dcf2c75 with .npmrc fix
 
 # 2. Vercel auto-deploys on push (watch: https://vercel.com/contatovinicaetano93-commits/imobi)
 # Expected: Build succeeds in <60s, no timeout errors
+# Deployment enabled on feature branch - fresh build in progress
 
 # 3. Verify deployment
 curl -s https://app.imbobi.com.br/api/health | jq .
