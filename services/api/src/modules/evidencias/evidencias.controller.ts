@@ -1,7 +1,6 @@
 import {
-  Controller, Post, Get, Patch, Param, Body, UseGuards, UseInterceptors, UploadedFile,
+  Controller, Post, Get, Patch, Param, Body, UseGuards,
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-fastify/multer";
 import { Throttle } from "@nestjs/throttler";
 import { EvidenciasService } from "./evidencias.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -14,11 +13,9 @@ export class EvidenciasController {
   constructor(private readonly evidencias: EvidenciasService) {}
 
   @Post("upload")
-  @UseInterceptors(FileInterceptor("file"))
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async upload(
     @UsuarioAtual() u: IUsuario,
-    @UploadedFile() file: any,
     @Body() body: any
   ) {
     const input: UploadEvidenciaInput = {
@@ -28,7 +25,11 @@ export class EvidenciasController {
       accuracyMetros: Number(body.accuracyMetros),
       descricao: body.descricao || "",
     };
-    return this.evidencias.upload(u.id, input, file.buffer, file.mimetype);
+
+    const buffer = Buffer.from(body.imageBase64 || "", "base64");
+    const mimetype = body.mimeType || "image/jpeg";
+
+    return this.evidencias.upload(u.id, input, buffer, mimetype);
   }
 
   @Get("etapa/:etapaId")
