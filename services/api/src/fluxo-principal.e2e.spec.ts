@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import request from 'supertest';
 import { AppModule } from './app.module';
 
 describe('[E2E] Fluxo Principal', () => {
@@ -24,7 +25,8 @@ describe('[E2E] Fluxo Principal', () => {
   });
 
   it('1️⃣ should register new usuario', async () => {
-    const res = await app.get('http://localhost:4000/api/v1/auth/registrar')
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/auth/registrar')
       .send({
         nome: 'Test User',
         cpf: '12345678901',
@@ -42,7 +44,8 @@ describe('[E2E] Fluxo Principal', () => {
   });
 
   it('2️⃣ should login usuario', async () => {
-    const res = await app.get('http://localhost:4000/api/v1/auth/login')
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
       .send({
         email: 'test@test.com',
         password: 'SecurePass123!',
@@ -54,7 +57,8 @@ describe('[E2E] Fluxo Principal', () => {
   });
 
   it('3️⃣ should request credito', async () => {
-    const res = await app.get('http://localhost:4000/api/v1/creditos')
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/creditos')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
         valorSolicitado: 50000,
@@ -68,7 +72,8 @@ describe('[E2E] Fluxo Principal', () => {
   });
 
   it('4️⃣ should create obra', async () => {
-    const res = await app.get('http://localhost:4000/api/v1/obras')
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/obras')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
         nome: 'Obra Test',
@@ -84,7 +89,8 @@ describe('[E2E] Fluxo Principal', () => {
   });
 
   it('5️⃣ should upload evidencia', async () => {
-    const res = await app.post('http://localhost:4000/api/v1/evidencias')
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/evidencias')
       .set('Authorization', `Bearer ${accessToken}`)
       .field('obraId', obraId)
       .field('latitude', '-23.5505')
@@ -97,7 +103,8 @@ describe('[E2E] Fluxo Principal', () => {
 
   it('6️⃣ should enqueue liberacao-parcela job', async () => {
     // Verificar que job foi criado na fila
-    const res = await app.get(`http://localhost:4000/api/v1/creditos/${creditoId}`)
+    const res = await request(app.getHttpServer())
+      .get(`/api/v1/creditos/${creditoId}`)
       .set('Authorization', `Bearer ${accessToken}`);
 
     expect(res.status).toBe(200);
