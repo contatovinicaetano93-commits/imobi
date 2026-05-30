@@ -47,7 +47,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -78,7 +78,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:test@localhost:5432/imobi_test
           NODE_ENV: test
-        run: cd services/api && npx prisma migrate deploy
+        run: cd services/api && pnpm exec prisma migrate deploy
 
       - name: Run E2E tests
         env:
