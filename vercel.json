@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm install && turbo run build --filter=@imbobi/web",
+  "buildCommand": "turbo run build --filter=@imbobi/web",
   "outputDirectory": "apps/web/.next",
   "framework": "nextjs",
   "env": {
