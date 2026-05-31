@@ -1,4 +1,5 @@
 import { Controller, Get, Logger, Inject } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { getRedisConfig, validateRedisConfig } from "./config";
 import type { Cache } from "cache-manager";
@@ -12,6 +13,7 @@ interface HealthCheck {
   database: { configured: boolean };
 }
 
+@ApiTags("health")
 @Controller("health")
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);
@@ -19,6 +21,8 @@ export class HealthController {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   @Get()
+  @ApiOperation({ summary: "Health check", description: "Checks API health status and critical infrastructure components" })
+  @ApiResponse({ status: 200, description: "Health status with component details" })
   async getHealth(): Promise<HealthCheck> {
     const redisConfig = getRedisConfig();
     const redisValidationErrors = validateRedisConfig(redisConfig);

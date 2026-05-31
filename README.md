@@ -33,6 +33,41 @@ pnpm db:generate    # Regenerate Prisma client
 pnpm db:studio      # Open Prisma Studio
 ```
 
+### API Documentation
+```bash
+# View interactive API docs (Swagger/OpenAPI)
+# Available at http://localhost:4000/api/v1/docs when running pnpm dev
+
+# Endpoints:
+# POST   /api/v1/auth/registrar          - User registration
+# POST   /api/v1/auth/login              - User login
+# POST   /api/v1/auth/renovar            - Refresh access token
+# POST   /api/v1/auth/logout             - Revoke refresh token
+# 
+# GET    /api/v1/obras                   - List user's obras
+# POST   /api/v1/obras                   - Create new obra
+# GET    /api/v1/obras/:id               - Get obra details
+# GET    /api/v1/obras/:id/progresso     - Get construction progress
+#
+# POST   /api/v1/simulador/calcular      - Calculate credit simulation
+# POST   /api/v1/credito/solicitar       - Request credit
+# GET    /api/v1/credito/meus            - List user's credits
+# GET    /api/v1/credito/:id/extrato     - Credit statement
+#
+# POST   /api/v1/evidencias/upload       - Upload progress photo (GPS validated)
+# GET    /api/v1/evidencias/etapa/:id    - List evidence for stage
+#
+# POST   /api/v1/kyc/upload              - Upload KYC document
+# GET    /api/v1/kyc/status              - Check KYC status
+#
+# GET    /api/v1/manager/dashboard       - Manager statistics
+# GET    /api/v1/manager/etapas-pendentes - Pending stage approvals
+# POST   /api/v1/manager/etapas/batch-aprovar - Bulk approve stages (up to 100)
+# POST   /api/v1/manager/kyc/batch-aprovar   - Bulk approve KYC (up to 100)
+#
+# GET    /health                         - Health check with infrastructure status
+```
+
 ## 📁 Project Structure
 
 ```
@@ -201,7 +236,14 @@ pnpm type-check  # All packages
 
 ## 📚 Documentation
 
-Key documentation files:
+### API Documentation
+- **Interactive Swagger UI**: Available at `/api/v1/docs` (development mode only)
+  - Comprehensive endpoint descriptions
+  - Request/response schemas
+  - Live API testing interface
+  - Authentication support (Bearer token)
+
+### Code Documentation
 - `CLAUDE.md` - Project guidelines and standards
 - `WORK_COMPLETED.md` - Latest session progress
 - `SETUP.md` - Detailed setup instructions
