@@ -15,13 +15,24 @@ export async function GET() {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (!res.ok) {
+    if (res.status === 401) {
       return NextResponse.json(null, { status: 401 });
+    }
+
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: "Failed to fetch user" },
+        { status: 500 }
+      );
     }
 
     const user = await res.json();
     return NextResponse.json(user);
-  } catch {
-    return NextResponse.json(null, { status: 500 });
+  } catch (error) {
+    console.error("Auth session fetch error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

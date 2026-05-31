@@ -48,16 +48,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      const apiUrl = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      if (!res.ok) throw new Error("Login failed");
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ message: "Login failed" }));
+        throw new Error(error.message ?? "Login failed");
+      }
 
-      const userData = await res.json();
+      const { accessToken, refreshToken } = await res.json();
+      await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken, refreshToken }),
+      });
+
+      const userData = await fetch("/api/auth/me").then(r => r.json());
       setUser(userData);
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
