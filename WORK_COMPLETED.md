@@ -194,6 +194,48 @@ const res = await fetch(`${BASE_URL}/api/v1${path}`, { ...init, headers });
 
 ---
 
+## API Documentation & Enhancements (Session 3)
+
+### 1. Swagger/OpenAPI Documentation
+**Added comprehensive API documentation** using @nestjs/swagger to all 13 NestJS controllers:
+- **Controllers documented:** auth, credito, etapas, evidencias, kyc, manager, notificacoes, obras, push-notificacoes, score, simulador, usuarios, admin
+- **Interactive Swagger UI:** Available at `/api/v1/docs` during development
+- **API Reference:** All endpoints documented with descriptions, parameters, request/response schemas
+- **Features:**
+  - Bearer token authentication support in Swagger UI
+  - ApiTags for logical grouping of endpoints
+  - ApiOperation summaries and descriptions
+  - ApiResponse decorators for status codes and schemas
+  - ApiParam and ApiQuery for parameter documentation
+
+**Files Modified:**
+- `services/api/package.json` - Added @nestjs/swagger and swagger-ui-express dependencies
+- `services/api/src/main.ts` - Added Swagger setup in development mode
+- All 13 controller files - Added @ApiTags and endpoint documentation decorators
+- `README.md` - Added API Documentation section with endpoint list
+
+### 2. Batch Operations for Manager Module
+**Added four new bulk action endpoints** to handle 100+ items efficiently:
+- **POST `/api/v1/manager/etapas/batch-aprovar`** - Approve up to 100 stages at once
+- **POST `/api/v1/manager/etapas/batch-rejeitar`** - Reject up to 100 stages with common reason
+- **POST `/api/v1/manager/kyc/batch-aprovar`** - Approve up to 100 KYC documents
+- **POST `/api/v1/manager/kyc/batch-rejeitar`** - Reject up to 100 KYC documents
+
+**Implementation Details:**
+- Uses Promise.allSettled for parallel processing without failure cascade
+- Returns summary: `{ aprovadas/rejeitadas: number, erros: number, total: number }`
+- Validates max 100 items per request and required fields
+- Each item maintains independent audit logging on success/failure
+- Input validation prevents empty lists and missing motivo fields
+
+### 3. Health Check Enhancements
+**Added Swagger documentation** to the health check endpoint:
+- ApiTags, ApiOperation, and ApiResponse decorators
+- Documents infrastructure status: Redis, Email provider, Firebase, Database
+- Provides connectivity validation for all critical services
+
+---
+
 ## Commits
 
 1. **`04f158c`** - Add `/api/v1` prefix to api-client for correct endpoint routing
@@ -201,6 +243,8 @@ const res = await fetch(`${BASE_URL}/api/v1${path}`, { ...init, headers });
 3. **`184b710`** - Add role validation to admin dashboard endpoint
 4. **`c8776aa`** - Add validation for rejection motivo fields
 5. **`8ada7c0`** - Improve API endpoint validation and consistency
+6. **`a6e5c3b`** - Add Swagger/OpenAPI documentation to all 13 API controllers
+7. **`f1ad9df`** - Enhance API documentation and add Swagger decorators to health endpoint
 
 ---
 
