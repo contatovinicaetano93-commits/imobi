@@ -48,14 +48,25 @@ async function bootstrap() {
   }));
 
   // Request ID middleware for tracing
-  app.use(new RequestIdMiddleware().use.bind(new RequestIdMiddleware()));
+  const requestIdMiddleware = new RequestIdMiddleware();
+  app.use(requestIdMiddleware.use.bind(requestIdMiddleware));
 
   // Structured exception filter and logging
   app.useGlobalFilters(new StructuredExceptionFilter(logger));
   app.setGlobalPrefix("api/v1");
 
+  const corsOriginEnv = process.env["CORS_ORIGIN"] || "http://localhost:3000";
+  const corsOrigins = corsOriginEnv
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+
+  if (corsOrigins.length === 0) {
+    throw new Error("CORS_ORIGIN configuration error: no valid origins provided after filtering");
+  }
+
   app.enableCors({
-    origin: (process.env["CORS_ORIGIN"] ?? "http://localhost:3000").split(","),
+    origin: corsOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
