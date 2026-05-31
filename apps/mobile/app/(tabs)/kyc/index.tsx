@@ -79,8 +79,45 @@ export default function KYCScreen() {
     }
   };
 
+  const requestGalleryPermission = async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          "Permissão Necessária",
+          "Necessário acesso à galeria para selecionar documentos. Por favor, configure isso nas configurações do seu telefone."
+        );
+        return false;
+      }
+      return true;
+    } catch (e: any) {
+      Alert.alert("Erro", "Falha ao solicitar permissão: " + e.message);
+      return false;
+    }
+  };
+
+  const requestCameraPermission = async () => {
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          "Permissão Necessária",
+          "Necessário acesso à câmera para fotografar documentos. Por favor, configure isso nas configurações do seu telefone."
+        );
+        return false;
+      }
+      return true;
+    } catch (e: any) {
+      Alert.alert("Erro", "Falha ao solicitar permissão: " + e.message);
+      return false;
+    }
+  };
+
   const pickImageFromGallery = async (docType: DocumentType) => {
     try {
+      const hasPermission = await requestGalleryPermission();
+      if (!hasPermission) return;
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -98,6 +135,9 @@ export default function KYCScreen() {
 
   const pickImageFromCamera = async (docType: DocumentType) => {
     try {
+      const hasPermission = await requestCameraPermission();
+      if (!hasPermission) return;
+
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
         aspect: [4, 3],
