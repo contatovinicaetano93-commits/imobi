@@ -1,0 +1,232 @@
+# IMOBI — Estrutura Financeira para Construção Civil
+
+**IMOBI** is a fintech platform that provides structured financing for construction projects in Brazil. The system enables builders to access credit with geovalidated step-by-step disbursement and investors to earn stable returns with multiple guarantee layers.
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js ≥ 20.0.0
+- pnpm ≥ 9.0.0
+- PostgreSQL (or SQLite for local development)
+
+### Installation
+```bash
+git clone <repo-url>
+cd imobi
+pnpm install
+```
+
+### Development
+```bash
+# Start web app (http://localhost:3000) + API (http://localhost:4000)
+pnpm dev
+
+# Type checking across all packages
+pnpm type-check
+
+# Production build
+pnpm build
+
+# Database operations
+pnpm db:migrate     # Run migrations
+pnpm db:generate    # Regenerate Prisma client
+pnpm db:studio      # Open Prisma Studio
+```
+
+## 📁 Project Structure
+
+```
+imobi/
+├── apps/
+│   ├── web/          # Next.js 14 web application (App Router)
+│   └── mobile/       # Expo 51 React Native mobile app
+├── packages/
+│   ├── core/         # Shared utilities, hooks, API client (zero deps)
+│   ├── schemas/      # Zod validation schemas (single source of truth)
+│   └── ui/           # Shared UI components (shadcn + RN)
+├── services/
+│   ├── api/          # NestJS 10 + Fastify backend API
+│   └── workers/      # BullMQ async workers (credit liberation)
+└── prisma/           # Database schema & migrations
+```
+
+## 🏗️ Architecture
+
+### Tech Stack
+- **Monorepo:** Turborepo + pnpm workspaces
+- **Web:** Next.js 14 with App Router & route groups
+- **Mobile:** Expo 51 with Expo Router
+- **Backend:** NestJS 10 with Fastify (not Express)
+- **Database:** PostgreSQL + Prisma ORM + PostGIS
+- **Cache/Queues:** Redis + BullMQ
+- **Storage:** AWS S3 for construction photos
+- **Error Tracking:** Sentry
+
+### Key Features
+
+#### 📊 Simulador (Credit Calculator)
+- Real-time credit simulation based on project value, type, and timeline
+- LTV calculation (70-85% depending on project phase)
+- Automated interest rate calculation by project type
+- Used to pre-screen borrowers before full KYC
+
+#### 🏗️ Obra Management
+- Create construction projects with GPS coordinates
+- Track multiple credit phases (Terreno, Construção, Acabamento, Comprador)
+- Milestone-based disbursement
+
+#### 📸 Geovalidated Evidence
+- Upload construction progress photos with GPS validation
+- Two-layer validation: client-side UX + server-side PostGIS
+- EXIF data extraction and accuracy checks
+- Enable automatic stage approval based on visual evidence
+
+#### 👤 KYC (Know Your Customer)
+- 100% digital KYC process (no paperwork)
+- Document upload and verification
+- Approval in 48 hours
+
+#### 🎯 Manager Dashboard
+- Pending stage approvals with bulk actions
+- KYC document review queue
+- Priority filtering and date range filtering
+- Audit logs for compliance
+
+#### 💰 Credit Liberation
+- Automatic partial disbursement on stage completion
+- BullMQ async worker processes approvals
+- 5-layer guarantee structure:
+  1. Fiduciary lien on property
+  2. Project receivables
+  3. 10% reserve fund
+  4. Credit insurance
+  5. Rigorous due diligence
+
+## 🎨 Landing Page Design
+
+Modern pitch deck aesthetic with professional color scheme:
+- **Primary Green (#30D158)** - CTAs and highlights
+- **Secondary Blue (#0052CC)** - Gradients and secondary elements
+- **Dark Slate Theme** - Modern, professional dark background
+
+9 comprehensive sections:
+1. Hero with stats and CTAs
+2. 5-step credit journey
+3. Why choose IMOBI (4 differentials)
+4. Product offerings (4 product types)
+5. How it works in practice (5 steps)
+6. Key metrics display
+7. Security & guarantee layers
+8. Customer testimonials
+9. FAQ with collapsible answers
+
+## ✅ Current Status
+
+### Build & Type Safety
+- ✅ Production build passing (4 packages compiled, 35 pages generated)
+- ✅ All packages pass TypeScript type checking
+- ✅ Zero compilation errors
+
+### API Routes
+- ✅ `/api/v1` prefix correctly implemented
+- ✅ All 11 modules initializing without errors
+- ✅ CORS configured (localhost:3000 ↔ localhost:4000)
+- ✅ JWT authentication ready
+
+### Web Application
+- ✅ Landing page with pitch deck redesign
+- ✅ Signup form with validation
+- ✅ Login form with session management
+- ✅ Credit calculator (simulador)
+- ✅ Manager dashboard with filtering
+- ✅ Engineer inspection tracking
+- ✅ Admin statistics dashboard
+
+### Infrastructure
+- ✅ PostgreSQL connection string configured
+- ✅ Prisma migrations ready
+- ✅ Redis configuration ready
+- ✅ BullMQ async workers structure ready
+- ✅ Sentry error tracking configured
+
+## 🔧 Configuration
+
+### Environment Variables (`.env`)
+
+**Web App** (`apps/web/.env.local`):
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
+
+**API** (`services/api/.env`):
+```env
+DATABASE_URL=postgresql://user:password@host:port/database
+REDIS_HOST=localhost
+REDIS_PORT=6379
+PORT=4000
+JWT_SECRET=your-secret-key
+NODE_ENV=development
+CORS_ORIGIN=localhost:3000
+```
+
+## 🧪 Testing
+
+### Type Checking
+```bash
+pnpm type-check  # All packages
+```
+
+### Manual Testing Checklist
+- [ ] Landing page loads with correct styling
+- [ ] Signup form submits to `/api/v1/auth/registrar`
+- [ ] Login form returns JWT tokens
+- [ ] Simulador calculates correct LTV and rates
+- [ ] Create obra with GPS coordinates
+- [ ] Upload evidence photos with EXIF validation
+- [ ] Manager dashboard loads pending items
+- [ ] Approval workflow processes correctly
+- [ ] Credit liberation triggers via BullMQ
+
+## 📚 Documentation
+
+Key documentation files:
+- `CLAUDE.md` - Project guidelines and standards
+- `WORK_COMPLETED.md` - Latest session progress
+- `SETUP.md` - Detailed setup instructions
+
+## 🚢 Deployment
+
+### Vercel (Next.js Web App)
+1. Connect repository to Vercel
+2. Set `NEXT_PUBLIC_API_URL` environment variable
+3. Deploy automatically on push to main
+
+### Railway or AWS (NestJS API)
+1. Deploy containerized API
+2. Provision PostgreSQL + Redis
+3. Set environment variables
+4. Run database migrations
+
+## 🔐 Security
+
+- ✅ JWT tokens for authentication
+- ✅ HttpOnly cookies for session storage
+- ✅ CORS configured for trusted origins
+- ✅ Environment variables for sensitive data
+- ✅ Sentry for error tracking and monitoring
+
+## 📞 Support
+
+For questions or issues, refer to:
+1. `CLAUDE.md` - Project rules and conventions
+2. Individual package `README.md` files
+3. Commit messages for implementation details
+
+## 📝 License
+
+Proprietary - IMOBI
+
+---
+
+**Last Updated:** May 31, 2026  
+**Branch:** `claude/gifted-hawking-ULZTB`
