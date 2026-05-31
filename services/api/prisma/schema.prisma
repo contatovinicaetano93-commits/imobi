@@ -20,6 +20,7 @@ model Usuario {
   telefone      String
   passwordHash  String
   tipo          UsuarioTipo @default(TOMADOR)
+  comercialRole ComercialRole?
   kycStatus     KycStatus @default(PENDENTE)
   criadoEm      DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt
@@ -33,6 +34,7 @@ model Usuario {
   fcmTokens     UsuarioFcmToken[]
   etapaAuditLogs EtapaAuditLog[] @relation("EtapaAuditLogs")
   kycAuditLogs  KycAuditLog[] @relation("KycAuditLogs")
+  leadsGerenciados Lead[] @relation("LeadUsuarios")
 
   @@index([email])
   @@index([cpf])
@@ -131,6 +133,7 @@ model Obra {
 
   etapas              EtapaObra[]
   evidencias          EvidenciaEtapa[]
+  leads               Lead[]
 
   @@index([usuarioId])
   @@index([creditoId])
@@ -328,5 +331,140 @@ model KycAuditLog {
 
   @@index([kycDocumentoId])
   @@index([usuarioId])
+  @@index([criadoEm])
+}
+
+// ── Comercial: Leads & Pipeline (Phase 11) ──────────────────────────
+
+enum LeadFonte {
+  WEBSITE
+  INDICACAO
+  MARKETPLACE
+  CAMPANHA_DIGITAL
+  OFFLINE
+  PARCEIRO
+}
+
+enum LeadSegmento {
+  NOVO
+  RETORNO
+  CONCORRENTE
+}
+
+enum LeadActivityTipo {
+  CALL_OUTBOUND
+  CALL_INBOUND
+  EMAIL_SENT
+  EMAIL_RECEIVED
+  MEETING_SCHEDULED
+  MEETING_COMPLETED
+  PROPOSAL_SENT
+  DOCUMENT_REQUESTED
+  PAYMENT_RECEIVED
+  STAGE_CHANGED
+  NOTE_ADDED
+  FOLLOW_UP_SET
+}
+
+enum ComercialRole {
+  GERENTE_VENDAS
+  REPRESENTANTE
+}
+
+model PipelineStage {
+  stageId         String   @id @default(uuid())
+  nome            String   @unique
+  ordem           Int      @unique
+  descricao       String?
+  corHex          String   @default("#999999")
+  taxaConversao   Float    @default(0.0)
+  diasMedioStage  Int      @default(7)
+
+  leads           Lead[]
+
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+
+  @@index([ordem])
+}
+
+model Lead {
+  leadId              String   @id @default(uuid())
+  obraId              String?
+  obra                Obra?    @relation(fields: [obraId], references: [obraId], onDelete: SetNull)
+  usuarioId           String?
+  usuario             Usuario? @relation("LeadUsuarios", fields: [usuarioId], references: [usuarioId], onDelete: SetNull)
+  atribuidoEm         String?
+
+  clienteNome         String
+  clienteEmail        String
+  clienteTelefone     String
+  clienteCpf          String?
+
+  stageId             String
+  stage               PipelineStage @relation(fields: [stageId], references: [stageId], onDelete: Restrict)
+
+  fonte               LeadFonte     @default(WEBSITE)
+  tipoObra            String?
+  segmentoCliente     LeadSegmento  @default(NOVO)
+
+  condicoes           String?
+  proximoAcompanhamento DateTime?
+  statusUltimo        String?
+
+  criadoEm            DateTime @default(now())
+  atualizadoEm        DateTime @updatedAt
+  convertidoEm        DateTime?
+
+  scoreHistorico      ConversionScore[]
+  atividades          LeadActivity[]
+
+  @@index([obraId])
+  @@index([usuarioId])
+  @@index([stageId])
+  @@index([fonte])
+  @@index([segmentoCliente])
+  @@index([criadoEm])
+  @@index([convertidoEm])
+}
+
+model ConversionScore {
+  scoreId             String   @id @default(uuid())
+  leadId              String
+  lead                Lead     @relation(fields: [leadId], references: [leadId], onDelete: Cascade)
+
+  scoreFinal          Float
+  probabilidadeClosing Float
+  dataEstimadaClosing DateTime?
+
+  fonteScore          Float    @default(0.0)
+  tipoObraScore       Float    @default(0.0)
+  segmentoScore       Float    @default(0.0)
+  engajamentoScore    Float    @default(0.0)
+  historicoScore      Float    @default(0.0)
+
+  versaoAlgoritmo     String   @default("v1")
+
+  criadoEm            DateTime @default(now())
+  atualizadoEm        DateTime @updatedAt
+
+  @@index([leadId])
+  @@index([scoreFinal])
+  @@index([atualizadoEm])
+}
+
+model LeadActivity {
+  atividadeId     String   @id @default(uuid())
+  leadId          String
+  lead            Lead     @relation(fields: [leadId], references: [leadId], onDelete: Cascade)
+
+  tipo            LeadActivityTipo
+  descricao       String
+  usuarioId       String
+
+  criadoEm        DateTime @default(now())
+
+  @@index([leadId])
+  @@index([tipo])
   @@index([criadoEm])
 }
