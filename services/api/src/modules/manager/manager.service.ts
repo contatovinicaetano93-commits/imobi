@@ -2,6 +2,7 @@ import { Injectable, ForbiddenException, Inject } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
+import { ETAPA_STATUS_MAP } from "../../common/constants";
 
 const CACHE_KEYS = {
   STATS: "manager:stats",
@@ -17,6 +18,7 @@ const CACHE_KEYS = {
       dataFim?: string;
       obraType?: string;
       priority?: "todas" | "urgente" | "intermediaria" | "normal";
+      searchTerm?: string;
     }
   ) => {
     const status = filters?.status || "todas";
@@ -24,7 +26,8 @@ const CACHE_KEYS = {
     const dataFim = filters?.dataFim || "";
     const obraType = filters?.obraType || "";
     const priority = filters?.priority || "todas";
-    return `manager:etapas:${limit}:${offset}:${status}:${dataInicio}:${dataFim}:${obraType}:${priority}`;
+    const searchTerm = filters?.searchTerm || "";
+    return `manager:etapas:${limit}:${offset}:${status}:${dataInicio}:${dataFim}:${obraType}:${priority}:${searchTerm}`;
   },
   KYC_PENDENTES: (limit: number, offset: number) => `manager:kyc:${limit}:${offset}`,
 };
@@ -54,6 +57,7 @@ export class ManagerService {
       dataFim?: string;
       obraType?: string;
       priority?: "todas" | "urgente" | "intermediaria" | "normal";
+      searchTerm?: string;
     }
   ) {
     const cacheKey = CACHE_KEYS.ETAPAS_PENDENTES(limit, offset, filters);
@@ -64,12 +68,7 @@ export class ManagerService {
 
     // Status filter
     if (filters?.status && filters.status !== "todas") {
-      const statusMap = {
-        pendente: "AGUARDANDO_VISTORIA",
-        aprovada: "APROVADA",
-        rejeitada: "REJEITADA",
-      };
-      where.status = statusMap[filters.status] || "AGUARDANDO_VISTORIA";
+      where.status = ETAPA_STATUS_MAP[filters.status] || "AGUARDANDO_VISTORIA";
     } else {
       where.status = "AGUARDANDO_VISTORIA";
     }
@@ -90,6 +89,38 @@ export class ManagerService {
     // Obra type filter
     if (filters?.obraType) {
       where.obra = { tipo: filters.obraType };
+    }
+
+    // Search term filter (by obra name or usuario name)
+    if (filters?.searchTerm?.trim()) {
+      const searchCondition = {
+        OR: [
+          { obra: { nome: { contains: filters.searchTerm, mode: "insensitive" } } },
+          { obra: { usuario: { nome: { contains: filters.searchTerm, mode: "insensitive" } } } },
+        ],
+      };
+      // Merge search with existing obra filters
+      if (where.obra) {
+        where.AND = [{ obra: where.obra }, searchCondition];
+        delete where.obra;
+      } else {
+        where.OR = searchCondition.OR;
+      }
+    }
+
+    // Priority filter (based on creation time)
+    if (filters?.priority && filters.priority !== "todas") {
+      const now = new Date();
+      const cutoff12h = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+      const cutoff24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+      if (filters.priority === "urgente") {
+        where.criadoEm = { ...where.criadoEm, lte: cutoff24h };
+      } else if (filters.priority === "intermediaria") {
+        where.criadoEm = { ...where.criadoEm, lte: cutoff12h, gt: cutoff24h };
+      } else if (filters.priority === "normal") {
+        where.criadoEm = { ...where.criadoEm, gt: cutoff12h };
+      }
     }
 
     const [etapas, total] = await Promise.all([
@@ -114,34 +145,8 @@ export class ManagerService {
       this.prisma.etapaObra.count({ where }),
     ]);
 
-    // Apply priority filter on the fetched results (based on hours ago)
-    let filtered = etapas;
-    let filteredTotal = total;
-    if (filters?.priority && filters.priority !== "todas") {
-      filtered = etapas.filter((e) => {
-        const hoursAgo = Math.floor((Date.now() - new Date(e.criadoEm).getTime()) / (1000 * 60 * 60));
-        if (filters.priority === "urgente") return hoursAgo >= 24;
-        if (filters.priority === "intermediaria") return hoursAgo >= 12 && hoursAgo < 24;
-        if (filters.priority === "normal") return hoursAgo < 12;
-        return true;
-      });
-      // When priority filter is applied, recalculate total count
-      // This is needed because priority is determined by current time, not a DB column
-      // Count all items that match other filters
-      const allEtapas = await this.prisma.etapaObra.findMany({
-        where,
-        select: { criadoEm: true },
-      });
-
-      const allFiltered = allEtapas.filter((e) => {
-        const hoursAgo = Math.floor((Date.now() - new Date(e.criadoEm).getTime()) / (1000 * 60 * 60));
-        if (filters.priority === "urgente") return hoursAgo >= 24;
-        if (filters.priority === "intermediaria") return hoursAgo >= 12 && hoursAgo < 24;
-        if (filters.priority === "normal") return hoursAgo < 12;
-        return true;
-      });
-      filteredTotal = allFiltered.length;
-    }
+    const filtered = etapas;
+    const filteredTotal = total;
 
     const result = {
       etapas: filtered.map((e) => ({

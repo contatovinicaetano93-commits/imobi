@@ -10,13 +10,15 @@ export type BulkApprovalActionsProps = {
   isDisabled: boolean;
 };
 
-const REJECTION_PRESETS = [
-  "Documentação incompleta",
-  "GPS inválido",
-  "Obra parada",
-  "Fotos com qualidade inadequada",
-  "Outro motivo",
-];
+const REJECTION_REASONS: Record<string, string> = {
+  NÃO_ATENDE_CRITERIOS: "Não atende aos critérios",
+  DOCUMENTAÇÃO_INCOMPLETA: "Documentação incompleta",
+  INCONSISTÊNCIAS_DADOS: "Inconsistências nos dados",
+  RISCO_REGULATÓRIO: "Risco regulatório",
+  OUTRO: "Outro motivo",
+};
+
+const REJECTION_PRESETS = Object.values(REJECTION_REASONS);
 
 export function BulkApprovalActions({
   selectedEtapas,
