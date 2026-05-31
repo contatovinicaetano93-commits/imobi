@@ -1,0 +1,16 @@
+{
+  "buildCommand": "pnpm build --filter @imbobi/web",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_API_URL": {
+      "description": "API base URL for production",
+      "required": true
+    }
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": false
+    }
+  }
+}
