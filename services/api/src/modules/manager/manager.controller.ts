@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Query, Body, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Controller, Get, Patch, Param, Query, Body, UseGuards, UseInterceptors, BadRequestException } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
 import { ManagerService } from "./manager.service";
@@ -92,6 +92,9 @@ export class ManagerController {
     @Param("id") id: string,
     @Body("motivo") motivo: string
   ) {
+    if (!motivo?.trim()) {
+      throw new BadRequestException("Motivo da rejeição é obrigatório");
+    }
     await this.manager.verificarPermissao(u.id);
     return this.etapas.rejeitar(u.id, id, motivo);
   }
@@ -108,6 +111,9 @@ export class ManagerController {
     @Param("id") id: string,
     @Body("motivo") motivo: string
   ) {
+    if (!motivo?.trim()) {
+      throw new BadRequestException("Motivo da rejeição é obrigatório");
+    }
     await this.manager.verificarPermissao(u.id);
     return this.kyc.rejeitarDocumento(id, u.id, motivo);
   }
