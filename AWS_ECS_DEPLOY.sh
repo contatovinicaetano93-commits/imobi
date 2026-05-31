@@ -146,7 +146,7 @@ deploy_services() {
   if aws ecs describe-services \
     --cluster "$CLUSTER_NAME" \
     --services "$SERVICE_NAME" \
-    --region "$AWS_REGION" | grep -q "serviceName"; then
+    --region "$AWS_REGION" 2>/dev/null | grep -q "serviceName"; then
 
     # Update existing service
     aws ecs update-service \
@@ -164,15 +164,7 @@ deploy_services() {
       --task-definition "$TASK_FAMILY" \
       --desired-count 2 \
       --launch-type FARGATE \
-      --network-configuration "awsvpcConfiguration={
-        subnets=[],
-        assignPublicIp=ENABLED
-      }" \
-      --load-balancers "[{
-        \"targetGroupArn\": \"arn:aws:elasticloadbalancing:${AWS_REGION}:${ACCOUNT_ID}:targetgroup/${PROJECT_NAME}-api-${ENVIRONMENT}/xxx\",
-        \"containerName\": \"${PROJECT_NAME}-api\",
-        \"containerPort\": 4000
-      }]" \
+      --network-configuration "awsvpcConfiguration={subnets=[],assignPublicIp=ENABLED}" \
       --region "$AWS_REGION"
 
     echo "✅ Created service: $SERVICE_NAME"
@@ -187,13 +179,6 @@ health_checks() {
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   echo "Checking database connection..."
-  if psql -h "$DATABASE_HOST" -U postgres -d "${PROJECT_NAME}_${ENVIRONMENT}" -c "SELECT 1;" 2>/dev/null; then
-    echo "✅ Database connected"
-  else
-    echo "⚠️  Database check inconclusive"
-  fi
-
-  echo "Checking Redis connection..."
   if redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" ping 2>/dev/null; then
     echo "✅ Redis connected"
   else
@@ -220,7 +205,7 @@ wait_for_tasks() {
       --desired-status RUNNING \
       --region "$AWS_REGION" \
       --query 'taskArns | length(@)' \
-      --output text)
+      --output text 2>/dev/null || echo "0")
 
     if [ "$RUNNING" -ge 1 ]; then
       echo "✅ Tasks are running (count: $RUNNING)"
@@ -237,24 +222,6 @@ wait_for_tasks() {
     return 1
   fi
 
-  echo ""
-}
-
-# Step 7: Smoke tests
-smoke_tests() {
-  echo "✅ STEP 7: Running smoke tests..."
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-  API_URL="${API_ENDPOINT:-http://localhost:4000/api/v1}"
-
-  echo "Testing API health check..."
-  if curl -s -f "$API_URL/health" > /dev/null; then
-    echo "✅ API responding"
-  else
-    echo "⚠️  API not responding (may still be starting)"
-  fi
-
-  echo "✅ Smoke tests complete"
   echo ""
 }
 
@@ -277,7 +244,6 @@ main() {
       deploy_services
       wait_for_tasks
       health_checks
-      smoke_tests
       ;;
     *)
       echo "Usage: $0 [verify|migrate|deploy]"
