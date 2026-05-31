@@ -1,4 +1,5 @@
 import { Controller, Get, Patch, Param, Query, Body, UseGuards, UseInterceptors, BadRequestException } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
 import { ManagerService } from "./manager.service";
@@ -7,6 +8,8 @@ import { KycService } from "../kyc/kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
+@ApiTags("manager")
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller("manager")
 export class ManagerController {
@@ -18,6 +21,8 @@ export class ManagerController {
 
   @Get("dashboard")
   @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: "Dashboard de estatísticas", description: "Retorna resumo de estatísticas para o gerenciador" })
+  @ApiResponse({ status: 200, description: "Estatísticas carregadas" })
   async dashboard(@UsuarioAtual() u: IUsuario) {
     await this.manager.verificarPermissao(u.id);
     return this.manager.obterEstatisticas();
@@ -26,7 +31,12 @@ export class ManagerController {
   @Get("etapas-pendentes")
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(120) // 2 min
+  @CacheTTL(120)
+  @ApiOperation({ summary: "Listar etapas pendentes", description: "Lista etapas aguardando aprovação com filtros (2min cache)" })
+  @ApiQuery({ name: "limit", example: "20", required: false })
+  @ApiQuery({ name: "offset", example: "0", required: false })
+  @ApiQuery({ name: "status", enum: ["todas", "pendente", "aprovada", "rejeitada"], required: false })
+  @ApiResponse({ status: 200, description: "Lista de etapas pendentes" })
   async listarEtapasPendentes(
     @UsuarioAtual() u: IUsuario,
     @Query("limit") limit: string = "20",
@@ -54,7 +64,11 @@ export class ManagerController {
   @Get("kyc-pendentes")
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(120) // 2 min
+  @CacheTTL(120)
+  @ApiOperation({ summary: "Listar KYC pendentes", description: "Lista documentos KYC aguardando aprovação (2min cache)" })
+  @ApiQuery({ name: "limit", example: "20", required: false })
+  @ApiQuery({ name: "offset", example: "0", required: false })
+  @ApiResponse({ status: 200, description: "Lista de KYC pendentes" })
   async listarKycPendentes(
     @UsuarioAtual() u: IUsuario,
     @Query("limit") limit: string = "20",
@@ -77,6 +91,9 @@ export class ManagerController {
   }
 
   @Patch("etapas/:id/aprovar")
+  @ApiOperation({ summary: "Aprovar etapa", description: "Aprova uma etapa de construção e libera parcela se aplicável" })
+  @ApiParam({ name: "id", description: "ID da etapa" })
+  @ApiResponse({ status: 200, description: "Etapa aprovada com sucesso" })
   async aprovarEtapa(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
@@ -87,6 +104,9 @@ export class ManagerController {
   }
 
   @Patch("etapas/:id/rejeitar")
+  @ApiOperation({ summary: "Rejeitar etapa", description: "Rejeita uma etapa com motivo documentado" })
+  @ApiParam({ name: "id", description: "ID da etapa" })
+  @ApiResponse({ status: 200, description: "Etapa rejeitada com sucesso" })
   async rejeitarEtapa(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
@@ -100,12 +120,18 @@ export class ManagerController {
   }
 
   @Patch("kyc/:id/aprovar")
+  @ApiOperation({ summary: "Aprovar KYC", description: "Aprova documentação KYC do usuário" })
+  @ApiParam({ name: "id", description: "ID do documento KYC" })
+  @ApiResponse({ status: 200, description: "KYC aprovado com sucesso" })
   async aprovarKyc(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     await this.manager.verificarPermissao(u.id);
     return this.kyc.aprovarDocumento(id, u.id);
   }
 
   @Patch("kyc/:id/rejeitar")
+  @ApiOperation({ summary: "Rejeitar KYC", description: "Rejeita documentação KYC solicitando reenvio" })
+  @ApiParam({ name: "id", description: "ID do documento KYC" })
+  @ApiResponse({ status: 200, description: "KYC rejeitado com sucesso" })
   async rejeitarKyc(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
@@ -119,12 +145,18 @@ export class ManagerController {
   }
 
   @Get("etapas/:id/audit-log")
+  @ApiOperation({ summary: "Audit log da etapa", description: "Retorna histórico completo de ações sobre a etapa" })
+  @ApiParam({ name: "id", description: "ID da etapa" })
+  @ApiResponse({ status: 200, description: "Histórico de auditoria" })
   async obterEtapaAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     await this.manager.verificarPermissao(u.id);
     return this.manager.obterEtapaAuditLog(id);
   }
 
   @Get("kyc/:id/audit-log")
+  @ApiOperation({ summary: "Audit log do KYC", description: "Retorna histórico completo de ações sobre o KYC" })
+  @ApiParam({ name: "id", description: "ID do documento KYC" })
+  @ApiResponse({ status: 200, description: "Histórico de auditoria" })
   async obterKycAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     await this.manager.verificarPermissao(u.id);
     return this.manager.obterKycAuditLog(id);

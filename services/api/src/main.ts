@@ -3,6 +3,7 @@ import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { validateEnvironmentOrThrow, initSentry } from "./common/config";
@@ -28,6 +29,27 @@ async function bootstrap() {
   // ThrottlerGuard is registered via AppModule providers
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");
+
+  // Setup Swagger documentation
+  if (process.env["NODE_ENV"] !== "production") {
+    const config = new DocumentBuilder()
+      .setTitle("IMOBI API")
+      .setDescription("Plataforma de financiamento estruturado para construção civil")
+      .setVersion("1.0.0")
+      .addBearerAuth()
+      .addTag("auth", "Autenticação e autorização")
+      .addTag("obras", "Gerenciamento de obras e projetos")
+      .addTag("etapas", "Etapas de construção e progresso")
+      .addTag("evidencias", "Fotos de progresso e validação GPS")
+      .addTag("credito", "Simulação e gestão de crédito")
+      .addTag("kyc", "Know Your Customer - documentação")
+      .addTag("usuarios", "Gestão de usuários")
+      .addTag("manager", "Dashboard do gerenciador")
+      .addTag("admin", "Painel administrativo")
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup("docs", app, document);
+  }
 
   const nodeEnv = process.env["NODE_ENV"] || "development";
   const corsOrigins = process.env["CORS_ORIGIN"]?.split(",");
