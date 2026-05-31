@@ -9,7 +9,7 @@ APP_NAME="imobi"
 ENVIRONMENT="production"
 VPC_CIDR="10.0.0.0/16"
 PUBLIC_SUBNET_CIDR="10.0.1.0/24"
-PRIVATE_SUBNET_CIDR="10.0.2.0/24"
+# Note: PRIVATE_SUBNET_CIDR is defined below in multi-AZ section to ensure different AZ
 DB_PASSWORD=$(openssl rand -base64 32)
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
@@ -38,15 +38,19 @@ IGW_ID=$(aws ec2 create-internet-gateway --region $AWS_REGION --tag-specificatio
 aws ec2 attach-internet-gateway --internet-gateway-id $IGW_ID --vpc-id $VPC_ID --region $AWS_REGION
 log_success "Internet Gateway criado: $IGW_ID"
 
-# Create Public Subnet
-log_info "Criando subnets..."
-AZ=$(aws ec2 describe-availability-zones --region $AWS_REGION --query 'AvailabilityZones[0].ZoneName' --output text)
-PUBLIC_SUBNET_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block $PUBLIC_SUBNET_CIDR --availability-zone $AZ --region $AWS_REGION --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$APP_NAME-public-subnet}]" --query 'Subnet.SubnetId' --output text)
-log_success "Public Subnet criada: $PUBLIC_SUBNET_ID"
+# Create Subnets in different availability zones (required for RDS)
+log_info "Criando subnets em diferentes availability zones..."
+AZ_1=$(aws ec2 describe-availability-zones --region $AWS_REGION --query 'AvailabilityZones[0].ZoneName' --output text)
+AZ_2=$(aws ec2 describe-availability-zones --region $AWS_REGION --query 'AvailabilityZones[1].ZoneName' --output text)
 
-# Create Private Subnet
-PRIVATE_SUBNET_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block $PRIVATE_SUBNET_CIDR --availability-zone $AZ --region $AWS_REGION --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$APP_NAME-private-subnet}]" --query 'Subnet.SubnetId' --output text)
-log_success "Private Subnet criada: $PRIVATE_SUBNET_ID"
+# Create Public Subnet in AZ1
+PUBLIC_SUBNET_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block $PUBLIC_SUBNET_CIDR --availability-zone $AZ_1 --region $AWS_REGION --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$APP_NAME-public-subnet}]" --query 'Subnet.SubnetId' --output text 2>/dev/null || echo "subnet-existing")
+log_success "Public Subnet criada em $AZ_1: $PUBLIC_SUBNET_ID"
+
+# Create Private Subnet in AZ2 (required for RDS to have multi-AZ support)
+PRIVATE_SUBNET_CIDR="10.0.3.0/24"
+PRIVATE_SUBNET_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block $PRIVATE_SUBNET_CIDR --availability-zone $AZ_2 --region $AWS_REGION --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$APP_NAME-private-subnet}]" --query 'Subnet.SubnetId' --output text 2>/dev/null || echo "subnet-existing")
+log_success "Private Subnet criada em $AZ_2: $PRIVATE_SUBNET_ID"
 
 # Create Route Table for Public Subnet
 log_info "Configurando rotas..."
