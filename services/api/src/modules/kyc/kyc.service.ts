@@ -159,7 +159,7 @@ export class KycService {
     try {
       await this.email.kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo);
     } catch (error) {
-      this.logger.warn(`Failed to send KYC rejection email: ${error}`);
+      this.logger.error(`Failed to send KYC rejection email to ${documento.usuario.email}: ${error instanceof Error ? error.message : String(error)}`);
     }
 
     return atualizado;

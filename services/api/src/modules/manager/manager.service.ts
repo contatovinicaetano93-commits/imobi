@@ -98,13 +98,16 @@ export class ManagerService {
       const hoursAgo24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       const hoursAgo12 = new Date(now.getTime() - 12 * 60 * 60 * 1000);
 
-      if (filters.priority === "urgente") {
-        where.criadoEm = { lte: hoursAgo24 };
-      } else if (filters.priority === "intermediaria") {
-        where.criadoEm = { gte: hoursAgo24, lt: hoursAgo12 };
-      } else if (filters.priority === "normal") {
-        where.criadoEm = { gte: hoursAgo12 };
-      }
+      const priorityCondition =
+        filters.priority === "urgente"
+          ? { lte: hoursAgo24 }
+          : filters.priority === "intermediaria"
+            ? { gte: hoursAgo24, lt: hoursAgo12 }
+            : filters.priority === "normal"
+              ? { gte: hoursAgo12 }
+              : {};
+
+      where.criadoEm = where.criadoEm ? { ...where.criadoEm, ...priorityCondition } : priorityCondition;
     }
 
     const [etapas, filteredTotal] = await Promise.all([
