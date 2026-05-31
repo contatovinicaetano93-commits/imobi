@@ -17,8 +17,15 @@ const projectRoot = path.resolve(__dirname, "../../../");
 moduleAlias.addAlias("@imbobi/schemas", path.join(projectRoot, "packages/schemas/dist"));
 moduleAlias.addAlias("@imbobi/core", path.join(projectRoot, "packages/core/dist"));
 moduleAlias.addAlias("@imbobi/ui", path.join(projectRoot, "packages/ui/dist"));
+
+// Initialize Sentry BEFORE other imports
+import { initSentry } from "./common/sentry.init";
+const nodeEnv = process.env.NODE_ENV || "development";
+initSentry(nodeEnv, process.env.RELEASE_VERSION);
+
 import { AppModule } from "./app.module";
 import { StructuredExceptionFilter } from "./common/filters/structured-exception.filter";
+import { SentryExceptionFilter } from "./common/filters/sentry-exception.filter";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 import { LoggerService } from "./common/logger.service";
 import { validateJwtSecret } from "./common/validators/jwt-secret.validator";
@@ -51,8 +58,8 @@ async function bootstrap() {
   const requestIdMiddleware = new RequestIdMiddleware();
   app.use(requestIdMiddleware.use.bind(requestIdMiddleware));
 
-  // Structured exception filter and logging
-  app.useGlobalFilters(new StructuredExceptionFilter(logger));
+  // Exception filters (Sentry first for error tracking, then structured logging)
+  app.useGlobalFilters(new SentryExceptionFilter(), new StructuredExceptionFilter(logger));
   app.setGlobalPrefix("api/v1");
 
   const corsOriginEnv = process.env["CORS_ORIGIN"] || "http://localhost:3000";
