@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode } from "@nestjs/common";
+import { Controller, Post, Body, HttpCode, BadRequestException } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { CadastroUsuarioSchema, LoginSchema } from "@imbobi/schemas";
@@ -25,12 +25,18 @@ export class AuthController {
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   renovar(@Body("refreshToken") token: string) {
+    if (!token?.trim()) {
+      throw new BadRequestException("refreshToken é obrigatório");
+    }
     return this.auth.renovarToken(token);
   }
 
   @Post("logout")
   @HttpCode(204)
   logout(@Body("refreshToken") token: string) {
+    if (!token?.trim()) {
+      throw new BadRequestException("refreshToken é obrigatório");
+    }
     return this.auth.revogarToken(token);
   }
 }
