@@ -3,6 +3,7 @@ import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
 import { EncryptionService } from "../../common/encryption.service";
+import { setUserContext } from "../../common/sentry.init";
 import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
 
 @Injectable()
@@ -42,6 +43,9 @@ export class AuthService {
 
     const senhaOk = await bcrypt.compare(input.senha, usuario.passwordHash);
     if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
+
+    // Set Sentry user context for error tracking
+    setUserContext(usuario.usuarioId, { email: usuario.email, nome: usuario.nome });
 
     return {
       usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
