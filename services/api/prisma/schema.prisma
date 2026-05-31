@@ -394,7 +394,7 @@ model Lead {
   obra                Obra?    @relation(fields: [obraId], references: [obraId], onDelete: SetNull)
   usuarioId           String?
   usuario             Usuario? @relation("LeadUsuarios", fields: [usuarioId], references: [usuarioId], onDelete: SetNull)
-  atribuidoEm         String?
+  atribuidoEm         DateTime?
 
   clienteNome         String
   clienteEmail        String
