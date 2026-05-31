@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from "@nestjs/common";
+import { Controller, Get, UseGuards, ForbiddenException } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -10,7 +10,9 @@ export class AdminController {
 
   @Get("dashboard")
   dashboard(@UsuarioAtual() u: IUsuario) {
-    // TODO: Validate admin role
+    if (u.tipo !== "ADMIN") {
+      throw new ForbiddenException("Apenas administradores podem acessar esta rota");
+    }
     return this.admin.obterDashboard();
   }
 }
