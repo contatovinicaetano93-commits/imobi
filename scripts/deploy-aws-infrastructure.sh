@@ -10,7 +10,8 @@ ENVIRONMENT="production"
 VPC_CIDR="10.0.0.0/16"
 PUBLIC_SUBNET_CIDR="10.0.1.0/24"
 # Note: PRIVATE_SUBNET_CIDR is defined below in multi-AZ section to ensure different AZ
-DB_PASSWORD=$(openssl rand -base64 32)
+# Generate password with only allowed characters (no /, @, ", space)
+DB_PASSWORD=$(openssl rand -base64 12 | tr -d '/' | tr -d '+' | tr -d '=' | head -c 15)ABC123
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
 # Colors
@@ -95,19 +96,17 @@ aws rds create-db-instance \
   --db-instance-identifier "$RDS_INSTANCE" \
   --db-instance-class db.t3.micro \
   --engine postgres \
-  --engine-version 15.3 \
+  --engine-version 15.18 \
   --master-username postgres \
   --master-user-password "$DB_PASSWORD" \
   --allocated-storage 20 \
   --storage-type gp3 \
-  --storage-encrypted \
   --db-name imobi_prod \
   --db-subnet-group-name "$APP_NAME-db-subnet" \
   --vpc-security-group-ids $RDS_SG \
   --publicly-accessible \
-  --backup-retention-period 7 \
+  --backup-retention-period 1 \
   --region $AWS_REGION \
-  --skip-final-snapshot \
   --query 'DBInstance.DBInstanceIdentifier' \
   --output text 2>/dev/null || true
 
