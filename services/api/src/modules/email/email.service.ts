@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 import * as nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 
@@ -18,6 +19,7 @@ interface RetryConfig {
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
+  private sesClient: SESClient | null = null;
   private transporter: Transporter | null = null;
   private readonly provider: string;
   private readonly retryConfig: RetryConfig = {
@@ -28,10 +30,10 @@ export class EmailService {
 
   constructor() {
     this.provider = process.env["EMAIL_PROVIDER"] || "smtp";
-    this.initializeTransporter();
+    this.initializeProvider();
   }
 
-  private initializeTransporter() {
+  private initializeProvider() {
     const provider = this.provider.toLowerCase();
 
     if (provider === "sendgrid") {
@@ -73,14 +75,11 @@ export class EmailService {
       return;
     }
 
-    // Para SES, usamos nodemailer com o driver SMTP
-    this.transporter = nodemailer.createTransport({
-      host: `email-smtp.${region}.amazonaws.com`,
-      port: 587,
-      secure: false,
-      auth: {
-        user: accessKeyId,
-        pass: secretAccessKey,
+    this.sesClient = new SESClient({
+      region,
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
       },
     });
 
@@ -113,17 +112,61 @@ export class EmailService {
   }
 
   async enviarEmail(opcoes: EmailOptions): Promise<boolean> {
-    if (!this.transporter) {
+    if (this.sesClient) {
+      return this.enviarEmailViaSes(opcoes);
+    } else if (this.transporter) {
+      return this.enviarEmailViaTransporter(opcoes);
+    } else {
       this.logger.debug(`[EMAIL-CONSOLE] ${opcoes.to} - ${opcoes.subject}`);
       return true;
     }
+  }
 
+  private async enviarEmailViaSes(opcoes: EmailOptions): Promise<boolean> {
+    let lastError: Error | null = null;
+    let delayMs = this.retryConfig.delayMs;
+
+    const fromEmail = process.env["SMTP_FROM"] || "noreply@imbobi.com";
+
+    for (let attempt = 1; attempt <= this.retryConfig.maxAttempts; attempt++) {
+      try {
+        const command = new SendEmailCommand({
+          Source: fromEmail,
+          Destination: { ToAddresses: [opcoes.to] },
+          Message: {
+            Subject: { Data: opcoes.subject, Charset: "UTF-8" },
+            Body: {
+              Html: { Data: opcoes.html, Charset: "UTF-8" },
+              Text: opcoes.text ? { Data: opcoes.text, Charset: "UTF-8" } : undefined,
+            },
+          },
+        });
+
+        await this.sesClient!.send(command);
+        this.logger.debug(`Email enviado para ${opcoes.to} via SES (attempt ${attempt}/${this.retryConfig.maxAttempts})`);
+        return true;
+      } catch (error) {
+        lastError = error as Error;
+        this.logger.warn(`Email send attempt ${attempt} failed for ${opcoes.to}: ${lastError.message}`);
+
+        if (attempt < this.retryConfig.maxAttempts) {
+          await this.sleep(delayMs);
+          delayMs *= this.retryConfig.backoffMultiplier;
+        }
+      }
+    }
+
+    this.logger.error(`Email failed after ${this.retryConfig.maxAttempts} attempts for ${opcoes.to}: ${lastError?.message}`);
+    return false;
+  }
+
+  private async enviarEmailViaTransporter(opcoes: EmailOptions): Promise<boolean> {
     let lastError: Error | null = null;
     let delayMs = this.retryConfig.delayMs;
 
     for (let attempt = 1; attempt <= this.retryConfig.maxAttempts; attempt++) {
       try {
-        await this.transporter.sendMail({
+        await this.transporter!.sendMail({
           from: process.env["SMTP_FROM"] || "noreply@imbobi.com",
           to: opcoes.to,
           subject: opcoes.subject,
