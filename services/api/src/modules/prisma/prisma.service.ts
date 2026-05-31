@@ -6,9 +6,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
 
   async onModuleInit() {
-    // Retry logic for database connection (useful in test/CI environments)
-    const maxRetries = 10;
-    const retryDelayMs = 1000;
+    const maxRetries = 3;
+    const retryDelayMs = 500;
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -34,7 +33,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       }
     }
 
-    // All retries exhausted
     this.logger.error(
       `Failed to connect to database after ${maxRetries} attempts: ${lastError?.message}`
     );

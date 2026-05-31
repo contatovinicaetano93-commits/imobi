@@ -32,12 +32,7 @@ export function BulkApprovalActions({
   const handleBulkApprove = async () => {
     setIsProcessing(true);
     try {
-      // Approving in parallel
-      await Promise.all(
-        selectedEtapas.map((etapaId) =>
-          managerApi.aprovarEtapa(etapaId, "Aprovação em lote")
-        )
-      );
+      await managerApi.batchAprovarEtapas(selectedEtapas, "Aprovação em lote");
       onSuccess("approve");
       setShowConfirm(null);
     } catch (error) {
@@ -57,12 +52,7 @@ export function BulkApprovalActions({
 
     setIsProcessing(true);
     try {
-      // Rejecting in parallel
-      await Promise.all(
-        selectedEtapas.map((etapaId) =>
-          managerApi.rejeitarEtapa(etapaId, rejectReason)
-        )
-      );
+      await managerApi.batchRejeitarEtapas(selectedEtapas, rejectReason);
       onSuccess("reject");
       setShowConfirm(null);
       setRejectReason("");

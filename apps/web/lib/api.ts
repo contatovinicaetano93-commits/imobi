@@ -285,6 +285,10 @@ export const managerApi = {
     apiFetch(`/manager/etapas/${id}/aprovar`, { method: "PATCH", body: JSON.stringify({ observacao }) }),
   rejeitarEtapa: (id: string, motivo: string) =>
     apiFetch(`/manager/etapas/${id}/rejeitar`, { method: "PATCH", body: JSON.stringify({ motivo }) }),
+  batchAprovarEtapas: (ids: string[], observacao?: string) =>
+    apiFetch(`/manager/etapas/batch-aprovar`, { method: "POST", body: JSON.stringify({ ids, observacao }) }),
+  batchRejeitarEtapas: (ids: string[], motivo: string) =>
+    apiFetch(`/manager/etapas/batch-rejeitar`, { method: "POST", body: JSON.stringify({ ids, motivo }) }),
   aprovarKyc: (id: string) =>
     apiFetch(`/manager/kyc/${id}/aprovar`, { method: "PATCH" }),
   rejeitarKyc: (id: string, motivo: string) =>

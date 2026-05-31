@@ -93,11 +93,10 @@ export class KycService {
       tipo: "KYC_APROVADO",
     }).catch(() => {});
 
-    // BUG-003: Ensure email is sent before returning response
     try {
       await this.email.kycAprovadoEmail(documento.usuario.nome, documento.usuario.email);
     } catch (error) {
-      this.logger.warn(`Failed to send KYC approval email: ${error}`);
+      this.logger.error(`Failed to send KYC approval email to ${documento.usuario.email}: ${error instanceof Error ? error.message : String(error)}`);
     }
 
     return atualizado;

@@ -6,16 +6,17 @@ export async function POST(req: Request) {
   const token = jar.get("access_token")?.value;
 
   if (token) {
+    const apiUrl = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
     try {
-      const apiUrl = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
-      await fetch(`${apiUrl}/api/v1/auth/logout`, {
+      const res = await fetch(`${apiUrl}/api/v1/auth/logout`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => {
-        // Proceed with logout even if API call fails
       });
-    } catch {
-      // Silently fail on API call
+      if (!res.ok) {
+        console.error(`Logout API failed: ${res.status} ${res.statusText}`);
+      }
+    } catch (error) {
+      console.error(`Logout API error: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

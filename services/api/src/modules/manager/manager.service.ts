@@ -92,7 +92,22 @@ export class ManagerService {
       where.obra = { tipo: filters.obraType };
     }
 
-    const [etapas, total] = await Promise.all([
+    // Priority filter (convert to DB query instead of in-memory filter)
+    if (filters?.priority && filters.priority !== "todas") {
+      const now = new Date();
+      const hoursAgo24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const hoursAgo12 = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+
+      if (filters.priority === "urgente") {
+        where.criadoEm = { lte: hoursAgo24 };
+      } else if (filters.priority === "intermediaria") {
+        where.criadoEm = { gte: hoursAgo24, lt: hoursAgo12 };
+      } else if (filters.priority === "normal") {
+        where.criadoEm = { gte: hoursAgo12 };
+      }
+    }
+
+    const [etapas, filteredTotal] = await Promise.all([
       this.prisma.etapaObra.findMany({
         where,
         include: {
@@ -114,37 +129,8 @@ export class ManagerService {
       this.prisma.etapaObra.count({ where }),
     ]);
 
-    // Apply priority filter on the fetched results (based on hours ago)
-    let filtered = etapas;
-    let filteredTotal = total;
-    if (filters?.priority && filters.priority !== "todas") {
-      filtered = etapas.filter((e) => {
-        const hoursAgo = Math.floor((Date.now() - new Date(e.criadoEm).getTime()) / (1000 * 60 * 60));
-        if (filters.priority === "urgente") return hoursAgo >= 24;
-        if (filters.priority === "intermediaria") return hoursAgo >= 12 && hoursAgo < 24;
-        if (filters.priority === "normal") return hoursAgo < 12;
-        return true;
-      });
-      // When priority filter is applied, recalculate total count
-      // This is needed because priority is determined by current time, not a DB column
-      // Count all items that match other filters
-      const allEtapas = await this.prisma.etapaObra.findMany({
-        where,
-        select: { criadoEm: true },
-      });
-
-      const allFiltered = allEtapas.filter((e) => {
-        const hoursAgo = Math.floor((Date.now() - new Date(e.criadoEm).getTime()) / (1000 * 60 * 60));
-        if (filters.priority === "urgente") return hoursAgo >= 24;
-        if (filters.priority === "intermediaria") return hoursAgo >= 12 && hoursAgo < 24;
-        if (filters.priority === "normal") return hoursAgo < 12;
-        return true;
-      });
-      filteredTotal = allFiltered.length;
-    }
-
     const result = {
-      etapas: filtered.map((e) => ({
+      etapas: etapas.map((e) => ({
         etapaId: e.etapaId,
         nome: e.nome,
         ordem: e.ordem,
@@ -166,7 +152,6 @@ export class ManagerService {
       total: filteredTotal,
     };
 
-    // Cache TTL: 120 seconds (matches controller CacheTTL decorator)
     await this.cacheManager.set(cacheKey, result, 120000);
     return result;
   }
