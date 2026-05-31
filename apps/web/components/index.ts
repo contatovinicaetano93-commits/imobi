@@ -15,7 +15,7 @@ export { Card, CardHeader, CardContent, CardFooter } from "./card";
 
 // Data Display
 export { DataTable } from "./data-table";
-export type { Column as DataTableColumn } from "./data-table";
+export type { Column } from "./data-table";
 
 // Dialogs & Modals
 export { Modal, ConfirmDialog } from "./modal";

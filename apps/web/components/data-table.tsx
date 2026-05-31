@@ -2,7 +2,7 @@
 
 import { ReactNode, useState } from "react";
 
-interface Column<T> {
+export interface Column<T> {
   key: keyof T | string;
   label: string;
   render?: (value: any, row: T) => ReactNode;
