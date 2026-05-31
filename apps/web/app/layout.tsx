@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { Analytics } from "@vercel/analytics/react";
+import { Providers } from "@/app/providers";
 import { initSentry } from "@/lib/sentry";
 
 // Initialize Sentry on first load
@@ -19,7 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
       <body>
-        {children}
+        <Providers>{children}</Providers>
         <Analytics />
       </body>
     </html>
