@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'imobi RDS PostgreSQL 16 with PostGIS (Free Tier)'
+
+Parameters:
+  DBInstanceIdentifier:
+    Type: String
+    Default: imobi-postgres
+    Description: Database instance name
+  
+  MasterUsername:
+    Type: String
+    Default: imobi_admin
+    Description: Master database username
+  
+  MasterUserPassword:
+    Type: String
+    NoEcho: true
+    Description: Master database password (min 8 chars)
+  
+  DBName:
+    Type: String
+    Default: imobi_production
+    Description: Initial database name
+
+Resources:
+  # RDS Security Group
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow PostgreSQL access for imobi
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0  # Allow all (dev only - restrict in prod)
+      Tags:
+        - Key: Name
+          Value: imobi-rds-sg
+
+  # RDS Subnet Group
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for imobi RDS
+      SubnetIds:
+        - !Ref Subnet1
+        - !Ref Subnet2
+      Tags:
+        - Key: Name
+          Value: imobi-db-subnet
+
+  # RDS Instance
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Ref DBInstanceIdentifier
+      Engine: postgres
+      EngineVersion: '16.1'
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: '20'
+      StorageType: gp2
+      StorageEncrypted: true
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterUserPassword
+      DBName: !Ref DBName
+      Port: 5432
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      PubliclyAccessible: true
+      MultiAZ: false
+      EnableCloudwatchLogsExports:
+        - postgresql
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: '03:00-04:00'
+      PreferredMaintenanceWindow: 'mon:04:00-mon:05:00'
+      EnableIAMDatabaseAuthentication: false
+      EnableCopyTagsToSnapshot: true
+      Tags:
+        - Key: Name
+          Value: imobi-postgres
+        - Key: Environment
+          Value: staging
+
+  # VPC (default)
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+
+  Subnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: us-east-2a
+
+  Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: us-east-2b
+
+Outputs:
+  RDSEndpoint:
+    Description: RDS Database Endpoint
+    Value: !GetAtt RDSInstance.Endpoint.Address
+    Export:
+      Name: !Sub '${AWS::StackName}-RDSEndpoint'
+  
+  RDSPort:
+    Description: RDS Database Port
+    Value: !GetAtt RDSInstance.Endpoint.Port
+    Export:
+      Name: !Sub '${AWS::StackName}-RDSPort'
+  
+  RDSDBName:
+    Description: Database Name
+    Value: !Ref DBName
+  
+  RDSConnectionString:
+    Description: Complete JDBC Connection String
+    Value: !Sub 'postgresql://${MasterUsername}:PASSWORD@${RDSInstance.Endpoint.Address}:5432/${DBName}'
