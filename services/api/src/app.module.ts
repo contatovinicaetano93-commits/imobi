@@ -30,16 +30,27 @@ import { ProductionMiddleware } from "./common/middleware/production.middleware"
 import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
 
 const redisConfig = getRedisConfig();
+const isDevelopment = process.env.NODE_ENV !== "production";
+
+// Throttler limits: development vs production
+const throttlerConfig = isDevelopment
+  ? [
+      { ttl: 60000, limit: 10000 }, // Development: generous limits for testing
+      { ttl: 60000, limit: 5000, name: "auth" },
+      { ttl: 60000, limit: 5000, name: "upload" },
+      { ttl: 60000, limit: 5000, name: "manager" },
+    ]
+  : [
+      { ttl: 60000, limit: 100 }, // Production: strict limits
+      { ttl: 60000, limit: 10, name: "auth" },
+      { ttl: 60000, limit: 5, name: "upload" },
+      { ttl: 60000, limit: 20, name: "manager" },
+    ];
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([
-      { ttl: 60000, limit: 100 }, // General: 100 req/min
-      { ttl: 60000, limit: 10, name: "auth" }, // Auth endpoints: 10 req/min
-      { ttl: 60000, limit: 5, name: "upload" }, // File uploads: 5 req/min
-      { ttl: 60000, limit: 20, name: "manager" }, // Manager ops: 20 req/min
-    ]),
+    ThrottlerModule.forRoot(throttlerConfig),
     CacheModule.register({
       isGlobal: true,
       store: "redis",
