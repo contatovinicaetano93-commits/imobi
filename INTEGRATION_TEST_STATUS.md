@@ -3,11 +3,11 @@
 **Branch**: `claude/gifted-hawking-ULZTB`
 
 ## Executive Summary
-Integration testing of the imbobi API core flows is approximately 70% complete. Core authentication, obra creation, and KYC document management have been verified. One critical blocker (PostGIS geometry validation) has been identified and temporarily skipped to enable testing of other flows.
+Integration testing of the imbobi API core flows is approximately 80% complete. Core authentication, obra creation with GPS validation, and KYC document management have been verified. PostGIS geometry validation blocker has been resolved with an application-level bounding box implementation. 8 out of 10 verification steps are complete or verified.
 
 ---
 
-## ✅ Completed Verifications (7/10)
+## ✅ Completed Verifications (8/10)
 
 ### Step 1: Basic Auth Flow ✅
 **Status**: VERIFIED  
@@ -50,24 +50,31 @@ const throttlerConfig = isDevelopment
 
 ---
 
-### Step 3: Database & PostGIS ✅ (Partial)
-**Status**: DATABASE OK, PostGIS TEMPORARILY SKIPPED  
+### Step 3: Database & GPS Validation ✅
+**Status**: FULLY OPERATIONAL  
 **Tests**:
 - PostgreSQL 16 connection: ✅ Working
 - Prisma ORM initialization: ✅ Working
-- Table schema validation: ✅ All 14 tables exist (Usuario, Obra, Credito, KycDocumento, etc.)
-- PostGIS extension: ✅ Installed (`CREATE EXTENSION IF NOT EXISTS postgis`)
+- Table schema validation: ✅ All 14 tables exist
+- GPS coordinate validation: ✅ VERIFIED
 
-**Known Issue**: Template literal syntax error in raw PostGIS query
-- **File**: `services/api/src/modules/obras/obras.service.ts:15`
-- **Problem**: Prisma $queryRaw template interpolation incompatible with `ST_GeomFromText()` syntax
-- **Solution**: Temporarily commented out GPS validation (lines 13-20)
-- **Impact**: Obra creation proceeds without PostGIS spatial validation; GPS coordinates still stored
+**GPS Validation Implementation**:
+- **File**: `services/api/src/modules/obras/obras.service.ts:13-26`
+- **Solution**: Implemented application-level bounding box validation
+- **Bounds**: Brazil geographic limits (-33.75 to 5.25 lat, -73.99 to -34.79 lon)
+- **Test Results**:
+  - São Paulo (-23.5505, -46.6333): ✅ Accepted, obra created with 9 default stages
+  - New York (40.7128, -74.0060): ✅ Rejected with error "GPS inválido (fora dos limites do Brasil)"
+- **Advantages**: No PostGIS dependency, faster validation, coordinates still stored in database
 
-**Geometry Query** (currently skipped):
+**Validation Logic**:
 ```typescript
-// TODO: Fix template literal syntax for PostGIS
-// SELECT ST_IsValid(ST_GeomFromText('POINT(${longitude} ${latitude})', 4326)) AS valid
+const isWithinBrazil =
+  latitude >= -33.75 && latitude <= 5.25 &&
+  longitude >= -73.99 && longitude <= -34.79;
+if (!isWithinBrazil) {
+  throw new BadRequestException('GPS inválido (fora dos limites do Brasil)');
+}
 ```
 
 ---
@@ -201,15 +208,12 @@ export const liberacaoParcelaJob = async (job: Job<LiberacaoParcelaInput>) => {
 
 ## 🐛 Known Issues & Blockers
 
-### Issue 1: PostGIS Geometry Validation Template Literal
-**Severity**: MEDIUM (non-blocking, GPS validation skipped)  
-**File**: `services/api/src/modules/obras/obras.service.ts:15`  
-**Error**: Prisma `$queryRaw` template literal syntax incompatible with PostGIS functions
-**Current State**: GPS validation commented out; coordinates still stored
-**Resolution**: Requires either:
-1. Converting to parameterized Prisma query syntax
-2. Using native Prisma geometry support (if available)
-3. Implementing GPS validation at application layer (bounding box check)
+### Issue 1: PostGIS Geometry Validation - RESOLVED ✅
+**File**: `services/api/src/modules/obras/obras.service.ts:13-26`  
+**Solution**: Replaced PostGIS ST_GeomFromText() with application-level bounding box validation
+**Implementation**: Validates coordinates are within Brazil's geographic bounds
+**Test Results**: Both valid (São Paulo) and invalid (New York) coordinates handled correctly
+**Status**: FULLY OPERATIONAL - No further action needed
 
 ### Issue 2: E2E Test Database Connectivity
 **Severity**: MEDIUM (affects test suite execution)  
@@ -227,8 +231,8 @@ export const liberacaoParcelaJob = async (job: Job<LiberacaoParcelaInput>) => {
 | Authentication | Basic flow | ✅ Manual verification |
 | API Throttling | Environment-aware limits | ✅ Manual verification |
 | Database connectivity | PostgreSQL + Prisma | ✅ Operational |
-| PostGIS | Spatial validation | 🟡 Skipped (bug to fix) |
-| Obra creation | Core flow | ✅ Manual verification |
+| GPS Validation | Brazil bounds check | ✅ Verified (valid & invalid coords) |
+| Obra creation | Full flow with GPS | ✅ Verified (creates 9 stages) |
 | KYC documents | 27 test cases | 🟡 Test suite exists, execution pending |
 | BullMQ workers | Job structure | ✅ Code verified |
 | Email notifications | Integration points | ✅ Code verified |
@@ -239,10 +243,10 @@ export const liberacaoParcelaJob = async (job: Job<LiberacaoParcelaInput>) => {
 
 ## 🔧 Recommended Next Steps
 
-1. **Fix PostGIS Query** (15 min)
-   - Convert ST_GeomFromText template literal to parameterized query
-   - Test GPS validation with valid/invalid coordinates
-   - Re-enable at obras.service.ts:13-20
+1. **✅ COMPLETE - GPS Validation Fixed**
+   - Replaced PostGIS with bounding box check
+   - Tested with valid (São Paulo) and invalid (New York) coordinates
+   - Both cases working correctly
 
 2. **Resolve E2E Database Pooling** (30 min)
    - Add connection pool size configuration
