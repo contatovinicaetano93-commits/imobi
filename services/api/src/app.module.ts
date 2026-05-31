@@ -20,6 +20,7 @@ import { EmailModule } from "./modules/email/email.module";
 import { MarketplaceModule } from "./modules/marketplace/marketplace.module";
 import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
+import { ComercialModule } from "./modules/comercial/comercial.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker } from "./workers/excluir-usuario.worker";
@@ -74,6 +75,7 @@ const redisConfig = getRedisConfig();
     PushNotificacoesModule,
     MarketplaceModule,
     ParceirosModule,
+    ComercialModule,
   ],
   controllers: [HealthController],
   providers: [
