@@ -43,6 +43,45 @@ export const pushApi = {
   },
 };
 
+export const kycApi = {
+  uploadDocumento: async (tipo: string, url: string) => {
+    const token = await getToken();
+    return apiClient.post("/kyc/upload", { tipo, url }, token ?? undefined);
+  },
+  listarDocumentos: async () => {
+    const token = await getToken();
+    return apiClient.get<KycDocumento[]>("/kyc/documentos", token ?? undefined);
+  },
+  obterStatus: async () => {
+    const token = await getToken();
+    return apiClient.get<KycStatus>("/kyc/status", token ?? undefined);
+  },
+  verificarCompleto: async () => {
+    const token = await getToken();
+    return apiClient.get<{ completo: boolean }>("/kyc/verificar", token ?? undefined);
+  },
+};
+
+export type KycDocumento = {
+  kycDocumentoId: string;
+  usuarioId: string;
+  tipo: string;
+  url: string;
+  status: "PENDENTE" | "APROVADO" | "REJEITADO";
+  criadoEm: string;
+};
+
+export type KycStatus = {
+  usuarioId: string;
+  status: string;
+  documentos: KycDocumento[];
+  resumo: {
+    pendentes: number;
+    aprovados: number;
+    rejeitados: number;
+  };
+};
+
 // Types
 export type Obra = {
   obraId: string;
