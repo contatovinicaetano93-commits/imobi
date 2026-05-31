@@ -2,7 +2,7 @@
 
 # AWS STAGING DEPLOYMENT AUTOMATION
 # Centralizes imbobi infrastructure on AWS
-# Prerequisites: AWS account, awscli, docker, terraform
+# Prerequisites: AWS account, awscli, docker, pnpm
 
 set -e
 
@@ -71,28 +71,28 @@ build_and_push() {
   aws ecr get-login-password --region "$AWS_REGION" | \
     docker login --username AWS --password-stdin "$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
 
-  # Build API
-  echo "Building API Docker image..."
-  docker build -t "$PROJECT_NAME-api:latest" \
+  # Build and push API
+  echo "Building and pushing API Docker image..."
+  REPO_URI="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${PROJECT_NAME}-api-${ENVIRONMENT}:latest"
+  docker build -t "${PROJECT_NAME}-api:latest" \
     --build-arg NODE_ENV=staging \
     -f services/api/Dockerfile \
     .
+  docker tag "${PROJECT_NAME}-api:latest" "$REPO_URI"
+  docker push "$REPO_URI"
+  echo "✅ Pushed API: $REPO_URI"
 
-  # Build Web
-  echo "Building Web Docker image..."
-  docker build -t "$PROJECT_NAME-web:latest" \
+  # Build and push Web
+  echo "Building and pushing Web Docker image..."
+  REPO_URI="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${PROJECT_NAME}-web-${ENVIRONMENT}:latest"
+  docker build -t "${PROJECT_NAME}-web:latest" \
     --build-arg NEXT_PUBLIC_API_URL="https://api.staging.imbobi.com" \
     -f apps/web/Dockerfile \
     .
+  docker tag "${PROJECT_NAME}-web:latest" "$REPO_URI"
+  docker push "$REPO_URI"
+  echo "✅ Pushed Web: $REPO_URI"
 
-  # Tag and push
-  for service in api web; do
-    REPO_URI="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${PROJECT_NAME}-${service}-${ENVIRONMENT}:latest"
-    echo "Pushing $service to ECR..."
-    docker tag "${PROJECT_NAME}-${service}:latest" "$REPO_URI"
-    docker push "$REPO_URI"
-    echo "✅ Pushed $service: $REPO_URI"
-  done
   echo ""
 }
 
@@ -134,8 +134,7 @@ setup_rds() {
       --publicly-accessible false \
       --region "$AWS_REGION" \
       --db-name "${PROJECT_NAME}_staging" \
-      --port 5432 \
-      --no-storage-encrypted
+      --port 5432
 
     echo "⏳ Waiting for RDS instance to be available (this takes 5-10 minutes)..."
     aws rds wait db-instance-available \
@@ -235,7 +234,7 @@ setup_ecs_cluster() {
   CLUSTER_NAME="${PROJECT_NAME}-${ENVIRONMENT}"
 
   # Check if cluster exists
-  if aws ecs describe-clusters --clusters "$CLUSTER_NAME" --region "$AWS_REGION" | grep -q '"status": "ACTIVE"'; then
+  if aws ecs describe-clusters --clusters "$CLUSTER_NAME" --region "$AWS_REGION" 2>/dev/null | grep -q '"status": "ACTIVE"'; then
     echo "✅ ECS cluster '$CLUSTER_NAME' exists"
   else
     echo "Creating ECS cluster..."
