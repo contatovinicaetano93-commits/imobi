@@ -44,7 +44,7 @@ export default function VisitDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const visitaId = Array.isArray(params.visitaId) ? params.visitaId[0] : params.visitaId;
+  const visitaId = (Array.isArray(params.visitaId) ? params.visitaId[0] : params.visitaId) as string;
 
   useEffect(() => {
     Promise.all([

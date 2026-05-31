@@ -32,7 +32,7 @@ export default function KycDetailPage() {
   const [showRejectionForm, setShowRejectionForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const docId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const docId = (Array.isArray(params.id) ? params.id[0] : params.id) as string;
 
   useEffect(() => {
     managerApi

@@ -30,7 +30,7 @@ export default function EtapaDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
-  const etapaId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const etapaId = (Array.isArray(params.id) ? params.id[0] : params.id) as string;
 
   useEffect(() => {
     Promise.all([

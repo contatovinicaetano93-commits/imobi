@@ -4,8 +4,9 @@ const API_URL = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { etapaId: string } }
+  { params }: { params: Promise<{ etapaId: string }> }
 ) {
+  const { etapaId } = await params;
   const token = req.cookies.get("access_token")?.value;
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,7 +23,7 @@ export async function POST(
     const formData = new FormData();
     const blob = new Blob([fileBuffer], { type: "image/jpeg" });
     formData.append("file", blob, "evidence.jpg");
-    formData.append("etapaId", params.etapaId);
+    formData.append("etapaId", etapaId);
     formData.append("latitude", String(latitude));
     formData.append("longitude", String(longitude));
     formData.append("accuracyMetros", String(accuracyMetros));
