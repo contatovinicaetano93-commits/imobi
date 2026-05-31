@@ -7,8 +7,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  ProgressBarAndroid,
-  ProgressViewIOS,
   Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -317,19 +315,14 @@ export default function KYCScreen() {
 
                 {uploading && selectedDocument === docKey && (
                   <View style={styles.progressContainer}>
-                    {Platform.OS === "ios" ? (
-                      <ProgressViewIOS
-                        value={uploadProgress / 100}
-                        progressTintColor="#16a34a"
-                        style={styles.progressBar}
+                    <View style={styles.progressBarContainer}>
+                      <View
+                        style={[
+                          styles.progressBarFill,
+                          { width: `${uploadProgress}%` },
+                        ]}
                       />
-                    ) : (
-                      <ProgressBarAndroid
-                        progress={uploadProgress / 100}
-                        color="#16a34a"
-                        style={styles.progressBar}
-                      />
-                    )}
+                    </View>
                     <Text style={styles.progressText}>{uploadProgress}%</Text>
                   </View>
                 )}
@@ -466,7 +459,17 @@ const styles = StyleSheet.create({
   galleryButton: { backgroundColor: "#8b5cf6" },
   actionButtonText: { color: "#fff", fontSize: 13, fontWeight: "600" },
   progressContainer: { marginTop: 12, gap: 8 },
-  progressBar: { height: 6, borderRadius: 3, overflow: "hidden" },
+  progressBarContainer: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#e5e7eb",
+    overflow: "hidden",
+  },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: "#16a34a",
+    borderRadius: 3,
+  },
   progressText: { fontSize: 12, color: "#6b7280", textAlign: "right" },
   completeCard: {
     backgroundColor: "#dcfce7",
