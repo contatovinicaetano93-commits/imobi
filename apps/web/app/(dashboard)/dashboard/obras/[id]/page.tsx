@@ -15,11 +15,16 @@ const STATUS_STYLE: Record<string, string> = {
   REJEITADA:           "bg-red-50 text-red-700 border-red-200",
 };
 
-export default async function ObraDetailPage({ params }: { params: { id: string } }) {
-  const obra = await obrasApi.buscar(params.id).catch(() => null);
+export default async function ObraDetailPage({
+  params
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params;
+  const obra = await obrasApi.buscar(id).catch(() => null);
   if (!obra) notFound();
 
-  const progresso = await obrasApi.progresso(params.id).catch(() => 0);
+  const progresso = await obrasApi.progresso(id).catch(() => 0);
   const etapas = obra.etapas ?? [];
 
   return (

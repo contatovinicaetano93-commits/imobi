@@ -12,15 +12,16 @@ export const metadata: Metadata = { title: "Vistoria — imbobi" };
 export default async function VistoriaPage({
   params,
 }: {
-  params: { id: string; etapaId: string };
+  params: Promise<{ id: string; etapaId: string }>;
 }) {
+  const { id, etapaId } = await params;
   const [obra, evidencias] = await Promise.all([
-    obrasApi.buscar(params.id).catch(() => null),
-    evidenciasApi.listarPorEtapa(params.etapaId).catch(() => []),
+    obrasApi.buscar(id).catch(() => null),
+    evidenciasApi.listarPorEtapa(etapaId).catch(() => []),
   ]);
   if (!obra) notFound();
 
-  const etapa = obra.etapas?.find((e) => e.id === params.etapaId);
+  const etapa = obra.etapas?.find((e) => e.id === etapaId);
   if (!etapa) notFound();
 
   return (
@@ -28,7 +29,7 @@ export default async function VistoriaPage({
       <div className="text-sm text-gray-500 flex gap-2">
         <a href="/dashboard/obras" className="hover:text-brand-600">Obras</a>
         <span>/</span>
-        <a href={`/dashboard/obras/${params.id}`} className="hover:text-brand-600">{obra.nome}</a>
+        <a href={`/dashboard/obras/${id}`} className="hover:text-brand-600">{obra.nome}</a>
         <span>/</span>
         <span className="text-gray-900 font-medium">Vistoria: {etapa.nome}</span>
       </div>
@@ -46,7 +47,7 @@ export default async function VistoriaPage({
         </div>
       </div>
 
-      <UploadEvidenciaForm etapaId={params.etapaId} />
+      <UploadEvidenciaForm etapaId={etapaId} />
 
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -79,8 +80,8 @@ export default async function VistoriaPage({
       </div>
 
       <AprovarEtapaForm
-        etapaId={params.etapaId}
-        obraId={params.id}
+        etapaId={etapaId}
+        obraId={id}
         valorLiberacao={Number(etapa.valorLiberacao)}
       />
     </div>
