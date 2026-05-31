@@ -28,7 +28,7 @@ export default function DashboardPage() {
         }
 
         // Fetch user data from API
-        const res = await fetch("http://localhost:4000/api/v1/usuario/perfil", {
+        const res = await fetch("http://localhost:4000/api/v1/usuarios/meu-perfil", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
