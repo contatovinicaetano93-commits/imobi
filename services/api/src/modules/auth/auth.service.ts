@@ -50,7 +50,12 @@ export class AuthService {
   }
 
   async renovarToken(refreshToken: string) {
-    const decoded = this.jwt.decode(refreshToken) as any;
+    let decoded: any;
+    try {
+      decoded = this.jwt.verify(refreshToken) as any;
+    } catch (error) {
+      throw new UnauthorizedException("Token inválido ou expirado.");
+    }
     if (!decoded?.sub) {
       throw new UnauthorizedException("Token inválido.");
     }
@@ -63,7 +68,12 @@ export class AuthService {
       throw new UnauthorizedException("Sessão inválida ou expirada.");
     }
 
-    const decryptedToken = this.encryption.decrypt(sessao.refreshToken);
+    let decryptedToken: string;
+    try {
+      decryptedToken = this.encryption.decrypt(sessao.refreshToken);
+    } catch (error) {
+      throw new UnauthorizedException("Sessão inválida: token corrompido ou tamperado.");
+    }
     if (decryptedToken !== refreshToken) {
       throw new UnauthorizedException("Token não corresponde.");
     }

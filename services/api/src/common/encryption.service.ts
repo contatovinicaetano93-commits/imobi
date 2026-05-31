@@ -51,8 +51,8 @@ export class EncryptionService {
       let decrypted = decipher.update(encrypted, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
       return decrypted;
-    } catch {
-      return ciphertext;
+    } catch (error) {
+      throw new Error(`Decryption failed: ${error instanceof Error ? error.message : 'unknown error'}. Token may be corrupted or tampered with.`);
     }
   }
 }

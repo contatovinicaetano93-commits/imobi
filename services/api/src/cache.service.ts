@@ -6,8 +6,13 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   private redis: Redis;
 
   onModuleInit() {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    this.redis = new Redis(redisUrl);
+    const redisHost = process.env.REDIS_HOST || 'localhost';
+    const redisPort = Number(process.env.REDIS_PORT || 6379);
+    this.redis = new Redis({
+      host: redisHost,
+      port: redisPort,
+      retryStrategy: (times) => Math.min(times * 50, 2000),
+    });
   }
 
   onModuleDestroy() {
@@ -28,10 +33,21 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   }
 
   async deletePattern(pattern: string): Promise<void> {
-    const keys = await this.redis.keys(pattern);
-    if (keys.length > 0) {
-      await this.redis.del(...keys);
-    }
+    let cursor = 0;
+    const batchSize = 100;
+    do {
+      const [nextCursor, keys] = await this.redis.scan(
+        cursor,
+        "MATCH",
+        pattern,
+        "COUNT",
+        batchSize.toString()
+      );
+      cursor = parseInt(nextCursor);
+      if (keys.length > 0) {
+        await this.redis.del(...keys);
+      }
+    } while (cursor !== 0);
   }
 
   async invalidateUserCache(usuarioId: string): Promise<void> {
