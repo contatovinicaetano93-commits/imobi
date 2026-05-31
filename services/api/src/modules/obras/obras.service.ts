@@ -9,16 +9,19 @@ export class ObrasService {
 
   async criar(usuarioId: string, input: CriarObraInput) {
     return this.prisma.$transaction(async (tx) => {
-      // TODO: BUG-002 - PostGIS validation temporarily skipped due to template literal syntax issue
-      // Re-implement with Prisma parameterized queries or native geometry support
-      // if (input.geo?.latitude && input.geo?.longitude) {
-      //   const gpsValidation = await tx.$queryRaw<Array<{ valid: boolean }>>`
-      //     SELECT ST_IsValid(ST_GeomFromText('POINT(${input.geo.longitude} ${input.geo.latitude})', 4326)) AS valid
-      //   `;
-      //   if (!gpsValidation[0]?.valid) {
-      //     throw new BadRequestException('GPS inválido (fora dos limites do Brasil)');
-      //   }
-      // }
+      // Server-side GPS coordinate validation
+      if (input.geo?.latitude && input.geo?.longitude) {
+        const { latitude, longitude } = input.geo;
+        // Validate that coordinates are within Brazil bounds
+        // Brazil: approximately -33.75 to 5.25 latitude, -73.99 to -34.79 longitude
+        const isWithinBrazil =
+          latitude >= -33.75 && latitude <= 5.25 &&
+          longitude >= -73.99 && longitude <= -34.79;
+
+        if (!isWithinBrazil) {
+          throw new BadRequestException('GPS inválido (fora dos limites do Brasil)');
+        }
+      }
 
       const obra = await tx.obra.create({
         data: {
