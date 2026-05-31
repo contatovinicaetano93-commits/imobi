@@ -145,10 +145,62 @@ const res = await fetch(`${BASE_URL}/api/v1${path}`, { ...init, headers });
 
 ---
 
+## Code Quality Improvements (Session 2)
+
+### 1. Role-Based Access Control
+**Added admin role validation** to prevent unauthorized access to the admin dashboard endpoint.
+- **Change:** admin.controller.ts now checks `u.tipo === "ADMIN"` before allowing access
+- **Impact:** Restricts sensitive admin statistics to authorized users only
+
+### 2. Input Validation Enhancements
+**Added explicit validation** for rejection reason fields:
+- `manager.controller.ts`: Both etapa and KYC rejection endpoints now validate `motivo` is not empty
+- `auth.controller.ts`: Token refresh and logout endpoints validate `refreshToken` is provided
+- Prevents invalid requests with empty or missing required fields
+
+### 3. API Endpoint Consistency
+**Standardized simulador endpoint**:
+- Added ZodPipe validation (consistent with other controllers)
+- Added rate limiting (50 req/min) to protect calculation endpoint
+- Removed manual schema parsing in favor of pipe-based validation
+- Added `@HttpCode(200)` for clarity
+
+**Password Security**:
+- Verified password requirements: 8+ chars, uppercase letter, number
+- Using bcryptjs with cost 12 for secure hashing
+
+**Rate Limiting**:
+- Auth endpoints: 10 req/min (registrar, login, token operations)
+- Simulador: 50 req/min (public calculation endpoint)
+- Throttler configured globally via AppModule
+
+### 4. Database Security & Performance
+**GPS Validation**:
+- Server-side PostGIS validation with `ST_DWithin`
+- Haversine formula fallback for distance calculation
+- Accuracy requirement: GPS within 15 meters of obra location
+
+**Indexes**: Well-designed indexes on:
+- `usuario(email)`, `usuario(cpf)` - Auth lookups
+- `credito(usuarioId, status)` - Credit queries
+- `etapaObra(obraId, status)` - Stage lookups
+- `evidenciaEtapa(etapaId, validada)` - Evidence validation
+
+### 5. Error Handling
+- Global HttpExceptionFilter properly configured
+- All endpoints return consistent error format with timestamp
+- Graceful error handling in async email/push operations
+- KYC service validates motivo before rejection
+
+---
+
 ## Commits
 
 1. **`04f158c`** - Add `/api/v1` prefix to api-client for correct endpoint routing
 2. **`d46e1e3`** - Resolve TypeScript errors in simulador and disable typed routes
+3. **`184b710`** - Add role validation to admin dashboard endpoint
+4. **`c8776aa`** - Add validation for rejection motivo fields
+5. **`8ada7c0`** - Improve API endpoint validation and consistency
 
 ---
 
