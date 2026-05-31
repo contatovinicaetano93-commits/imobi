@@ -10,6 +10,14 @@ export class ComercialService {
   ) {}
 
   async criarLead(data: any) {
+    const defaultStage = await this.prisma.pipelineStage.findFirst({
+      where: { nome: "PROSPECÇÃO" },
+    });
+
+    if (!defaultStage) {
+      throw new Error("Pipeline stage PROSPECÇÃO not found. Run seed first.");
+    }
+
     const lead = await this.prisma.lead.create({
       data: {
         clienteNome: data.clienteNome,
@@ -19,7 +27,7 @@ export class ComercialService {
         fonte: data.fonte,
         tipoObra: data.tipoObra,
         segmentoCliente: data.segmentoCliente,
-        stage: "PROSPECÇÃO",
+        stageId: defaultStage.stageId,
       },
       include: {
         scoreHistorico: { take: 1, orderBy: { criadoEm: "desc" } },
@@ -35,7 +43,7 @@ export class ComercialService {
   async listarLeads(limit = 20, offset = 0, filters?: any) {
     const where: any = {};
 
-    if (filters?.stage) where.stage = filters.stage;
+    if (filters?.stageId) where.stageId = filters.stageId;
     if (filters?.fonte) where.fonte = filters.fonte;
     if (filters?.segmentoCliente) where.segmentoCliente = filters.segmentoCliente;
     if (filters?.scoreMin || filters?.scoreMax) {
@@ -59,6 +67,7 @@ export class ComercialService {
         take: limit,
         skip: offset,
         include: {
+          stage: true,
           scoreHistorico: { take: 1, orderBy: { criadoEm: "desc" } },
         },
         orderBy: { criadoEm: "desc" },
@@ -78,6 +87,7 @@ export class ComercialService {
     const lead = await this.prisma.lead.findUnique({
       where: { leadId },
       include: {
+        stage: true,
         atividades: { orderBy: { criadoEm: "desc" } },
         scoreHistorico: { orderBy: { criadoEm: "desc" } },
         obra: true,
@@ -98,7 +108,7 @@ export class ComercialService {
   }
 
   async adicionarAtividade(leadId: string, usuarioId: string, data: any) {
-    const activity = await this.prisma.leadAtividade.create({
+    const activity = await this.prisma.leadActivity.create({
       data: {
         leadId,
         usuarioId,
