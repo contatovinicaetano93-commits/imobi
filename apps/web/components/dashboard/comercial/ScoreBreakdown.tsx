@@ -1,7 +1,6 @@
 'use client';
 
 import { ConversionScore } from '@imbobi/schemas';
-import { Card } from '@/components/ui/card';
 
 interface ScoreBreakdownProps {
   score: ConversionScore;
@@ -17,7 +16,7 @@ export function ScoreBreakdown({ score }: ScoreBreakdownProps) {
   ];
 
   return (
-    <Card className="p-6">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <div className="mb-6">
         <div className="flex justify-between items-baseline mb-2">
           <h3 className="text-lg font-semibold">Score Final</h3>
@@ -66,6 +65,6 @@ export function ScoreBreakdown({ score }: ScoreBreakdownProps) {
           </p>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }

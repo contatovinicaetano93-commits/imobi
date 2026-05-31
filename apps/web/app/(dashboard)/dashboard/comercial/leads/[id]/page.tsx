@@ -4,9 +4,6 @@ import { useEffect, useState } from 'react';
 import { LeadDetail } from '@imbobi/schemas';
 import { ScoreBreakdown } from '@/components/dashboard/comercial/ScoreBreakdown';
 import { ConversionTimeline } from '@/components/dashboard/comercial/ConversionTimeline';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { use } from 'react';
 
 interface LeadDetailPageProps {
@@ -60,14 +57,14 @@ export default function LeadDetailPage({ params }: LeadDetailPageProps) {
           <p className="text-gray-600 mt-1">{lead.clienteEmail}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">Editar</Button>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Editar</button>
+          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             + Atividade
-          </Button>
+          </button>
         </div>
       </div>
 
-      <Card className="p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <h2 className="font-semibold text-lg mb-4">Informações Gerais</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div>
@@ -76,22 +73,22 @@ export default function LeadDetailPage({ params }: LeadDetailPageProps) {
           </div>
           <div>
             <p className="text-sm text-gray-600">Fonte</p>
-            <Badge className="mt-1">{lead.fonte}</Badge>
+            <span className="inline-block mt-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{lead.fonte}</span>
           </div>
           <div>
             <p className="text-sm text-gray-600">Segmento</p>
-            <Badge variant="outline" className="mt-1">
+            <span className="inline-block mt-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
               {lead.segmentoCliente}
-            </Badge>
+            </span>
           </div>
           <div>
             <p className="text-sm text-gray-600">Estágio</p>
-            <Badge variant="secondary" className="mt-1">
-              {lead.stageName}
-            </Badge>
+            <span className="inline-block mt-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
+              {lead.stage?.nome || 'N/A'}
+            </span>
           </div>
         </div>
-      </Card>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
@@ -100,7 +97,7 @@ export default function LeadDetailPage({ params }: LeadDetailPageProps) {
           )}
         </div>
 
-        <Card className="p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <h3 className="font-semibold text-lg mb-4">Próximas Ações</h3>
           <div className="space-y-3">
             {lead.proximoAcompanhamento && (
@@ -111,14 +108,14 @@ export default function LeadDetailPage({ params }: LeadDetailPageProps) {
                 </p>
               </div>
             )}
-            <Button className="w-full" variant="outline">
+            <button className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
               Agendar Contato
-            </Button>
-            <Button className="w-full" variant="outline">
+            </button>
+            <button className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
               Enviar Proposta
-            </Button>
+            </button>
           </div>
-        </Card>
+        </div>
       </div>
 
       {lead.atividades && lead.atividades.length > 0 && (

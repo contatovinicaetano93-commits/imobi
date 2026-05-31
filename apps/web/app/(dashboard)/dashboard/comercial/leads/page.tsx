@@ -1,11 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import { Lead } from '@imbobi/schemas';
 import { LeadCard } from '@/components/dashboard/comercial/LeadCard';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 interface LeadsListResponse {
   leads: Lead[];
@@ -56,31 +53,31 @@ export default function LeadsList() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Leads</h1>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <button className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700">
           + Novo Lead
-        </Button>
+        </button>
       </div>
 
-      <Card className="p-4">
-        <Input
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        <input
           placeholder="Buscar por nome, email ou telefone..."
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
             setPage(1);
           }}
-          className="max-w-md"
+          className="max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-      </Card>
+      </div>
 
       {loading ? (
         <div className="text-center py-12">
           <p className="text-gray-500">Carregando leads...</p>
         </div>
       ) : leads.length === 0 ? (
-        <Card className="p-12 text-center">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
           <p className="text-gray-500">Nenhum lead encontrado</p>
-        </Card>
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -90,25 +87,25 @@ export default function LeadsList() {
           </div>
 
           {totalPages > 1 && (
-            <Card className="p-4 flex justify-center gap-2">
-              <Button
-                variant="outline"
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex justify-center gap-2">
+              <button
                 disabled={page === 1}
                 onClick={() => setPage(Math.max(1, page - 1))}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 ← Anterior
-              </Button>
+              </button>
               <span className="px-4 py-2 text-sm text-gray-600">
                 Página {page} de {totalPages}
               </span>
-              <Button
-                variant="outline"
+              <button
                 disabled={page === totalPages}
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Próxima →
-              </Button>
-            </Card>
+              </button>
+            </div>
           )}
         </>
       )}
