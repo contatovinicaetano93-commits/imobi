@@ -46,7 +46,7 @@ if [ "$MODE" = "staging" ]; then
     fi
     
     # Load environment
-    export $(cat .env.staging | xargs)
+    set -a && source .env.staging && set +a
     
     # Start services
     echo ""
