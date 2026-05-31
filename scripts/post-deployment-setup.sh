@@ -32,12 +32,15 @@ log_info "🚀 Starting post-deployment configuration..."
 # Extract configuration from file
 log_info "Extracting infrastructure details..."
 
-RDS_ENDPOINT=$(grep "RDS Endpoint:" "$CONFIG_FILE" | awk '{print $3}')
-RDS_PASSWORD=$(grep "Password:" "$CONFIG_FILE" | awk '{print $2}')
+RDS_ENDPOINT=$(grep "Endpoint:" "$CONFIG_FILE" | head -1 | sed 's/.*Endpoint: //' | tr -d ' ')
+RDS_PASSWORD=$(grep "Password:" "$CONFIG_FILE" | head -1 | sed 's/.*Password: //' | tr -d ' ')
 RDS_HOST=$(echo "$RDS_ENDPOINT" | cut -d: -f1)
-RDS_PORT=${RDS_ENDPOINT##*:}
+RDS_PORT="5432"
 
-REDIS_ENDPOINT=$(grep "Redis Endpoint:" "$CONFIG_FILE" | awk '{print $3}')
+REDIS_ENDPOINT=$(grep "Endpoint:" "$CONFIG_FILE" | tail -1 | sed 's/.*Endpoint: //' | tr -d ' ')
+if [ "$REDIS_ENDPOINT" = "None" ]; then
+  REDIS_ENDPOINT="pending"
+fi
 REDIS_HOST=$(echo "$REDIS_ENDPOINT" | cut -d: -f1)
 REDIS_PORT="6379"
 
