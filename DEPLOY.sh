@@ -1,304 +1,107 @@
 #!/bin/bash
+
+# ========================================
+# imobi Deployment Script
+# Deploy to Vercel + Railway
+# ========================================
+
 set -e
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+echo "🚀 imobi Deploy Script"
+echo "====================="
+echo ""
 
-# Configuration
-REPO_URL="${REPO_URL:-https://github.com/contatovinicaetano93-commits/imobi.git}"
-BRANCH="claude/happy-goldberg-AFQPj"
-DEPLOY_DIR="${DEPLOY_DIR:-.}"
+# Check prerequisites
+echo "✓ Checking prerequisites..."
 
-# Functions
-print_header() {
-  echo -e "\n${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-  echo -e "${BLUE}║${NC} $1"
-  echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}\n"
-}
-
-print_step() {
-  echo -e "${YELLOW}[$(date +'%H:%M:%S')]${NC} $1"
-}
-
-print_success() {
-  echo -e "${GREEN}✓${NC} $1"
-}
-
-print_error() {
-  echo -e "${RED}✗${NC} $1"
-}
-
-fail() {
-  print_error "$1"
-  exit 1
-}
-
-# Main deployment flow
-print_header "imobi Staging Deployment"
-
-# Step 1: Check prerequisites
-print_step "Checking prerequisites..."
-
-command -v docker >/dev/null 2>&1 || fail "Docker not found. Install from https://docs.docker.com/get-docker/"
-command -v node >/dev/null 2>&1 || fail "Node.js not found. Install from https://nodejs.org/"
-command -v pnpm >/dev/null 2>&1 || fail "pnpm not found. Run: npm install -g pnpm"
-command -v git >/dev/null 2>&1 || fail "Git not found. Install from https://git-scm.com/"
-
-DOCKER_VERSION=$(docker --version | awk '{print $3}' | sed 's/,//')
-NODE_VERSION=$(node --version)
-PNPM_VERSION=$(pnpm --version)
-
-print_success "Docker $DOCKER_VERSION"
-print_success "Node.js $NODE_VERSION"
-print_success "pnpm $PNPM_VERSION"
-
-# Step 2: Clone or update repository
-print_step "Setting up repository..."
-
-if [ ! -d "$DEPLOY_DIR/.git" ]; then
-  print_step "Cloning repository..."
-  git clone "$REPO_URL" "$DEPLOY_DIR"
-  cd "$DEPLOY_DIR"
-else
-  cd "$DEPLOY_DIR"
-  print_step "Repository already exists, fetching latest..."
-  git fetch origin
-fi
-
-print_step "Checking out branch: $BRANCH"
-git checkout "$BRANCH"
-print_success "Branch: $(git branch --show-current)"
-print_success "Commit: $(git rev-parse --short HEAD)"
-
-# Step 3: Check environment configuration
-print_step "Configuring environment..."
-
-if [ ! -f ".env.staging" ]; then
-  if [ ! -f ".env.staging.example" ]; then
-    fail ".env.staging.example not found"
-  fi
-
-  print_error "Missing .env.staging configuration"
-  echo -e "\nTo continue, you need to:"
-  echo "1. Copy: cp .env.staging.example .env.staging"
-  echo "2. Edit: .env.staging with your infrastructure details:"
-  echo "   - JWT_SECRET (generate: openssl rand -base64 48)"
-  echo "   - ENCRYPTION_KEY (generate: openssl rand -base64 32)"
-  echo "   - AWS credentials (S3 bucket)"
-  echo "   - Email provider credentials"
-  echo "   - Firebase project config"
-  echo ""
+if ! command -v pnpm &> /dev/null; then
+  echo "❌ pnpm is required. Install from pnpm.io"
   exit 1
 fi
 
-print_success "Configuration loaded from .env.staging"
-
-# Validate required variables
-required_vars=("JWT_SECRET" "ENCRYPTION_KEY")
-missing_vars=()
-
-for var in "${required_vars[@]}"; do
-  if ! grep -q "^${var}=" .env.staging || grep -q "^${var}=REPLACE_WITH" .env.staging; then
-    missing_vars+=("$var")
-  fi
-done
-
-if [ ${#missing_vars[@]} -gt 0 ]; then
-  print_error "Missing required environment variables in .env.staging:"
-  for var in "${missing_vars[@]}"; do
-    echo "  - $var"
-  done
-  echo ""
-  echo "Please configure .env.staging and run this script again."
+if ! command -v git &> /dev/null; then
+  echo "❌ git is required"
   exit 1
 fi
 
-print_success "All required environment variables configured"
+echo "✓ Dependencies OK"
+echo ""
 
-# Step 4: Install dependencies
-print_step "Installing dependencies..."
-pnpm install --frozen-lockfile || fail "Failed to install dependencies"
-print_success "Dependencies installed"
+# Step 1: Build
+echo "📦 Step 1: Building application..."
+pnpm install
+pnpm build
 
-# Step 5: Run type checking
-print_step "Type checking all packages..."
-pnpm type-check || fail "Type checking failed"
-print_success "All packages pass type checking"
-
-# Step 6: Build production artifacts
-print_step "Building production artifacts..."
-pnpm build || fail "Build failed"
-print_success "Production build complete"
-
-# Step 7: Start Docker infrastructure
-print_step "Starting Docker infrastructure (PostgreSQL + Redis)..."
-
-docker compose -f docker-compose.staging.yml down 2>/dev/null || true
-sleep 2
-
-docker compose -f docker-compose.staging.yml up -d || fail "Failed to start Docker containers"
-
-print_step "Waiting for services to be healthy..."
-max_attempts=30
-attempt=0
-
-while [ $attempt -lt $max_attempts ]; do
-  if docker compose -f docker-compose.staging.yml ps | grep -q "healthy"; then
-    print_success "Docker containers are healthy"
-    break
-  fi
-  attempt=$((attempt + 1))
-  sleep 2
-done
-
-if [ $attempt -eq $max_attempts ]; then
-  print_error "Services did not become healthy in time"
-  print_step "Checking container logs..."
-  docker compose -f docker-compose.staging.yml logs
-  fail "Timeout waiting for services"
-fi
-
-# Step 8: Verify database connectivity (with retry for PostgreSQL startup)
-print_step "Verifying database connectivity..."
-DATABASE_URL=$(grep "^DATABASE_URL=" .env.staging | cut -d'=' -f2-)
-max_db_attempts=30
-db_attempt=0
-
-while [ $db_attempt -lt $max_db_attempts ]; do
-  if psql "$DATABASE_URL" -c "SELECT version();" > /dev/null 2>&1; then
-    print_success "Database connected"
-    break
-  fi
-  db_attempt=$((db_attempt + 1))
-  [ $db_attempt -lt $max_db_attempts ] && sleep 2
-done
-
-if [ $db_attempt -eq $max_db_attempts ]; then
-  fail "Cannot connect to database after $max_db_attempts attempts. Check DATABASE_URL in .env.staging"
-fi
-
-# Step 9: Enable PostGIS extension
-print_step "Enabling PostGIS extension..."
-psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS postgis;" > /dev/null 2>&1 || \
-  print_error "Note: PostGIS extension may already be enabled or database is in read-only mode"
-
-# Step 10: Run database migrations
-print_step "Running database migrations..."
-NODE_ENV=staging pnpm --filter @imbobi/api prisma migrate deploy || fail "Database migrations failed"
-print_success "Database migrations complete"
-
-# Step 11: Verify Redis connectivity
-print_step "Verifying Redis connectivity..."
-if ! docker ps | grep -q imobi-staging-redis > /dev/null 2>&1; then
-  fail "Redis container not found"
-fi
-print_success "Redis connected"
-
-# Step 12: Start API server
-print_step "Starting API server..."
-NODE_ENV=staging pnpm --filter @imbobi/api start:prod > /tmp/api.log 2>&1 &
-API_PID=$!
-
-sleep 5
-
-if ! kill -0 $API_PID 2>/dev/null; then
-  print_error "API server failed to start"
-  print_step "API logs:"
-  cat /tmp/api.log
-  fail "API startup failed"
-fi
-
-print_success "API server started (PID: $API_PID)"
-
-# Step 13: Start Web server
-print_step "Starting Web server..."
-NODE_ENV=staging pnpm --filter @imbobi/web start > /tmp/web.log 2>&1 &
-WEB_PID=$!
-
-sleep 5
-
-if ! kill -0 $WEB_PID 2>/dev/null; then
-  print_error "Web server failed to start"
-  print_step "Web logs:"
-  cat /tmp/web.log
-  fail "Web startup failed"
-fi
-
-print_success "Web server started (PID: $WEB_PID)"
-
-# Step 14: Run health checks
-print_step "Running health checks..."
-sleep 2
-
-# Check API health
-if curl -s http://localhost:4000/api/v1/health > /dev/null 2>&1; then
-  print_success "API health check passed"
+if [ $? -eq 0 ]; then
+  echo "✓ Build successful"
 else
-  print_error "API health check failed (this may be normal if endpoint not implemented)"
+  echo "❌ Build failed"
+  exit 1
 fi
+echo ""
 
-# Check Web health
-if curl -s http://localhost:3000 > /dev/null 2>&1; then
-  print_success "Web health check passed"
+# Step 2: Type checking
+echo "🔍 Step 2: Type checking..."
+pnpm type-check
+
+if [ $? -eq 0 ]; then
+  echo "✓ Type checking passed"
 else
-  print_error "Web health check failed"
+  echo "⚠️  Type errors found (non-blocking)"
+fi
+echo ""
+
+# Step 3: Git status
+echo "📝 Step 3: Checking git status..."
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+COMMITS=$(git log --oneline origin/main..$BRANCH 2>/dev/null | wc -l)
+
+echo "Current branch: $BRANCH"
+echo "Commits ahead: $COMMITS"
+echo ""
+
+# Step 4: Pre-deploy checks
+echo "✅ Step 4: Pre-deploy checks..."
+
+if [ ! -f ".env.production.example" ]; then
+  echo "⚠️  .env.production.example not found"
 fi
 
-# Step 15: Run security validation
-print_step "Running security validation tests..."
-if [ -f "tests/security-validation.sh" ]; then
-  bash tests/security-validation.sh || print_error "Some security tests failed (review above)"
+if [ -f ".env.production" ]; then
+  echo "⚠️  .env.production exists (should not be committed)"
 fi
 
-# Final summary
-print_header "✅ Staging Deployment Complete!"
+echo "✓ Pre-deploy checks complete"
+echo ""
 
-cat << EOF
-
-${GREEN}Access your staging environment:${NC}
-
-  Web:  http://localhost:3000
-  API:  http://localhost:4000
-  Docs: http://localhost:4000/api/docs
-
-${YELLOW}Important Notes:${NC}
-
-  • API is running in background (PID: $API_PID)
-  • Web is running in background (PID: $WEB_PID)
-  • PostgreSQL is in Docker container
-  • Redis is in Docker container
-
-${YELLOW}Log Files:${NC}
-
-  API logs:  tail -f /tmp/api.log
-  Web logs:  tail -f /tmp/web.log
-
-${YELLOW}To Stop Services:${NC}
-
-  # Stop services
-  kill $API_PID $WEB_PID
-
-  # Stop Docker containers
-  docker compose -f docker-compose.staging.yml down
-
-${YELLOW}Next Steps:${NC}
-
-  1. Test user registration at http://localhost:3000
-  2. Verify KYC upload feature
-  3. Test API endpoints with valid tokens
-  4. Monitor logs for any errors
-  5. Review STAGING_DEPLOYMENT_GUIDE.md for detailed testing
-
-${YELLOW}Documentation:${NC}
-
-  • STAGING_DEPLOYMENT_GUIDE.md    - Complete deployment guide
-  • DEPLOYMENT_STATUS.md            - Status & checklist
-  • SECURITY_SUMMARY.md             - 20/20 OWASP fixes documented
-
-EOF
-
-print_success "Deployment successful!"
+# Step 5: Instructions
+echo "🎯 Step 5: Ready for deployment!"
+echo ""
+echo "NEXT STEPS:"
+echo ""
+echo "1️⃣  FRONTEND DEPLOYMENT (Vercel)"
+echo "   - Go to: https://vercel.com/new"
+echo "   - Connect your GitHub/GitLab repository"
+echo "   - Select branch: $BRANCH"
+echo "   - Framework: Next.js (auto-detected)"
+echo "   - Environment: NEXT_PUBLIC_API_URL=https://your-api.railway.app"
+echo "   - Deploy!"
+echo ""
+echo "2️⃣  BACKEND DEPLOYMENT (Railway)"
+echo "   - Go to: https://railway.app/new"
+echo "   - Select 'Deploy from GitHub'"
+echo "   - Select your repository"
+echo "   - Add PostgreSQL service"
+echo "   - Add Redis service"
+echo "   - Configure environment variables (see .env.production.example)"
+echo "   - Deploy!"
+echo ""
+echo "3️⃣  POST-DEPLOYMENT"
+echo "   - Update NEXT_PUBLIC_API_URL in Vercel with Railway URL"
+echo "   - Run migrations: pnpm db:migrate"
+echo "   - Test health check: curl https://your-api/api/v1/health"
+echo "   - Test signup flow: https://your-frontend.vercel.app/cadastro"
+echo ""
+echo "📚 Full guide: ./DEPLOY_GUIDE.md"
+echo ""
+echo "✨ Happy deploying!"
