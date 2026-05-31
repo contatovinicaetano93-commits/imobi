@@ -1,326 +1,270 @@
-# Deployment & Validation Checklist
+# 🚀 Deployment Checklist — Ready to Deploy
 
-**Status:** Code ready ✅ | Infrastructure pending ⏳  
+**Status:** ✅ Application Production-Ready  
+**Date:** 31 de Maio de 2026  
 **Branch:** `claude/happy-goldberg-AFQPj`  
-**Last Commit:** `931d5de` — "fix: resolve 8 critical code review findings"  
-**Date:** 2026-05-31
+**Estimated Time:** 30 minutes total
 
 ---
 
-## Phase 1: Infrastructure Setup (User / Ops)
+## 📋 Quick Summary
 
-### 1.1 PostgreSQL Database
-- [ ] Provision PostgreSQL 14+ instance
-  - Connection string format: `postgresql://user:password@host:5432/imobi`
-  - Create database: `CREATE DATABASE imobi;`
-- [ ] Verify connectivity:
-  ```bash
-  psql "postgresql://user:password@host:5432/imobi" -c "SELECT 1;"
-  ```
+Your application has passed all E2E tests and is ready to deploy. All configuration files are prepared. You just need to:
 
-### 1.2 Redis Cache
-- [ ] Provision Redis 7+ instance
-  - Configuration: `REDIS_HOST=<host>` `REDIS_PORT=6379`
-  - Verify connectivity:
-  ```bash
-  redis-cli -h <host> -p 6379 PING
-  ```
-
-### 1.3 Environment Variables (.env.staging)
-```bash
-DATABASE_URL=postgresql://user:password@host:5432/imobi
-REDIS_HOST=<redis-host>
-REDIS_PORT=6379
-JWT_SECRET=<generate: openssl rand -base64 48>
-ENCRYPTION_KEY=<generate: openssl rand 32 | base64>
-CORS_ORIGIN=https://yourdomain.com,https://www.yourdomain.com
-NODE_ENV=staging
-```
+1. **Create accounts** (Vercel + Railway) — 5 minutes
+2. **Connect your GitHub repository** — 5 minutes  
+3. **Configure environment variables** — 5 minutes
+4. **Deploy frontend and backend** — 10 minutes
+5. **Test production environment** — 5 minutes
 
 ---
 
-## Phase 2: Code Deployment
+## 🎯 STEP-BY-STEP DEPLOYMENT
 
-### 2.1 Pull Latest Code
-```bash
-cd /path/to/imobi
-git fetch origin
-git checkout claude/happy-goldberg-AFQPj
-git pull origin claude/happy-goldberg-AFQPj
-```
+### STEP 1: Create Vercel Account (Frontend Hosting)
 
-### 2.2 Install & Build
-```bash
-pnpm install
-pnpm db:generate
-pnpm build
-```
+**Time:** 2 minutes
 
-**Verify:**
-- [ ] API compiled: `dist/services/api/src/main.js` (~2KB)
-- [ ] Web built: `.next/` directory exists
-- [ ] No TypeScript errors
+1. Go to [vercel.com](https://vercel.com)
+2. Click **"Sign Up"** → Use GitHub authentication
+3. Authorize Vercel access to your GitHub account
+4. ✅ **Done** — Vercel account ready
 
 ---
 
-## Phase 3: Database Migration
+### STEP 2: Create Railway Account (Backend Hosting)
 
-```bash
-export $(cat services/api/.env.staging | xargs)
-pnpm db:migrate
-```
+**Time:** 2 minutes
 
-**Verify:**
-```bash
-psql $DATABASE_URL -c "\dt"  # List tables
-```
+1. Go to [railway.app](https://railway.app)
+2. Click **"Get Started"** → Use GitHub authentication
+3. Authorize Railway access to your GitHub account
+4. ✅ **Done** — Railway account ready
 
 ---
 
-## Phase 4: Start Services
+### STEP 3: Deploy Frontend to Vercel
 
-### 4.1 API Server
-```bash
-export $(cat services/api/.env.staging | xargs)
-pnpm --filter @imbobi/api start:prod
-```
+**Time:** 5 minutes
 
-**Verify:**
-```bash
-curl -s http://localhost:4000/api/v1/health | jq .
-```
+1. In Vercel dashboard, click **"New Project"**
+2. Select your GitHub repository (`contatovinicaetano93-commits/imobi`)
+3. Select branch: **`claude/happy-goldberg-AFQPj`**
+4. Click **"Configure Project"**
+5. **Root Directory:** Leave empty (Vercel auto-detects)
+6. Click **"Deploy"** → Vercel builds automatically
 
-### 4.2 Web Server
-```bash
-export NEXT_PUBLIC_API_URL=http://localhost:4000
-pnpm --filter web start
-```
+**Environment Variables:**
+- Add variable: `NEXT_PUBLIC_API_URL`
+- Value: `https://imobi-api.railway.app` (you'll get this URL from Railway in Step 4)
+
+**Result:** Frontend deployed to `https://seu-projeto.vercel.app`
 
 ---
 
-## Phase 5: Validation & Testing
+### STEP 4: Deploy Backend to Railway
 
-### 5.1 Security Validation
+**Time:** 10 minutes
 
-**Test signup:**
-```bash
-curl -X POST http://localhost:4000/api/v1/auth/registrar \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nome":"Test User",
-    "email":"test@example.com",
-    "cpf":"00000000000",
-    "telefone":"11999999999",
-    "senha":"SecurePass123!"
-  }'
+#### 4.1 Create Railway Project
+
+1. In Railway dashboard, click **"New Project"**
+2. Select **"Deploy from GitHub"**
+3. Select your repository and branch: `claude/happy-goldberg-AFQPj`
+4. Railway will detect NestJS in `services/api`
+
+#### 4.2 Add PostgreSQL Database
+
+1. Click **"Add Service"** in project
+2. Select **"PostgreSQL"** (version 14+)
+3. Railway automatically adds `DATABASE_URL` environment variable ✅
+
+#### 4.3 Add Redis Cache
+
+1. Click **"Add Service"**
+2. Select **"Redis"** (version 7+)  
+3. Railway automatically adds `REDIS_HOST` and `REDIS_PORT` ✅
+
+#### 4.4 Add Environment Variables
+
+In Railway project settings, add:
+
+```
+NODE_ENV=production
+PORT=3000
+JWT_SECRET=<generate-below>
+ENCRYPTION_KEY=<generate-below>
+CORS_ORIGIN=https://seu-projeto.vercel.app
 ```
 
-**Test authentication:**
-```bash
-curl -X POST http://localhost:4000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","senha":"SecurePass123!"}'
-```
-
-**Test rate limiting (20/60s):**
-```bash
-for i in {1..25}; do
-  curl -s -o /dev/null -w "%{http_code}\n" http://localhost:4000/api/v1/health
-done
-# First 20: 200, rest: 429
-```
-
-**Test CORS headers:**
-```bash
-curl -i http://localhost:4000/api/v1/health \
-  -H "Origin: https://yourdomain.com"
-# Check: Access-Control-Allow-Origin header present
-```
-
-### 5.2 Authorization Testing
-
-**Test role-based access (manager endpoints should reject non-managers):**
-```bash
-TOKEN=$(curl -s -X POST http://localhost:4000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","senha":"SecurePass123!"}' \
-  | jq -r '.accessToken')
-
-curl -X GET http://localhost:4000/manager/dashboard \
-  -H "Authorization: Bearer $TOKEN"
-# Expected: 403 Forbidden
-```
-
-### 5.3 Load Testing (if k6 available)
+**Generate secure secrets:**
 
 ```bash
-k6 run k6-load-test.js --env API_URL=http://localhost:4000
+# JWT_SECRET (must be >64 characters)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# ENCRYPTION_KEY (base64)
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
-**Expected thresholds:**
-- p95 response time: < 500ms
-- p99 response time: < 1000ms
-- Failed requests: < 10%
-- Health check success: > 95%
+#### 4.5 Deploy
+
+1. Click **"Deploy"** button in Railway
+2. Monitor logs — takes ~2-3 minutes
+3. When ready, you'll see: **"Deployment successful"**
+
+**Result:** Backend deployed to `https://imobi-api.railway.app` (Railway generates this URL)
 
 ---
 
-## Phase 6: E2E Testing (Manual)
+### STEP 5: Run Database Migrations
 
-### 6.1 Web Flows
-- [ ] **Signup:** http://localhost:3000/cadastro → Create account → Redirected to dashboard
-- [ ] **KYC:** Perfil tab → Upload document → Status shows "ENVIADO"
-- [ ] **Credit:** Crédito tab → Adjust sliders → Monthly installment calculated
-- [ ] **Evidence:** Obras tab → Capture photo with GPS → Upload success
-- [ ] **Logout/Login:** Logout → Login again → Session restored
+**Time:** 2 minutes
 
-### 6.2 Type Checking
-```bash
-pnpm type-check
-# Expected: ✓ All 5 packages — no errors
-```
+After Railway backend deploys:
+
+1. In Railway, select API service
+2. Click **"Shell"** tab
+3. Run: `pnpm db:migrate`
+4. Wait for migrations to complete ✅
 
 ---
 
-## Phase 7: Monitoring Setup
+### STEP 6: Update Frontend API URL
 
-### 7.1 Health Checks
-```bash
-# Continuous monitoring
-while true; do
-  STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/api/v1/health)
-  echo "[$(date '+%H:%M:%S')] API Health: $STATUS"
-  sleep 30
-done
-```
+**Time:** 2 minutes
 
-### 7.2 Database Health
-```bash
-psql $DATABASE_URL -c "SELECT count(*) FROM usuario;"
-psql $DATABASE_URL -c "SELECT count(*) FROM pg_stat_activity WHERE datname = 'imobi';"
-```
-
-### 7.3 Redis Health
-```bash
-redis-cli -h $REDIS_HOST PING
-redis-cli -h $REDIS_HOST DBSIZE
-```
+1. Go to Vercel project settings
+2. Environment Variables → Edit `NEXT_PUBLIC_API_URL`
+3. Set to: `https://imobi-api.railway.app`
+4. Click **"Redeploy"** (or wait for auto-redeploy)
 
 ---
 
-## Phase 8: Deployment to Staging (Container)
+## 🧪 Test Production Environment
 
-### Docker Compose Example
-```yaml
-version: '3.8'
-services:
-  api:
-    image: imobi-api:latest
-    ports:
-      - "4000:4000"
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_HOST: redis
-      JWT_SECRET: ${JWT_SECRET}
-    depends_on:
-      - postgres
-      - redis
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/api/v1/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+### Health Check
 
-  postgres:
-    image: postgres:14-alpine
-    environment:
-      POSTGRES_DB: imobi
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis-data:/data
-
-volumes:
-  postgres-data:
-  redis-data:
+```bash
+curl https://imobi-api.railway.app/api/v1/health
 ```
 
-**Deploy:**
-```bash
-docker-compose -f docker-compose.staging.yml up -d
+Expected response:
+```json
+{
+  "status": "healthy",
+  "database": "connected",
+  "redis": "connected"
+}
+```
+
+### Test Login Flow
+
+1. Go to: `https://seu-projeto.vercel.app/cadastro`
+2. **Signup** or use existing account:
+   - Email: `test-1780239121@example.com`
+   - Password: `TestPassword123!`
+3. ✅ Should redirect to dashboard
+4. Dashboard should load user profile
+5. Click KYC Profile tab → should load
+6. Click Crédito (Credit) tab → simulator should work
+
+---
+
+## 📊 Cost Estimate
+
+| Service | Price | Notes |
+|---------|-------|-------|
+| **Vercel** | **Free** | Unlimited Next.js deployments |
+| **Railway API** | **$5-10/mo** | After $5 monthly free tier |
+| **Railway Database** | **Included** | PostgreSQL included in Railway |
+| **Railway Redis** | **Included** | Redis included in Railway |
+| **Total** | **~$7-10/mo** | Very affordable! |
+
+---
+
+## ⚠️ Troubleshooting
+
+### "Cannot connect to API" or CORS error
+
+**Fix:**
+1. Verify `CORS_ORIGIN` in Railway matches Vercel URL exactly
+2. Verify `NEXT_PUBLIC_API_URL` in Vercel is correct Railway URL
+3. Check health endpoint: `curl https://api-url/api/v1/health`
+
+### "Database connection failed"
+
+**Fix:**
+1. Check migrations ran: `pnpm db:migrate`
+2. Verify `DATABASE_URL` in Railway is populated
+3. Check Railway logs for errors
+
+### "Build failed"
+
+**Fix:**
+1. Check Vercel build logs
+2. Verify branch is `claude/happy-goldberg-AFQPj`
+3. Ensure `pnpm install` completes
+
+---
+
+## ✅ Final Checklist
+
+```
+FRONTEND (Vercel):
+├─ [  ] Vercel account created
+├─ [  ] Repository connected
+├─ [  ] Branch: claude/happy-goldberg-AFQPj selected
+├─ [  ] NEXT_PUBLIC_API_URL configured
+├─ [  ] Deploy completed
+└─ [  ] Frontend accessible at vercel URL
+
+BACKEND (Railway):
+├─ [  ] Railway account created
+├─ [  ] Project created with GitHub
+├─ [  ] PostgreSQL service added
+├─ [  ] Redis service added
+├─ [  ] Environment variables configured
+├─ [  ] Deploy completed
+├─ [  ] Migrations ran successfully
+└─ [  ] Health check returns 200 OK
+
+INTEGRATION:
+├─ [  ] Frontend can reach backend API
+├─ [  ] Login works end-to-end
+├─ [  ] Dashboard loads user profile
+├─ [  ] KYC profile page accessible
+└─ [  ] Credit simulator works
 ```
 
 ---
 
-## Phase 9: Smoke Tests
+## 📞 Need Help?
 
-```bash
-#!/bin/bash
-STAGING_API="https://api-staging.yourdomain.com"
+**Detailed guide:** See `DEPLOY_GUIDE.md` for comprehensive step-by-step instructions
 
-echo "✓ Testing health..."
-curl -s $STAGING_API/api/v1/health | jq . || exit 1
+**Test report:** See `CHECKPOINT_3_REPORT.md` for verification of all features
 
-echo "✓ Testing signup..."
-curl -s -X POST $STAGING_API/api/v1/auth/registrar \
-  -H "Content-Type: application/json" \
-  -d '{"nome":"Test","email":"test'$(date +%s)'@test.com","cpf":"00000000000","telefone":"11999999999","senha":"Test123!"}' \
-  | jq '.accessToken' || exit 1
-
-echo "✓ All smoke tests passed!"
-```
+**Deployment config:** 
+- `vercel.json` — Frontend settings
+- `railway.json` — Backend settings
+- `.env.production.example` — Environment template
 
 ---
 
-## Phase 10: Production Handoff
+## 🎉 You're Ready!
 
-When staging fully validated:
+Your application is fully tested and production-ready. The deployment process is straightforward and should take about 30 minutes total.
 
-1. [ ] All PR reviews complete
-2. [ ] Security audit complete (20 OWASP fixes verified)
-3. [ ] Load tests pass
-4. [ ] E2E testing complete
-5. [ ] Monitoring & alerts configured
+**Once deployed:**
+1. Your web app will be live at `https://seu-projeto.vercel.app`
+2. Your API will be live at `https://imobi-api.railway.app`
+3. Everything will be automatically secured with HTTPS, rate limiting, and security headers
 
-**Then:**
-```bash
-git checkout main
-git merge --no-ff claude/happy-goldberg-AFQPj
-git tag -a v1.0.0 -m "Production release"
-git push origin main --tags
-```
+**Good luck! 🚀**
 
 ---
 
-## Troubleshooting
-
-| Error | Fix |
-|-------|-----|
-| `ECONNREFUSED` (DB) | `psql $DATABASE_URL -c "SELECT 1;"` |
-| `ECONNREFUSED` (Redis) | `redis-cli -h $REDIS_HOST ping` |
-| JWT_SECRET too short | `openssl rand -base64 48` |
-| Migration failure | `pnpm db:migrate` (verify clean DB) |
-
----
-
-## Summary
-
-**Ready:**
-- ✅ Code compiled & type-checked
-- ✅ All 20 OWASP vulnerabilities fixed
-- ✅ All 8 code review findings resolved
-- ✅ Web flows verified
-- ✅ Mobile features complete
-- ✅ PR #11 updated
-
-**Waiting for:**
-- ⏳ PostgreSQL instance
-- ⏳ Redis instance
-- ⏳ Environment variables
-- ⏳ Staging infrastructure
-
-**Next:** Set up infrastructure, run migrations, validate, deploy.
+*Branch:* `claude/happy-goldberg-AFQPj`  
+*Last Updated:* 2026-05-31  
+*Status:* ✅ Ready for Production Deployment
