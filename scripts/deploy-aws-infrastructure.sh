@@ -84,8 +84,11 @@ log_info "Criando RDS..."
 aws rds create-db-subnet-group --db-subnet-group-name "$APP_NAME-db-subnet" --db-subnet-group-description "Subnet group for imobi RDS" --subnet-ids $PUBLIC_SUBNET_ID $PRIVATE_SUBNET_ID --region $AWS_REGION 2>/dev/null || true
 
 # Create RDS PostgreSQL Instance
-RDS_INSTANCE=$(aws rds create-db-instance \
-  --db-instance-identifier "$APP_NAME-postgres" \
+log_info "Criando RDS PostgreSQL (instância criada, mas pode levar 5-10 minutos para ficar disponível)..."
+RDS_INSTANCE="$APP_NAME-postgres"
+
+aws rds create-db-instance \
+  --db-instance-identifier "$RDS_INSTANCE" \
   --db-instance-class db.t3.micro \
   --engine postgres \
   --engine-version 15.3 \
@@ -102,16 +105,43 @@ RDS_INSTANCE=$(aws rds create-db-instance \
   --region $AWS_REGION \
   --skip-final-snapshot \
   --query 'DBInstance.DBInstanceIdentifier' \
-  --output text 2>/dev/null || echo "$APP_NAME-postgres")
+  --output text 2>/dev/null || true
 
-log_success "RDS criado: $RDS_INSTANCE"
+log_success "RDS instância iniciada: $RDS_INSTANCE"
 log_info "⏳ Aguardando RDS ficar disponível (isso pode levar 5-10 minutos)..."
 
-# Wait for RDS to be available
-aws rds wait db-instance-available --db-instance-identifier $RDS_INSTANCE --region $AWS_REGION || true
+# Wait for RDS to be available with retry logic
+MAX_RETRIES=60
+RETRY_INTERVAL=10
+ATTEMPT=0
 
-# Get RDS endpoint
-RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier $RDS_INSTANCE --region $AWS_REGION --query 'DBInstances[0].Endpoint.Address' --output text)
+while [ $ATTEMPT -lt $MAX_RETRIES ]; do
+  if aws rds describe-db-instances --db-instance-identifier $RDS_INSTANCE --region $AWS_REGION &>/dev/null; then
+    STATUS=$(aws rds describe-db-instances --db-instance-identifier $RDS_INSTANCE --region $AWS_REGION --query 'DBInstances[0].DBInstanceStatus' --output text)
+    if [ "$STATUS" = "available" ]; then
+      log_success "RDS disponível!"
+      break
+    else
+      echo "  Status: $STATUS... (tentativa $((ATTEMPT+1))/$MAX_RETRIES)"
+    fi
+  else
+    echo "  Instância criando... (tentativa $((ATTEMPT+1))/$MAX_RETRIES)"
+  fi
+
+  ATTEMPT=$((ATTEMPT + 1))
+  if [ $ATTEMPT -lt $MAX_RETRIES ]; then
+    sleep $RETRY_INTERVAL
+  fi
+done
+
+if [ $ATTEMPT -ge $MAX_RETRIES ]; then
+  log_error "RDS não ficou disponível após $(($MAX_RETRIES * $RETRY_INTERVAL)) segundos"
+  log_info "Continuando mesmo assim... você pode verificar o status em:"
+  log_info "  aws rds describe-db-instances --db-instance-identifier $RDS_INSTANCE --region $AWS_REGION"
+fi
+
+# Get RDS endpoint (pode demorar um pouco para estar disponível)
+RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier $RDS_INSTANCE --region $AWS_REGION --query 'DBInstances[0].Endpoint.Address' --output text 2>/dev/null || echo "pending")
 log_success "RDS Endpoint: $RDS_ENDPOINT"
 
 # Create ElastiCache Redis
@@ -125,8 +155,11 @@ aws elasticache create-cache-subnet-group \
   --region $AWS_REGION 2>/dev/null || true
 
 # Create Redis Cluster
-REDIS_ENDPOINT=$(aws elasticache create-cache-cluster \
-  --cache-cluster-id "$APP_NAME-redis" \
+log_info "Criando ElastiCache Redis..."
+REDIS_CLUSTER_ID="$APP_NAME-redis"
+
+aws elasticache create-cache-cluster \
+  --cache-cluster-id "$REDIS_CLUSTER_ID" \
   --cache-node-type cache.t3.micro \
   --engine redis \
   --engine-version 7.0 \
@@ -135,14 +168,39 @@ REDIS_ENDPOINT=$(aws elasticache create-cache-cluster \
   --security-group-ids $REDIS_SG \
   --region $AWS_REGION \
   --query 'CacheCluster.CacheNodes[0].Address' \
-  --output text 2>/dev/null || echo "pending")
+  --output text 2>/dev/null || true
 
-log_success "Redis criado"
+log_success "Redis instância iniciada"
 log_info "⏳ Aguardando Redis ficar disponível..."
 
-aws elasticache wait cache-cluster-available --cache-cluster-id "$APP_NAME-redis" --region $AWS_REGION || true
+# Wait for Redis with retry logic
+MAX_RETRIES=60
+RETRY_INTERVAL=10
+ATTEMPT=0
 
-REDIS_ENDPOINT=$(aws elasticache describe-cache-clusters --cache-cluster-id "$APP_NAME-redis" --show-cache-node-info --region $AWS_REGION --query 'CacheClusters[0].CacheNodes[0].Address' --output text)
+while [ $ATTEMPT -lt $MAX_RETRIES ]; do
+  STATUS=$(aws elasticache describe-cache-clusters --cache-cluster-id "$REDIS_CLUSTER_ID" --region $AWS_REGION --query 'CacheClusters[0].CacheClusterStatus' --output text 2>/dev/null || echo "creating")
+
+  if [ "$STATUS" = "available" ]; then
+    log_success "Redis disponível!"
+    break
+  else
+    echo "  Status: $STATUS... (tentativa $((ATTEMPT+1))/$MAX_RETRIES)"
+  fi
+
+  ATTEMPT=$((ATTEMPT + 1))
+  if [ $ATTEMPT -lt $MAX_RETRIES ]; then
+    sleep $RETRY_INTERVAL
+  fi
+done
+
+if [ $ATTEMPT -ge $MAX_RETRIES ]; then
+  log_error "Redis não ficou disponível após $(($MAX_RETRIES * $RETRY_INTERVAL)) segundos"
+  log_info "Continuando mesmo assim... você pode verificar o status em:"
+  log_info "  aws elasticache describe-cache-clusters --cache-cluster-id $REDIS_CLUSTER_ID --region $AWS_REGION"
+fi
+
+REDIS_ENDPOINT=$(aws elasticache describe-cache-clusters --cache-cluster-id "$REDIS_CLUSTER_ID" --show-cache-node-info --region $AWS_REGION --query 'CacheClusters[0].CacheNodes[0].Address' --output text 2>/dev/null || echo "pending")
 log_success "Redis Endpoint: $REDIS_ENDPOINT"
 
 # Create S3 Bucket
