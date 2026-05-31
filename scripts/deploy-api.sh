@@ -6,7 +6,7 @@ set -e
 
 API_IP=${1:-""}
 ENVIRONMENT=${2:-"production"}
-SSH_KEY="${HOME}/.ssh/imobi-api.pem"
+SSH_KEY="${HOME}/.ssh/imobi-key.pem"
 
 if [ -z "$API_IP" ]; then
   echo "Usage: ./deploy-api.sh <API_IP> [ENVIRONMENT]"

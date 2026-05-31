@@ -7,7 +7,7 @@ set -e
 WEB_IP=${1:-""}
 API_URL=${2:-""}
 ENVIRONMENT=${3:-"production"}
-SSH_KEY="${HOME}/.ssh/imobi-web.pem"
+SSH_KEY="${HOME}/.ssh/imobi-key.pem"
 
 if [ -z "$WEB_IP" ] || [ -z "$API_URL" ]; then
   echo "Usage: ./deploy-web.sh <WEB_IP> <API_URL> [ENVIRONMENT]"
