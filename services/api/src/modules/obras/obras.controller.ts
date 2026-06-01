@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { ObrasService } from "./obras.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";

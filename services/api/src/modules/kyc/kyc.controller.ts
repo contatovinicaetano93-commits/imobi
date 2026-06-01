@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Patch, Body, Param, UseGuards, ForbiddenException } from "@nestjs/common";
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 import { KycService } from "./kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";

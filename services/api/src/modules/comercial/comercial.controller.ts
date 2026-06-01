@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ComercialService } from './comercial.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { UsuarioAtual, type UsuarioAtual as IUsuario } from '../../common/decorators/usuario-atual.decorator';
 
 @Controller('api/comercial')
 @UseGuards(JwtAuthGuard)
@@ -49,8 +50,8 @@ export class ComercialController {
   }
 
   @Post('leads')
-  async createLead(@Body() data: any) {
-    return this.comercialService.criarLead(data);
+  async createLead(@UsuarioAtual() u: IUsuario, @Body() data: any) {
+    return this.comercialService.criarLead(u.id, data);
   }
 
   @Get('leads/:leadId')

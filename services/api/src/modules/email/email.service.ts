@@ -187,4 +187,20 @@ export class EmailService {
       html,
     });
   }
+
+  async contaExcluida(nome: string, email: string): Promise<boolean> {
+    const html = `
+      <h2>Conta Excluída</h2>
+      <p>Olá ${nome},</p>
+      <p>Sua conta e todos os dados associados foram excluídos com sucesso de acordo com sua solicitação LGPD.</p>
+      <p>Registros de conformidade serão mantidos conforme requisitos legais.</p>
+      <p>Se tiver dúvidas, entre em contato conosco.</p>
+    `;
+
+    return this.enviarEmail({
+      to: email,
+      subject: "Conta Excluída com Sucesso",
+      html,
+    });
+  }
 }

@@ -32,6 +32,8 @@ model Usuario {
   kycDocumentos KycDocumento[] @relation("KycDocumentos")
   notificacoes  Notificacao[]
   fcmTokens     UsuarioFcmToken[]
+  leadsCreated  Lead[] @relation("LeadsCreatedBy")
+  leadActivities LeadActivity[] @relation("LeadActivities")
 
   @@index([email])
   @@index([cpf])
@@ -130,6 +132,7 @@ model Obra {
 
   etapas              EtapaObra[]
   evidencias          EvidenciaEtapa[]
+  leads               Lead[]
 
   @@index([usuarioId])
   @@index([creditoId])
@@ -327,4 +330,92 @@ model AnalyticsEvent {
   @@index([usuarioId])
   @@index([eventType])
   @@index([timestamp])
+}
+
+// ── Comercial / Leads ────────────────────────────────────────────────
+
+model PipelineStage {
+  stageId     String   @id @default(uuid())
+  pipelineId  String
+  pipeline    Pipeline @relation(fields: [pipelineId], references: [pipelineId], onDelete: Cascade)
+  nome        String
+  ordem       Int
+  criadoEm    DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  leads       Lead[]
+
+  @@unique([pipelineId, ordem])
+  @@index([pipelineId])
+}
+
+model Pipeline {
+  pipelineId  String   @id @default(uuid())
+  nome        String
+  criadoEm    DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  stages      PipelineStage[]
+
+  @@index([criadoEm])
+}
+
+model Lead {
+  leadId            String   @id @default(uuid())
+  clienteNome       String
+  clienteEmail      String
+  clienteTelefone   String
+  clienteCpf        String?
+  fonte             String   // PARCEIRO, INDICACAO, WEBSITE, OFFLINE
+  tipoObra          String   // residencial, comercial, industrial, reforma
+  segmentoCliente   String   // NOVO, RETORNO, CONCORRENTE
+  stageId           String
+  stage             PipelineStage @relation(fields: [stageId], references: [stageId], onDelete: Restrict)
+  obraId            String?
+  obra              Obra?    @relation(fields: [obraId], references: [obraId], onDelete: SetNull)
+  usuarioId         String
+  usuario           Usuario  @relation("LeadsCreatedBy", fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  criadoEm          DateTime @default(now())
+  atualizadoEm      DateTime @updatedAt
+
+  atividades        LeadActivity[]
+  scoreHistorico    ConversionScore[]
+
+  @@index([stageId])
+  @@index([usuarioId])
+  @@index([obraId])
+  @@index([criadoEm])
+}
+
+model LeadActivity {
+  leadActivityId String   @id @default(uuid())
+  leadId         String
+  lead           Lead     @relation(fields: [leadId], references: [leadId], onDelete: Cascade)
+  usuarioId      String
+  usuario        Usuario  @relation("LeadActivities", fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  tipo           String   // CALL, EMAIL, MEETING, PROPOSAL, VISIT, FOLLOW_UP, NOTE
+  descricao      String
+  criadoEm       DateTime @default(now())
+
+  @@index([leadId])
+  @@index([usuarioId])
+  @@index([criadoEm])
+}
+
+model ConversionScore {
+  scoreId              String   @id @default(uuid())
+  leadId               String
+  lead                 Lead     @relation(fields: [leadId], references: [leadId], onDelete: Cascade)
+  scoreFinal           Int
+  probabilidadeClosing Float
+  dataEstimadaClosing  DateTime
+  fonteScore           Int
+  tipoObraScore        Int
+  segmentoScore        Int
+  engajamentoScore     Int
+  historicoScore       Int
+  criadoEm             DateTime @default(now())
+
+  @@index([leadId])
+  @@index([criadoEm])
 }

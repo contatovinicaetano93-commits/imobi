@@ -1,6 +1,7 @@
 import {
   Controller, Post, Get, Patch, Param, Body, UseGuards, ForbiddenException,
 } from "@nestjs/common";
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
 import { EvidenciasService } from "./evidencias.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -23,6 +24,7 @@ export class EvidenciasController {
       latitude: Number(body.latitude),
       longitude: Number(body.longitude),
       accuracyMetros: Number(body.accuracyMetros),
+      timestampCaptura: body.timestampCaptura || new Date().toISOString(),
       descricao: body.descricao || "",
     };
 

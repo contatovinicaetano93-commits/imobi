@@ -1,4 +1,5 @@
 import { Controller, Get, Patch, Param, Query, Body, UseGuards } from "@nestjs/common";
+import { ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
 import { ManagerService } from "./manager.service";
 import { EtapasService } from "../etapas/etapas.service";
 import { KycService } from "../kyc/kyc.service";

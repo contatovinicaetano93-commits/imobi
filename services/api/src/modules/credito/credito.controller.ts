@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, UseGuards, UseInterceptors, ForbiddenException } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
 import { CreditoService } from "./credito.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";

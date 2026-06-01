@@ -9,7 +9,7 @@ export class ComercialService {
     private scoringService: ConversionScoringService
   ) {}
 
-  async criarLead(data: any) {
+  async criarLead(usuarioId: string, data: any) {
     const defaultStage = await this.prisma.pipelineStage.findFirst({
       where: { nome: 'PROSPECÇÃO' },
     });
@@ -28,6 +28,7 @@ export class ComercialService {
         tipoObra: data.tipoObra,
         segmentoCliente: data.segmentoCliente,
         stageId: defaultStage.stageId,
+        usuarioId,
       },
       include: {
         scoreHistorico: { take: 1, orderBy: { criadoEm: 'desc' } },

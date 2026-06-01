@@ -24,6 +24,7 @@ import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { ScoreUpdateWorker } from "./workers/score-update.worker";
+import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { HealthController } from "./common/health.controller";
 import { HealthService } from "./common/health.service";
 import { CsrfService } from "./common/csrf.service";
@@ -96,6 +97,7 @@ import { QUEUE_LIBERACAO } from "./common/constants";
     HealthService,
     LoggerService,
     ScoreUpdateWorker,
+    LiberacaoParcelaWorker,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
@@ -109,6 +111,5 @@ import { QUEUE_LIBERACAO } from "./common/constants";
       useClass: StructuredLoggingInterceptor,
     },
   ],
-  providers: [LiberacaoParcelaWorker],
 })
 export class AppModule {}

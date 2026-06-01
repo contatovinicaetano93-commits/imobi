@@ -1,4 +1,5 @@
 import { Controller, Get, Patch, Param, Body, UseGuards, ForbiddenException } from "@nestjs/common";
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
 import { EtapasService } from "./etapas.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";

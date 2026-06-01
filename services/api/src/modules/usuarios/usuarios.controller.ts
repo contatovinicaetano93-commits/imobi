@@ -1,4 +1,5 @@
 import { Controller, Get, Patch, UseGuards, Body, UseInterceptors } from "@nestjs/common";
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
 import { UsuariosService } from "./usuarios.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
