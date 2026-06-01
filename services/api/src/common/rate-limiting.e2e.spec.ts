@@ -26,13 +26,11 @@ describe("Rate Limiting E2E - Load Testing", () => {
 
     // Create test user
     userEmail = `rate-limit-${Date.now()}@imbobi.com`;
-    await request(app.getHttpServer())
-      .post("/api/v1/auth/registrar")
-      .send({
-        email: userEmail,
-        password: "Senha@123",
-        nome: "Rate Limit Test User",
-      });
+    await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+      email: userEmail,
+      password: "Senha@123",
+      nome: "Rate Limit Test User",
+    });
 
     const loginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
@@ -75,7 +73,7 @@ describe("Rate Limiting E2E - Load Testing", () => {
         requests.push(
           request(app.getHttpServer())
             .get("/api/v1/notificacoes")
-            .set("Authorization", `Bearer ${userToken}`)
+            .set("Authorization", `Bearer ${userToken}`),
         );
       }
 
@@ -129,7 +127,7 @@ describe("Rate Limiting E2E - Load Testing", () => {
           request(app.getHttpServer()).post("/api/v1/auth/login").send({
             email: authEmail,
             password: "WrongPassword@123",
-          })
+          }),
         );
       }
 
@@ -234,7 +232,7 @@ describe("Rate Limiting E2E - Load Testing", () => {
               .set("Authorization", `Bearer ${userToken}`)
               .field("etapaId", etapaId)
               .field("latCaptura", "-15.789")
-              .field("lngCaptura", "-48.123")
+              .field("lngCaptura", "-48.123"),
           );
         }
 
@@ -338,7 +336,7 @@ describe("Rate Limiting E2E - Load Testing", () => {
         requests.push(
           request(app.getHttpServer())
             .get("/api/v1/notificacoes")
-            .set("Authorization", `Bearer ${userToken}`)
+            .set("Authorization", `Bearer ${userToken}`),
         );
       }
 
@@ -354,13 +352,11 @@ describe("Rate Limiting E2E - Load Testing", () => {
     it("Multiple users should have independent rate limits", async () => {
       // Create another user
       const user2Email = `rate-limit-user2-${Date.now()}@imbobi.com`;
-      await request(app.getHttpServer())
-        .post("/api/v1/auth/registrar")
-        .send({
-          email: user2Email,
-          password: "Senha@123",
-          nome: "Rate Limit Test User 2",
-        });
+      await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+        email: user2Email,
+        password: "Senha@123",
+        nome: "Rate Limit Test User 2",
+      });
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
@@ -396,7 +392,9 @@ describe("Rate Limiting E2E - Load Testing", () => {
     it("Anonymous requests should also be rate limited", async () => {
       // Requests without auth token should still respect rate limits
       // (or return 401 before hitting rate limit check)
-      const res = await request(app.getHttpServer()).get("/api/v1/notificacoes");
+      const res = await request(app.getHttpServer()).get(
+        "/api/v1/notificacoes",
+      );
 
       expect([200, 401, 429]).toContain(res.status);
     });

@@ -34,13 +34,11 @@ describe("Notifications E2E - Comprehensive Suite", () => {
 
     // Create constructor user
     constructorEmail = `constructor-notif-${Date.now()}@imbobi.com`;
-    await request(app.getHttpServer())
-      .post("/api/v1/auth/registrar")
-      .send({
-        email: constructorEmail,
-        password: "Senha@123",
-        nome: "Constructor Notifications Test",
-      });
+    await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+      email: constructorEmail,
+      password: "Senha@123",
+      nome: "Constructor Notifications Test",
+    });
 
     const constructorLoginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
@@ -51,13 +49,11 @@ describe("Notifications E2E - Comprehensive Suite", () => {
 
     // Create manager user
     managerEmail = `manager-notif-${Date.now()}@imbobi.com`;
-    await request(app.getHttpServer())
-      .post("/api/v1/auth/registrar")
-      .send({
-        email: managerEmail,
-        password: "Senha@123",
-        nome: "Manager Notifications Test",
-      });
+    await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+      email: managerEmail,
+      password: "Senha@123",
+      nome: "Manager Notifications Test",
+    });
 
     const managerLoginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
@@ -220,7 +216,7 @@ describe("Notifications E2E - Comprehensive Suite", () => {
 
       expect(Array.isArray(res.body.notificacoes)).toBe(true);
       const etapaAprovadaNotif = res.body.notificacoes.find(
-        (n: any) => n.tipo === "ETAPA_APROVADA"
+        (n: any) => n.tipo === "ETAPA_APROVADA",
       );
       expect(etapaAprovadaNotif).toBeDefined();
       expect(etapaAprovadaNotif.titulo).toContain("Etapa aprovada");
@@ -233,7 +229,7 @@ describe("Notifications E2E - Comprehensive Suite", () => {
         .expect(200);
 
       const etapaNotif = res.body.notificacoes.find(
-        (n: any) => n.tipo === "ETAPA_APROVADA"
+        (n: any) => n.tipo === "ETAPA_APROVADA",
       );
       expect(etapaNotif).toHaveProperty("notificacaoId");
       expect(etapaNotif).toHaveProperty("usuarioId");
@@ -310,7 +306,7 @@ describe("Notifications E2E - Comprehensive Suite", () => {
         .expect(200);
 
       const etapaNotif = res.body.notificacoes.find(
-        (n: any) => n.tipo === "ETAPA_APROVADA"
+        (n: any) => n.tipo === "ETAPA_APROVADA",
       );
       expect(etapaNotif.lida).toBe(true);
     });
@@ -400,7 +396,7 @@ describe("Notifications E2E - Comprehensive Suite", () => {
         .expect(200);
 
       const etapaNotif = res.body.notificacoes.find(
-        (n: any) => n.tipo === "ETAPA_APROVADA"
+        (n: any) => n.tipo === "ETAPA_APROVADA",
       );
       notificacaoId = etapaNotif.notificacaoId;
       expect(notificacaoId).toBeDefined();
@@ -422,7 +418,7 @@ describe("Notifications E2E - Comprehensive Suite", () => {
         .expect(200);
 
       const deletedNotif = res.body.notificacoes.find(
-        (n: any) => n.notificacaoId === notificacaoId
+        (n: any) => n.notificacaoId === notificacaoId,
       );
       expect(deletedNotif).toBeUndefined();
     });
@@ -480,7 +476,7 @@ describe("Notifications E2E - Comprehensive Suite", () => {
       expect(notificacoes.length).toBeGreaterThan(0);
 
       const etapaAprovadaNotif = notificacoes.find(
-        (n) => n.tipo === "ETAPA_APROVADA"
+        (n) => n.tipo === "ETAPA_APROVADA",
       );
       expect(etapaAprovadaNotif).toBeDefined();
       expect(etapaAprovadaNotif?.titulo).toContain("Etapa");

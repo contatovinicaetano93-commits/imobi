@@ -22,7 +22,10 @@ export class UsuariosService {
     });
   }
 
-  async atualizarPerfil(usuarioId: string, data: { nome?: string; telefone?: string }) {
+  async atualizarPerfil(
+    usuarioId: string,
+    data: { nome?: string; telefone?: string },
+  ) {
     return this.prisma.usuario.update({
       where: { usuarioId },
       data: { ...data, atualizadoEm: new Date() },

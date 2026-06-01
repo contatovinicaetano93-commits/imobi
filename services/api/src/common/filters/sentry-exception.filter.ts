@@ -15,7 +15,7 @@ export class SentryExceptionFilter implements ExceptionFilter {
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = "Internal server error";
-    let details = {};
+    const details = {};
 
     if (exception instanceof Error) {
       message = exception.message;

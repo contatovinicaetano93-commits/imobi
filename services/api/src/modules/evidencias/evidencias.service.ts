@@ -10,25 +10,25 @@ import { calcularDistanciaMetros } from "@imbobi/core";
 import type { UploadEvidenciaInput } from "@imbobi/schemas";
 
 const MAX_ACCURACY_METROS = 15;
-const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/heic', 'image/webp'];
+const ALLOWED_MIME = ["image/jpeg", "image/png", "image/heic", "image/webp"];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 @Injectable()
 export class EvidenciasService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly storage: StorageService
+    private readonly storage: StorageService,
   ) {}
 
   private validateFile(mimeType: string, fileSize: number): void {
     if (!ALLOWED_MIME.includes(mimeType)) {
       throw new BadRequestException(
-        `Invalid image format. Allowed: ${ALLOWED_MIME.join(', ')}`
+        `Invalid image format. Allowed: ${ALLOWED_MIME.join(", ")}`,
       );
     }
     if (fileSize > MAX_FILE_SIZE) {
       throw new BadRequestException(
-        `File size exceeds 10MB limit. Got: ${(fileSize / 1024 / 1024).toFixed(2)}MB`
+        `File size exceeds 10MB limit. Got: ${(fileSize / 1024 / 1024).toFixed(2)}MB`,
       );
     }
   }
@@ -37,7 +37,7 @@ export class EvidenciasService {
     usuarioId: string,
     input: UploadEvidenciaInput,
     fileBuffer: Buffer,
-    mimeType: string
+    mimeType: string,
   ) {
     this.validateFile(mimeType, fileBuffer.length);
 
@@ -53,7 +53,7 @@ export class EvidenciasService {
 
     if (input.accuracyMetros > MAX_ACCURACY_METROS) {
       throw new BadRequestException(
-        `Precisão GPS insuficiente: ${input.accuracyMetros}m. Máximo permitido: ${MAX_ACCURACY_METROS}m.`
+        `Precisão GPS insuficiente: ${input.accuracyMetros}m. Máximo permitido: ${MAX_ACCURACY_METROS}m.`,
       );
     }
 
@@ -75,16 +75,20 @@ export class EvidenciasService {
       {
         latitude: Number(etapa.obra.geoLatitude),
         longitude: Number(etapa.obra.geoLongitude),
-      }
+      },
     );
 
     if (!dentro) {
       throw new ForbiddenException(
-        `Localização inválida. Você está a ${Math.round(distanciaObra)}m da obra. Máximo permitido: ${etapa.obra.raioValidacaoMetros}m.`
+        `Localização inválida. Você está a ${Math.round(distanciaObra)}m da obra. Máximo permitido: ${etapa.obra.raioValidacaoMetros}m.`,
       );
     }
 
-    const { url } = await this.storage.upload(fileBuffer, mimeType, input.etapaId);
+    const { url } = await this.storage.upload(
+      fileBuffer,
+      mimeType,
+      input.etapaId,
+    );
 
     return this.prisma.evidenciaEtapa.create({
       data: {
@@ -107,7 +111,11 @@ export class EvidenciasService {
     });
   }
 
-  async listarPorEtapaComValidacao(usuarioId: string, usuarioTipo: string, etapaId: string) {
+  async listarPorEtapaComValidacao(
+    usuarioId: string,
+    usuarioTipo: string,
+    etapaId: string,
+  ) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId },
       include: { obra: { select: { usuarioId: true } } },
@@ -127,7 +135,12 @@ export class EvidenciasService {
     });
   }
 
-  async validar(gestorId: string, evidenciaId: string, aprovado: boolean, observacao?: string) {
+  async validar(
+    gestorId: string,
+    evidenciaId: string,
+    aprovado: boolean,
+    observacao?: string,
+  ) {
     const evidencia = await this.prisma.evidenciaEtapa.findUnique({
       where: { evidenciaId },
     });

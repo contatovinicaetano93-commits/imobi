@@ -2,7 +2,9 @@ declare const process: { env: Record<string, string | undefined> } | undefined;
 
 const BASE_URL =
   typeof process !== "undefined"
-    ? (process.env["NEXT_PUBLIC_API_URL"] ?? process.env["EXPO_PUBLIC_API_URL"] ?? "")
+    ? (process.env["NEXT_PUBLIC_API_URL"] ??
+      process.env["EXPO_PUBLIC_API_URL"] ??
+      "")
     : "";
 
 interface RequestOptions extends RequestInit {
@@ -13,7 +15,7 @@ class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
-    public code?: string
+    public code?: string,
   ) {
     super(message);
     this.name = "ApiError";
@@ -22,7 +24,7 @@ class ApiError extends Error {
 
 async function request<T>(
   path: string,
-  options: RequestOptions = {}
+  options: RequestOptions = {},
 ): Promise<T> {
   const { token, ...init } = options;
 
@@ -38,7 +40,10 @@ async function request<T>(
   const res = await fetch(`${BASE_URL}/api/v1${path}`, { ...init, headers });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({})) as { message?: string; code?: string };
+    const body = (await res.json().catch(() => ({}))) as {
+      message?: string;
+      code?: string;
+    };
     throw new ApiError(res.status, body.message ?? res.statusText, body.code);
   }
 

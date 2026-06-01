@@ -38,14 +38,17 @@ class LoadTester {
   private metrics: Map<string, PerformanceMetric> = new Map();
   private startTime: number = 0;
 
-  constructor(private app: INestApplication, private prisma: PrismaService) {}
+  constructor(
+    private app: INestApplication,
+    private prisma: PrismaService,
+  ) {}
 
   recordMetric(
     endpoint: string,
     method: string,
     responseTime: number,
     statusCode: number,
-    cacheHit?: boolean
+    cacheHit?: boolean,
   ) {
     const key = `${method} ${endpoint}`;
     if (!this.metrics.has(key)) {
@@ -83,7 +86,7 @@ class LoadTester {
         avg: sorted.reduce((a, b) => a + b, 0) / sorted.length,
         min: Math.min(...sorted),
         max: Math.max(...sorted),
-        errorRate: (m.errorCount / m.totalRequests * 100).toFixed(2) + "%",
+        errorRate: ((m.errorCount / m.totalRequests) * 100).toFixed(2) + "%",
         cacheHitRate: m.cacheHit
           ? ((m.cacheHit / (m.cacheHit + m.cacheMiss!)) * 100).toFixed(2) + "%"
           : undefined,
@@ -93,7 +96,11 @@ class LoadTester {
 
   async simulateConcurrentUsers(
     config: LoadTestConfig,
-    workloadFn: (userId: string, token: string, userIdx: number) => Promise<void>
+    workloadFn: (
+      userId: string,
+      token: string,
+      userIdx: number,
+    ) => Promise<void>,
   ) {
     this.startTime = Date.now();
     const userTokens: Array<{ id: string; token: string }> = [];
@@ -136,7 +143,7 @@ class LoadTester {
         promises.push(
           workloadFn(user.id, user.token, i).catch((e) => {
             // Silently catch workload errors to continue test
-          })
+          }),
         );
       }
     }
@@ -144,13 +151,15 @@ class LoadTester {
     await Promise.all(promises);
 
     // Cleanup
-    const emails = userTokens.map((_, i) => `load-test-${Date.now()}-${i}@imbobi.test`);
+    const emails = userTokens.map(
+      (_, i) => `load-test-${Date.now()}-${i}@imbobi.test`,
+    );
     await this.prisma.usuario.deleteMany({
       where: { email: { in: emails } },
     });
 
     console.log(
-      `[Load Test] Completed ${promises.length} requests in ${Date.now() - this.startTime}ms`
+      `[Load Test] Completed ${promises.length} requests in ${Date.now() - this.startTime}ms`,
     );
   }
 }
@@ -185,23 +194,33 @@ describe("Load Testing & Performance Validation", () => {
         requestsPerUser: 2,
       };
 
-      await loadTester.simulateConcurrentUsers(config, async (userId, token, userIdx) => {
-        const email = `load-auth-${Date.now()}-${userIdx}@imbobi.test`;
-        const startMs = Date.now();
+      await loadTester.simulateConcurrentUsers(
+        config,
+        async (userId, token, userIdx) => {
+          const email = `load-auth-${Date.now()}-${userIdx}@imbobi.test`;
+          const startMs = Date.now();
 
-        const res = await request(app.getHttpServer())
-          .post("/api/v1/auth/login")
-          .send({ email, password: "TestPass@123" });
+          const res = await request(app.getHttpServer())
+            .post("/api/v1/auth/login")
+            .send({ email, password: "TestPass@123" });
 
-        const responseTime = Date.now() - startMs;
-        loadTester.recordMetric("/auth/login", "POST", responseTime, res.status);
-      });
+          const responseTime = Date.now() - startMs;
+          loadTester.recordMetric(
+            "/auth/login",
+            "POST",
+            responseTime,
+            res.status,
+          );
+        },
+      );
 
       const metrics = loadTester.getMetrics();
       const authMetric = metrics.find((m) => m.endpoint === "/auth/login");
 
       expect(authMetric).toBeDefined();
-      expect(authMetric!.errorCount).toBeLessThan(authMetric!.totalRequests * 0.1); // < 10% error
+      expect(authMetric!.errorCount).toBeLessThan(
+        authMetric!.totalRequests * 0.1,
+      ); // < 10% error
       expect(authMetric!.p95).toBeLessThan(1000); // p95 < 1s
     });
   });
@@ -238,7 +257,7 @@ describe("Load Testing & Performance Validation", () => {
       };
 
       let firstRequestTime = 0;
-      let subsequentTimes: number[] = [];
+      const subsequentTimes: number[] = [];
 
       await loadTester.simulateConcurrentUsers(
         config,
@@ -259,20 +278,23 @@ describe("Load Testing & Performance Validation", () => {
 
           const xCacheHeader =
             res.headers["x-cache"] || res.headers["cache-control"] || "unknown";
-          const cacheHit = xCacheHeader.includes("hit") || xCacheHeader.includes("HIT");
+          const cacheHit =
+            xCacheHeader.includes("hit") || xCacheHeader.includes("HIT");
 
           loadTester.recordMetric(
             "/manager/etapas-pendentes",
             "GET",
             responseTime,
             res.status,
-            cacheHit
+            cacheHit,
           );
-        }
+        },
       );
 
       const metrics = loadTester.getMetrics();
-      const dashboardMetric = metrics.find((m) => m.endpoint === "/manager/etapas-pendentes");
+      const dashboardMetric = metrics.find(
+        (m) => m.endpoint === "/manager/etapas-pendentes",
+      );
 
       expect(dashboardMetric).toBeDefined();
       expect(dashboardMetric!.p95).toBeLessThan(500); // p95 < 500ms for cached requests
@@ -304,16 +326,19 @@ describe("Load Testing & Performance Validation", () => {
         requestsPerUser: 3,
       };
 
-      await loadTester.simulateConcurrentUsers(config, async (userId, token, userIdx) => {
-        const startMs = Date.now();
+      await loadTester.simulateConcurrentUsers(
+        config,
+        async (userId, token, userIdx) => {
+          const startMs = Date.now();
 
-        const res = await request(app.getHttpServer())
-          .get("/api/v1/obras?limit=50&offset=0")
-          .set("Authorization", `Bearer ${token}`);
+          const res = await request(app.getHttpServer())
+            .get("/api/v1/obras?limit=50&offset=0")
+            .set("Authorization", `Bearer ${token}`);
 
-        const responseTime = Date.now() - startMs;
-        loadTester.recordMetric("/obras", "GET", responseTime, res.status);
-      });
+          const responseTime = Date.now() - startMs;
+          loadTester.recordMetric("/obras", "GET", responseTime, res.status);
+        },
+      );
 
       const metrics = loadTester.getMetrics();
       const obrasMetric = metrics.find((m) => m.endpoint === "/obras");
@@ -373,20 +398,30 @@ describe("Load Testing & Performance Validation", () => {
       };
 
       // Concurrent attempts to approve same etapa (should mostly fail due to state check)
-      await loadTester.simulateConcurrentUsers(config, async (userId, token, userIdx) => {
-        const startMs = Date.now();
+      await loadTester.simulateConcurrentUsers(
+        config,
+        async (userId, token, userIdx) => {
+          const startMs = Date.now();
 
-        const res = await request(app.getHttpServer())
-          .patch(`/api/v1/etapas/${testEtapa.etapaId}/aprovar`)
-          .set("Authorization", `Bearer ${userToken}`)
-          .send({ observacao: "Approved" });
+          const res = await request(app.getHttpServer())
+            .patch(`/api/v1/etapas/${testEtapa.etapaId}/aprovar`)
+            .set("Authorization", `Bearer ${userToken}`)
+            .send({ observacao: "Approved" });
 
-        const responseTime = Date.now() - startMs;
-        loadTester.recordMetric("/etapas/:id/aprovar", "PATCH", responseTime, res.status);
-      });
+          const responseTime = Date.now() - startMs;
+          loadTester.recordMetric(
+            "/etapas/:id/aprovar",
+            "PATCH",
+            responseTime,
+            res.status,
+          );
+        },
+      );
 
       const metrics = loadTester.getMetrics();
-      const approvalMetric = metrics.find((m) => m.endpoint === "/etapas/:id/aprovar");
+      const approvalMetric = metrics.find(
+        (m) => m.endpoint === "/etapas/:id/aprovar",
+      );
 
       // Even with concurrent attempts, response should be fast
       expect(approvalMetric!.p95).toBeLessThan(800);
@@ -426,21 +461,31 @@ describe("Load Testing & Performance Validation", () => {
     it("should generate comprehensive performance report", () => {
       const metrics = loadTester.getMetrics();
 
-      console.log("\n\n╔════════════════════════════════════════════════════════════════════╗");
-      console.log("║             IMOBI API - LOAD TEST PERFORMANCE REPORT                ║");
-      console.log("╚════════════════════════════════════════════════════════════════════╝\n");
+      console.log(
+        "\n\n╔════════════════════════════════════════════════════════════════════╗",
+      );
+      console.log(
+        "║             IMOBI API - LOAD TEST PERFORMANCE REPORT                ║",
+      );
+      console.log(
+        "╚════════════════════════════════════════════════════════════════════╝\n",
+      );
 
       metrics.forEach((m) => {
         console.log(`\n${m.method} ${m.endpoint}`);
         console.log("  ├─ Requests:      " + m.totalRequests);
-        console.log("  ├─ Errors:        " + m.errorCount + ` (${m.errorRate})`);
         console.log(
-          `  ├─ Response Time: min=${m.min}ms, avg=${m.avg.toFixed(2)}ms, p50=${m.p50}ms, p95=${m.p95}ms, p99=${m.p99}ms, max=${m.max}ms`
+          "  ├─ Errors:        " + m.errorCount + ` (${m.errorRate})`,
+        );
+        console.log(
+          `  ├─ Response Time: min=${m.min}ms, avg=${m.avg.toFixed(2)}ms, p50=${m.p50}ms, p95=${m.p95}ms, p99=${m.p99}ms, max=${m.max}ms`,
         );
         if (m.cacheHitRate) {
           console.log(`  ├─ Cache Hit Rate: ${m.cacheHitRate}`);
         }
-        console.log("  └─ Status:        " + (m.p95 < 500 ? "✓ PASS" : "⚠ SLOW"));
+        console.log(
+          "  └─ Status:        " + (m.p95 < 500 ? "✓ PASS" : "⚠ SLOW"),
+        );
       });
 
       console.log("\n");

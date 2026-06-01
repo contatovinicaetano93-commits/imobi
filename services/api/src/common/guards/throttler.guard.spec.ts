@@ -10,11 +10,7 @@ describe("CustomThrottlerGuard", () => {
   beforeEach(() => {
     reflector = new Reflector();
     mockStorage = {} as ThrottlerStorage;
-    guard = new CustomThrottlerGuard(
-      {} as any,
-      mockStorage,
-      reflector
-    );
+    guard = new CustomThrottlerGuard({} as any, mockStorage, reflector);
   });
 
   describe("getTracker", () => {
@@ -85,9 +81,9 @@ describe("CustomThrottlerGuard", () => {
     it("should have proper rate limit configuration", () => {
       const expectedLimits = {
         general: 100, // 100 req/min
-        auth: 10,     // 10 req/min
-        upload: 5,    // 5 req/min
-        manager: 20,  // 20 req/min
+        auth: 10, // 10 req/min
+        upload: 5, // 5 req/min
+        manager: 20, // 20 req/min
       };
 
       expect(expectedLimits.general).toBe(100);

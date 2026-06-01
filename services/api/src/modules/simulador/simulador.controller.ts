@@ -13,7 +13,11 @@ export class SimuladorController {
   @Post("calcular")
   @HttpCode(200)
   @Throttle({ default: { limit: 50, ttl: 60000 } })
-  @ApiOperation({ summary: "Simular crédito", description: "Calcula taxa de juros, LTV e parcelas baseado em parâmetros do projeto" })
+  @ApiOperation({
+    summary: "Simular crédito",
+    description:
+      "Calcula taxa de juros, LTV e parcelas baseado em parâmetros do projeto",
+  })
   @ApiResponse({ status: 200, description: "Simulação calculada com sucesso" })
   @ApiResponse({ status: 400, description: "Parâmetros de entrada inválidos" })
   async calcular(@Body(new ZodPipe(SimuladorInputSchema)) input: unknown) {

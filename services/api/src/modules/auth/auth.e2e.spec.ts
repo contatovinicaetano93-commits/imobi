@@ -113,7 +113,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
 
     it("POST /auth/registrar → 409 with duplicate email", async () => {
       const email = `duplicate-${Date.now()}@imbobi.com`;
-      
+
       // First registration
       await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
@@ -159,17 +159,15 @@ describe("Auth E2E - Comprehensive Suite", () => {
 
   describe("Login", () => {
     let testEmail: string;
-    let testPassword = "Senha@123";
+    const testPassword = "Senha@123";
 
     beforeAll(async () => {
       testEmail = `login-test-${Date.now()}@imbobi.com`;
-      await request(app.getHttpServer())
-        .post("/api/v1/auth/registrar")
-        .send({
-          email: testEmail,
-          password: testPassword,
-          nome: "Login Test User",
-        });
+      await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+        email: testEmail,
+        password: testPassword,
+        nome: "Login Test User",
+      });
     });
 
     it("POST /auth/login → 200 with valid credentials", async () => {
@@ -271,18 +269,16 @@ describe("Auth E2E - Comprehensive Suite", () => {
 
   describe("Token Refresh", () => {
     let testEmail: string;
-    let testPassword = "Senha@123";
+    const testPassword = "Senha@123";
     let refreshToken: string;
 
     beforeAll(async () => {
       testEmail = `refresh-test-${Date.now()}@imbobi.com`;
-      await request(app.getHttpServer())
-        .post("/api/v1/auth/registrar")
-        .send({
-          email: testEmail,
-          password: testPassword,
-          nome: "Refresh Test User",
-        });
+      await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+        email: testEmail,
+        password: testPassword,
+        nome: "Refresh Test User",
+      });
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
@@ -332,18 +328,16 @@ describe("Auth E2E - Comprehensive Suite", () => {
 
   describe("Logout", () => {
     let testEmail: string;
-    let testPassword = "Senha@123";
+    const testPassword = "Senha@123";
     let refreshToken: string;
 
     beforeAll(async () => {
       testEmail = `logout-test-${Date.now()}@imbobi.com`;
-      await request(app.getHttpServer())
-        .post("/api/v1/auth/registrar")
-        .send({
-          email: testEmail,
-          password: testPassword,
-          nome: "Logout Test User",
-        });
+      await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+        email: testEmail,
+        password: testPassword,
+        nome: "Logout Test User",
+      });
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
@@ -450,13 +444,11 @@ describe("Auth E2E - Comprehensive Suite", () => {
   describe("JWT Expiry Handling", () => {
     it("Access token should have expiry claim", async () => {
       const email = `jwt-test-${Date.now()}@imbobi.com`;
-      await request(app.getHttpServer())
-        .post("/api/v1/auth/registrar")
-        .send({
-          email,
-          password: "Senha@123",
-          nome: "JWT Test User",
-        });
+      await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+        email,
+        password: "Senha@123",
+        nome: "JWT Test User",
+      });
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
@@ -475,13 +467,11 @@ describe("Auth E2E - Comprehensive Suite", () => {
 
     it("Refresh token should have expiry claim", async () => {
       const email = `refresh-jwt-test-${Date.now()}@imbobi.com`;
-      await request(app.getHttpServer())
-        .post("/api/v1/auth/registrar")
-        .send({
-          email,
-          password: "Senha@123",
-          nome: "Refresh JWT Test User",
-        });
+      await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+        email,
+        password: "Senha@123",
+        nome: "Refresh JWT Test User",
+      });
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
@@ -491,7 +481,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
         });
 
       const refreshToken = loginRes.body.refreshToken;
-      
+
       if (refreshToken.includes(".")) {
         const parts = refreshToken.split(".");
         const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());

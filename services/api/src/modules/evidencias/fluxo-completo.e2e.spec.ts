@@ -28,13 +28,11 @@ describe("Fluxo Completo: Obra → Evidência → Vistoria → Liberação", () 
 
     // Create constructor user
     const constructorEmail = `constructor-${Date.now()}@imbobi.com`;
-    await request(app.getHttpServer())
-      .post("/api/v1/auth/registrar")
-      .send({
-        email: constructorEmail,
-        password: "Senha@123",
-        nome: "Construtor Test",
-      });
+    await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+      email: constructorEmail,
+      password: "Senha@123",
+      nome: "Construtor Test",
+    });
 
     const constructorRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
@@ -45,13 +43,11 @@ describe("Fluxo Completo: Obra → Evidência → Vistoria → Liberação", () 
 
     // Create manager user
     const managerEmail = `manager-${Date.now()}@imbobi.com`;
-    await request(app.getHttpServer())
-      .post("/api/v1/auth/registrar")
-      .send({
-        email: managerEmail,
-        password: "Senha@123",
-        nome: "Manager Test",
-      });
+    await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+      email: managerEmail,
+      password: "Senha@123",
+      nome: "Manager Test",
+    });
 
     const managerRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
@@ -167,9 +163,13 @@ describe("Fluxo Completo: Obra → Evidência → Vistoria → Liberação", () 
     expect(res.status).toBe(200);
     expect(res.body.etapas.length).toBeGreaterThan(1);
     res.body.etapas.forEach((etapa: any) => {
-      expect(["AGUARDANDO_VISTORIA", "APROVADA", "EM_PROGRESSO", "LIBERADA", "REJEITADA"]).toContain(
-        etapa.status
-      );
+      expect([
+        "AGUARDANDO_VISTORIA",
+        "APROVADA",
+        "EM_PROGRESSO",
+        "LIBERADA",
+        "REJEITADA",
+      ]).toContain(etapa.status);
     });
   });
 

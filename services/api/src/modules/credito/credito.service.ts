@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { simularCredito } from "@imbobi/core";
-import type { SolicitacaoCreditoInput, SimulacaoCreditoInput } from "@imbobi/schemas";
+import type {
+  SolicitacaoCreditoInput,
+  SimulacaoCreditoInput,
+} from "@imbobi/schemas";
 
 @Injectable()
 export class CreditoService {
@@ -30,7 +33,12 @@ export class CreditoService {
       include: {
         obras: { select: { obraId: true, nome: true, status: true } },
         liberacoes: {
-          select: { liberacaoId: true, valor: true, status: true, processadoEm: true },
+          select: {
+            liberacaoId: true,
+            valor: true,
+            status: true,
+            processadoEm: true,
+          },
           orderBy: { criadoEm: "desc" },
           take: 10,
         },

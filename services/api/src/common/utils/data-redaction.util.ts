@@ -1,26 +1,26 @@
 export class DataRedactionUtil {
   private static readonly SENSITIVE_FIELDS = [
-    'senha',
-    'password',
-    'token',
-    'refreshToken',
-    'accessToken',
-    'cpf',
-    'cnpj',
-    'creditCard',
-    'bankAccount',
-    'apiKey',
-    'secret',
+    "senha",
+    "password",
+    "token",
+    "refreshToken",
+    "accessToken",
+    "cpf",
+    "cnpj",
+    "creditCard",
+    "bankAccount",
+    "apiKey",
+    "secret",
   ];
 
-  private static readonly REDACTION_PATTERN = '***REDACTED***';
+  private static readonly REDACTION_PATTERN = "***REDACTED***";
 
   static redact(data: any, depth = 0, maxDepth = 10): any {
     if (depth > maxDepth || data === null || data === undefined) {
       return data;
     }
 
-    if (typeof data !== 'object') {
+    if (typeof data !== "object") {
       return data;
     }
 
@@ -32,7 +32,7 @@ export class DataRedactionUtil {
     for (const [key, value] of Object.entries(data)) {
       if (this.isSensitiveField(key)) {
         redacted[key] = this.REDACTION_PATTERN;
-      } else if (typeof value === 'object' && value !== null) {
+      } else if (typeof value === "object" && value !== null) {
         redacted[key] = this.redact(value, depth + 1, maxDepth);
       } else {
         redacted[key] = value;
@@ -49,7 +49,7 @@ export class DataRedactionUtil {
 
   static redactUrl(url: string): string {
     try {
-      const urlObj = new URL(url, 'http://localhost');
+      const urlObj = new URL(url, "http://localhost");
       const params = new URLSearchParams(urlObj.search);
 
       for (const [key] of params) {

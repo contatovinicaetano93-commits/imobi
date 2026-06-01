@@ -12,7 +12,8 @@ import { EncryptionService } from "../../common/encryption.service";
     PassportModule,
     PrismaModule,
     JwtModule.register({
-      secret: process.env["JWT_SECRET"] || "test-secret-key-for-development-only",
+      secret:
+        process.env["JWT_SECRET"] || "test-secret-key-for-development-only",
       signOptions: { expiresIn: "15m" },
     }),
   ],

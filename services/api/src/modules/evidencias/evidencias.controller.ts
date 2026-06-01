@@ -1,10 +1,26 @@
 import {
-  Controller, Post, Get, Patch, Param, Body, UseGuards, ForbiddenException,
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+  ForbiddenException,
 } from "@nestjs/common";
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+} from "@nestjs/swagger";
 import { EvidenciasService } from "./evidencias.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import {
+  UsuarioAtual,
+  type UsuarioAtual as IUsuario,
+} from "../../common/decorators/usuario-atual.decorator";
 import type { UploadEvidenciaInput } from "@imbobi/schemas";
 
 @ApiTags("evidencias")
@@ -15,10 +31,7 @@ export class EvidenciasController {
   constructor(private readonly evidencias: EvidenciasService) {}
 
   @Post()
-  upload(
-    @UsuarioAtual() u: IUsuario,
-    @Body() body: any
-  ) {
+  upload(@UsuarioAtual() u: IUsuario, @Body() body: any) {
     const input: UploadEvidenciaInput = {
       etapaId: body.etapaId,
       latitude: Number(body.latitude),
@@ -40,14 +53,17 @@ export class EvidenciasController {
   }
 
   @Patch(":id/validar")
-  @ApiOperation({ summary: "Validar evidência", description: "Aprova ou rejeita uma foto de evidência" })
+  @ApiOperation({
+    summary: "Validar evidência",
+    description: "Aprova ou rejeita uma foto de evidência",
+  })
   @ApiParam({ name: "id", description: "ID da evidência" })
   @ApiResponse({ status: 200, description: "Evidência validada" })
   validar(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
     @Body("aprovado") aprovado: boolean,
-    @Body("observacao") obs?: string
+    @Body("observacao") obs?: string,
   ) {
     return this.evidencias.validar(u.id, id, aprovado, obs);
   }

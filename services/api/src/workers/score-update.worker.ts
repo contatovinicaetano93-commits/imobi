@@ -1,5 +1,10 @@
 import { Logger } from "@nestjs/common";
-import { Processor, Process, OnQueueFailed, OnQueueCompleted } from "@nestjs/bull";
+import {
+  Processor,
+  Process,
+  OnQueueFailed,
+  OnQueueCompleted,
+} from "@nestjs/bull";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { Job } from "bull";
 import { InjectQueue } from "@nestjs/bull";
@@ -16,20 +21,20 @@ export class ScoreUpdateWorker {
   constructor(
     private readonly prisma: PrismaService,
     private readonly scoreService: ScoreService,
-    @InjectQueue(QUEUE_SCORE_UPDATE) private scoreQueue: Queue
+    @InjectQueue(QUEUE_SCORE_UPDATE) private scoreQueue: Queue,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async scheduleScoreUpdate() {
-    this.logger.log(
-      "[ScoreUpdateWorker] Enqueuing daily score update job..."
-    );
+    this.logger.log("[ScoreUpdateWorker] Enqueuing daily score update job...");
     await this.scoreQueue.add({}, { removeOnComplete: true });
   }
 
   @Process()
-  async handle(job: Job) {
-    this.logger.log("[ScoreUpdateWorker] Starting daily score recalculation...");
+  async handle(_job: Job) {
+    this.logger.log(
+      "[ScoreUpdateWorker] Starting daily score recalculation...",
+    );
 
     try {
       // Buscar todos usuários ativos
@@ -46,19 +51,19 @@ export class ScoreUpdateWorker {
           updated++;
         } catch (error) {
           this.logger.warn(
-            `Failed to update score for usuario ${usuario.usuarioId}: ${error.message}`
+            `Failed to update score for usuario ${usuario.usuarioId}: ${error.message}`,
           );
         }
       }
 
       this.logger.log(
-        `[ScoreUpdateWorker] Completed. Updated ${updated}/${usuarios.length} usuários`
+        `[ScoreUpdateWorker] Completed. Updated ${updated}/${usuarios.length} usuários`,
       );
       return { updatedCount: updated };
     } catch (error) {
       this.logger.error(
         `[ScoreUpdateWorker] Fatal error: ${error.message}`,
-        error.stack
+        error.stack,
       );
       throw error;
     }
@@ -72,7 +77,7 @@ export class ScoreUpdateWorker {
   @OnQueueFailed()
   onFailed(job: Job, error: Error) {
     this.logger.error(
-      `[ScoreUpdateWorker] Job failed: ${job.id} - ${error.message}`
+      `[ScoreUpdateWorker] Job failed: ${job.id} - ${error.message}`,
     );
   }
 }

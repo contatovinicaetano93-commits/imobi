@@ -5,7 +5,7 @@ export interface RedisConfig {
 }
 
 export function getRedisConfig(): RedisConfig {
-  const nodeEnv = process.env.NODE_ENV || 'development';
+  const nodeEnv = process.env.NODE_ENV || "development";
   const redisUrl = process.env.REDIS_URL;
   const redisHost = process.env.REDIS_HOST;
   const redisPort = process.env.REDIS_PORT;
@@ -25,16 +25,16 @@ export function getRedisConfig(): RedisConfig {
   }
 
   // Fallback for development and test environments
-  if (nodeEnv === 'development' || nodeEnv === 'test') {
+  if (nodeEnv === "development" || nodeEnv === "test") {
     return {
-      host: 'localhost',
+      host: "localhost",
       port: 6379,
     };
   }
 
   // Production requires explicit configuration
   throw new Error(
-    'Redis configuration missing. Either set REDIS_URL or both REDIS_HOST and REDIS_PORT environment variables.',
+    "Redis configuration missing. Either set REDIS_URL or both REDIS_HOST and REDIS_PORT environment variables.",
   );
 }
 
@@ -42,24 +42,26 @@ function parseRedisUrl(url: string): RedisConfig {
   try {
     const parsed = new URL(url);
 
-    if (parsed.protocol !== 'redis:' && parsed.protocol !== 'rediss:') {
+    if (parsed.protocol !== "redis:" && parsed.protocol !== "rediss:") {
       throw new Error(`Invalid Redis URL protocol: ${parsed.protocol}`);
     }
 
     const host = parsed.hostname;
-    const nodeEnv = process.env.NODE_ENV || 'development';
+    const nodeEnv = process.env.NODE_ENV || "development";
     // Only allow port fallback in dev/test; production must be explicit
     const port = parsed.port
       ? Number(parsed.port)
-      : nodeEnv === 'development' || nodeEnv === 'test'
-      ? 6379
-      : (() => {
-          throw new Error('Redis URL must include explicit port for production (e.g., redis://host:6379)');
-        })();
+      : nodeEnv === "development" || nodeEnv === "test"
+        ? 6379
+        : (() => {
+            throw new Error(
+              "Redis URL must include explicit port for production (e.g., redis://host:6379)",
+            );
+          })();
     const password = parsed.password || undefined;
 
     if (!host) {
-      throw new Error('Redis URL missing hostname');
+      throw new Error("Redis URL missing hostname");
     }
 
     if (port < 1 || port > 65535) {
@@ -78,11 +80,15 @@ function parseRedisUrl(url: string): RedisConfig {
 export function validateRedisConfig(config: RedisConfig): string[] {
   const errors: string[] = [];
 
-  if (!config.host || typeof config.host !== 'string') {
-    errors.push('Redis host is missing or invalid');
+  if (!config.host || typeof config.host !== "string") {
+    errors.push("Redis host is missing or invalid");
   }
 
-  if (typeof config.port !== 'number' || config.port < 1 || config.port > 65535) {
+  if (
+    typeof config.port !== "number" ||
+    config.port < 1 ||
+    config.port > 65535
+  ) {
     errors.push(`Redis port is invalid: ${config.port}`);
   }
 

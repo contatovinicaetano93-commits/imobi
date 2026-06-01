@@ -26,13 +26,11 @@ describe("Error Recovery E2E - Comprehensive Suite", () => {
 
     // Create test user
     userEmail = `error-recovery-${Date.now()}@imbobi.com`;
-    await request(app.getHttpServer())
-      .post("/api/v1/auth/registrar")
-      .send({
-        email: userEmail,
-        password: "Senha@123",
-        nome: "Error Recovery Test User",
-      });
+    await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+      email: userEmail,
+      password: "Senha@123",
+      nome: "Error Recovery Test User",
+    });
 
     const loginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
@@ -81,7 +79,7 @@ describe("Error Recovery E2E - Comprehensive Suite", () => {
         requests.push(
           request(app.getHttpServer())
             .get("/api/v1/notificacoes")
-            .set("Authorization", `Bearer ${userToken}`)
+            .set("Authorization", `Bearer ${userToken}`),
         );
       }
 
@@ -334,11 +332,13 @@ describe("Error Recovery E2E - Comprehensive Suite", () => {
       responses.push(
         await request(app.getHttpServer())
           .get("/api/v1/notificacoes/invalid")
-          .set("Authorization", `Bearer ${userToken}`)
+          .set("Authorization", `Bearer ${userToken}`),
       );
 
       // Unauthenticated
-      responses.push(await request(app.getHttpServer()).get("/api/v1/notificacoes"));
+      responses.push(
+        await request(app.getHttpServer()).get("/api/v1/notificacoes"),
+      );
 
       // Responses should have consistent error format
       responses.forEach((res) => {
@@ -509,7 +509,7 @@ describe("Error Recovery E2E - Comprehensive Suite", () => {
         promises.push(
           prisma.credito.findUnique({
             where: { creditoId },
-          })
+          }),
         );
       }
 

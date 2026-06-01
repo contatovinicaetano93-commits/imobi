@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, ConflictException } from "@nestjs/common";
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
@@ -11,7 +15,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
-    private readonly encryption: EncryptionService
+    private readonly encryption: EncryptionService,
   ) {}
 
   async registrar(input: CadastroUsuarioInput) {
@@ -29,7 +33,13 @@ export class AuthService {
         telefone: input.telefone,
         passwordHash,
       },
-      select: { usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true },
+      select: {
+        usuarioId: true,
+        nome: true,
+        email: true,
+        tipo: true,
+        kycStatus: true,
+      },
     });
 
     return { usuario, ...this.gerarTokens(usuario.usuarioId) };
@@ -45,10 +55,18 @@ export class AuthService {
     if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
 
     // Set Sentry user context for error tracking
-    setUserContext(usuario.usuarioId, { email: usuario.email, nome: usuario.nome });
+    setUserContext(usuario.usuarioId, {
+      email: usuario.email,
+      nome: usuario.nome,
+    });
 
     return {
-      usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
+      usuario: {
+        usuarioId: usuario.usuarioId,
+        nome: usuario.nome,
+        email: usuario.email,
+        tipo: usuario.tipo,
+      },
       ...this.gerarTokens(usuario.usuarioId),
     };
   }
@@ -76,7 +94,9 @@ export class AuthService {
     try {
       decryptedToken = this.encryption.decrypt(sessao.refreshToken);
     } catch (error) {
-      throw new UnauthorizedException("Sessão inválida: token corrompido ou tamperado.");
+      throw new UnauthorizedException(
+        "Sessão inválida: token corrompido ou tamperado.",
+      );
     }
     if (decryptedToken !== refreshToken) {
       throw new UnauthorizedException("Token não corresponde.");
@@ -101,7 +121,10 @@ export class AuthService {
 
   private gerarTokens(usuarioId: string) {
     const accessToken = this.jwt.sign({ sub: usuarioId }, { expiresIn: "15m" });
-    const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
+    const refreshToken = this.jwt.sign(
+      { sub: usuarioId, type: "refresh" },
+      { expiresIn: "7d" },
+    );
     const encryptedToken = this.encryption.encrypt(refreshToken);
 
     void this.prisma.sessaoToken.create({

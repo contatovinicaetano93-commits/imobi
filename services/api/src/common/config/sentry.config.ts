@@ -1,5 +1,9 @@
 import * as Sentry from "@sentry/node";
-import { httpIntegration, onUncaughtExceptionIntegration, onUnhandledRejectionIntegration } from "@sentry/node";
+import {
+  httpIntegration,
+  onUncaughtExceptionIntegration,
+  onUnhandledRejectionIntegration,
+} from "@sentry/node";
 
 export function initSentry(): void {
   const dsn = process.env.SENTRY_DSN;
@@ -8,7 +12,7 @@ export function initSentry(): void {
   // Only initialize Sentry if DSN is provided
   if (!dsn) {
     console.log(
-      "Sentry DSN not configured. Error tracking disabled. Set SENTRY_DSN to enable."
+      "Sentry DSN not configured. Error tracking disabled. Set SENTRY_DSN to enable.",
     );
     return;
   }
@@ -43,7 +47,10 @@ export function initSentry(): void {
 /**
  * Capture an exception manually (for non-thrown errors)
  */
-export function captureException(error: Error, context?: Record<string, unknown>): void {
+export function captureException(
+  error: Error,
+  context?: Record<string, unknown>,
+): void {
   if (context) {
     Sentry.setContext("custom", context);
   }
@@ -53,7 +60,10 @@ export function captureException(error: Error, context?: Record<string, unknown>
 /**
  * Capture a message
  */
-export function captureMessage(message: string, level: Sentry.SeverityLevel = "info"): void {
+export function captureMessage(
+  message: string,
+  level: Sentry.SeverityLevel = "info",
+): void {
   Sentry.captureMessage(message, level);
 }
 

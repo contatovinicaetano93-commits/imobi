@@ -1,6 +1,9 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "remoteCache": {
+    "signature": true
+  },
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -12,15 +15,20 @@
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "cache": true,
+      "outputs": []
     },
     "type-check": {
-      "dependsOn": ["^type-check"]
+      "dependsOn": ["^type-check"],
+      "cache": true,
+      "outputs": []
     },
     "test": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$"],
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**"],
+      "cache": true
     },
     "db:generate": {
       "cache": false

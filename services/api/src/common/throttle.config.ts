@@ -1,28 +1,28 @@
-import { ThrottlerModuleOptions } from '@nestjs/throttler';
+import { ThrottlerModuleOptions } from "@nestjs/throttler";
 
 export const throttleConfig: ThrottlerModuleOptions = [
   {
-    name: 'global',
+    name: "global",
     ttl: 60000,
     limit: 100,
   },
   {
-    name: 'auth',
+    name: "auth",
     ttl: 60000,
     limit: 5,
   },
   {
-    name: 'kyc',
+    name: "kyc",
     ttl: 60000,
     limit: 10,
   },
   {
-    name: 'upload',
+    name: "upload",
     ttl: 60000,
     limit: 20,
   },
   {
-    name: 'read',
+    name: "read",
     ttl: 60000,
     limit: 200,
   },

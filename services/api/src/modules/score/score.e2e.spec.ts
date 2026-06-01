@@ -58,7 +58,9 @@ describe("Score E2E", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("nivel");
-    expect(["Excelente", "Bom", "Regular", "Iniciante"]).toContain(res.body.nivel);
+    expect(["Excelente", "Bom", "Regular", "Iniciante"]).toContain(
+      res.body.nivel,
+    );
   });
 
   it("Should return score history", async () => {

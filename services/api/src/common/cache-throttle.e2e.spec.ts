@@ -153,7 +153,7 @@ describe("Cache & Rate Limiting E2E", () => {
       expect(
         res.headers["x-ratelimit-limit"] ||
           res.headers["ratelimit-limit"] ||
-          res.headers["x-rate-limit-limit"]
+          res.headers["x-rate-limit-limit"],
       ).toBeDefined();
     });
   });

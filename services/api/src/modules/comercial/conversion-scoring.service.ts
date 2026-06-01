@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class ConversionScoringService {
@@ -42,7 +42,7 @@ export class ConversionScoringService {
 
   private calcularEngajamentoScore(
     atividades: any[],
-    ultimaAtividade?: Date
+    ultimaAtividade?: Date,
   ): number {
     const count = atividades?.length || 0;
 
@@ -70,7 +70,7 @@ export class ConversionScoringService {
   private calcularHistoricoScore(ultimoScore?: number): number {
     if (ultimoScore === undefined || ultimoScore === null) return 50;
 
-    return Math.min(100, 50 + (ultimoScore * 0.5));
+    return Math.min(100, 50 + ultimoScore * 0.5);
   }
 
   private calcularScoreFinal(fatores: {
@@ -136,8 +136,8 @@ export class ConversionScoringService {
     const lead = await this.prisma.lead.findUnique({
       where: { leadId },
       include: {
-        atividades: { orderBy: { criadoEm: 'desc' } },
-        scoreHistorico: { take: 1, orderBy: { criadoEm: 'desc' } },
+        atividades: { orderBy: { criadoEm: "desc" } },
+        scoreHistorico: { take: 1, orderBy: { criadoEm: "desc" } },
       },
     });
 
@@ -155,7 +155,7 @@ export class ConversionScoringService {
       segmentoScore: this.calcularSegmentoScore(lead.segmentoCliente),
       engajamentoScore: this.calcularEngajamentoScore(
         lead.atividades,
-        ultimaAtividade
+        ultimaAtividade,
       ),
       historicoScore: this.calcularHistoricoScore(ultimoScore),
     };

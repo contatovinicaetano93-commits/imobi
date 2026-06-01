@@ -34,13 +34,11 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
 
     // Create constructor user
     constructorEmail = `constructor-mgr-${Date.now()}@imbobi.com`;
-    await request(app.getHttpServer())
-      .post("/api/v1/auth/registrar")
-      .send({
-        email: constructorEmail,
-        password: "Senha@123",
-        nome: "Constructor Manager Dashboard Test",
-      });
+    await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+      email: constructorEmail,
+      password: "Senha@123",
+      nome: "Constructor Manager Dashboard Test",
+    });
 
     const constructorLoginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
@@ -51,13 +49,11 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
 
     // Create manager user
     managerEmail = `manager-mgr-${Date.now()}@imbobi.com`;
-    await request(app.getHttpServer())
-      .post("/api/v1/auth/registrar")
-      .send({
-        email: managerEmail,
-        password: "Senha@123",
-        nome: "Manager Dashboard Test",
-      });
+    await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+      email: managerEmail,
+      password: "Senha@123",
+      nome: "Manager Dashboard Test",
+    });
 
     const managerLoginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
@@ -175,7 +171,9 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
         .expect(200);
 
       const pendingEtapas = res.body.etapas.filter(
-        (e: any) => e.status === "AGUARDANDO_VISTORIA" || e.status === "AGUARDANDO_EVIDENCIA"
+        (e: any) =>
+          e.status === "AGUARDANDO_VISTORIA" ||
+          e.status === "AGUARDANDO_EVIDENCIA",
       );
       expect(pendingEtapas.length).toBeGreaterThan(0);
     });
@@ -230,10 +228,10 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
         .expect(200);
 
       const approvedEtapa = res.body.etapas.find(
-        (e: any) => e.id === etapaIds[1]
+        (e: any) => e.id === etapaIds[1],
       );
       expect(["APROVADA", "EM_LIBERACAO", "LIBERADA"]).toContain(
-        approvedEtapa.status
+        approvedEtapa.status,
       );
     });
 
@@ -281,7 +279,7 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
         .expect(200);
 
       const rejectedEtapas = res.body.etapas.filter(
-        (e: any) => e.status === "REJEITADA"
+        (e: any) => e.status === "REJEITADA",
       );
       // May have 0 or more depending on setup
       expect(Array.isArray(rejectedEtapas)).toBe(true);
@@ -348,7 +346,7 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
         (e: any) =>
           e.status === "APROVADA" ||
           e.status === "LIBERADA" ||
-          e.status === "EM_LIBERACAO"
+          e.status === "EM_LIBERACAO",
       ).length;
 
       expect(totalEtapas).toBeGreaterThan(0);
@@ -461,7 +459,8 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
       // Check manager can approve etapa
       const pendingEtapa = obraRes.body.etapas.find(
         (e: any) =>
-          e.status === "AGUARDANDO_VISTORIA" || e.status === "AGUARDANDO_EVIDENCIA"
+          e.status === "AGUARDANDO_VISTORIA" ||
+          e.status === "AGUARDANDO_EVIDENCIA",
       );
 
       if (pendingEtapa) {

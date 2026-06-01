@@ -11,7 +11,7 @@ export class NotificacoesService {
     tipo: TipoNotificacao,
     titulo: string,
     mensagem: string,
-    link?: string
+    link?: string,
   ) {
     return this.prisma.notificacao.create({
       data: { usuarioId, tipo, titulo, mensagem, link },

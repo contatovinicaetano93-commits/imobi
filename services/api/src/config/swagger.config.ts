@@ -9,30 +9,14 @@ export function getSwaggerConfig() {
     .setTitle("imobi API")
     .setDescription(
       "Fintech de crédito inteligente para construção civil. " +
-      "Financiamento com liberação por etapas validadas por GPS e fotos geovalidadas."
+        "Financiamento com liberação por etapas validadas por GPS e fotos geovalidadas.",
     )
     .setVersion("1.0.0")
-    .setContact(
-      "imobi Support",
-      "https://imbobi.com/support",
-      "api@imbobi.com"
-    )
-    .setLicense(
-      "Commercial",
-      "https://imbobi.com/terms"
-    )
-    .addServer(
-      "http://localhost:4000/api/v1",
-      "Local Development"
-    )
-    .addServer(
-      "https://api-staging.imbobi.com/api/v1",
-      "Staging Environment"
-    )
-    .addServer(
-      "https://api.imbobi.com/api/v1",
-      "Production"
-    )
+    .setContact("imobi Support", "https://imbobi.com/support", "api@imbobi.com")
+    .setLicense("Commercial", "https://imbobi.com/terms")
+    .addServer("http://localhost:4000/api/v1", "Local Development")
+    .addServer("https://api-staging.imbobi.com/api/v1", "Staging Environment")
+    .addServer("https://api.imbobi.com/api/v1", "Production")
     .addBearerAuth(
       {
         type: "http",
@@ -42,7 +26,7 @@ export function getSwaggerConfig() {
           "Acesso protegido usando JWT Bearer token. " +
           "Token deve ser enviado no header: Authorization: Bearer <token>",
       },
-      "access-token"
+      "access-token",
     )
     .addCookieAuth(
       "refreshToken",
@@ -53,9 +37,12 @@ export function getSwaggerConfig() {
           "RefreshToken armazenado como HttpOnly cookie (apenas servidor). " +
           "Usado para renovar accessToken expirado.",
       },
-      "refresh-token"
+      "refresh-token",
     )
-    .addTag("Authentication", "Endpoints de autenticação e gerenciamento de tokens")
+    .addTag(
+      "Authentication",
+      "Endpoints de autenticação e gerenciamento de tokens",
+    )
     .addTag("Users", "Gerenciamento de perfil e dados de usuário")
     .addTag("Credit", "Simulador de crédito e requisições de financiamento")
     .addTag("KYC", "Know Your Customer - validação de identidade")

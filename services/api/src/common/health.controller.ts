@@ -1,7 +1,7 @@
-import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
-import { HealthService } from './health.service';
+import { Controller, Get, HttpException, HttpStatus } from "@nestjs/common";
+import { HealthService } from "./health.service";
 
-@Controller('health')
+@Controller("health")
 export class HealthController {
   constructor(private health: HealthService) {}
 
@@ -10,15 +10,15 @@ export class HealthController {
     return this.health.getHealth();
   }
 
-  @Get('live')
+  @Get("live")
   async liveness() {
     return this.health.getLiveness();
   }
 
-  @Get('ready')
+  @Get("ready")
   async readiness() {
     const ready = await this.health.getReadiness();
-    if (ready.status !== 'ready') {
+    if (ready.status !== "ready") {
       throw new HttpException(ready, HttpStatus.SERVICE_UNAVAILABLE);
     }
     return ready;

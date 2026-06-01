@@ -1,21 +1,21 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ConversionScoringService } from './conversion-scoring.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { ConversionScoringService } from "./conversion-scoring.service";
 
 @Injectable()
 export class ComercialService {
   constructor(
     private prisma: PrismaService,
-    private scoringService: ConversionScoringService
+    private scoringService: ConversionScoringService,
   ) {}
 
   async criarLead(usuarioId: string, data: any) {
     const defaultStage = await this.prisma.pipelineStage.findFirst({
-      where: { nome: 'PROSPECÇÃO' },
+      where: { nome: "PROSPECÇÃO" },
     });
 
     if (!defaultStage) {
-      throw new Error('Pipeline stage PROSPECÇÃO not found. Run seed first.');
+      throw new Error("Pipeline stage PROSPECÇÃO not found. Run seed first.");
     }
 
     const lead = await this.prisma.lead.create({
@@ -31,7 +31,7 @@ export class ComercialService {
         usuarioId,
       },
       include: {
-        scoreHistorico: { take: 1, orderBy: { criadoEm: 'desc' } },
+        scoreHistorico: { take: 1, orderBy: { criadoEm: "desc" } },
       },
     });
 
@@ -45,7 +45,8 @@ export class ComercialService {
 
     if (filters?.stageId) where.stageId = filters.stageId;
     if (filters?.fonte) where.fonte = filters.fonte;
-    if (filters?.segmentoCliente) where.segmentoCliente = filters.segmentoCliente;
+    if (filters?.segmentoCliente)
+      where.segmentoCliente = filters.segmentoCliente;
     if (filters?.scoreMin || filters?.scoreMax) {
       where.scoreHistorico = {};
       if (filters?.scoreMin)
@@ -55,9 +56,14 @@ export class ComercialService {
     }
     if (filters?.searchTerm) {
       where.OR = [
-        { clienteNome: { contains: filters.searchTerm, mode: 'insensitive' } },
-        { clienteEmail: { contains: filters.searchTerm, mode: 'insensitive' } },
-        { clienteTelefone: { contains: filters.searchTerm, mode: 'insensitive' } },
+        { clienteNome: { contains: filters.searchTerm, mode: "insensitive" } },
+        { clienteEmail: { contains: filters.searchTerm, mode: "insensitive" } },
+        {
+          clienteTelefone: {
+            contains: filters.searchTerm,
+            mode: "insensitive",
+          },
+        },
       ];
     }
 
@@ -68,9 +74,9 @@ export class ComercialService {
         skip: offset,
         include: {
           stage: true,
-          scoreHistorico: { take: 1, orderBy: { criadoEm: 'desc' } },
+          scoreHistorico: { take: 1, orderBy: { criadoEm: "desc" } },
         },
-        orderBy: { criadoEm: 'desc' },
+        orderBy: { criadoEm: "desc" },
       }),
       this.prisma.lead.count({ where }),
     ]);
@@ -88,8 +94,8 @@ export class ComercialService {
       where: { leadId },
       include: {
         stage: true,
-        atividades: { orderBy: { criadoEm: 'desc' } },
-        scoreHistorico: { orderBy: { criadoEm: 'desc' } },
+        atividades: { orderBy: { criadoEm: "desc" } },
+        scoreHistorico: { orderBy: { criadoEm: "desc" } },
         obra: true,
         usuario: true,
       },
@@ -117,7 +123,8 @@ export class ComercialService {
       },
     });
 
-    const score = await this.scoringService.recalcularScoreAposAtividade(leadId);
+    const score =
+      await this.scoringService.recalcularScoreAposAtividade(leadId);
 
     return { activity, updatedScore: score };
   }
@@ -144,7 +151,7 @@ export class ComercialService {
       allScores.length > 0
         ? Math.round(
             allScores.reduce((sum, s) => sum + s.scoreFinal, 0) /
-              allScores.length
+              allScores.length,
           )
         : 0;
 

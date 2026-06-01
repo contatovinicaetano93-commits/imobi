@@ -19,7 +19,7 @@ function calculateDistance(
   lat1: number,
   lng1: number,
   lat2: number,
-  lng2: number
+  lng2: number,
 ): number {
   const R = 6371000; // Earth radius in meters
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -41,8 +41,8 @@ function isValidSaoPauloCoordinate(lat: number, lng: number): boolean {
   // São Paulo city approximate bounds
   const minLat = -23.65;
   const maxLat = -23.48;
-  const minLng = -46.80;
-  const maxLng = -46.40;
+  const minLng = -46.8;
+  const maxLng = -46.4;
 
   return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
 }
@@ -54,7 +54,7 @@ function isValidSaoPauloCoordinate(lat: number, lng: number): boolean {
 function calculateTotalWithInterest(
   principal: number,
   taxaMensal: number,
-  prazoMeses: number
+  prazoMeses: number,
 ): number {
   return principal + principal * taxaMensal * prazoMeses;
 }
@@ -121,7 +121,7 @@ async function seedUsuarios(data: any): Promise<Map<number, string>> {
 
     usuarioMap.set(i, usuario.usuarioId);
     console.log(
-      `  ✓ Created ${usuarioData.tipo}: ${usuarioData.nome} (${usuarioData.email})`
+      `  ✓ Created ${usuarioData.tipo}: ${usuarioData.nome} (${usuarioData.email})`,
     );
   }
 
@@ -133,7 +133,7 @@ async function seedUsuarios(data: any): Promise<Map<number, string>> {
  */
 async function seedCreditos(
   data: any,
-  usuarioMap: Map<number, string>
+  usuarioMap: Map<number, string>,
 ): Promise<Map<number, string>> {
   console.log(`\nSeeding ${data.creditos.length} credits...`);
 
@@ -150,13 +150,11 @@ async function seedCreditos(
     const totalComJuros = calculateTotalWithInterest(
       creditoData.valorLiberado,
       creditoData.taxaMensal,
-      creditoData.prazoMeses
+      creditoData.prazoMeses,
     );
 
     const dataVencimento = new Date();
-    dataVencimento.setMonth(
-      dataVencimento.getMonth() + creditoData.prazoMeses
-    );
+    dataVencimento.setMonth(dataVencimento.getMonth() + creditoData.prazoMeses);
 
     const credito = await prisma.credito.create({
       data: {
@@ -172,7 +170,7 @@ async function seedCreditos(
 
     creditoMap.set(i, credito.creditoId);
     console.log(
-      `  ✓ Created credit: R$ ${creditoData.valorAprovado} | Status: ${creditoData.status} (Total com juros: R$ ${totalComJuros.toFixed(2)})`
+      `  ✓ Created credit: R$ ${creditoData.valorAprovado} | Status: ${creditoData.status} (Total com juros: R$ ${totalComJuros.toFixed(2)})`,
     );
   }
 
@@ -185,9 +183,11 @@ async function seedCreditos(
 async function seedObras(
   data: any,
   usuarioMap: Map<number, string>,
-  creditoMap: Map<number, string>
+  creditoMap: Map<number, string>,
 ): Promise<Map<number, string>> {
-  console.log(`\nSeeding ${data.obras.length} obras (construction projects)...`);
+  console.log(
+    `\nSeeding ${data.obras.length} obras (construction projects)...`,
+  );
 
   const obraMap = new Map<number, string>();
 
@@ -206,7 +206,7 @@ async function seedObras(
       !isValidSaoPauloCoordinate(obraData.geoLatitude, obraData.geoLongitude)
     ) {
       console.warn(
-        `  ⚠ Obra GPS coordinates outside São Paulo bounds: ${obraData.nome}`
+        `  ⚠ Obra GPS coordinates outside São Paulo bounds: ${obraData.nome}`,
       );
     }
 
@@ -227,7 +227,7 @@ async function seedObras(
 
     obraMap.set(i, obra.obraId);
     console.log(
-      `  ✓ Created obra: ${obraData.nome} | Status: ${obraData.status} | Area: ${obraData.areaM2}m²`
+      `  ✓ Created obra: ${obraData.nome} | Status: ${obraData.status} | Area: ${obraData.areaM2}m²`,
     );
   }
 
@@ -240,7 +240,7 @@ async function seedObras(
  */
 async function seedEtapas(
   data: any,
-  obraMap: Map<number, string>
+  obraMap: Map<number, string>,
 ): Promise<Map<string, string[]>> {
   console.log(`\nSeeding etapas (construction stages)...`);
 
@@ -323,7 +323,9 @@ async function seedEtapas(
     }
 
     etapasMap.set(obraId, etapasIds);
-    console.log(`    ✓ Created 9 stages for obra (Total: ${cumulativePercent}%)`);
+    console.log(
+      `    ✓ Created 9 stages for obra (Total: ${cumulativePercent}%)`,
+    );
   }
 
   return etapasMap;
@@ -335,7 +337,7 @@ async function seedEtapas(
 async function seedEvidencias(
   data: any,
   obraMap: Map<number, string>,
-  etapasMap: Map<string, string[]>
+  etapasMap: Map<string, string[]>,
 ): Promise<void> {
   console.log(`\nSeeding ${data.evidencias.length} photo evidences...`);
 
@@ -348,9 +350,7 @@ async function seedEvidencias(
 
     const etapasIds = etapasMap.get(obraId);
     if (!etapasIds || !etapasIds[evidenciaData.etapaId]) {
-      console.warn(
-        `  ⚠ Etapa not found for evidencia in obra, skipping`
-      );
+      console.warn(`  ⚠ Etapa not found for evidencia in obra, skipping`);
       continue;
     }
 
@@ -367,7 +367,7 @@ async function seedEvidencias(
       obra.geoLatitude,
       obra.geoLongitude,
       evidenciaData.latCaptura,
-      evidenciaData.lngCaptura
+      evidenciaData.lngCaptura,
     );
 
     const evidencia = await prisma.evidenciaEtapa.create({
@@ -386,7 +386,7 @@ async function seedEvidencias(
 
     const validStatus = evidenciaData.validada ? "VALIDADA" : "PENDENTE";
     console.log(
-      `  ✓ Created evidence: ${evidenciaData.fotoUrl} | Status: ${validStatus} | Distance: ${(distanciaObra / 1).toFixed(1)}m`
+      `  ✓ Created evidence: ${evidenciaData.fotoUrl} | Status: ${validStatus} | Distance: ${(distanciaObra / 1).toFixed(1)}m`,
     );
   }
 }
@@ -396,7 +396,7 @@ async function seedEvidencias(
  */
 async function seedKycDocumentos(
   data: any,
-  usuarioMap: Map<number, string>
+  usuarioMap: Map<number, string>,
 ): Promise<void> {
   console.log(`\nSeeding ${data.kycDocumentos.length} KYC documents...`);
 
@@ -412,10 +412,7 @@ async function seedKycDocumentos(
     let analisadoEm: Date | null = null;
 
     // For approved/rejected documents, assign to an admin user
-    if (
-      kycData.status === "APROVADO" ||
-      kycData.status === "REJEITADO"
-    ) {
+    if (kycData.status === "APROVADO" || kycData.status === "REJEITADO") {
       // Get first admin user
       const admin = await prisma.usuario.findFirst({
         where: { tipo: "ADMIN" },
@@ -424,7 +421,9 @@ async function seedKycDocumentos(
         analisadoPorId = admin.usuarioId;
         analisadoEm = new Date();
         // Set analysis date 1-5 days before now
-        analisadoEm.setDate(analisadoEm.getDate() - Math.floor(Math.random() * 5 + 1));
+        analisadoEm.setDate(
+          analisadoEm.getDate() - Math.floor(Math.random() * 5 + 1),
+        );
       }
     }
 
@@ -441,7 +440,7 @@ async function seedKycDocumentos(
     });
 
     console.log(
-      `  ✓ Created KYC document: ${kycData.tipo} | Status: ${kycData.status}`
+      `  ✓ Created KYC document: ${kycData.tipo} | Status: ${kycData.status}`,
     );
   }
 }
@@ -451,9 +450,11 @@ async function seedKycDocumentos(
  */
 async function seedScoreHistoricos(
   data: any,
-  usuarioMap: Map<number, string>
+  usuarioMap: Map<number, string>,
 ): Promise<void> {
-  console.log(`\nSeeding ${data.scoreHistoricos.length} score history records...`);
+  console.log(
+    `\nSeeding ${data.scoreHistoricos.length} score history records...`,
+  );
 
   for (const scoreData of data.scoreHistoricos) {
     const usuarioId = usuarioMap.get(scoreData.usuarioId - 1);
@@ -472,7 +473,7 @@ async function seedScoreHistoricos(
     });
 
     console.log(
-      `  ✓ Created score record: Score ${scoreData.score} | Reason: ${scoreData.motivo}`
+      `  ✓ Created score record: Score ${scoreData.score} | Reason: ${scoreData.motivo}`,
     );
   }
 }
@@ -481,7 +482,7 @@ async function seedScoreHistoricos(
  * Create sample notifications for completed operations
  */
 async function seedNotificacoes(
-  usuarioMap: Map<number, string>
+  usuarioMap: Map<number, string>,
 ): Promise<void> {
   console.log(`\nCreating sample notifications...`);
 
@@ -567,13 +568,25 @@ async function main(): Promise<void> {
     console.log("║                                                         ║");
     console.log("║                                                         ║");
     console.log("║  Data Summary:                                          ║");
-    console.log(`║  - Users: ${data.usuarios.length}                                             ║`);
-    console.log(`║  - Credits: ${data.creditos.length}                                            ║`);
-    console.log(`║  - Obras: ${data.obras.length}                                             ║`);
+    console.log(
+      `║  - Users: ${data.usuarios.length}                                             ║`,
+    );
+    console.log(
+      `║  - Credits: ${data.creditos.length}                                            ║`,
+    );
+    console.log(
+      `║  - Obras: ${data.obras.length}                                             ║`,
+    );
     console.log(`║  - Etapas: 90 (9 per obra)                              ║`);
-    console.log(`║  - Evidencias: ${data.evidencias.length}                                          ║`);
-    console.log(`║  - KYC Documents: ${data.kycDocumentos.length}                                      ║`);
-    console.log(`║  - Score Records: ${data.scoreHistoricos.length}                                      ║`);
+    console.log(
+      `║  - Evidencias: ${data.evidencias.length}                                          ║`,
+    );
+    console.log(
+      `║  - KYC Documents: ${data.kycDocumentos.length}                                      ║`,
+    );
+    console.log(
+      `║  - Score Records: ${data.scoreHistoricos.length}                                      ║`,
+    );
     console.log("╚════════════════════════════════════════════════════════╝");
   } catch (error) {
     console.error("\n✗ Seeding failed:", error);

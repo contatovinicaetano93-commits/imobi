@@ -1,5 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
@@ -25,7 +29,7 @@ export class StorageService {
         Body: buffer,
         ContentType: mimeType,
         ServerSideEncryption: "AES256",
-      })
+      }),
     );
     const url = await this.getSignedUrl(key);
     return { url, key };
@@ -35,11 +39,13 @@ export class StorageService {
     return getSignedUrl(
       this.s3,
       new GetObjectCommand({ Bucket: this.bucket, Key: key }),
-      { expiresIn }
+      { expiresIn },
     );
   }
 
   async delete(key: string) {
-    await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
+    await this.s3.send(
+      new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
+    );
   }
 }

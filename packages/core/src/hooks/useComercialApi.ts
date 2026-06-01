@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
-import { LeadDetail, Lead, DashboardStats, LeadsListResponse } from '@imbobi/schemas';
-import { apiClient, ApiError } from '../services/api-client';
+import { useState, useCallback } from "react";
+import { LeadDetail, DashboardStats, LeadsListResponse } from "@imbobi/schemas";
+import { apiClient, ApiError } from "../services/api-client";
 
 interface ComercialApiState {
   loading: boolean;
@@ -17,7 +17,7 @@ export function useComercialApi(token?: string) {
     async (
       page: number = 1,
       pageSize: number = 12,
-      searchTerm: string = ''
+      searchTerm: string = "",
     ): Promise<LeadsListResponse | null> => {
       setState({ loading: true, error: null });
       try {
@@ -31,17 +31,20 @@ export function useComercialApi(token?: string) {
 
         const response = await apiClient.get<LeadsListResponse>(
           `/api/comercial/leads?${query}`,
-          token
+          token,
         );
         setState({ loading: false, error: null });
         return response;
       } catch (error) {
-        const err = error instanceof ApiError ? error : new Error('Failed to fetch leads');
+        const err =
+          error instanceof ApiError
+            ? error
+            : new Error("Failed to fetch leads");
         setState({ loading: false, error: err });
         return null;
       }
     },
-    [token]
+    [token],
   );
 
   const getLeadDetail = useCallback(
@@ -50,60 +53,67 @@ export function useComercialApi(token?: string) {
       try {
         const response = await apiClient.get<LeadDetail>(
           `/api/comercial/leads/${leadId}`,
-          token
+          token,
         );
         setState({ loading: false, error: null });
         return response;
       } catch (error) {
-        const err = error instanceof ApiError ? error : new Error('Failed to fetch lead detail');
+        const err =
+          error instanceof ApiError
+            ? error
+            : new Error("Failed to fetch lead detail");
         setState({ loading: false, error: err });
         return null;
       }
     },
-    [token]
+    [token],
   );
 
-  const getDashboardStats = useCallback(
-    async (): Promise<DashboardStats | null> => {
+  const getDashboardStats =
+    useCallback(async (): Promise<DashboardStats | null> => {
       setState({ loading: true, error: null });
       try {
         const response = await apiClient.get<DashboardStats>(
           `/api/comercial/dashboard/stats`,
-          token
+          token,
         );
         setState({ loading: false, error: null });
         return response;
       } catch (error) {
-        const err = error instanceof ApiError ? error : new Error('Failed to fetch dashboard stats');
+        const err =
+          error instanceof ApiError
+            ? error
+            : new Error("Failed to fetch dashboard stats");
         setState({ loading: false, error: err });
         return null;
       }
-    },
-    [token]
-  );
+    }, [token]);
 
   const addActivity = useCallback(
     async (
       leadId: string,
       tipo: string,
-      descricao: string
+      descricao: string,
     ): Promise<{ success: boolean; error?: string }> => {
       setState({ loading: true, error: null });
       try {
         await apiClient.post(
           `/api/comercial/leads/${leadId}/atividades`,
           { tipo, descricao },
-          token
+          token,
         );
         setState({ loading: false, error: null });
         return { success: true };
       } catch (error) {
-        const err = error instanceof ApiError ? error : new Error('Failed to add activity');
+        const err =
+          error instanceof ApiError
+            ? error
+            : new Error("Failed to add activity");
         setState({ loading: false, error: err });
         return { success: false, error: err.message };
       }
     },
-    [token]
+    [token],
   );
 
   return {

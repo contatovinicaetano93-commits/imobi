@@ -6,7 +6,14 @@ export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
 
   async obterDashboard() {
-    const [totalUsuarios, totalCreditos, totalObras, totalEtapas, creditosAtivos, obrasAtivas] = await Promise.all([
+    const [
+      totalUsuarios,
+      totalCreditos,
+      totalObras,
+      totalEtapas,
+      creditosAtivos,
+      obrasAtivas,
+    ] = await Promise.all([
       this.prisma.usuario.count(),
       this.prisma.credito.count(),
       this.prisma.obra.count(),

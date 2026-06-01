@@ -37,7 +37,7 @@ const validateCNPJ = (cnpj: string): boolean => {
     multiplier = multiplier === 2 ? 9 : multiplier - 1;
   }
   let remainder = sum % 11;
-  let digit1 = remainder < 2 ? 0 : 11 - remainder;
+  const digit1 = remainder < 2 ? 0 : 11 - remainder;
   if (digit1 !== parseInt(clean[12])) return false;
 
   sum = 0;
@@ -47,7 +47,7 @@ const validateCNPJ = (cnpj: string): boolean => {
     multiplier = multiplier === 2 ? 9 : multiplier - 1;
   }
   remainder = sum % 11;
-  let digit2 = remainder < 2 ? 0 : 11 - remainder;
+  const digit2 = remainder < 2 ? 0 : 11 - remainder;
   if (digit2 !== parseInt(clean[13])) return false;
 
   return true;
@@ -69,17 +69,10 @@ export const KycStatusEnum = z.enum([
 
 export const CadastroUsuarioSchema = z.object({
   nome: z.string().min(3).max(120),
-  cpf: z
-    .string()
-    .refine(validateCPF, "CPF inválido"),
-  cnpj: z
-    .string()
-    .refine(validateCNPJ, "CNPJ inválido")
-    .optional(),
+  cpf: z.string().refine(validateCPF, "CPF inválido"),
+  cnpj: z.string().refine(validateCNPJ, "CNPJ inválido").optional(),
   email: z.string().email(),
-  telefone: z
-    .string()
-    .regex(/^\d{10,11}$/, "Telefone inválido"),
+  telefone: z.string().regex(/^\d{10,11}$/, "Telefone inválido"),
   senha: z
     .string()
     .min(8, "Mínimo 8 caracteres")

@@ -16,7 +16,7 @@ export function useSimuladorCredito(taxaMensal = TAXA_MENSAL_DEFAULT) {
 
   const resultado = useMemo<SimulacaoResult>(
     () => simularCredito(valorSolicitado, taxaMensal, prazoMeses),
-    [valorSolicitado, prazoMeses, taxaMensal]
+    [valorSolicitado, prazoMeses, taxaMensal],
   );
 
   return {

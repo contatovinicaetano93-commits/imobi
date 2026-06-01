@@ -8,7 +8,10 @@ export interface Coordinates {
 /**
  * Calcula distância em metros entre dois pontos geográficos (fórmula Haversine).
  */
-export function calcularDistanciaMetros(a: Coordinates, b: Coordinates): number {
+export function calcularDistanciaMetros(
+  a: Coordinates,
+  b: Coordinates,
+): number {
   const toRad = (deg: number) => (deg * Math.PI) / 180;
 
   const dLat = toRad(b.latitude - a.latitude);
@@ -30,7 +33,7 @@ export function calcularDistanciaMetros(a: Coordinates, b: Coordinates): number 
 export function estaNoRaio(
   atual: Coordinates,
   alvo: Coordinates,
-  raioMetros: number
+  raioMetros: number,
 ): boolean {
   return calcularDistanciaMetros(atual, alvo) <= raioMetros;
 }

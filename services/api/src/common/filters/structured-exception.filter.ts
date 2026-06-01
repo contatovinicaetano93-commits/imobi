@@ -1,7 +1,14 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Inject } from '@nestjs/common';
-import { LoggerService } from '../logger.service';
-import { DataRedactionUtil } from '../utils/data-redaction.util';
-import { ErrorCategorizerUtil } from '../utils/error-categorizer.util';
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  Inject,
+} from "@nestjs/common";
+import { LoggerService } from "../logger.service";
+import { DataRedactionUtil } from "../utils/data-redaction.util";
+import { ErrorCategorizerUtil } from "../utils/error-categorizer.util";
 
 @Catch()
 export class StructuredExceptionFilter implements ExceptionFilter {
@@ -13,7 +20,7 @@ export class StructuredExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error';
+    let message = "Internal server error";
     let errorDetail: any;
     let validation: any;
 
@@ -21,7 +28,7 @@ export class StructuredExceptionFilter implements ExceptionFilter {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
-      if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+      if (typeof exceptionResponse === "object" && exceptionResponse !== null) {
         const obj = exceptionResponse as Record<string, any>;
         message = obj.message || exception.message;
         validation = obj.error;
@@ -45,7 +52,9 @@ export class StructuredExceptionFilter implements ExceptionFilter {
       requestId: request.id,
       traceId: request.traceId,
       timestamp: new Date().toISOString(),
-      ...(process.env.NODE_ENV === 'development' && { stack: errorDetail?.stack }),
+      ...(process.env.NODE_ENV === "development" && {
+        stack: errorDetail?.stack,
+      }),
     };
 
     const logContext = {
@@ -66,23 +75,23 @@ export class StructuredExceptionFilter implements ExceptionFilter {
     const logLevel = this.selectLogLevel(errorMetadata.severity);
     this.logger[logLevel](
       `${errorMetadata.category}: ${message}`,
-      'Exception',
-      DataRedactionUtil.redact(logContext)
+      "Exception",
+      DataRedactionUtil.redact(logContext),
     );
 
     response.status(status).send(errorResponse);
   }
 
-  private selectLogLevel(severity: string): 'error' | 'warn' | 'debug' {
+  private selectLogLevel(severity: string): "error" | "warn" | "debug" {
     switch (severity) {
-      case 'critical':
-      case 'high':
-        return 'error';
-      case 'medium':
-        return 'warn';
-      case 'low':
+      case "critical":
+      case "high":
+        return "error";
+      case "medium":
+        return "warn";
+      case "low":
       default:
-        return 'debug';
+        return "debug";
     }
   }
 }

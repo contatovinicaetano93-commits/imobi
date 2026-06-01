@@ -73,16 +73,21 @@ describe("Database & Cache Performance Profiling", () => {
       const queries = [
         {
           name: "Find usuario by email",
-          query: () => prisma.usuario.findUnique({ where: { email: "test@imbobi.com" } }),
+          query: () =>
+            prisma.usuario.findUnique({ where: { email: "test@imbobi.com" } }),
         },
         {
           name: "List obras by usuarioId",
-          query: () => prisma.obra.findMany({ where: { usuarioId: "test-id" }, take: 50 }),
+          query: () =>
+            prisma.obra.findMany({ where: { usuarioId: "test-id" }, take: 50 }),
         },
         {
           name: "List etapas by status",
           query: () =>
-            prisma.etapaObra.findMany({ where: { status: "AGUARDANDO_VISTORIA" }, take: 100 }),
+            prisma.etapaObra.findMany({
+              where: { status: "AGUARDANDO_VISTORIA" },
+              take: 100,
+            }),
         },
         {
           name: "List notificacoes by usuarioId and lida",
@@ -159,25 +164,30 @@ describe("Database & Cache Performance Profiling", () => {
           operation: "Load EtapaObra with full relationships",
           issue:
             "Including obra.usuario + obra.credito + evidencias for each etapa may trigger N+1",
-          recommendation: "Use Prisma batch loading or aggregate in application",
+          recommendation:
+            "Use Prisma batch loading or aggregate in application",
           severity: "MEDIUM",
         },
         {
           operation: "List paginated etapas with filters and sorting",
-          issue: "Complex WHERE + JOIN + ORDER BY on large tables needs indexed columns",
+          issue:
+            "Complex WHERE + JOIN + ORDER BY on large tables needs indexed columns",
           recommendation: "Add INDEX on (status, criadoEm, obraId)",
           severity: "MEDIUM",
         },
         {
           operation: "Notificacao queries with lida + criadoEm",
           issue: "Multiple filter conditions on large table",
-          recommendation: "Add COMPOUND INDEX on (usuarioId, lida, criadoEm DESC)",
+          recommendation:
+            "Add COMPOUND INDEX on (usuarioId, lida, criadoEm DESC)",
           severity: "LOW",
         },
         {
           operation: "Cache key serialization",
-          issue: "Large filter objects may create unique keys, reducing hit rate",
-          recommendation: "Simplify cache key generation, reuse common filter combinations",
+          issue:
+            "Large filter objects may create unique keys, reducing hit rate",
+          recommendation:
+            "Simplify cache key generation, reuse common filter combinations",
           severity: "LOW",
         },
       ];
@@ -222,7 +232,9 @@ describe("Database & Cache Performance Profiling", () => {
 
       console.log("\n📊 Rate Limiting Coverage:");
       limits.forEach((l) => {
-        console.log(`   ${l.endpoint.padEnd(20)} | ${l.limit.padEnd(12)} | ${l.purpose}`);
+        console.log(
+          `   ${l.endpoint.padEnd(20)} | ${l.limit.padEnd(12)} | ${l.purpose}`,
+        );
       });
 
       expect(limits.every((l) => l.adequate)).toBe(true);

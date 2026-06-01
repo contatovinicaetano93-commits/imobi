@@ -214,7 +214,7 @@ describe("Obras E2E - Comprehensive Suite", () => {
         .expect(200);
 
       const found = listRes.body.some(
-        (obra) => obra.obraId === createRes.body.obraId
+        (obra) => obra.obraId === createRes.body.obraId,
       );
       expect(found).toBe(true);
     });
@@ -395,7 +395,7 @@ describe("Obras E2E - Comprehensive Suite", () => {
 
       const totalPercentual = res.body.etapas.reduce(
         (sum, etapa) => sum + etapa.percentualObra,
-        0
+        0,
       );
 
       expect(totalPercentual).toBeGreaterThan(0);
@@ -508,10 +508,10 @@ describe("Obras E2E - Comprehensive Suite", () => {
         .expect(200);
 
       const found1 = listRes.body.some(
-        (obra) => obra.obraId === createRes1.body.obraId
+        (obra) => obra.obraId === createRes1.body.obraId,
       );
       const found2 = listRes.body.some(
-        (obra) => obra.obraId === createRes2.body.obraId
+        (obra) => obra.obraId === createRes2.body.obraId,
       );
 
       expect(found1).toBe(true);

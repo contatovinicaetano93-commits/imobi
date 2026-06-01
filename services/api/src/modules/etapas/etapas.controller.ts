@@ -1,8 +1,25 @@
-import { Controller, Get, Patch, Param, Body, UseGuards, ForbiddenException } from "@nestjs/common";
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
+import {
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+  ForbiddenException,
+} from "@nestjs/common";
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+} from "@nestjs/swagger";
 import { EtapasService } from "./etapas.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import {
+  UsuarioAtual,
+  type UsuarioAtual as IUsuario,
+} from "../../common/decorators/usuario-atual.decorator";
 
 @ApiTags("etapas")
 @ApiBearerAuth()
@@ -17,21 +34,30 @@ export class EtapasController {
   }
 
   @Patch(":id/aprovar")
-  @ApiOperation({ summary: "Aprovar etapa", description: "Aprova uma etapa de construção" })
+  @ApiOperation({
+    summary: "Aprovar etapa",
+    description: "Aprova uma etapa de construção",
+  })
   @ApiParam({ name: "id", description: "ID da etapa" })
   @ApiResponse({ status: 200, description: "Etapa aprovada" })
   aprovar(
     @Param("id") id: string,
     @UsuarioAtual() u: IUsuario,
-    @Body("observacao") obs?: string
+    @Body("observacao") obs?: string,
   ) {
     return this.etapas.aprovar(u.id, id, obs);
   }
 
   @Patch(":id/status")
-  async status(@UsuarioAtual() u: IUsuario, @Param("id") id: string, @Body("status") status: string) {
+  async status(
+    @UsuarioAtual() u: IUsuario,
+    @Param("id") id: string,
+    @Body("status") status: string,
+  ) {
     if (u.tipo !== "ADMIN" && u.tipo !== "GESTOR_OBRA") {
-      throw new ForbiddenException("Apenas ADMIN e GESTOR_OBRA podem alterar status de etapas.");
+      throw new ForbiddenException(
+        "Apenas ADMIN e GESTOR_OBRA podem alterar status de etapas.",
+      );
     }
     return this.etapas.atualizarStatus(id, status);
   }

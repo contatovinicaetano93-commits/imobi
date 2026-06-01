@@ -10,6 +10,11 @@ export const KYCInputSchema = z.object({
 
 export type KYCInput = z.infer<typeof KYCInputSchema>;
 
-export const KYCStatusSchema = z.enum(["PENDENTE", "APROVADO", "REJEITADO", "BLOQUEADO"]);
+export const KYCStatusSchema = z.enum([
+  "PENDENTE",
+  "APROVADO",
+  "REJEITADO",
+  "BLOQUEADO",
+]);
 
 export type KYCStatus = z.infer<typeof KYCStatusSchema>;

@@ -1,5 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../modules/prisma/prisma.service';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from "@nestjs/common";
+import { PrismaService } from "../../modules/prisma/prisma.service";
 
 @Injectable()
 export class ManagerGuard implements CanActivate {
@@ -10,7 +15,7 @@ export class ManagerGuard implements CanActivate {
     const usuarioId = request.user?.sub;
 
     if (!usuarioId) {
-      throw new ForbiddenException('User not authenticated');
+      throw new ForbiddenException("User not authenticated");
     }
 
     const usuario = await this.prisma.usuario.findUnique({
@@ -18,8 +23,13 @@ export class ManagerGuard implements CanActivate {
       select: { tipo: true },
     });
 
-    if (!usuario || (usuario.tipo !== 'GESTOR_OBRA' && usuario.tipo !== 'ADMIN')) {
-      throw new ForbiddenException('Acesso negado. Apenas gestores podem acessar.');
+    if (
+      !usuario ||
+      (usuario.tipo !== "GESTOR_OBRA" && usuario.tipo !== "ADMIN")
+    ) {
+      throw new ForbiddenException(
+        "Acesso negado. Apenas gestores podem acessar.",
+      );
     }
 
     return true;

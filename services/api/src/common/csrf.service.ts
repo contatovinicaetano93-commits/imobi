@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { randomBytes } from 'crypto';
+import { Injectable } from "@nestjs/common";
+import { randomBytes } from "crypto";
 
 @Injectable()
 export class CsrfService {
   private tokens = new Map<string, { token: string; expiresAt: number }>();
 
   generateToken(sessionId: string): string {
-    const token = randomBytes(32).toString('hex');
+    const token = randomBytes(32).toString("hex");
     const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
     this.tokens.set(sessionId, { token, expiresAt });
     return token;

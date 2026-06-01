@@ -6,7 +6,12 @@ interface PushPayload {
   usuarioId: string;
   titulo: string;
   mensagem: string;
-  tipo: "ETAPA_APROVADA" | "PARCELA_LIBERADA" | "KYC_APROVADO" | "KYC_REJEITADO" | "GERAL";
+  tipo:
+    | "ETAPA_APROVADA"
+    | "PARCELA_LIBERADA"
+    | "KYC_APROVADO"
+    | "KYC_REJEITADO"
+    | "GERAL";
   dados?: Record<string, string>;
 }
 
@@ -25,7 +30,10 @@ export class PushNotificacoesService {
         admin.initializeApp({
           credential: admin.credential.cert({
             projectId: process.env["FIREBASE_PROJECT_ID"],
-            privateKey: process.env["FIREBASE_PRIVATE_KEY"]?.replace(/\\n/g, "\n"),
+            privateKey: process.env["FIREBASE_PRIVATE_KEY"]?.replace(
+              /\\n/g,
+              "\n",
+            ),
             clientEmail: process.env["FIREBASE_CLIENT_EMAIL"],
           } as admin.ServiceAccount),
         });
@@ -40,7 +48,9 @@ export class PushNotificacoesService {
 
   async enviarPush(payload: PushPayload): Promise<boolean> {
     if (!this.messaging) {
-      this.logger.debug(`[PUSH-CONSOLE] ${payload.usuarioId} - ${payload.titulo}`);
+      this.logger.debug(
+        `[PUSH-CONSOLE] ${payload.usuarioId} - ${payload.titulo}`,
+      );
       return true;
     }
 
@@ -65,7 +75,9 @@ export class PushNotificacoesService {
 
     try {
       const response = await this.messaging.sendEachForMulticast(message);
-      this.logger.debug(`Push enviado para ${response.successCount} dispositivos`);
+      this.logger.debug(
+        `Push enviado para ${response.successCount} dispositivos`,
+      );
 
       // Desativa tokens que falharam
       const failedTokens = response.responses

@@ -59,7 +59,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
       const loginPromises = users.map((u) =>
         request(app.getHttpServer())
           .post("/api/v1/auth/login")
-          .send({ email: u.email, password: "Senha@123" })
+          .send({ email: u.email, password: "Senha@123" }),
       );
 
       const responses = await Promise.all(loginPromises);
@@ -74,7 +74,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
       const readPromises = users.map((u) =>
         request(app.getHttpServer())
           .get("/api/v1/notificacoes")
-          .set("Authorization", `Bearer ${u.token}`)
+          .set("Authorization", `Bearer ${u.token}`),
       );
 
       const responses = await Promise.all(readPromises);
@@ -123,7 +123,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
             },
             valorTotal: 100000,
             creditoId: credits[idx],
-          })
+          }),
       );
 
       const responses = await Promise.all(obraPromises);
@@ -169,7 +169,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
       const readPromises = users.map((u) =>
         request(app.getHttpServer())
           .get(`/api/v1/obras/${obraId}`)
-          .set("Authorization", `Bearer ${u.token}`)
+          .set("Authorization", `Bearer ${u.token}`),
       );
 
       const responses = await Promise.all(readPromises);
@@ -231,7 +231,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
             .set("Authorization", `Bearer ${u.token}`)
             .field("etapaId", etapaId)
             .field("latCaptura", "-15.789")
-            .field("lngCaptura", "-48.123")
+            .field("lngCaptura", "-48.123"),
         );
 
         const responses = await Promise.all(uploadPromises);
@@ -289,7 +289,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
             .send({
               obraId,
               observacoes: "Concurrent approval",
-            })
+            }),
         );
 
         const responses = await Promise.all(approvalPromises);
@@ -312,7 +312,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
         readPromises.push(
           request(app.getHttpServer())
             .get("/api/v1/notificacoes")
-            .set("Authorization", `Bearer ${user.token}`)
+            .set("Authorization", `Bearer ${user.token}`),
         );
       }
 
@@ -376,7 +376,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
         readPromises.push(
           request(app.getHttpServer())
             .get("/api/v1/score")
-            .set("Authorization", `Bearer ${user.token}`)
+            .set("Authorization", `Bearer ${user.token}`),
         );
       }
 
@@ -403,7 +403,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
         queryPromises.push(
           request(app.getHttpServer())
             .get("/api/v1/notificacoes")
-            .set("Authorization", `Bearer ${users[userIdx].token}`)
+            .set("Authorization", `Bearer ${users[userIdx].token}`),
         );
       }
 
@@ -419,7 +419,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
       const promises = users.map((u) =>
         request(app.getHttpServer())
           .get("/api/v1/notificacoes?limit=1000")
-          .set("Authorization", `Bearer ${u.token}`)
+          .set("Authorization", `Bearer ${u.token}`),
       );
 
       const responses = await Promise.all(promises);
@@ -446,7 +446,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
               loanType: "construction",
               valorSolicitado: 50000 + i * 10000,
               prazoMeses: 12,
-            })
+            }),
         );
       }
 
@@ -461,7 +461,9 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
 
       // Verify all are independent
       const credits = await Promise.all(
-        createdIds.map((id) => prisma.credito.findUnique({ where: { creditoId: id } }))
+        createdIds.map((id) =>
+          prisma.credito.findUnique({ where: { creditoId: id } }),
+        ),
       );
 
       credits.forEach((credit) => {
@@ -482,7 +484,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
           request(app.getHttpServer())
             .post("/api/v1/push-notificacoes/registrar-token")
             .set("Authorization", `Bearer ${user.token}`)
-            .send({ token: "duplicate-test-token" })
+            .send({ token: "duplicate-test-token" }),
         );
       }
 
@@ -557,7 +559,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
 
       // Most workflows should complete successfully
       const successCount = results.filter(
-        (r) => r.notifications && r.credit && r.obra
+        (r) => r.notifications && r.credit && r.obra,
       ).length;
 
       expect(successCount).toBeGreaterThanOrEqual(1);

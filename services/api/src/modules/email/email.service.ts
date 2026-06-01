@@ -36,7 +36,8 @@ export class EmailService {
       host: smtpHost,
       port: parseInt(smtpPort),
       secure: parseInt(smtpPort) === 465,
-      auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
+      auth:
+        smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
     });
 
     this.logger.debug(`Email configured: ${smtpHost}:${smtpPort}`);
@@ -91,7 +92,7 @@ export class EmailService {
     email: string,
     etapaNome: string,
     obraNome: string,
-    valor: number
+    valor: number,
   ): Promise<boolean> {
     const html = `
       <h2>Etapa Aprovada: ${etapaNome}</h2>
@@ -112,7 +113,7 @@ export class EmailService {
     nome: string,
     email: string,
     valor: number,
-    obraNome: string
+    obraNome: string,
   ): Promise<boolean> {
     const html = `
       <h2>Parcela Liberada</h2>
@@ -148,7 +149,7 @@ export class EmailService {
   async kycRejeitadoEmail(
     nome: string,
     email: string,
-    motivo: string
+    motivo: string,
   ): Promise<boolean> {
     const html = `
       <h2>Validação de Identidade Rejeitada</h2>
@@ -169,7 +170,7 @@ export class EmailService {
   async recuperacaoSenhaEmail(
     nome: string,
     email: string,
-    token: string
+    token: string,
   ): Promise<boolean> {
     const resetLink = `${process.env["APP_URL"] || "http://localhost:3000"}/reset-password?token=${token}`;
     const html = `

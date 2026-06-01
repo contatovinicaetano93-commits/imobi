@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
@@ -11,7 +15,7 @@ export class KycService {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
   ) {}
 
   async uploadDocumento(usuarioId: string, tipo: string, url: string) {
@@ -39,7 +43,9 @@ export class KycService {
 
     const pendentes = documentos.filter((d) => d.status === "PENDENTE").length;
     const aprovados = documentos.filter((d) => d.status === "APROVADO").length;
-    const rejeitados = documentos.filter((d) => d.status === "REJEITADO").length;
+    const rejeitados = documentos.filter(
+      (d) => d.status === "REJEITADO",
+    ).length;
 
     return {
       usuarioId,
@@ -71,16 +77,18 @@ export class KycService {
       "KYC_APROVADO",
       "Documento KYC aprovado",
       `Seu documento "${documento.tipo}" foi aprovado com sucesso.`,
-      "/dashboard/perfil"
+      "/dashboard/perfil",
     );
 
     // Envia push notification
-    this.pushNotificacoes.enviarPush({
-      usuarioId: documento.usuarioId,
-      titulo: "Documentação Aprovada",
-      mensagem: `Seu documento ${documento.tipo} foi aprovado!`,
-      tipo: "KYC_APROVADO",
-    }).catch(() => {});
+    this.pushNotificacoes
+      .enviarPush({
+        usuarioId: documento.usuarioId,
+        titulo: "Documentação Aprovada",
+        mensagem: `Seu documento ${documento.tipo} foi aprovado!`,
+        tipo: "KYC_APROVADO",
+      })
+      .catch(() => {});
 
     // Envia email
     this.email
@@ -93,7 +101,7 @@ export class KycService {
   async rejeitarDocumento(
     kycDocumentoId: string,
     gestorId: string,
-    motivo: string
+    motivo: string,
   ) {
     const documento = await this.prisma.kycDocumento.findUnique({
       where: { kycDocumentoId },
@@ -121,21 +129,27 @@ export class KycService {
       "KYC_REJEITADO",
       "Documento KYC rejeitado",
       `Seu documento "${documento.tipo}" foi rejeitado. Motivo: ${motivo}. Por favor, envie um novo documento.`,
-      "/dashboard/perfil"
+      "/dashboard/perfil",
     );
 
     // Envia push notification
-    this.pushNotificacoes.enviarPush({
-      usuarioId: documento.usuarioId,
-      titulo: "Documentação Rejeitada",
-      mensagem: `Seu documento foi rejeitado. Motivo: ${motivo}`,
-      tipo: "KYC_REJEITADO",
-      dados: { motivo },
-    }).catch(() => {});
+    this.pushNotificacoes
+      .enviarPush({
+        usuarioId: documento.usuarioId,
+        titulo: "Documentação Rejeitada",
+        mensagem: `Seu documento foi rejeitado. Motivo: ${motivo}`,
+        tipo: "KYC_REJEITADO",
+        dados: { motivo },
+      })
+      .catch(() => {});
 
     // Envia email
     this.email
-      .kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo)
+      .kycRejeitadoEmail(
+        documento.usuario.nome,
+        documento.usuario.email,
+        motivo,
+      )
       .catch(() => {});
 
     return atualizado;
@@ -156,7 +170,9 @@ export class KycService {
 
     const tiposRequeridos = ["RG", "Selfie"];
     const tiposPresentes = documentos.map((d) => d.tipo);
-    const completo = tiposRequeridos.every((tipo) => tiposPresentes.includes(tipo));
+    const completo = tiposRequeridos.every((tipo) =>
+      tiposPresentes.includes(tipo),
+    );
 
     if (completo) {
       await this.prisma.usuario.update({

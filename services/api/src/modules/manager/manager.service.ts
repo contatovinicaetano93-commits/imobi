@@ -5,23 +5,30 @@ import { PrismaService } from "../prisma/prisma.service";
 
 const CACHE_KEYS = {
   STATS: "manager:stats",
-  ETAPAS_PENDENTES: (limit: number, offset: number) => `manager:etapas:${limit}:${offset}`,
-  KYC_PENDENTES: (limit: number, offset: number) => `manager:kyc:${limit}:${offset}`,
+  ETAPAS_PENDENTES: (limit: number, offset: number) =>
+    `manager:etapas:${limit}:${offset}`,
+  KYC_PENDENTES: (limit: number, offset: number) =>
+    `manager:kyc:${limit}:${offset}`,
 };
 
 @Injectable()
 export class ManagerService {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async verificarPermissao(usuarioId: string) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId },
     });
-    if (!usuario || (usuario.tipo !== "GESTOR_OBRA" && usuario.tipo !== "ADMIN")) {
-      throw new ForbiddenException("Acesso negado. Apenas gestores podem acessar.");
+    if (
+      !usuario ||
+      (usuario.tipo !== "GESTOR_OBRA" && usuario.tipo !== "ADMIN")
+    ) {
+      throw new ForbiddenException(
+        "Acesso negado. Apenas gestores podem acessar.",
+      );
     }
   }
 
@@ -168,12 +175,15 @@ export class ManagerService {
     const cached = await this.cacheManager.get(cacheKey);
     if (cached) return cached;
 
-    const [etapasPendentes, kycPendentes, creditosAtivos, obrasAtivas] = await Promise.all([
-      this.prisma.etapaObra.count({ where: { status: "AGUARDANDO_VISTORIA" } }),
-      this.prisma.kycDocumento.count({ where: { status: "PENDENTE" } }),
-      this.prisma.credito.count({ where: { status: "ATIVO" } }),
-      this.prisma.obra.count({ where: { status: "EM_EXECUCAO" } }),
-    ]);
+    const [etapasPendentes, kycPendentes, creditosAtivos, obrasAtivas] =
+      await Promise.all([
+        this.prisma.etapaObra.count({
+          where: { status: "AGUARDANDO_VISTORIA" },
+        }),
+        this.prisma.kycDocumento.count({ where: { status: "PENDENTE" } }),
+        this.prisma.credito.count({ where: { status: "ATIVO" } }),
+        this.prisma.obra.count({ where: { status: "EM_EXECUCAO" } }),
+      ]);
 
     const result = {
       filaAprovacoes: etapasPendentes,

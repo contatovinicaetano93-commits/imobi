@@ -1,22 +1,22 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable, Inject } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Cache } from "cache-manager";
+import { PrismaService } from "../prisma/prisma.service";
 
 export interface AnalyticsEvent {
   userId: string;
   eventType:
-    | 'SIGNUP'
-    | 'LOGIN'
-    | 'KYC_UPLOAD'
-    | 'KYC_APPROVED'
-    | 'KYC_REJECTED'
-    | 'CREDIT_SIMULATED'
-    | 'CREDIT_APPLIED'
-    | 'WORK_CREATED'
-    | 'EVIDENCE_UPLOADED'
-    | 'STAGE_COMPLETED'
-    | 'PAYMENT_MADE';
+    | "SIGNUP"
+    | "LOGIN"
+    | "KYC_UPLOAD"
+    | "KYC_APPROVED"
+    | "KYC_REJECTED"
+    | "CREDIT_SIMULATED"
+    | "CREDIT_APPLIED"
+    | "WORK_CREATED"
+    | "EVIDENCE_UPLOADED"
+    | "STAGE_COMPLETED"
+    | "PAYMENT_MADE";
   metadata?: Record<string, any>;
   timestamp?: Date;
 }
@@ -54,7 +54,7 @@ export class AnalyticsService {
       await this.updateCachedMetrics(event.eventType);
     } catch (error) {
       // Log error but don't crash on analytics failure
-      console.error('Analytics event tracking error:', error);
+      console.error("Analytics event tracking error:", error);
     }
   }
 
@@ -63,7 +63,8 @@ export class AnalyticsService {
     endDate?: Date,
   ): Promise<AnalyticsMetrics> {
     const now = new Date();
-    const start = startDate || new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
+    const start =
+      startDate || new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
     const end = endDate || now;
 
     // Try to get from cache first
@@ -76,16 +77,16 @@ export class AnalyticsService {
 
     // Get fresh data from database
     const metrics: AnalyticsMetrics = {
-      totalSignups: await this.countEventType('SIGNUP', start, end),
-      totalLogins: await this.countEventType('LOGIN', start, end),
+      totalSignups: await this.countEventType("SIGNUP", start, end),
+      totalLogins: await this.countEventType("LOGIN", start, end),
       kycApprovalRate: await this.calculateKycApprovalRate(start, end),
       averageCreditSimulation: await this.calculateAverageCreditSimulation(
         start,
         end,
       ),
       activeUsers24h: await this.countActiveUsers24h(),
-      totalWorks: await this.countEventType('WORK_CREATED', start, end),
-      completedStages: await this.countEventType('STAGE_COMPLETED', start, end),
+      totalWorks: await this.countEventType("WORK_CREATED", start, end),
+      completedStages: await this.countEventType("STAGE_COMPLETED", start, end),
     };
 
     // Cache for 5 minutes
@@ -94,13 +95,10 @@ export class AnalyticsService {
     return metrics;
   }
 
-  async getUserTimeline(
-    userId: string,
-    limit: number = 50,
-  ): Promise<any[]> {
+  async getUserTimeline(userId: string, limit: number = 50): Promise<any[]> {
     const events = await this.prisma.analyticsEvent.findMany({
       where: { usuarioId: userId },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { timestamp: "desc" },
       take: limit,
     });
 
@@ -120,18 +118,18 @@ export class AnalyticsService {
     daysToCredit: number | null;
   }> {
     const signup = await this.prisma.analyticsEvent.findFirst({
-      where: { usuarioId: userId, eventType: 'SIGNUP' },
-      orderBy: { timestamp: 'asc' },
+      where: { usuarioId: userId, eventType: "SIGNUP" },
+      orderBy: { timestamp: "asc" },
     });
 
     const kycApproved = await this.prisma.analyticsEvent.findFirst({
-      where: { usuarioId: userId, eventType: 'KYC_APPROVED' },
-      orderBy: { timestamp: 'asc' },
+      where: { usuarioId: userId, eventType: "KYC_APPROVED" },
+      orderBy: { timestamp: "asc" },
     });
 
     const creditApplied = await this.prisma.analyticsEvent.findFirst({
-      where: { usuarioId: userId, eventType: 'CREDIT_APPLIED' },
-      orderBy: { timestamp: 'asc' },
+      where: { usuarioId: userId, eventType: "CREDIT_APPLIED" },
+      orderBy: { timestamp: "asc" },
     });
 
     return {
@@ -177,14 +175,14 @@ export class AnalyticsService {
   ): Promise<number> {
     const uploaded = await this.prisma.analyticsEvent.count({
       where: {
-        eventType: 'KYC_UPLOAD',
+        eventType: "KYC_UPLOAD",
         timestamp: { gte: startDate, lte: endDate },
       },
     });
 
     const approved = await this.prisma.analyticsEvent.count({
       where: {
-        eventType: 'KYC_APPROVED',
+        eventType: "KYC_APPROVED",
         timestamp: { gte: startDate, lte: endDate },
       },
     });
@@ -198,7 +196,7 @@ export class AnalyticsService {
   ): Promise<number> {
     const events = await this.prisma.analyticsEvent.findMany({
       where: {
-        eventType: 'CREDIT_SIMULATED',
+        eventType: "CREDIT_SIMULATED",
         timestamp: { gte: startDate, lte: endDate },
       },
       select: { metadata: true },
@@ -221,7 +219,7 @@ export class AnalyticsService {
       where: {
         timestamp: { gte: since24h },
       },
-      distinct: ['usuarioId'],
+      distinct: ["usuarioId"],
       select: { usuarioId: true },
     });
 
@@ -230,9 +228,9 @@ export class AnalyticsService {
 
   private async updateCachedMetrics(eventType: string): Promise<void> {
     // Invalidate metrics cache when new event comes in
-    const cacheKey = 'analytics-metrics-*';
+    const cacheKey = "analytics-metrics-*";
     // In a real implementation, we'd iterate through all cache keys and invalidate
     // For now, just clear the main metrics cache
-    await this.cacheManager.del('analytics-metrics');
+    await this.cacheManager.del("analytics-metrics");
   }
 }

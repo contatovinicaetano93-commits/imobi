@@ -1,4 +1,9 @@
-import { Processor, Process, OnQueueFailed, OnQueueCompleted } from "@nestjs/bull";
+import {
+  Processor,
+  Process,
+  OnQueueFailed,
+  OnQueueCompleted,
+} from "@nestjs/bull";
 import { Job } from "bull";
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../modules/prisma/prisma.service";
@@ -22,7 +27,7 @@ export class ExcluirUsuarioWorker {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly email: EmailService
+    private readonly email: EmailService,
   ) {}
 
   @Process("hard-delete")
@@ -36,17 +41,21 @@ export class ExcluirUsuarioWorker {
       });
 
       if (!usuario) {
-        this.logger.warn(`Usuário ${usuarioId} não encontrado - já pode estar deletado`);
+        this.logger.warn(
+          `Usuário ${usuarioId} não encontrado - já pode estar deletado`,
+        );
         return;
       }
 
       // Verify that the user was actually marked for deletion 30+ days ago
       const agora = new Date();
-      const diasDesdeDelecao = (agora.getTime() - usuario.deletadoEm!.getTime()) / (1000 * 60 * 60 * 24);
+      const diasDesdeDelecao =
+        (agora.getTime() - usuario.deletadoEm!.getTime()) /
+        (1000 * 60 * 60 * 24);
 
       if (diasDesdeDelecao < 30) {
         this.logger.warn(
-          `Tentativa de deletar usuário ${usuarioId} com apenas ${diasDesdeDelecao.toFixed(1)} dias - ignorando`
+          `Tentativa de deletar usuário ${usuarioId} com apenas ${diasDesdeDelecao.toFixed(1)} dias - ignorando`,
         );
         return;
       }
@@ -95,12 +104,18 @@ export class ExcluirUsuarioWorker {
         });
       });
 
-      this.logger.log(`Usuário ${usuarioId} deletado com sucesso após período de graça de 30 dias`);
+      this.logger.log(
+        `Usuário ${usuarioId} deletado com sucesso após período de graça de 30 dias`,
+      );
 
       // Send confirmation email to the email address (before it's deleted)
       this.email
         .contaExcluida(usuario.nome, usuario.email)
-        .catch((e) => this.logger.error(`Erro ao enviar email de exclusão confirmada: ${e}`));
+        .catch((e) =>
+          this.logger.error(
+            `Erro ao enviar email de exclusão confirmada: ${e}`,
+          ),
+        );
     } catch (error) {
       this.logger.error(`Erro ao deletar usuário ${usuarioId}: ${error}`);
       throw error;
@@ -109,12 +124,16 @@ export class ExcluirUsuarioWorker {
 
   @OnQueueFailed()
   onFailed(job: Job, err: Error) {
-    this.logger.error(`Job de exclusão de usuário ${job.data.usuarioId} falhou: ${err.message}`);
+    this.logger.error(
+      `Job de exclusão de usuário ${job.data.usuarioId} falhou: ${err.message}`,
+    );
     // The job will be retried based on the queue configuration (3 attempts with exponential backoff)
   }
 
   @OnQueueCompleted()
   onCompleted(job: Job) {
-    this.logger.log(`Job de exclusão de usuário ${job.data.usuarioId} completado`);
+    this.logger.log(
+      `Job de exclusão de usuário ${job.data.usuarioId} completado`,
+    );
   }
 }

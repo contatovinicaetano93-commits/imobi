@@ -14,8 +14,14 @@ const moduleAlias = require("module-alias");
 // __dirname at runtime = /home/user/imobi/services/api/dist
 // Need to go up 3 levels: dist -> api -> services -> imobi
 const projectRoot = path.resolve(__dirname, "../../../");
-moduleAlias.addAlias("@imbobi/schemas", path.join(projectRoot, "packages/schemas/dist"));
-moduleAlias.addAlias("@imbobi/core", path.join(projectRoot, "packages/core/dist"));
+moduleAlias.addAlias(
+  "@imbobi/schemas",
+  path.join(projectRoot, "packages/schemas/dist"),
+);
+moduleAlias.addAlias(
+  "@imbobi/core",
+  path.join(projectRoot, "packages/core/dist"),
+);
 moduleAlias.addAlias("@imbobi/ui", path.join(projectRoot, "packages/ui/dist"));
 
 // Initialize Sentry BEFORE other imports
@@ -34,32 +40,37 @@ async function bootstrap() {
   validateJwtSecret();
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ logger: process.env["NODE_ENV"] !== "production" })
+    new FastifyAdapter({ logger: process.env["NODE_ENV"] !== "production" }),
   );
 
   const logger = app.get(LoggerService);
 
   // Security headers
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
-        fontSrc: ["'self'"],
-        connectSrc: ["'self'"],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", "data:", "https:"],
+          fontSrc: ["'self'"],
+          connectSrc: ["'self'"],
+        },
       },
-    },
-    hsts: { maxAge: 31536000, includeSubDomains: true },
-  }));
+      hsts: { maxAge: 31536000, includeSubDomains: true },
+    }),
+  );
 
   // Request ID middleware for tracing
   const requestIdMiddleware = new RequestIdMiddleware();
   app.use(requestIdMiddleware.use.bind(requestIdMiddleware));
 
   // Exception filters (Sentry first for error tracking, then structured logging)
-  app.useGlobalFilters(new SentryExceptionFilter(), new StructuredExceptionFilter(logger));
+  app.useGlobalFilters(
+    new SentryExceptionFilter(),
+    new StructuredExceptionFilter(logger),
+  );
   app.setGlobalPrefix("api/v1");
 
   const corsOriginEnv = process.env["CORS_ORIGIN"] || "http://localhost:3000";
@@ -69,7 +80,9 @@ async function bootstrap() {
     .filter((origin) => origin.length > 0);
 
   if (corsOrigins.length === 0) {
-    throw new Error("CORS_ORIGIN configuration error: no valid origins provided after filtering");
+    throw new Error(
+      "CORS_ORIGIN configuration error: no valid origins provided after filtering",
+    );
   }
 
   app.enableCors({
@@ -99,7 +112,7 @@ async function bootstrap() {
     }
     fs.writeFileSync(
       path.join(distDir, "openapi.json"),
-      JSON.stringify(document, null, 2)
+      JSON.stringify(document, null, 2),
     );
   }
 

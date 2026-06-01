@@ -1,12 +1,13 @@
 import { z } from "zod";
 
-export const FonteEnum = z.enum(["PARCEIRO", "INDICACAO", "WEBSITE", "OFFLINE"]);
-
-export const SegmentoClienteEnum = z.enum([
-  "NOVO",
-  "RETORNO",
-  "CONCORRENTE",
+export const FonteEnum = z.enum([
+  "PARCEIRO",
+  "INDICACAO",
+  "WEBSITE",
+  "OFFLINE",
 ]);
+
+export const SegmentoClienteEnum = z.enum(["NOVO", "RETORNO", "CONCORRENTE"]);
 
 export const TipoObraEnum = z.enum([
   "residencial",
@@ -74,22 +75,28 @@ export const LeadSchema = z.object({
 });
 
 export const LeadDetailSchema = LeadSchema.extend({
-  stage: z.object({
-    stageId: z.string().uuid(),
-    nome: z.string(),
-    pipelineId: z.string().uuid(),
-  }).optional(),
+  stage: z
+    .object({
+      stageId: z.string().uuid(),
+      nome: z.string(),
+      pipelineId: z.string().uuid(),
+    })
+    .optional(),
   atividades: z.array(LeadActivitySchema).optional(),
   scoreBreakdown: ConversionScoreSchema.optional(),
-  obra: z.object({
-    obraId: z.string().uuid(),
-    nome: z.string(),
-  }).optional(),
-  usuario: z.object({
-    usuarioId: z.string().uuid(),
-    nome: z.string(),
-    email: z.string().email(),
-  }).optional(),
+  obra: z
+    .object({
+      obraId: z.string().uuid(),
+      nome: z.string(),
+    })
+    .optional(),
+  usuario: z
+    .object({
+      usuarioId: z.string().uuid(),
+      nome: z.string(),
+      email: z.string().email(),
+    })
+    .optional(),
   proximoAcompanhamento: z.date().optional(),
 });
 

@@ -13,7 +13,8 @@ export class AuthController {
   @Post("registrar")
   @ApiOperation({
     summary: "Registrar novo usuário",
-    description: "Cria uma nova conta de usuário no sistema. O refreshToken é retornado como HttpOnly cookie.",
+    description:
+      "Cria uma nova conta de usuário no sistema. O refreshToken é retornado como HttpOnly cookie.",
   })
   @ApiBody({
     description: "Dados de cadastro do usuário",
@@ -38,23 +39,33 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 400, description: "Validação falhou: CPF inválido, email duplicado, etc" })
-  @ApiResponse({ status: 429, description: "Rate limit atingido (10 registros/min)" })
+  @ApiResponse({
+    status: 400,
+    description: "Validação falhou: CPF inválido, email duplicado, etc",
+  })
+  @ApiResponse({
+    status: 429,
+    description: "Rate limit atingido (10 registros/min)",
+  })
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async registrar(
     @Body(new ZodPipe(CadastroUsuarioSchema)) body: unknown,
-    @Res() res: any
+    @Res() res: any,
   ) {
     const result = await this.auth.registrar(body as never);
     this.setRefreshTokenCookie(res, result.refreshToken);
-    return res.send({ usuario: result.usuario, accessToken: result.accessToken });
+    return res.send({
+      usuario: result.usuario,
+      accessToken: result.accessToken,
+    });
   }
 
   @Post("login")
   @HttpCode(200)
   @ApiOperation({
     summary: "Login de usuário",
-    description: "Autentica usuário com email e senha. Retorna accessToken (Bearer) e refreshToken (HttpOnly cookie).",
+    description:
+      "Autentica usuário com email e senha. Retorna accessToken (Bearer) e refreshToken (HttpOnly cookie).",
   })
   @ApiBody({
     description: "Credenciais de login",
@@ -75,23 +86,30 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: "Credenciais inválidas ou usuário não encontrado" })
-  @ApiResponse({ status: 429, description: "Rate limit atingido (10 tentativas/min)" })
+  @ApiResponse({
+    status: 401,
+    description: "Credenciais inválidas ou usuário não encontrado",
+  })
+  @ApiResponse({
+    status: 429,
+    description: "Rate limit atingido (10 tentativas/min)",
+  })
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async login(
-    @Body(new ZodPipe(LoginSchema)) body: unknown,
-    @Res() res: any
-  ) {
+  async login(@Body(new ZodPipe(LoginSchema)) body: unknown, @Res() res: any) {
     const result = await this.auth.login(body as never);
     this.setRefreshTokenCookie(res, result.refreshToken);
-    return res.send({ usuario: result.usuario, accessToken: result.accessToken });
+    return res.send({
+      usuario: result.usuario,
+      accessToken: result.accessToken,
+    });
   }
 
   @Post("renovar")
   @HttpCode(200)
   @ApiOperation({
     summary: "Renovar tokens",
-    description: "Usa o refreshToken para obter um novo accessToken. refreshToken pode ser enviado no body ou como HttpOnly cookie.",
+    description:
+      "Usa o refreshToken para obter um novo accessToken. refreshToken pode ser enviado no body ou como HttpOnly cookie.",
   })
   @ApiBody({
     description: "Refresh token (pode também vir do cookie)",
@@ -110,13 +128,16 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: "RefreshToken inválido ou expirado" })
-  @ApiResponse({ status: 429, description: "Rate limit atingido (10 renovações/min)" })
+  @ApiResponse({
+    status: 401,
+    description: "RefreshToken inválido ou expirado",
+  })
+  @ApiResponse({
+    status: 429,
+    description: "Rate limit atingido (10 renovações/min)",
+  })
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async renovar(
-    @Body("refreshToken") token: string,
-    @Res() res: any
-  ) {
+  async renovar(@Body("refreshToken") token: string, @Res() res: any) {
     const result = await this.auth.renovarToken(token);
     this.setRefreshTokenCookie(res, result.refreshToken);
     return res.send({ accessToken: result.accessToken });
@@ -126,7 +147,8 @@ export class AuthController {
   @HttpCode(204)
   @ApiOperation({
     summary: "Logout de usuário",
-    description: "Revoga o refreshToken e remove o cookie. O usuário não poderá renovar tokens após logout.",
+    description:
+      "Revoga o refreshToken e remove o cookie. O usuário não poderá renovar tokens após logout.",
   })
   @ApiBody({
     description: "Refresh token a ser revogado",
@@ -141,10 +163,7 @@ export class AuthController {
     description: "Logout bem-sucedido (sem corpo de resposta)",
   })
   @ApiResponse({ status: 400, description: "RefreshToken não fornecido" })
-  async logout(
-    @Body("refreshToken") token: string,
-    @Res() res: any
-  ) {
+  async logout(@Body("refreshToken") token: string, @Res() res: any) {
     await this.auth.revogarToken(token);
     res.clearCookie?.("refreshToken");
     return res.send();
@@ -158,12 +177,13 @@ export class AuthController {
         secure: isProduction,
         sameSite: "strict",
         maxAge: 7 * 24 * 60 * 60 * 1000,
-      }) ?? res.cookie?.("refreshToken", token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      }) ??
+        res.cookie?.("refreshToken", token, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: "strict",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
     } catch (err) {
       // Fallback: skip cookie if method doesn't exist
     }

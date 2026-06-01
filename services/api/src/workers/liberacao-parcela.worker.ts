@@ -1,4 +1,9 @@
-import { Processor, Process, OnQueueFailed, OnQueueCompleted } from "@nestjs/bull";
+import {
+  Processor,
+  Process,
+  OnQueueFailed,
+  OnQueueCompleted,
+} from "@nestjs/bull";
 import { Job } from "bull";
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../modules/prisma/prisma.service";
@@ -22,7 +27,7 @@ export class LiberacaoParcelaWorker {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
   ) {}
 
   @Process()
@@ -38,9 +43,7 @@ export class LiberacaoParcelaWorker {
     });
 
     if (liberacaoExistente) {
-      this.logger.log(
-        `[Idempotent] Liberação já processada: ${creditoId}`
-      );
+      this.logger.log(`[Idempotent] Liberação já processada: ${creditoId}`);
       return;
     }
 
@@ -77,17 +80,19 @@ export class LiberacaoParcelaWorker {
         "PARCELA_LIBERADA",
         "Parcela liberada com sucesso",
         `Liberação de R$ ${formattedValue} foi processada para ${obra?.nome || "sua obra"}.`,
-        obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
+        obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard",
       );
 
       // Envia push notification
-      this.pushNotificacoes.enviarPush({
-        usuarioId: credito.usuarioId,
-        titulo: "Parcela Liberada!",
-        mensagem: `R$ ${formattedValue} foi creditado para ${obra?.nome || "sua obra"}.`,
-        tipo: "PARCELA_LIBERADA",
-        dados: { creditoId, valor: String(valor) },
-      }).catch((e) => this.logger.error(`Erro ao enviar push: ${e}`));
+      this.pushNotificacoes
+        .enviarPush({
+          usuarioId: credito.usuarioId,
+          titulo: "Parcela Liberada!",
+          mensagem: `R$ ${formattedValue} foi creditado para ${obra?.nome || "sua obra"}.`,
+          tipo: "PARCELA_LIBERADA",
+          dados: { creditoId, valor: String(valor) },
+        })
+        .catch((e) => this.logger.error(`Erro ao enviar push: ${e}`));
 
       // Envia email
       this.email
@@ -95,11 +100,13 @@ export class LiberacaoParcelaWorker {
           credito.usuario.nome,
           credito.usuario.email,
           valor,
-          obra?.nome || "sua obra"
+          obra?.nome || "sua obra",
         )
         .catch((e) => this.logger.error(`Erro ao enviar email: ${e}`));
 
-      this.logger.log(`Liberação processada para crédito ${creditoId}: R$ ${valor}`);
+      this.logger.log(
+        `Liberação processada para crédito ${creditoId}: R$ ${valor}`,
+      );
     } catch (error) {
       this.logger.error(`Liberação falhou: ${error.message}`, error.stack);
 
@@ -145,11 +152,13 @@ export class LiberacaoParcelaWorker {
             "PARCELA_FALHA",
             "Erro na liberação da parcela",
             `Ocorreu um erro ao processar a liberação para ${obra?.nome || "sua obra"}. Por favor, contate o suporte.`,
-            obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
+            obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard",
           )
           .catch((e) => this.logger.error(`Erro ao notificar falha: ${e}`));
       })
-      .catch((e) => this.logger.error(`Erro ao processar falha de liberação: ${e}`));
+      .catch((e) =>
+        this.logger.error(`Erro ao processar falha de liberação: ${e}`),
+      );
   }
 
   @OnQueueCompleted()

@@ -69,7 +69,7 @@ import { QUEUE_LIBERACAO } from "./common/constants";
       },
       {
         name: "score-update",
-      }
+      },
     ),
     ScheduleModule.forRoot(),
     PrismaModule,

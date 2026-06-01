@@ -7,31 +7,34 @@ import {
   Query,
   UseGuards,
   Req,
-} from '@nestjs/common';
-import { ComercialService } from './comercial.service';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { UsuarioAtual, type UsuarioAtual as IUsuario } from '../../common/decorators/usuario-atual.decorator';
+} from "@nestjs/common";
+import { ComercialService } from "./comercial.service";
+import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import {
+  UsuarioAtual,
+  type UsuarioAtual as IUsuario,
+} from "../../common/decorators/usuario-atual.decorator";
 
-@Controller('api/comercial')
+@Controller("api/comercial")
 @UseGuards(JwtAuthGuard)
 export class ComercialController {
   constructor(private readonly comercialService: ComercialService) {}
 
-  @Get('dashboard/stats')
+  @Get("dashboard/stats")
   async getDashboardStats() {
     return this.comercialService.obterDashboardStats();
   }
 
-  @Get('leads')
+  @Get("leads")
   async listLeads(
-    @Query('limit') limit = '20',
-    @Query('offset') offset = '0',
-    @Query('stageId') stageId?: string,
-    @Query('fonte') fonte?: string,
-    @Query('segmentoCliente') segmentoCliente?: string,
-    @Query('scoreMin') scoreMin?: string,
-    @Query('scoreMax') scoreMax?: string,
-    @Query('searchTerm') searchTerm?: string
+    @Query("limit") limit = "20",
+    @Query("offset") offset = "0",
+    @Query("stageId") stageId?: string,
+    @Query("fonte") fonte?: string,
+    @Query("segmentoCliente") segmentoCliente?: string,
+    @Query("scoreMin") scoreMin?: string,
+    @Query("scoreMax") scoreMax?: string,
+    @Query("searchTerm") searchTerm?: string,
   ) {
     const filters = {
       stageId,
@@ -45,30 +48,30 @@ export class ComercialController {
     return this.comercialService.listarLeads(
       parseInt(limit),
       parseInt(offset),
-      filters
+      filters,
     );
   }
 
-  @Post('leads')
+  @Post("leads")
   async createLead(@UsuarioAtual() u: IUsuario, @Body() data: any) {
     return this.comercialService.criarLead(u.id, data);
   }
 
-  @Get('leads/:leadId')
-  async getLeadDetail(@Param('leadId') leadId: string) {
+  @Get("leads/:leadId")
+  async getLeadDetail(@Param("leadId") leadId: string) {
     return this.comercialService.obterLeadDetalhe(leadId);
   }
 
-  @Get('leads/:leadId/score')
-  async getLeadScore(@Param('leadId') leadId: string) {
+  @Get("leads/:leadId/score")
+  async getLeadScore(@Param("leadId") leadId: string) {
     return this.comercialService.calcularScoreConversao(leadId);
   }
 
-  @Post('leads/:leadId/atividades')
+  @Post("leads/:leadId/atividades")
   async addActivity(
-    @Param('leadId') leadId: string,
+    @Param("leadId") leadId: string,
     @Body() data: any,
-    @Req() req: any
+    @Req() req: any,
   ) {
     const usuarioId = req.user.usuarioId;
     return this.comercialService.adicionarAtividade(leadId, usuarioId, data);

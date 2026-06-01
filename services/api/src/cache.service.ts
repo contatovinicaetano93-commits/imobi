@@ -1,12 +1,12 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Redis } from 'ioredis';
+import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
+import { Redis } from "ioredis";
 
 @Injectable()
 export class CacheService implements OnModuleInit, OnModuleDestroy {
   private redis: Redis;
 
   onModuleInit() {
-    const redisHost = process.env.REDIS_HOST || 'localhost';
+    const redisHost = process.env.REDIS_HOST || "localhost";
     const redisPort = Number(process.env.REDIS_PORT || 6379);
     this.redis = new Redis({
       host: redisHost,
@@ -41,7 +41,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
         "MATCH",
         pattern,
         "COUNT",
-        batchSize.toString()
+        batchSize.toString(),
       );
       cursor = parseInt(nextCursor);
       if (keys.length > 0) {

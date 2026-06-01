@@ -1,58 +1,48 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Enhanced validation with custom error messages (Portuguese)
 export const EnhancedSchemas = {
-  email: z
-    .string()
-    .email('Email inválido')
-    .toLowerCase()
-    .trim(),
+  email: z.string().email("Email inválido").toLowerCase().trim(),
 
   password: z
     .string()
-    .min(8, 'Senha deve ter mínimo 8 caracteres')
-    .regex(/[A-Z]/, 'Deve conter letra maiúscula')
-    .regex(/[0-9]/, 'Deve conter número')
-    .regex(/[@$!%*?&]/, 'Deve conter caractere especial'),
+    .min(8, "Senha deve ter mínimo 8 caracteres")
+    .regex(/[A-Z]/, "Deve conter letra maiúscula")
+    .regex(/[0-9]/, "Deve conter número")
+    .regex(/[@$!%*?&]/, "Deve conter caractere especial"),
 
   cpf: z
     .string()
-    .regex(/^\d{11}$/, 'CPF deve ter 11 dígitos')
-    .refine(validateCPF, 'CPF inválido'),
+    .regex(/^\d{11}$/, "CPF deve ter 11 dígitos")
+    .refine(validateCPF, "CPF inválido"),
 
   cnpj: z
     .string()
-    .regex(/^\d{14}$/, 'CNPJ deve ter 14 dígitos')
-    .refine(validateCNPJ, 'CNPJ inválido'),
+    .regex(/^\d{14}$/, "CNPJ deve ter 14 dígitos")
+    .refine(validateCNPJ, "CNPJ inválido"),
 
-  telefone: z
-    .string()
-    .regex(/^\d{11}$/, 'Telefone deve ter 11 dígitos'),
+  telefone: z.string().regex(/^\d{11}$/, "Telefone deve ter 11 dígitos"),
 
-  url: z
-    .string()
-    .url('URL inválida'),
+  url: z.string().url("URL inválida"),
 
   monetario: z
     .number()
-    .min(0, 'Valor não pode ser negativo')
-    .max(10000000, 'Valor máximo excedido'),
+    .min(0, "Valor não pode ser negativo")
+    .max(10000000, "Valor máximo excedido"),
 
-  data: z
-    .string()
-    .refine((val) => !isNaN(Date.parse(val)), 'Data inválida'),
+  data: z.string().refine((val) => !isNaN(Date.parse(val)), "Data inválida"),
 
   latitude: z
     .number()
     .min(-90)
     .max(90)
-    .refine((val) => !Number.isNaN(val), 'Latitude inválida'),
+    .refine((val) => !Number.isNaN(val), "Latitude inválida"),
 
   longitude: z
     .number()
     .min(-180)
     .max(180)
-    .refine((val) => !Number.isNaN(val), 'Longitude inválida'),
+    .refine((val) => !Number.isNaN(val), "Longitude inválida"),
 };
 
 // CPF validation (modulo 11)
@@ -88,7 +78,7 @@ function validateCNPJ(cnpj: string): boolean {
 
   let size = cnpj.length - 2;
   let numbers = cnpj.substring(0, size);
-  let digits = cnpj.substring(size);
+  const digits = cnpj.substring(size);
   let sum = 0;
   let pos = size - 7;
 

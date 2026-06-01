@@ -1,9 +1,15 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Inject } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { LoggerService } from '../logger.service';
-import { DataRedactionUtil } from '../utils/data-redaction.util';
-import { ErrorCategorizerUtil } from '../utils/error-categorizer.util';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  Inject,
+} from "@nestjs/common";
+import { Observable } from "rxjs";
+import { tap, catchError } from "rxjs/operators";
+import { LoggerService } from "../logger.service";
+import { DataRedactionUtil } from "../utils/data-redaction.util";
+import { ErrorCategorizerUtil } from "../utils/error-categorizer.util";
 
 @Injectable()
 export class StructuredLoggingInterceptor implements NestInterceptor {
@@ -30,13 +36,13 @@ export class StructuredLoggingInterceptor implements NestInterceptor {
 
         this.logger.log(
           `${method} ${DataRedactionUtil.redactUrl(url)} - ${res.statusCode}`,
-          'HTTP',
+          "HTTP",
           {
             ...logContext,
             statusCode: res.statusCode,
             duration: `${duration}ms`,
             responseSize: JSON.stringify(response).length,
-          }
+          },
         );
       }),
       catchError((error) => {
@@ -57,25 +63,25 @@ export class StructuredLoggingInterceptor implements NestInterceptor {
         const logLevel = this.selectLogLevel(errorMetadata.severity);
         this.logger[logLevel](
           `Error in ${method} ${DataRedactionUtil.redactUrl(url)}`,
-          'HTTP',
-          DataRedactionUtil.redact(errorContext)
+          "HTTP",
+          DataRedactionUtil.redact(errorContext),
         );
 
         throw error;
-      })
+      }),
     );
   }
 
-  private selectLogLevel(severity: string): 'error' | 'warn' | 'debug' {
+  private selectLogLevel(severity: string): "error" | "warn" | "debug" {
     switch (severity) {
-      case 'critical':
-      case 'high':
-        return 'error';
-      case 'medium':
-        return 'warn';
-      case 'low':
+      case "critical":
+      case "high":
+        return "error";
+      case "medium":
+        return "warn";
+      case "low":
       default:
-        return 'debug';
+        return "debug";
     }
   }
 }

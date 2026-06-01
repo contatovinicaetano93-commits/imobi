@@ -34,13 +34,11 @@ describe("Payment Release E2E - Comprehensive Suite", () => {
 
     // Create constructor user
     constructorEmail = `constructor-${Date.now()}@imbobi.com`;
-    await request(app.getHttpServer())
-      .post("/api/v1/auth/registrar")
-      .send({
-        email: constructorEmail,
-        password: "Senha@123",
-        nome: "Construtor Payment Test",
-      });
+    await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+      email: constructorEmail,
+      password: "Senha@123",
+      nome: "Construtor Payment Test",
+    });
 
     const constructorLoginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
@@ -51,13 +49,11 @@ describe("Payment Release E2E - Comprehensive Suite", () => {
 
     // Create manager user
     managerEmail = `manager-${Date.now()}@imbobi.com`;
-    await request(app.getHttpServer())
-      .post("/api/v1/auth/registrar")
-      .send({
-        email: managerEmail,
-        password: "Senha@123",
-        nome: "Manager Payment Test",
-      });
+    await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
+      email: managerEmail,
+      password: "Senha@123",
+      nome: "Manager Payment Test",
+    });
 
     const managerLoginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
@@ -185,7 +181,7 @@ describe("Payment Release E2E - Comprehensive Suite", () => {
 
       const etapa = res.body.etapas.find((e: any) => e.id === etapaId);
       expect(["AGUARDANDO_VISTORIA", "AGUARDANDO_EVIDENCIA"]).toContain(
-        etapa.status
+        etapa.status,
       );
     });
   });
@@ -258,7 +254,7 @@ describe("Payment Release E2E - Comprehensive Suite", () => {
 
       // Should have at least the PARCELA_LIBERADA notification
       const paymentNotification = notificacoes.find(
-        (n) => n.tipo === "PARCELA_LIBERADA"
+        (n) => n.tipo === "PARCELA_LIBERADA",
       );
       expect(paymentNotification).toBeDefined();
       expect(paymentNotification?.titulo).toContain("Parcela liberada");
@@ -298,7 +294,7 @@ describe("Payment Release E2E - Comprehensive Suite", () => {
 
       // At least one etapa should have changed status
       const statusChanged = obra?.etapas.some(
-        (e) => e.status !== "AGUARDANDO_VISTORIA"
+        (e) => e.status !== "AGUARDANDO_VISTORIA",
       );
       expect(statusChanged).toBe(true);
     });

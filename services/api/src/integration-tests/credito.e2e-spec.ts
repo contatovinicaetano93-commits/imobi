@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../app.module';
+import { Test, TestingModule } from "@nestjs/testing";
+import { INestApplication, ValidationPipe } from "@nestjs/common";
+import request from "supertest";
+import { AppModule } from "../app.module";
 
-describe('Credit Simulator Integration Tests', () => {
+describe("Credit Simulator Integration Tests", () => {
   let app: INestApplication;
   let accessToken: string;
 
@@ -18,13 +18,13 @@ describe('Credit Simulator Integration Tests', () => {
 
     // Register and login test user
     const signup = await request(app.getHttpServer())
-      .post('/api/v1/auth/register')
+      .post("/api/v1/auth/register")
       .send({
-        email: 'creditotest@example.com',
-        password: 'SecurePass123!@#',
-        nome: 'Credit Test User',
-        cpf: '11144477741',
-        celular: '11999999999',
+        email: "creditotest@example.com",
+        password: "SecurePass123!@#",
+        nome: "Credit Test User",
+        cpf: "11144477741",
+        celular: "11999999999",
       });
 
     accessToken = signup.body.access_token;
@@ -34,20 +34,20 @@ describe('Credit Simulator Integration Tests', () => {
     await app.close();
   });
 
-  describe('POST /api/v1/credito/simular', () => {
-    it('should simulate credit correctly', async () => {
+  describe("POST /api/v1/credito/simular", () => {
+    it("should simulate credit correctly", async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/v1/credito/simular')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .post("/api/v1/credito/simular")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           valor: 50000, // R$50,000
           prazo: 36, // 36 months
         })
         .expect(201);
 
-      expect(response.body).toHaveProperty('parcelas');
-      expect(response.body).toHaveProperty('juros');
-      expect(response.body).toHaveProperty('cet');
+      expect(response.body).toHaveProperty("parcelas");
+      expect(response.body).toHaveProperty("juros");
+      expect(response.body).toHaveProperty("cet");
       expect(response.body.valor).toBe(50000);
       expect(response.body.prazo).toBe(36);
 
@@ -57,10 +57,10 @@ describe('Credit Simulator Integration Tests', () => {
       expect(response.body.cet).toBeGreaterThan(0);
     });
 
-    it('should reject valor below minimum', async () => {
+    it("should reject valor below minimum", async () => {
       await request(app.getHttpServer())
-        .post('/api/v1/credito/simular')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .post("/api/v1/credito/simular")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           valor: 5000, // Below R$10,000 minimum
           prazo: 36,
@@ -68,10 +68,10 @@ describe('Credit Simulator Integration Tests', () => {
         .expect(400);
     });
 
-    it('should reject valor above maximum', async () => {
+    it("should reject valor above maximum", async () => {
       await request(app.getHttpServer())
-        .post('/api/v1/credito/simular')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .post("/api/v1/credito/simular")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           valor: 2000000, // Above R$1,000,000 maximum
           prazo: 36,
@@ -79,10 +79,10 @@ describe('Credit Simulator Integration Tests', () => {
         .expect(400);
     });
 
-    it('should reject prazo below minimum', async () => {
+    it("should reject prazo below minimum", async () => {
       await request(app.getHttpServer())
-        .post('/api/v1/credito/simular')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .post("/api/v1/credito/simular")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           valor: 50000,
           prazo: 6, // Below 12 months minimum
@@ -90,10 +90,10 @@ describe('Credit Simulator Integration Tests', () => {
         .expect(400);
     });
 
-    it('should reject prazo above maximum', async () => {
+    it("should reject prazo above maximum", async () => {
       await request(app.getHttpServer())
-        .post('/api/v1/credito/simular')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .post("/api/v1/credito/simular")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           valor: 50000,
           prazo: 240, // Above 180 months maximum
@@ -101,10 +101,10 @@ describe('Credit Simulator Integration Tests', () => {
         .expect(400);
     });
 
-    it('should calculate different rates for different amounts', async () => {
+    it("should calculate different rates for different amounts", async () => {
       const simulation1 = await request(app.getHttpServer())
-        .post('/api/v1/credito/simular')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .post("/api/v1/credito/simular")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           valor: 10000,
           prazo: 12,
@@ -112,8 +112,8 @@ describe('Credit Simulator Integration Tests', () => {
         .expect(201);
 
       const simulation2 = await request(app.getHttpServer())
-        .post('/api/v1/credito/simular')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .post("/api/v1/credito/simular")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           valor: 500000,
           prazo: 12,
@@ -124,10 +124,10 @@ describe('Credit Simulator Integration Tests', () => {
       expect(simulation2.body.cet).toBeLessThan(simulation1.body.cet);
     });
 
-    it('should calculate different rates for different terms', async () => {
+    it("should calculate different rates for different terms", async () => {
       const shortTerm = await request(app.getHttpServer())
-        .post('/api/v1/credito/simular')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .post("/api/v1/credito/simular")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           valor: 100000,
           prazo: 12,
@@ -135,8 +135,8 @@ describe('Credit Simulator Integration Tests', () => {
         .expect(201);
 
       const longTerm = await request(app.getHttpServer())
-        .post('/api/v1/credito/simular')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .post("/api/v1/credito/simular")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           valor: 100000,
           prazo: 60,
@@ -147,9 +147,9 @@ describe('Credit Simulator Integration Tests', () => {
       expect(longTerm.body.cet).toBeGreaterThan(shortTerm.body.cet);
     });
 
-    it('should reject unauthorized request', async () => {
+    it("should reject unauthorized request", async () => {
       await request(app.getHttpServer())
-        .post('/api/v1/credito/simular')
+        .post("/api/v1/credito/simular")
         .send({
           valor: 50000,
           prazo: 36,
@@ -157,10 +157,10 @@ describe('Credit Simulator Integration Tests', () => {
         .expect(401);
     });
 
-    it('should include calculated monthly installment', async () => {
+    it("should include calculated monthly installment", async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/v1/credito/simular')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .post("/api/v1/credito/simular")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           valor: 100000,
           prazo: 36,
@@ -173,20 +173,20 @@ describe('Credit Simulator Integration Tests', () => {
     });
   });
 
-  describe('GET /api/v1/credito/simulacoes', () => {
-    it('should list user simulations', async () => {
+  describe("GET /api/v1/credito/simulacoes", () => {
+    it("should list user simulations", async () => {
       // First create some simulations
       await request(app.getHttpServer())
-        .post('/api/v1/credito/simular')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .post("/api/v1/credito/simular")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           valor: 50000,
           prazo: 36,
         });
 
       const response = await request(app.getHttpServer())
-        .get('/api/v1/credito/simulacoes')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .get("/api/v1/credito/simulacoes")
+        .set("Authorization", `Bearer ${accessToken}`)
         .expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
@@ -194,16 +194,16 @@ describe('Credit Simulator Integration Tests', () => {
 
       // Verify structure
       response.body.forEach((sim: any) => {
-        expect(sim).toHaveProperty('valor');
-        expect(sim).toHaveProperty('prazo');
-        expect(sim).toHaveProperty('parcelas');
-        expect(sim).toHaveProperty('createdAt');
+        expect(sim).toHaveProperty("valor");
+        expect(sim).toHaveProperty("prazo");
+        expect(sim).toHaveProperty("parcelas");
+        expect(sim).toHaveProperty("createdAt");
       });
     });
 
-    it('should reject unauthorized request', async () => {
+    it("should reject unauthorized request", async () => {
       await request(app.getHttpServer())
-        .get('/api/v1/credito/simulacoes')
+        .get("/api/v1/credito/simulacoes")
         .expect(401);
     });
   });

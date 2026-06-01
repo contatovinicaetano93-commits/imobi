@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CacheService } from "../../cache.service";
 import type { CriarObraInput } from "@imbobi/schemas";
@@ -18,7 +22,10 @@ export class ObrasService {
           usuarioId,
           creditoId: input.creditoId,
           nome: input.nome,
-          endereco: typeof input.endereco === "string" ? input.endereco : JSON.stringify(input.endereco),
+          endereco:
+            typeof input.endereco === "string"
+              ? input.endereco
+              : JSON.stringify(input.endereco),
           geoLatitude: input.geo?.latitude ?? 0,
           geoLongitude: input.geo?.longitude ?? 0,
           raioValidacaoMetros: input.geo?.raioValidacaoMetros ?? 50,
@@ -54,7 +61,11 @@ export class ObrasService {
 
     const obras = await this.prisma.obra.findMany({
       where: { usuarioId },
-      include: { etapas: { select: { etapaId: true, nome: true, status: true, ordem: true } } },
+      include: {
+        etapas: {
+          select: { etapaId: true, nome: true, status: true, ordem: true },
+        },
+      },
       orderBy: { criadoEm: "desc" },
     });
 
@@ -77,7 +88,14 @@ export class ObrasService {
             },
           },
         },
-        credito: { select: { creditoId: true, valorAprovado: true, valorLiberado: true, status: true } },
+        credito: {
+          select: {
+            creditoId: true,
+            valorAprovado: true,
+            valorLiberado: true,
+            status: true,
+          },
+        },
       },
     });
     if (!obra) throw new NotFoundException("Obra não encontrada.");

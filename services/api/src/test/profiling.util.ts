@@ -89,7 +89,7 @@ export class PerformanceProfiler {
       // If this query is slow (>100ms), suggest index
       // In production, check query plan with EXPLAIN
       suggestions.push(
-        "CONSIDER: INDEX on EtapaObra(status, criadoEm) for manager/etapas-pendentes filtering"
+        "CONSIDER: INDEX on EtapaObra(status, criadoEm) for manager/etapas-pendentes filtering",
       );
     } catch (e) {}
 
@@ -101,7 +101,7 @@ export class PerformanceProfiler {
       `;
 
       suggestions.push(
-        "CONSIDER: INDEX on LiberacaoParcela(creditoId, status) for payment queue queries"
+        "CONSIDER: INDEX on LiberacaoParcela(creditoId, status) for payment queue queries",
       );
     } catch (e) {}
 
@@ -114,7 +114,7 @@ export class PerformanceProfiler {
       `;
 
       suggestions.push(
-        "CONSIDER: INDEX on Notificacao(usuarioId, lida, criadoEm) for unread notification queries"
+        "CONSIDER: INDEX on Notificacao(usuarioId, lida, criadoEm) for unread notification queries",
       );
     } catch (e) {}
 
@@ -174,9 +174,13 @@ export class PerformanceProfiler {
         LIMIT 10
       `;
 
-      recommendations.push(`✓ Found ${Array.isArray(indexStats) ? indexStats.length : 0} indexes in use`);
+      recommendations.push(
+        `✓ Found ${Array.isArray(indexStats) ? indexStats.length : 0} indexes in use`,
+      );
     } catch (e) {
-      recommendations.push("⚠ Could not analyze index usage (requires pg_stat_statements)");
+      recommendations.push(
+        "⚠ Could not analyze index usage (requires pg_stat_statements)",
+      );
     }
 
     // Check for unused indexes
@@ -190,15 +194,21 @@ export class PerformanceProfiler {
 
       if (Array.isArray(unusedIndexes) && unusedIndexes.length > 0) {
         recommendations.push(
-          `⚠ FOUND: ${unusedIndexes.length} unused indexes - consider dropping to save storage`
+          `⚠ FOUND: ${unusedIndexes.length} unused indexes - consider dropping to save storage`,
         );
       }
     } catch (e) {}
 
     // Check connection pool
-    recommendations.push("ℹ Cache TTL: 5min default (consider 2-5min for high-traffic endpoints)");
-    recommendations.push("ℹ Rate Limits: Auth=10/min, General=100/min, Manager=20/min");
-    recommendations.push("ℹ Job Queue: BullMQ liberacao-parcela with Redis backend");
+    recommendations.push(
+      "ℹ Cache TTL: 5min default (consider 2-5min for high-traffic endpoints)",
+    );
+    recommendations.push(
+      "ℹ Rate Limits: Auth=10/min, General=100/min, Manager=20/min",
+    );
+    recommendations.push(
+      "ℹ Job Queue: BullMQ liberacao-parcela with Redis backend",
+    );
 
     // Performance targets
     recommendations.push("\n📊 Performance Targets:");
@@ -214,9 +224,15 @@ export class PerformanceProfiler {
 export async function runProfilingAnalysis(prisma: PrismaService) {
   const profiler = new PerformanceProfiler(prisma);
 
-  console.log("\n╔════════════════════════════════════════════════════════════════════╗");
-  console.log("║              DATABASE & CACHE PERFORMANCE ANALYSIS                  ║");
-  console.log("╚════════════════════════════════════════════════════════════════════╝\n");
+  console.log(
+    "\n╔════════════════════════════════════════════════════════════════════╗",
+  );
+  console.log(
+    "║              DATABASE & CACHE PERFORMANCE ANALYSIS                  ║",
+  );
+  console.log(
+    "╚════════════════════════════════════════════════════════════════════╝\n",
+  );
 
   // Analyze N+1 queries
   console.log("1️⃣  N+1 Query Analysis:");
@@ -241,7 +257,7 @@ export async function runProfilingAnalysis(prisma: PrismaService) {
   const cachePatterns = profiler.analyzeCachePatterns();
   cachePatterns.forEach((pattern) => {
     console.log(
-      `   ${pattern.endpoint}: avg response ${pattern.avgResponseTimeMs}ms, TTL ${pattern.ttlSeconds}s`
+      `   ${pattern.endpoint}: avg response ${pattern.avgResponseTimeMs}ms, TTL ${pattern.ttlSeconds}s`,
     );
   });
 

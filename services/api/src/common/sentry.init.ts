@@ -27,10 +27,7 @@ export function initSentry(environment: string, release?: string) {
   console.log(`✅ Sentry initialized for ${environment} environment`);
 }
 
-export function captureException(
-  error: Error,
-  context?: Record<string, any>
-) {
+export function captureException(error: Error, context?: Record<string, any>) {
   if (context) {
     Sentry.captureException(error, { extra: context });
   } else {
@@ -38,7 +35,10 @@ export function captureException(
   }
 }
 
-export function captureMessage(message: string, level: Sentry.SeverityLevel = "info") {
+export function captureMessage(
+  message: string,
+  level: Sentry.SeverityLevel = "info",
+) {
   Sentry.captureMessage(message, level);
 }
 

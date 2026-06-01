@@ -1,5 +1,9 @@
 import { useState, useCallback } from "react";
-import { calcularDistanciaMetros, estaNoRaio, type Coordinates } from "../utils/haversine";
+import {
+  calcularDistanciaMetros,
+  estaNoRaio,
+  type Coordinates,
+} from "../utils/haversine";
 
 export type GeoStatus =
   | "idle"
@@ -38,7 +42,7 @@ const MAX_ACCURACY_METERS = 15;
 export function useGeoValidation(
   alvo: Coordinates,
   raioMetros: number,
-  getPosition: () => Promise<Coordinates & { accuracy: number }>
+  getPosition: () => Promise<Coordinates & { accuracy: number }>,
 ) {
   const [state, setState] = useState<GeoValidationState>({
     status: "idle",
@@ -49,7 +53,11 @@ export function useGeoValidation(
   });
 
   const validar = useCallback(async () => {
-    setState((s) => ({ ...s, status: "checking", mensagem: MENSAGENS.checking }));
+    setState((s) => ({
+      ...s,
+      status: "checking",
+      mensagem: MENSAGENS.checking,
+    }));
 
     try {
       const pos = await getPosition();

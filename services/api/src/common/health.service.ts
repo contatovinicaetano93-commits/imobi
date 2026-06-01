@@ -1,7 +1,7 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
-import { PrismaService } from '../modules/prisma/prisma.service';
+import { Injectable, Inject } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Cache } from "cache-manager";
+import { PrismaService } from "../modules/prisma/prisma.service";
 
 @Injectable()
 export class HealthService {
@@ -13,12 +13,12 @@ export class HealthService {
   async getHealth() {
     const uptime = process.uptime();
     const memoryUsage = process.memoryUsage();
-    
+
     return {
-      status: 'ok',
+      status: "ok",
       timestamp: new Date().toISOString(),
       uptime: Math.floor(uptime),
-      version: process.env.npm_package_version || '1.0.0',
+      version: process.env.npm_package_version || "1.0.0",
       memory: {
         heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
         heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
@@ -32,7 +32,7 @@ export class HealthService {
   }
 
   async getLiveness() {
-    return { status: 'alive', timestamp: new Date().toISOString() };
+    return { status: "alive", timestamp: new Date().toISOString() };
   }
 
   async getReadiness() {
@@ -41,9 +41,9 @@ export class HealthService {
       this.checkRedis(),
     ]);
 
-    const ready = dbReady === 'connected' && redisReady === 'connected';
+    const ready = dbReady === "connected" && redisReady === "connected";
     return {
-      status: ready ? 'ready' : 'not_ready',
+      status: ready ? "ready" : "not_ready",
       timestamp: new Date().toISOString(),
       services: { database: dbReady, redis: redisReady },
     };
@@ -52,19 +52,19 @@ export class HealthService {
   private async checkDatabase(): Promise<string> {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
-      return 'connected';
+      return "connected";
     } catch {
-      return 'disconnected';
+      return "disconnected";
     }
   }
 
   private async checkRedis(): Promise<string> {
     try {
-      await this.cacheManager.set('health-check', 'ok', 1000);
-      const val = await this.cacheManager.get('health-check');
-      return val === 'ok' ? 'connected' : 'disconnected';
+      await this.cacheManager.set("health-check", "ok", 1000);
+      const val = await this.cacheManager.get("health-check");
+      return val === "ok" ? "connected" : "disconnected";
     } catch {
-      return 'disconnected';
+      return "disconnected";
     }
   }
 }

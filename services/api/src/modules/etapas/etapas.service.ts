@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bull";
 import { Queue } from "bull";
 import { PrismaService } from "../prisma/prisma.service";
@@ -14,7 +19,8 @@ export class EtapasService {
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
     private readonly pushNotificacoes: PushNotificacoesService,
-    @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue<LiberacaoJob>
+    @InjectQueue(QUEUE_LIBERACAO)
+    private readonly liberacaoQueue: Queue<LiberacaoJob>,
   ) {}
 
   async aprovar(gestorId: string, etapaId: string, observacao?: string) {
@@ -32,7 +38,9 @@ export class EtapasService {
       where: { etapaId: etapaId, validada: true },
     });
     if (evidencias === 0) {
-      throw new BadRequestException("Etapa precisa ter ao menos uma evidência validada.");
+      throw new BadRequestException(
+        "Etapa precisa ter ao menos uma evidência validada.",
+      );
     }
 
     await this.prisma.etapaObra.update({
@@ -46,38 +54,52 @@ export class EtapasService {
       "ETAPA_APROVADA",
       `Etapa aprovada: ${etapa.nome}`,
       `A etapa "${etapa.nome}" da obra "${etapa.obra.nome}" foi aprovada com sucesso. A liberação da parcela foi agendada.`,
-      `/dashboard/obras/${etapa.obra.obraId}`
+      `/dashboard/obras/${etapa.obra.obraId}`,
     );
 
     // Envia push notification
-    this.pushNotificacoes.enviarPush({
-      usuarioId: etapa.obra.usuarioId,
-      titulo: `Etapa Aprovada: ${etapa.nome}`,
-      mensagem: `Sua etapa foi aprovada e a parcela será liberada em breve.`,
-      tipo: "ETAPA_APROVADA",
-      dados: { obraId: etapa.obra.obraId, etapaId },
-    }).catch(() => {});
+    this.pushNotificacoes
+      .enviarPush({
+        usuarioId: etapa.obra.usuarioId,
+        titulo: `Etapa Aprovada: ${etapa.nome}`,
+        mensagem: `Sua etapa foi aprovada e a parcela será liberada em breve.`,
+        tipo: "ETAPA_APROVADA",
+        dados: { obraId: etapa.obra.obraId, etapaId },
+      })
+      .catch(() => {});
 
     // Envia email de confirmação
     const credito = etapa.obra.credito;
     if (credito) {
-      const valorLiberacao = Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
-      this.email.etapaAprovadaEmail(
-        etapa.obra.usuario?.nome || "usuário",
-        etapa.obra.usuario?.email || "",
-        etapa.nome,
-        etapa.obra.nome,
-        valorLiberacao
-      ).catch(() => {});
+      const valorLiberacao =
+        Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
+      this.email
+        .etapaAprovadaEmail(
+          etapa.obra.usuario?.nome || "usuário",
+          etapa.obra.usuario?.email || "",
+          etapa.nome,
+          etapa.obra.nome,
+          valorLiberacao,
+        )
+        .catch(() => {});
     }
 
     // Dispara liberação de parcela via fila (assíncrono)
     if (credito && credito.status === "ATIVO") {
-      const valorLiberacao = Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
+      const valorLiberacao =
+        Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
       await this.prisma.liberacaoParcela.create({
-        data: { creditoId: credito.creditoId, valor: valorLiberacao, status: "PENDENTE" },
+        data: {
+          creditoId: credito.creditoId,
+          valor: valorLiberacao,
+          status: "PENDENTE",
+        },
       });
-      await this.liberacaoQueue.add({ creditoId: credito.creditoId, etapaId, valor: valorLiberacao });
+      await this.liberacaoQueue.add({
+        creditoId: credito.creditoId,
+        etapaId,
+        valor: valorLiberacao,
+      });
     }
 
     return { ok: true, observacao };
@@ -103,7 +125,7 @@ export class EtapasService {
       "ETAPA_REPROVADA",
       `Etapa reprovada: ${etapa.nome}`,
       `A etapa "${etapa.nome}" foi reprovada. Motivo: ${motivo}`,
-      `/dashboard/obras/${etapa.obra.obraId}`
+      `/dashboard/obras/${etapa.obra.obraId}`,
     );
 
     return { ok: true, motivo };
@@ -122,7 +144,12 @@ export class EtapasService {
       orderBy: { ordem: "asc" },
       include: {
         evidencias: {
-          select: { evidenciaId: true, fotoUrl: true, validada: true, criadoEm: true },
+          select: {
+            evidenciaId: true,
+            fotoUrl: true,
+            validada: true,
+            criadoEm: true,
+          },
           orderBy: { criadoEm: "desc" },
           take: 5,
         },
@@ -130,7 +157,11 @@ export class EtapasService {
     });
   }
 
-  async listarPorObraComValidacao(usuarioId: string, usuarioTipo: string, obraId: string) {
+  async listarPorObraComValidacao(
+    usuarioId: string,
+    usuarioTipo: string,
+    obraId: string,
+  ) {
     const obra = await this.prisma.obra.findUnique({
       where: { obraId },
       select: { usuarioId: true },
