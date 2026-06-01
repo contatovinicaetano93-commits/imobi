@@ -57,13 +57,16 @@ export function AdvancedFilters({ filters: initialFilters, onFilter, onReset }: 
     onReset();
   };
 
-  const hasActiveFilters =
-    filters.status !== "todas" ||
-    filters.dataInicio ||
-    filters.dataFim ||
-    filters.obraType ||
-    filters.priority !== "todas" ||
-    !!filters.searchTerm;
+  const activeFiltersArray = [
+    filters.status !== "todas",
+    !!filters.dataInicio,
+    !!filters.dataFim,
+    !!filters.obraType,
+    filters.priority !== "todas",
+    !!filters.searchTerm,
+  ];
+  const activeCount = activeFiltersArray.filter(Boolean).length;
+  const hasActiveFilters = activeCount > 0;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4">
@@ -76,22 +79,8 @@ export function AdvancedFilters({ filters: initialFilters, onFilter, onReset }: 
         <div className="flex items-center gap-2">
           <span className="font-semibold text-xs sm:text-sm text-gray-900">Filtros Avançados</span>
           {hasActiveFilters && (
-            <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full" aria-label={`${
-                [
-                  filters.status !== "todas" ? 1 : 0,
-                  filters.dataInicio ? 1 : 0,
-                  filters.dataFim ? 1 : 0,
-                  filters.obraType ? 1 : 0,
-                  filters.priority !== "todas" ? 1 : 0,
-                ].reduce((a, b) => a + b, 0)
-              } filtros ativos`}>
-              {[
-                filters.status !== "todas" ? 1 : 0,
-                filters.dataInicio ? 1 : 0,
-                filters.dataFim ? 1 : 0,
-                filters.obraType ? 1 : 0,
-                filters.priority !== "todas" ? 1 : 0,
-              ].reduce((a, b) => a + b, 0)}
+            <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full" aria-label={`${activeCount} filtros ativos`}>
+              {activeCount}
             </span>
           )}
         </div>
