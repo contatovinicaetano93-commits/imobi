@@ -1,14 +1,12 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { RegionalMetrics } from "./fundos-utils";
 import { formatarBRL } from "@imbobi/core";
 
 interface RegionalDistributionProps {
   data: RegionalMetrics[];
 }
-
-const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export function RegionalDistribution({ data }: RegionalDistributionProps) {
   if (data.length === 0) {
@@ -65,7 +63,7 @@ export function RegionalDistribution({ data }: RegionalDistributionProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {data.map((region, idx) => {
+            {data.map((region) => {
               const liberacaoPerc = region.totalAprovado > 0
                 ? ((region.totalLiberado / region.totalAprovado) * 100).toFixed(1)
                 : "0.0";

@@ -1,12 +1,10 @@
 "use client";
 
-
-
 import { useEffect, useState } from "react";
 import { creditoApi, scoreApi, obrasApi, notificacoesApi, type CreditoResumo, type ScoreAtual, type ScoreHistorico, type ObraResumo, type Notificacao } from "@/lib/api";
-import { CreditSimulator } from "@/components/dashboard/CreditSimulator";
-import { ScoreDynamics } from "@/components/dashboard/ScoreDynamics";
-import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
+import { CreditSimulator } from "@/(dashboard)/_components/CreditSimulator";
+import { ScoreDynamics } from "@/(dashboard)/_components/ScoreDynamics";
+import { NotificationFeed } from "@/(dashboard)/_components/NotificationFeed";
 import Link from "next/link";
 
 function brl(v: number) {

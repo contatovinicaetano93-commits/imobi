@@ -6,12 +6,10 @@ import { PortfolioChart } from "./_components/PortfolioChart";
 import { RegionalDistribution } from "./_components/RegionalDistribution";
 import { InadimplenciaMetrics } from "./_components/InadimplenciaMetrics";
 import { ReportExport } from "./_components/ReportExport";
-import { LoadingSkeleton } from "./_components/LoadingSkeleton";
 import {
   aggregateByRegion,
   calculateRoiTimeline,
   calculateInadimplenciaRate,
-  calculatePortfolioPerformance,
 } from "./_components/fundos-utils";
 
 export const metadata: Metadata = { title: "Fundos — imbobi" };
@@ -58,7 +56,6 @@ async function FundosPageContent() {
   const regionalMetrics = aggregateByRegion(obras, creditos);
   const roiTimeline = calculateRoiTimeline(creditos);
   const inadimplenciaData = calculateInadimplenciaRate(creditos);
-  const portfolioPerformance = calculatePortfolioPerformance(obras);
 
   return (
     <div className="space-y-8">
@@ -149,6 +146,9 @@ async function FundosPageContent() {
           Evolução de ROI
         </h2>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <p className="text-sm text-gray-500 mb-6">
+            Comparação entre ROI esperado e real ao longo do tempo
+          </p>
           <PortfolioChart data={roiTimeline} />
         </div>
       </section>

@@ -25,50 +25,32 @@ export type PortfolioPerformance = {
   progresso: number;
 };
 
-export type ReportTemplate = "executive" | "detailed" | "minimal";
-
-const BRAZILIAN_STATES: Record<string, string> = {
-  "north": "Norte", "northeast": "Nordeste", "center-west": "Centro-Oeste",
-  "southeast": "Sudeste", "south": "Sul",
-};
-
-// Memoization cache for expensive calculations
-const coordinateCache = new Map<string, string>();
-
 function getStateFromCoordinates(lat: number, lng: number): string {
   if (!lat || !lng) return "Desconhecido";
-
-  const cacheKey = `${lat},${lng}`;
-  if (coordinateCache.has(cacheKey)) {
-    return coordinateCache.get(cacheKey)!;
-  }
-
-  let result = "Desconhecido";
 
   // Simplified state determination based on coordinates
   // Northeast: lat -2 to -17, lng -34 to -48
   if (lat <= -2 && lat >= -17 && lng >= -48 && lng <= -34) {
-    result = "Nordeste";
+    return "Nordeste";
   }
   // Southeast: lat -15 to -28, lng -41 to -55
-  else if (lat <= -15 && lat >= -28 && lng >= -55 && lng <= -41) {
-    result = "Sudeste";
+  if (lat <= -15 && lat >= -28 && lng >= -55 && lng <= -41) {
+    return "Sudeste";
   }
   // South: lat -25 to -33, lng -49 to -57
-  else if (lat <= -25 && lat >= -33 && lng >= -57 && lng <= -49) {
-    result = "Sul";
+  if (lat <= -25 && lat >= -33 && lng >= -57 && lng <= -49) {
+    return "Sul";
   }
   // Center-West: lat -7 to -22, lng -54 to -62
-  else if (lat <= -7 && lat >= -22 && lng >= -62 && lng <= -54) {
-    result = "Centro-Oeste";
+  if (lat <= -7 && lat >= -22 && lng >= -62 && lng <= -54) {
+    return "Centro-Oeste";
   }
   // North: lat 5 to -4, lng -49 to -74
-  else if (lat <= 5 && lat >= -4 && lng >= -74 && lng <= -49) {
-    result = "Norte";
+  if (lat <= 5 && lat >= -4 && lng >= -74 && lng <= -49) {
+    return "Norte";
   }
 
-  coordinateCache.set(cacheKey, result);
-  return result;
+  return "Desconhecido";
 }
 
 export function aggregateByRegion(obras: ObraResumo[], creditos: CreditoResumo[]): RegionalMetrics[] {
@@ -192,69 +174,42 @@ export function generateCSVReport(
   regional: RegionalMetrics[],
   roiData: RoiDataPoint[],
   inadimplenciaData: InadimplenciaDataPoint[],
-  creditos: CreditoResumo[],
-  template: ReportTemplate = "detailed"
+  creditos: CreditoResumo[]
 ): string {
   const totalAprovado = creditos.reduce((acc, c) => acc + Number(c.valorAprovado ?? 0), 0);
   const totalLiberado = creditos.reduce((acc, c) => acc + Number(c.valorLiberado ?? 0), 0);
-  const percentualLiberado = totalAprovado > 0 ? ((totalLiberado / totalAprovado) * 100).toFixed(2) : "0.00";
 
   let csv = "RELATÓRIO DE FUNDOS - IMBOBI\n";
-  csv += `Gerado em: ${new Date().toLocaleString("pt-BR")}\n`;
-  csv += `Tipo de Relatório: ${template === "executive" ? "Executivo" : template === "minimal" ? "Mínimo" : "Detalhado"}\n\n`;
+  csv += `Gerado em: ${new Date().toLocaleString("pt-BR")}\n\n`;
 
   // Summary
   csv += "RESUMO EXECUTIVO\n";
   csv += `Total Aprovado,${totalAprovado}\n`;
   csv += `Total Liberado,${totalLiberado}\n`;
-  csv += `Percentual Liberado,${percentualLiberado}%\n`;
-  csv += `Número de Créditos,${creditos.length}\n`;
-  csv += `Número de Regiões,${regional.length}\n\n`;
+  csv += `Percentual Liberado,${((totalLiberado / totalAprovado) * 100).toFixed(2)}%\n\n`;
 
-  if (template !== "minimal") {
-    // Regional Distribution
-    csv += "DISTRIBUIÇÃO REGIONAL\n";
-    csv += "Estado,Obras,Total Aprovado,Total Liberado,Progresso Médio\n";
-    regional.forEach((r) => {
-      csv += `${r.estado},${r.obrasCount},${r.totalAprovado},${r.totalLiberado},${r.progresso}%\n`;
-    });
-    csv += "\n";
+  // Regional Distribution
+  csv += "DISTRIBUIÇÃO REGIONAL\n";
+  csv += "Estado,Obras,Total Aprovado,Total Liberado,Progresso Médio\n";
+  regional.forEach((r) => {
+    csv += `${r.estado},${r.obrasCount},${r.totalAprovado},${r.totalLiberado},${r.progresso}%\n`;
+  });
+  csv += "\n";
 
-    // ROI Timeline
-    csv += "TIMELINE DE ROI\n";
-    csv += "Mês,ROI Esperado,ROI Real\n";
-    roiData.forEach((r) => {
-      csv += `${r.mes},${r.esperado},${r.real}\n`;
-    });
-    csv += "\n";
+  // ROI Timeline
+  csv += "TIMELINE DE ROI\n";
+  csv += "Mês,ROI Esperado,ROI Real\n";
+  roiData.forEach((r) => {
+    csv += `${r.mes},${r.esperado},${r.real}\n`;
+  });
+  csv += "\n";
 
-    // Inadimplência
-    csv += "TAXA DE INADIMPLÊNCIA\n";
-    csv += "Mês,Taxa (%)\n";
-    inadimplenciaData.forEach((i) => {
-      csv += `${i.mes},${i.taxa}\n`;
-    });
-  }
+  // Inadimplência
+  csv += "TAXA DE INADIMPLÊNCIA\n";
+  csv += "Mês,Taxa (%)\n";
+  inadimplenciaData.forEach((i) => {
+    csv += `${i.mes},${i.taxa}\n`;
+  });
 
   return csv;
-}
-
-export function generateXLSXReport(
-  regional: RegionalMetrics[],
-  roiData: RoiDataPoint[],
-  inadimplenciaData: InadimplenciaDataPoint[],
-  creditos: CreditoResumo[],
-  template: ReportTemplate = "detailed"
-): Uint8Array {
-  // This function creates a simple XLSX-compatible format
-  // In production, use a library like 'xlsx' for full XLSX support
-  const totalAprovado = creditos.reduce((acc, c) => acc + Number(c.valorAprovado ?? 0), 0);
-  const totalLiberado = creditos.reduce((acc, c) => acc + Number(c.valorLiberado ?? 0), 0);
-
-  // For now, return CSV data as fallback - proper XLSX generation should use a dedicated library
-  const csvData = generateCSVReport(regional, roiData, inadimplenciaData, creditos, template);
-
-  // Convert to Uint8Array for download
-  const encoder = new TextEncoder();
-  return encoder.encode(csvData);
 }
