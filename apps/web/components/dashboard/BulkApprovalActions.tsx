@@ -5,7 +5,7 @@ import { managerApi } from "@/lib/api";
 
 export type BulkApprovalActionsProps = {
   selectedEtapas: string[];
-  onSuccess: () => void;
+  onSuccess: (action: "approve" | "reject") => void;
   onError: (message: string) => void;
   isDisabled: boolean;
 };
@@ -28,7 +28,7 @@ export function BulkApprovalActions({
           managerApi.aprovarEtapa(etapaId, "Aprovação em lote")
         )
       );
-      onSuccess();
+      onSuccess("approve");
       setShowConfirm(false);
     } catch (error) {
       onError(

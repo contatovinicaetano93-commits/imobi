@@ -4,15 +4,20 @@ import { useEffect, useState, ChangeEvent } from 'react';
 import { Lead } from '@imbobi/schemas';
 import { LeadCard } from '@/components/dashboard/comercial/LeadCard';
 
+type LeadWithRelations = Lead & {
+  scoreHistorico?: { scoreFinal: number; probabilidadeClosing: number }[];
+  stage?: { nome: string };
+};
+
 interface LeadsListResponse {
-  leads: Lead[];
+  leads: LeadWithRelations[];
   total: number;
   page: number;
   pageSize: number;
 }
 
 export default function LeadsList() {
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [leads, setLeads] = useState<LeadWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);

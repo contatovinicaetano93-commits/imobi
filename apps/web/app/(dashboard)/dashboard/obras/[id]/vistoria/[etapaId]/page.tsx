@@ -44,7 +44,7 @@ export default async function VistoriaPage({
         </div>
       </div>
 
-      <UploadEvidenciaForm etapaId={etapaId} />
+      {/* TODO: Implement UploadEvidenciaForm component */}
 
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">

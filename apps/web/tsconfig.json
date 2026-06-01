@@ -9,14 +9,13 @@
     "jsx": "preserve",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "strict": false,
+    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "noImplicitAny": false,
     "paths": {
       "@/*": [
         "./app/*",

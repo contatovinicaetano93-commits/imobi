@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
+import { FormField, Input } from "@/components";
 
 export default function CadastroPage() {
   const router = useRouter();

@@ -7,20 +7,25 @@ export type FilterState = {
   dataInicio: string;
   dataFim: string;
   obraType: string;
+  priority?: "todas" | "alta" | "media" | "baixa";
 };
 
 export type AdvancedFiltersProps = {
+  filters?: FilterState;
   onFilter: (filters: FilterState) => void;
   onReset: () => void;
 };
 
-export function AdvancedFilters({ onFilter, onReset }: AdvancedFiltersProps) {
-  const [filters, setFilters] = useState<FilterState>({
-    status: "todas",
-    dataInicio: "",
-    dataFim: "",
-    obraType: "",
-  });
+export function AdvancedFilters({ filters: initialFilters, onFilter, onReset }: AdvancedFiltersProps) {
+  const [filters, setFilters] = useState<FilterState>(
+    initialFilters || {
+      status: "todas",
+      dataInicio: "",
+      dataFim: "",
+      obraType: "",
+      priority: "todas",
+    }
+  );
 
   const [isExpanded, setIsExpanded] = useState(false);
 

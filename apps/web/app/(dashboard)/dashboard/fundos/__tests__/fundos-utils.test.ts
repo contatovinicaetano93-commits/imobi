@@ -20,6 +20,7 @@ describe("fundos-utils", () => {
           nome: "Obra Nordeste",
           geoLatitude: -8,
           geoLongitude: -40,
+          raioValidacaoMetros: 100,
           status: "EM_ANDAMENTO",
           progresso: 50,
           credito: {
@@ -36,13 +37,14 @@ describe("fundos-utils", () => {
           nome: "Obra Sudeste",
           geoLatitude: -23,
           geoLongitude: -46,
+          raioValidacaoMetros: 100,
           status: "EM_ANDAMENTO",
           progresso: 75,
           credito: {
             id: "c2",
             status: "ATIVO",
-            valorAprovado: BigInt(200000),
-            valorLiberado: BigInt(150000),
+            valorAprovado: 200000,
+            valorLiberado: 150000,
             taxaMensal: 0.02,
             prazoMeses: 12,
           } as CreditoResumo,
@@ -68,26 +70,38 @@ describe("fundos-utils", () => {
       const obras: ObraResumo[] = [
         {
           id: "1",
+          nome: "Obra 1",
+          raioValidacaoMetros: 100,
           geoLatitude: -23,
           geoLongitude: -46,
           status: "EM_ANDAMENTO",
           progresso: 40,
           credito: {
+            id: "c1",
+            status: "ATIVO",
             valorAprovado: 100000,
             valorLiberado: 50000,
+            taxaMensal: 0.02,
+            prazoMeses: 12,
           } as CreditoResumo,
-        } as ObraResumo,
+        },
         {
           id: "2",
+          nome: "Obra 2",
+          raioValidacaoMetros: 100,
           geoLatitude: -23,
           geoLongitude: -46,
           status: "EM_ANDAMENTO",
           progresso: 60,
           credito: {
+            id: "c2",
+            status: "ATIVO",
             valorAprovado: 100000,
             valorLiberado: 50000,
+            taxaMensal: 0.02,
+            prazoMeses: 12,
           } as CreditoResumo,
-        } as ObraResumo,
+        },
       ];
 
       const result = aggregateByRegion(obras, []);
@@ -99,26 +113,38 @@ describe("fundos-utils", () => {
       const obras: ObraResumo[] = [
         {
           id: "1",
+          nome: "Obra 1",
+          raioValidacaoMetros: 100,
           geoLatitude: -8,
           geoLongitude: -40,
           status: "EM_ANDAMENTO",
           progresso: 50,
           credito: {
-            valorAprovado: BigInt(50000),
-            valorLiberado: BigInt(25000),
+            id: "c1",
+            status: "ATIVO",
+            valorAprovado: 50000,
+            valorLiberado: 25000,
+            taxaMensal: 0.02,
+            prazoMeses: 12,
           } as CreditoResumo,
-        } as ObraResumo,
+        },
         {
           id: "2",
+          nome: "Obra 2",
+          raioValidacaoMetros: 100,
           geoLatitude: -23,
           geoLongitude: -46,
           status: "EM_ANDAMENTO",
           progresso: 50,
           credito: {
-            valorAprovado: BigInt(200000),
-            valorLiberado: BigInt(100000),
+            id: "c2",
+            status: "ATIVO",
+            valorAprovado: 200000,
+            valorLiberado: 100000,
+            taxaMensal: 0.02,
+            prazoMeses: 12,
           } as CreditoResumo,
-        } as ObraResumo,
+        },
       ];
 
       const result = aggregateByRegion(obras, []);
@@ -130,15 +156,21 @@ describe("fundos-utils", () => {
       const obras: ObraResumo[] = [
         {
           id: "1",
+          nome: "Obra 1",
+          raioValidacaoMetros: 100,
           geoLatitude: 0,
           geoLongitude: 0,
           status: "EM_ANDAMENTO",
           progresso: 50,
           credito: {
+            id: "c1",
+            status: "ATIVO",
             valorAprovado: 100000,
             valorLiberado: 50000,
+            taxaMensal: 0.02,
+            prazoMeses: 12,
           } as CreditoResumo,
-        } as ObraResumo,
+        },
       ];
 
       const result = aggregateByRegion(obras, []);
@@ -153,8 +185,8 @@ describe("fundos-utils", () => {
         {
           id: "1",
           status: "ATIVO",
-          valorAprovado: BigInt(1000000),
-          valorLiberado: BigInt(800000),
+          valorAprovado: 1000000,
+          valorLiberado: 800000,
           taxaMensal: 0.02,
           prazoMeses: 12,
         } as CreditoResumo,
@@ -173,8 +205,8 @@ describe("fundos-utils", () => {
         {
           id: "1",
           status: "ATIVO",
-          valorAprovado: BigInt(1000000),
-          valorLiberado: BigInt(800000),
+          valorAprovado: 1000000,
+          valorLiberado: 800000,
           taxaMensal: 0.02,
           prazoMeses: 12,
         } as CreditoResumo,
@@ -194,8 +226,8 @@ describe("fundos-utils", () => {
         {
           id: "1",
           status: "ATIVO",
-          valorAprovado: BigInt(1200000),
-          valorLiberado: BigInt(1000000),
+          valorAprovado: 1200000,
+          valorLiberado: 1000000,
           taxaMensal: 0.02,
           prazoMeses: 12,
         } as CreditoResumo,
@@ -225,8 +257,8 @@ describe("fundos-utils", () => {
         {
           id: "1",
           status: "ATIVO",
-          valorAprovado: BigInt(1000000),
-          valorLiberado: BigInt(800000),
+          valorAprovado: 1000000,
+          valorLiberado: 800000,
           taxaMensal: 0.02,
           prazoMeses: 12,
         } as CreditoResumo,
@@ -244,8 +276,8 @@ describe("fundos-utils", () => {
         {
           id: "1",
           status: "ATIVO",
-          valorAprovado: BigInt(1000000),
-          valorLiberado: BigInt(800000),
+          valorAprovado: 1000000,
+          valorLiberado: 800000,
           taxaMensal: 0.02,
           prazoMeses: 12,
         } as CreditoResumo,
@@ -264,8 +296,8 @@ describe("fundos-utils", () => {
         {
           id: "1",
           status: "ATIVO",
-          valorAprovado: BigInt(1000000),
-          valorLiberado: BigInt(800000),
+          valorAprovado: 1000000,
+          valorLiberado: 800000,
           taxaMensal: 0.02,
           prazoMeses: 12,
         } as CreditoResumo,
@@ -284,8 +316,8 @@ describe("fundos-utils", () => {
         {
           id: "1",
           status: "ATIVO",
-          valorAprovado: BigInt(1000000),
-          valorLiberado: BigInt(800000),
+          valorAprovado: 1000000,
+          valorLiberado: 800000,
           taxaMensal: 0.02,
           prazoMeses: 12,
         } as CreditoResumo,
@@ -305,6 +337,8 @@ describe("fundos-utils", () => {
       const obras: ObraResumo[] = [
         {
           id: "1",
+          nome: "Obra 1",
+          raioValidacaoMetros: 100,
           geoLatitude: -23,
           geoLongitude: -46,
           status: "EM_ANDAMENTO",
@@ -312,12 +346,12 @@ describe("fundos-utils", () => {
           credito: {
             id: "c1",
             status: "ATIVO",
-            valorAprovado: BigInt(1000000),
-            valorLiberado: BigInt(600000),
+            valorAprovado: 1000000,
+            valorLiberado: 600000,
             taxaMensal: 0.02,
             prazoMeses: 12,
           } as CreditoResumo,
-        } as ObraResumo,
+        },
       ];
 
       const result = calculatePortfolioPerformance(obras);
@@ -334,6 +368,8 @@ describe("fundos-utils", () => {
       const obras: ObraResumo[] = [
         {
           id: "1",
+          nome: "Obra 1",
+          raioValidacaoMetros: 100,
           geoLatitude: -23,
           geoLongitude: -46,
           status: "EM_ANDAMENTO",
@@ -341,12 +377,12 @@ describe("fundos-utils", () => {
           credito: {
             id: "c1",
             status: "ATIVO",
-            valorAprovado: BigInt(1000000),
-            valorLiberado: BigInt(600000),
+            valorAprovado: 1000000,
+            valorLiberado: 600000,
             taxaMensal: 0.02,
             prazoMeses: 12,
           } as CreditoResumo,
-        } as ObraResumo,
+        },
       ];
 
       const result = calculatePortfolioPerformance(obras);
@@ -361,6 +397,8 @@ describe("fundos-utils", () => {
       const obras: ObraResumo[] = [
         {
           id: "1",
+          nome: "Obra 1",
+          raioValidacaoMetros: 100,
           geoLatitude: -23,
           geoLongitude: -46,
           status: "EM_ANDAMENTO",
@@ -368,12 +406,12 @@ describe("fundos-utils", () => {
           credito: {
             id: "c1",
             status: "ATIVO",
-            valorAprovado: BigInt(1000000),
-            valorLiberado: BigInt(600000),
+            valorAprovado: 1000000,
+            valorLiberado: 600000,
             taxaMensal: 0.02,
             prazoMeses: 12,
           } as CreditoResumo,
-        } as ObraResumo,
+        },
       ];
 
       const result = calculatePortfolioPerformance(obras);
@@ -408,8 +446,8 @@ describe("fundos-utils", () => {
         {
           id: "1",
           status: "ATIVO",
-          valorAprovado: BigInt(200000),
-          valorLiberado: BigInt(150000),
+          valorAprovado: 200000,
+          valorLiberado: 150000,
           taxaMensal: 0.02,
           prazoMeses: 12,
         } as CreditoResumo,
@@ -433,8 +471,8 @@ describe("fundos-utils", () => {
         {
           id: "1",
           status: "ATIVO",
-          valorAprovado: BigInt(1000000),
-          valorLiberado: BigInt(600000),
+          valorAprovado: 1000000,
+          valorLiberado: 600000,
           taxaMensal: 0.02,
           prazoMeses: 12,
         } as CreditoResumo,

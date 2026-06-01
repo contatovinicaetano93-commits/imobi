@@ -26,6 +26,9 @@ export default function KycPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const limit = 20;
 
   useEffect(() => {

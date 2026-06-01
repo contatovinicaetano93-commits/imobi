@@ -6,6 +6,7 @@ import { PortfolioChart } from "./_components/PortfolioChart";
 import { RegionalDistribution } from "./_components/RegionalDistribution";
 import { InadimplenciaMetrics } from "./_components/InadimplenciaMetrics";
 import { ReportExport } from "./_components/ReportExport";
+import { LoadingSkeleton } from "./_components/LoadingSkeleton";
 import {
   aggregateByRegion,
   calculateRoiTimeline,

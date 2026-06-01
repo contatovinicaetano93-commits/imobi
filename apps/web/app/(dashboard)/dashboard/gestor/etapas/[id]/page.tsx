@@ -24,6 +24,7 @@ export default function EtapaDetailPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionForm, setShowRejectionForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   const etapaId = (Array.isArray(params.id) ? params.id[0] : params.id) as string;
 

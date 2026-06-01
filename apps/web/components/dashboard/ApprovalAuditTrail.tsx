@@ -24,45 +24,44 @@ function formatDate(date: string) {
   });
 }
 
-function getStatusBadgeColor(acaoTipo: string): string {
-  switch (acaoTipo) {
-    case "APROVADA":
-    case "APROVADO":
+function getStatusBadgeColor(action: string): string {
+  switch (action) {
+    case "approve":
       return "bg-green-100 text-green-800 border-green-300";
-    case "REJEITADA":
-    case "REJEITADO":
+    case "reject":
       return "bg-red-100 text-red-800 border-red-300";
-    case "EDITADA":
+    case "update":
       return "bg-blue-100 text-blue-800 border-blue-300";
+    case "create":
+      return "bg-gray-100 text-gray-800 border-gray-300";
     default:
       return "bg-gray-100 text-gray-800 border-gray-300";
   }
 }
 
-function getStatusIcon(acaoTipo: string) {
-  switch (acaoTipo) {
-    case "APROVADA":
-    case "APROVADO":
+function getStatusIcon(action: string) {
+  switch (action) {
+    case "approve":
       return <CheckCircle2 className="w-6 h-6" />;
-    case "REJEITADA":
-    case "REJEITADO":
+    case "reject":
       return <XCircle className="w-6 h-6" />;
-    case "EDITADA":
+    case "update":
       return <Edit3 className="w-6 h-6" />;
+    case "create":
+      return <Clock className="w-6 h-6" />;
     default:
       return <Clock className="w-6 h-6" />;
   }
 }
 
-function getStatusLabel(acaoTipo: string): string {
+function getStatusLabel(action: string): string {
   const labels: Record<string, string> = {
-    APROVADA: "Aprovada",
-    REJEITADA: "Rejeitada",
-    APROVADO: "Aprovado",
-    REJEITADO: "Rejeitado",
-    EDITADA: "Editada",
+    approve: "Aprovado",
+    reject: "Rejeitado",
+    update: "Editado",
+    create: "Criado",
   };
-  return labels[acaoTipo] || acaoTipo;
+  return labels[action] || action;
 }
 
 export function ApprovalAuditTrail({
@@ -123,34 +122,26 @@ export function ApprovalAuditTrail({
 
         <div className="space-y-6 relative z-10">
           {auditLogs.map((log, idx) => {
-            const badgeColor = getStatusBadgeColor(log.acaoTipo);
-            const icon = getStatusIcon(log.acaoTipo);
-            const label = getStatusLabel(log.acaoTipo);
+            const badgeColor = getStatusBadgeColor(log.action);
+            const icon = getStatusIcon(log.action);
+            const label = getStatusLabel(log.action);
             const isLastItem = idx === auditLogs.length - 1;
-            const observacao =
-              "observacoes" in log
-                ? log.observacoes
-                : "motivo" in log
-                  ? log.motivo
-                  : null;
 
             const iconColor =
-              log.acaoTipo === "APROVADA" || log.acaoTipo === "APROVADO"
+              log.action === "approve"
                 ? "text-green-600"
-                : log.acaoTipo === "REJEITADA" ||
-                    log.acaoTipo === "REJEITADO"
+                : log.action === "reject"
                   ? "text-red-600"
                   : "text-blue-600";
 
             return (
-              <div key={log.auditId} className="flex gap-4">
+              <div key={log.id} className="flex gap-4">
                 {/* Timeline dot with icon */}
                 <div
                   className={`flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center font-bold text-white z-20 relative bg-white border-2 ${
-                    log.acaoTipo === "APROVADA" || log.acaoTipo === "APROVADO"
+                    log.action === "approve"
                       ? "border-green-600 bg-green-50"
-                      : log.acaoTipo === "REJEITADA" ||
-                          log.acaoTipo === "REJEITADO"
+                      : log.action === "reject"
                         ? "border-red-600 bg-red-50"
                         : "border-blue-600 bg-blue-50"
                   }`}
@@ -170,7 +161,7 @@ export function ApprovalAuditTrail({
                       </span>
                       <div className="flex items-center gap-1 text-xs text-gray-500">
                         <Clock className="w-3 h-3 flex-shrink-0" />
-                        <span className="truncate">{formatDate(log.criadoEm)}</span>
+                        <span className="truncate">{formatDate(log.timestamp)}</span>
                       </div>
                     </div>
 
@@ -179,35 +170,32 @@ export function ApprovalAuditTrail({
                       <div className="space-y-2 text-xs">
                         <div className="flex items-center gap-2 min-w-0">
                           <User className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                          <span className="font-semibold text-gray-900 truncate">{log.gerenciador}</span>
+                          <span className="font-semibold text-gray-900 truncate">{log.usuario.nome}</span>
                         </div>
                         <div className="flex items-center gap-2 min-w-0">
                           <Mail className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                          <span className="text-gray-600 truncate">{log.gerenciadorEmail}</span>
+                          <span className="text-gray-600 truncate">{log.usuario.email}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Reason/Observation */}
-                    {observacao && (
+                    {log.observacao && (
                       <div className={`rounded-lg p-4 text-sm border ${
-                        log.acaoTipo === "REJEITADA" ||
-                        log.acaoTipo === "REJEITADO"
+                        log.action === "reject"
                           ? "bg-red-50 border-red-200"
                           : "bg-blue-50 border-blue-200"
                       }`}>
                         <p className={`font-semibold mb-2 ${
-                          log.acaoTipo === "REJEITADA" ||
-                          log.acaoTipo === "REJEITADO"
+                          log.action === "reject"
                             ? "text-red-900"
                             : "text-blue-900"
                         }`}>
-                          {log.acaoTipo === "REJEITADA" ||
-                          log.acaoTipo === "REJEITADO"
+                          {log.action === "reject"
                             ? "Motivo da rejeição:"
                             : "Observações:"}
                         </p>
-                        <p className="text-gray-700 whitespace-pre-wrap">{observacao}</p>
+                        <p className="text-gray-700 whitespace-pre-wrap">{log.observacao}</p>
                       </div>
                     )}
                   </div>

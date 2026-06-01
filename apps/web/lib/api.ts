@@ -61,6 +61,7 @@ export const simuladorApi = {
 export type ObraResumo = {
   id: string; nome: string; status: string;
   geoLatitude: number; geoLongitude: number; raioValidacaoMetros: number;
+  endereco?: string;
   progresso?: number;
   credito?: { id: string; valorAprovado: number; valorLiberado: number; status: string } | null;
   etapas?: EtapaResumo[];
@@ -347,6 +348,32 @@ export type ValidacaoForm = {
   }[];
   status: "RASCUNHO" | "ENVIADA" | "REJEITADA" | "APROVADA";
   submissaoEm?: string;
+};
+
+// ── Audit Types ──────────────────────────────────────────────────────
+
+export type EtapaAuditEntry = {
+  id: string;
+  etapaId: string;
+  action: "approve" | "reject" | "create" | "update";
+  timestamp: string;
+  usuario: {
+    nome: string;
+    email: string;
+  };
+  observacao?: string;
+};
+
+export type KycAuditEntry = {
+  id: string;
+  kycDocumentoId: string;
+  action: "approve" | "reject" | "create" | "update";
+  timestamp: string;
+  usuario: {
+    nome: string;
+    email: string;
+  };
+  observacao?: string;
 };
 
 export const engenheirosApi = {

@@ -57,11 +57,11 @@ export default function EtapasContent() {
   useEffect(() => {
     setLoading(true);
     managerApi
-      .listarEtapasPendentes(limit, offset, filters)
+      .listarEtapasPendentes(limit, offset)
       .then(setData)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [offset, filters]);
+  }, [offset]);
 
   if (loading) {
     return (
