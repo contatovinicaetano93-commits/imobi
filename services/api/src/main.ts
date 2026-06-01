@@ -6,70 +6,23 @@ import {
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
-import { validateEnvironmentOrThrow, initSentry } from "./common/config";
 
 async function bootstrap() {
-  // Validate environment first to catch all config errors at startup
-  validateEnvironmentOrThrow();
-
-  // Then initialize optional services like Sentry
-  initSentry();
-
-  const fastifyOptions: any = {
-    logger: process.env["NODE_ENV"] !== "production",
-    trust: true, // Trust proxy headers from Render load balancer
-    bodyLimit: 104857600, // 100MB for file uploads
-  };
-
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter(fastifyOptions)
+    new FastifyAdapter({ logger: process.env["NODE_ENV"] !== "production" })
   );
 
   // ThrottlerGuard is registered via AppModule providers
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");
 
-  // Setup Swagger documentation
-  if (process.env["NODE_ENV"] !== "production") {
-    const config = new DocumentBuilder()
-      .setTitle("IMOBI API")
-      .setDescription("Plataforma de financiamento estruturado para construção civil")
-      .setVersion("1.0.0")
-      .addBearerAuth()
-      .addTag("auth", "Autenticação e autorização")
-      .addTag("obras", "Gerenciamento de obras e projetos")
-      .addTag("etapas", "Etapas de construção e progresso")
-      .addTag("evidencias", "Fotos de progresso e validação GPS")
-      .addTag("credito", "Simulação e gestão de crédito")
-      .addTag("kyc", "Know Your Customer - documentação")
-      .addTag("usuarios", "Gestão de usuários")
-      .addTag("manager", "Dashboard do gerenciador")
-      .addTag("admin", "Painel administrativo")
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup("docs", app, document);
-  }
-
-  const nodeEnv = process.env["NODE_ENV"] || "development";
-  const corsOrigins = process.env["CORS_ORIGIN"]?.split(",");
-
-  if (nodeEnv === "production" && !corsOrigins) {
-    throw new Error("CORS_ORIGIN is required in production mode. Please set it as a comma-separated list of allowed origins.");
-  }
-
   app.enableCors({
-    origin: corsOrigins ?? ["http://localhost:3000"],
+    origin: process.env["CORS_ORIGIN"]?.split(",") ?? ["http://localhost:3000"],
     credentials: true,
   });
 
   const port = Number(process.env["PORT"] ?? 4000);
-
-  // Log deployment info for debugging
-  console.log(`[STARTUP] Node ENV: ${nodeEnv}`);
-  console.log(`[STARTUP] Port: ${port}`);
-  console.log(`[STARTUP] CORS Origins: ${corsOrigins?.join(", ") || "localhost:3000"}`);
-
   await app.listen(port, "0.0.0.0");
   console.log(`imbobi API running on port ${port}`);
 }

@@ -40,16 +40,6 @@ export class EtapasService {
       data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
     });
 
-    // Create audit log entry
-    await this.prisma.etapaAuditLog.create({
-      data: {
-        etapaId,
-        acaoTipo: "APROVADA",
-        usuarioId: gestorId,
-        observacoes: observacao || null,
-      },
-    });
-
     // Notifica o criador da obra sobre a aprovação
     await this.notificacoes.criar(
       etapa.obra.usuarioId,
@@ -106,16 +96,6 @@ export class EtapasService {
     await this.prisma.etapaObra.update({
       where: { etapaId },
       data: { status: "REPROVADA" },
-    });
-
-    // Create audit log entry
-    await this.prisma.etapaAuditLog.create({
-      data: {
-        etapaId,
-        acaoTipo: "REJEITADA",
-        usuarioId: gestorId,
-        observacoes: motivo,
-      },
     });
 
     await this.notificacoes.criar(

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import type { CriarObraInput } from "@imbobi/schemas";
 import { ETAPAS_PADRAO } from "./etapas-padrao";
@@ -9,20 +9,6 @@ export class ObrasService {
 
   async criar(usuarioId: string, input: CriarObraInput) {
     return this.prisma.$transaction(async (tx) => {
-      // Server-side GPS coordinate validation
-      if (input.geo?.latitude && input.geo?.longitude) {
-        const { latitude, longitude } = input.geo;
-        // Validate that coordinates are within Brazil bounds
-        // Brazil: approximately -33.75 to 5.25 latitude, -73.99 to -34.79 longitude
-        const isWithinBrazil =
-          latitude >= -33.75 && latitude <= 5.25 &&
-          longitude >= -73.99 && longitude <= -34.79;
-
-        if (!isWithinBrazil) {
-          throw new BadRequestException('GPS inválido (fora dos limites do Brasil)');
-        }
-      }
-
       const obra = await tx.obra.create({
         data: {
           usuarioId,

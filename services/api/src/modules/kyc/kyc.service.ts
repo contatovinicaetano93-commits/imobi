@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
@@ -7,8 +7,6 @@ import { KycDocumentoStatus } from "@prisma/client";
 
 @Injectable()
 export class KycService {
-  private readonly logger = new Logger(KycService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
@@ -67,15 +65,6 @@ export class KycService {
       },
     });
 
-    // Create audit log entry
-    await this.prisma.kycAuditLog.create({
-      data: {
-        kycDocumentoId,
-        acaoTipo: "APROVADO",
-        usuarioId: gestorId,
-      },
-    });
-
     // Notifica usuário
     await this.notificacoes.criar(
       documento.usuarioId,
@@ -93,11 +82,10 @@ export class KycService {
       tipo: "KYC_APROVADO",
     }).catch(() => {});
 
-    try {
-      await this.email.kycAprovadoEmail(documento.usuario.nome, documento.usuario.email);
-    } catch (error) {
-      this.logger.error(`Failed to send KYC approval email to ${documento.usuario.email}: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    // Envia email
+    this.email
+      .kycAprovadoEmail(documento.usuario.nome, documento.usuario.email)
+      .catch(() => {});
 
     return atualizado;
   }
@@ -127,16 +115,6 @@ export class KycService {
       },
     });
 
-    // Create audit log entry
-    await this.prisma.kycAuditLog.create({
-      data: {
-        kycDocumentoId,
-        acaoTipo: "REJEITADO",
-        usuarioId: gestorId,
-        motivo,
-      },
-    });
-
     // Notifica usuário
     await this.notificacoes.criar(
       documento.usuarioId,
@@ -156,11 +134,9 @@ export class KycService {
     }).catch(() => {});
 
     // Envia email
-    try {
-      await this.email.kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo);
-    } catch (error) {
-      this.logger.error(`Failed to send KYC rejection email to ${documento.usuario.email}: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    this.email
+      .kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo)
+      .catch(() => {});
 
     return atualizado;
   }

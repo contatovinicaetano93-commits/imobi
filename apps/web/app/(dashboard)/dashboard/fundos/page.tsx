@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { obrasApi, creditoApi } from "@/lib/api";
+import { Suspense } from "react";
+import { obrasApi, creditoApi, type ObraResumo, type CreditoResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { PortfolioChart } from "./_components/PortfolioChart";
 import { RegionalDistribution } from "./_components/RegionalDistribution";
@@ -11,14 +12,12 @@ import {
   calculateInadimplenciaRate,
 } from "./_components/fundos-utils";
 
-export const dynamic = 'force-dynamic';
-
 export const metadata: Metadata = { title: "Fundos — imbobi" };
 
-export default async function FundosPage() {
+async function FundosPageContent() {
   const [obras, creditos] = await Promise.all([
-    obrasApi.listar().catch(() => []),
-    creditoApi.meus().catch(() => []),
+    obrasApi.listar().catch(() => [] as ObraResumo[]),
+    creditoApi.meus().catch(() => [] as CreditoResumo[]),
   ]);
 
   // Total desembolsado
@@ -243,5 +242,13 @@ export default async function FundosPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function FundosPage() {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <FundosPageContent />
+    </Suspense>
   );
 }

@@ -1,399 +1,354 @@
-# 🧪 iMobi MVP — Smoke Test Checklist
+# Smoke Test Checklist - Happy Path Validation
 
-**Data**: 2026-05-29  
-**Objetivo**: Validar todas as funcionalidades críticas antes da produção (2026-06-02)  
-**Público**: Founder/CTO (teste SOZINHO, sem especialistas)  
-**Tempo Total**: ~45 minutos  
-**Pré-requisito**: Ambiente rodando localmente (ver QUICK_START_LOCAL.md)
-
----
-
-## ⚠️ ANTES DE COMEÇAR
-
-1. Confirme que `pnpm dev` está rodando (Web + API + Redis)
-2. Abra `http://localhost:3000` no navegador
-3. Abra Chrome DevTools (F12) → Network + Console para ver erros
-4. Use as credenciais mock abaixo para testes
+**Status**: Phase 7 - Staging Deployment & E2E Validation  
+**Environment**: Staging (after deployment)  
+**Purpose**: Validate 15-20 critical user flows work end-to-end  
+**Estimated Duration**: 30-45 minutes (manual + automated)
 
 ---
 
-## 📋 CENÁRIOS DE TESTE
+## Quick Reference
 
-Marque ✅ PASS, ❌ FAIL, ou ⚠️ PARTIAL para cada teste.
-
----
-
-### 1️⃣ LOGIN E AUTENTICAÇÃO
-**Tempo**: ~3 minutos  
-**Objetivo**: Validar fluxo de login com JWT
-
-#### Passos:
-1. Acesse `http://localhost:3000/login`
-2. Insira:
-   - **Email**: `founder@test.local`
-   - **Senha**: `Senha123` (ou use credencial do `.env.staging`)
-3. Clique "Entrar"
-4. Espere redirecionamento para `/dashboard`
-
-#### Validações:
-- [ ] Página de login carrega sem erros
-- [ ] Botão "Entrar" desabilitado durante envio (loading state)
-- [ ] Após login: token JWT armazenado em cookie HttpOnly
-- [ ] Redirecionamento automático para dashboard ocorre
-- [ ] Console (DevTools) não mostra erros 4xx/5xx
-
-#### Status:
-- **✅ PASS**: Login bem-sucedido, dashboard carrega
-- **❌ FAIL**: Erro no login ou não redireciona
-- **⚠️ PARTIAL**: Login funciona mas com delay > 2s
+| # | Test | Description | Status |
+|---|------|-------------|--------|
+| 1 | Auth Login | Login → JWT → Dashboard | [ ] |
+| 2 | Logout | Logout → Token invalidated | [ ] |
+| 3 | Create Obra | Create project → List → Details | [ ] |
+| 4 | GPS Validation | Valid/Invalid GPS tested | [ ] |
+| 5 | Upload Evidence | Image → S3 → CDN URL | [ ] |
+| 6 | Engineer Assignment | Manager assigns → Notification | [ ] |
+| 7 | Create Parcela | Create payment → Status tracking | [ ] |
+| 8 | Liberar Parcela | Approve → BullMQ async → Release | [ ] |
+| 9 | Notifications | Create → Firebase → Read | [ ] |
+| 10 | KYC Upload | Document → Validation → Approval | [ ] |
+| 11 | Manager Approval | Approve/Reject etapas | [ ] |
+| 12 | Rate Limiting | 100 ok, 101st = 429 | [ ] |
+| 13 | Caching | Query 2x → 2nd from Redis | [ ] |
+| 14 | Error Recovery | Redis down → Graceful fallback | [ ] |
+| 15 | Concurrency | 5 concurrent ops → No races | [ ] |
+| 16 | LGPD Export | Export all user data | [ ] |
+| 17 | LGPD Delete | Account deletion 30-day grace | [ ] |
 
 ---
 
-### 2️⃣ DASHBOARD E OVERVIEW
-**Tempo**: ~2 minutos  
-**Objetivo**: Validar carregamento de dados do dashboard
+## Test 1: Authentication Flow
 
-#### Passos:
-1. Faça login (cenário anterior)
-2. Navegue para `/dashboard` (ou espere redirecionamento)
-3. Observe widgets principais (KYC status, crédito disponível, obras)
+**Expected**: Login → JWT token → Dashboard access
 
-#### Validações:
-- [ ] Dashboard carrega em < 2 segundos
-- [ ] KYC Status Badge mostra status correto
-- [ ] Saldo de crédito exibido
-- [ ] Lista de obras carrega (mínimo 1 obra mock)
-- [ ] Nenhum erro no console
+**Steps**:
+1. Go to https://staging.imbobi.com.br/login
+2. Enter test@imbobi.com.br / Test123456!
+3. Click "Entrar"
+4. Verify: Redirected to /dashboard
+5. Check DevTools: JWT token in cookies
 
-#### Status:
-- **✅ PASS**: Todos os widgets carregam corretamente
-- **❌ FAIL**: Widgets não carregam ou exibem erro
-- **⚠️ PARTIAL**: Alguns widgets carregam com delay
+**Result**: [ ] PASS [ ] FAIL  
+**Time**: [ ] ms
 
 ---
 
-### 3️⃣ FILTROS AVANÇADOS
-**Tempo**: ~5 minutos  
-**Objetivo**: Validar novo sistema de filtros
+## Test 2: Logout & Token Invalidation
 
-#### Passos:
-1. Na página `/dashboard/obras` (ou seção de obras)
-2. Localize o painel de filtros
-3. Aplique combinações:
-   - Filtro por status (ex: "Em Andamento")
-   - Filtro por localização (ex: "São Paulo")
-   - Filtro por valor (ex: R$ 50k - R$ 500k)
-4. Clique "Aplicar Filtros"
-5. Observe lista atualizada
+**Expected**: Logout → Redirected to login → Protected routes blocked
 
-#### Validações:
-- [ ] Filtros carregam sem erro
-- [ ] Chips de filtros selecionados aparecem
-- [ ] Lista de obras atualiza ao aplicar filtro
-- [ ] Botão "Limpar Filtros" funciona
-- [ ] URL reflete parâmetros de filtro (query params)
-- [ ] Sem erros no console
+**Steps**:
+1. From dashboard, click menu → "Sair"
+2. Verify: Redirected to /login
+3. Try /dashboard directly
+4. Verify: Redirected to /login again
 
-#### Status:
-- **✅ PASS**: Filtros aplicados corretamente, resultados atualizados
-- **❌ FAIL**: Filtros não funcionam ou erro ao aplicar
-- **⚠️ PARTIAL**: Alguns filtros funcionam, outros não
+**Result**: [ ] PASS [ ] FAIL
 
 ---
 
-### 4️⃣ OPERAÇÕES EM LOTE (BULK REJECT)
-**Tempo**: ~4 minutos  
-**Objetivo**: Validar nova funcionalidade de rejeição em lote
+## Test 3: Create Obra
 
-#### Passos:
-1. Acesse `/dashboard/gestor` (ou página de gestão de obras)
-2. Selecione múltiplas obras (checkbox)
-   - Mínimo 2 obras
-3. Clique "Rejeitar Selecionadas" ou botão similar
-4. Preencha motivo da rejeição em modal
-5. Confirme ação
+**Expected**: Create project → Appears in list → Details accessible
 
-#### Validações:
-- [ ] Checkboxes funcionam (selecionar/desselecionar)
-- [ ] Botão "Rejeitar Selecionadas" aparece quando obras selecionadas
-- [ ] Modal de confirmação exibe corretamente
-- [ ] Após confirmação: obras atualizadas para status "Rejeitadas"
-- [ ] Motivo registrado no audit trail
-- [ ] Sem erros de API (HTTP 200-201)
+**Steps**:
+1. Login (Test 1)
+2. Go to "Minhas Obras"
+3. Click "+ Criar Obra"
+4. Fill: Nome="Test Obra", CEP="01310100"
+5. Click "Criar"
+6. Verify: 200 OK
+7. Verify: Obra in list
+8. Click on obra → Details load
 
-#### Status:
-- **✅ PASS**: Rejeição em lote funciona, status atualizado
-- **❌ FAIL**: Operação falha ou não atualiza status
-- **⚠️ PARTIAL**: Funciona mas com delay ou confirmação confusa
+**Result**: [ ] PASS [ ] FAIL  
+**Response Time**: [ ] ms  
+**Cleanup**: [ ] Delete test obra
 
 ---
 
-### 5️⃣ MAPA COM GPS
-**Tempo**: ~4 minutos  
-**Objetivo**: Validar geolocalização e mapa interativo
+## Test 4: GPS Validation (PostGIS)
 
-#### Passos:
-1. Acesse página com mapa (ex: `/dashboard/obras` ou criar obra)
-2. Veja mapa carregando (Mapbox/Google Maps)
-3. Se disponível, clique em obra no mapa para expandir details
-4. Teste filtro por raio (ex: "Obras em 5km")
-5. Tente adicionar marcador (click no mapa ou input de endereço)
+**Expected**: Valid GPS accepted, invalid rejected
 
-#### Validações:
-- [ ] Mapa carrega (não aparece cinza/branco)
-- [ ] Marcadores de obras aparecem no mapa
-- [ ] Click em marcador exibe popup com detalhes
-- [ ] Zoom e pan funcionam (scroll e arrastar)
-- [ ] Se houver input de endereço: busca por GPS funciona
-- [ ] Validação de GPS no servidor (PostGIS) não falha
+**Steps**:
+1. From obra, click "Adicionar GPS"
+2. Allow location
+3. Submit: Lat -23.5505, Lon -46.6333
+4. Verify: 200 OK, { valid: true }
+5. Try invalid: Lat -50, Lon -100
+6. Verify: 400 Bad Request
 
-#### Status:
-- **✅ PASS**: Mapa interativo, marcadores funcionam
-- **❌ FAIL**: Mapa não carrega ou marcadores não aparecem
-- **⚠️ PARTIAL**: Mapa carrega mas interações lentas
+**Result**: [ ] PASS [ ] FAIL  
+**Valid GPS time**: [ ] ms  
+**Invalid GPS time**: [ ] ms
 
 ---
 
-### 6️⃣ AUDIT TRAIL (LOG DE AUDITORIA)
-**Tempo**: ~3 minutos  
-**Objetivo**: Validar registro de ações
+## Test 5: Upload Evidence Image
 
-#### Passos:
-1. Acesse `/dashboard/auditoria` (ou seção similar)
-2. Veja lista de ações recentes (login, rejeição, aprovação, etc)
-3. Clique em uma ação para expandir detalhes
-4. Verifique informações: usuário, ação, timestamp, objeto afetado
+**Expected**: Upload → S3 stored → CDN URL returned
 
-#### Validações:
-- [ ] Página carrega sem erro
-- [ ] Mínimo 5 entradas de log aparecem
-- [ ] Cada entrada mostra: usuário, ação, data/hora
-- [ ] Timestamps em formato legível (ex: "29/05 14:30")
-- [ ] Detalhes expandem sem erro
-- [ ] Filtro por tipo de ação funciona (se disponível)
+**Steps**:
+1. From obra, click "Adicionar Evidência"
+2. Select image (< 5MB)
+3. Click upload
+4. Verify: 200 OK, { url, key }
+5. Click URL → Image opens in browser
+6. Verify: Encrypted (AES-256)
 
-#### Status:
-- **✅ PASS**: Audit trail completo e legível
-- **❌ FAIL**: Logs não aparecem ou erro ao expandir
-- **⚠️ PARTIAL**: Logs aparecem mas informações incompletas
+**Result**: [ ] PASS [ ] FAIL  
+**Upload time**: [ ] s  
+**S3 URL accessible**: [ ] YES [ ] NO
 
 ---
 
-### 7️⃣ KYC (VALIDAÇÃO DE IDENTIDADE)
-**Tempo**: ~5 minutos  
-**Objetivo**: Validar fluxo de KYC
+## Test 6: Engineer Assignment
 
-#### Passos:
-1. Acesse `/dashboard/kyc` ou clique em "KYC Status Badge"
-2. Se status = "PENDENTE":
-   - Clique "Iniciar Verificação"
-   - Preencha formulário (CPF, dados pessoais mock)
-   - Clique "Enviar"
-3. Observe mudança de status para "EM_ANALISE"
-4. Aguarde simulação de aprovação (< 10s em dev)
-5. Status deve mudar para "APROVADO" ou "REJEITADO"
+**Expected**: Manager assigns → Engineer notified → Can access
 
-#### Validações:
-- [ ] Página KYC carrega
-- [ ] Status badge exibe corretamente
-- [ ] Formulário valida entrada (ex: CPF inválido → erro)
-- [ ] Submit dispara API call (POST /kyc/submit)
-- [ ] Status atualiza após envio
-- [ ] Mock de aprovação/rejeição funciona em dev
+**Steps**:
+1. Login as manager
+2. Go to obra
+3. Click "Atribuir Engenheiro"
+4. Select engineer
+5. Verify: 200 OK
+6. Login as engineer
+7. Check notifications: Assignment visible
+8. Click → Obra loads
 
-#### Status:
-- **✅ PASS**: KYC flow completo, status atualiza
-- **❌ FAIL**: Formulário não valida ou status não muda
-- **⚠️ PARTIAL**: Funciona com validações ausentes
+**Result**: [ ] PASS [ ] FAIL  
+**Notification time**: [ ] s (Firebase FCM)
 
 ---
 
-### 8️⃣ TRATAMENTO DE ERROS
-**Tempo**: ~3 minutos  
-**Objetivo**: Validar UX de erro
+## Test 7: Create Parcela
 
-#### Passos:
-1. Simule erro deliberadamente:
-   - Logout (apague token)
-   - Tente acessar `/dashboard` (deve redirecionar para login)
-2. Tente login com email inválido → erro visível
-3. Tente login com senha incorreta → mensagem amigável
-4. Interrompa rede (DevTools → Network → Offline)
-5. Tente qualquer ação → mensagem de conexão
+**Expected**: Create payment → DB updated → Status pending_approval
 
-#### Validações:
-- [ ] Redirecionamento para login quando não autenticado
-- [ ] Validação de email no formulário (antes de submit)
-- [ ] Erro de "credenciais inválidas" é amigável (não expõe API)
-- [ ] Toast/alert aparecem para erros (não console)
-- [ ] Modo offline mostra mensagem clara
-- [ ] Sem erros não-tratados no console
+**Steps**:
+1. Login as admin
+2. Go to "Crédito" → "Parcelas"
+3. Click "+ Criar"
+4. Fill: Valor=5000, Vencimento=30d
+5. Click "Criar"
+6. Verify: 200 OK, ID returned
 
-#### Status:
-- **✅ PASS**: Todos os erros tratados com UX clara
-- **❌ FAIL**: Erros mostram stack trace ou crash app
-- **⚠️ PARTIAL**: Alguns erros tratados, outros não
+**Result**: [ ] PASS [ ] FAIL  
+**Response time**: [ ] ms
 
 ---
 
-### 9️⃣ PERFORMANCE E CARGA
-**Tempo**: ~5 minutos  
-**Objetivo**: Validar que app não trava com dados
+## Test 8: Liberar Parcela (Async Job)
 
-#### Passos:
-1. Abra DevTools → Performance tab
-2. Clique "Graváção" (Record)
-3. Na dashboard, carregue:
-   - Lista com 100+ obras (scroll bottom)
-   - Abra filtros avançados
-   - Aplique múltiplos filtros
-4. Pare gravação
-5. Observe métrica (deve ser verde/rápido)
+**Expected**: Approve → Job queued → Status updates → Email sent
 
-#### Validações:
-- [ ] Página inicial carrega em < 1.5s
-- [ ] Scroll é suave (60 FPS)
-- [ ] Abrir modais é instant (< 200ms)
-- [ ] Aplicar filtros: resultado em < 1s
-- [ ] Listar 100+ itens sem congelamento
-- [ ] Memória não cresce infinitamente (DevTools → Memory)
+**Steps**:
+1. From Parcelas, find test parcela
+2. Click "Aprovar e Liberar"
+3. Verify: 200 OK (< 500ms)
+4. Status: "liberando" → wait 5s → "liberada"
+5. Check email: SendGrid sandbox
 
-#### Status:
-- **✅ PASS**: Performance excelente, sem lag
-- **❌ FAIL**: Page freeze ou lag perceptível
-- **⚠️ PARTIAL**: Performance aceitável mas com delays
+**Result**: [ ] PASS [ ] FAIL  
+**Approve time**: [ ] ms  
+**Job completion**: [ ] s  
+**Email received**: [ ] YES [ ] NO
 
 ---
 
-### 🔟 RATE LIMIT E THROTTLING
-**Tempo**: ~4 minutos  
-**Objetivo**: Validar proteção contra abuso
+## Test 9: Notifications (Firebase FCM)
 
-#### Passos:
-1. Abra console do navegador (F12)
-2. Execute script para disparar múltiplas requisições:
-   ```javascript
-   for (let i = 0; i < 20; i++) {
-     fetch('/api/obras', { headers: { 'Authorization': 'Bearer ...' } })
-   }
-   ```
-3. Ou faça spam de clicks em botão de ação
-4. Observe resposta do servidor
+**Expected**: Create → Send → User reads
 
-#### Validações:
-- [ ] Após ~15 requisições: 429 (Too Many Requests)
-- [ ] Mensagem ao usuário: "Muitas tentativas, aguarde X segundos"
-- [ ] UI desabilita botões durante throttle
-- [ ] Rate limit não afeta outras abas/usuários
-- [ ] Após timeout: requisições normalizadas
+**Steps**:
+1. Create notification: "Test message"
+2. Send to user
+3. Verify: 200 OK
+4. Login as recipient
+5. Check: Push notification received
+6. Click → Marked as read
+7. List: unread count decrements
 
-#### Status:
-- **✅ PASS**: Rate limiting funciona, UX clara
-- **❌ FAIL**: Sem rate limiting ou app trava
-- **⚠️ PARTIAL**: Rate limiting existe mas UX confusa
+**Result**: [ ] PASS [ ] FAIL  
+**Delivery time**: [ ] s
 
 ---
 
-## 📊 RESULTADO FINAL
+## Test 10: KYC Document Upload
 
-Preencha após testar todos os 10 cenários:
+**Expected**: Upload → Validation → Approval
 
-| Cenário | Status | Notas |
-|---------|--------|-------|
-| 1. Login | ✅/❌/⚠️ | |
-| 2. Dashboard | ✅/❌/⚠️ | |
-| 3. Filtros | ✅/❌/⚠️ | |
-| 4. Bulk Reject | ✅/❌/⚠️ | |
-| 5. Mapa GPS | ✅/❌/⚠️ | |
-| 6. Audit Trail | ✅/❌/⚠️ | |
-| 7. KYC | ✅/❌/⚠️ | |
-| 8. Erros | ✅/❌/⚠️ | |
-| 9. Performance | ✅/❌/⚠️ | |
-| 10. Rate Limit | ✅/❌/⚠️ | |
+**Steps**:
+1. Login as user
+2. Go to "Perfil" → "Validação"
+3. Upload ID image
+4. Verify: 200 OK
+5. Wait: Unico API (sandbox) validates
+6. Verify: Status updates (approved/rejected)
+
+**Result**: [ ] PASS [ ] FAIL  
+**Validation time**: [ ] s
 
 ---
 
-## ✅/❌ CRITÉRIOS DE APROVAÇÃO
+## Test 11: Manager Dashboard Approval
 
-**VERDE (Go para produção)**:
-- Mínimo 9/10 cenários com ✅ PASS
-- Nenhum ❌ FAIL em cenários críticos (1, 2, 7, 8)
+**Expected**: View pending → Approve → Audit logged → User notified
 
-**AMARELO (Correções menores)**:
-- 7-8/10 com ✅ PASS
-- ⚠️ PARTIAL aceitável apenas em 3, 5, 9, 10
-- Requere fix antes de deploy
+**Steps**:
+1. Login as manager
+2. Go to "Manager Portal"
+3. Find pending etapa
+4. Click "Revisar"
+5. Click "Aprovar"
+6. Verify: Status = "approved"
+7. Check audit trail: Logged with timestamp
+8. Verify: User notified
 
-**VERMELHO (Não homologar)**:
-- < 7/10 com ✅ PASS
-- ❌ FAIL em qualquer cenário crítico
-- Requere investigação e correção
-
----
-
-## 🐛 ENCONTROU BUG?
-
-Se algum cenário falhar:
-
-1. **Documente** o passo exato que falhou
-2. **Reproduza** 2x para confirmar
-3. **Capture** screenshot/log do erro
-4. **Reporte** em formato:
-   ```
-   Cenário: [Número e nome]
-   Passo: [Qual passo exato falhou]
-   Erro: [Mensagem exata ou comportamento]
-   Reproduzível: [Sim/Não/Às vezes]
-   Screenshot: [Anexe]
-   ```
-5. **Escalade** para time de dev (não lance para produção)
+**Result**: [ ] PASS [ ] FAIL  
+**Response time**: [ ] ms
 
 ---
 
-## 📞 CHECKLIST PRÉ-PRODUÇÃO
+## Test 12: Rate Limiting (100/min)
 
-Antes de declarar sucesso:
+**Expected**: Requests 1-100 ok, #101 = 429
 
-- [ ] Todos 10 cenários testados
-- [ ] Resultado preenchido acima
-- [ ] Nenhum ❌ FAIL em (1, 2, 7, 8)
-- [ ] Bugs documentados e escalados
-- [ ] CTO/Tech Lead assinou aprovação
-
----
-
-## 🚀 PRÓXIMOS PASSOS
-
-Se ✅ VERDE:
-```
-1. Executar health check: ./scripts/cutover-health-check.sh
-2. Revisar MONITORING_DASHBOARD_SETUP.md
-3. Preparar para cutover em 2026-06-02
+**Bash**:
+```bash
+for i in {1..101}; do
+  curl https://api-staging.railway.app/health \
+    -H "Authorization: Bearer $TOKEN" \
+    --write-out "%{http_code}\n"
+done | tail -5
 ```
 
-Se 🟡 AMARELO:
-```
-1. Time de dev: < 24h de correções
-2. Re-testar 3 cenários que falharam
-3. Voltar para smoke test
-```
+**Expected**: 200 200 200 ... 429
 
-Se 🔴 VERMELHO:
-```
-1. PARAR deployment
-2. Investigação imediata
-3. Reportar para stakeholders
-4. Reagendar cutover
-```
+**Result**: [ ] PASS [ ] FAIL
 
 ---
 
-**Tester**: ________________  
-**Data/Hora**: 2026-05-29  
-**Assinatura**: ________________  
-**Status Final**: 🟢 / 🟡 / 🔴
+## Test 13: Caching (5 min TTL)
+
+**Expected**: 2nd query from Redis (10x faster)
+
+**Bash**:
+```bash
+time curl https://api-staging.railway.app/obras?page=1  # ~200ms, X-Cache: MISS
+time curl https://api-staging.railway.app/obras?page=1  # ~20ms, X-Cache: HIT
+```
+
+**Result**: [ ] PASS [ ] FAIL  
+**First query**: [ ] ms  
+**Cache hit**: [ ] ms
 
 ---
 
-*Gerado para iMobi MVP — Smoke Test Checklist*  
-*Válido até: 2026-06-02 23:59 UTC*
+## Test 14: Error Recovery (Redis Down)
+
+**Expected**: API continues without Redis, with warnings
+
+**Steps**:
+1. In Railway, scale Redis to 0
+2. Try: curl https://api-staging.railway.app/health
+3. Verify: Still 200 OK (< 3s)
+4. Check Sentry: Warning logged
+5. Restart Redis
+6. Verify recovery: Cache operational
+
+**Result**: [ ] PASS [ ] FAIL  
+**Degraded response time**: [ ] ms
+
+---
+
+## Test 15: Concurrency (No Race Conditions)
+
+**Expected**: 5 concurrent operations succeed without corruption
+
+**Bash**:
+```bash
+for i in {1..5}; do
+  curl -X POST https://api-staging.railway.app/credito/liberar \
+    -H "Authorization: Bearer $TOKEN" \
+    -d "{\"parcelaId\": \"$ID_$i\"}" &
+done
+wait
+```
+
+**Result**: [ ] PASS [ ] FAIL  
+**All 5 jobs queued**: [ ] YES [ ] NO
+
+---
+
+## Test 16: LGPD Data Export
+
+**Expected**: Request → ZIP emailed → All data included
+
+**Steps**:
+1. Login as user
+2. Go to "Privacidade"
+3. Click "Exportar Meus Dados"
+4. Confirm
+5. Check email: ZIP within 2 minutes
+6. Download & verify: usuario.json, credito.json, obras.json
+
+**Result**: [ ] PASS [ ] FAIL  
+**Email time**: [ ] minutes
+
+---
+
+## Test 17: LGPD Account Deletion
+
+**Expected**: Request → 30-day grace → Auto-delete
+
+**Steps**:
+1. Login as user
+2. Go to "Privacidade"
+3. Click "Deletar Conta"
+4. Confirm with password
+5. Verify: 200 OK
+6. Try login: Still works, warning shown
+7. After 30 days: Account hard-deleted (verify)
+
+**Result**: [ ] PASS [ ] FAIL  
+**Soft-delete recorded**: [ ] YES [ ] NO
+
+---
+
+## Summary
+
+**Pass Rate**: [ ] / 17 = [ ]%
+
+**Critical Issues** (blocks deployment):
+```
+[ ] None
+[ ] (list if any)
+```
+
+**Final Decision**: 
+[ ] 🟢 GO - Deploy to production
+[ ] 🔴 NO-GO - Fix issues and re-test
+
+**Tested By**: [ ] Name  
+**Date**: [ ] 2026-05-30  
+**Time**: [ ] 45 min
+
+---
+
+**Version**: 1.0 | **Status**: Ready | **Created**: 2026-05-30

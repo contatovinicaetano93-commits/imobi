@@ -1,10 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { managerApi, type EtapaPendente } from "@/lib/api";
-import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions";
-import { AdvancedFilters, type FilterState } from "@/components/dashboard/AdvancedFilters";
+import { BulkApprovalActions } from "@/(dashboard)/_components/BulkApprovalActions";
+import { AdvancedFilters, type FilterState } from "@/(dashboard)/_components/AdvancedFilters";
 import Link from "next/link";
 
 function brl(v: number) {
@@ -19,9 +18,7 @@ function hoursAgo(date: string): number {
   return Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60));
 }
 
-function EtapasContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export default function EtapasPage() {
   const [data, setData] = useState<{ etapas: EtapaPendente[]; total: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,35 +30,17 @@ function EtapasContent() {
     dataInicio: "",
     dataFim: "",
     obraType: "",
-    priority: "todas",
   });
   const limit = 20;
-
-  // Initialize filters from URL query params
-  useEffect(() => {
-    const status = (searchParams.get("status") as FilterState["status"]) || "todas";
-    const dataInicio = searchParams.get("dataInicio") || "";
-    const dataFim = searchParams.get("dataFim") || "";
-    const obraType = searchParams.get("obraType") || "";
-    const priority = (searchParams.get("priority") as FilterState["priority"]) || "todas";
-
-    setFilters({
-      status,
-      dataInicio,
-      dataFim,
-      obraType,
-      priority,
-    });
-  }, [searchParams]);
 
   useEffect(() => {
     setLoading(true);
     managerApi
-      .listarEtapasPendentes(limit, offset, filters)
+      .listarEtapasPendentes(limit, offset)
       .then(setData)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [offset, filters]);
+  }, [offset]);
 
   if (loading) {
     return (
@@ -102,9 +81,8 @@ function EtapasContent() {
     );
   };
 
-  const handleBulkSuccess = (action: "approve" | "reject") => {
-    const actionText = action === "approve" ? "aprovada(s)" : "rejeitada(s)";
-    setSuccessMessage(`${selectedEtapas.length} etapa(s) ${actionText} com sucesso!`);
+  const handleBulkSuccess = () => {
+    setSuccessMessage(`${selectedEtapas.length} etapa(s) aprovada(s) com sucesso!`);
     setSelectedEtapas([]);
     setOffset(0);
     setTimeout(() => setSuccessMessage(null), 5000);
@@ -113,9 +91,6 @@ function EtapasContent() {
   const handleError = (message: string) => {
     setError(message);
   };
-
-  // Use data.etapas directly - filtering is now handled by the API
-  const filteredEtapas = data.etapas;
 
   return (
     <div className="space-y-6">
@@ -137,80 +112,49 @@ function EtapasContent() {
           <p className="text-gray-500 text-sm mt-1">
             {data.total} etapa{data.total !== 1 ? "s" : ""} aguardando aprovação
             {selectedEtapas.length > 0 && ` — ${selectedEtapas.length} selecionada(s)`}
-            {filters.priority && filters.priority !== "todas" && ` — Filtrando por: ${filters.priority}`}
           </p>
         </div>
       </div>
 
       <AdvancedFilters
-        filters={filters}
-        onFilter={(newFilters: FilterState) => {
+        onFilter={(newFilters) => {
           setFilters(newFilters);
           setOffset(0);
-          // Update URL query params
-          const params = new URLSearchParams();
-          if (newFilters.status && newFilters.status !== "todas") {
-            params.set("status", newFilters.status);
-          }
-          if (newFilters.dataInicio) {
-            params.set("dataInicio", newFilters.dataInicio);
-          }
-          if (newFilters.dataFim) {
-            params.set("dataFim", newFilters.dataFim);
-          }
-          if (newFilters.obraType) {
-            params.set("obraType", newFilters.obraType);
-          }
-          if (newFilters.priority && newFilters.priority !== "todas") {
-            params.set("priority", newFilters.priority);
-          }
-          const queryString = params.toString();
-          router.push(`?${queryString}`);
         }}
         onReset={() => {
-          setFilters({ status: "todas", dataInicio: "", dataFim: "", obraType: "", priority: "todas" });
+          setFilters({ status: "todas", dataInicio: "", dataFim: "", obraType: "" });
           setOffset(0);
-          // Clear URL query params
-          router.push("?");
         }}
       />
 
-      {filteredEtapas.length === 0 ? (
+      {data.etapas.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <p className="text-4xl mb-4">🎉</p>
-          <p className="text-gray-500">
-            {data.etapas.length === 0
-              ? "Nenhuma etapa pendente no momento"
-              : "Nenhuma etapa corresponde aos filtros selecionados"}
-          </p>
+          <p className="text-gray-500">Nenhuma etapa pendente no momento</p>
         </div>
       ) : (
         <div className="space-y-4">
           {/* Selection Toolbar */}
-          {filteredEtapas.length > 0 && (
+          {data.etapas.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
-                  checked={selectedEtapas.length === filteredEtapas.length && filteredEtapas.length > 0}
-                  onChange={() => {
-                    setSelectedEtapas((prev) =>
-                      prev.length === filteredEtapas.length ? [] : filteredEtapas.map((e) => e.etapaId)
-                    );
-                  }}
+                  checked={selectedEtapas.length === data.etapas.length && data.etapas.length > 0}
+                  onChange={handleSelectAll}
                   className="w-5 h-5 rounded border-gray-300 text-brand-600 cursor-pointer"
                   title="Selecionar/desselecionar todos"
                 />
                 <span className="text-sm text-gray-700">
                   {selectedEtapas.length === 0
                     ? "Selecionar etapas"
-                    : `${selectedEtapas.length} de ${filteredEtapas.length} selecionadas`}
+                    : `${selectedEtapas.length} de ${data.etapas.length} selecionadas`}
                 </span>
               </div>
             </div>
           )}
 
-          {filteredEtapas.map((etapa) => {
+          {data.etapas.map((etapa) => {
             const horas = hoursAgo(etapa.criadoEm);
             const urgente = horas >= 24;
             const isSelected = selectedEtapas.includes(etapa.etapaId);
@@ -277,6 +221,7 @@ function EtapasContent() {
                   </div>
 
                   {/* Ações */}
+      // @ts-ignore - Next.js Link type compatibility
                   <div className="shrink-0 flex gap-2">
                     <Link
                       href={`/dashboard/gestor/etapas/${etapa.etapaId}`}
@@ -324,13 +269,5 @@ function EtapasContent() {
         </div>
       )}
     </div>
-  );
-}
-
-export default function EtapasPage() {
-  return (
-    <Suspense fallback={<div className="space-y-6"><div><h1 className="text-2xl font-bold text-gray-900">Etapas Pendentes</h1><p className="text-gray-500 text-sm mt-1">Carregando...</p></div></div>}>
-      <EtapasContent />
-    </Suspense>
   );
 }

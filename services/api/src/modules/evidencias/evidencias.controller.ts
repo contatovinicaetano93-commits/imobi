@@ -1,8 +1,6 @@
 import {
   Controller, Post, Get, Patch, Param, Body, UseGuards,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from "@nestjs/swagger";
-import { Throttle } from "@nestjs/throttler";
 import { EvidenciasService } from "./evidencias.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -15,12 +13,8 @@ import type { UploadEvidenciaInput } from "@imbobi/schemas";
 export class EvidenciasController {
   constructor(private readonly evidencias: EvidenciasService) {}
 
-  @Post("upload")
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
-  @ApiOperation({ summary: "Upload de evidência", description: "Envia foto de progresso com GPS validation (5req/min)" })
-  @ApiResponse({ status: 201, description: "Foto salva com sucesso, GPS validado" })
-  @ApiResponse({ status: 400, description: "GPS fora da zona permitida (15m)" })
-  async upload(
+  @Post()
+  upload(
     @UsuarioAtual() u: IUsuario,
     @Body() body: any
   ) {

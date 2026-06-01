@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { obrasApi, type EtapaResumo } from "@/lib/api";
+import { obrasApi } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
-
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: "Detalhe da Obra — imbobi" };
 
@@ -66,7 +64,7 @@ export default async function ObraDetailPage({
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Cronograma de Etapas</h2>
         <div className="space-y-3">
-          {etapas.map((etapa: EtapaResumo) => (
+          {etapas.map((etapa) => (
             <div key={etapa.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
               <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600 shrink-0">
                 {etapa.ordem}

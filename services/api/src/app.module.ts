@@ -1,11 +1,7 @@
-import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
 import { ThrottlerModule } from "@nestjs/throttler";
-import { CacheModule } from "@nestjs/cache-manager";
-import { APP_GUARD, APP_INTERCEPTOR, Reflector } from "@nestjs/core";
-import { CacheInterceptor } from "@nestjs/cache-manager";
-import { ThrottlerStorage } from "@nestjs/throttler";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsuariosModule } from "./modules/usuarios/usuarios.module";
@@ -24,51 +20,15 @@ import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notific
 import { SimuladorModule } from "./modules/simulador/simulador.module";
 import { AdminModule } from "./modules/admin/admin.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
-import { HealthController } from "./common/health.controller";
-import { getRedisConfig } from "./common/config";
-import { ProductionMiddleware } from "./common/middleware/production.middleware";
-import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
-
-const redisConfig = getRedisConfig();
-const isDevelopment = process.env.NODE_ENV !== "production";
-
-// Throttler limits: development vs production
-const throttlerConfig = isDevelopment
-  ? [
-      { ttl: 60000, limit: 10000 }, // Development: generous limits for testing
-      { ttl: 60000, limit: 5000, name: "auth" },
-      { ttl: 60000, limit: 5000, name: "upload" },
-      { ttl: 60000, limit: 5000, name: "manager" },
-    ]
-  : [
-      { ttl: 60000, limit: 100 }, // Production: strict limits
-      { ttl: 60000, limit: 10, name: "auth" },
-      { ttl: 60000, limit: 5, name: "upload" },
-      { ttl: 60000, limit: 20, name: "manager" },
-    ];
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot(throttlerConfig),
-    CacheModule.register({
-      isGlobal: true,
-      store: "redis",
-      host: redisConfig.host,
-      port: redisConfig.port,
-      ...(redisConfig.password && { password: redisConfig.password }),
-      ttl: 300, // 5 min default TTL
-      lazyConnect: true,
-      retryStrategy: (times: number) => Math.min(times * 50, 2000),
-    }),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     BullModule.forRoot({
       redis: {
-        host: redisConfig.host,
-        port: redisConfig.port,
-        ...(redisConfig.password && { password: redisConfig.password }),
-        maxRetriesPerRequest: null,
-        enableReadyCheck: false,
-        retryStrategy: (times: number) => Math.min(times * 50, 2000),
+        host: process.env["REDIS_HOST"] ?? "localhost",
+        port: Number(process.env["REDIS_PORT"] ?? 6379),
       },
     }),
     PrismaModule,
@@ -88,29 +48,6 @@ const throttlerConfig = isDevelopment
     ParceirosModule,
     AdminModule,
   ],
-  controllers: [HealthController],
-  providers: [
-    LiberacaoParcelaWorker,
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
-    },
-    {
-      provide: APP_GUARD,
-      useFactory: (
-        options: any,
-        storageService: ThrottlerStorage,
-        reflector: Reflector,
-      ) => new CustomThrottlerGuard(options, storageService, reflector),
-      inject: ["THROTTLER:MODULE_OPTIONS", ThrottlerStorage, Reflector],
-    },
-  ],
+  providers: [LiberacaoParcelaWorker],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    const nodeEnv = process.env.NODE_ENV || 'development';
-    if (nodeEnv === 'production') {
-      consumer.apply(ProductionMiddleware).forRoutes('*');
-    }
-  }
-}
+export class AppModule {}

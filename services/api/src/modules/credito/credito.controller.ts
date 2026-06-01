@@ -1,6 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from "@nestjs/swagger";
-import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
+import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
 import { CreditoService } from "./credito.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -44,12 +42,6 @@ export class CreditoController {
 
   @UseGuards(JwtAuthGuard)
   @Get(":id/extrato")
-  @ApiBearerAuth()
-  @UseInterceptors(CacheInterceptor)
-  @CacheTTL(300)
-  @ApiOperation({ summary: "Extrato do crédito", description: "Retorna extrato detalhado de um crédito (5min cache)" })
-  @ApiParam({ name: "id", description: "ID do crédito" })
-  @ApiResponse({ status: 200, description: "Extrato carregado" })
   extrato(@Param("id") id: string) {
     return this.credito.extrato(id);
   }

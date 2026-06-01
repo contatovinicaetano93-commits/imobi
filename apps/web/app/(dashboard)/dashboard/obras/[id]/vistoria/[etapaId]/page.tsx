@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { obrasApi, evidenciasApi, type EvidenciaDetalhe } from "@/lib/api";
+import { obrasApi, evidenciasApi } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { AprovarEtapaForm } from "./aprovar-form";
 import { UploadEvidenciaForm } from "./upload-form";
-
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: "Vistoria — imbobi" };
 
@@ -57,7 +55,7 @@ export default async function VistoriaPage({
           <p className="text-gray-400 text-sm">Nenhuma evidência enviada ainda.</p>
         ) : (
           <div className="grid grid-cols-2 gap-4">
-            {evidencias.map((ev: EvidenciaDetalhe) => (
+            {evidencias.map((ev) => (
               <div key={ev.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <img src={ev.fotoUrl} alt="Evidência" className="w-full aspect-video object-cover" />
                 <div className="p-4 space-y-1">

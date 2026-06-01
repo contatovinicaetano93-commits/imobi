@@ -1,7 +1,9 @@
+declare const process: { env: Record<string, string | undefined> } | undefined;
+
 const BASE_URL =
   typeof process !== "undefined"
-    ? (process.env["NEXT_PUBLIC_API_URL"] ?? process.env["EXPO_PUBLIC_API_URL"] ?? "http://localhost:4000")
-    : "http://localhost:4000";
+    ? (process.env["NEXT_PUBLIC_API_URL"] ?? process.env["EXPO_PUBLIC_API_URL"] ?? "")
+    : "";
 
 interface RequestOptions extends RequestInit {
   token?: string;

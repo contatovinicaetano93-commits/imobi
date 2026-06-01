@@ -1,19 +1,17 @@
 import type { Metadata } from "next";
-import { engenheirosApi, type Visita } from "@/lib/api";
+import { engenheirosApi } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { VisitQueue } from "./_components/VisitQueue";
 import { DynamicVisitQueueClient } from "./_components/DynamicVisitQueueClient";
-
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: "Portal do Engenheiro — imbobi" };
 
 export default async function EngenheiroPortalPage() {
   const visitas = await engenheirosApi.listarVisitas().catch(() => []);
-
-  const agendadas = visitas.filter((v: Visita) => v.status === "AGENDADA");
-  const iniciadas = visitas.filter((v: Visita) => v.status === "INICIADA");
-  const concluidas = visitas.filter((v: Visita) => v.status === "CONCLUIDA");
+  
+  const agendadas = visitas.filter((v) => v.status === "AGENDADA");
+  const iniciadas = visitas.filter((v) => v.status === "INICIADA");
+  const concluidas = visitas.filter((v) => v.status === "CONCLUIDA");
 
   return (
     <div className="space-y-8">
@@ -51,7 +49,7 @@ export default async function EngenheiroPortalPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {agendadas.slice(0, 3).map((visita: Visita) => (
+            {agendadas.slice(0, 3).map((visita) => (
               <a
                 key={visita.visitaId}
                 href={`/dashboard/engenheiro/${visita.visitaId}`}
@@ -91,7 +89,7 @@ export default async function EngenheiroPortalPage() {
         <section aria-labelledby="in-progress-title">
           <h2 id="in-progress-title" className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Em Andamento</h2>
           <div className="space-y-3">
-            {iniciadas.map((visita: Visita) => (
+            {iniciadas.map((visita) => (
               <a
                 key={visita.visitaId}
                 href={`/dashboard/engenheiro/${visita.visitaId}`}
@@ -120,7 +118,7 @@ export default async function EngenheiroPortalPage() {
         <section aria-labelledby="completed-title">
           <h2 id="completed-title" className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Concluídas</h2>
           <div className="space-y-3">
-            {concluidas.slice(0, 5).map((visita: Visita) => (
+            {concluidas.slice(0, 5).map((visita) => (
               <a
                 key={visita.visitaId}
                 href={`/dashboard/engenheiro/${visita.visitaId}`}

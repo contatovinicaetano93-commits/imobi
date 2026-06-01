@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatarBRL } from "@imbobi/core";
 
@@ -13,12 +13,13 @@ interface Props {
 export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
   const router = useRouter();
   const [obs, setObs] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   const acao = async (aprovado: boolean) => {
     setErro(null);
-    startTransition(async () => {
+    setIsPending(true);
+    try {
       const res = await fetch(`/api/etapas/${etapaId}/validar`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -33,7 +34,9 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
 
       router.push(`/dashboard/obras/${obraId}`);
       router.refresh();
-    });
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
