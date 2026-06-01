@@ -242,7 +242,7 @@ log_success "AMI selecionada: $AMI_ID"
 log_info "Criando Key Pair..."
 mkdir -p ~/.ssh
 
-aws ec2 create-key-pair --key-name "$APP_NAME-key" --region $AWS_REGION --query 'KeyMaterial' --output text > ~/.ssh/$APP_NAME-key.pem 2>/dev/null || true
+aws ec2 create-key-pair --key-name "$APP_NAME-key" --region $AWS_REGION --output json | jq -r '.KeyMaterial' > ~/.ssh/$APP_NAME-key.pem
 chmod 600 ~/.ssh/$APP_NAME-key.pem
 log_success "Key Pair: ~/.ssh/$APP_NAME-key.pem"
 
