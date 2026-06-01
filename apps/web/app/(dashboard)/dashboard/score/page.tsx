@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { scoreApi, type ScoreAtual, type ScoreHistorico } from "@/lib/api";
 
-export const dynamic = 'force-dynamic';
-
 export const metadata: Metadata = { title: "Score de Construtibilidade — imbobi" };
 
 function getNivelThresholds(nivel: string): { proximo: string; proximoScore: number; progresso: number } {
@@ -119,7 +117,7 @@ export default async function ScorePage() {
           <p className="text-sm text-gray-400">Nenhum registro no histórico.</p>
         ) : (
           <div className="space-y-2">
-            {historico.map((item: ScoreHistorico) => (
+            {historico.map((item) => (
               <div key={item.id} className="flex justify-between items-center text-sm p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium text-gray-900">{item.score}</p>

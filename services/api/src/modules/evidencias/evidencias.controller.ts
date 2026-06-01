@@ -1,7 +1,6 @@
 import {
   Controller, Post, Get, Patch, Param, Body, UseGuards,
 } from "@nestjs/common";
-import { Throttle } from "@nestjs/throttler";
 import { EvidenciasService } from "./evidencias.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -12,7 +11,6 @@ export class EvidenciasController {
   constructor(private readonly evidencias: EvidenciasService) {}
 
   @Post()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   upload(
     @UsuarioAtual() u: IUsuario,
     @Body() body: any

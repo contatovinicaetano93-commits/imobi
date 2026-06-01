@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { obrasApi, type ObraResumo } from "@/lib/api";
+import { obrasApi } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
-
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: "Minhas Obras — imbobi" };
 
@@ -39,7 +37,7 @@ export default async function ObrasPage() {
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
-          {obras.map((obra: ObraResumo) => (
+          {obras.map((obra) => (
             <a
               key={obra.id}
               href={`/dashboard/obras/${obra.id}`}

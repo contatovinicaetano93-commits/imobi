@@ -1,3 +1,5 @@
+import { cookies } from "next/headers";
+
 const API_URL = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
 
 export class ApiError extends Error {
@@ -7,17 +9,17 @@ export class ApiError extends Error {
 }
 
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const jar = await cookies();
+  const token = jar.get("access_token")?.value;
+
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
-
-  // In a browser context, credentials: 'include' will automatically send cookies
-  // In SSR context, the request context already includes cookies
+  if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const res = await fetch(`${API_URL}/api/v1${path}`, {
     ...init,
     headers,
     cache: "no-store",
-    credentials: "include",
   });
 
   if (!res.ok) {
@@ -34,7 +36,6 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 export type ObraResumo = {
   id: string; nome: string; status: string;
   geoLatitude: number; geoLongitude: number; raioValidacaoMetros: number;
-  endereco?: string;
   progresso?: number;
   credito?: { id: string; valorAprovado: number; valorLiberado: number; status: string } | null;
   etapas?: EtapaResumo[];
@@ -177,11 +178,6 @@ export type EtapaPendente = {
 export type EtapaDetalhe = EtapaPendente & {
   status: string;
   evidencias: Array<{ evidenciaId: string; fotoUrl: string; criadoEm: string }>;
-  obra: EtapaPendente["obra"] & {
-    geoLatitude?: number;
-    geoLongitude?: number;
-    raioValidacaoMetros?: number;
-  };
 };
 
 export type KycPendente = {
@@ -205,53 +201,12 @@ export type ManagerStats = {
   obrasAtivas: number;
 };
 
-export type EtapaAuditEntry = {
-  auditId: string;
-  acaoTipo: string;
-  gerenciador: string;
-  gerenciadorEmail: string;
-  observacoes?: string;
-  criadoEm: string;
-};
-
-export type KycAuditEntry = {
-  auditId: string;
-  acaoTipo: string;
-  gerenciador: string;
-  gerenciadorEmail: string;
-  motivo?: string;
-  criadoEm: string;
-};
-
 export const managerApi = {
   dashboard: () => apiFetch<ManagerStats>("/manager/dashboard"),
-  listarEtapasPendentes: (
-    limit?: number,
-    offset?: number,
-    filters?: {
-      status?: "todas" | "pendente" | "aprovada" | "rejeitada";
-      dataInicio?: string;
-      dataFim?: string;
-      obraType?: string;
-      priority?: "todas" | "urgente" | "intermediaria" | "normal";
-      searchTerm?: string;
-    }
-  ) => {
-    const params = new URLSearchParams();
-    if (limit) params.set("limit", String(limit));
-    if (offset) params.set("offset", String(offset));
-    if (filters?.status && filters.status !== "todas") params.set("status", filters.status);
-    if (filters?.dataInicio) params.set("dataInicio", filters.dataInicio);
-    if (filters?.dataFim) params.set("dataFim", filters.dataFim);
-    if (filters?.obraType) params.set("obraType", filters.obraType);
-    if (filters?.priority && filters.priority !== "todas") params.set("priority", filters.priority);
-    if (filters?.searchTerm) params.set("searchTerm", filters.searchTerm);
-
-    const queryString = params.toString();
-    return apiFetch<{ etapas: EtapaPendente[]; total: number }>(
-      `/manager/etapas-pendentes${queryString ? `?${queryString}` : ""}`
-    );
-  },
+  listarEtapasPendentes: (limit?: number, offset?: number) =>
+    apiFetch<{ etapas: EtapaPendente[]; total: number }>(
+      `/manager/etapas-pendentes${limit || offset ? `?limit=${limit ?? 20}&offset=${offset ?? 0}` : ""}`
+    ),
   listarKycPendentes: (limit?: number, offset?: number) =>
     apiFetch<{ documentos: KycPendente[]; total: number }>(
       `/manager/kyc-pendentes${limit || offset ? `?limit=${limit ?? 20}&offset=${offset ?? 0}` : ""}`
@@ -266,37 +221,6 @@ export const managerApi = {
     apiFetch(`/manager/kyc/${id}/aprovar`, { method: "PATCH" }),
   rejeitarKyc: (id: string, motivo: string) =>
     apiFetch(`/manager/kyc/${id}/rejeitar`, { method: "PATCH", body: JSON.stringify({ motivo }) }),
-  obterEtapaAuditLog: (id: string) => apiFetch<EtapaAuditEntry[]>(`/manager/etapas/${id}/audit-log`),
-  obterKycAuditLog: (id: string) => apiFetch<KycAuditEntry[]>(`/manager/kyc/${id}/audit-log`),
-};
-
-// ── Engenheiros ──────────────────────────────────────────────────────
-
-export type Visita = {
-  visitaId: string;
-  status: "AGENDADA" | "INICIADA" | "CONCLUIDA";
-  etapaId: string;
-  etapaNome: string;
-  obraId: string;
-  obraNome: string;
-  dataAgendada: string;
-  dataInicio?: string;
-  dataConclusao?: string;
-  observacoes?: string;
-  obra: {
-    nome: string;
-    endereco?: string;
-  };
-  criadoEm: string;
-};
-
-export const engenheirosApi = {
-  listarVisitas: () => apiFetch<Visita[]>("/engenheiros/visitas"),
-  atualizarValidacao: (visitaId: string, data: { status?: string; dataAgendada?: string; observacoes?: string }) =>
-    apiFetch(`/engenheiros/visitas/${visitaId}`, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    }),
 };
 
 // ── Notificações ──────────────────────────────────────────────────────
@@ -331,3 +255,82 @@ export const notificacoesApi = {
   deletar: (id: string) =>
     apiFetch(`/notificacoes/${id}`, { method: "DELETE" }),
 };
+
+// ── Engenheiro (Inspector) ────────────────────────────────────────────
+
+export type Visita = {
+  visitaId: string;
+  etapaId: string;
+  obra: {
+    id: string;
+    nome: string;
+    endereco: string;
+    geoLatitude: number;
+    geoLongitude: number;
+    raioValidacaoMetros: number;
+  };
+  dataAgendada: string;
+  status: "AGENDADA" | "INICIADA" | "CONCLUIDA" | "CANCELADA";
+  observacoes?: string;
+  criadoEm: string;
+};
+
+export type ValidacaoForm = {
+  visitaId: string;
+  etapaId: string;
+  obraCondicoes: {
+    estruturaOk: boolean;
+    fundacaoOk: boolean;
+    coberturaPlanejada: boolean;
+    observacoes?: string;
+  };
+  conformidade: {
+    protetoresPresentes: boolean;
+    sinalizacaoOk: boolean;
+    acessoSeguro: boolean;
+    observacoes?: string;
+  };
+  observacoesGerais?: string;
+  fotos: {
+    id: string;
+    url: string;
+    latCaptura: number;
+    lngCaptura: number;
+    accuracyMetros: number;
+    descricao?: string;
+  }[];
+  status: "RASCUNHO" | "ENVIADA" | "REJEITADA" | "APROVADA";
+  submissaoEm?: string;
+};
+
+export const engenheirosApi = {
+  listarVisitas: (filtroStatus?: string) =>
+    apiFetch<Visita[]>(`/engenheiros/visitas${filtroStatus ? `?status=${filtroStatus}` : ""}`),
+  obterVisita: (visitaId: string) =>
+    apiFetch<Visita>(`/engenheiros/visitas/${visitaId}`),
+  obterValidacao: (visitaId: string) =>
+    apiFetch<ValidacaoForm>(`/engenheiros/validacoes/${visitaId}`),
+  submeterValidacao: (visitaId: string, data: Omit<ValidacaoForm, "visitaId" | "etapaId">) =>
+    apiFetch<ValidacaoForm>(`/engenheiros/validacoes/${visitaId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  atualizarValidacao: (visitaId: string, data: Partial<ValidacaoForm>) =>
+    apiFetch<ValidacaoForm>(`/engenheiros/validacoes/${visitaId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  gerarRelatorioPDF: (visitaId: string) =>
+    apiFetch<{ url: string }>(`/engenheiros/validacoes/${visitaId}/relatorio`),
+  fazerUploadFoto: async (visitaId: string, formData: FormData) => {
+    const cookieStore = await cookies();
+    return fetch(`${API_URL}/api/v1/engenheiros/validacoes/${visitaId}/fotos`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${cookieStore.get("access_token")?.value ?? ""}`,
+      },
+      body: formData,
+    }).then((res) => (res.ok ? res.json() : Promise.reject(res)));
+  },
+};
+

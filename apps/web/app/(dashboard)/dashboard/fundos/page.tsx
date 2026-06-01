@@ -1,24 +1,25 @@
 import type { Metadata } from "next";
-import { obrasApi, creditoApi } from "@/lib/api";
+import { Suspense } from "react";
+import { obrasApi, creditoApi, type ObraResumo, type CreditoResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { PortfolioChart } from "./_components/PortfolioChart";
 import { RegionalDistribution } from "./_components/RegionalDistribution";
 import { InadimplenciaMetrics } from "./_components/InadimplenciaMetrics";
 import { ReportExport } from "./_components/ReportExport";
+import { LoadingSkeleton } from "./_components/LoadingSkeleton";
 import {
   aggregateByRegion,
   calculateRoiTimeline,
   calculateInadimplenciaRate,
+  calculatePortfolioPerformance,
 } from "./_components/fundos-utils";
-
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: "Fundos — imbobi" };
 
-export default async function FundosPage() {
+async function FundosPageContent() {
   const [obras, creditos] = await Promise.all([
-    obrasApi.listar().catch(() => []),
-    creditoApi.meus().catch(() => []),
+    obrasApi.listar().catch(() => [] as ObraResumo[]),
+    creditoApi.meus().catch(() => [] as CreditoResumo[]),
   ]);
 
   // Total desembolsado
@@ -57,6 +58,7 @@ export default async function FundosPage() {
   const regionalMetrics = aggregateByRegion(obras, creditos);
   const roiTimeline = calculateRoiTimeline(creditos);
   const inadimplenciaData = calculateInadimplenciaRate(creditos);
+  const portfolioPerformance = calculatePortfolioPerformance(obras);
 
   return (
     <div className="space-y-8">
@@ -147,9 +149,6 @@ export default async function FundosPage() {
           Evolução de ROI
         </h2>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <p className="text-sm text-gray-500 mb-6">
-            Comparação entre ROI esperado e real ao longo do tempo
-          </p>
           <PortfolioChart data={roiTimeline} />
         </div>
       </section>
@@ -243,5 +242,13 @@ export default async function FundosPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function FundosPage() {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <FundosPageContent />
+    </Suspense>
   );
 }
