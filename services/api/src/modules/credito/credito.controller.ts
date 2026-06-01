@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, UseGuards, UseInterceptors, ForbiddenException } from "@nestjs/common";
+import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
 import { CreditoService } from "./credito.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -42,7 +43,13 @@ export class CreditoController {
 
   @UseGuards(JwtAuthGuard)
   @Get(":id/extrato")
-  extrato(@Param("id") id: string) {
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(300) // 5 min
+  async extrato(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
+    const credito = await this.credito.buscarPorId(id);
+    if (!credito || credito.usuarioId !== u.id) {
+      throw new ForbiddenException("Acesso negado a este crédito.");
+    }
     return this.credito.extrato(id);
   }
 }

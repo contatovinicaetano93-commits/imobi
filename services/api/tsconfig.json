@@ -7,7 +7,7 @@
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
-      "@imbobi/*": ["../../packages/*/src"],
+      "@imbobi/*": ["../../packages/*/dist"],
       "@/*": ["src/*"]
     },
     "strict": false,

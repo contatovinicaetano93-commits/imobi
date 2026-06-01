@@ -129,4 +129,21 @@ export class EtapasService {
       },
     });
   }
+
+  async listarPorObraComValidacao(usuarioId: string, usuarioTipo: string, obraId: string) {
+    const obra = await this.prisma.obra.findUnique({
+      where: { obraId },
+      select: { usuarioId: true },
+    });
+    if (!obra) throw new NotFoundException("Obra não encontrada.");
+
+    const ehOwner = obra.usuarioId === usuarioId;
+    const ehGestor = usuarioTipo === "ADMIN" || usuarioTipo === "GESTOR_OBRA";
+
+    if (!ehOwner && !ehGestor) {
+      throw new ForbiddenException("Acesso negado a esta obra.");
+    }
+
+    return this.listarPorObra(obraId);
+  }
 }

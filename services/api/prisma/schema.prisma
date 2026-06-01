@@ -23,6 +23,7 @@ model Usuario {
   kycStatus     KycStatus @default(PENDENTE)
   criadoEm      DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt
+  deletadoEm    DateTime?
 
   sessoes       SessaoToken[]
   creditos      Credito[]
@@ -133,6 +134,8 @@ model Obra {
   @@index([usuarioId])
   @@index([creditoId])
   @@index([status])
+  @@index([status, atualizadoEm])
+  @@index([geoLatitude, geoLongitude])
 }
 
 enum ObraStatus {
@@ -164,6 +167,7 @@ model EtapaObra {
   @@unique([obraId, ordem])
   @@index([obraId])
   @@index([status])
+  @@index([status, criadoEm])
 }
 
 enum EtapaStatus {
@@ -187,6 +191,8 @@ model EvidenciaEtapa {
   lngCaptura        Float
   accuracyMetros    Float?
   distanciaObra     Float?
+  exifTimestamp     DateTime?
+  fotoKey           String?
   validada          Boolean  @default(false)
   observacao        String?
   criadoEm          DateTime @default(now())
@@ -195,6 +201,7 @@ model EvidenciaEtapa {
   @@index([etapaId])
   @@index([obraId])
   @@index([validada])
+  @@index([validada, criadoEm])
 }
 
 // ── Liberações de Parcelas ────────────────────────────────────────────
@@ -291,4 +298,33 @@ enum TipoNotificacao {
   OBRA_CRIADA
   SCORE_ATUALIZADO
   VISTORIA_PENDENTE
+}
+
+// ── Job Falhas ────────────────────────────────────────────────────
+
+model JobFalha {
+  jobFalhaId  String   @id @default(uuid())
+  queue       String
+  jobId       String
+  payload     Json
+  erro        String
+  tentativas  Int
+  criadoEm   DateTime @default(now())
+
+  @@index([queue])
+  @@index([criadoEm])
+}
+
+// ── Analytics ──────────────────────────────────────────────────────
+
+model AnalyticsEvent {
+  eventId    String   @id @default(uuid())
+  usuarioId  String
+  eventType  String
+  metadata   Json?
+  timestamp  DateTime @default(now())
+
+  @@index([usuarioId])
+  @@index([eventType])
+  @@index([timestamp])
 }

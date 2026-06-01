@@ -63,6 +63,36 @@ export default function KycPage() {
   const pages = Math.ceil(data.total / limit);
   const currentPage = offset / limit + 1;
 
+  const handleSelectDoc = (docId: string) => {
+    setSelectedDocs((prev) =>
+      prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    setSelectedDocs((prev) =>
+      prev.length === data.documentos.length ? [] : data.documentos.map((d) => d.kycDocumentoId)
+    );
+  };
+
+  const handleBulkSuccess = () => {
+    setSuccessMessage(`${selectedDocs.length} documento(s) aprovado(s) com sucesso!`);
+    setSelectedDocs([]);
+    setOffset(0);
+    setTimeout(() => setSuccessMessage(null), 5000);
+  };
+
+  const handleError = (message: string) => {
+    setError(message);
+  };
+
+  const filteredDocs = data.documentos.filter(
+    (doc) =>
+      doc.usuario.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.usuario.cpf.includes(searchQuery) ||
+      doc.usuario.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

@@ -1,0 +1,54 @@
+{
+  "cli": {
+    "version": ">= 5.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:3000"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://staging-api.imbobi.com"
+      },
+      "ios": {
+        "buildType": "simulator"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "staging": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://staging-api.imbobi.com"
+      },
+      "credentialsSource": "remote",
+      "ios": {
+        "simulator": false
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.imbobi.com"
+      },
+      "credentialsSource": "remote",
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": true,
+      "android": true
+    },
+    "staging": {
+      "ios": false,
+      "android": false
+    }
+  }
+}

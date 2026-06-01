@@ -1,5 +1,5 @@
 import {
-  Controller, Post, Get, Patch, Param, Body, UseGuards,
+  Controller, Post, Get, Patch, Param, Body, UseGuards, ForbiddenException,
 } from "@nestjs/common";
 import { EvidenciasService } from "./evidencias.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -33,11 +33,8 @@ export class EvidenciasController {
   }
 
   @Get("etapa/:etapaId")
-  @ApiOperation({ summary: "Listar evidências", description: "Retorna todas as fotos de uma etapa" })
-  @ApiParam({ name: "etapaId", description: "ID da etapa" })
-  @ApiResponse({ status: 200, description: "Lista de evidências" })
-  listar(@Param("etapaId") etapaId: string) {
-    return this.evidencias.listarPorEtapa(etapaId);
+  async listar(@UsuarioAtual() u: IUsuario, @Param("etapaId") etapaId: string) {
+    return this.evidencias.listarPorEtapaComValidacao(u.id, u.tipo, etapaId);
   }
 
   @Patch(":id/validar")

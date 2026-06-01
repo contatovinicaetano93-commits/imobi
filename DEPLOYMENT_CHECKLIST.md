@@ -1,211 +1,270 @@
-# imobi MVP Deployment — Executive Checklist
+# 🚀 Deployment Checklist — Ready to Deploy
 
-**Status**: Steps 1-5 Ready for Execution  
-**Date**: 2026-05-30  
-**Deployment Target**: Vercel (Web) + Production Infrastructure
-
----
-
-## QUICK START CHECKLIST
-
-### ✅ COMPLETED
-- [x] **Step 1**: Git merge claude/serene-pasteur-mB72T → main
-  - Commit: `e7e7572`
-  - Status: **MERGED & PUSHED** to origin/main
-  - Vercel webhook: **READY** (auto-triggered)
-
-### ⏳ IN PROGRESS / PENDING
-
-#### Step 2: Vercel Environment Variables (Manual UI Configuration)
-**Access**: https://vercel.com/contatovinicaetano93-commits/imobi → Settings → Environment Variables
-
-**Required Variables** (add all 14):
-```
-1. NODE_ENV = production
-2. NEXT_PUBLIC_API_URL = https://api.imbobi.com.br
-3. DATABASE_URL = [from PostgreSQL step 4]
-4. REDIS_HOST = [from Redis step 5]
-5. REDIS_PORT = 6379
-6. JWT_SECRET = [GENERATE: openssl rand -base64 48]
-7. AWS_ACCESS_KEY_ID = [S3 credentials]
-8. AWS_SECRET_ACCESS_KEY = [S3 credentials]
-9. SENDGRID_API_KEY = [SendGrid dashboard]
-10. FIREBASE_PROJECT_ID = imbobi-prod
-11. FIREBASE_PRIVATE_KEY = [Firebase console]
-12. SENTRY_DSN = [Sentry console]
-13. CORS_ORIGIN = https://imbobi.com.br
-14. EMAIL_PROVIDER = sendgrid
-```
-
-**Scope**: Set all to "Production"
-
-**Action**: ⏳ **BLOCKED** — Requires manual Vercel Dashboard access (user action required)
+**Status:** ✅ Application Production-Ready  
+**Date:** 31 de Maio de 2026  
+**Branch:** `claude/happy-goldberg-AFQPj`  
+**Estimated Time:** 30 minutes total
 
 ---
 
-#### Step 3: Vercel Build Validation
-**Trigger**: Automatic (via webhook from Step 1)  
-**Expected**: < 60 seconds build time
+## 📋 Quick Summary
 
-**Validation Checklist**:
-```
-☐ Navigate to https://vercel.com/contatovinicaetano93-commits/imobi/deployments
-☐ Wait for build to complete (status: "Ready")
-☐ Verify build logs: No errors or warnings
-☐ Check deployment URL: https://imobi.vercel.app accessible
-☐ All 14 environment variables loaded successfully
-```
+Your application has passed all E2E tests and is ready to deploy. All configuration files are prepared. You just need to:
 
-**Action**: ⏳ **WAITING** — Depends on Step 2 completion
+1. **Create accounts** (Vercel + Railway) — 5 minutes
+2. **Connect your GitHub repository** — 5 minutes  
+3. **Configure environment variables** — 5 minutes
+4. **Deploy frontend and backend** — 10 minutes
+5. **Test production environment** — 5 minutes
 
 ---
 
-#### Step 4: PostgreSQL Production Database
-**Provider Recommendation**: Railway or Supabase (PostGIS support required)
+## 🎯 STEP-BY-STEP DEPLOYMENT
 
-**Setup Steps**:
-```
-1. Create PostgreSQL 15+ instance with PostGIS extension
-2. Copy connection string → Add to Vercel (Step 2)
-3. Run migrations:
-   DATABASE_URL="..." pnpm db:migrate
-4. Verify PostGIS: SELECT postgis_version();
-```
+### STEP 1: Create Vercel Account (Frontend Hosting)
 
-**Example Setup Time**: 10-15 minutes
+**Time:** 2 minutes
 
-**Required**:
-- PostgreSQL 15+
-- PostGIS extension (mandatory for GPS validation)
-- Automated backups enabled
-- Daily 7+ day retention
-
-**Action**: ✅ **READY** — Execute after Step 2
+1. Go to [vercel.com](https://vercel.com)
+2. Click **"Sign Up"** → Use GitHub authentication
+3. Authorize Vercel access to your GitHub account
+4. ✅ **Done** — Vercel account ready
 
 ---
 
-#### Step 5: Redis Production Cache
-**Provider Recommendation**: Upstash (serverless, Vercel-friendly) or Railway
+### STEP 2: Create Railway Account (Backend Hosting)
 
-**Setup Steps**:
-```
-1. Create Redis instance (2GB+ memory)
-2. Enable persistence (RDB or AOF)
-3. Copy connection string → Add to Vercel (Step 2)
-4. Test: redis-cli -h <host> -p <port> -a <pass> ping
-5. Verify BullMQ: Check API logs for "Queue connected"
-```
+**Time:** 2 minutes
 
-**Example Setup Time**: 5-10 minutes
-
-**Required**:
-- Redis 6.0+ (6.2+ recommended)
-- Persistence enabled (RDB/AOF)
-- TLS/SSL encryption
-- 2GB+ memory for cache + 10k jobs
-
-**Action**: ✅ **READY** — Execute after Step 2
+1. Go to [railway.app](https://railway.app)
+2. Click **"Get Started"** → Use GitHub authentication
+3. Authorize Railway access to your GitHub account
+4. ✅ **Done** — Railway account ready
 
 ---
 
-## Execution Order
+### STEP 3: Deploy Frontend to Vercel
 
-```
-Step 1: ✅ DONE
-         ↓
-Step 2: ⏳ USER ACTION → Add 14 vars to Vercel UI
-         ↓
-Steps 3-5: In parallel or sequence
-  Step 3: Monitor Vercel build (automatic)
-  Step 4: Create PostgreSQL + run migrations
-  Step 5: Create Redis + test BullMQ
-         ↓
-Final: Verify all health checks pass
-```
+**Time:** 5 minutes
+
+1. In Vercel dashboard, click **"New Project"**
+2. Select your GitHub repository (`contatovinicaetano93-commits/imobi`)
+3. Select branch: **`claude/happy-goldberg-AFQPj`**
+4. Click **"Configure Project"**
+5. **Root Directory:** Leave empty (Vercel auto-detects)
+6. Click **"Deploy"** → Vercel builds automatically
+
+**Environment Variables:**
+- Add variable: `NEXT_PUBLIC_API_URL`
+- Value: `https://imobi-api.railway.app` (you'll get this URL from Railway in Step 4)
+
+**Result:** Frontend deployed to `https://seu-projeto.vercel.app`
 
 ---
 
-## Success Criteria
+### STEP 4: Deploy Backend to Railway
 
-**All steps complete when**:
-- [x] Step 1: Git main merged & pushed
-- [ ] Step 2: 14 environment variables in Vercel
-- [ ] Step 3: Vercel build status = SUCCESS
-- [ ] Step 4: Database migrations applied successfully
-- [ ] Step 5: Redis BullMQ queue operational
+**Time:** 10 minutes
 
-**Validation**:
+#### 4.1 Create Railway Project
+
+1. In Railway dashboard, click **"New Project"**
+2. Select **"Deploy from GitHub"**
+3. Select your repository and branch: `claude/happy-goldberg-AFQPj`
+4. Railway will detect NestJS in `services/api`
+
+#### 4.2 Add PostgreSQL Database
+
+1. Click **"Add Service"** in project
+2. Select **"PostgreSQL"** (version 14+)
+3. Railway automatically adds `DATABASE_URL` environment variable ✅
+
+#### 4.3 Add Redis Cache
+
+1. Click **"Add Service"**
+2. Select **"Redis"** (version 7+)  
+3. Railway automatically adds `REDIS_HOST` and `REDIS_PORT` ✅
+
+#### 4.4 Add Environment Variables
+
+In Railway project settings, add:
+
+```
+NODE_ENV=production
+PORT=3000
+JWT_SECRET=<generate-below>
+ENCRYPTION_KEY=<generate-below>
+CORS_ORIGIN=https://seu-projeto.vercel.app
+```
+
+**Generate secure secrets:**
+
 ```bash
-# After all steps complete, run:
-curl https://imobi.vercel.app/health
-# Should return:
-# {
-#   "status": "ok",
-#   "postgres": "connected",
-#   "redis": "connected",
-#   "s3": "reachable"
-# }
+# JWT_SECRET (must be >64 characters)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# ENCRYPTION_KEY (base64)
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+#### 4.5 Deploy
+
+1. Click **"Deploy"** button in Railway
+2. Monitor logs — takes ~2-3 minutes
+3. When ready, you'll see: **"Deployment successful"**
+
+**Result:** Backend deployed to `https://imobi-api.railway.app` (Railway generates this URL)
+
+---
+
+### STEP 5: Run Database Migrations
+
+**Time:** 2 minutes
+
+After Railway backend deploys:
+
+1. In Railway, select API service
+2. Click **"Shell"** tab
+3. Run: `pnpm db:migrate`
+4. Wait for migrations to complete ✅
+
+---
+
+### STEP 6: Update Frontend API URL
+
+**Time:** 2 minutes
+
+1. Go to Vercel project settings
+2. Environment Variables → Edit `NEXT_PUBLIC_API_URL`
+3. Set to: `https://imobi-api.railway.app`
+4. Click **"Redeploy"** (or wait for auto-redeploy)
+
+---
+
+## 🧪 Test Production Environment
+
+### Health Check
+
+```bash
+curl https://imobi-api.railway.app/api/v1/health
+```
+
+Expected response:
+```json
+{
+  "status": "healthy",
+  "database": "connected",
+  "redis": "connected"
+}
+```
+
+### Test Login Flow
+
+1. Go to: `https://seu-projeto.vercel.app/cadastro`
+2. **Signup** or use existing account:
+   - Email: `test-1780239121@example.com`
+   - Password: `TestPassword123!`
+3. ✅ Should redirect to dashboard
+4. Dashboard should load user profile
+5. Click KYC Profile tab → should load
+6. Click Crédito (Credit) tab → simulator should work
+
+---
+
+## 📊 Cost Estimate
+
+| Service | Price | Notes |
+|---------|-------|-------|
+| **Vercel** | **Free** | Unlimited Next.js deployments |
+| **Railway API** | **$5-10/mo** | After $5 monthly free tier |
+| **Railway Database** | **Included** | PostgreSQL included in Railway |
+| **Railway Redis** | **Included** | Redis included in Railway |
+| **Total** | **~$7-10/mo** | Very affordable! |
+
+---
+
+## ⚠️ Troubleshooting
+
+### "Cannot connect to API" or CORS error
+
+**Fix:**
+1. Verify `CORS_ORIGIN` in Railway matches Vercel URL exactly
+2. Verify `NEXT_PUBLIC_API_URL` in Vercel is correct Railway URL
+3. Check health endpoint: `curl https://api-url/api/v1/health`
+
+### "Database connection failed"
+
+**Fix:**
+1. Check migrations ran: `pnpm db:migrate`
+2. Verify `DATABASE_URL` in Railway is populated
+3. Check Railway logs for errors
+
+### "Build failed"
+
+**Fix:**
+1. Check Vercel build logs
+2. Verify branch is `claude/happy-goldberg-AFQPj`
+3. Ensure `pnpm install` completes
+
+---
+
+## ✅ Final Checklist
+
+```
+FRONTEND (Vercel):
+├─ [  ] Vercel account created
+├─ [  ] Repository connected
+├─ [  ] Branch: claude/happy-goldberg-AFQPj selected
+├─ [  ] NEXT_PUBLIC_API_URL configured
+├─ [  ] Deploy completed
+└─ [  ] Frontend accessible at vercel URL
+
+BACKEND (Railway):
+├─ [  ] Railway account created
+├─ [  ] Project created with GitHub
+├─ [  ] PostgreSQL service added
+├─ [  ] Redis service added
+├─ [  ] Environment variables configured
+├─ [  ] Deploy completed
+├─ [  ] Migrations ran successfully
+└─ [  ] Health check returns 200 OK
+
+INTEGRATION:
+├─ [  ] Frontend can reach backend API
+├─ [  ] Login works end-to-end
+├─ [  ] Dashboard loads user profile
+├─ [  ] KYC profile page accessible
+└─ [  ] Credit simulator works
 ```
 
 ---
 
-## Estimated Timeline
+## 📞 Need Help?
 
-| Step | Task | Duration | Status |
-|------|------|----------|--------|
-| 1 | Git merge & push | 2 min | ✅ DONE |
-| 2 | Add Vercel env vars | 15 min | ⏳ MANUAL |
-| 3 | Vercel build (auto) | 1 min | ⏳ WAITING |
-| 4 | PostgreSQL setup | 15 min | ✅ READY |
-| 5 | Redis setup | 10 min | ✅ READY |
-| **Total** | **Full deployment** | **~45 min** | **⏳ IN PROGRESS** |
+**Detailed guide:** See `DEPLOY_GUIDE.md` for comprehensive step-by-step instructions
 
----
+**Test report:** See `CHECKPOINT_3_REPORT.md` for verification of all features
 
-## Important Notes
-
-⚠️ **Before proceeding**:
-1. Verify all 14 variables are ready (see DEPLOYMENT_STEPS_1-5.md for details)
-2. Have PostgreSQL provider account ready (Railway/Supabase/RDS)
-3. Have Redis provider account ready (Upstash/Railway)
-4. Have Firebase service account JSON ready
-5. Have SendGrid API key ready
-
-✅ **No production data loss risk**:
-- This is initial setup (no existing production database)
-- Migrations are idempotent and versioned
-- Rollback possible via reverting DATABASE_URL
-
-🔒 **Security checks**:
-- [x] No `.env` files committed (only `.env.example`)
-- [x] JWT_SECRET generated securely
-- [x] AWS credentials use IAM user (not root)
-- [x] All connections use TLS/SSL
-- [x] CORS properly scoped to imbobi.com.br
+**Deployment config:** 
+- `vercel.json` — Frontend settings
+- `railway.json` — Backend settings
+- `.env.production.example` — Environment template
 
 ---
 
-## Documents Reference
+## 🎉 You're Ready!
 
-| Document | Purpose | Status |
-|----------|---------|--------|
-| `DEPLOYMENT_STEPS_1-5.md` | Detailed step-by-step guide | ✅ Created |
-| `DEPLOYMENT_CHECKLIST.md` | Executive summary (this file) | ✅ Created |
-| `.env.example` | Environment variable template | ✅ In repo |
-| `CLAUDE.md` | Project architecture & rules | ✅ In repo |
+Your application is fully tested and production-ready. The deployment process is straightforward and should take about 30 minutes total.
 
----
+**Once deployed:**
+1. Your web app will be live at `https://seu-projeto.vercel.app`
+2. Your API will be live at `https://imobi-api.railway.app`
+3. Everything will be automatically secured with HTTPS, rate limiting, and security headers
 
-## Support
-
-**If blocked**:
-1. Check Vercel dashboard logs: https://vercel.com/contatovinicaetano93-commits/imobi/deployments
-2. Review provider-specific docs (Railway, Upstash, Firebase)
-3. Consult DEPLOYMENT_STEPS_1-5.md for detailed troubleshooting
-
-**Key email**: contato.vinicaetano93@gmail.com
+**Good luck! 🚀**
 
 ---
 
-**Last Updated**: 2026-05-30  
-**Next Review**: After Step 2 completion
+*Branch:* `claude/happy-goldberg-AFQPj`  
+*Last Updated:* 2026-05-31  
+*Status:* ✅ Ready for Production Deployment

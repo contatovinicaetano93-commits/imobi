@@ -1,0 +1,244 @@
+===============================================
+KYC PAGE - DETAILED CODE ANALYSIS
+===============================================
+
+Location: /home/user/imobi/apps/web/app/(dashboard)/dashboard/kyc/page.tsx
+
+COMPONENT DETAILS:
+==================
+
+1. CLIENT COMPONENT
+   - Type: "use client" (Client-side rendering)
+   - Framework: React with Next.js 14
+
+2. IMPORTS
+   - useEffect, useState from React
+   - kycApi types and functions from @/lib/api
+
+3. STATE MANAGEMENT
+   ├─ status: KycStatus | null
+   │  └─ Holds complete KYC status including documents and summary
+   ├─ uploading: boolean
+   │  └─ Tracks upload operation state
+   ├─ error: string | null
+   │  └─ Error message display
+   └─ loading: boolean
+      └─ Initial page load state
+
+4. LIFECYCLE
+   - useEffect on mount → loadStatus()
+   - Automatically fetches KYC status when component loads
+
+5. KEY FUNCTIONS
+
+   a) loadStatus()
+      - Calls: kycApi.obterStatus()
+      - Sets: status state, error on failure, loading=false
+      - Runs: On mount and after upload
+
+   b) handleUpload(tipo: string)
+      - Type: "RG" or "Selfie"
+      - Flow:
+        1. Set uploading=true, clear error
+        2. Generate mock S3 URL: https://s3.example.com/kyc/{tipo}-{timestamp}.jpg
+        3. Call: kycApi.uploadDocumento(tipo, url)
+        4. Refresh status via loadStatus()
+        5. Handle errors with try-catch
+      - Note: Currently uses mock URL - needs real S3 upload integration
+
+   c) getStatusBadge(status: string)
+      - Returns Tailwind CSS classes for status styling
+      - Mappings:
+        * PENDENTE → yellow background
+        * APROVADO → green background  
+        * REJEITADO → red background
+        * Default → gray background
+
+6. RENDER STRUCTURE
+
+   Page Layout (p-6 padding):
+   ├─ Title: "Verificação de Identidade (KYC)"
+   ├─ Subtitle: "Envie seus documentos..."
+   ├─ Error Box (conditional)
+   │  └─ Red error display if error state exists
+   │
+   ├─ Status Overview Grid (4 columns on desktop, 1 on mobile)
+   │  ├─ Column 1: "Status Geral" (blue background)
+   │  │  └─ Value: status.status === "NENHUM" ? "Pendente" : "Enviado"
+   │  ├─ Column 2: "Pendentes" (yellow background)
+   │  │  └─ Value: status?.resumo.pendentes || 0
+   │  ├─ Column 3: "Aprovados" (green background)
+   │  │  └─ Value: status?.resumo.aprovados || 0
+   │  └─ Column 4: "Rejeitados" (red background)
+   │     └─ Value: status?.resumo.rejeitados || 0
+   │
+   ├─ Documents Section
+   │  ├─ Title: "Documentos Enviados"
+   │  ├─ If documents exist:
+   │  │  └─ For each document:
+   │  │     ├─ Document type (e.g., "RG")
+   │  │     ├─ Upload date (pt-BR formatted)
+   │  │     ├─ Rejection reason (if rejected)
+   │  │     └─ Status badge
+   │  └─ Else: "Nenhum documento enviado"
+   │
+   ├─ Upload Section (gray background)
+   │  ├─ Title: "Enviar Documentos"
+   │  ├─ Instructions: "RG (frente e verso) e Selfie com documento"
+   │  └─ Two buttons (2 columns on desktop, 1 on mobile):
+   │     ├─ "Enviar RG" → onClick={() => handleUpload("RG")}
+   │     └─ "Enviar Selfie" → onClick={() => handleUpload("Selfie")}
+   │     └─ Both show "Enviando..." when uploading
+   │
+   └─ Info Box (blue background)
+      ├─ "Próximos passos:" heading
+      └─ Bullet points:
+         ├─ Análise em até 24 horas
+         ├─ Notificação quando aprovado/rejeitado
+         └─ Opção de reenvio se rejeitado
+
+7. STYLING CLASSES USED
+   - Typography: text-3xl, text-xl, text-sm, text-gray-600
+   - Spacing: p-6, p-4, p-3, mb-2, mb-4, mb-6, mt-1, mt-2, mt-6
+   - Layout: grid, grid-cols-1, md:grid-cols-2, md:grid-cols-4, gap-4, space-y-3
+   - Colors: bg-blue-50, bg-yellow-50, bg-green-50, bg-red-50, text-yellow-800, etc.
+   - Interactive: rounded, border, hover:bg-blue-700, disabled:opacity-50
+   - Flexbox: flex, items-center, justify-between
+
+8. ERROR HANDLING
+   - Try-catch in loadStatus()
+   - Try-catch in handleUpload()
+   - Display error messages in red box
+   - Fallback messages for non-Error types
+   - Error clearing on new upload attempt
+
+9. LOADING STATES
+   - Initial: Shows "Carregando..." div
+   - Upload: Button text changes to "Enviando..."
+   - Button disabled state: disabled={uploading}
+
+10. ACCESSIBILITY NOTES
+    - Uses semantic HTML headings
+    - Error box styled with role-appropriate colors
+    - Button states properly indicated
+    - Text content is descriptive
+
+===============================================
+API INTEGRATION DETAILS
+===============================================
+
+File: /home/user/imobi/apps/web/lib/api.ts
+
+1. API BASE URL
+   - NEXT_PUBLIC_API_URL (env var) or default: http://localhost:4000
+
+2. FETCH WRAPPER (apiFetch)
+   - Sets Content-Type: application/json
+   - Uses credentials: 'include' (for cookies)
+   - Response handling: JSON parsing, error throwing
+   - Status code 204 returns undefined
+
+3. KYC ENDPOINTS
+
+   a) obterStatus()
+      - Method: GET
+      - Path: /api/v1/kyc/status
+      - Returns: KycStatus
+      
+   b) uploadDocumento(tipo, url)
+      - Method: POST
+      - Path: /api/v1/kyc/upload
+      - Body: { tipo: string, url: string }
+      - Returns: KycDocumento
+      
+   c) listarDocumentos()
+      - Method: GET
+      - Path: /api/v1/kyc/documentos
+      - Returns: KycDocumento[]
+      
+   d) verificarKycCompleto()
+      - Method: GET
+      - Path: /api/v1/kyc/verificar
+      - Returns: { completo: boolean, documentos: KycDocumento[] }
+
+4. TYPE DEFINITIONS
+
+   KycDocumento:
+   {
+     kycDocumentoId: string      // UUID
+     tipo: string                // "RG", "Selfie", etc.
+     url: string                 // S3 URL
+     status: string              // "PENDENTE", "APROVADO", "REJEITADO"
+     motivo_rejeicao?: string    // Optional rejection reason
+     analisadoEm?: string        // ISO 8601 timestamp
+     criadoEm: string            // ISO 8601 timestamp
+   }
+
+   KycStatus:
+   {
+     usuarioId: string
+     status: string              // Overall status
+     documentos: KycDocumento[]
+     resumo: {
+       pendentes: number
+       aprovados: number
+       rejeitados: number
+     }
+   }
+
+===============================================
+SECURITY CONSIDERATIONS
+===============================================
+
+1. AUTHENTICATION
+   - ✓ Dashboard is protected
+   - ✓ Uses credentials: 'include' for cookie-based auth
+   - ✓ Redirects to login if not authenticated
+
+2. API REQUESTS
+   - ✓ Uses HTTPS in production (S3 URLs)
+   - ✓ JSON body for POST requests
+   - ✓ Proper error handling
+
+3. POTENTIAL IMPROVEMENTS
+   - [ ] Add file type validation before upload
+   - [ ] Add file size check before upload
+   - [ ] Implement actual file input instead of mock upload
+   - [ ] Add loading skeleton for better UX
+   - [ ] Add request timeout handling
+   - [ ] Add retry logic for failed uploads
+
+===============================================
+MISSING IMPLEMENTATIONS
+===============================================
+
+Current implementation uses MOCK S3 URLs:
+  mockUrl = `https://s3.example.com/kyc/${tipo}-${Date.now()}.jpg`
+
+Still needed:
+1. Real file input element
+2. File to S3 upload integration
+3. Get signed URL from API before upload
+4. Progress tracking during upload
+5. File validation (type, size)
+6. Drag-and-drop support
+
+===============================================
+TESTING CHECKLIST (AUTHENTICATED)
+===============================================
+
+[ ] Page loads without errors
+[ ] Status overview displays current values
+[ ] Documents list shows existing documents
+[ ] Upload buttons are clickable
+[ ] Upload triggers API call
+[ ] Error message displays on failure
+[ ] Success updates status immediately
+[ ] Buttons disable during upload
+[ ] Loading text appears on buttons
+[ ] Error clears on new upload
+[ ] Rejection reasons display
+[ ] Status badges show correct colors
+[ ] Responsive design works on mobile
+
+===============================================

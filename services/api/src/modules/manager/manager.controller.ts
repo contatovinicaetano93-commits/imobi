@@ -3,11 +3,10 @@ import { ManagerService } from "./manager.service";
 import { EtapasService } from "../etapas/etapas.service";
 import { KycService } from "../kyc/kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { ManagerGuard } from "../../common/guards/manager.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
-@ApiTags("manager")
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ManagerGuard)
 @Controller("manager")
 export class ManagerController {
   constructor(
@@ -18,7 +17,6 @@ export class ManagerController {
 
   @Get("dashboard")
   async dashboard(@UsuarioAtual() u: IUsuario) {
-    await this.manager.verificarPermissao(u.id);
     return this.manager.obterEstatisticas();
   }
 
@@ -28,7 +26,6 @@ export class ManagerController {
     @Query("limit") limit: string = "20",
     @Query("offset") offset: string = "0"
   ) {
-    await this.manager.verificarPermissao(u.id);
     return this.manager.listarEtapasPendentes(Number(limit), Number(offset));
   }
 
@@ -38,19 +35,16 @@ export class ManagerController {
     @Query("limit") limit: string = "20",
     @Query("offset") offset: string = "0"
   ) {
-    await this.manager.verificarPermissao(u.id);
     return this.manager.listarKycPendentes(Number(limit), Number(offset));
   }
 
   @Get("etapas/:id")
   async obterEtapaDetalhe(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
-    await this.manager.verificarPermissao(u.id);
     return this.manager.obterEtapaDetalhe(id);
   }
 
   @Get("kyc/:id")
   async obterKycDetalhe(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
-    await this.manager.verificarPermissao(u.id);
     return this.manager.obterKycDetalhe(id);
   }
 
@@ -63,7 +57,6 @@ export class ManagerController {
     @Param("id") id: string,
     @Body("observacao") observacao?: string
   ) {
-    await this.manager.verificarPermissao(u.id);
     return this.etapas.aprovar(u.id, id, observacao);
   }
 
@@ -76,10 +69,6 @@ export class ManagerController {
     @Param("id") id: string,
     @Body("motivo") motivo: string
   ) {
-    if (!motivo?.trim()) {
-      throw new BadRequestException("Motivo da rejeição é obrigatório");
-    }
-    await this.manager.verificarPermissao(u.id);
     return this.etapas.rejeitar(u.id, id, motivo);
   }
 
@@ -88,7 +77,6 @@ export class ManagerController {
   @ApiParam({ name: "id", description: "ID do documento KYC" })
   @ApiResponse({ status: 200, description: "KYC aprovado com sucesso" })
   async aprovarKyc(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
-    await this.manager.verificarPermissao(u.id);
     return this.kyc.aprovarDocumento(id, u.id);
   }
 
@@ -101,10 +89,6 @@ export class ManagerController {
     @Param("id") id: string,
     @Body("motivo") motivo: string
   ) {
-    if (!motivo?.trim()) {
-      throw new BadRequestException("Motivo da rejeição é obrigatório");
-    }
-    await this.manager.verificarPermissao(u.id);
     return this.kyc.rejeitarDocumento(id, u.id, motivo);
   }
 }

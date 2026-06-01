@@ -2,13 +2,16 @@ import { Injectable, UnauthorizedException, ConflictException } from "@nestjs/co
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
+import { EncryptionService } from "../../common/encryption.service";
+import { setUserContext } from "../../common/sentry.init";
 import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwt: JwtService
+    private readonly jwt: JwtService,
+    private readonly encryption: EncryptionService
   ) {}
 
   async registrar(input: CadastroUsuarioInput) {
@@ -41,6 +44,9 @@ export class AuthService {
     const senhaOk = await bcrypt.compare(input.senha, usuario.passwordHash);
     if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
 
+    // Set Sentry user context for error tracking
+    setUserContext(usuario.usuarioId, { email: usuario.email, nome: usuario.nome });
+
     return {
       usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
       ...this.gerarTokens(usuario.usuarioId),
@@ -48,12 +54,34 @@ export class AuthService {
   }
 
   async renovarToken(refreshToken: string) {
-    const sessao = await this.prisma.sessaoToken.findUnique({
-      where: { refreshToken },
+    let decoded: any;
+    try {
+      decoded = this.jwt.verify(refreshToken) as any;
+    } catch (error) {
+      throw new UnauthorizedException("Token inválido ou expirado.");
+    }
+    if (!decoded?.sub) {
+      throw new UnauthorizedException("Token inválido.");
+    }
+
+    const sessao = await this.prisma.sessaoToken.findFirst({
+      where: { usuarioId: decoded.sub },
+      orderBy: { criadoEm: "desc" },
     });
     if (!sessao || sessao.revogadoEm || sessao.expiresAt < new Date()) {
       throw new UnauthorizedException("Sessão inválida ou expirada.");
     }
+
+    let decryptedToken: string;
+    try {
+      decryptedToken = this.encryption.decrypt(sessao.refreshToken);
+    } catch (error) {
+      throw new UnauthorizedException("Sessão inválida: token corrompido ou tamperado.");
+    }
+    if (decryptedToken !== refreshToken) {
+      throw new UnauthorizedException("Token não corresponde.");
+    }
+
     await this.prisma.sessaoToken.update({
       where: { sessionId: sessao.sessionId },
       data: { revogadoEm: new Date() },
@@ -62,8 +90,11 @@ export class AuthService {
   }
 
   async revogarToken(refreshToken: string) {
+    const decoded = this.jwt.decode(refreshToken) as any;
+    if (!decoded?.sub) return;
+
     await this.prisma.sessaoToken.updateMany({
-      where: { refreshToken },
+      where: { usuarioId: decoded.sub },
       data: { revogadoEm: new Date() },
     });
   }
@@ -71,11 +102,12 @@ export class AuthService {
   private gerarTokens(usuarioId: string) {
     const accessToken = this.jwt.sign({ sub: usuarioId }, { expiresIn: "15m" });
     const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
+    const encryptedToken = this.encryption.encrypt(refreshToken);
 
     void this.prisma.sessaoToken.create({
       data: {
         usuarioId,
-        refreshToken,
+        refreshToken: encryptedToken,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });

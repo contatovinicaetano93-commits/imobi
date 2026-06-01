@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { DashboardNavbar } from "./_components/navbar";
 
+export const dynamic = "force-dynamic";
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <>

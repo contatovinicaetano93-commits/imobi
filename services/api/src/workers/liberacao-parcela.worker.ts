@@ -5,8 +5,7 @@ import { PrismaService } from "../modules/prisma/prisma.service";
 import { NotificacoesService } from "../modules/notificacoes/notificacoes.service";
 import { EmailService } from "../modules/email/email.service";
 import { PushNotificacoesService } from "../modules/push-notificacoes/push-notificacoes.service";
-
-export const QUEUE_LIBERACAO = "liberacao-parcela";
+import { QUEUE_LIBERACAO } from "../common/constants";
 
 export interface LiberacaoJob {
   creditoId: string;
@@ -29,6 +28,21 @@ export class LiberacaoParcelaWorker {
   @Process()
   async handle(job: Job<LiberacaoJob>) {
     const { creditoId, valor } = job.data;
+
+    // Verificação de idempotência
+    const liberacaoExistente = await this.prisma.liberacaoParcela.findFirst({
+      where: {
+        creditoId,
+        status: "CONCLUIDA",
+      },
+    });
+
+    if (liberacaoExistente) {
+      this.logger.log(
+        `[Idempotent] Liberação já processada: ${creditoId}`
+      );
+      return;
+    }
 
     try {
       const credito = await this.prisma.credito.findUnique({
@@ -87,7 +101,20 @@ export class LiberacaoParcelaWorker {
 
       this.logger.log(`Liberação processada para crédito ${creditoId}: R$ ${valor}`);
     } catch (error) {
-      this.logger.error(`Erro ao processar liberação: ${error}`);
+      this.logger.error(`Liberação falhou: ${error.message}`, error.stack);
+
+      // Salvar falha em JobFalha table
+      await this.prisma.jobFalha.create({
+        data: {
+          queue: QUEUE_LIBERACAO,
+          jobId: String(job.id),
+          payload: JSON.stringify(job.data),
+          erro: error.message,
+          tentativas: job.attemptsMade,
+        },
+      });
+
+      // Re-throw para BullMQ retentar
       throw error;
     }
   }

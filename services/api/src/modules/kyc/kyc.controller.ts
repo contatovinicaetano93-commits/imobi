@@ -1,5 +1,5 @@
-import { Controller, Post, Get, Patch, Body, Param, UseGuards } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from "@nestjs/swagger";
+import { Controller, Post, Get, Patch, Body, Param, UseGuards, ForbiddenException } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { KycService } from "./kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -37,24 +37,21 @@ export class KycController {
   }
 
   @Get("pendentes")
-  @ApiOperation({ summary: "Documentos pendentes", description: "Lista documentos aguardando aprovação (admin)" })
-  @ApiResponse({ status: 200, description: "Lista de documentos pendentes" })
-  async listarPendentes() {
+  async listarPendentes(@UsuarioAtual() u: IUsuario) {
+    if (u.tipo !== "ADMIN" && u.tipo !== "GESTOR_OBRA") {
+      throw new ForbiddenException("Acesso restrito apenas para ADMIN e GESTOR_OBRA.");
+    }
     return this.kyc.listarPendentes();
   }
 
   @Patch(":id/aprovar")
-  @ApiOperation({ summary: "Aprovar documento", description: "Aprova um documento KYC específico" })
-  @ApiParam({ name: "id", description: "ID do documento" })
-  @ApiResponse({ status: 200, description: "Documento aprovado" })
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   async aprovarDocumento(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     return this.kyc.aprovarDocumento(id, u.id);
   }
 
   @Patch(":id/rejeitar")
-  @ApiOperation({ summary: "Rejeitar documento", description: "Rejeita um documento solicitando reenvio" })
-  @ApiParam({ name: "id", description: "ID do documento" })
-  @ApiResponse({ status: 200, description: "Documento rejeitado" })
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   async rejeitarDocumento(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,

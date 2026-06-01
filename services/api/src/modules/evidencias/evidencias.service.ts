@@ -10,6 +10,8 @@ import { calcularDistanciaMetros } from "@imbobi/core";
 import type { UploadEvidenciaInput } from "@imbobi/schemas";
 
 const MAX_ACCURACY_METROS = 15;
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/heic', 'image/webp'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 @Injectable()
 export class EvidenciasService {
@@ -18,12 +20,27 @@ export class EvidenciasService {
     private readonly storage: StorageService
   ) {}
 
+  private validateFile(mimeType: string, fileSize: number): void {
+    if (!ALLOWED_MIME.includes(mimeType)) {
+      throw new BadRequestException(
+        `Invalid image format. Allowed: ${ALLOWED_MIME.join(', ')}`
+      );
+    }
+    if (fileSize > MAX_FILE_SIZE) {
+      throw new BadRequestException(
+        `File size exceeds 10MB limit. Got: ${(fileSize / 1024 / 1024).toFixed(2)}MB`
+      );
+    }
+  }
+
   async upload(
     usuarioId: string,
     input: UploadEvidenciaInput,
     fileBuffer: Buffer,
     mimeType: string
   ) {
+    this.validateFile(mimeType, fileBuffer.length);
+
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId: input.etapaId },
       include: { obra: true },
@@ -40,6 +57,7 @@ export class EvidenciasService {
       );
     }
 
+    // Parameterized query: Prisma $queryRaw with template literals automatically escapes parameters
     const result = await this.prisma.$queryRaw<Array<{ dentro: boolean }>>`
       SELECT ST_DWithin(
         ST_SetSRID(ST_MakePoint(${input.longitude}, ${input.latitude}), 4326)::geography,
@@ -83,6 +101,26 @@ export class EvidenciasService {
   }
 
   async listarPorEtapa(etapaId: string) {
+    return this.prisma.evidenciaEtapa.findMany({
+      where: { etapaId },
+      orderBy: { criadoEm: "desc" },
+    });
+  }
+
+  async listarPorEtapaComValidacao(usuarioId: string, usuarioTipo: string, etapaId: string) {
+    const etapa = await this.prisma.etapaObra.findUnique({
+      where: { etapaId },
+      include: { obra: { select: { usuarioId: true } } },
+    });
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+
+    const ehOwner = etapa.obra.usuarioId === usuarioId;
+    const ehGestor = usuarioTipo === "ADMIN" || usuarioTipo === "GESTOR_OBRA";
+
+    if (!ehOwner && !ehGestor) {
+      throw new ForbiddenException("Acesso negado a esta etapa.");
+    }
+
     return this.prisma.evidenciaEtapa.findMany({
       where: { etapaId },
       orderBy: { criadoEm: "desc" },

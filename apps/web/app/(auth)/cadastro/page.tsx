@@ -5,8 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
-import { apiClient, ApiError } from "@imbobi/core";
-import { FormField, Input } from "@/components/form-field";
 
 export default function CadastroPage() {
   const router = useRouter();
@@ -24,18 +22,31 @@ export default function CadastroPage() {
   const onSubmit = async (data: CadastroUsuarioInput) => {
     setErro(null);
     try {
-      const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
-        "/auth/registrar",
-        data
-      );
-      await fetch("/api/auth/session", {
+      const res = await fetch("http://localhost:4000/api/v1/auth/registrar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(res),
+        credentials: "include",
+        body: JSON.stringify(data),
       });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(
+          Array.isArray(error.message) ? error.message[0] : error.message
+        );
+      }
+
+      const result = await res.json();
+
+      // Save accessToken to localStorage for dashboard
+      localStorage.setItem("accessToken", result.accessToken);
+
+      // refreshToken is automatically set as HttpOnly cookie by the API
+      // No need to handle it explicitly
+
       router.push("/dashboard");
     } catch (e) {
-      setErro(e instanceof ApiError ? e.message : "Erro inesperado ao criar conta. Tente novamente.");
+      setErro(e instanceof Error ? e.message : "Erro inesperado.");
     }
   };
 

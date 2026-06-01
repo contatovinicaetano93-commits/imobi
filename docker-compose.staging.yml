@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: imobi-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-imobi}
+      POSTGRES_USER: ${DB_USER:-imobi_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-imobi_dev_password}
+      POSTGRES_INITDB_ARGS: "-c max_connections=200"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-imobi_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - imobi-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: imobi-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_dev_password}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - imobi-network
+
+  # API Server
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+      args:
+        NODE_ENV: staging
+    container_name: imobi-api
+    environment:
+      NODE_ENV: staging
+      DATABASE_URL: postgresql://${DB_USER:-imobi_user}:${DB_PASSWORD:-imobi_dev_password}@postgres:5432/${DB_NAME:-imobi}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_dev_password}
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_key_min_64_characters_required_for_production}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev_encryption_key}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - imobi-network
+    restart: unless-stopped
+
+  # Web Server
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    container_name: imobi-web
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+      NODE_ENV: staging
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - imobi-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  imobi-network:
+    driver: bridge

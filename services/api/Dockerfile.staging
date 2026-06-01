@@ -1,0 +1,48 @@
+# Build stage
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy monorepo files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages ./packages
+COPY services ./services
+COPY apps ./apps
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build API and shared packages
+RUN pnpm --filter @imbobi/api build
+RUN pnpm --filter @imbobi/schemas build
+RUN pnpm --filter @imbobi/core build
+
+# Runtime stage
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files from builder
+COPY --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/services ./services
+COPY --from=builder /app/apps ./apps
+
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
+
+# Expose port
+EXPOSE 4000
+
+# Health check
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 \
+  CMD node -e "require('http').get('http://localhost:4000/api/v1/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+
+# Run API
+CMD ["pnpm", "--filter", "@imbobi/api", "start"]

@@ -3,6 +3,7 @@ import { obrasApi } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 
 export const metadata: Metadata = { title: "Minhas Obras — imbobi" };
+export const dynamic = "force-dynamic";
 
 const STATUS_STYLE: Record<string, string> = {
   EM_ANDAMENTO: "bg-blue-50 text-blue-700",

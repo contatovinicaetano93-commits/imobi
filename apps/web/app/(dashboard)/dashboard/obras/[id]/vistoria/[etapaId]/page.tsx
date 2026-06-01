@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { obrasApi, evidenciasApi } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { AprovarEtapaForm } from "./aprovar-form";
-import { UploadEvidenciaForm } from "./upload-form";
 
 export const metadata: Metadata = { title: "Vistoria — imbobi" };
 

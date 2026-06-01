@@ -19,6 +19,7 @@ android/
 .env
 .env.local
 .env.*.local
+.env.staging
 
 # Turbo
 .turbo/
@@ -35,6 +36,9 @@ Thumbs.db
 *.log
 npm-debug.log*
 pnpm-debug.log*
+
+# Redis
+dump.rdb
 
 # Test coverage
 coverage/

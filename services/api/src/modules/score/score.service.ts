@@ -1,9 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { CacheService } from "../../cache.service";
 
 @Injectable()
 export class ScoreService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+  ) {}
 
   /**
    * Calcula score de construtibilidade (0-1000) baseado no histórico de obras.
@@ -59,11 +63,33 @@ export class ScoreService {
   }
 
   async buscarScoreAtual(usuarioId: string) {
+    const cacheKey = `score:${usuarioId}`;
+    const cached = await this.cache.get<number>(cacheKey);
+    if (cached !== null) return cached;
+
     const score = await this.calcularScore(usuarioId);
     // Registra no histórico
     await this.prisma.scoreHistorico.create({
       data: { usuarioId, score, motivo: "Cálculo automático" },
     });
+
+    // Cache por 10 minutos
+    await this.cache.set(cacheKey, score, 600);
+    return score;
+  }
+
+  async recalcularScore(usuarioId: string) {
+    const cacheKey = `score:${usuarioId}`;
+    const score = await this.calcularScore(usuarioId);
+
+    // Registra no histórico com motivo de recálculo automático
+    await this.prisma.scoreHistorico.create({
+      data: { usuarioId, score, motivo: "Recálculo automático diário" },
+    });
+
+    // Invalida cache para forçar recálculo próximo acesso
+    await this.cache.delete(cacheKey);
+
     return score;
   }
 

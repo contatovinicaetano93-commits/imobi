@@ -1,4 +1,5 @@
-import { Controller, Get, Patch, UseGuards, Body } from "@nestjs/common";
+import { Controller, Get, Patch, UseGuards, Body, UseInterceptors } from "@nestjs/common";
+import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
 import { UsuariosService } from "./usuarios.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";

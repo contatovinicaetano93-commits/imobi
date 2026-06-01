@@ -1,0 +1,309 @@
+# Staging Environment Quick Start — imobi
+
+## One-Command Staging Setup
+
+```bash
+bash scripts/setup-staging.sh
+```
+
+**What it does:**
+1. ✅ Validates Docker and docker-compose installation
+2. ✅ Generates secure JWT_SECRET and ENCRYPTION_KEY
+3. ✅ Starts PostgreSQL, Redis, MinIO, PgAdmin
+4. ✅ Runs Prisma migrations
+5. ✅ Creates MinIO buckets
+6. ✅ Installs dependencies
+7. ✅ Validates type checking and builds API/Web
+
+**Result:** Full staging environment running locally
+
+---
+
+## Access Services
+
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| **Web App** | http://localhost:3000 | - |
+| **API** | http://localhost:4000 | - |
+| **API Health** | http://localhost:4000/api/v1/health | - |
+| **PostgreSQL** | localhost:5433 | imobi / staging_password |
+| **Redis** | localhost:6380 | - |
+| **MinIO Console** | http://localhost:9001 | minioadmin / minioadmin |
+| **PgAdmin** | http://localhost:5050 | admin@imobi.com / admin123 |
+
+---
+
+## Development Workflow
+
+### Start Services
+```bash
+docker-compose -f docker-compose.staging.yml up -d
+```
+
+### Start Dev Servers
+```bash
+pnpm dev
+```
+
+This starts:
+- Next.js Web: http://localhost:3000
+- NestJS API: http://localhost:4000
+- Hot reloading enabled
+
+### View Logs
+```bash
+# View all services
+docker-compose -f docker-compose.staging.yml logs -f
+
+# View specific service
+docker-compose -f docker-compose.staging.yml logs -f postgres
+docker-compose -f docker-compose.staging.yml logs -f redis
+docker-compose -f docker-compose.staging.yml logs -f minio
+docker-compose -f docker-compose.staging.yml logs -f pgadmin
+```
+
+### Database Operations
+```bash
+# Connect to PostgreSQL
+PGPASSWORD=staging_password psql -h localhost -p 5433 -U imobi -d imobi_staging
+
+# Create database
+createdb -h localhost -p 5433 -U imobi imobi_staging
+
+# Run migrations
+pnpm db:migrate
+
+# Reset database
+pnpm db:reset
+```
+
+### Redis Operations
+```bash
+# Connect to Redis
+redis-cli -h localhost -p 6380
+
+# Clear cache
+redis-cli -h localhost -p 6380 FLUSHALL
+
+# Monitor connections
+redis-cli -h localhost -p 6380 CLIENT LIST
+```
+
+### MinIO Operations
+```bash
+# List buckets
+mc ls minio
+
+# Upload file
+mc cp file.txt minio/imobi-staging
+
+# View bucket contents
+mc ls minio/imobi-staging
+```
+
+---
+
+## Validation & Testing
+
+### Health Checks
+```bash
+# API health
+curl -s http://localhost:4000/api/v1/health | jq '.'
+
+# Web health
+curl -s http://localhost:3000 | head -20
+
+# Database connection
+PGPASSWORD=staging_password psql -h localhost -p 5433 -U imobi -d imobi_staging -c "SELECT 1"
+
+# Redis connection
+redis-cli -h localhost -p 6380 PING
+```
+
+### Run Security Validation Tests
+```bash
+bash scripts/STAGING_VALIDATION_TESTS.sh
+```
+
+**Tests included:**
+- ✅ API health checks
+- ✅ Security headers (CSP, HSTS, X-Frame-Options)
+- ✅ Authentication validation
+- ✅ Authorization (RBAC)
+- ✅ Rate limiting
+- ✅ CORS configuration
+- ✅ Input validation (CPF, password complexity)
+- ✅ HTTPS/TLS readiness
+- ✅ Error handling
+- ✅ HTTP methods
+
+### Run Load Testing Suite
+```bash
+# Light load test (baseline)
+bash run-load-tests.sh http://localhost:4000
+
+# Generate HTML report
+bash analyze-load-tests.sh load-test-results-YYYYMMDD-HHMMSS/
+xdg-open load-test-results-YYYYMMDD-HHMMSS/load-test-report.html
+```
+
+**Load test scenarios:**
+- Light: 10 concurrent, 100 requests
+- Medium: 50 concurrent, 500 requests
+- Heavy: 200 concurrent, 1000 requests
+- Spike: 500 concurrent, 100 requests
+- Sustained: 100 concurrent, 5 minutes
+
+---
+
+## Troubleshooting
+
+### Port Already in Use
+```bash
+# Find process using port
+lsof -i :3000
+lsof -i :4000
+lsof -i :5433
+lsof -i :6380
+
+# Kill process
+kill -9 <PID>
+```
+
+### Docker Container Issues
+```bash
+# Restart single service
+docker-compose -f docker-compose.staging.yml restart postgres
+
+# Rebuild image
+docker-compose -f docker-compose.staging.yml build --no-cache api
+
+# Force recreate all
+docker-compose -f docker-compose.staging.yml down -v
+docker-compose -f docker-compose.staging.yml up -d
+```
+
+### Database Connection Failed
+```bash
+# Check PostgreSQL status
+docker-compose -f docker-compose.staging.yml logs postgres | tail -20
+
+# Check connection string
+grep DATABASE_URL .env.staging
+
+# Manual test
+PGPASSWORD=staging_password psql -h localhost -p 5433 -U imobi -d imobi_staging -c "SELECT version()"
+```
+
+### Missing Dependencies
+```bash
+# Reinstall
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
+
+# Install specific missing package
+pnpm add <package-name>
+```
+
+### Build Failures
+```bash
+# Type check all packages
+pnpm type-check
+
+# Build specific package
+pnpm --filter @imbobi/api build
+pnpm --filter @imbobi/web build
+
+# View detailed errors
+pnpm build --verbose
+```
+
+---
+
+## Environment Configuration
+
+**Key Variables in `.env.staging`:**
+
+```bash
+# API
+NODE_ENV=staging
+PORT=4000
+CORS_ORIGIN=http://localhost:3000
+
+# Database
+DATABASE_URL=postgresql://imobi:staging_password@postgres:5432/imobi_staging
+
+# Redis
+REDIS_HOST=redis
+REDIS_PORT=6380
+
+# Security
+JWT_SECRET=<auto-generated-64-chars>
+ENCRYPTION_KEY=<auto-generated-base64>
+
+# Storage (MinIO)
+AWS_S3_ENDPOINT=http://minio:9000
+AWS_ACCESS_KEY_ID=minioadmin
+AWS_SECRET_ACCESS_KEY=minioadmin
+S3_BUCKET=imobi-staging
+
+# Web
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
+
+---
+
+## Next Steps
+
+1. ✅ **Run setup script**
+   ```bash
+   bash scripts/setup-staging.sh
+   ```
+
+2. ✅ **Verify all services running**
+   ```bash
+   docker-compose -f docker-compose.staging.yml ps
+   ```
+
+3. ✅ **Test API health**
+   ```bash
+   curl -s http://localhost:4000/api/v1/health | jq '.'
+   ```
+
+4. ✅ **Start development servers**
+   ```bash
+   pnpm dev
+   ```
+
+5. ✅ **Run validation tests**
+   ```bash
+   bash scripts/STAGING_VALIDATION_TESTS.sh
+   ```
+
+6. ✅ **Test web flows**
+   - Sign up: http://localhost:3000/cadastro
+   - KYC Profile: http://localhost:3000/dashboard/perfil
+   - Credit Simulator: http://localhost:3000/dashboard/simulador
+
+---
+
+## Production Deployment
+
+When ready for production, follow `INFRASTRUCTURE_PROVISIONING.md`:
+- AWS RDS PostgreSQL setup
+- AWS ElastiCache Redis
+- AWS S3 bucket configuration
+- EC2/ECS API deployment
+- CloudFront distribution for Web
+- Route 53 DNS configuration
+- ACM SSL certificate setup
+
+---
+
+## Support
+
+For detailed documentation, see:
+- `STAGING_DEPLOYMENT.md` — Full deployment guide
+- `LOAD_TESTING.md` — Load testing scenarios and thresholds
+- `SECURITY_VALIDATION_REPORT.md` — Security audit details
+- `INFRASTRUCTURE_PROVISIONING.md` — AWS infrastructure setup

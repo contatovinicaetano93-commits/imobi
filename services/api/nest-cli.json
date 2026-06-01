@@ -2,7 +2,9 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "outDir": "./dist",
-    "deleteOutDir": true
-  }
+    "deleteOutDir": false,
+    "preserveSymlinks": true
+  },
+  "assets": [],
+  "watchAssets": false
 }

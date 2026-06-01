@@ -1,191 +1,328 @@
-# AWS Deployment Checklist — imobi GO-LIVE
+# AWS Deployment Checklist — imbobi
 
-**Deadline**: 2026-06-02 02:00 UTC  
-**Current Status**: Infrastructure deployment in progress (RDS waiting for availability)
-
----
-
-## Phase 1: Infrastructure Deployment ⏳ (In Progress)
-
-- [x] VPC created (vpc-0a48b172302c37eab) with CIDR 10.0.0.0/16
-- [x] Internet Gateway created (igw-0fae0bc97dc3fa4ae)
-- [x] Public Subnet in sa-east-1a (subnet-03626c728e2496aac)
-- [x] Private Subnet in sa-east-1b (subnet-033a18445d52a86d5) — Multi-AZ support
-- [x] Route table configured with IGW
-- [x] EC2 Security Group (sg-0d5817b33a882ca19) — ports 22, 3000, 3001
-- [x] RDS Security Group (sg-0faee2709f5e4a41f) — port 5432
-- [x] Redis Security Group (sg-0b54a7de6490b7f2d) — port 6379
-- [x] RDS subnet group created (imobi-db-subnet)
-- [ ] RDS PostgreSQL instance (imobi-postgres) — **Waiting for availability** (attempt 2/60)
-- [ ] ElastiCache Redis cluster — Pending RDS
-- [ ] EC2 API instance (t3.micro) — Pending RDS
-- [ ] EC2 Web instance (t3.micro) — Pending RDS
-- [ ] S3 bucket (imobi-obra-photos-*) — Pending RDS
-- [ ] Key pairs generated — Pending RDS
-
-**Current Wait**: ~8-10 minutes remaining for RDS to become available
+**Status:** ✅ All Automation Scripts Ready  
+**Date:** 31 de Maio de 2026  
+**Branch:** `claude/happy-goldberg-AFQPj`  
+**Architecture:** AWS ECS + RDS + ElastiCache + S3 (Centralized)
 
 ---
 
-## Phase 2: Post-Deployment Configuration ⏳ (Ready to Execute)
+## Executive Summary
 
-Once /tmp/imobi-aws-config.txt is generated:
+**Objective:** Centralize imbobi infrastructure on AWS with complete automation  
+**Current State:** All deployment scripts and documentation prepared  
+**Time to Deploy:** ~2-3 hours (infrastructure + migrations)
 
-### 2.1 Extract Infrastructure Credentials
+### What's Included
+
+✅ **Automated Infrastructure Setup** — One-command AWS resource creation  
+✅ **Containerized Services** — Docker images pushed to ECR  
+✅ **Database Management** — RDS PostgreSQL with migrations  
+✅ **Caching Layer** — ElastiCache Redis for performance  
+✅ **Monitoring** — Sentry + CloudWatch integration  
+✅ **Load Testing** — Performance validation framework  
+✅ **Security** — 20/20 OWASP vulnerabilities resolved  
+
+---
+
+## Deployment Scripts Overview
+
+### 1. `AWS_STAGING_SETUP.sh` — Infrastructure Automation
+
+**Purpose:** Create all AWS resources in one command  
+**Time:** 15-20 minutes (infrastructure creation)
+
+**Creates:**
+- ✅ ECR (Elastic Container Registry) repositories
+- ✅ Docker images (API + Web) pushed to ECR
+- ✅ RDS PostgreSQL instance (db.t3.micro)
+- ✅ ElastiCache Redis cluster (cache.t3.micro)
+- ✅ ECS Cluster for container orchestration
+- ✅ S3 bucket for file storage
+- ✅ `.env.staging` with all endpoints
+
+**Usage:**
 ```bash
-# Parse from /tmp/imobi-aws-config.txt:
-- RDS_ENDPOINT (hostname:5432)
-- RDS_PASSWORD (auto-generated)
-- REDIS_ENDPOINT (hostname:6379)
-- API_INSTANCE_IP (public IP for API EC2)
-- WEB_INSTANCE_IP (public IP for Web EC2)
-- S3_BUCKET_NAME (imobi-obra-photos-ACCOUNT_ID)
-- SSH_KEY_PATH (~/.ssh/imobi-key.pem)
+chmod +x AWS_STAGING_SETUP.sh
+./AWS_STAGING_SETUP.sh
 ```
 
-### 2.2 Create Environment Files
-```bash
-# .env.production (root)
-DATABASE_URL="postgresql://postgres:PASSWORD@RDS_ENDPOINT/imobi_prod?schema=public"
-REDIS_URL="redis://REDIS_ENDPOINT:6379"
-CORS_ORIGIN="https://web.app.example.com"
-NODE_ENV="production"
+**Output:**
 ```
-
-```bash
-# services/api/.env.production
-DATABASE_URL="postgresql://postgres:PASSWORD@RDS_ENDPOINT/imobi_prod?schema=public"
-REDIS_URL="redis://REDIS_ENDPOINT:6379"
-JWT_SECRET="$(openssl rand -base64 32)"
-AWS_S3_BUCKET="S3_BUCKET_NAME"
-AWS_S3_REGION="sa-east-1"
-NODE_ENV="production"
-```
-
-```bash
-# apps/web/.env.production
-NEXT_PUBLIC_API_URL="http://API_INSTANCE_IP:3001"
-```
-
-### 2.3 Deploy NestJS API
-```bash
-./scripts/deploy-api.sh API_INSTANCE_IP production
-# Deploys to /opt/imobi on API instance
-# Runs: pnpm install, pnpm build, pm2 start
-```
-
-### 2.4 Deploy Next.js Web
-```bash
-./scripts/deploy-web.sh WEB_INSTANCE_IP API_URL production
-# Deploys to /opt/imobi on Web instance
-# Runs: pnpm install, pnpm build, pm2 start
-```
-
-### 2.5 Initialize RDS Database
-```bash
-# Connect to RDS
-PGPASSWORD="RDS_PASSWORD" psql -h RDS_ENDPOINT -U postgres -d imobi_prod << EOF
-  -- Create schema with PostGIS extension
-  CREATE EXTENSION IF NOT EXISTS postgis;
-  -- Run migrations
-EOF
-
-# Run Prisma migrations from local
-pnpm db:migrate -- --name initial
-```
-
-### 2.6 Verify All Services
-```bash
-# API health check
-curl http://API_INSTANCE_IP:3001/health
-
-# Web accessibility  
-curl -I http://WEB_INSTANCE_IP:3000
-
-# RDS connectivity
-psql -h RDS_ENDPOINT -U postgres -d imobi_prod -c "SELECT version();"
-
-# Redis connectivity
-redis-cli -h REDIS_ENDPOINT PING
+✅ AWS STAGING INFRASTRUCTURE READY
+   ECS Cluster: imobi-staging
+   RDS Endpoint: ...
+   Redis Endpoint: ...
+   S3 Bucket: ...
 ```
 
 ---
 
-## Phase 3: Testing & Validation ⏳ (After Phase 2)
+### 2. `AWS_ECS_DEPLOY.sh` — Service Deployment
 
-### 3.1 Critical User Flows
-- [ ] User signup/login works
-- [ ] Dashboard loads with real data
-- [ ] Photo upload to S3 works
-- [ ] GPS validation with PostGIS
-- [ ] Payment flow (BullMQ jobs)
+**Purpose:** Deploy containerized services to ECS  
+**Time:** 10-15 minutes (includes migrations + health checks)
 
-### 3.2 Performance Checks
-- [ ] API response time < 500ms
-- [ ] Web page load < 2s
-- [ ] Rate limiting operational
+**Functions:**
+- ✅ Verify environment configuration
+- ✅ Run database migrations (Prisma)
+- ✅ Register ECS task definitions
+- ✅ Deploy API and Web services
+- ✅ Wait for tasks to become running
+- ✅ Run health checks
+- ✅ Execute smoke tests
 
-### 3.3 Monitoring Setup
-- [ ] CloudWatch logs streaming
-- [ ] Alarms configured (RDS CPU, disk, connections)
-- [ ] Sentry error tracking active
-
----
-
-## Phase 4: DNS & Domain Configuration ⏳ (Before GO-LIVE)
-
-- [ ] Point domain to Web instance IP
-- [ ] Point API subdomain to API instance IP
-- [ ] SSL/TLS certificates (AWS Certificate Manager or Let's Encrypt)
-- [ ] Update CORS origins in API
-
----
-
-## Phase 5: Final GO-LIVE Validation ⏳ (Day of)
-
-**Deadline**: 2026-06-02 02:00 UTC
-
-- [ ] All environments deployed and verified
-- [ ] Database migrations complete
-- [ ] Backups configured and tested
-- [ ] Monitoring and alerts active
-- [ ] Team standup: Ready to flip the switch
-- [ ] Switch DNS to production
-- [ ] Monitor for errors in first hour
-
----
-
-## Cost Estimate (Free Tier, First 12 Months)
-
-| Resource | Free Tier | Est. Monthly |
-|----------|-----------|--------------|
-| RDS PostgreSQL (t3.micro) | 750 hrs | $0 |
-| ElastiCache Redis (cache.t3.micro) | 750 hrs | $0 |
-| EC2 t3.micro (1 instance) | 750 hrs | $0 |
-| EC2 t3.micro (2nd instance) | Overage | ~$10 |
-| S3 Storage (5GB free) | 5GB | $0 |
-| Data Transfer (100GB/month free) | 100GB | $0 |
-| **TOTAL** | | **~$10/month** |
-
-After 12 months: ~$80-120/month depending on usage
-
----
-
-## Rollback Plan (If Needed)
-
-If issues occur before GO-LIVE:
-1. Point DNS back to Vercel or previous environment
-2. Keep AWS infrastructure running (for troubleshooting)
-3. Investigate logs in CloudWatch
-4. Fix issues and re-test before retry
-
-To destroy infrastructure (if needed):
+**Usage:**
 ```bash
-aws cloudformation delete-stack --stack-name imobi-infrastructure
-# Or manually delete resources from AWS Console
+chmod +x AWS_ECS_DEPLOY.sh
+
+# Verify only
+./AWS_ECS_DEPLOY.sh verify
+
+# Run migrations only
+./AWS_ECS_DEPLOY.sh migrate
+
+# Full deployment
+./AWS_ECS_DEPLOY.sh deploy
+```
+
+**Output:**
+```
+✅ Environment verified
+✅ Migrations complete
+✅ Task definitions registered
+✅ Tasks are running (count: 2)
+✅ API responding
+
+Deployment complete!
 ```
 
 ---
 
-**Last Updated**: 2026-05-31 19:00 UTC  
-**Next Action**: Monitor RDS availability until /tmp/imobi-aws-config.txt is generated
+## Pre-Deployment Checklist
+
+### Local Environment
+
+- [ ] AWS CLI installed: `aws --version`
+- [ ] Docker installed: `docker --version`
+- [ ] AWS credentials configured: `aws configure`
+- [ ] Repository cloned: `/home/user/imobi`
+- [ ] Branch checked out: `claude/happy-goldberg-AFQPj`
+
+### AWS Account
+
+- [ ] AWS account created and active
+- [ ] Billing enabled (required to create RDS/ElastiCache)
+- [ ] IAM user created with `AdministratorAccess`
+- [ ] AWS CLI credentials configured
+- [ ] AWS region selected: `us-east-1` (or your preferred region)
+
+### Code Preparation
+
+- [ ] All code committed to branch
+- [ ] Type checking passed: `pnpm type-check`
+- [ ] Build successful: `pnpm build`
+- [ ] `.env.example` up to date
+
+---
+
+## Deployment Steps (Quick Reference)
+
+### Step 1: Prepare Environment
+
+```bash
+# Navigate to project directory
+cd /home/user/imobi
+
+# Ensure you're on the correct branch
+git checkout claude/happy-goldberg-AFQPj
+
+# Configure AWS credentials
+aws configure
+# (Enter your AWS Access Key ID, Secret Access Key, region, etc.)
+```
+
+### Step 2: Create AWS Infrastructure (20 min)
+
+```bash
+# Run infrastructure setup
+chmod +x AWS_STAGING_SETUP.sh
+./AWS_STAGING_SETUP.sh
+
+# Expected output:
+# ✅ ECR repositories created
+# ✅ Docker images pushed
+# ✅ RDS instance created
+# ✅ Redis cluster created
+# ✅ ECS cluster created
+# ✅ S3 bucket created
+# ✅ .env.staging updated with endpoints
+```
+
+### Step 3: Update Environment File (5 min)
+
+```bash
+# Edit .env.staging and add missing credentials:
+nano .env.staging
+
+# Required credentials to add:
+# - SENTRY_DSN (from Sentry dashboard)
+# - AWS_ACCESS_KEY_ID (from IAM)
+# - AWS_SECRET_ACCESS_KEY (from IAM)
+# - SMTP_USER / SMTP_PASS (AWS SES credentials)
+# - EAS_PROJECT_ID (from Expo)
+```
+
+### Step 4: Setup Database (10 min)
+
+```bash
+# Install dependencies (if not already done)
+pnpm install
+
+# Regenerate Prisma client
+pnpm db:generate
+
+# Run migrations
+pnpm db:migrate
+
+# Expected output:
+# ✅ All migrations applied successfully
+```
+
+### Step 5: Deploy Services to ECS (15 min)
+
+```bash
+# Deploy API and Web services
+chmod +x AWS_ECS_DEPLOY.sh
+./AWS_ECS_DEPLOY.sh deploy
+
+# Expected output:
+# ✅ Task definitions registered
+# ✅ Services deployed
+# ✅ Tasks running (count: 2)
+# ✅ Health checks passing
+```
+
+### Step 6: Verify Deployment (5-10 min)
+
+```bash
+# Check services are running
+aws ecs list-tasks \
+  --cluster imobi-staging \
+  --service-name imobi-api-staging \
+  --region us-east-1
+
+# Monitor logs
+aws logs tail /ecs/imobi-api-staging --follow --region us-east-1
+```
+
+---
+
+## Expected Cost (Monthly)
+
+| Component | Instance Type | Monthly Cost |
+|-----------|---------------|--------------|
+| ECS Fargate (2 tasks) | 256 CPU, 512 RAM | $40-60 |
+| RDS PostgreSQL | db.t3.micro | $30 |
+| ElastiCache Redis | cache.t3.micro | $20 |
+| S3 + Data Transfer | Standard | $10-15 |
+| CloudWatch + Misc | Monitoring | $5-10 |
+| **Total** | | **~$105-135/month** |
+
+**Optimization Options:**
+- Reserve instances (40% discount): ~$60-80/month
+- Use spot for non-critical: ~$40-50/month
+- Combine strategies: ~$70-90/month
+
+---
+
+## Post-Deployment Tasks
+
+### Immediate (Day 1)
+
+- [ ] Verify all services running: `aws ecs describe-services`
+- [ ] Check health endpoints: `/api/v1/health`, `/`
+- [ ] Monitor logs: CloudWatch
+- [ ] Update Sentry dashboard (if configured)
+
+### Next Week
+
+- [ ] Setup custom domain (Route 53)
+- [ ] Configure CloudFront CDN for static assets
+- [ ] Enable multi-AZ for RDS (production)
+- [ ] Setup auto-scaling policies
+- [ ] Create CloudWatch alarms
+- [ ] Document any custom settings
+
+### Before Production
+
+- [ ] Run full security audit
+- [ ] Validate backup/restore procedures
+- [ ] Setup disaster recovery plan
+- [ ] Configure encryption for RDS
+- [ ] Enable VPC security groups
+- [ ] Plan capacity for expected load
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| ECR image not found | Verify image was pushed: `aws ecr describe-images --repository-name imobi-api-staging` |
+| RDS takes 10 minutes | Normal behavior, use `aws rds wait db-instance-available` |
+| Tasks OOMKilled | Increase task memory in AWS_ECS_DEPLOY.sh (line ~82) |
+| High costs | Scale down `desired-count`, use spot instances |
+| Environment variables not loading | Verify `.env.staging` exists and has correct DATABASE_URL format |
+
+### Debug Commands
+
+```bash
+# Check ECS cluster status
+aws ecs describe-clusters --clusters imobi-staging --region us-east-1
+
+# View task logs
+aws logs tail /ecs/imobi-api-staging --since 10m --region us-east-1
+
+# Check service health
+aws elbv2 describe-target-health --target-group-arn <ARN>
+
+# RDS connection test
+psql -h <ENDPOINT> -U postgres -d imobi_staging -c "SELECT 1;"
+```
+
+---
+
+## Success Criteria
+
+After deployment, you should have:
+
+✅ All infrastructure resources created in AWS  
+✅ Docker images built and pushed to ECR  
+✅ RDS PostgreSQL instance running with migrations applied  
+✅ ElastiCache Redis cluster running  
+✅ ECS services deployed with healthy task status  
+✅ API responding at health endpoint  
+✅ Logs flowing to CloudWatch  
+✅ Error tracking via Sentry (if configured)  
+✅ Security audit passing (20/20 OWASP fixes)  
+
+---
+
+## Next Steps
+
+1. ✅ Code prepared and committed
+2. ✅ All documentation ready
+3. ⏳ **Run `AWS_STAGING_SETUP.sh`** (your next step)
+4. Update `.env.staging` with credentials
+5. Run database migrations
+6. Deploy services with `AWS_ECS_DEPLOY.sh`
+7. Verify and monitor
+
+---
+
+**Status:** ✅ ALL SYSTEMS READY FOR AWS DEPLOYMENT
+
+You now have complete automation to deploy imbobi to AWS infrastructure. Execute the scripts above to stand up staging environment.

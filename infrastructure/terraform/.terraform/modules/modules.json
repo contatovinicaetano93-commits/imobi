@@ -1,0 +1,1 @@
+{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"elasticache","Source":"./modules/elasticache","Dir":"modules/elasticache"},{"Key":"rds","Source":"./modules/rds","Dir":"modules/rds"},{"Key":"vpc","Source":"./modules/vpc","Dir":"modules/vpc"}]}

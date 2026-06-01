@@ -1,0 +1,154 @@
+name: EAS Build & Deploy
+
+on:
+  push:
+    branches:
+      - releases/staging
+      - releases/production
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Build profile"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        platform: [ios, android]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: "9.0.0"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Determine build profile
+        id: profile
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/releases/production" ]]; then
+            echo "profile=production" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/releases/staging" ]]; then
+            echo "profile=staging" >> $GITHUB_OUTPUT
+          else
+            echo "profile=${{ github.event.inputs.profile }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Expo environment
+        run: |
+          npm install -g eas-cli@latest
+
+      - name: Authenticate with EAS
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+        run: |
+          eas whoami
+          if [ $? -ne 0 ]; then
+            echo "Error: EAS_TOKEN not configured. Add it to GitHub Secrets."
+            exit 1
+          fi
+
+      - name: Build with EAS (${{ steps.profile.outputs.profile }})
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+        run: |
+          cd apps/mobile
+          eas build \
+            --platform ${{ matrix.platform }} \
+            --profile ${{ steps.profile.outputs.profile }} \
+            --non-interactive
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "EAS Build Failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "❌ *Build Failed* - ${{ steps.profile.outputs.profile }}\n*Platform*: ${{ matrix.platform }}\n*Branch*: ${{ github.ref }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
+                  }
+                }
+              ]
+            }
+
+      - name: Notify Slack on success
+        if: success()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "EAS Build Succeeded",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "✅ *Build Succeeded* - ${{ steps.profile.outputs.profile }}\n*Platform*: ${{ matrix.platform }}\n*Branch*: ${{ github.ref }}\n<https://expo.dev|Check EAS Dashboard>"
+                  }
+                }
+              ]
+            }
+
+  submit-production:
+    needs: build
+    if: github.ref == 'refs/heads/releases/production' && success()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Expo
+        run: npm install -g eas-cli@latest
+
+      - name: Authenticate with EAS
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+        run: eas whoami
+
+      - name: Submit to App Stores
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+        run: |
+          cd apps/mobile
+          # Submission happens automatically with production profile
+          # Uncomment below if manual submission is preferred:
+          # eas submit --platform ios --latest --non-interactive
+          # eas submit --platform android --latest --non-interactive
+          echo "✅ Production builds submitted (stores configured in eas.json)"

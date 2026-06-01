@@ -13,6 +13,7 @@ import {
 } from "./_components/fundos-utils";
 
 export const metadata: Metadata = { title: "Fundos — imbobi" };
+export const dynamic = "force-dynamic";
 
 async function FundosPageContent() {
   const [obras, creditos] = await Promise.all([

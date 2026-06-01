@@ -144,7 +144,7 @@ export class KycService {
   async listarPendentes() {
     return this.prisma.kycDocumento.findMany({
       where: { status: "PENDENTE" },
-      include: { usuario: { select: { nome: true, email: true, cpf: true } } },
+      include: { usuario: { select: { nome: true, email: true } } },
       orderBy: { criadoEm: "asc" },
     });
   }

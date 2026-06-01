@@ -1,15 +1,19 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { CacheService } from "../../cache.service";
 import type { CriarObraInput } from "@imbobi/schemas";
 import { ETAPAS_PADRAO } from "./etapas-padrao";
 
 @Injectable()
 export class ObrasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+  ) {}
 
   async criar(usuarioId: string, input: CriarObraInput) {
-    return this.prisma.$transaction(async (tx) => {
-      const obra = await tx.obra.create({
+    const obra = await this.prisma.$transaction(async (tx) => {
+      const novaObra = await tx.obra.create({
         data: {
           usuarioId,
           creditoId: input.creditoId,
@@ -24,7 +28,7 @@ export class ObrasService {
 
       await tx.etapaObra.createMany({
         data: ETAPAS_PADRAO.map((e, i) => ({
-          obraId: obra.obraId,
+          obraId: novaObra.obraId,
           nome: e.nome,
           ordem: i + 1,
           percentualObra: e.percentual,
@@ -33,18 +37,30 @@ export class ObrasService {
       });
 
       return tx.obra.findUnique({
-        where: { obraId: obra.obraId },
+        where: { obraId: novaObra.obraId },
         include: { etapas: { orderBy: { ordem: "asc" } } },
       });
     });
+
+    // Invalidate user obras list cache
+    await this.cache.invalidateUserCache(usuarioId);
+    return obra;
   }
 
   async listar(usuarioId: string) {
-    return this.prisma.obra.findMany({
+    const cacheKey = `user:${usuarioId}:obras`;
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
+
+    const obras = await this.prisma.obra.findMany({
       where: { usuarioId },
       include: { etapas: { select: { etapaId: true, nome: true, status: true, ordem: true } } },
       orderBy: { criadoEm: "desc" },
     });
+
+    // Cache por 2 minutos (low TTL pois pode estar mudando)
+    await this.cache.set(cacheKey, obras, 120);
+    return obras;
   }
 
   async buscar(usuarioId: string, obraId: string) {
@@ -70,10 +86,24 @@ export class ObrasService {
   }
 
   async progressoGeral(obraId: string): Promise<number> {
-    const etapas = await this.prisma.etapaObra.findMany({ where: { obraId } });
-    const concluidas = etapas.filter((e) => e.status === "CONCLUIDA");
+    const cacheKey = `obra:${obraId}:progresso`;
+    const cached = await this.cache.get<number>(cacheKey);
+    if (cached !== null) return cached;
+
+    const etapas = await this.prisma.etapaObra.findMany({
+      where: { obraId },
+      select: { status: true, percentualObra: true },
+    });
+
     const total = etapas.reduce((acc, e) => acc + Number(e.percentualObra), 0);
-    const concluido = concluidas.reduce((acc, e) => acc + Number(e.percentualObra), 0);
-    return total > 0 ? Math.round((concluido / total) * 100) : 0;
+    const concluido = etapas
+      .filter((e) => e.status === "CONCLUIDA")
+      .reduce((acc, e) => acc + Number(e.percentualObra), 0);
+
+    const progresso = total > 0 ? Math.round((concluido / total) * 100) : 0;
+
+    // Cache por 1 minuto
+    await this.cache.set(cacheKey, progresso, 60);
+    return progresso;
   }
 }

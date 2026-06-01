@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { managerApi, type EtapaDetalhe } from "@/lib/api";
-
+import { managerApi, type EtapaDetalhe, evidenciasApi } from "@/lib/api";
+import { GpsValidationStatus } from "@/components/dashboard/GpsValidationStatus";
 import Image from "next/image";
 
 function brl(v: number) {
@@ -18,6 +18,7 @@ export default function EtapaDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [etapa, setEtapa] = useState<EtapaDetalhe | null>(null);
+  const [gpsData, setGpsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -232,6 +233,33 @@ export default function EtapaDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Expanded Image Modal */}
+      {expandedImage && (
+        <div
+          className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4"
+          onClick={() => setExpandedImage(null)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[80vh] w-full h-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setExpandedImage(null)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 text-2xl"
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+            <Image
+              src={expandedImage}
+              alt="Foto expandida"
+              fill
+              className="object-contain"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
