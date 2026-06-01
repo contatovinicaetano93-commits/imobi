@@ -8,6 +8,7 @@ export type FilterState = {
   dataFim: string;
   obraType: string;
   priority?: "todas" | "urgente" | "intermediaria" | "normal";
+  searchTerm?: string;
 };
 
 export type AdvancedFiltersProps = {
@@ -24,6 +25,7 @@ export function AdvancedFilters({ filters: initialFilters, onFilter, onReset }: 
       dataFim: "",
       obraType: "",
       priority: "todas",
+      searchTerm: "",
     }
   );
 
@@ -49,6 +51,7 @@ export function AdvancedFilters({ filters: initialFilters, onFilter, onReset }: 
       dataFim: "",
       obraType: "",
       priority: "todas",
+      searchTerm: "",
     };
     setFilters(resetFilters);
     onReset();
@@ -59,7 +62,8 @@ export function AdvancedFilters({ filters: initialFilters, onFilter, onReset }: 
     filters.dataInicio ||
     filters.dataFim ||
     filters.obraType ||
-    filters.priority !== "todas";
+    filters.priority !== "todas" ||
+    !!filters.searchTerm;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4">
@@ -109,6 +113,22 @@ export function AdvancedFilters({ filters: initialFilters, onFilter, onReset }: 
 
       {isExpanded && (
         <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100">
+          {/* Search Box */}
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="search-term" className="text-xs sm:text-sm font-medium text-gray-700 block mb-2">
+              Buscar por Obra ou Tomador
+            </label>
+            <input
+              id="search-term"
+              type="text"
+              placeholder="Digite nome da obra ou tomador..."
+              value={filters.searchTerm || ""}
+              onChange={(e) => handleFilterChange("searchTerm", e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
+              aria-label="Buscar por obra ou tomador"
+            />
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* Status Filter */}
             <div className="space-y-2">

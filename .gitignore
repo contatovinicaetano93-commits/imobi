@@ -43,3 +43,4 @@ coverage/
 .vscode/
 .idea/
 SESSION_SUMMARY.md
+.env.production

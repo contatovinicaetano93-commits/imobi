@@ -44,6 +44,7 @@ function EtapasContent() {
     const dataFim = searchParams.get("dataFim") || "";
     const obraType = searchParams.get("obraType") || "";
     const priority = (searchParams.get("priority") as FilterState["priority"]) || "todas";
+    const searchTerm = searchParams.get("searchTerm") || "";
 
     setFilters({
       status,
@@ -51,6 +52,7 @@ function EtapasContent() {
       dataFim,
       obraType,
       priority,
+      searchTerm,
     });
   }, [searchParams]);
 
@@ -164,11 +166,14 @@ function EtapasContent() {
           if (newFilters.priority && newFilters.priority !== "todas") {
             params.set("priority", newFilters.priority);
           }
+          if (newFilters.searchTerm) {
+            params.set("searchTerm", newFilters.searchTerm);
+          }
           const queryString = params.toString();
           router.push(`?${queryString}`);
         }}
         onReset={() => {
-          setFilters({ status: "todas", dataInicio: "", dataFim: "", obraType: "", priority: "todas" });
+          setFilters({ status: "todas", dataInicio: "", dataFim: "", obraType: "", priority: "todas", searchTerm: "" });
           setOffset(0);
           // Clear URL query params
           router.push("?");

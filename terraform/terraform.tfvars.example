@@ -1,0 +1,45 @@
+aws_region = "sa-east-1"
+environment = "production"
+app_name    = "imobi"
+
+# VPC Configuration
+vpc_cidr             = "10.0.0.0/16"
+public_subnet_cidr   = "10.0.1.0/24"
+private_subnet_cidr  = "10.0.2.0/24"
+
+# RDS Configuration
+db_instance_class    = "db.t3.micro"  # Free tier eligible
+db_allocated_storage = 20              # Free tier: 20GB max
+db_name              = "imobi_prod"
+db_username          = "postgres"
+# IMPORTANT: Change this to a secure password!
+# Generate a secure password with: openssl rand -base64 32
+db_password          = "CHANGE_ME_TO_SECURE_PASSWORD"
+
+# ElastiCache Redis Configuration
+redis_node_type      = "cache.t3.micro"  # Free tier eligible
+redis_engine_version = "7.0"
+redis_num_cache_nodes = 1
+
+# EC2 Configuration
+ec2_instance_type    = "t3.micro"  # Free tier eligible (750 hrs/month)
+
+# Ports
+api_port             = 3001
+web_port             = 3000
+rds_port             = 5432
+redis_port           = 6379
+
+# Free Tier Strategy
+enable_multi_az      = false  # Disabled for free tier
+backup_retention_period = 7
+skip_final_snapshot  = true
+
+# Tags
+tags = {
+  Project     = "imobi"
+  Environment = "production"
+  ManagedBy   = "Terraform"
+  Owner       = "imobi-team"
+  CostCenter  = "product"
+}

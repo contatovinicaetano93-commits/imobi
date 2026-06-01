@@ -17,6 +17,7 @@ const CACHE_KEYS = {
       dataFim?: string;
       obraType?: string;
       priority?: "todas" | "urgente" | "intermediaria" | "normal";
+      searchTerm?: string;
     }
   ) => {
     const status = filters?.status || "todas";
@@ -24,7 +25,8 @@ const CACHE_KEYS = {
     const dataFim = filters?.dataFim || "";
     const obraType = filters?.obraType || "";
     const priority = filters?.priority || "todas";
-    return `manager:etapas:${limit}:${offset}:${status}:${dataInicio}:${dataFim}:${obraType}:${priority}`;
+    const searchTerm = filters?.searchTerm || "";
+    return `manager:etapas:${limit}:${offset}:${status}:${dataInicio}:${dataFim}:${obraType}:${priority}:${searchTerm}`;
   },
   KYC_PENDENTES: (limit: number, offset: number) => `manager:kyc:${limit}:${offset}`,
 };
@@ -54,6 +56,7 @@ export class ManagerService {
       dataFim?: string;
       obraType?: string;
       priority?: "todas" | "urgente" | "intermediaria" | "normal";
+      searchTerm?: string;
     }
   ) {
     const cacheKey = CACHE_KEYS.ETAPAS_PENDENTES(limit, offset, filters);
@@ -90,6 +93,14 @@ export class ManagerService {
     // Obra type filter
     if (filters?.obraType) {
       where.obra = { tipo: filters.obraType };
+    }
+
+    // Search term filter (by obra name or usuario name)
+    if (filters?.searchTerm?.trim()) {
+      where.OR = [
+        { obra: { nome: { contains: filters.searchTerm, mode: "insensitive" } } },
+        { obra: { usuario: { nome: { contains: filters.searchTerm, mode: "insensitive" } } } },
+      ];
     }
 
     const [etapas, total] = await Promise.all([

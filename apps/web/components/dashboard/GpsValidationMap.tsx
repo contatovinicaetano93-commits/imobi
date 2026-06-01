@@ -152,13 +152,25 @@ export function GpsValidationMap({
         icon,
       }).addTo(map);
 
+      // Accuracy circle
+      L.circle([ponto.latitude, ponto.longitude], {
+        radius: ponto.accuracy,
+        color: isValido ? '#4caf50' : '#f44336',
+        weight: 1,
+        opacity: 0.3,
+        fill: true,
+        fillColor: isValido ? '#4caf50' : '#f44336',
+        fillOpacity: 0.1,
+      }).addTo(map);
+
       const popupContent = `
         <div class="text-sm">
-          <strong>${isValido ? 'GPS Válido' : 'GPS Inválido'}</strong><br/>
-          Lat: ${ponto.latitude.toFixed(5)}<br/>
-          Lng: ${ponto.longitude.toFixed(5)}<br/>
-          Precisão: ${ponto.accuracy.toFixed(1)}m<br/>
-          ${ponto.distanciaObra !== undefined ? `Distância: ${ponto.distanciaObra.toFixed(1)}m` : ''}
+          <strong>${isValido ? '✓ GPS Válido' : '✗ GPS Inválido'}</strong><br/>
+          Lat: ${ponto.latitude.toFixed(6)}<br/>
+          Lng: ${ponto.longitude.toFixed(6)}<br/>
+          Precisão: ±${ponto.accuracy.toFixed(1)}m<br/>
+          ${ponto.distanciaObra !== undefined ? `Distância: ${ponto.distanciaObra.toFixed(1)}m<br/>Raio: ${raioValidacaoMetros}m` : ''}
+          ${ponto.distanciaObra !== undefined && ponto.distanciaObra > raioValidacaoMetros ? '<br/><strong style="color:red;">FORA DO RAIO</strong>' : ''}
         </div>
       `;
       marker.bindPopup(popupContent);
@@ -175,12 +187,12 @@ export function GpsValidationMap({
 
     // Cleanup: remove map instance properly
     return () => {
-      if (mapRef.current) {
-        // Detach all layers before removing
-        mapRef.current.eachLayer((layer) => {
-          mapRef.current?.removeLayer(layer);
+      const m = mapRef.current;
+      if (m) {
+        m.eachLayer((layer) => {
+          m.removeLayer(layer);
         });
-        mapRef.current.remove();
+        m.remove();
         mapRef.current = null;
       }
     };
