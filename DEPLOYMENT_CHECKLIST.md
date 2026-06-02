@@ -1,270 +1,178 @@
-# 🚀 Deployment Checklist — Ready to Deploy
+# AWS Phase 1 Deployment Checklist
 
-**Status:** ✅ Application Production-Ready  
-**Date:** 31 de Maio de 2026  
-**Branch:** `claude/happy-goldberg-AFQPj`  
-**Estimated Time:** 30 minutes total
+## Pre-Deployment
 
----
+- [ ] Review `/CLAUDE.md` for project architecture
+- [ ] Review `infrastructure/terraform/PHASE1_STATUS.md` for current status
+- [ ] Ensure AWS account created and free tier verified
+- [ ] Ensure IAM user created with appropriate permissions
 
-## 📋 Quick Summary
+## Credential Setup
 
-Your application has passed all E2E tests and is ready to deploy. All configuration files are prepared. You just need to:
+- [ ] Read `infrastructure/terraform/aws-phase1/AWS_CREDENTIALS_SETUP.md`
+- [ ] Create AWS IAM user: `imbobi-terraform-deployer`
+- [ ] Generate access keys (copy to secure location)
+- [ ] Copy `.env.aws.example` to `.env.aws`
+- [ ] Edit `.env.aws` with your actual credentials
+- [ ] Load credentials: `source .env.aws`
+- [ ] Run validation: `./validate-aws-credentials.sh`
+- [ ] Confirm all permission checks pass
 
-1. **Create accounts** (Vercel + Railway) — 5 minutes
-2. **Connect your GitHub repository** — 5 minutes  
-3. **Configure environment variables** — 5 minutes
-4. **Deploy frontend and backend** — 10 minutes
-5. **Test production environment** — 5 minutes
+## Terraform Preparation
 
----
+- [ ] `cd infrastructure/terraform/aws-phase1`
+- [ ] Review `terraform.tfvars` for variable values
+- [ ] Review `main.tf` for RDS, ElastiCache, SES configuration
+- [ ] Review `outputs.tf` for what will be exported after deployment
 
-## 🎯 STEP-BY-STEP DEPLOYMENT
+## Deployment
 
-### STEP 1: Create Vercel Account (Frontend Hosting)
+- [ ] Run: `terraform init`
+- [ ] Review output (should show provider downloaded)
+- [ ] Run: `terraform plan -out=phase1.tfplan`
+- [ ] Review plan carefully (resource creation/modification)
+- [ ] Run: `terraform apply phase1.tfplan`
+- [ ] Monitor AWS console for resource creation (5-15 minutes)
 
-**Time:** 2 minutes
+## Post-Deployment
 
-1. Go to [vercel.com](https://vercel.com)
-2. Click **"Sign Up"** → Use GitHub authentication
-3. Authorize Vercel access to your GitHub account
-4. ✅ **Done** — Vercel account ready
+- [ ] Verify RDS instance is "available" in AWS Console
+- [ ] Verify ElastiCache cluster is "available" in AWS Console
+- [ ] Test RDS connection: `psql -h <rds-endpoint> -U imbobimaster -d imbobi_staging`
+- [ ] Test Redis connection: `redis-cli -h <redis-endpoint> PING`
+- [ ] Capture RDS endpoint from Terraform output
+- [ ] Capture ElastiCache endpoint from Terraform output
+- [ ] Capture SES email from Terraform output
 
----
+## Application Configuration
 
-### STEP 2: Create Railway Account (Backend Hosting)
+- [ ] Create `.env.production` file
+- [ ] Set `DATABASE_URL` with RDS endpoint and password
+- [ ] Set `REDIS_URL` with ElastiCache endpoint
+- [ ] Set `SES_REGION=us-east-1`
+- [ ] Set `SES_FROM_EMAIL=noreply@imbobi.com.br`
+- [ ] Review other environment variables for staging setup
 
-**Time:** 2 minutes
+## Database Setup
 
-1. Go to [railway.app](https://railway.app)
-2. Click **"Get Started"** → Use GitHub authentication
-3. Authorize Railway access to your GitHub account
-4. ✅ **Done** — Railway account ready
+- [ ] Run: `pnpm db:migrate` (apply Prisma migrations)
+- [ ] Run: `pnpm db:generate` (regenerate Prisma client)
+- [ ] Verify migration status in database
 
----
+## Email Service Setup
 
-### STEP 3: Deploy Frontend to Vercel
+- [ ] Verify email identity in SES console
+- [ ] (Optional) Verify domain with DKIM records
+- [ ] Test SES with a test email
+- [ ] Subscribe to SNS topics for alerts
 
-**Time:** 5 minutes
+## Monitoring & Logging
 
-1. In Vercel dashboard, click **"New Project"**
-2. Select your GitHub repository (`contatovinicaetano93-commits/imobi`)
-3. Select branch: **`claude/happy-goldberg-AFQPj`**
-4. Click **"Configure Project"**
-5. **Root Directory:** Leave empty (Vercel auto-detects)
-6. Click **"Deploy"** → Vercel builds automatically
+- [ ] Navigate to CloudWatch console
+- [ ] Verify log group `/aws/imbobi/phase1` exists
+- [ ] Subscribe to SNS topics:
+  - `imbobi-elasticache-notifications`
+  - `imbobi-ses-alerts`
+- [ ] Set up email notifications for SNS topics
 
-**Environment Variables:**
-- Add variable: `NEXT_PUBLIC_API_URL`
-- Value: `https://imobi-api.railway.app` (you'll get this URL from Railway in Step 4)
+## Application Launch
 
-**Result:** Frontend deployed to `https://seu-projeto.vercel.app`
+- [ ] Start API server: `pnpm dev`
+- [ ] Start web app: `pnpm dev`
+- [ ] Verify database connection works
+- [ ] Verify Redis cache works
+- [ ] Test email sending functionality
+- [ ] Run application tests
 
----
+## Post-Launch Validation
 
-### STEP 4: Deploy Backend to Railway
+- [ ] Check CloudWatch logs for errors
+- [ ] Verify all services are running
+- [ ] Test critical user flows
+- [ ] Monitor SNS alerts for any issues
+- [ ] Check RDS backups are being created
+- [ ] Document any issues found
 
-**Time:** 10 minutes
+## Cleanup (If Needed)
 
-#### 4.1 Create Railway Project
+If deployment fails and needs rollback:
 
-1. In Railway dashboard, click **"New Project"**
-2. Select **"Deploy from GitHub"**
-3. Select your repository and branch: `claude/happy-goldberg-AFQPj`
-4. Railway will detect NestJS in `services/api`
+- [ ] Run: `terraform destroy`
+- [ ] Confirm resource deletion in AWS Console
+- [ ] Delete `.env.aws` (contains credentials)
+- [ ] Fix any issues in Terraform code
+- [ ] Retry deployment from "Credential Setup"
 
-#### 4.2 Add PostgreSQL Database
+## Documentation
 
-1. Click **"Add Service"** in project
-2. Select **"PostgreSQL"** (version 14+)
-3. Railway automatically adds `DATABASE_URL` environment variable ✅
+- [ ] Document any customizations made
+- [ ] Update `.env.example` if defaults changed
+- [ ] Document AWS account ID and region used
+- [ ] Document any DNS records added (if SES domain verified)
+- [ ] Create deployment notes for future reference
 
-#### 4.3 Add Redis Cache
+## Success Criteria
 
-1. Click **"Add Service"**
-2. Select **"Redis"** (version 7+)  
-3. Railway automatically adds `REDIS_HOST` and `REDIS_PORT` ✅
+- [ ] Terraform `apply` completed successfully
+- [ ] RDS instance is healthy and accepting connections
+- [ ] ElastiCache cluster is healthy and responding to PING
+- [ ] Application can read/write to both databases
+- [ ] Email sending works via SES
+- [ ] CloudWatch logs are collecting data
+- [ ] All pre-launch tests pass
 
-#### 4.4 Add Environment Variables
+## Rollback Plan
 
-In Railway project settings, add:
+If issues occur after deployment:
 
-```
-NODE_ENV=production
-PORT=3000
-JWT_SECRET=<generate-below>
-ENCRYPTION_KEY=<generate-below>
-CORS_ORIGIN=https://seu-projeto.vercel.app
-```
+1. **Database Issues:**
+   - Check RDS security group allows inbound on port 5432
+   - Verify RDS subnet group includes proper subnets
+   - Check database credentials in `.env.production`
 
-**Generate secure secrets:**
+2. **Cache Issues:**
+   - Check ElastiCache security group allows inbound on port 6379
+   - Verify ElastiCache subnet group includes proper subnets
+   - Check Redis connection string format
 
-```bash
-# JWT_SECRET (must be >64 characters)
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+3. **Email Issues:**
+   - Verify email identity is verified in SES
+   - Check SES daily limit not exceeded
+   - Check bounce rate in CloudWatch
 
-# ENCRYPTION_KEY (base64)
-node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-```
+4. **Full Rollback:**
+   - Run `terraform destroy` to remove all infrastructure
+   - Delete `.env.aws` file
+   - Fix issues and retry from start
 
-#### 4.5 Deploy
+## Support & Resources
 
-1. Click **"Deploy"** button in Railway
-2. Monitor logs — takes ~2-3 minutes
-3. When ready, you'll see: **"Deployment successful"**
+- **Terraform Docs:** https://registry.terraform.io/providers/hashicorp/aws/latest/docs
+- **AWS Credentials Guide:** `infrastructure/terraform/aws-phase1/AWS_CREDENTIALS_SETUP.md`
+- **Deployment Instructions:** `infrastructure/terraform/aws-phase1/DEPLOYMENT_INSTRUCTIONS.md`
+- **Project Guide:** `/CLAUDE.md`
 
-**Result:** Backend deployed to `https://imobi-api.railway.app` (Railway generates this URL)
+## Timeline
 
----
+| Phase | Time | Task |
+|-------|------|------|
+| Setup | 10 min | Credential setup and validation |
+| Init | 5 min | `terraform init` |
+| Plan | 5 min | `terraform plan` review |
+| Deployment | 15 min | RDS + ElastiCache + SES provisioning |
+| Testing | 10 min | Connection testing and validation |
+| **Total** | **~45 min** | Complete AWS Phase 1 deployment |
 
-### STEP 5: Run Database Migrations
+## Notes
 
-**Time:** 2 minutes
-
-After Railway backend deploys:
-
-1. In Railway, select API service
-2. Click **"Shell"** tab
-3. Run: `pnpm db:migrate`
-4. Wait for migrations to complete ✅
-
----
-
-### STEP 6: Update Frontend API URL
-
-**Time:** 2 minutes
-
-1. Go to Vercel project settings
-2. Environment Variables → Edit `NEXT_PUBLIC_API_URL`
-3. Set to: `https://imobi-api.railway.app`
-4. Click **"Redeploy"** (or wait for auto-redeploy)
-
----
-
-## 🧪 Test Production Environment
-
-### Health Check
-
-```bash
-curl https://imobi-api.railway.app/api/v1/health
-```
-
-Expected response:
-```json
-{
-  "status": "healthy",
-  "database": "connected",
-  "redis": "connected"
-}
-```
-
-### Test Login Flow
-
-1. Go to: `https://seu-projeto.vercel.app/cadastro`
-2. **Signup** or use existing account:
-   - Email: `test-1780239121@example.com`
-   - Password: `TestPassword123!`
-3. ✅ Should redirect to dashboard
-4. Dashboard should load user profile
-5. Click KYC Profile tab → should load
-6. Click Crédito (Credit) tab → simulator should work
-
----
-
-## 📊 Cost Estimate
-
-| Service | Price | Notes |
-|---------|-------|-------|
-| **Vercel** | **Free** | Unlimited Next.js deployments |
-| **Railway API** | **$5-10/mo** | After $5 monthly free tier |
-| **Railway Database** | **Included** | PostgreSQL included in Railway |
-| **Railway Redis** | **Included** | Redis included in Railway |
-| **Total** | **~$7-10/mo** | Very affordable! |
+- Free tier includes all Phase 1 services at $0/month
+- Monitor AWS console for resource status during deployment
+- RDS/ElastiCache provisioning is longest step
+- Terraform state stored locally (can migrate to S3 later)
+- All sensitive data is gitignored
 
 ---
 
-## ⚠️ Troubleshooting
-
-### "Cannot connect to API" or CORS error
-
-**Fix:**
-1. Verify `CORS_ORIGIN` in Railway matches Vercel URL exactly
-2. Verify `NEXT_PUBLIC_API_URL` in Vercel is correct Railway URL
-3. Check health endpoint: `curl https://api-url/api/v1/health`
-
-### "Database connection failed"
-
-**Fix:**
-1. Check migrations ran: `pnpm db:migrate`
-2. Verify `DATABASE_URL` in Railway is populated
-3. Check Railway logs for errors
-
-### "Build failed"
-
-**Fix:**
-1. Check Vercel build logs
-2. Verify branch is `claude/happy-goldberg-AFQPj`
-3. Ensure `pnpm install` completes
-
----
-
-## ✅ Final Checklist
-
-```
-FRONTEND (Vercel):
-├─ [  ] Vercel account created
-├─ [  ] Repository connected
-├─ [  ] Branch: claude/happy-goldberg-AFQPj selected
-├─ [  ] NEXT_PUBLIC_API_URL configured
-├─ [  ] Deploy completed
-└─ [  ] Frontend accessible at vercel URL
-
-BACKEND (Railway):
-├─ [  ] Railway account created
-├─ [  ] Project created with GitHub
-├─ [  ] PostgreSQL service added
-├─ [  ] Redis service added
-├─ [  ] Environment variables configured
-├─ [  ] Deploy completed
-├─ [  ] Migrations ran successfully
-└─ [  ] Health check returns 200 OK
-
-INTEGRATION:
-├─ [  ] Frontend can reach backend API
-├─ [  ] Login works end-to-end
-├─ [  ] Dashboard loads user profile
-├─ [  ] KYC profile page accessible
-└─ [  ] Credit simulator works
-```
-
----
-
-## 📞 Need Help?
-
-**Detailed guide:** See `DEPLOY_GUIDE.md` for comprehensive step-by-step instructions
-
-**Test report:** See `CHECKPOINT_3_REPORT.md` for verification of all features
-
-**Deployment config:** 
-- `vercel.json` — Frontend settings
-- `railway.json` — Backend settings
-- `.env.production.example` — Environment template
-
----
-
-## 🎉 You're Ready!
-
-Your application is fully tested and production-ready. The deployment process is straightforward and should take about 30 minutes total.
-
-**Once deployed:**
-1. Your web app will be live at `https://seu-projeto.vercel.app`
-2. Your API will be live at `https://imobi-api.railway.app`
-3. Everything will be automatically secured with HTTPS, rate limiting, and security headers
-
-**Good luck! 🚀**
-
----
-
-*Branch:* `claude/happy-goldberg-AFQPj`  
-*Last Updated:* 2026-05-31  
-*Status:* ✅ Ready for Production Deployment
+**Created:** 2026-06-02
+**Project:** imbobi - AWS Phase 1
+**Status:** Ready for deployment
