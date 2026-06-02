@@ -5,6 +5,7 @@ export * from "./utils/credito";
 
 // Hooks
 export * from "./hooks/useGeoValidation";
+export * from "./hooks/useGPS";
 export * from "./hooks/useSimuladorCredito";
 
 // Services
