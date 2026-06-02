@@ -1,0 +1,34 @@
+# ────────────────────────────────────────────────────────
+# imbobi Phase 1 AWS Terraform Configuration
+# ────────────────────────────────────────────────────────
+# Copy this file to terraform.tfvars and fill in your values
+
+aws_region = "us-east-1"
+environment = "dev"
+vpc_cidr = "10.0.0.0/16"
+
+# ────────────────────────────────────────────────────────
+# RDS PostgreSQL (Free Tier)
+# ────────────────────────────────────────────────────────
+# IMPORTANT: Generate a strong password with:
+#   openssl rand -base64 32 | tr -d '=' | cut -c1-32
+db_name = "imbobi_dev"
+db_username = "imbobimaster"
+db_password = "YOUR_SECURE_PASSWORD_HERE"  # Replace with generated password
+
+# ────────────────────────────────────────────────────────
+# SES Email Configuration
+# ────────────────────────────────────────────────────────
+# Email must be verified in AWS SES console before deployment
+ses_from_email = "noreply@imbobi.com.br"
+ses_mail_from_domain = "bounce.imbobi.com.br"
+
+# ────────────────────────────────────────────────────────
+# Common Tags
+# ────────────────────────────────────────────────────────
+tags = {
+  Project     = "imbobi"
+  Environment = "phase1"
+  Team        = "backend"
+  ManagedBy   = "Terraform"
+}

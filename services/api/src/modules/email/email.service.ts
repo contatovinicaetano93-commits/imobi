@@ -15,18 +15,53 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private sesClient: SESClient | null = null;
   private transporter: Transporter | null = null;
+  private useSES: boolean = false;
+  private sesFromEmail: string = "noreply@imbobi.com";
 
   constructor() {
-    this.initializeTransporter();
+    this.initializeEmailProvider();
   }
 
-  private initializeTransporter() {
+  private initializeEmailProvider() {
+    const useSES = process.env["USE_AWS_SES"] === "true";
+    const awsRegion = process.env["AWS_REGION"] || "us-east-1";
+    const sesFromEmail = process.env["SES_FROM_EMAIL"] || "noreply@imbobi.com";
     const smtpHost = process.env["SMTP_HOST"];
     const smtpPort = process.env["SMTP_PORT"];
     const smtpUser = process.env["SMTP_USER"];
     const smtpPass = process.env["SMTP_PASS"];
-    const fromEmail = process.env["SMTP_FROM"] || "noreply@imbobi.com";
 
+    // Prefer SES if configured
+    if (useSES) {
+      try {
+        this.sesClient = new SESClient({ region: awsRegion });
+        this.useSES = true;
+        this.sesFromEmail = sesFromEmail;
+        this.logger.log(`Email provider: AWS SES (${awsRegion})`);
+      } catch (error) {
+        this.logger.warn(`Failed to initialize SES: ${error}. Falling back to SMTP or console mode.`);
+        this.useSES = false;
+        this.initializeSMTPTransporter(smtpHost, smtpPort, smtpUser, smtpPass);
+      }
+      return;
+    }
+
+    // Fall back to SMTP if available
+    if (smtpHost && smtpPort) {
+      this.initializeSMTPTransporter(smtpHost, smtpPort, smtpUser, smtpPass);
+      return;
+    }
+
+    // Console mode for development
+    this.logger.warn("No email provider configured - using console mode (development)");
+  }
+
+  private initializeSMTPTransporter(
+    smtpHost: string | undefined,
+    smtpPort: string | undefined,
+    smtpUser: string | undefined,
+    smtpPass: string | undefined,
+  ) {
     if (!smtpHost || !smtpPort) {
       this.logger.warn("SMTP configuration not found - using console mode");
       return;
@@ -40,14 +75,77 @@ export class EmailService {
         smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
     });
 
-    this.logger.debug(`Email configured: ${smtpHost}:${smtpPort}`);
+    this.logger.debug(`Email configured: SMTP ${smtpHost}:${smtpPort}`);
   }
 
   async enviarEmail(opcoes: EmailOptions): Promise<boolean> {
     try {
+      // Use AWS SES if configured
+      if (this.useSES && this.sesClient) {
+        return await this.sendViaSES(opcoes);
+      }
+
+      // Fall back to SMTP
+      if (this.transporter) {
+        return await this.sendViaSMTP(opcoes);
+      }
+
+      // Console mode (development)
+      this.logger.debug(
+        `[EMAIL-CONSOLE] To: ${opcoes.to} | Subject: ${opcoes.subject}`,
+      );
+      return true;
+    } catch (error) {
+      this.logger.error(`Error sending email: ${error}`);
+      return false;
+    }
+  }
+
+  private async sendViaSES(opcoes: EmailOptions): Promise<boolean> {
+    try {
+      if (!this.sesClient) {
+        this.logger.error("SES client not initialized");
+        return false;
+      }
+
+      const command = new SendEmailCommand({
+        Source: this.sesFromEmail,
+        Destination: {
+          ToAddresses: [opcoes.to],
+        },
+        Message: {
+          Subject: {
+            Data: opcoes.subject,
+            Charset: "UTF-8",
+          },
+          Body: {
+            Html: {
+              Data: opcoes.html,
+              Charset: "UTF-8",
+            },
+            ...(opcoes.text && {
+              Text: {
+                Data: opcoes.text,
+                Charset: "UTF-8",
+              },
+            }),
+          },
+        },
+      });
+
+      const response = await this.sesClient.send(command);
+      this.logger.debug(`Email sent via SES to ${opcoes.to} (MessageId: ${response.MessageId})`);
+      return true;
+    } catch (error) {
+      this.logger.error(`SES Error: ${error}`);
+      return false;
+    }
+  }
+
+  private async sendViaSMTP(opcoes: EmailOptions): Promise<boolean> {
+    try {
       if (!this.transporter) {
-        this.logger.debug(`[EMAIL-CONSOLE] ${opcoes.to} - ${opcoes.subject}`);
-        return true;
+        return false;
       }
 
       await this.transporter.sendMail({
@@ -58,10 +156,10 @@ export class EmailService {
         text: opcoes.text,
       });
 
-      this.logger.debug(`Email enviado para ${opcoes.to}`);
+      this.logger.debug(`Email sent via SMTP to ${opcoes.to}`);
       return true;
     } catch (error) {
-      this.logger.error(`Erro ao enviar email: ${error}`);
+      this.logger.error(`SMTP Error: ${error}`);
       return false;
     }
   }
