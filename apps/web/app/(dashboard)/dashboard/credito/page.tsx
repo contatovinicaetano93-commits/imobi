@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { creditoApi, type CreditoResumo } from "@/lib/api";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "@imbobi/core/src/index.server";
 
 export const metadata: Metadata = { title: "Crédito — imbobi" };
 export const dynamic = "force-dynamic";

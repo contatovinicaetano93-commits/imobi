@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { usuariosApi } from "@/lib/api";
-import { formatarCPF, formatarTelefone } from "@imbobi/core";
+import { formatarCPF, formatarTelefone } from "@imbobi/core/src/index.server";
 import { PerfilForm } from "./perfil-form";
 
 export const metadata: Metadata = { title: "Perfil — imbobi" };

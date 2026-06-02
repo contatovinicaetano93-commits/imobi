@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { obrasApi, evidenciasApi } from "@/lib/api";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "@imbobi/core/src/index.server";
 import { AprovarEtapaForm } from "./aprovar-form";
 
 export const metadata: Metadata = { title: "Vistoria — imbobi" };

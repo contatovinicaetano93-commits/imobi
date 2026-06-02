@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { engenheirosApi } from "@/lib/api";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "@imbobi/core/src/index.server";
 import { VisitQueue } from "./_components/VisitQueue";
 import { DynamicVisitQueueClient } from "./_components/DynamicVisitQueueClient";
 

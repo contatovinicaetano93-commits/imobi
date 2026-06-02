@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { obrasApi, creditoApi, type ObraResumo, type CreditoResumo } from "@/lib/api";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "@imbobi/core/src/index.server";
 import { PortfolioChart } from "./_components/PortfolioChart";
 import { RegionalDistribution } from "./_components/RegionalDistribution";
 import { InadimplenciaMetrics } from "./_components/InadimplenciaMetrics";
