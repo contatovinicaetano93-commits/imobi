@@ -3,11 +3,5 @@
   "version": "0.1.0",
   "private": true,
   "main": "./web/index.ts",
-  "types": "./web/index.ts",
-  "exports": {
-    ".": {
-      "types": "./web/index.ts",
-      "default": "./web/index.ts"
-    }
-  }
+  "types": "./web/index.ts"
 }
