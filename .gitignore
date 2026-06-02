@@ -4,11 +4,13 @@ node_modules/
 .pnp.js
 
 # Build outputs
-dist/
 build/
 .next/
 out/
 *.tsbuildinfo
+# Exclude dist only for services (API), not for packages (workspace dependencies)
+/services/*/dist/
+/services/workers/dist/
 
 # Expo
 .expo/
