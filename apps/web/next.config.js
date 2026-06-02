@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   transpilePackages: ["@imbobi/core", "@imbobi/schemas", "@imbobi/ui"],
   images: {
     remotePatterns: [
