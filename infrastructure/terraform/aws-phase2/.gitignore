@@ -1,0 +1,57 @@
+# Terraform state files
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Terraform directories
+.terraform/
+.terraform.d/
+
+# Variable files (secrets)
+terraform.tfvars
+*.auto.tfvars
+.env.aws
+.env.production
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Excludes default & override files for terraform
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Include override files as they are usually used to override resources locally
+!override.tf
+!override.tf.json
+
+# Plan files
+*.tfplan
+*.tfplan.json
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# AWS credentials
+.aws/
+.awscli_history

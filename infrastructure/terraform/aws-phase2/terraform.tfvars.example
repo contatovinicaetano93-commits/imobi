@@ -1,0 +1,33 @@
+# AWS Phase 2 - ECS Fargate Deployment
+# Example Terraform Variables
+
+aws_region = "us-east-1"
+environment = "staging"
+
+# API Configuration
+api_port = 4000
+
+# ECS Task Configuration
+ecs_task_cpu    = "256"  # CPU units (256, 512, 1024, 2048, 4096)
+ecs_task_memory = "512"  # Memory in MB
+
+# ECS Service Configuration
+ecs_desired_count = 2
+ecs_max_capacity  = 4
+
+# Logging Configuration
+log_retention_days = 7
+
+# Database Configuration (from Phase 1)
+db_username = "imobi_user"       # Change to your RDS username
+db_password = "your_secure_password"  # Change to your RDS password
+db_name     = "imobi_staging"
+
+# CORS Configuration
+cors_origin = "https://app.imbobi.com.br,http://localhost:3000"
+
+# SSL Certificate (optional - for HTTPS)
+ssl_certificate_arn = ""  # Set to your ACM certificate ARN when available
+
+# Monitoring
+alert_email = "ops@imbobi.com.br"  # Change to your email
