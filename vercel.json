@@ -1,4 +1,10 @@
 {
-  "buildCommand": "turbo run build --filter=@imbobi/web",
-  "installCommand": "pnpm install"
+  "buildCommand": "turbo run build --filter=@imbobi/web --filter=@imbobi/api",
+  "installCommand": "pnpm install",
+  "rewrites": [
+    {
+      "source": "/api/:match*",
+      "destination": "/api/handler"
+    }
+  ]
 }
