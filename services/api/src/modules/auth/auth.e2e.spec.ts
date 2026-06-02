@@ -13,31 +13,32 @@ describe("Auth E2E - Comprehensive Suite", () => {
     return `${prefix}-${randomUUID()}@imbobi.com`;
   };
 
-  const validTestCPFs = [
-    "12345678909",
-    "12345678910",
-    "12345678911",
-    "12345678912",
-    "12345678913",
-    "12345678914",
-    "12345678915",
-    "12345678916",
-    "12345678917",
-    "12345678918",
-    "12345678919",
-    "12345678920",
-    "12345678921",
-    "12345678922",
-    "12345678923",
-    "12345678924",
-    "12345678925",
-  ];
-  let cpfIndex = 0;
+  let cpfCounter = 100000000; // Base number without check digits
 
   const generateTestCPF = () => {
-    const cpf = validTestCPFs[cpfIndex % validTestCPFs.length];
-    cpfIndex++;
-    return cpf;
+    const base = cpfCounter++;
+    const baseStr = base.toString().padStart(9, "0");
+
+    // Calculate first check digit
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(baseStr[i]) * (10 - i);
+    }
+    let remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    const digit1 = remainder.toString();
+
+    // Calculate second check digit
+    const partial = baseStr + digit1;
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(partial[i]) * (11 - i);
+    }
+    remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    const digit2 = remainder.toString();
+
+    return partial + digit2;
   };
 
   const baseTestUser = {
@@ -62,7 +63,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
 
     // Clean any stale test users from previous runs
     await prisma.usuario.deleteMany({
-      where: { email: { contains: "-test-" } },
+      where: { email: { endsWith: "@imbobi.com" } },
     });
   });
 
@@ -70,7 +71,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
     await prisma.usuario.deleteMany({
       where: {
         email: {
-          contains: "-test-",
+          endsWith: "@imbobi.com",
         },
       },
     });
@@ -182,6 +183,8 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .send({
           email,
           senha: "Senha@456",
+          cpf: generateTestCPF(),
+          telefone: "11999999999",
           nome: "Second User",
         })
         .expect(409);
@@ -240,9 +243,10 @@ describe("Auth E2E - Comprehensive Suite", () => {
 
       expect(res.body).toHaveProperty("access_token");
       expect(res.body).toHaveProperty("refreshToken");
-      expect(res.body).toHaveProperty("usuario");
-      expect(res.body.usuario).toHaveProperty("usuarioId");
-      expect(res.body.usuario).toHaveProperty("email", testEmail);
+      expect(res.body).toHaveProperty("usuarioId");
+      expect(res.body).toHaveProperty("email", testEmail);
+      expect(res.body).toHaveProperty("nome");
+      expect(res.body).toHaveProperty("tipo");
     });
 
     it("POST /auth/login → 401 with wrong password", async () => {
