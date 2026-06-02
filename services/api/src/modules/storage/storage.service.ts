@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import {
   S3Client,
   PutObjectCommand,
@@ -10,6 +10,7 @@ import { randomUUID } from "crypto";
 
 @Injectable()
 export class StorageService {
+  private readonly logger = new Logger(StorageService.name);
   private readonly s3 = new S3Client({
     region: process.env["AWS_REGION"] ?? "us-east-1",
     credentials: {
@@ -20,19 +21,39 @@ export class StorageService {
 
   private readonly bucket = process.env["S3_BUCKET"] ?? "imbobi-evidencias";
 
+  constructor() {
+    this.logger.log(
+      `Storage service initialized with bucket: ${this.bucket}`,
+    );
+  }
+
   async upload(buffer: Buffer, mimeType: string, etapaId: string) {
     const key = `evidencias/${etapaId}/${randomUUID()}`;
-    await this.s3.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        Body: buffer,
-        ContentType: mimeType,
-        ServerSideEncryption: "AES256",
-      }),
-    );
-    const url = await this.getSignedUrl(key);
-    return { url, key };
+    try {
+      this.logger.debug(
+        `Uploading file to S3: etapaId=${etapaId}, size=${buffer.length} bytes, type=${mimeType}`,
+      );
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: mimeType,
+          ServerSideEncryption: "AES256",
+        }),
+      );
+      const url = await this.getSignedUrl(key);
+      this.logger.log(
+        `File uploaded successfully: key=${key}, size=${buffer.length} bytes`,
+      );
+      return { url, key };
+    } catch (error) {
+      this.logger.error(
+        `Failed to upload file to S3: etapaId=${etapaId}`,
+        error,
+      );
+      throw error;
+    }
   }
 
   async getSignedUrl(key: string, expiresIn = 3600) {
@@ -44,8 +65,15 @@ export class StorageService {
   }
 
   async delete(key: string) {
-    await this.s3.send(
-      new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
-    );
+    try {
+      this.logger.debug(`Deleting file from S3: key=${key}`);
+      await this.s3.send(
+        new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
+      this.logger.log(`File deleted successfully: key=${key}`);
+    } catch (error) {
+      this.logger.error(`Failed to delete file from S3: key=${key}`, error);
+      throw error;
+    }
   }
 }
