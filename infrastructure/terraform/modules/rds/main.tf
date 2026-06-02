@@ -31,23 +31,23 @@ resource "aws_security_group" "rds" {
 }
 
 resource "aws_rds_cluster" "main" {
-  cluster_identifier      = "${var.project_name}-cluster"
-  engine                  = "aurora-postgresql"
-  engine_version          = "15.3"
-  database_name           = "imobi_prod"
-  master_username         = "postgres"
-  master_password         = var.rds_master_password
-  db_subnet_group_name    = aws_db_subnet_group.main.name
-  vpc_security_group_ids  = [aws_security_group.rds.id]
+  cluster_identifier     = "${var.project_name}-cluster"
+  engine                 = "aurora-postgresql"
+  engine_version         = "15.3"
+  database_name          = "imobi_prod"
+  master_username        = "postgres"
+  master_password        = var.rds_master_password
+  db_subnet_group_name   = aws_db_subnet_group.main.name
+  vpc_security_group_ids = [aws_security_group.rds.id]
 
   backup_retention_period      = var.rds_backup_retention_days
   preferred_backup_window      = "03:00-04:00"
   preferred_maintenance_window = "mon:04:00-mon:05:00"
 
-  storage_encrypted       = true
-  kms_key_id             = aws_kms_key.rds.arn
-  deletion_protection    = true
-  skip_final_snapshot    = false
+  storage_encrypted         = true
+  kms_key_id                = aws_kms_key.rds.arn
+  deletion_protection       = true
+  skip_final_snapshot       = false
   final_snapshot_identifier = "${var.project_name}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
   enabled_cloudwatch_logs_exports = ["postgresql"]
@@ -60,8 +60,8 @@ resource "aws_rds_cluster" "main" {
 resource "aws_rds_cluster_instance" "main_1" {
   cluster_identifier = aws_rds_cluster.main.id
   instance_class     = var.rds_instance_class
-  engine              = aws_rds_cluster.main.engine
-  engine_version      = aws_rds_cluster.main.engine_version
+  engine             = aws_rds_cluster.main.engine
+  engine_version     = aws_rds_cluster.main.engine_version
 
   publicly_accessible = false
 
@@ -73,8 +73,8 @@ resource "aws_rds_cluster_instance" "main_1" {
 resource "aws_rds_cluster_instance" "main_2" {
   cluster_identifier = aws_rds_cluster.main.id
   instance_class     = var.rds_instance_class
-  engine              = aws_rds_cluster.main.engine
-  engine_version      = aws_rds_cluster.main.engine_version
+  engine             = aws_rds_cluster.main.engine
+  engine_version     = aws_rds_cluster.main.engine_version
 
   publicly_accessible = false
 

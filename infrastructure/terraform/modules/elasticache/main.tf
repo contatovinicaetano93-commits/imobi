@@ -34,11 +34,11 @@ resource "aws_elasticache_replication_group" "main" {
   replication_group_description = "Redis cluster for ${var.project_name}"
   replication_group_id          = "${var.project_name}-redis"
   engine                        = "redis"
-  engine_version               = "7.0"
-  node_type                    = var.elasticache_instance_type
-  num_cache_clusters           = 2
-  automatic_failover_enabled   = true
-  multi_az_enabled             = true
+  engine_version                = "7.0"
+  node_type                     = var.elasticache_instance_type
+  num_cache_clusters            = 2
+  automatic_failover_enabled    = true
+  multi_az_enabled              = true
 
   parameter_group_name = aws_elasticache_parameter_group.main.name
   subnet_group_name    = aws_elasticache_subnet_group.main.name
@@ -48,9 +48,9 @@ resource "aws_elasticache_replication_group" "main" {
   transit_encryption_enabled = true
   auth_token                 = random_password.redis_auth_token.result
 
-  maintenance_window        = "mon:03:00-mon:04:00"
-  automatic_minor_upgrade   = true
-  notification_topic_arn    = var.sns_topic_arn
+  maintenance_window      = "mon:03:00-mon:04:00"
+  automatic_minor_upgrade = true
+  notification_topic_arn  = var.sns_topic_arn
 
   log_delivery_configuration {
     destination      = var.cloudwatch_log_group_name

@@ -1,14 +1,14 @@
 module "vpc" {
   source = "./modules/vpc"
 
-  vpc_cidr    = var.vpc_cidr
+  vpc_cidr     = var.vpc_cidr
   project_name = var.project_name
 }
 
 module "rds" {
   source = "./modules/rds"
 
-  vpc_id                     = module.vpc.vpc_id
+  vpc_id                    = module.vpc.vpc_id
   private_subnets           = module.vpc.private_subnets
   project_name              = var.project_name
   rds_instance_class        = var.rds_instance_class
@@ -21,12 +21,12 @@ module "rds" {
 module "elasticache" {
   source = "./modules/elasticache"
 
-  vpc_id                      = module.vpc.vpc_id
-  private_subnets            = module.vpc.private_subnets
-  project_name               = var.project_name
-  elasticache_instance_type  = var.elasticache_instance_type
-  sns_topic_arn              = aws_sns_topic.alerts.arn
-  cloudwatch_log_group_name  = aws_cloudwatch_log_group.elasticache.name
+  vpc_id                    = module.vpc.vpc_id
+  private_subnets           = module.vpc.private_subnets
+  project_name              = var.project_name
+  elasticache_instance_type = var.elasticache_instance_type
+  sns_topic_arn             = aws_sns_topic.alerts.arn
+  cloudwatch_log_group_name = aws_cloudwatch_log_group.elasticache.name
 
   depends_on = [module.vpc]
 }
