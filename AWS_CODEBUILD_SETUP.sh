@@ -101,7 +101,7 @@ else
 
   aws iam create-role \
     --role-name "$CODEBUILD_ROLE" \
-    --assume-role-policy-document "$TRUST_policy" > /dev/null
+    --assume-role-policy-document "$TRUST_POLICY" > /dev/null
 
   # Attach ECR and S3 policy
   POLICY='{
