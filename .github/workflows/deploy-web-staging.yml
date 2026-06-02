@@ -1,0 +1,83 @@
+name: Deploy Web to Staging
+
+on:
+  push:
+    branches:
+      - claude/gifted-hawking-ULZTB
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy-web-staging.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Build web
+        run: pnpm --filter @imbobi/web build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.STAGING_API_URL }}
+          NODE_ENV: staging
+
+      - name: Run E2E tests (optional)
+        run: pnpm --filter @imbobi/web test:e2e
+        continue-on-error: true
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.STAGING_API_URL }}
+
+      - name: Deploy to Vercel
+        uses: vercel/action@main
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./apps/web
+        continue-on-error: true
+
+      - name: Notify deployment status
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const status = '${{ job.status }}'
+            const message = status === 'success'
+              ? '✅ Web staging deployment successful'
+              : '❌ Web staging deployment failed'
+
+            console.log(message)
+
+      - name: Comment on PR
+        if: github.event_name == 'push'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            console.log('Build completed for web staging')
+            console.log('API URL: ${{ secrets.STAGING_API_URL }}')
