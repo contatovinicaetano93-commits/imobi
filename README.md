@@ -26,6 +26,32 @@
 - `@imbobi/core` — Hooks, utils, api-client (zero dependencies)
 - `@imbobi/ui` — Componentes base (Web: shadcn/ui | Mobile: React Native)
 
+### Fluxo de Arquitetura
+
+```
+┌──────────────┐  ┌──────────────┐       ┌──────────────┐
+│  Web App     │  │  Mobile App  │       │ Admin Panel  │
+│ (Next.js 14) │  │ (Expo 51)    │       │ (Next.js 14) │
+└──────┬───────┘  └──────┬───────┘       └──────┬───────┘
+       │                 │                       │
+       └─────────────────┼───────────────────────┘
+                         │
+              Shared Packages (Zod, Core, UI)
+                         │
+                         ↓
+            ┌────────────────────────────┐
+            │  NestJS API (Fastify)      │
+            │  Auth | KYC | Crédito      │
+            │  Evidencias | Obras        │
+            └────┬──────────────┬────────┘
+                 │              │
+        ┌────────┴────┐    ┌────┴─────────┐
+        │             │    │              │
+        ↓             ↓    ↓              ↓
+   PostgreSQL+   Redis+  AWS S3      BullMQ
+    PostGIS      Cache   (Fotos)     (Workers)
+```
+
 ---
 
 ## Quick Start
@@ -110,41 +136,100 @@ pnpm format
 
 ---
 
-## Estrutura de Diretórios
+## Estrutura do Monorepo
 
 ```
 imobi/
 ├── apps/
-│   ├── web/              # Next.js 14 frontend
-│   │   ├── app/          # App Router pages
-│   │   ├── components/   # React components
-│   │   └── public/       # Static assets
-│   └── mobile/           # Expo + Expo Router
-│       ├── app/          # Routing
-│       └── screens/      # React Native screens
+│   ├── web/                   # Next.js 14 frontend
+│   │   ├── app/               # App Router (routing + layouts)
+│   │   ├── components/        # React components
+│   │   │   ├── shared/        # Usados em múltiplas páginas
+│   │   │   ├── dashboard/     # Dashboard específico
+│   │   │   └── forms/         # Formas (auth, KYC, etc)
+│   │   ├── lib/               # Utilities (formatters, etc)
+│   │   └── public/            # Static assets
+│   │
+│   └── mobile/                # Expo 51 + Expo Router
+│       ├── app/               # Stack navigation
+│       ├── screens/           # React Native screens
+│       ├── components/        # Reusable components (RN)
+│       └── lib/               # Utilities
 │
 ├── services/
-│   ├── api/              # NestJS + Fastify API
+│   ├── api/                   # NestJS + Fastify
 │   │   ├── src/
-│   │   │   ├── auth/     # Authentication
-│   │   │   ├── kyc/      # KYC validation
-│   │   │   ├── credito/  # Credit module
-│   │   │   └── health/   # Health checks
-│   │   └── dist/         # Build output
-│   └── workers/          # BullMQ job processors
-│       ├── liberacao-parcela/
-│       └── notifications/
+│   │   │   ├── auth/          # JWT, registro, login
+│   │   │   ├── kyc/           # KYC validation (SERPRO, Unico)
+│   │   │   ├── credito/       # Simulador, parcelas
+│   │   │   ├── evidencias/    # Upload de fotos
+│   │   │   ├── obras/         # Dados de obras
+│   │   │   ├── etapas/        # Etapas de obra
+│   │   │   ├── manager/       # Gestor de obras
+│   │   │   ├── common/        # Guards, pipes, filters
+│   │   │   ├── providers/     # Services compartilhados
+│   │   │   └── health/        # Health checks
+│   │   └── dist/              # Build output
+│   │
+│   └── workers/               # BullMQ background jobs
+│       ├── liberacao-parcela/ # Processamento de parcelas
+│       └── notifications/     # Notificações via FCM
 │
-├── packages/
-│   ├── schemas/          # Zod validation schemas
-│   ├── core/             # Shared hooks & utils
-│   └── ui/               # Component library
+├── packages/                  # Shared libraries
+│   ├── schemas/               # Zod validation schemas
+│   │   ├── usuario.schema.ts
+│   │   ├── kyc.schema.ts
+│   │   ├── credito.schema.ts
+│   │   ├── evidencia.schema.ts
+│   │   └── index.ts           # Re-exports
+│   │
+│   ├── core/                  # Zero-dependency utilities
+│   │   ├── hooks/             # React hooks (web + mobile)
+│   │   ├── utils/             # Helpers (formatters, validators)
+│   │   ├── api-client/        # HTTP client wrapper
+│   │   └── index.ts
+│   │
+│   ├── ui/                    # Component library
+│   │   ├── web/               # shadcn/ui components
+│   │   ├── native/            # React Native components
+│   │   └── index.ts
+│   │
+│   └── config/                # Shared config
+│       ├── eslint/            # ESLint rules
+│       ├── typescript/        # TypeScript configs
+│       └── tailwind/          # Tailwind CSS config
 │
-├── .env.example          # Template de variáveis
-├── .env.staging          # Staging config (⚠️ .gitignore)
-├── .gitignore            # Git ignore rules
-└── pnpm-workspace.yaml   # Workspace config
+├── docs/                      # Documentation
+│   ├── DEPLOYMENT.md          # Infraestrutura & deployment
+│   ├── SECURITY.md            # Security & OWASP checklist
+│   ├── API_DOCS.md            # Endpoints & schemas
+│   └── CLAUDE.md              # Architecture overview
+│
+├── .github/
+│   └── workflows/             # GitHub Actions CI/CD
+│       ├── test.yml           # Tests on PR
+│       └── deploy.yml         # Deploy on push
+│
+├── .env.example               # Template de variáveis
+├── .env.staging               # Staging config (gitignored)
+├── .gitignore                 # Git rules
+├── pnpm-workspace.yaml        # Workspace config
+├── turbo.json                 # Turborepo pipeline
+└── package.json               # Monorepo deps + scripts
 ```
+
+### Padrão de Nomenclatura
+
+| Tipo | Exemplo | Localização |
+|------|---------|------------|
+| **Feature Branch** | `feature/kyc-upload` | Git branch |
+| **Bug Branch** | `bugfix/rate-limit` | Git branch |
+| **Hotfix Branch** | `hotfix/security-patch` | Git branch |
+| **Module** | `auth`, `kyc`, `credito` | `services/api/src/modules/` |
+| **Schema** | `CadastroUsuarioSchema` | `packages/schemas/` |
+| **Component** | `KycForm`, `CreditSimulator` | `apps/web/components/` |
+| **Hook** | `useAuthToken`, `useGeoLocation` | `packages/core/hooks/` |
+| **Util** | `formatCPF`, `calculateScore` | `packages/core/utils/` |
 
 ---
 
@@ -286,6 +371,94 @@ Production Monitoring → Set up alerts & logging
 - Upload para AWS S3
 - Validação de imagem client + server
 - Associação com obra/parcela
+
+---
+
+## Contributing Guidelines
+
+### Padrões de Código
+
+1. **TypeScript:** Código obrigatoriamente tipado
+   ```bash
+   pnpm type-check  # Validar em todos os pacotes
+   ```
+
+2. **Formatação:** Prettier automaticamente
+   ```bash
+   pnpm format      # Auto-format código
+   ```
+
+3. **Linting:** ESLint + regras de qualidade
+   ```bash
+   pnpm lint        # Verificar problemas
+   ```
+
+### Fluxo de Desenvolvimento
+
+1. **Branch:** Criar a partir de `main`
+   ```bash
+   git checkout -b feature/sua-feature
+   ```
+
+2. **Commits:** Mensagens descritivas
+   ```
+   ✅ Good: "feat(auth): add JWT token refresh"
+   ❌ Bad:  "fix stuff"
+   ```
+
+3. **PR:** Descrever mudanças, testes, e checklist
+   ```markdown
+   ## Descrição
+   Breve resumo das mudanças
+
+   ## Testes
+   - [ ] Tests passing (`pnpm test`)
+   - [ ] No TypeScript errors (`pnpm type-check`)
+   - [ ] Security validated (`pnpm run security:check`)
+
+   ## Checklist
+   - [ ] Dependências adicionadas (se aplicável)
+   - [ ] Migrations criadas (se aplicável)
+   - [ ] Documentação atualizada
+   ```
+
+4. **Review:** Esperar aprovação antes de merge
+   - Code review obrigatória
+   - CI/CD pipeline deve passar
+   - Security checks obrigatórias
+
+### Estrutura de Código
+
+#### Pacotes Compartilhados
+- Sem dependências nativas
+- Exportar tipos para cliente + servidor
+- Testes unitários obrigatórios
+
+#### Módulos API (NestJS)
+- Controllers + Services + Repositories
+- Zod validation pipes
+- Error handling centralizado
+- Rate limiting por endpoint
+
+#### Componentes UI
+- Storybook stories (web)
+- Acessibilidade (a11y) obrigatória
+- Props documentadas
+
+### Segurança
+
+**Nunca commitar:**
+- Secrets ou credenciais (`.env`)
+- Dados sensíveis (CPF, senhas)
+- Tokens ou keys
+
+**Sempre:**
+- Validar input com Zod schemas
+- Implementar authorization checks
+- Usar HTTPS em produção
+- Criptografar dados sensíveis
+
+Consultar `SECURITY.md` para checklist completo.
 
 ---
 
