@@ -56,7 +56,7 @@ import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
       },
     }),
     CoreModule,
-    ScheduleModule.forRoot(),
+    ...(process.env.NODE_ENV !== "test" ? [ScheduleModule.forRoot()] : []),
     PrismaModule,
     AuthModule,
     UsuariosModule,
@@ -81,6 +81,7 @@ import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
     EncryptionService,
     HealthService,
     LoggerService,
+    ...(process.env.NODE_ENV !== "test" ? [ScoreUpdateWorker, LiberacaoParcelaWorker] : []),
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
