@@ -42,6 +42,8 @@ dump.rdb
 
 # Test coverage
 coverage/
+test-results/
+playwright-report/
 
 # IDE
 .vscode/
