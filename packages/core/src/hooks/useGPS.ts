@@ -68,35 +68,39 @@ export function useGPS() {
       }
 
       // Fallback para navigator.geolocation (web)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const nav = (globalThis as any).navigator;
       if (typeof nav !== "undefined" && nav.geolocation) {
-        return new Promise<Coordinates & { accuracy: number }>((resolve, reject) => {
-          nav.geolocation.getCurrentPosition(
-            (pos: any) => {
-              const coords = {
-                latitude: pos.coords.latitude,
-                longitude: pos.coords.longitude,
-                accuracy: pos.coords.accuracy ?? 10,
-              };
-              setState({
-                isLoading: false,
-                error: null,
-                coordinates: coords,
-              });
-              resolve(coords);
-            },
-            (err: any) => {
-              const errorMsg = `Geolocation error: ${err.message}`;
-              setState({
-                isLoading: false,
-                error: errorMsg,
-                coordinates: null,
-              });
-              reject(new Error(errorMsg));
-            },
-            { enableHighAccuracy: true, timeout: 10000 },
-          );
-        });
+        return new Promise<Coordinates & { accuracy: number }>(
+          (resolve, reject) => {
+            nav.geolocation.getCurrentPosition(
+              (pos: any) => {
+                const coords = {
+                  latitude: pos.coords.latitude,
+                  longitude: pos.coords.longitude,
+                  accuracy: pos.coords.accuracy ?? 10,
+                };
+                setState({
+                  isLoading: false,
+                  error: null,
+                  coordinates: coords,
+                });
+                resolve(coords);
+              },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (err: any) => {
+                const errorMsg = `Geolocation error: ${err.message}`;
+                setState({
+                  isLoading: false,
+                  error: errorMsg,
+                  coordinates: null,
+                });
+                reject(new Error(errorMsg));
+              },
+              { enableHighAccuracy: true, timeout: 10000 },
+            );
+          },
+        );
       }
 
       throw new Error("GPS não disponível nesta plataforma");
