@@ -1,423 +1,252 @@
-# imobi Staging & Production Deployment Guide
+# iMobi Render Deployment Package
 
-**Project:** imobi (Fintech Construction Lending Platform)  
-**Stack:** Next.js 14 + NestJS + Fastify + PostgreSQL + Redis  
-**Status:** 🟢 CODE READY FOR STAGING  
-**Branch:** `claude/happy-goldberg-AFQPj`
+Complete deployment documentation and tools for iMobi on Render.
+
+## Files Included
+
+### 1. QUICK_REFERENCE.md (4 KB)
+**Start here!** Condensed command reference with copy-paste commands.
+
+**Best for:** Quick lookups, getting started fast
+- Security credential generation
+- Environment variable templates
+- Common health check commands
+- Test credentials
+- File locations
+
+**Reading time:** 5-10 minutes
 
 ---
 
-## Quick Start
+### 2. DEPLOYMENT_COMMANDS.md (21 KB)
+Comprehensive deployment guide with detailed explanations.
 
-### For Staging Deployment
+**Best for:** First-time deployment, understanding the full process
+- Complete security credentials explanation
+- Full environment variables reference table
+- Database setup (PostgreSQL + PostGIS)
+- Migration commands
+- Seed data documentation
+- 6 health check types
+- 12 troubleshooting scenarios
+- Performance tuning
+
+**Reading time:** 20-30 minutes
+
+**Sections:**
+```
+1. Generate Security Credentials
+2. Environment Variables Reference
+3. Pre-Deployment Checklist
+4. Render Service Configuration
+5. Database Setup
+6. Seed Data
+7. Health Checks
+8. Troubleshooting
+```
+
+---
+
+### 3. verify-deployment.sh (13 KB)
+Automated health check script for validating deployment.
+
+**Best for:** Post-deployment verification, monitoring
+- Interactive and automatic modes
+- 9 automated tests
+- Color-coded output
+- Pass/fail statistics
+- SSL certificate validation
+- Response time measurement
+
+**Usage:**
+```bash
+# Interactive (prompts for URLs)
+./verify-deployment.sh
+
+# Automatic (with URLs)
+./verify-deployment.sh https://api-xxx.render.com https://web-xxx.render.com
+
+# Show help
+./verify-deployment.sh --help
+```
+
+**Tests performed:**
+1. API health endpoint
+2. API connectivity
+3. API version endpoint
+4. API authentication
+5. CORS configuration
+6. Response times
+7. Web service health
+8. SSL certificate
+9. Environment variables
+
+---
+
+## Recommended Reading Order
+
+### For First-Time Deployment:
+
+1. **QUICK_REFERENCE.md** (5 min)
+   - Get overview of what's needed
+   - Generate credentials
+
+2. **DEPLOYMENT_COMMANDS.md** (20 min)
+   - Read sections 1-3 (Credentials, Variables, Checklist)
+   - Read section 4 (Render Configuration)
+
+3. **Create Render Services**
+   - PostgreSQL
+   - Redis
+   - API service
+   - Web service
+
+4. **Set Environment Variables**
+   - Use tables from DEPLOYMENT_COMMANDS.md
+   - Reference QUICK_REFERENCE.md for values
+
+5. **Deploy**
+   - Push to GitHub
+   - Render auto-deploys
+
+6. **Run Migrations & Seed**
+   - Follow DEPLOYMENT_COMMANDS.md section 5-6
+
+7. **Verify Deployment**
+   - Run `./verify-deployment.sh`
+
+---
+
+### For Troubleshooting:
+
+1. Check **verify-deployment.sh** output
+   - See which test failed
+
+2. Go to **DEPLOYMENT_COMMANDS.md** → Troubleshooting
+   - Find issue by name
+   - Follow fix steps
+
+3. Check **QUICK_REFERENCE.md** → Health Checks
+   - Run manual verification command
+
+---
+
+### For Reference:
+
+- **Environment variables:** DEPLOYMENT_COMMANDS.md or QUICK_REFERENCE.md
+- **Health checks:** verify-deployment.sh or DEPLOYMENT_COMMANDS.md
+- **Commands:** QUICK_REFERENCE.md (concise) or DEPLOYMENT_COMMANDS.md (detailed)
+- **Troubleshooting:** DEPLOYMENT_COMMANDS.md section 8
+
+---
+
+## Quick Command Summary
 
 ```bash
-# 1. Ensure infrastructure is ready (PostgreSQL 14+, Redis 7+)
-# 2. Run automated deployment
-./STAGING_DEPLOYMENT.sh staging \
-  "postgresql://user:pass@staging-db:5432/imbobi_staging" \
-  "redis://staging-redis:6379"
+# 1. Generate credentials (run on local machine)
+node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
-# 3. Run security validation
-./SECURITY_VALIDATION.sh http://staging-api:4000/api/v1
+# 2. Run migrations (after API is live)
+DATABASE_URL="postgresql://..." pnpm db:migrate
 
-# 4. Run E2E tests (requires test database)
-./RUN_E2E_TESTS.sh staging-db 5433 imbobi imbobi123 imbobi_test
-```
+# 3. Seed database (optional)
+DATABASE_URL="postgresql://..." pnpm --filter @imbobi/api seed
 
-### For Production Deployment
+# 4. Verify everything works
+./verify-deployment.sh https://api-xxx.render.com https://web-xxx.render.com
 
-Same scripts, different environment variables:
-
-```bash
-./STAGING_DEPLOYMENT.sh production \
-  "postgresql://user:pass@prod-db:5432/imbobi_prod" \
-  "redis://prod-redis:6379"
+# 5. Test health
+curl https://api-xxx.render.com/api/v1/health
 ```
 
 ---
 
-## What's Included
+## Environment Variables Checklist
 
-### 📋 Deployment Scripts
+Copy to Render Environment Variables section:
 
-| Script | Purpose | Time | Output |
-|--------|---------|------|--------|
-| `STAGING_DEPLOYMENT.sh` | Full deployment automation | 5-10 min | Ready-for-deployment checklist |
-| `SECURITY_VALIDATION.sh` | 20-point OWASP security check | 2-3 min | Security validation report |
-| `RUN_E2E_TESTS.sh` | Execute 10 E2E test suites | 10-15 min | Test results & coverage |
+### Database & Core
+- [ ] DATABASE_URL (from PostgreSQL service)
+- [ ] NODE_ENV=production
+- [ ] PORT=4000
 
-### 📚 Documentation
+### Security (Generate these)
+- [ ] JWT_SECRET (generate with node command)
+- [ ] JWT_EXPIRES_IN=15m
+- [ ] JWT_REFRESH_EXPIRES_IN=7d
+- [ ] ENCRYPTION_KEY (generate with node command)
 
-| Document | Content | Pages |
-|----------|---------|-------|
-| `STAGING_CHECKLIST.md` | 14-phase deployment checklist | 755 lines |
-| `STAGING_DEPLOYMENT.md` | Detailed deployment guide | 200+ lines |
-| `SECURITY_SUMMARY.md` | All 20 security fixes documented | 300+ lines |
-| `DEPLOYMENT_README.md` | This file |  |
+### Cache & Queue
+- [ ] REDIS_HOST (from Redis service)
+- [ ] REDIS_PORT=6379
+- [ ] REDIS_PASSWORD (from Redis service)
 
-### 🔧 Code Quality Status
+### API Configuration
+- [ ] CORS_ORIGIN=https://[your-web-domain]
 
-```
-✅ Type Checking: PASSED (all 5+ packages)
-✅ Production Build: SUCCESSFUL
-✅ Security Hardening: 20/20 OWASP vulnerabilities resolved
-✅ Frontend: Signup, login, KYC, simulator pages ready
-✅ API: All endpoints compiled and modules initialized
-✅ E2E Tests: 10 suites configured and ready
-✅ Git: All commits pushed to origin/claude/happy-goldberg-AFQPj
-```
+### Storage
+- [ ] AWS_REGION=us-east-1
+- [ ] AWS_ACCESS_KEY_ID (from AWS IAM)
+- [ ] AWS_SECRET_ACCESS_KEY (from AWS IAM)
+- [ ] S3_BUCKET=imbobi-evidencias-prod
 
----
+### Email (Choose ONE provider)
+- [ ] EMAIL_PROVIDER=sendgrid (or ses or smtp)
+- [ ] SENDGRID_API_KEY (or AWS/SMTP config)
 
-## Prerequisites
+### Notifications
+- [ ] FIREBASE_PROJECT_ID (from Firebase)
+- [ ] FIREBASE_PRIVATE_KEY (from Firebase JSON)
+- [ ] FIREBASE_CLIENT_EMAIL (from Firebase JSON)
 
-### Infrastructure (Required for Staging)
-
-```
-✅ PostgreSQL 14+ instance
-  └─ imbobi_staging database created
-  └─ Connection pool ready (min 5, max 20)
-
-✅ Redis 7+ instance
-  └─ Memory: 2GB+ recommended
-  └─ Persistence: AOF or RDB enabled
-  └─ 10-minute TTL for cache keys
-
-✅ Linux Server
-  └─ Node.js 20+
-  └─ pnpm 8+
-  └─ SSL certificates (Let's Encrypt)
-
-✅ Optional: Monitoring stack
-  └─ Prometheus/Grafana
-  └─ ELK Stack or CloudWatch
-  └─ Sentry or similar error tracking
-```
-
-### Before Running Deployment
-
-```bash
-# Verify git branch
-git status
-# Expected: On branch claude/happy-goldberg-AFQPj
-
-# Verify git is clean
-git log --oneline -5
-# Expected: Latest commit is deployment automation
-
-# Verify Node/pnpm
-node --version  # v20+
-pnpm --version  # 8+
-
-# Verify network connectivity
-ping staging-db
-ping staging-redis
-```
+### Web Service
+- [ ] NEXT_PUBLIC_API_URL=https://[your-api-domain]
 
 ---
 
-## Deployment Process (Step by Step)
+## Support & Documentation
 
-### Phase 1: Infrastructure Verification (10 min)
+### Internal References
+- Project guide: `CLAUDE.md`
+- API config: `services/api/.env.example`
+- Dockerfiles: `services/api/Dockerfile`, `apps/web/Dockerfile`
+- Seed data: `services/api/src/seeds/seed.ts`
 
-```bash
-# Verify database connection
-psql postgresql://user:pass@staging-db:5432/imbobi_staging -c "SELECT 1"
+### External Resources
+- Render Docs: https://render.com/docs
+- Prisma Migration: https://www.prisma.io/docs/orm/prisma-migrate
+- PostGIS: https://postgis.net/documentation
+- NestJS: https://docs.nestjs.com/deployment
+- Next.js: https://nextjs.org/docs/deployment
 
-# Verify Redis connection
-redis-cli -h staging-redis ping
-# Expected: PONG
-
-# Verify git access
-git fetch origin claude/happy-goldberg-AFQPj
-# Expected: up to date
-
-# Verify Node.js/pnpm
-node -v && pnpm -v
-# Expected: v20+ and 8+
-```
-
-### Phase 2: Automated Deployment (5-10 min)
-
-```bash
-# Run deployment script
-./STAGING_DEPLOYMENT.sh staging \
-  "postgresql://imbobi:password@staging-db:5432/imbobi_staging" \
-  "redis://staging-redis:6379"
-
-# This script will:
-# 1. Install dependencies (pnpm install)
-# 2. Type check all packages (pnpm type-check)
-# 3. Build production artifacts (pnpm build)
-# 4. Run database migrations (pnpm db:migrate)
-# 5. Verify database connection
-# 6. Generate deployment checklist
-```
-
-### Phase 3: Server Startup (2-3 min)
-
-```bash
-# Terminal 1: API Server
-cd services/api
-node dist/main.js
-# Expected: [Nest] API listening on port 4000
-
-# Terminal 2: Web Server
-cd apps/web
-npx next start
-# Expected: ▲ Next.js 14.2.35
-
-# Terminal 3: Process Monitor
-pm2 start "node services/api/dist/main.js" --name api
-pm2 start "npx next start --cwd apps/web" --name web
-pm2 logs
-```
-
-### Phase 4: Verification (5-10 min)
-
-```bash
-# Health checks
-curl http://localhost:4000/api/v1/health
-# Expected: {"status":"ok"}
-
-curl http://localhost:3000/cadastro
-# Expected: Signup page HTML
-
-# Security validation
-./SECURITY_VALIDATION.sh http://localhost:4000/api/v1
-
-# E2E tests (if database available)
-./RUN_E2E_TESTS.sh localhost 5433 imbobi imbobi123 imbobi_test
-```
+### Questions?
+Contact: contato.vinicaetano93@gmail.com
 
 ---
 
-## What Gets Deployed
+## Deployment Checklist
 
-### API Server (`services/api`)
-- NestJS + Fastify framework
-- All modules initialized:
-  - ✅ Auth (JWT + refresh tokens)
-  - ✅ Users (profile management)
-  - ✅ Credit (simulator + requests)
-  - ✅ KYC (document upload + validation)
-  - ✅ Evidências (GPS-validated photos)
-  - ✅ Obras (construction projects)
-  - ✅ Notifications (in-app + push)
-  - ✅ Workers (BullMQ job queue)
-  - ✅ Analytics (metrics + reporting)
-
-### Web Application (`apps/web`)
-- Next.js 14 with App Router
-- Authentication guard (redirects to login)
-- Pages:
-  - ✅ `/cadastro` — Signup form
-  - ✅ `/login` — Login form
-  - ✅ `/dashboard` — Main dashboard
-  - ✅ `/dashboard/kyc` — KYC profile
-  - ✅ `/dashboard/simulador` — Credit simulator
-  - ✅ `/dashboard/obras` — Projects list
-  - ✅ `/dashboard/perfil` — User profile
-
-### Mobile App (`apps/mobile`)
-- Expo 51 + Expo Router
-- All screens implemented:
-  - ✅ KYC profile (document upload)
-  - ✅ Credit simulator (sliders + calculation)
-  - ✅ Evidências (GPS validation + upload)
-  - ✅ Authentication (secure store)
+- [ ] Read QUICK_REFERENCE.md
+- [ ] Generate JWT_SECRET and ENCRYPTION_KEY
+- [ ] Create PostgreSQL database in Render
+- [ ] Create Redis instance in Render
+- [ ] Create API service in Render
+- [ ] Create Web service in Render
+- [ ] Set all environment variables (see checklist above)
+- [ ] Push to GitHub (Render auto-deploys)
+- [ ] Wait for build to complete
+- [ ] Run database migrations
+- [ ] Seed database (optional)
+- [ ] Run `./verify-deployment.sh` to verify
+- [ ] Check API health endpoint with curl
+- [ ] Test login with seed credentials
+- [ ] Verify photos upload to S3
+- [ ] Verify emails are sent
+- [ ] Monitor logs for errors
 
 ---
 
-## Monitoring & Operations
-
-### Health Checks
-
-```bash
-# API Health
-curl http://api:4000/api/v1/health/live      # Liveness
-curl http://api:4000/api/v1/health/ready     # Readiness
-
-# Web Health
-curl http://web:3000                         # Should return 200
-
-# Database
-psql $DATABASE_URL -c "SELECT 1"
-
-# Redis
-redis-cli PING
-```
-
-### Common Operations
-
-```bash
-# View API logs
-pm2 logs api
-
-# View Web logs
-pm2 logs web
-
-# Restart services
-pm2 restart api web
-
-# Monitor resources
-pm2 monit
-
-# Database backup
-pg_dump $DATABASE_URL > backup.sql
-
-# Database restore
-psql $DATABASE_URL < backup.sql
-```
-
-### Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| "Can't reach database" | Verify PostgreSQL running: `psql $DATABASE_URL` |
-| "Cannot connect to Redis" | Verify Redis running: `redis-cli PING` |
-| "Port 4000 already in use" | Kill process: `lsof -i :4000 \| kill -9` |
-| "Build failed" | Clear cache: `rm -rf dist node_modules && pnpm install` |
-| "Migration failed" | Check schema: `pnpm db:generate && pnpm db:migrate` |
-| "E2E tests timeout" | Increase timeout: `jest --testTimeout=30000` |
-
----
-
-## Security Checklist
-
-Before going to production, verify:
-
-```
-Authentication & Tokens:
-✅ JWT_SECRET is 64+ characters and random
-✅ ENCRYPTION_KEY is base64-encoded 32-byte value
-✅ Refresh tokens encrypted in HttpOnly cookies
-✅ Token rotation working on refresh
-
-CORS & Headers:
-✅ CORS origin whitelist configured (no *)
-✅ Content-Security-Policy header set
-✅ Strict-Transport-Security header set
-✅ X-Frame-Options set to DENY
-
-Data Validation:
-✅ CPF validation with modulo-11 checksum
-✅ Email validation and uniqueness check
-✅ Password minimum 8 characters
-✅ SQL injection prevention (Prisma)
-
-Database Security:
-✅ SSL/TLS connection to database
-✅ Database credentials not in code
-✅ Backup encryption enabled
-✅ Read replicas isolated from writes
-
-Infrastructure:
-✅ Firewall rules configured
-✅ Only allow known IPs to database
-✅ VPN/bastion host for SSH access
-✅ Secrets stored in secure vault (not git)
-```
-
----
-
-## Performance Targets
-
-| Metric | Target | How to Monitor |
-|--------|--------|---|
-| API Latency (p95) | <200ms | `curl -w "@curl-format.txt"` |
-| API Throughput | >100 req/s | `wrk -t4 -c100` |
-| Database Query (p95) | <100ms | PostgreSQL logs |
-| Web Page Load | <2s | Lighthouse CI |
-| Cache Hit Ratio | >70% | Redis INFO |
-
----
-
-## Rollback Procedure
-
-If deployment fails or issues discovered:
-
-```bash
-# 1. Stop services
-pm2 stop api web
-
-# 2. Restore previous version
-git checkout <previous_commit>
-pnpm install --frozen-lockfile
-pnpm build
-
-# 3. Run migrations rollback (if applicable)
-pnpm prisma migrate resolve --rolled-back <migration_name>
-
-# 4. Start services
-pm2 start api web
-
-# 5. Verify
-curl http://api:4000/api/v1/health
-```
-
----
-
-## Support & Escalation
-
-### On-Call Engineer
-- **Name:** ________________
-- **Phone:** ________________
-- **Email:** ________________
-- **PagerDuty:** ________________
-
-### Critical Issues
-1. **API Down** → Page on-call engineer immediately
-2. **Database Down** → Failover to replica (if configured)
-3. **Security Breach** → Follow incident response plan
-4. **Data Corruption** → Restore from backup
-
-### Status Page
-- Public: `https://status.imbobi.com`
-- Internal: Incident tracking system
-
----
-
-## Next Steps
-
-### After Staging Validation
-1. ✅ Run full E2E test suite
-2. ✅ Perform security audit
-3. ✅ Load test to 100+ concurrent users
-4. ✅ Get product team sign-off
-5. ✅ Get security team sign-off
-6. ✅ Then proceed to production
-
-### Documentation References
-- **Architecture:** See `CLAUDE.md` (project guide)
-- **Security:** See `SECURITY_SUMMARY.md` (20 fixes documented)
-- **Deployment:** See `STAGING_DEPLOYMENT.md` (detailed steps)
-- **Checklist:** See `STAGING_CHECKLIST.md` (14 phases)
-
----
-
-## Summary
-
-**Current State:**
-- ✅ Code complete and type-safe
-- ✅ Build successful
-- ✅ Security hardened (20/20 OWASP)
-- ✅ Deployment automation ready
-- ⏳ Awaiting infrastructure setup
-
-**Timeline:**
-- Infrastructure setup: 1-2 hours
-- Code deployment: 5-10 minutes
-- Verification: 5-10 minutes
-- **Total: 1-3 hours to production-ready staging**
-
-**Resources:**
-- Branch: `claude/happy-goldberg-AFQPj`
-- Docs: 4 comprehensive guides
-- Scripts: 3 automated deployment tools
-- Tests: 10 E2E test suites (ready to run)
-
-**Ready to deploy! 🚀**
-
-Questions? Check STAGING_DEPLOYMENT.md or SECURITY_SUMMARY.md for detailed information.
+**Created:** 2026-06-02
+**Stack:** Turborepo + Next.js 14 + NestJS + PostgreSQL + Redis + Render
+**Status:** Production-ready

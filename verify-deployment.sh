@@ -1,614 +1,490 @@
 #!/bin/bash
 
-################################################################################
-# imobi Render Deployment Verification Script
+#==============================================================================
+# iMobi Render Deployment Verification Script
 #
-# Comprehensive health check for imobi deployment
-# Usage: ./verify-deployment.sh [api-url] [interactive]
+# Automated health checks for iMobi deployment on Render
+# Run this after deployment to verify all services are working
 #
-# Examples:
-#   ./verify-deployment.sh                           # Check localhost:4000
-#   ./verify-deployment.sh https://api.imobi.com.br  # Check production API
-#   ./verify-deployment.sh https://api.imobi.com.br true  # Interactive mode
-#
-# Exit codes:
-#   0 = All checks passed
-#   1 = Some warnings (services up but degraded)
-#   2 = Critical failures (services down)
-################################################################################
+# Usage: ./verify-deployment.sh [api_url] [web_url]
+#   ./verify-deployment.sh https://api-xxx.render.com https://app-xxx.render.com
+#   ./verify-deployment.sh (uses defaults from environment or prompts)
+#==============================================================================
 
-set -euo pipefail
+set -o pipefail
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Configuration
-# ─────────────────────────────────────────────────────────────────────────────
-
-API_URL="${1:-http://localhost:4000}"
-INTERACTIVE="${2:-false}"
-TIMEOUT=10
-CURL_OPTS="-s --connect-timeout $TIMEOUT --max-time $((TIMEOUT + 5))"
-
-# Color codes
+# Color codes for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m'  # No Color
-BOLD='\033[1m'
+NC='\033[0m' # No Color
 
-# Test counters
-PASSED=0
-WARNINGS=0
-FAILED=0
-SKIPPED=0
+# Configuration
+API_URL="${1}"
+WEB_URL="${2}"
+TIMEOUT=10
+VERBOSE=0
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Utility Functions
-# ─────────────────────────────────────────────────────────────────────────────
+# Stats tracking
+TESTS_TOTAL=0
+TESTS_PASSED=0
+TESTS_FAILED=0
 
-log_header() {
-    echo -e "\n${BLUE}${BOLD}► $1${NC}"
+#==============================================================================
+# Helper Functions
+#==============================================================================
+
+log_info() {
+  echo -e "${BLUE}[INFO]${NC} $1"
 }
 
 log_success() {
-    echo -e "  ${GREEN}✓${NC} $1"
-    ((PASSED++)) || true
-}
-
-log_warning() {
-    echo -e "  ${YELLOW}⚠${NC} $1"
-    ((WARNINGS++)) || true
+  echo -e "${GREEN}[PASS]${NC} $1"
+  ((TESTS_PASSED++))
 }
 
 log_error() {
-    echo -e "  ${RED}✗${NC} $1"
-    ((FAILED++)) || true
+  echo -e "${RED}[FAIL]${NC} $1"
+  ((TESTS_FAILED++))
 }
 
-log_info() {
-    echo -e "  ${CYAN}ℹ${NC} $1"
+log_warning() {
+  echo -e "${YELLOW}[WARN]${NC} $1"
 }
 
-log_skipped() {
-    echo -e "  ${YELLOW}⊘${NC} $1"
-    ((SKIPPED++)) || true
+log_section() {
+  echo ""
+  echo -e "${BLUE}==== $1 ====${NC}"
 }
 
-# Check if command exists
-command_exists() {
-    command -v "$1" &> /dev/null
-    return $?
-}
-
-# Pretty print JSON (fallback to raw if jq not available)
-pretty_json() {
-    if command_exists jq; then
-        echo "$1" | jq '.'
-    else
-        echo "$1"
-    fi
-}
-
-# Test HTTP endpoint
-test_endpoint() {
-    local endpoint=$1
-    local description=$2
-    local expected_code=${3:-200}
-
-    echo -n "  Testing ${description}... "
-
-    local response
-    local http_code
-    response=$(eval "curl $CURL_OPTS -w '\n%{http_code}' '${API_URL}${endpoint}' 2>&1" || echo "")
-
-    if [ -z "$response" ]; then
-        log_error "No response from $endpoint"
-        return 2
-    fi
-
-    http_code=$(echo "$response" | tail -n1)
-    body=$(echo "$response" | head -n-1)
-
-    if [ "$http_code" = "$expected_code" ]; then
-        log_success "HTTP $http_code"
-        return 0
-    elif [ "$http_code" = "503" ] || [ "$http_code" = "500" ]; then
-        log_error "HTTP $http_code"
-        return 2
-    else
-        log_warning "HTTP $http_code (expected $expected_code)"
-        return 1
-    fi
-}
-
-# Extract JSON field (with jq fallback)
-get_json_field() {
-    local json=$1
-    local field=$2
-
-    if command_exists jq; then
-        echo "$json" | jq -r ".${field}" 2>/dev/null || echo ""
-    else
-        # Simple grep-based fallback for basic fields
-        echo "$json" | grep -o "\"${field}\"[^,}]*" | cut -d':' -f2- | tr -d ' "' || echo ""
-    fi
-}
-
-# Interactive prompt
-prompt_continue() {
-    if [ "$INTERACTIVE" = "true" ]; then
-        local response
-        read -p "  Press Enter to continue or 'q' to quit: " response
-        if [ "$response" = "q" ]; then
-            exit 0
-        fi
-    fi
-}
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Check Functions
-# ─────────────────────────────────────────────────────────────────────────────
+#==============================================================================
+# Check Prerequisites
+#==============================================================================
 
 check_prerequisites() {
-    log_header "Prerequisites"
+  log_section "Checking Prerequisites"
+  
+  local missing_tools=0
+  
+  # Check curl
+  if ! command -v curl &> /dev/null; then
+    log_error "curl not found. Please install: brew install curl"
+    missing_tools=1
+  fi
+  
+  # Check jq (optional but recommended)
+  if ! command -v jq &> /dev/null; then
+    log_warning "jq not installed. JSON parsing will be limited. Install: brew install jq"
+  fi
+  
+  if [ $missing_tools -eq 1 ]; then
+    echo ""
+    log_error "Missing required tools. Cannot continue."
+    exit 1
+  fi
+  
+  log_success "All prerequisites met"
+}
 
-    # Check curl
-    if command_exists curl; then
-        log_success "curl installed"
+#==============================================================================
+# Input Validation
+#==============================================================================
+
+prompt_urls() {
+  if [ -z "$API_URL" ]; then
+    echo ""
+    read -p "Enter API URL (e.g., https://api-xxx.render.com): " API_URL
+    if [ -z "$API_URL" ]; then
+      log_error "API URL is required"
+      exit 1
+    fi
+  fi
+  
+  if [ -z "$WEB_URL" ]; then
+    read -p "Enter Web URL (e.g., https://app-xxx.render.com): " WEB_URL
+    if [ -z "$WEB_URL" ]; then
+      log_error "Web URL is required"
+      exit 1
+    fi
+  fi
+}
+
+validate_urls() {
+  log_section "Validating URLs"
+  
+  # Validate API URL
+  if [[ $API_URL =~ ^https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,} ]]; then
+    log_success "API URL format valid: $API_URL"
+  else
+    log_error "Invalid API URL format: $API_URL"
+    exit 1
+  fi
+  
+  # Validate Web URL
+  if [[ $WEB_URL =~ ^https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,} ]]; then
+    log_success "Web URL format valid: $WEB_URL"
+  else
+    log_error "Invalid Web URL format: $WEB_URL"
+    exit 1
+  fi
+}
+
+#==============================================================================
+# Health Check Tests
+#==============================================================================
+
+test_api_health() {
+  ((TESTS_TOTAL++))
+  
+  log_section "Testing API Health"
+  
+  local health_endpoint="$API_URL/api/v1/health"
+  local response
+  local http_code
+  
+  log_info "Checking: $health_endpoint"
+  
+  response=$(curl -s -w "\n%{http_code}" --connect-timeout "$TIMEOUT" "$health_endpoint")
+  http_code=$(echo "$response" | tail -n1)
+  body=$(echo "$response" | head -n-1)
+  
+  if [ "$http_code" = "200" ]; then
+    log_success "API health endpoint returned HTTP 200"
+    
+    # Try to parse JSON if jq is available
+    if command -v jq &> /dev/null; then
+      local status=$(echo "$body" | jq -r '.status // "unknown"' 2>/dev/null)
+      local db_status=$(echo "$body" | jq -r '.database // "unknown"' 2>/dev/null)
+      local redis_status=$(echo "$body" | jq -r '.redis // "unknown"' 2>/dev/null)
+      
+      if [ "$status" = "ok" ]; then
+        log_success "API status: OK"
+        log_info "  Database: $db_status"
+        log_info "  Redis: $redis_status"
+      else
+        log_warning "API status: $status (expected: ok)"
+      fi
     else
-        log_error "curl not found (required)"
-        return 2
+      log_info "Response: $body"
     fi
-
-    # Check jq (optional but recommended)
-    if command_exists jq; then
-        log_success "jq installed (JSON parsing enabled)"
-    else
-        log_warning "jq not found (using fallback JSON parsing)"
-    fi
-
-    # Check connectivity to API
-    echo -n "  Testing basic connectivity... "
-    if eval "curl $CURL_OPTS -I '${API_URL}' > /dev/null 2>&1"; then
-        log_success "Can reach ${API_URL}"
-    else
-        log_error "Cannot reach ${API_URL} - verify URL and network"
-        return 2
-    fi
+  else
+    log_error "API health check failed (HTTP $http_code)"
+    log_info "Response: $body"
+    return 1
+  fi
 }
 
-check_api_health() {
-    log_header "API Health Endpoints"
-
-    # GET /api/v1/health
-    echo -n "  GET /api/v1/health... "
-    local response
-    response=$(eval "curl $CURL_OPTS '${API_URL}/api/v1/health'" 2>&1) || {
-        log_error "Request failed"
-        return 2
-    }
-
-    if echo "$response" | grep -q '"status"'; then
-        log_success "Health endpoint responding"
-
-        # Parse status
-        local status
-        status=$(get_json_field "$response" "status")
-
-        if [ "$status" = "ok" ]; then
-            log_success "Overall status: OK"
-        else
-            log_warning "Overall status: $status (degraded)"
-            return 1
-        fi
-
-        # Check sub-services
-        local db_status
-        db_status=$(get_json_field "$response" "database")
-        if [ "$db_status" = "connected" ]; then
-            log_success "Database: Connected"
-        else
-            log_warning "Database: $db_status"
-        fi
-
-        local redis_status
-        redis_status=$(get_json_field "$response" "redis")
-        if [ "$redis_status" = "connected" ]; then
-            log_success "Redis Cache: Connected"
-        else
-            log_warning "Redis Cache: $redis_status"
-        fi
-
-    else
-        log_error "Invalid response from health endpoint"
-        return 2
-    fi
+test_api_connectivity() {
+  ((TESTS_TOTAL++))
+  
+  log_section "Testing API Connectivity"
+  
+  local response
+  local http_code
+  
+  log_info "Testing basic connectivity to API"
+  
+  response=$(curl -s -w "\n%{http_code}" --connect-timeout "$TIMEOUT" -I "$API_URL/api/v1")
+  http_code=$(echo "$response" | tail -n1)
+  
+  if [ "$http_code" != "000" ] && [ -n "$http_code" ]; then
+    log_success "API is reachable (HTTP $http_code)"
+  else
+    log_error "API is not reachable"
+    return 1
+  fi
 }
 
-check_liveness() {
-    log_header "Liveness Probe (Service Running)"
-
-    echo -n "  GET /api/v1/health/live... "
-    local http_code
-    http_code=$(eval "curl $CURL_OPTS -o /dev/null -w '%{http_code}' '${API_URL}/api/v1/health/live'" 2>&1) || {
-        log_error "Request failed"
-        return 2
-    }
-
-    if [ "$http_code" = "200" ]; then
-        log_success "Service is running (HTTP $http_code)"
-    else
-        log_error "Service not responding (HTTP $http_code)"
-        return 2
-    fi
+test_web_health() {
+  ((TESTS_TOTAL++))
+  
+  log_section "Testing Web Service"
+  
+  local response
+  local http_code
+  
+  log_info "Checking: $WEB_URL"
+  
+  response=$(curl -s -w "\n%{http_code}" --connect-timeout "$TIMEOUT" "$WEB_URL")
+  http_code=$(echo "$response" | tail -n1)
+  
+  if [ "$http_code" = "200" ]; then
+    log_success "Web service returned HTTP 200"
+  else
+    log_error "Web service returned HTTP $http_code (expected: 200)"
+    return 1
+  fi
 }
 
-check_readiness() {
-    log_header "Readiness Probe (All Dependencies)"
-
-    echo -n "  GET /api/v1/health/ready... "
-    local http_code
-    http_code=$(eval "curl $CURL_OPTS -o /dev/null -w '%{http_code}' '${API_URL}/api/v1/health/ready'" 2>&1) || {
-        log_error "Request failed"
-        return 2
-    }
-
-    if [ "$http_code" = "200" ]; then
-        log_success "Service ready (HTTP $http_code)"
-    elif [ "$http_code" = "503" ]; then
-        log_warning "Service unavailable - dependencies not ready (HTTP $http_code)"
-        return 1
-    else
-        log_error "Unexpected response (HTTP $http_code)"
-        return 2
-    fi
+test_api_auth() {
+  ((TESTS_TOTAL++))
+  
+  log_section "Testing API Authentication"
+  
+  log_info "Testing protected endpoint (should require auth)"
+  
+  local response
+  local http_code
+  
+  response=$(curl -s -w "\n%{http_code}" --connect-timeout "$TIMEOUT" "$API_URL/api/v1/auth/profile")
+  http_code=$(echo "$response" | tail -n1)
+  
+  # Protected endpoints should return 401 without token
+  if [ "$http_code" = "401" ]; then
+    log_success "Protected endpoint correctly returns HTTP 401 (unauthorized)"
+  else
+    log_warning "Protected endpoint returned HTTP $http_code (expected: 401 for unauthenticated request)"
+  fi
 }
 
-check_response_time() {
-    log_header "Response Performance"
-
-    echo "  Measuring endpoint latency..."
-
-    # Test 3 requests and average
-    local total_time=0
-    local count=3
-
-    for i in $(seq 1 $count); do
-        echo -n "    Request $i... "
-        local start
-        local end
-        local elapsed
-
-        start=$(date +%s%N)
-        eval "curl $CURL_OPTS -o /dev/null '${API_URL}/api/v1/health'" 2>&1 > /dev/null || true
-        end=$(date +%s%N)
-
-        elapsed=$(( (end - start) / 1000000 ))  # Convert to milliseconds
-        total_time=$(( total_time + elapsed ))
-
-        if [ $elapsed -lt 500 ]; then
-            log_success "${elapsed}ms"
-        elif [ $elapsed -lt 1000 ]; then
-            log_warning "${elapsed}ms (acceptable)"
-        else
-            log_warning "${elapsed}ms (slow)"
-        fi
-    done
-
-    local avg_time=$(( total_time / count ))
-    echo "  Average response time: ${avg_time}ms"
-
-    if [ $avg_time -lt 300 ]; then
-        log_success "Performance is excellent"
-    elif [ $avg_time -lt 700 ]; then
-        log_warning "Performance is acceptable"
-    else
-        log_warning "Performance is slow - may need investigation"
-        return 1
-    fi
+test_api_version() {
+  ((TESTS_TOTAL++))
+  
+  log_section "Testing API Version Endpoint"
+  
+  log_info "Checking: $API_URL/api/v1"
+  
+  local response
+  local http_code
+  
+  response=$(curl -s -w "\n%{http_code}" --connect-timeout "$TIMEOUT" "$API_URL/api/v1")
+  http_code=$(echo "$response" | tail -n1)
+  
+  if [ "$http_code" = "200" ]; then
+    log_success "API v1 endpoint is accessible"
+  elif [ "$http_code" = "404" ]; then
+    log_warning "API v1 endpoint returned 404 (may be expected)"
+  else
+    log_warning "API v1 endpoint returned HTTP $http_code"
+  fi
 }
 
-check_cors() {
-    log_header "CORS Configuration"
-
-    local origin="http://localhost:3000"
-    echo "  Testing CORS with origin: $origin"
-
-    local response
-    response=$(eval "curl $CURL_OPTS -H 'Origin: $origin' -H 'Access-Control-Request-Method: GET' '${API_URL}/api/v1/health'" 2>&1) || {
-        log_error "CORS request failed"
-        return 2
-    }
-
-    if echo "$response" | grep -q "status"; then
-        log_success "CORS headers present"
-    else
-        log_warning "Could not verify CORS headers"
-    fi
+test_cors() {
+  ((TESTS_TOTAL++))
+  
+  log_section "Testing CORS Configuration"
+  
+  log_info "Checking CORS headers from API"
+  
+  local response
+  local cors_header
+  
+  response=$(curl -s -w "\n" -H "Origin: $WEB_URL" --connect-timeout "$TIMEOUT" -I "$API_URL/api/v1/health")
+  cors_header=$(echo "$response" | grep -i "Access-Control-Allow-Origin" | head -n1)
+  
+  if [ -n "$cors_header" ]; then
+    log_success "CORS header present: $cors_header"
+  else
+    log_warning "No CORS headers detected (may be expected depending on configuration)"
+  fi
 }
 
-check_environment_vars() {
-    log_header "Environment Variables"
-
-    # These should be set in Render dashboard, we can't check from CLI
-    # But we can suggest what to verify
-
-    log_info "Verify these in Render dashboard (Service → Environment):"
-    echo "    ✓ DATABASE_URL is set and starts with 'postgresql://'"
-    echo "    ✓ REDIS_HOST and REDIS_PORT are configured"
-    echo "    ✓ JWT_SECRET is set (min 64 characters)"
-    echo "    ✓ ENCRYPTION_KEY is set (base64-encoded)"
-    echo "    ✓ NODE_ENV is set to 'production'"
-    echo "    ✓ PORT is set to '4000'"
-    echo "    ✓ CORS_ORIGIN matches your domain"
-    echo "    ✓ NEXT_PUBLIC_API_URL points to this API"
-
-    log_skipped "Manual verification required (no CLI access to Render env vars)"
+test_response_times() {
+  ((TESTS_TOTAL++))
+  
+  log_section "Testing Response Times"
+  
+  log_info "Measuring API response time (3 requests)"
+  
+  local total_time=0
+  local count=0
+  
+  for i in {1..3}; do
+    local time=$(curl -s -w "%{time_total}" -o /dev/null --connect-timeout "$TIMEOUT" "$API_URL/api/v1/health")
+    total_time=$(echo "$total_time + $time" | bc)
+    count=$((count + 1))
+  done
+  
+  local avg_time=$(echo "scale=3; $total_time / $count" | bc)
+  
+  log_info "Average response time: ${avg_time}s"
+  
+  if (( $(echo "$avg_time < 1.0" | bc -l) )); then
+    log_success "Response time is good (< 1s)"
+  elif (( $(echo "$avg_time < 3.0" | bc -l) )); then
+    log_warning "Response time is acceptable but slower than ideal (${avg_time}s)"
+  else
+    log_error "Response time is slow (${avg_time}s)"
+  fi
 }
 
-check_database() {
-    log_header "Database Connectivity"
-
-    log_info "Database status from health endpoint:"
-
-    local response
-    response=$(eval "curl $CURL_OPTS '${API_URL}/api/v1/health'" 2>&1) || {
-        log_error "Cannot reach health endpoint"
-        return 2
-    }
-
-    local db_status
-    db_status=$(get_json_field "$response" "database")
-
-    if [ "$db_status" = "connected" ]; then
-        log_success "PostgreSQL is connected"
-        return 0
-    else
-        log_error "PostgreSQL is disconnected: $db_status"
-        log_info "Check in Render dashboard:"
-        echo "      • Postgres service is running"
-        echo "      • DATABASE_URL is correct"
-        echo "      • Network connectivity is allowed"
-        return 2
-    fi
+test_ssl_certificate() {
+  ((TESTS_TOTAL++))
+  
+  log_section "Testing SSL Certificate"
+  
+  log_info "Checking SSL certificate validity"
+  
+  # Extract hostname from URL
+  local hostname=$(echo "$API_URL" | sed -E 's|https?://([^/]+).*|\1|')
+  
+  if [ -z "$hostname" ]; then
+    log_warning "Could not extract hostname from URL"
+    return 0
+  fi
+  
+  # Check certificate expiration
+  local cert_info=$(echo | openssl s_client -servername "$hostname" -connect "$hostname:443" 2>/dev/null | \
+                   openssl x509 -noout -dates 2>/dev/null)
+  
+  if [ $? -eq 0 ]; then
+    log_success "SSL certificate is valid"
+    log_info "$cert_info"
+  else
+    log_warning "Could not verify SSL certificate (openssl may not be available)"
+  fi
 }
 
-check_redis() {
-    log_header "Redis Cache"
+#==============================================================================
+# Environment Variables Check
+#==============================================================================
 
-    log_info "Redis status from health endpoint:"
-
-    local response
-    response=$(eval "curl $CURL_OPTS '${API_URL}/api/v1/health'" 2>&1) || {
-        log_error "Cannot reach health endpoint"
-        return 2
-    }
-
-    local redis_status
-    redis_status=$(get_json_field "$response" "redis")
-
-    if [ "$redis_status" = "connected" ]; then
-        log_success "Redis is connected"
-        return 0
-    else
-        log_warning "Redis is disconnected or not required: $redis_status"
-        log_info "Check in Render dashboard:"
-        echo "      • Redis service is running (if required)"
-        echo "      • REDIS_HOST and REDIS_PORT are correct"
-        echo "      • REDIS_PASSWORD is set (if needed)"
+check_environment_variables() {
+  ((TESTS_TOTAL++))
+  
+  log_section "Checking Environment Variables"
+  
+  local required_vars=("DATABASE_URL" "REDIS_HOST" "JWT_SECRET" "ENCRYPTION_KEY")
+  local missing=0
+  
+  log_info "Checking if environment variables are accessible..."
+  
+  if [ -z "$RENDER_API_SERVICE_ID" ] && [ -z "$RENDER_EXTERNAL_URL" ]; then
+    log_warning "Not running in Render environment (RENDER_* vars not found)"
+    log_info "This is normal if running locally. To check Render vars, run this on Render."
+    return 0
+  fi
+  
+  # If we're in Render, check the vars
+  for var in "${required_vars[@]}"; do
+    if [ -z "${!var}" ]; then
+      log_warning "$var not set"
+      missing=1
     fi
+  done
+  
+  if [ $missing -eq 0 ]; then
+    log_success "All critical environment variables are set"
+  else
+    log_warning "Some environment variables may not be set"
+  fi
 }
 
-check_api_endpoints() {
-    log_header "API Endpoints"
+#==============================================================================
+# Final Report
+#==============================================================================
 
-    local endpoints=(
-        "/api/v1/health"
-        "/api/v1/health/live"
-        "/api/v1/health/ready"
-    )
-
-    for endpoint in "${endpoints[@]}"; do
-        echo -n "  GET ${endpoint}... "
-        local http_code
-        http_code=$(eval "curl $CURL_OPTS -o /dev/null -w '%{http_code}' '${API_URL}${endpoint}'" 2>&1) || {
-            log_error "Request failed"
-            continue
-        }
-
-        if [ "$http_code" = "200" ] || [ "$http_code" = "503" ]; then
-            log_success "HTTP $http_code"
-        else
-            log_warning "HTTP $http_code"
-        fi
-    done
+print_summary() {
+  echo ""
+  log_section "Verification Summary"
+  
+  local pass_rate=0
+  if [ $TESTS_TOTAL -gt 0 ]; then
+    pass_rate=$(echo "scale=1; $TESTS_PASSED * 100 / $TESTS_TOTAL" | bc)
+  fi
+  
+  echo -e "Total Tests:   $TESTS_TOTAL"
+  echo -e "Passed:        ${GREEN}$TESTS_PASSED${NC}"
+  echo -e "Failed:        ${RED}$TESTS_FAILED${NC}"
+  echo -e "Pass Rate:     $pass_rate%"
+  
+  echo ""
+  
+  if [ $TESTS_FAILED -eq 0 ]; then
+    echo -e "${GREEN}All checks passed! Deployment appears healthy.${NC}"
+    return 0
+  else
+    echo -e "${RED}Some checks failed. Please review the errors above.${NC}"
+    return 1
+  fi
 }
 
-check_error_logs() {
-    log_header "Error Rate Check"
-
-    # Most APIs don't expose error rate in public endpoints
-    # This is informational only
-
-    log_info "To check error logs:"
-    echo "    1. Go to Render dashboard → Your API service"
-    echo "    2. Click 'Logs' tab"
-    echo "    3. Look for ERROR and WARN level messages"
-    echo "    4. Check for repeated error patterns"
-
-    log_skipped "Error logs require manual inspection"
-}
-
-show_summary() {
-    log_header "Deployment Verification Summary"
-
-    local total=$((PASSED + WARNINGS + FAILED))
-
-    echo
-    echo -e "  Results:"
-    echo -e "    ${GREEN}✓ Passed: $PASSED${NC}"
-
-    if [ $WARNINGS -gt 0 ]; then
-        echo -e "    ${YELLOW}⚠ Warnings: $WARNINGS${NC}"
-    fi
-
-    if [ $FAILED -gt 0 ]; then
-        echo -e "    ${RED}✗ Failed: $FAILED${NC}"
-    fi
-
-    if [ $SKIPPED -gt 0 ]; then
-        echo -e "    ${YELLOW}⊘ Skipped: $SKIPPED${NC}"
-    fi
-
-    echo -e "    Total tests: $total"
-    echo
-
-    # Determine overall status
-    if [ $FAILED -eq 0 ] && [ $WARNINGS -eq 0 ]; then
-        echo -e "${GREEN}${BOLD}✓ All checks passed! Deployment looks healthy.${NC}"
-        return 0
-    elif [ $FAILED -eq 0 ]; then
-        echo -e "${YELLOW}${BOLD}⚠ Some warnings detected but no critical failures.${NC}"
-        return 1
-    else
-        echo -e "${RED}${BOLD}✗ Critical failures detected. Check the errors above.${NC}"
-        return 2
-    fi
-}
-
-show_next_steps() {
-    log_header "Next Steps"
-
-    if [ $FAILED -eq 0 ]; then
-        echo -e "  ${GREEN}Your deployment is ready!${NC}"
-        echo
-        echo "  ✓ Test authentication:"
-        echo "    curl -X POST ${API_URL}/api/v1/auth/login \\"
-        echo "      -H 'Content-Type: application/json' \\"
-        echo "      -d '{\"email\":\"test@example.com\",\"password\":\"TestPassword123\"}'"
-        echo
-        echo "  ✓ Monitor service:"
-        echo "    Watch logs in Render dashboard → Service → Logs"
-        echo
-        echo "  ✓ Set up monitoring:"
-        echo "    - Configure uptime monitoring (Pingdom, Better Uptime, etc.)"
-        echo "    - Set up alerts for 503/500 errors"
-        echo "    - Monitor database size and redis memory"
-        echo
-        echo "  ✓ Load test data (optional):"
-        echo "    pnpm --filter @imbobi/api seed"
-    else
-        echo -e "  ${RED}Please fix the errors above before proceeding.${NC}"
-        echo
-        echo "  Debugging steps:"
-        echo "  1. Check Render logs: Render dashboard → Service → Logs"
-        echo "  2. Verify environment variables are set correctly"
-        echo "  3. Check database and Redis are running"
-        echo "  4. Review deployment build output"
-        echo "  5. Check network security groups and firewall rules"
-    fi
-}
+#==============================================================================
+# Usage and Help
+#==============================================================================
 
 show_usage() {
-    cat << EOF
-${BOLD}imobi Deployment Verification${NC}
+  cat << EOF
+iMobi Deployment Verification Script
 
-${BOLD}Usage:${NC}
-  ./verify-deployment.sh [API_URL] [INTERACTIVE]
+USAGE:
+  ./verify-deployment.sh [API_URL] [WEB_URL]
 
-${BOLD}Arguments:${NC}
-  API_URL       API endpoint URL (default: http://localhost:4000)
-  INTERACTIVE   Enable interactive mode (true/false, default: false)
-
-${BOLD}Examples:${NC}
-  # Check local development API
+EXAMPLES:
+  # Interactive mode (prompts for URLs)
   ./verify-deployment.sh
 
-  # Check production API
-  ./verify-deployment.sh https://api.imobi.com.br
+  # Automatic mode (with URLs)
+  ./verify-deployment.sh https://api-xxx.render.com https://web-xxx.render.com
 
-  # Check with interactive prompts
-  ./verify-deployment.sh https://api.imobi.com.br true
+ENVIRONMENT VARIABLES:
+  Tested if running on Render:
+  - DATABASE_URL (PostgreSQL)
+  - REDIS_HOST (Redis)
+  - JWT_SECRET (Authentication)
+  - ENCRYPTION_KEY (Data encryption)
 
-${BOLD}Exit Codes:${NC}
-  0 = All checks passed
-  1 = Some warnings
-  2 = Critical failures
+TESTS PERFORMED:
+  1. API health endpoint (/api/v1/health)
+  2. API basic connectivity
+  3. Web service availability
+  4. API authentication (protected endpoint)
+  5. API version endpoint
+  6. CORS configuration
+  7. Response times
+  8. SSL certificate validity
+  9. Environment variables check
 
-${BOLD}What Gets Checked:${NC}
-  ✓ Prerequisites (curl, jq)
-  ✓ API health endpoints
-  ✓ Liveness probe
-  ✓ Readiness probe
-  ✓ Response performance
-  ✓ CORS configuration
-  ✓ Database connectivity
-  ✓ Redis cache status
-  ✓ API endpoints
-  ✓ Error logs
+REQUIREMENTS:
+  - curl (for HTTP requests)
+  - jq (optional, for JSON parsing)
+  - openssl (optional, for SSL certificate checks)
+
+For more information, see DEPLOYMENT_COMMANDS.md
 
 EOF
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
+#==============================================================================
 # Main Execution
-# ─────────────────────────────────────────────────────────────────────────────
+#==============================================================================
 
 main() {
-    # Show header
-    clear || true
-    echo -e "${BOLD}${BLUE}"
-    cat << "EOF"
-╔─────────────────────────────────────────────────────────╗
-│     imobi Render Deployment Verification              │
-│     Comprehensive Health Check & Diagnostics           │
-╚─────────────────────────────────────────────────────────╝
-EOF
-    echo -e "${NC}"
-
-    echo "API URL: $API_URL"
-    echo "Time: $(date +'%Y-%m-%d %H:%M:%S')"
-    echo "Mode: $([ "$INTERACTIVE" = "true" ] && echo "Interactive" || echo "Automated")"
-    echo
-
-    # Run checks
-    check_prerequisites && prompt_continue || {
-        show_summary
-        exit 2
-    }
-
-    check_api_health && prompt_continue
-    check_liveness && prompt_continue
-    check_readiness && prompt_continue
-    check_response_time && prompt_continue
-    check_cors && prompt_continue
-    check_environment_vars && prompt_continue
-    check_database && prompt_continue
-    check_redis && prompt_continue
-    check_api_endpoints && prompt_continue
-    check_error_logs && prompt_continue
-
-    # Show summary and next steps
-    echo
-    show_summary
-    local exit_code=$?
-
-    echo
-    show_next_steps
-
-    exit $exit_code
-}
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Script Entry Point
-# ─────────────────────────────────────────────────────────────────────────────
-
-# Handle help flag
-if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+  echo ""
+  echo -e "${BLUE}"
+  echo "╔════════════════════════════════════════════════════════╗"
+  echo "║     iMobi Deployment Verification Script              ║"
+  echo "║                                                         ║"
+  echo "║  Complete health check for Render deployment          ║"
+  echo "╚════════════════════════════════════════════════════════╝"
+  echo -e "${NC}"
+  
+  # Show help if requested
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     show_usage
     exit 0
-fi
+  fi
+  
+  check_prerequisites
+  prompt_urls
+  validate_urls
+  
+  # Run all tests
+  test_api_connectivity
+  test_api_health
+  test_api_version
+  test_api_auth
+  test_cors
+  test_response_times
+  test_web_health
+  test_ssl_certificate
+  check_environment_variables
+  
+  # Print summary and exit with appropriate code
+  print_summary
+  exit $?
+}
 
-# Run main
+# Run main function
 main "$@"
