@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { managerApi, type EtapaDetalhe, evidenciasApi } from "@/lib/api";
+import { managerApi, type EtapaDetalhe, evidenciasApi } from "@/lib/api.client";
 import { GpsValidationStatus } from "@/components/dashboard/GpsValidationStatus";
 import Image from "next/image";
 

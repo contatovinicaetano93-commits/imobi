@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { Visita } from "@/lib/api";
+import type { Visita } from "@/lib/api.client";
 import { VisitQueue } from "./VisitQueue";
 
 interface DynamicVisitQueueClientProps {

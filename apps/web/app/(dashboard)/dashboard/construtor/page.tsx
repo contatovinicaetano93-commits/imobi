@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { creditoApi, scoreApi, obrasApi, notificacoesApi, type CreditoResumo, type ScoreAtual, type ScoreHistorico, type ObraResumo, type Notificacao } from "@/lib/api";
+import { creditoApi, scoreApi, obrasApi, notificacoesApi, type CreditoResumo, type ScoreAtual, type ScoreHistorico, type ObraResumo, type Notificacao } from "@/lib/api.client";
 import { CreditSimulator } from "@/(dashboard)/_components/CreditSimulator";
 import { ScoreDynamics } from "@/(dashboard)/_components/ScoreDynamics";
 import { NotificationFeed } from "@/(dashboard)/_components/NotificationFeed";

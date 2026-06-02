@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { notificacoesApi, type Notificacao } from "@/lib/api";
+import { notificacoesApi, type Notificacao } from "@/lib/api.client";
 
 type NotificationFeedProps = {
   limit?: number;

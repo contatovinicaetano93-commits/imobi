@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { Visita, ValidacaoForm, ObraResumo } from "@/lib/api";
-import { engenheirosApi } from "@/lib/api";
+import type { Visita, ValidacaoForm, ObraResumo } from "@/lib/api.client";
+import { engenheirosApi } from "@/lib/api.client";
 import { useGeoValidation } from "@imbobi/core";
 import { CheckCircle2, AlertCircle, Camera, Loader2, MapPin, CheckSquare } from "lucide-react";
 

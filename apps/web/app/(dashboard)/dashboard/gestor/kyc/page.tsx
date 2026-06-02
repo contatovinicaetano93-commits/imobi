@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { managerApi, type KycPendente } from "@/lib/api";
+import { managerApi, type KycPendente } from "@/lib/api.client";
 import Link from "next/link";
 
 function formatDate(date: string) {

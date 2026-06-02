@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { kycApi, type KycStatus, type KycDocumento } from "@/lib/api";
+import { kycApi, type KycStatus, type KycDocumento } from "@/lib/api.client";
 
 export default function KycPage() {
   const [status, setStatus] = useState<KycStatus | null>(null);

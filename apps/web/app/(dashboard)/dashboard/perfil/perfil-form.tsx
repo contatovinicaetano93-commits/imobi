@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { usuariosApi, type UsuarioPerfil } from "@/lib/api";
+import { usuariosApi, type UsuarioPerfil } from "@/lib/api.client";
 import { formatarTelefone } from "@imbobi/core";
 
 const schema = z.object({

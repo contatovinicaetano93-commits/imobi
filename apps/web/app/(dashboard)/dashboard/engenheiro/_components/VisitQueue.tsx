@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, List, Calendar } from "lucide-react";
-import type { Visita } from "@/lib/api";
+import type { Visita } from "@/lib/api.client";
 
 interface VisitQueueProps {
   visits: Visita[];

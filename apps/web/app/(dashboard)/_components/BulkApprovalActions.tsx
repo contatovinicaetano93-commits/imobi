@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { managerApi } from "@/lib/api";
+import { managerApi } from "@/lib/api.client";
 
 export type BulkApprovalActionsProps = {
   selectedEtapas: string[];

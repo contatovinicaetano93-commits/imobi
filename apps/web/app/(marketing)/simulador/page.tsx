@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { simuladorApi, type SimuladorResult } from "@/lib/api";
+import { simuladorApi, type SimuladorResult } from "@/lib/api.client";
 
 type FormState = {
   valorEmpreendimento: string;

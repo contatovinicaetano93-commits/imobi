@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { CheckCircle2, Clock, Edit2, Loader2, AlertCircle } from "lucide-react";
-import type { Visita } from "@/lib/api";
-import { engenheirosApi } from "@/lib/api";
+import type { Visita } from "@/lib/api.client";
+import { engenheirosApi } from "@/lib/api.client";
 
 interface QuickActionsProps {
   visita: Visita;

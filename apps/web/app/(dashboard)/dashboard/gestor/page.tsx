@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { managerApi, type ManagerStats } from "@/lib/api";
+import { managerApi, type ManagerStats } from "@/lib/api.client";
 import Link from "next/link";
 
 function brl(v: number) {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { RegionalMetrics, RoiDataPoint, InadimplenciaDataPoint, generateCSVReport } from "./fundos-utils";
-import { CreditoResumo } from "@/lib/api";
+import { CreditoResumo } from "@/lib/api.client";
 
 interface ReportExportProps {
   regional: RegionalMetrics[];

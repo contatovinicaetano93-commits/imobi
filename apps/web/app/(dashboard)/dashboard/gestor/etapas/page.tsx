@@ -3,7 +3,7 @@
 
 
 import { useEffect, useState } from "react";
-import { managerApi, type EtapaPendente } from "@/lib/api";
+import { managerApi, type EtapaPendente } from "@/lib/api.client";
 import { BulkApprovalActions } from "@/(dashboard)/_components/BulkApprovalActions";
 import { AdvancedFilters, type FilterState } from "@/(dashboard)/_components/AdvancedFilters";
 import Link from "next/link";

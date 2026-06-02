@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { managerApi, type EtapaPendente } from "@/lib/api";
+import { managerApi, type EtapaPendente } from "@/lib/api.client";
 import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions";
 import { AdvancedFilters, type FilterState } from "@/components/dashboard/AdvancedFilters";
 import Link from "next/link";

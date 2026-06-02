@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { managerApi, type KycPendente } from "@/lib/api";
+import { managerApi, type KycPendente } from "@/lib/api.client";
 
 import Image from "next/image";
 
