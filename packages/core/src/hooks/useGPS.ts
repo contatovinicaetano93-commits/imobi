@@ -9,18 +9,19 @@ export interface GPSState {
 
 /**
  * Hook para captura de GPS agnóstico (mobile e web)
- * 
+ *
  * No mobile (Expo), deve ser inicializado com:
- * initializeGPS(() => Location.requestForegroundPermissionsAsync(), 
+ * initializeGPS(() => Location.requestForegroundPermissionsAsync(),
  *               () => Location.getCurrentPositionAsync(...))
- * 
+ *
  * Uso:
  * const { getPosition, coordinates, error, isLoading } = useGPS();
  * await getPosition(); // captura coordenadas
  */
 
 let permissionGetter: (() => Promise<{ status: string }>) | null = null;
-let positionGetter: (() => Promise<Coordinates & { accuracy: number }>) | null = null;
+let positionGetter: (() => Promise<Coordinates & { accuracy: number }>) | null =
+  null;
 
 /**
  * Inicializa o hook GPS com implementações específicas da plataforma
@@ -28,7 +29,7 @@ let positionGetter: (() => Promise<Coordinates & { accuracy: number }>) | null =
  */
 export function initializeGPS(
   requestPermissions: () => Promise<{ status: string }>,
-  getPosition: () => Promise<Coordinates & { accuracy: number }>
+  getPosition: () => Promise<Coordinates & { accuracy: number }>,
 ) {
   permissionGetter = requestPermissions;
   positionGetter = getPosition;
@@ -41,7 +42,9 @@ export function useGPS() {
     coordinates: null,
   });
 
-  const getPositionInternal = useCallback(async (): Promise<Coordinates & { accuracy: number }> => {
+  const getPositionInternal = useCallback(async (): Promise<
+    Coordinates & { accuracy: number }
+  > => {
     setState({ isLoading: true, error: null, coordinates: null });
 
     try {
@@ -83,17 +86,22 @@ export function useGPS() {
             },
             (err) => {
               const errorMsg = `Geolocation error: ${err.message}`;
-              setState({ isLoading: false, error: errorMsg, coordinates: null });
+              setState({
+                isLoading: false,
+                error: errorMsg,
+                coordinates: null,
+              });
               reject(new Error(errorMsg));
             },
-            { enableHighAccuracy: true, timeout: 10000 }
+            { enableHighAccuracy: true, timeout: 10000 },
           );
         });
       }
 
       throw new Error("GPS não disponível nesta plataforma");
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Erro ao obter localização";
+      const errorMsg =
+        err instanceof Error ? err.message : "Erro ao obter localização";
       setState({ isLoading: false, error: errorMsg, coordinates: null });
       throw err;
     }
