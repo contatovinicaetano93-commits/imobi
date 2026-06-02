@@ -1,0 +1,117 @@
+# Render Environment Variables Template
+# Copy these variables into Render Dashboard > Environment tab
+# Replace the [...] placeholders with your actual values
+
+# ============================================
+# CORE APPLICATION SETTINGS
+# ============================================
+NODE_ENV=production
+PORT=4000
+RELEASE_VERSION=1.0.0
+
+# ============================================
+# DATABASE (POSTGRESQL)
+# ============================================
+# Format: postgresql://username:password@host:port/database?schema=public&sslmode=require
+# Example: postgresql://user:mypassword@my-db.c4d2rwqz.us-east-1.rds.amazonaws.com:5432/imobi_staging?schema=public&sslmode=require
+DATABASE_URL=postgresql://[USERNAME]:[PASSWORD]@[HOST]:5432/imobi_staging?schema=public&sslmode=require
+
+# ============================================
+# REDIS CONFIGURATION
+# ============================================
+# Option 1: Use REDIS_URL (if your provider supplies it)
+# REDIS_URL=redis://:[PASSWORD]@[HOST]:6379
+
+# Option 2: Use individual host/port/password
+REDIS_HOST=[REDIS_HOST]
+REDIS_PORT=6379
+REDIS_PASSWORD=[REDIS_PASSWORD]
+
+# ============================================
+# JWT & ENCRYPTION KEYS (GENERATE THESE!)
+# ============================================
+# Generate JWT_SECRET: openssl rand -base64 32
+# Min 64 characters required for production
+JWT_SECRET=[GENERATE_WITH_OPENSSL_RAND]
+
+# Generate ENCRYPTION_KEY: openssl rand -base64 32
+ENCRYPTION_KEY=[GENERATE_WITH_OPENSSL_RAND]
+
+# ============================================
+# AWS S3 CONFIGURATION
+# ============================================
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=imobi-staging-assets
+AWS_ACCESS_KEY_ID=[YOUR_AWS_ACCESS_KEY]
+AWS_SECRET_ACCESS_KEY=[YOUR_AWS_SECRET_KEY]
+
+# ============================================
+# CORS CONFIGURATION
+# ============================================
+# Comma-separated list of allowed origins (no spaces)
+# Examples: https://staging.imbobi.com,https://app.imbobi.com
+CORS_ORIGIN=[STAGING_WEB_URL],[STAGING_APP_URL]
+
+# ============================================
+# EMAIL SERVICE (OPTIONAL)
+# ============================================
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=[YOUR_EMAIL@GMAIL.COM]
+SMTP_PASS=[YOUR_APP_PASSWORD]
+SMTP_FROM=noreply@imbobi.com
+
+# ============================================
+# FIREBASE (OPTIONAL - for push notifications)
+# ============================================
+FIREBASE_PROJECT_ID=[YOUR_FIREBASE_PROJECT_ID]
+FIREBASE_PRIVATE_KEY=[YOUR_FIREBASE_PRIVATE_KEY_WITH_ESCAPED_NEWLINES]
+FIREBASE_CLIENT_EMAIL=[firebase@your-project.iam.gserviceaccount.com]
+
+# ============================================
+# SENTRY ERROR TRACKING (OPTIONAL)
+# ============================================
+SENTRY_DSN=https://[KEY]@o[ORG].ingest.sentry.io/[PROJECT]
+
+# ============================================
+# INSTRUCTIONS FOR FILLING IN VALUES
+# ============================================
+
+# DATABASE_URL:
+#   - Get from your RDS/PostgreSQL provider
+#   - Format: postgresql://user:password@host:5432/database?schema=public&sslmode=require
+#   - Test locally before adding to Render
+
+# REDIS:
+#   - Get from your Redis provider (AWS ElastiCache, Railway, etc)
+#   - REDIS_URL is preferred if available
+#   - Or use REDIS_HOST, REDIS_PORT, REDIS_PASSWORD
+
+# JWT_SECRET & ENCRYPTION_KEY:
+#   - Run: openssl rand -base64 32 (run twice)
+#   - Copy the output (should be ~44 characters)
+#   - First output → JWT_SECRET
+#   - Second output → ENCRYPTION_KEY
+#   - Never use the same value twice
+
+# AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY:
+#   - Go to AWS IAM console
+#   - Create new user with S3 permissions
+#   - Generate access key/secret
+#   - Never share or commit these values
+
+# CORS_ORIGIN:
+#   - List all domains that will call the API
+#   - Format: https://domain1.com,https://domain2.com
+#   - Comma-separated, no spaces
+#   - Must use https:// (not http://)
+
+# FIREBASE:
+#   - Download JSON from Firebase console
+#   - Copy private_key (escape newlines as \n)
+#   - Copy client_email
+
+# SENTRY_DSN:
+#   - Get from Sentry project settings
+#   - Format: https://public-key@sentry.io/project-id
+

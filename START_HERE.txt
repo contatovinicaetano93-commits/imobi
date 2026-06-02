@@ -1,0 +1,236 @@
+================================================================================
+RENDER DEPLOYMENT FOR IMOBI WEB FRONTEND - START HERE
+================================================================================
+
+You have received comprehensive deployment guides for the imobi Next.js web
+frontend to Render.
+
+CHOOSE YOUR PATH:
+
+================================================================================
+Option 1: I want the QUICK START (5 minutes)
+================================================================================
+
+1. Open: RENDER_QUICK_REFERENCE.md
+2. Use the settings table to configure Render service
+3. Deploy to Render (3-5 min)
+4. Verify using the checklist
+Total time: 10-15 minutes
+
+================================================================================
+Option 2: I want COMPLETE INSTRUCTIONS (20 minutes)
+================================================================================
+
+1. Open: RENDER_DEPLOYMENT_README.md (overview)
+2. Open: RENDER_DEPLOYMENT_WEB_GUIDE.md (main guide)
+3. Follow step-by-step from sections 1-9
+4. Verify deployment using section 10
+Total time: 20-25 minutes
+
+================================================================================
+Option 3: I want the OVERVIEW FIRST (3 minutes)
+================================================================================
+
+1. Open: RENDER_DEPLOYMENT_INDEX.md
+2. Read the "Key Information" section
+3. Choose your learning path
+4. Follow selected guide
+Total time: 5-30 minutes depending on path
+
+================================================================================
+KEY FACTS (KNOW BEFORE YOU START)
+================================================================================
+
+What you're deploying:
+  - Next.js 14 web app
+  - Staging environment
+  - Branch: claude/happy-goldberg-AFQPj
+
+Where it's going:
+  - Render.com (cloud deployment platform)
+  - Region: us-east-1
+  - Instance: Free tier (or $7/month)
+
+Expected result:
+  - Web app at: https://imbobi-web-staging.onrender.com
+  - Landing page, registration, login working
+  - API calls to: https://api.staging.imbobi.com/api/v1
+
+Setup time:
+  - Reading: 3-20 minutes
+  - Deployment: 5-10 minutes
+  - Verification: 5 minutes
+  - Total: 15-30 minutes
+
+Cost:
+  - Free tier works for staging
+  - Optional upgrade to $7/month for better performance
+  - No hidden costs
+
+================================================================================
+CRITICAL INFO YOU NEED
+================================================================================
+
+GitHub Repository:  contatovinicaetano93-commits/imobi
+Branch:             claude/happy-goldberg-AFQPj
+Build Command:      pnpm build
+Start Command:      pnpm --filter @imbobi/web start
+
+Environment Variables (exactly 2, don't skip any):
+  NEXT_PUBLIC_API_URL = https://api.staging.imbobi.com/api/v1
+  NODE_ENV = staging
+
+Service Name:       imbobi-web-staging
+Region:             us-east-1
+Instance:           Free (or Starter)
+
+================================================================================
+DOCUMENTATION FILES
+================================================================================
+
+PRIMARY (Start with one of these):
+  ✓ RENDER_DEPLOYMENT_README.md - Overview (read first)
+  ✓ RENDER_QUICK_REFERENCE.md - One-page cheat sheet (fastest)
+  ✓ RENDER_DEPLOYMENT_INDEX.md - Navigation guide
+
+MAIN GUIDE:
+  ✓ RENDER_DEPLOYMENT_WEB_GUIDE.md - Complete instructions (28KB)
+
+SUPPORTING:
+  ✓ RENDER_DEPLOYMENT_CHECKLIST.md - Verification checklist
+  ✓ RENDER_QUICK_START.md - 5-minute setup
+  ✓ RENDER_STEP_BY_STEP.md - Visual guide
+  ✓ RENDER_DEPLOYMENT_SETUP.md - Detailed setup
+
+REFERENCE:
+  ✓ RENDER_CONFIG_REFERENCE.md - Configuration reference
+  ✓ RENDER_TECHNICAL_CONFIG.md - Technical details
+
+================================================================================
+STEP-BY-STEP OVERVIEW (Non-technical)
+================================================================================
+
+Step 1: UNDERSTAND (5 min)
+  - Read RENDER_DEPLOYMENT_README.md
+  - Understand what you're doing
+  - Know what you need
+
+Step 2: PREPARE (2 min)
+  - Have GitHub credentials ready
+  - Ensure you have Render account (free)
+  - Have environment variables ready (see above)
+
+Step 3: CREATE SERVICE (10 min)
+  - Go to render.com
+  - Create Web Service
+  - Connect GitHub repo
+  - Set branch and commands
+  - Add environment variables
+
+Step 4: DEPLOY (5 min)
+  - Click "Create" button
+  - Watch build logs
+  - Wait for "Service is live" message
+
+Step 5: VERIFY (5 min)
+  - Visit the web URL
+  - Test landing page
+  - Test registration link
+  - Check API calls
+  - See RENDER_DEPLOYMENT_CHECKLIST.md
+
+TOTAL TIME: 25-30 minutes
+
+================================================================================
+VERIFICATION CHECKLIST
+================================================================================
+
+After deployment, verify these work:
+
+□ Can access https://imbobi-web-staging.onrender.com
+□ Landing page loads with hero section
+□ Click "Cadastro" link → goes to /cadastro
+□ Registration form visible
+□ Go to /dashboard → redirects to /login
+□ Login form visible
+□ Open DevTools (F12) → Network tab
+□ Try to login
+□ Verify requests go to: https://api.staging.imbobi.com/api/v1
+□ No CORS errors in console
+
+If all checked: SUCCESS! Your web app is deployed.
+
+================================================================================
+COMMON QUESTIONS
+================================================================================
+
+Q: What if I have no technical background?
+A: Use RENDER_DEPLOYMENT_WEB_GUIDE.md - it's written for non-technical users
+
+Q: How fast can I deploy?
+A: 15 minutes with RENDER_QUICK_REFERENCE.md
+
+Q: Do I need database/Redis setup?
+A: NO - those are for the API only. Just deploy the web app.
+
+Q: How much will it cost?
+A: Free for testing ($0). Optional $7/month for better staging performance.
+
+Q: What if deployment fails?
+A: See "Troubleshooting" section in RENDER_DEPLOYMENT_WEB_GUIDE.md
+
+Q: How do I deploy updates?
+A: Just push code to the branch - Render auto-deploys (or use Redeploy button)
+
+Q: Can I use a custom domain?
+A: Yes - see "Domain Configuration" in RENDER_DEPLOYMENT_WEB_GUIDE.md
+
+================================================================================
+WHAT TO DO NOW
+================================================================================
+
+1. Choose your learning style:
+   - Visual learner? → RENDER_DEPLOYMENT_WEB_GUIDE.md
+   - Experienced? → RENDER_QUICK_REFERENCE.md
+   - Want overview first? → RENDER_DEPLOYMENT_README.md
+
+2. Read the chosen guide
+
+3. Create Render Web Service following instructions
+
+4. Wait for "Service is live" (3-5 min)
+
+5. Verify using RENDER_DEPLOYMENT_CHECKLIST.md
+
+6. Done! Your web app is live.
+
+================================================================================
+NEED HELP?
+================================================================================
+
+Documentation Issues?
+  - Check RENDER_DEPLOYMENT_WEB_GUIDE.md for more detail
+  - See RENDER_DEPLOYMENT_INDEX.md for navigation help
+
+Deployment Issues?
+  - Check RENDER_DEPLOYMENT_WEB_GUIDE.md Troubleshooting section
+  - Visit https://status.render.com to check service status
+
+Application Issues?
+  - Check browser DevTools (F12)
+  - Review project CLAUDE.md
+  - Check Render logs
+
+Still Stuck?
+  - Render Docs: https://render.com/docs
+  - Next.js Docs: https://nextjs.org/docs
+  - Project Guide: CLAUDE.md
+
+================================================================================
+
+NOW: Open one of these files:
+  1. RENDER_DEPLOYMENT_README.md (start here)
+  2. RENDER_QUICK_REFERENCE.md (fastest)
+  3. RENDER_DEPLOYMENT_WEB_GUIDE.md (most complete)
+
+Good luck!

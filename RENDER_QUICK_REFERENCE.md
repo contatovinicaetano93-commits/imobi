@@ -1,151 +1,138 @@
-# imobi — Render Deployment Quick Reference
+# Render Web Deployment — Quick Reference Card
 
-**Quick setup checklist and command reference for PostgreSQL + Redis on Render**
+**For:** imobi Next.js Web Frontend  
+**Branch:** claude/happy-goldberg-AFQPj  
+**Created:** June 2, 2026
 
 ---
 
-## 1-Minute Setup Summary
+## 5-Minute Setup Summary
+
+### Service Settings
+| Field | Value |
+|-------|-------|
+| Service Name | `imbobi-web-staging` |
+| GitHub Repo | `contatovinicaetano93-commits/imobi` |
+| Branch | `claude/happy-goldberg-AFQPj` |
+| Build Command | `pnpm build` |
+| Start Command | `pnpm --filter @imbobi/web start` |
+| Region | `us-east-1` |
+| Instance | Free tier (or Starter $7/month) |
+
+### Environment Variables (Required)
+```
+NEXT_PUBLIC_API_URL = https://api.staging.imbobi.com/api/v1
+NODE_ENV = staging
+```
+
+### Expected Result
+```
+✓ Web app live at: https://imbobi-web-staging.onrender.com
+✓ Landing page loads
+✓ /cadastro works
+✓ /dashboard redirects to /login
+✓ API calls go to api.staging.imbobi.com
+```
+
+---
+
+## Verification Checklist
+
+After deployment completes, check:
+
+```
+□ "Service is live" message appears in Render logs
+□ Can access https://imbobi-web-staging.onrender.com (landing page)
+□ Landing page shows hero section and CTA buttons
+□ Click "Cadastro" button → loads /cadastro (registration form)
+□ Manually visit /dashboard → redirects to /login (shows login form)
+□ Open DevTools (F12) → Network tab → try login
+  - Verify requests to https://api.staging.imbobi.com/api/v1
+  - Response should be 200/201 or 400/401 (not connection error)
+```
+
+---
+
+## Deployment Commands (Local Testing)
 
 ```bash
-# 1. Create PostgreSQL 14+ on Render
-# 2. Create Redis 7+ on Render
-# 3. Copy connection strings to Render environment variables
-# 4. Deploy API service to Render
-# 5. Run migrations from API service shell
+# Full build (monorepo)
+pnpm build
+
+# Start web app only
+cd apps/web && npm start
+
+# Or with pnpm workspace filter
+pnpm --filter @imbobi/web start
 ```
 
 ---
 
-## Connection Strings
+## Common Issues & Fixes
 
-### PostgreSQL
-```
-postgresql://imbobi_staging:password@dpg-xxx.postgres.render.com:5432/imobi_staging
-```
-**Render Variable**: `DATABASE_URL`
-
-### Redis
-```
-redis://:cA3xL9pK2mQ5vN1x@dpg-xxx.redis.render.com:6379
-```
-**Render Variables**:
-- `REDIS_HOST` = `dpg-xxx.redis.render.com`
-- `REDIS_PORT` = `6379`
-- `REDIS_PASSWORD` = `cA3xL9pK2mQ5vN1x`
+| Issue | Fix |
+|-------|-----|
+| Blank page / 404 | Check build logs. Try alt start: `cd apps/web && npm start` |
+| `pnpm: command not found` | Use alt start command above |
+| API calls fail | Verify `NEXT_PUBLIC_API_URL` in Env Variables |
+| Slow builds (>10 min) | Upgrade to Starter instance tier |
+| Module not found errors | Add env var: `PNPM_VERSION=9.0.0` and redeploy |
 
 ---
 
-## Environment Variables (Render Dashboard)
+## Deploy Updates
 
-**API Service → Environment**
-
-| Variable | Value | Generate/Source |
-|----------|-------|---|
-| `NODE_ENV` | `staging` | Manual |
-| `PORT` | `4000` | Manual |
-| `DATABASE_URL` | `postgresql://...` | From Render PostgreSQL |
-| `REDIS_HOST` | `dpg-xxx.redis.render.com` | From Render Redis |
-| `REDIS_PORT` | `6379` | From Render Redis |
-| `REDIS_PASSWORD` | `...` | From Render Redis |
-| `JWT_SECRET` | _(64+ char base64)_ | `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
-| `ENCRYPTION_KEY` | _(32 byte base64)_ | `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
-| `CORS_ORIGIN` | `https://web-staging.imobi.com` | Manual |
-| `AWS_REGION` | `us-east-1` | Manual |
-| `AWS_ACCESS_KEY_ID` | `...` | AWS IAM |
-| `AWS_SECRET_ACCESS_KEY` | `...` | AWS IAM |
-| `AWS_S3_BUCKET` | `imobi-staging-assets` | Manual |
-
----
-
-## Commands (After API Service Deployed)
-
-### Run Migrations
+**If auto-deploy enabled:**
 ```bash
-# Via Render service shell or deploy command
-DATABASE_URL="postgresql://..." pnpm db:migrate
+git push origin claude/happy-goldberg-AFQPj
+# → Render auto-deploys (3-5 min)
 ```
 
-### Generate Prisma Client
-```bash
-pnpm db:generate
-```
+**If auto-deploy disabled:**
+1. Render dashboard → Select service
+2. Click "Redeploy" button
+3. Wait for "Service is live"
 
-### Open Prisma Studio
-```bash
-DATABASE_URL="postgresql://..." pnpm prisma:studio
-```
-
-### Seed Test Data (Optional)
-```bash
-pnpm --filter @imbobi/api seed
-```
+**Hard refresh in browser:** Ctrl+Shift+R (or Cmd+Shift+R on Mac)
 
 ---
 
-## Verification
+## URLs
 
-### Check API Health
-```bash
-curl https://api-staging.imobi.com/health
-```
-
-### Test Database Connection
-```bash
-psql postgresql://imbobi_staging:password@dpg-xxx.postgres.render.com:5432/imobi_staging -c "\dt"
-```
-
-### View API Logs
-Render Dashboard → Service → Logs → Search for:
-- `"Database connected"`
-- `"Redis connected"`
-- Connection errors
+| Service | URL |
+|---------|-----|
+| Web Frontend | `https://imbobi-web-staging.onrender.com` |
+| Landing Page | `https://imbobi-web-staging.onrender.com` |
+| Registration | `https://imbobi-web-staging.onrender.com/cadastro` |
+| Login | `https://imbobi-web-staging.onrender.com/login` |
+| API | `https://api.staging.imbobi.com/api/v1` |
+| Render Dashboard | `https://dashboard.render.com` |
 
 ---
 
-## Tables Created
+## Scaling
 
-```
-Usuario, SessaoToken, UsuarioFcmToken
-Credito, LiberacaoParcela
-Obra, EtapaObra, EvidenciaEtapa
-KycDocumento
-Notificacao
-ScoreHistorico
-JobFalha
-AnalyticsEvent
-```
+| Need | Action |
+|------|--------|
+| Better performance | Upgrade instance to Starter ($7/month) |
+| Check metrics | Dashboard → "Metrics" tab |
+| Rollback broken deploy | Dashboard → "Deployments" → click previous → "Redeploy" |
+| Disable auto-deploy | Dashboard → "Settings" → toggle "Auto-Deploy" to No |
 
 ---
 
-## Troubleshooting
+## Next Steps
 
-| Problem | Check |
-|---------|-------|
-| Connection refused | Database URL correct? Database available? |
-| Migration failed | USER has CREATE privilege? DATABASE_URL set? |
-| Redis timeout | REDIS_HOST/PORT/PASSWORD correct? Instance available? |
-| Out of memory | Increase Redis/PostgreSQL instance size |
-
----
-
-## Files Referenced
-
-- Schema: `/services/api/prisma/schema.prisma`
-- Migrations: `/services/api/prisma/migrations/`
-- App Module: `/services/api/src/app.module.ts`
-- Config: `/services/api/.env.example`
+1. ✓ Create Web Service on Render (follow main guide)
+2. ✓ Verify all 5 checks above pass
+3. Test critical user flows:
+   - [ ] Sign up / registration
+   - [ ] Login
+   - [ ] View dashboard
+4. Monitor first 24 hours in Render dashboard
+5. (Optional) Configure custom domain `staging.imbobi.com`
 
 ---
 
-## Important Links
-
-- Full Guide: `RENDER_DEPLOYMENT_SETUP.md`
-- Render Dashboard: https://dashboard.render.com
-- Prisma Docs: https://www.prisma.io/docs/
-- Render PostgreSQL: https://render.com/docs/databases
-- Render Redis: https://render.com/docs/redis
-
----
-
-**Created**: 2026-06-02  
-**For**: imobi Staging Deployment on Render
+**Full Guide:** See `RENDER_DEPLOYMENT_WEB_GUIDE.md`  
+**Project Info:** See `CLAUDE.md`
