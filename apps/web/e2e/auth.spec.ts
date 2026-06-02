@@ -1,14 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page, APIRequestContext, BrowserContext } from '@playwright/test';
 
 const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
 const API_URL = process.env.PLAYWRIGHT_TEST_API_URL || 'http://localhost:4000';
 
 test.describe('Auth Flow E2E', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }: { page: Page }) => {
     await page.goto(`${BASE_URL}/`);
   });
 
-  test('should complete sign up flow', async ({ page, request }) => {
+  test('should complete sign up flow', async ({ page, request }: { page: Page; request: APIRequestContext }) => {
     // Step 1: Navigate to signup
     await page.click('text=Criar conta');
     await page.waitForURL('**/cadastro');
@@ -31,7 +31,7 @@ test.describe('Auth Flow E2E', () => {
     await expect(page).toHaveURL(/(login|verificar-email)/);
   });
 
-  test('should complete login flow', async ({ page, context }) => {
+  test('should complete login flow', async ({ page, context }: { page: Page; context: BrowserContext }) => {
     // Pre-registered test user
     const testEmail = 'test@imbobi.com.br';
     const testPassword = 'Test123456!';
@@ -56,7 +56,7 @@ test.describe('Auth Flow E2E', () => {
     expect(authCookie).toBeTruthy();
   });
 
-  test('should access simulator after login', async ({ page }) => {
+  test('should access simulator after login', async ({ page }: { page: Page }) => {
     const testEmail = 'test@imbobi.com.br';
     const testPassword = 'Test123456!';
 
@@ -87,7 +87,7 @@ test.describe('Auth Flow E2E', () => {
     await expect(resultLocator).toBeVisible();
   });
 
-  test('should logout', async ({ page, context }) => {
+  test('should logout', async ({ page, context }: { page: Page; context: BrowserContext }) => {
     const testEmail = 'test@imbobi.com.br';
     const testPassword = 'Test123456!';
 
@@ -113,7 +113,7 @@ test.describe('Auth Flow E2E', () => {
     expect(authCookie).toBeFalsy();
   });
 
-  test('should handle API errors gracefully', async ({ page }) => {
+  test('should handle API errors gracefully', async ({ page }: { page: Page }) => {
     // Try login with invalid credentials
     await page.goto(`${BASE_URL}/login`);
     await page.fill('input[name="email"]', 'invalid@example.com');
@@ -129,7 +129,7 @@ test.describe('Auth Flow E2E', () => {
     await expect(page).toHaveURL('**/login');
   });
 
-  test('should verify API health check', async ({ request }) => {
+  test('should verify API health check', async ({ request }: { request: APIRequestContext }) => {
     // Test API health endpoint
     const response = await request.get(`${API_URL}/api/v1/health`);
     expect(response.status()).toBe(200);
@@ -140,7 +140,7 @@ test.describe('Auth Flow E2E', () => {
 });
 
 test.describe('Session Management E2E', () => {
-  test('should maintain session across navigation', async ({ page }) => {
+  test('should maintain session across navigation', async ({ page }: { page: Page }) => {
     const testEmail = 'test@imbobi.com.br';
     const testPassword = 'Test123456!';
 
