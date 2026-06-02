@@ -72,9 +72,7 @@ export function useGPS() {
       const nav = (globalThis as any).navigator;
       if (typeof nav !== "undefined" && nav.geolocation) {
         return new Promise<Coordinates & { accuracy: number }>(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (resolve, reject) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             nav.geolocation.getCurrentPosition(
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (pos: any) => {
