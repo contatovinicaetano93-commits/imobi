@@ -55,7 +55,7 @@ export class AuthController {
     const result = await this.auth.registrar(body as never);
     this.setRefreshTokenCookie(res, result.refreshToken);
     return res.send({
-      usuario: result.usuario,
+      ...result.usuario,
       access_token: result.accessToken,
     });
   }

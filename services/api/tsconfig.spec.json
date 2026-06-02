@@ -1,7 +1,9 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist/test"
+    "outDir": "./dist/test",
+    "skipLibCheck": true,
+    "lib": ["ES2021"]
   },
   "include": [
     "src/**/*",

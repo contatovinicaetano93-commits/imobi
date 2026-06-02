@@ -9,8 +9,10 @@ describe("Auth E2E - Comprehensive Suite", () => {
   let prisma: PrismaService;
   const baseTestUser = {
     email: `auth-test-${Date.now()}@imbobi.com`,
-    password: "Senha@123",
+    senha: "Senha@123",
     nome: "Test User",
+    cpf: "12345678909",
+    telefone: "11999999999",
   };
 
   beforeAll(async () => {
@@ -109,7 +111,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email: `test-${Date.now()}@imbobi.com`,
-          password: "123",
+          senha: "123",
           nome: "Test User",
         })
         .expect(400);
@@ -137,7 +139,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email,
-          password: "Senha@456",
+          senha: "Senha@456",
           nome: "Second User",
         })
         .expect(409);
@@ -173,7 +175,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
       testEmail = `login-test-${Date.now()}@imbobi.com`;
       await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
         email: testEmail,
-        password: testPassword,
+        senha: testPassword,
         nome: "Login Test User",
       });
     });
@@ -183,7 +185,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/login")
         .send({
           email: testEmail,
-          password: testPassword,
+          senha: testPassword,
         })
         .expect(200);
 
@@ -199,7 +201,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/login")
         .send({
           email: testEmail,
-          password: "WrongPassword@123",
+          senha: "WrongPassword@123",
         })
         .expect(401);
 
@@ -211,7 +213,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/login")
         .send({
           email: "nonexistent@imbobi.com",
-          password: testPassword,
+          senha: testPassword,
         })
         .expect(401);
 
@@ -222,7 +224,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
         .send({
-          password: testPassword,
+          senha: testPassword,
         })
         .expect(400);
 
@@ -245,7 +247,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/login")
         .send({
           email: testEmail,
-          password: testPassword,
+          senha: testPassword,
         })
         .expect(200);
 
@@ -259,7 +261,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/login")
         .send({
           email: testEmail,
-          password: testPassword,
+          senha: testPassword,
         })
         .expect(200);
 
@@ -284,7 +286,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
       testEmail = `refresh-test-${Date.now()}@imbobi.com`;
       await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
         email: testEmail,
-        password: testPassword,
+        senha: testPassword,
         nome: "Refresh Test User",
       });
 
@@ -292,7 +294,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/login")
         .send({
           email: testEmail,
-          password: testPassword,
+          senha: testPassword,
         });
 
       refreshToken = loginRes.body.refreshToken;
@@ -343,7 +345,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
       testEmail = `logout-test-${Date.now()}@imbobi.com`;
       await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
         email: testEmail,
-        password: testPassword,
+        senha: testPassword,
         nome: "Logout Test User",
       });
 
@@ -351,7 +353,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/login")
         .send({
           email: testEmail,
-          password: testPassword,
+          senha: testPassword,
         });
 
       refreshToken = loginRes.body.refreshToken;
