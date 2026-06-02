@@ -7,6 +7,7 @@ import { CacheModule } from "@nestjs/cache-manager";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { CacheInterceptor } from "@nestjs/cache-manager";
 import { CacheService } from "./cache.service";
+import { CoreModule } from "./core/core.module";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsuariosModule } from "./modules/usuarios/usuarios.module";
@@ -23,15 +24,14 @@ import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
-import { ScoreUpdateWorker } from "./workers/score-update.worker";
-import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { HealthController } from "./common/health.controller";
 import { HealthService } from "./common/health.service";
 import { CsrfService } from "./common/csrf.service";
 import { EncryptionService } from "./common/encryption.service";
 import { LoggerService } from "./common/logger.service";
 import { StructuredLoggingInterceptor } from "./common/interceptors/structured-logging.interceptor";
-import { QUEUE_LIBERACAO } from "./common/constants";
+import { ScoreUpdateWorker } from "./workers/score-update.worker";
+import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 
 @Module({
   imports: [
@@ -55,22 +55,7 @@ import { QUEUE_LIBERACAO } from "./common/constants";
         port: Number(process.env["REDIS_PORT"] ?? 6379),
       },
     }),
-    BullModule.registerQueue(
-      {
-        name: QUEUE_LIBERACAO,
-        defaultJobOptions: {
-          attempts: 3,
-          backoff: {
-            type: "exponential",
-            delay: 2000,
-          },
-          removeOnComplete: true,
-        },
-      },
-      {
-        name: "score-update",
-      },
-    ),
+    CoreModule,
     ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
@@ -96,8 +81,6 @@ import { QUEUE_LIBERACAO } from "./common/constants";
     EncryptionService,
     HealthService,
     LoggerService,
-    ScoreUpdateWorker,
-    LiberacaoParcelaWorker,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
