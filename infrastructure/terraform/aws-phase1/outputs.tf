@@ -144,9 +144,9 @@ output "environment_summary" {
     environment = var.environment
     region      = var.aws_region
     services = {
-      rds_endpoint    = aws_db_instance.postgres.address
-      redis_endpoint  = aws_elasticache_cluster.redis.cache_nodes[0].address
-      ses_from_email  = aws_sesv2_email_identity.imbobi.email_address
+      rds_endpoint   = aws_db_instance.postgres.address
+      redis_endpoint = aws_elasticache_cluster.redis.cache_nodes[0].address
+      ses_from_email = aws_sesv2_email_identity.imbobi.email_address
     }
     free_tier_limits = {
       rds_monthly_hours     = 750

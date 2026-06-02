@@ -37,14 +37,14 @@ resource "aws_security_group" "rds" {
 }
 
 resource "aws_db_instance" "postgres" {
-  identifier            = "imbobi-postgres"
-  engine               = "postgres"
-  engine_version       = "15.4"
-  instance_class       = "db.t2.micro" # Free tier eligible
-  allocated_storage    = 20            # Free tier: 20 GB
-  storage_type         = "gp2"
-  storage_encrypted    = true
-  skip_final_snapshot  = false
+  identifier                = "imbobi-postgres"
+  engine                    = "postgres"
+  engine_version            = "15.4"
+  instance_class            = "db.t2.micro" # Free tier eligible
+  allocated_storage         = 20            # Free tier: 20 GB
+  storage_type              = "gp2"
+  storage_encrypted         = true
+  skip_final_snapshot       = false
   final_snapshot_identifier = "imbobi-postgres-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
   db_name  = var.db_name
@@ -126,7 +126,7 @@ resource "aws_elasticache_cluster" "redis" {
   transit_encryption_enabled = false # Free tier limitation
   auth_token_enabled         = false # Free tier limitation
 
-  maintenance_window = "sun:03:00-sun:04:00"
+  maintenance_window     = "sun:03:00-sun:04:00"
   notification_topic_arn = aws_sns_topic.elasticache_notifications.arn
 
   tags = {
@@ -167,8 +167,8 @@ resource "aws_sesv2_email_identity" "imbobi" {
 
 # Request production access quota (for emails beyond 50k/day in future)
 resource "aws_ses_account_sending_limit_update" "imbobi" {
-  max_send_rate       = 1
-  max_24_hour_send    = 50000 # Free tier limit
+  max_send_rate    = 1
+  max_24_hour_send = 50000 # Free tier limit
 }
 
 # CloudWatch Alarms for SES bounce rates
@@ -251,46 +251,3 @@ resource "aws_cloudwatch_log_group" "imbobi" {
   }
 }
 
-# ────────────────────────────────────────────────────────
-# Outputs for connection strings
-# ────────────────────────────────────────────────────────
-output "rds_endpoint" {
-  description = "RDS PostgreSQL endpoint"
-  value       = aws_db_instance.postgres.endpoint
-}
-
-output "rds_database_url" {
-  description = "PostgreSQL connection URL (DATABASE_URL)"
-  value       = "postgresql://${aws_db_instance.postgres.username}:****@${aws_db_instance.postgres.address}:5432/${aws_db_instance.postgres.db_name}"
-  sensitive   = true
-}
-
-output "elasticache_endpoint" {
-  description = "ElastiCache Redis endpoint"
-  value       = aws_elasticache_cluster.redis.cache_nodes[0].address
-}
-
-output "elasticache_port" {
-  description = "ElastiCache Redis port"
-  value       = aws_elasticache_cluster.redis.port
-}
-
-output "elasticache_url" {
-  description = "Redis connection URL (REDIS_URL)"
-  value       = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:${aws_elasticache_cluster.redis.port}"
-}
-
-output "ses_from_email" {
-  description = "SES verified email for sending"
-  value       = aws_sesv2_email_identity.imbobi.email_address
-}
-
-output "ses_region" {
-  description = "AWS region where SES is configured"
-  value       = var.aws_region
-}
-
-output "cloudwatch_log_group" {
-  description = "CloudWatch log group for monitoring"
-  value       = aws_cloudwatch_log_group.imbobi.name
-}
