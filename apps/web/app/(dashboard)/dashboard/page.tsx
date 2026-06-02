@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { obrasApi, creditoApi } from "@/lib/api";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "@imbobi/core/src/index.server";
 
 export const metadata: Metadata = { title: "Dashboard — imbobi" };
 
