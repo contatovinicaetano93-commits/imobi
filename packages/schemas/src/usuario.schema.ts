@@ -83,7 +83,7 @@ export const CadastroUsuarioSchema = z.object({
 
 export const LoginSchema = z.object({
   email: z.string().email(),
-  senha: z.string().min(1),
+  senha: z.string().min(8, "Mínimo 8 caracteres"),
 });
 
 export const UpdateUsuarioSchema = CadastroUsuarioSchema.omit({

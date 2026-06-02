@@ -82,31 +82,49 @@ export class AuthService {
       throw new UnauthorizedException("Token inválido.");
     }
 
-    const sessao = await this.prisma.sessaoToken.findFirst({
-      where: { usuarioId: decoded.sub },
-      orderBy: { criadoEm: "desc" },
-    });
-    if (!sessao || sessao.revogadoEm || sessao.expiresAt < new Date()) {
-      throw new UnauthorizedException("Sessão inválida ou expirada.");
-    }
+    return this.prisma.$transaction(async (tx) => {
+      const sessao = await tx.sessaoToken.findFirst({
+        where: { usuarioId: decoded.sub },
+        orderBy: { criadoEm: "desc" },
+      });
+      if (!sessao || sessao.revogadoEm || sessao.expiresAt < new Date()) {
+        throw new UnauthorizedException("Sessão inválida ou expirada.");
+      }
 
-    let decryptedToken: string;
-    try {
-      decryptedToken = this.encryption.decrypt(sessao.refreshToken);
-    } catch (error) {
-      throw new UnauthorizedException(
-        "Sessão inválida: token corrompido ou tamperado.",
+      let decryptedToken: string;
+      try {
+        decryptedToken = this.encryption.decrypt(sessao.refreshToken);
+      } catch (error) {
+        throw new UnauthorizedException(
+          "Sessão inválida: token corrompido ou tamperado.",
+        );
+      }
+      if (decryptedToken !== refreshToken) {
+        throw new UnauthorizedException("Token não corresponde.");
+      }
+
+      await tx.sessaoToken.update({
+        where: { sessionId: sessao.sessionId },
+        data: { revogadoEm: new Date() },
+      });
+
+      const newAccessToken = this.jwt.sign({ sub: sessao.usuarioId }, { expiresIn: "15m" });
+      const newRefreshToken = this.jwt.sign(
+        { sub: sessao.usuarioId, type: "refresh" },
+        { expiresIn: "7d" },
       );
-    }
-    if (decryptedToken !== refreshToken) {
-      throw new UnauthorizedException("Token não corresponde.");
-    }
+      const encryptedToken = this.encryption.encrypt(newRefreshToken);
 
-    await this.prisma.sessaoToken.update({
-      where: { sessionId: sessao.sessionId },
-      data: { revogadoEm: new Date() },
+      await tx.sessaoToken.create({
+        data: {
+          usuarioId: sessao.usuarioId,
+          refreshToken: encryptedToken,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+
+      return { accessToken: newAccessToken, refreshToken: newRefreshToken };
     });
-    return this.gerarTokens(sessao.usuarioId);
   }
 
   async revogarToken(refreshToken: string) {

@@ -7,6 +7,7 @@ import {
   Body,
   UseGuards,
   ForbiddenException,
+  BadRequestException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -21,7 +22,7 @@ import {
   UsuarioAtual,
   type UsuarioAtual as IUsuario,
 } from "../../common/decorators/usuario-atual.decorator";
-import type { UploadEvidenciaInput } from "@imbobi/schemas";
+import { UploadEvidenciaSchema, type UploadEvidenciaInput } from "@imbobi/schemas";
 
 @ApiTags("evidencias")
 @ApiBearerAuth()
@@ -32,19 +33,23 @@ export class EvidenciasController {
 
   @Post()
   upload(@UsuarioAtual() u: IUsuario, @Body() body: any) {
-    const input: UploadEvidenciaInput = {
-      etapaId: body.etapaId,
-      latitude: Number(body.latitude),
-      longitude: Number(body.longitude),
-      accuracyMetros: Number(body.accuracyMetros),
-      timestampCaptura: body.timestampCaptura || new Date().toISOString(),
-      descricao: body.descricao || "",
-    };
+    try {
+      const input: UploadEvidenciaInput = UploadEvidenciaSchema.parse({
+        etapaId: body.etapaId,
+        latitude: Number(body.latitude),
+        longitude: Number(body.longitude),
+        accuracyMetros: Number(body.accuracyMetros),
+        timestampCaptura: body.timestampCaptura || new Date().toISOString(),
+        descricao: body.descricao,
+      });
 
-    const buffer = Buffer.from(body.imageBase64 || "", "base64");
-    const mimetype = body.mimeType || "image/jpeg";
+      const buffer = Buffer.from(body.imageBase64 || "", "base64");
+      const mimetype = body.mimeType || "image/jpeg";
 
-    return this.evidencias.upload(u.id, input, buffer, mimetype);
+      return this.evidencias.upload(u.id, input, buffer, mimetype);
+    } catch (error: any) {
+      throw new BadRequestException(error.errors?.[0]?.message || "Dados inválidos");
+    }
   }
 
   @Get("etapa/:etapaId")
@@ -55,7 +60,7 @@ export class EvidenciasController {
   @Patch(":id/validar")
   @ApiOperation({
     summary: "Validar evidência",
-    description: "Aprova ou rejeita uma foto de evidência",
+    description: "Aprova ou rejeita uma foto de evidência (ADMIN/GESTOR_OBRA apenas)",
   })
   @ApiParam({ name: "id", description: "ID da evidência" })
   @ApiResponse({ status: 200, description: "Evidência validada" })
@@ -65,6 +70,9 @@ export class EvidenciasController {
     @Body("aprovado") aprovado: boolean,
     @Body("observacao") obs?: string,
   ) {
+    if (u.tipo !== "ADMIN" && u.tipo !== "GESTOR_OBRA") {
+      throw new ForbiddenException("Apenas ADMIN ou GESTOR_OBRA podem validar evidências");
+    }
     return this.evidencias.validar(u.id, id, aprovado, obs);
   }
 }
