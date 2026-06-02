@@ -1,47 +1,6 @@
 import { useCallback, useState } from "react";
 import type { Coordinates } from "../utils/haversine";
 
-declare global {
-  interface Navigator {
-    geolocation: Geolocation;
-  }
-  interface Geolocation {
-    getCurrentPosition(
-      successCallback: PositionCallback,
-      errorCallback?: PositionErrorCallback,
-      options?: PositionOptions,
-    ): void;
-  }
-  interface PositionCallback {
-    (position: GeolocationPosition): void;
-  }
-  interface PositionErrorCallback {
-    (positionError: GeolocationPositionError): void;
-  }
-  interface PositionOptions {
-    enableHighAccuracy?: boolean;
-    timeout?: number;
-    maximumAge?: number;
-  }
-  interface GeolocationPosition {
-    coords: GeolocationCoordinates;
-    timestamp: number;
-  }
-  interface GeolocationCoordinates {
-    latitude: number;
-    longitude: number;
-    accuracy: number | null;
-    altitude: number | null;
-    altitudeAccuracy: number | null;
-    heading: number | null;
-    speed: number | null;
-  }
-  interface GeolocationPositionError {
-    code: number;
-    message: string;
-  }
-}
-
 export interface GPSState {
   isLoading: boolean;
   error: string | null;
@@ -111,9 +70,9 @@ export function useGPS() {
       // Fallback para navigator.geolocation (web)
       const nav = (globalThis as any).navigator;
       if (typeof nav !== "undefined" && nav.geolocation) {
-        return new Promise((resolve, reject) => {
+        return new Promise<Coordinates & { accuracy: number }>((resolve, reject) => {
           nav.geolocation.getCurrentPosition(
-            (pos) => {
+            (pos: any) => {
               const coords = {
                 latitude: pos.coords.latitude,
                 longitude: pos.coords.longitude,
@@ -126,7 +85,7 @@ export function useGPS() {
               });
               resolve(coords);
             },
-            (err) => {
+            (err: any) => {
               const errorMsg = `Geolocation error: ${err.message}`;
               setState({
                 isLoading: false,
