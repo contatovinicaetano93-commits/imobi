@@ -56,7 +56,7 @@ export class AuthController {
     this.setRefreshTokenCookie(res, result.refreshToken);
     return res.send({
       usuario: result.usuario,
-      accessToken: result.accessToken,
+      access_token: result.accessToken,
     });
   }
 
@@ -100,7 +100,7 @@ export class AuthController {
     this.setRefreshTokenCookie(res, result.refreshToken);
     return res.send({
       usuario: result.usuario,
-      accessToken: result.accessToken,
+      access_token: result.accessToken,
     });
   }
 
@@ -140,7 +140,7 @@ export class AuthController {
   async renovar(@Body("refreshToken") token: string, @Res() res: any) {
     const result = await this.auth.renovarToken(token);
     this.setRefreshTokenCookie(res, result.refreshToken);
-    return res.send({ accessToken: result.accessToken });
+    return res.send({ access_token: result.accessToken });
   }
 
   @Post("logout")
