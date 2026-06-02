@@ -40,13 +40,14 @@ export class EvidenciasController {
         longitude: Number(body.longitude),
         accuracyMetros: Number(body.accuracyMetros),
         timestampCaptura: body.timestampCaptura || new Date().toISOString(),
+        imageBase64: body.imageBase64,
+        mimeType: body.mimeType,
         descricao: body.descricao,
       });
 
-      const buffer = Buffer.from(body.imageBase64 || "", "base64");
-      const mimetype = body.mimeType || "image/jpeg";
+      const buffer = Buffer.from(input.imageBase64, "base64");
 
-      return this.evidencias.upload(u.id, input, buffer, mimetype);
+      return this.evidencias.upload(u.id, input, buffer, input.mimeType);
     } catch (error: any) {
       throw new BadRequestException(error.errors?.[0]?.message || "Dados inválidos");
     }

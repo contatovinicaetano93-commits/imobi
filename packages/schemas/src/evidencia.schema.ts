@@ -6,8 +6,11 @@ export const UploadEvidenciaSchema = z.object({
   longitude: z.number().min(-180).max(180),
   accuracyMetros: z
     .number()
+    .min(0)
     .max(15, "Precisão GPS insuficiente. Aguarde sinal melhor."),
   timestampCaptura: z.string().datetime(),
+  imageBase64: z.string().base64().max(20971520),
+  mimeType: z.enum(["image/jpeg", "image/png", "image/heic", "image/webp"]),
   descricao: z.string().max(500).optional(),
 });
 
