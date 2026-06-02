@@ -28,13 +28,15 @@ describe("Rate Limiting E2E - Load Testing", () => {
     userEmail = `rate-limit-${Date.now()}@imbobi.com`;
     await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
       email: userEmail,
-      password: "Senha@123",
+      senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
       nome: "Rate Limit Test User",
     });
 
     const loginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email: userEmail, password: "Senha@123" });
+      .send({ email: userEmail, senha: "Senha@123" });
 
     userToken = loginRes.body.access_token;
     userId = loginRes.body.usuario?.usuarioId;
@@ -126,7 +128,7 @@ describe("Rate Limiting E2E - Load Testing", () => {
         requests.push(
           request(app.getHttpServer()).post("/api/v1/auth/login").send({
             email: authEmail,
-            password: "WrongPassword@123",
+            senha: "WrongPassword@123",
           }),
         );
       }
@@ -147,7 +149,7 @@ describe("Rate Limiting E2E - Load Testing", () => {
         .post("/api/v1/auth/login")
         .send({
           email: testEmail,
-          password: "WrongPassword",
+          senha: "WrongPassword",
         });
 
       expect([401, 429, 400]).toContain(res1.status);
@@ -160,7 +162,7 @@ describe("Rate Limiting E2E - Load Testing", () => {
         .post("/api/v1/auth/login")
         .send({
           email: testEmail,
-          password: "AnotherWrongPassword",
+          senha: "AnotherWrongPassword",
         });
 
       expect([401, 429, 400]).toContain(res2.status);
@@ -172,7 +174,9 @@ describe("Rate Limiting E2E - Load Testing", () => {
         .post("/api/v1/auth/login")
         .send({
           email: userEmail,
-          password: "Senha@123",
+          senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
         });
 
       expect(res.status).toBe(200);
@@ -354,13 +358,15 @@ describe("Rate Limiting E2E - Load Testing", () => {
       const user2Email = `rate-limit-user2-${Date.now()}@imbobi.com`;
       await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
         email: user2Email,
-        password: "Senha@123",
+        senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
         nome: "Rate Limit Test User 2",
       });
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({ email: user2Email, password: "Senha@123" });
+        .send({ email: user2Email, senha: "Senha@123" });
 
       const user2Token = loginRes.body.access_token;
 

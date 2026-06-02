@@ -29,13 +29,15 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email,
-          password: "Senha@123",
+          senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
           nome: `Concurrent User ${i}`,
         });
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({ email, password: "Senha@123" });
+        .send({ email, senha: "Senha@123" });
 
       users.push({
         email,
@@ -59,7 +61,7 @@ describe("Concurrency E2E - Comprehensive Suite", () => {
       const loginPromises = users.map((u) =>
         request(app.getHttpServer())
           .post("/api/v1/auth/login")
-          .send({ email: u.email, password: "Senha@123" }),
+          .send({ email: u.email, senha: "Senha@123" }),
       );
 
       const responses = await Promise.all(loginPromises);

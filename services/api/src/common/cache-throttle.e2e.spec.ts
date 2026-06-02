@@ -25,11 +25,13 @@ describe("Cache & Rate Limiting E2E", () => {
     const email = `cache-throttle-${Date.now()}@imbobi.com`;
     await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
-      .send({ email, password: "Senha@123", nome: "Cache Test User" });
+      .send({ email, senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999", nome: "Cache Test User" });
 
     const loginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email, password: "Senha@123" });
+      .send({ email, senha: "Senha@123" });
 
     token = loginRes.body.access_token;
   });
@@ -64,11 +66,13 @@ describe("Cache & Rate Limiting E2E", () => {
       const email2 = `cache-throttle-2-${Date.now()}@imbobi.com`;
       await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({ email: email2, password: "Senha@123", nome: "Cache User 2" });
+        .send({ email: email2, senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999", nome: "Cache User 2" });
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({ email: email2, password: "Senha@123" });
+        .send({ email: email2, senha: "Senha@123" });
 
       const token2 = loginRes.body.access_token;
 
@@ -125,7 +129,7 @@ describe("Cache & Rate Limiting E2E", () => {
         .post("/api/v1/auth/login")
         .send({
           email: "test@example.com",
-          password: "wrong",
+          senha: "wrong",
         });
 
       // Should fail auth but not rate limit

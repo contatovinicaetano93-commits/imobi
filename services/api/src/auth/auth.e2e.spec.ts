@@ -9,8 +9,10 @@ describe("Auth E2E", () => {
   let prisma: PrismaService;
   const testUser = {
     email: `test-${Date.now()}@imbobi.com`,
-    password: "Senha@123",
+    senha: "Senha@123",
     nome: "Test User",
+    cpf: "12345678909",
+    telefone: "11999999999",
   };
 
   beforeAll(async () => {
@@ -48,7 +50,7 @@ describe("Auth E2E", () => {
       .post("/api/v1/auth/login")
       .send({
         email: testUser.email,
-        password: testUser.password,
+        senha: testUser.senha,
       })
       .expect(200);
 

@@ -28,13 +28,15 @@ describe("Error Recovery E2E - Comprehensive Suite", () => {
     userEmail = `error-recovery-${Date.now()}@imbobi.com`;
     await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
       email: userEmail,
-      password: "Senha@123",
+      senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
       nome: "Error Recovery Test User",
     });
 
     const loginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email: userEmail, password: "Senha@123" });
+      .send({ email: userEmail, senha: "Senha@123" });
 
     userToken = loginRes.body.access_token;
     userId = loginRes.body.usuario?.usuarioId;
@@ -97,7 +99,9 @@ describe("Error Recovery E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email: userEmail, // Already exists
-          password: "Senha@123",
+          senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
           nome: "Duplicate User",
         });
 
@@ -185,7 +189,9 @@ describe("Error Recovery E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email: newEmail,
-          password: "Senha@123",
+          senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
           nome: "Email Test User",
         });
 
@@ -275,7 +281,7 @@ describe("Error Recovery E2E - Comprehensive Suite", () => {
       // Core auth should work
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({ email: userEmail, password: "Senha@123" });
+        .send({ email: userEmail, senha: "Senha@123" });
 
       expect(loginRes.status).toBe(200);
       expect(loginRes.body.access_token).toBeDefined();

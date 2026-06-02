@@ -27,11 +27,13 @@ describe("Obras E2E", () => {
     const email = `obras-test-${Date.now()}@imbobi.com`;
     await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
-      .send({ email, password: "Senha@123", nome: "Test" });
+      .send({ email, senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999", nome: "Test" });
 
     const loginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email, password: "Senha@123" });
+      .send({ email, senha: "Senha@123" });
 
     token = loginRes.body.access_token;
     usuarioId = loginRes.body.usuarioId;

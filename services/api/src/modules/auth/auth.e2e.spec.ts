@@ -53,7 +53,9 @@ describe("Auth E2E - Comprehensive Suite", () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
         .send({
-          password: "Senha@123",
+          senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
           nome: "Test User",
         })
         .expect(400);
@@ -78,7 +80,9 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email: `test-${Date.now()}@imbobi.com`,
-          password: "Senha@123",
+          senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
         })
         .expect(400);
 
@@ -90,7 +94,9 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email: "invalid-email",
-          password: "Senha@123",
+          senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
           nome: "Test User",
         })
         .expect(400);
@@ -119,7 +125,9 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email,
-          password: "Senha@123",
+          senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
           nome: "First User",
         })
         .expect(201);
@@ -384,7 +392,9 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email,
-          password: "Senha@123",
+          senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
           nome: "Auth Endpoints User",
         });
 
@@ -394,7 +404,9 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/login")
         .send({
           email,
-          password: "Senha@123",
+          senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
         });
 
       token = login.body.access_token;
@@ -446,7 +458,9 @@ describe("Auth E2E - Comprehensive Suite", () => {
       const email = `jwt-test-${Date.now()}@imbobi.com`;
       await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
         email,
-        password: "Senha@123",
+        senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
         nome: "JWT Test User",
       });
 
@@ -454,7 +468,9 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/login")
         .send({
           email,
-          password: "Senha@123",
+          senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
         });
 
       const token = loginRes.body.access_token;
@@ -469,7 +485,9 @@ describe("Auth E2E - Comprehensive Suite", () => {
       const email = `refresh-jwt-test-${Date.now()}@imbobi.com`;
       await request(app.getHttpServer()).post("/api/v1/auth/registrar").send({
         email,
-        password: "Senha@123",
+        senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
         nome: "Refresh JWT Test User",
       });
 
@@ -477,7 +495,9 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/login")
         .send({
           email,
-          password: "Senha@123",
+          senha: "Senha@123",
+        cpf: "12345678909",
+        telefone: "11999999999",
         });
 
       const refreshToken = loginRes.body.refreshToken;
