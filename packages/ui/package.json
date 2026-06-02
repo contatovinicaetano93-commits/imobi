@@ -6,8 +6,8 @@
   "types": "./web/index.ts",
   "exports": {
     ".": {
-      "import": "./web/index.ts",
-      "require": "./web/index.ts"
+      "types": "./web/index.ts",
+      "default": "./web/index.ts"
     }
   }
 }
