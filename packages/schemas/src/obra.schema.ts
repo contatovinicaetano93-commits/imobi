@@ -64,6 +64,21 @@ export const EtapasPadraoEnum = z.enum([
   "ENTREGA",
 ]);
 
+export const ObraResponseSchema = z.object({
+  id: z.string().uuid(),
+  nome: z.string(),
+  local: z.string().optional(),
+  endereco: EnderecoSchema.optional(),
+  status: StatusObraEnum,
+  progresso: z.number().min(0).max(100).default(0),
+  areaM2: z.number().positive().optional(),
+  datainicioISO: z.string().datetime().optional(),
+  dataConclusaoPrevistaISO: z.string().datetime().optional(),
+  creditoId: z.string().uuid().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
 export type StatusObra = z.infer<typeof StatusObraEnum>;
 export type StatusEtapa = z.infer<typeof StatusEtapaEnum>;
 export type EnderecoInput = z.infer<typeof EnderecoSchema>;
@@ -71,3 +86,4 @@ export type GeolocalizacaoInput = z.infer<typeof GeolocalizacaoSchema>;
 export type CriarObraInput = z.infer<typeof CriarObraSchema>;
 export type CriarEtapaInput = z.infer<typeof CriarEtapaSchema>;
 export type EtapaPadrao = z.infer<typeof EtapasPadraoEnum>;
+export type ObraResponse = z.infer<typeof ObraResponseSchema>;

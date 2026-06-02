@@ -1,9 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { TipoNotificacao } from "@prisma/client";
 
 @Injectable()
 export class NotificacoesService {
+  private readonly logger = new Logger(NotificacoesService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async criar(
@@ -13,9 +15,17 @@ export class NotificacoesService {
     mensagem: string,
     link?: string,
   ) {
-    return this.prisma.notificacao.create({
-      data: { usuarioId, tipo, titulo, mensagem, link },
-    });
+    try {
+      return await this.prisma.notificacao.create({
+        data: { usuarioId, tipo, titulo, mensagem, link },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to create notification for user ${usuarioId}`,
+        error,
+      );
+      throw error;
+    }
   }
 
   async listar(usuarioId: string, limit = 20, offset = 0) {
@@ -54,9 +64,17 @@ export class NotificacoesService {
   }
 
   async deletar(notificacaoId: string) {
-    return this.prisma.notificacao.delete({
-      where: { notificacaoId },
-    });
+    try {
+      return await this.prisma.notificacao.delete({
+        where: { notificacaoId },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete notification ${notificacaoId}`,
+        error,
+      );
+      throw error;
+    }
   }
 
   async contarNaoLidas(usuarioId: string) {

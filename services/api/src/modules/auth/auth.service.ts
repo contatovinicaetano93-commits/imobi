@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  Logger,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
@@ -12,6 +13,8 @@ import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
@@ -145,13 +148,21 @@ export class AuthService {
     );
     const encryptedToken = this.encryption.encrypt(refreshToken);
 
-    void this.prisma.sessaoToken.create({
-      data: {
-        usuarioId,
-        refreshToken: encryptedToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
+    // Fire-and-forget session creation with error logging
+    this.prisma.sessaoToken
+      .create({
+        data: {
+          usuarioId,
+          refreshToken: encryptedToken,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      })
+      .catch((error) => {
+        this.logger.error(
+          `Failed to create session token for user ${usuarioId}`,
+          error,
+        );
+      });
 
     return { accessToken, refreshToken };
   }

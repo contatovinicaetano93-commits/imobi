@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ObraResponse } from "@imbobi/schemas";
 
 export default function ObrasListPage() {
-  const [obras, setObras] = useState<any[]>([]);
+  const [obras, setObras] = useState<ObraResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

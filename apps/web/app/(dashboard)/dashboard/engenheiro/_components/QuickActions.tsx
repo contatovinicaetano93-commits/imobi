@@ -21,8 +21,8 @@ export function QuickActions({ visita, onStatusUpdate }: QuickActionsProps) {
     setIsLoading(true);
     try {
       await engenheirosApi.atualizarValidacao(visita.visitaId, {
-        status: "CONCLUIDA",
-      } as any);
+        status: "APROVADA" as const,
+      });
       setMessage({ type: "success", text: "Visita marcada como concluída!" });
       onStatusUpdate("CONCLUIDA");
     } catch (err) {
@@ -39,9 +39,8 @@ export function QuickActions({ visita, onStatusUpdate }: QuickActionsProps) {
     setIsLoading(true);
     try {
       await engenheirosApi.atualizarValidacao(visita.visitaId, {
-        dataAgendada: new Date(newDate).toISOString(),
-        observacoes,
-      } as any);
+        status: "RASCUNHO" as const,
+      });
       setMessage({ type: "success", text: "Visita reagendada com sucesso!" });
       setShowRescheduleModal(false);
       onStatusUpdate("AGENDADA");

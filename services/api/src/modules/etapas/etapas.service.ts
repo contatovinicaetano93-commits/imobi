@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bull";
 import { Queue } from "bull";
@@ -14,6 +15,8 @@ import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
 
 @Injectable()
 export class EtapasService {
+  private readonly logger = new Logger(EtapasService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
@@ -57,7 +60,7 @@ export class EtapasService {
       `/dashboard/obras/${etapa.obra.obraId}`,
     );
 
-    // Envia push notification
+    // Envia push notification (fire-and-forget with error logging)
     this.pushNotificacoes
       .enviarPush({
         usuarioId: etapa.obra.usuarioId,
@@ -66,9 +69,14 @@ export class EtapasService {
         tipo: "ETAPA_APROVADA",
         dados: { obraId: etapa.obra.obraId, etapaId },
       })
-      .catch(() => {});
+      .catch((error) => {
+        this.logger.error(
+          `Failed to send push notification for approved etapa ${etapaId}`,
+          error,
+        );
+      });
 
-    // Envia email de confirmação
+    // Envia email de confirmação (fire-and-forget with error logging)
     const credito = etapa.obra.credito;
     if (credito) {
       const valorLiberacao =
@@ -81,7 +89,12 @@ export class EtapasService {
           etapa.obra.nome,
           valorLiberacao,
         )
-        .catch(() => {});
+        .catch((error) => {
+          this.logger.error(
+            `Failed to send approval email for etapa ${etapaId}`,
+            error,
+          );
+        });
     }
 
     // Dispara liberação de parcela via fila (assíncrono)

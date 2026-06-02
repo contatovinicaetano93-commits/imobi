@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
@@ -11,6 +12,8 @@ import { KycDocumentoStatus } from "@prisma/client";
 
 @Injectable()
 export class KycService {
+  private readonly logger = new Logger(KycService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
@@ -80,7 +83,7 @@ export class KycService {
       "/dashboard/perfil",
     );
 
-    // Envia push notification
+    // Envia push notification (fire-and-forget with error logging)
     this.pushNotificacoes
       .enviarPush({
         usuarioId: documento.usuarioId,
@@ -88,12 +91,22 @@ export class KycService {
         mensagem: `Seu documento ${documento.tipo} foi aprovado!`,
         tipo: "KYC_APROVADO",
       })
-      .catch(() => {});
+      .catch((error) => {
+        this.logger.error(
+          `Failed to send push notification for approved KYC ${kycDocumentoId}`,
+          error,
+        );
+      });
 
-    // Envia email
+    // Envia email (fire-and-forget with error logging)
     this.email
       .kycAprovadoEmail(documento.usuario.nome, documento.usuario.email)
-      .catch(() => {});
+      .catch((error) => {
+        this.logger.error(
+          `Failed to send approval email for KYC ${kycDocumentoId}`,
+          error,
+        );
+      });
 
     return atualizado;
   }
@@ -132,7 +145,7 @@ export class KycService {
       "/dashboard/perfil",
     );
 
-    // Envia push notification
+    // Envia push notification (fire-and-forget with error logging)
     this.pushNotificacoes
       .enviarPush({
         usuarioId: documento.usuarioId,
@@ -141,16 +154,26 @@ export class KycService {
         tipo: "KYC_REJEITADO",
         dados: { motivo },
       })
-      .catch(() => {});
+      .catch((error) => {
+        this.logger.error(
+          `Failed to send push notification for rejected KYC ${kycDocumentoId}`,
+          error,
+        );
+      });
 
-    // Envia email
+    // Envia email (fire-and-forget with error logging)
     this.email
       .kycRejeitadoEmail(
         documento.usuario.nome,
         documento.usuario.email,
         motivo,
       )
-      .catch(() => {});
+      .catch((error) => {
+        this.logger.error(
+          `Failed to send rejection email for KYC ${kycDocumentoId}`,
+          error,
+        );
+      });
 
     return atualizado;
   }

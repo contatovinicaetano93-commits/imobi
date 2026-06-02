@@ -18,7 +18,6 @@ export default function EtapaDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [etapa, setEtapa] = useState<EtapaDetalhe | null>(null);
-  const [gpsData, setGpsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
