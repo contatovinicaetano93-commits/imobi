@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   ForbiddenException,
+  BadRequestException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -97,5 +98,61 @@ export class KycController {
   @ApiResponse({ status: 200, description: "Status de conclusão do KYC" })
   async verificarKycCompleto(@UsuarioAtual() u: IUsuario) {
     return this.kyc.verificarKycCompleto(u.id);
+  }
+
+  @Post("webhook/unico")
+  @ApiOperation({
+    summary: "Webhook para status Unico",
+    description: "Recebe atualizações de status da verificação Unico",
+  })
+  @ApiResponse({ status: 200, description: "Webhook processado" })
+  async webhookUnico(
+    @Body() payload: { documentId: string; status: string; reason?: string; timestamp: string },
+  ) {
+    if (!payload.documentId || !payload.status || !payload.timestamp) {
+      throw new BadRequestException("documentId, status e timestamp são obrigatórios");
+    }
+
+    const validStatuses = ["APPROVED", "REJECTED", "PENDING"];
+    if (!validStatuses.includes(payload.status)) {
+      throw new BadRequestException(`Status inválido: ${payload.status}`);
+    }
+
+    await this.kyc.procesarWebhookUnico({
+      documentId: payload.documentId,
+      status: payload.status as "APPROVED" | "REJECTED" | "PENDING",
+      reason: payload.reason,
+      timestamp: payload.timestamp,
+    });
+
+    return { success: true, message: "Webhook Unico processado" };
+  }
+
+  @Post("webhook/serpro")
+  @ApiOperation({
+    summary: "Webhook para status SERPRO",
+    description: "Recebe atualizações de status da verificação SERPRO",
+  })
+  @ApiResponse({ status: 200, description: "Webhook processado" })
+  async webhookSERPRO(
+    @Body() payload: { documentId: string; status: string; serproStatus?: string; timestamp: string },
+  ) {
+    if (!payload.documentId || !payload.status || !payload.timestamp) {
+      throw new BadRequestException("documentId, status e timestamp são obrigatórios");
+    }
+
+    const validStatuses = ["VERIFIED", "FAILED", "PENDING"];
+    if (!validStatuses.includes(payload.status)) {
+      throw new BadRequestException(`Status inválido: ${payload.status}`);
+    }
+
+    await this.kyc.procesarWebhookSERPRO({
+      documentId: payload.documentId,
+      status: payload.status as "VERIFIED" | "FAILED" | "PENDING",
+      serproStatus: payload.serproStatus,
+      timestamp: payload.timestamp,
+    });
+
+    return { success: true, message: "Webhook SERPRO processado" };
   }
 }

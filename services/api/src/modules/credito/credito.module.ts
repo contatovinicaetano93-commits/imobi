@@ -4,6 +4,7 @@ import { CreditoController } from "./credito.controller";
 import { CreditoService } from "./credito.service";
 import { LiberacaoParcelaWorker } from "../../workers/liberacao-parcela.worker";
 import { QUEUE_LIBERACAO } from "../../common/constants";
+import { QueueMonitoringService } from "../../common/queue-monitoring.service";
 import { PrismaModule } from "../prisma/prisma.module";
 import { NotificacoesModule } from "../notificacoes/notificacoes.module";
 import { EmailModule } from "../email/email.module";
@@ -25,9 +26,18 @@ import { PushNotificacoesModule } from "../push-notificacoes/push-notificacoes.m
         },
         removeOnComplete: true,
       },
+      // Dead-letter queue: captures failed jobs after all retries exhausted
+      settings: {
+        retryProcessDelay: 5000, // 5s between retries
+      },
     }),
   ],
   controllers: [CreditoController],
-  providers: [CreditoService, ...(process.env.NODE_ENV !== "test" ? [LiberacaoParcelaWorker] : [])],
+  providers: [
+    CreditoService,
+    QueueMonitoringService,
+    ...(process.env.NODE_ENV !== "test" ? [LiberacaoParcelaWorker] : []),
+  ],
+  exports: [QueueMonitoringService],
 })
 export class CreditoModule {}

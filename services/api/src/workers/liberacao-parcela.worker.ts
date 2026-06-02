@@ -128,7 +128,9 @@ export class LiberacaoParcelaWorker {
 
   @OnQueueFailed()
   onFailed(job: Job, err: Error) {
-    this.logger.error(`Job ${job.id} falhou: ${err.message}`);
+    this.logger.error(
+      `Job ${job.id} falhou (tentativa ${job.attemptsMade}/${job.opts.attempts}): ${err.message}`,
+    );
 
     // Registra a falha no banco de dados e notifica
     this.prisma.credito
@@ -139,22 +141,33 @@ export class LiberacaoParcelaWorker {
       .then(async (credito) => {
         if (!credito) return;
 
-        await this.prisma.liberacaoParcela.updateMany({
-          where: { creditoId: job.data.creditoId, status: "PENDENTE" },
-          data: { status: "FALHA", processadoEm: new Date() },
-        });
+        // Mark as failed only after all retries exhausted
+        if (job.attemptsMade >= job.opts.attempts) {
+          await this.prisma.liberacaoParcela.updateMany({
+            where: { creditoId: job.data.creditoId, status: "PENDENTE" },
+            data: { status: "FALHA", processadoEm: new Date() },
+          });
 
-        // Notifica usuário sobre falha
-        const obra = credito.obras?.[0];
-        await this.notificacoes
-          .criar(
-            credito.usuarioId,
-            "PARCELA_FALHA",
-            "Erro na liberação da parcela",
-            `Ocorreu um erro ao processar a liberação para ${obra?.nome || "sua obra"}. Por favor, contate o suporte.`,
-            obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard",
-          )
-          .catch((e) => this.logger.error(`Erro ao notificar falha: ${e}`));
+          // Notifica usuário sobre falha permanente
+          const obra = credito.obras?.[0];
+          await this.notificacoes
+            .criar(
+              credito.usuarioId,
+              "PARCELA_FALHA",
+              "Erro na liberação da parcela",
+              `Ocorreu um erro ao processar a liberação para ${obra?.nome || "sua obra"}. Por favor, contate o suporte.`,
+              obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard",
+            )
+            .catch((e) => this.logger.error(`Erro ao notificar falha: ${e}`));
+
+          this.logger.warn(
+            `Job ${job.id} marcado como falha permanente após ${job.attemptsMade} tentativas`,
+          );
+        } else {
+          this.logger.debug(
+            `Job ${job.id} será retentado (próxima tentativa em ${job.opts.backoff?.delay}ms)`,
+          );
+        }
       })
       .catch((e) =>
         this.logger.error(`Erro ao processar falha de liberação: ${e}`),

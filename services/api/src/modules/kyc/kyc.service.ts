@@ -206,4 +206,76 @@ export class KycService {
 
     return { completo, documentos };
   }
+
+  // Webhook handler for Unico verification status updates
+  async procesarWebhookUnico(payload: {
+    documentId: string;
+    status: "APPROVED" | "REJECTED" | "PENDING";
+    reason?: string;
+    timestamp: string;
+  }) {
+    this.logger.log(`Processando webhook Unico: ${payload.documentId}`);
+
+    try {
+      const documento = await this.prisma.kycDocumento.findUnique({
+        where: { kycDocumentoId: payload.documentId },
+        include: { usuario: true },
+      });
+
+      if (!documento) {
+        throw new NotFoundException(`Documento ${payload.documentId} não encontrado`);
+      }
+
+      if (payload.status === "APPROVED") {
+        await this.aprovarDocumento(payload.documentId, "UNICO_WEBHOOK");
+      } else if (payload.status === "REJECTED") {
+        await this.rejeitarDocumento(
+          payload.documentId,
+          "UNICO_WEBHOOK",
+          payload.reason || "Documento rejeitado pela verificação Unico",
+        );
+      }
+
+      this.logger.log(`Webhook Unico processado com sucesso: ${payload.documentId}`);
+    } catch (error) {
+      this.logger.error(`Erro ao processar webhook Unico: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  // Webhook handler for SERPRO verification status updates
+  async procesarWebhookSERPRO(payload: {
+    documentId: string;
+    status: "VERIFIED" | "FAILED" | "PENDING";
+    serproStatus?: string;
+    timestamp: string;
+  }) {
+    this.logger.log(`Processando webhook SERPRO: ${payload.documentId}`);
+
+    try {
+      const documento = await this.prisma.kycDocumento.findUnique({
+        where: { kycDocumentoId: payload.documentId },
+        include: { usuario: true },
+      });
+
+      if (!documento) {
+        throw new NotFoundException(`Documento ${payload.documentId} não encontrado`);
+      }
+
+      if (payload.status === "VERIFIED") {
+        await this.aprovarDocumento(payload.documentId, "SERPRO_WEBHOOK");
+      } else if (payload.status === "FAILED") {
+        await this.rejeitarDocumento(
+          payload.documentId,
+          "SERPRO_WEBHOOK",
+          `Verificação SERPRO falhou: ${payload.serproStatus || "motivo desconhecido"}`,
+        );
+      }
+
+      this.logger.log(`Webhook SERPRO processado com sucesso: ${payload.documentId}`);
+    } catch (error) {
+      this.logger.error(`Erro ao processar webhook SERPRO: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
 }
