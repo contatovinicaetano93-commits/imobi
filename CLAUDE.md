@@ -41,32 +41,42 @@ pnpm build            # build de produção
 - ➕ ElastiCache (Redis) em vez de local — cache.t2.micro free
 - Nodemailer → SES: Update `services/api/src/modules/email/email.service.ts`
 
-**FASE 2 (Escalabilidade)**: Meses 4-6
-- ➕ Lambda/API Gateway em vez de NestJS local
-- ➕ Vercel em vez de Next.js local
-- ➕ SQS/SNS em vez de BullMQ + Redis
-- ➕ CloudWatch centralizado (logs, métricas, alertas)
+**FASE 2 (Escalabilidade Inteligente)**: Meses 6-12
+- ➕ ECS Fargate + ALB em vez de NestJS local (servidor 24/7, escalável, ~70% mais barato que Lambda)
+- ➕ Vercel em vez de Next.js local ✅ (Next.js nativo)
+- ➕ RDS PostgreSQL (~20-30% economia)
+- ➕ ElastiCache Redis (~80% economia)
+- ➕ **Keep BullMQ + Redis** (escala bem até 10k jobs/dia, depois EventBridge Phase 3)
+- ➕ CloudWatch + X-Ray (observabilidade centralizada, replace Sentry)
 
-**FASE 3 (Compliance)**: Meses 7+
+**FASE 3 (Compliance & Enterprise)**: Meses 12+
+- ➕ EventBridge (async cross-service, replace BullMQ depois escalar)
 - ➕ Cognito (autenticação, MFA, social login)
-- ➕ Secrets Manager (credenciais)
+- ➕ Lambda (apenas para webhooks/triggers, não servidor principal)
 - ➕ WAF + Shield (segurança)
-- ➕ Cost Optimization
+- ➕ Cost Optimization & RI (Reserved Instances)
 
-### Ferramentas NÃO alinhadas com AWS (TODO)
-| Ferramenta | Atual | AWS | Prioridade | Effort |
-|-----------|-------|-----|-----------|--------|
-| Email | Nodemailer | SES | 🔴 ALTA | 2h |
-| Banco de dados | PostgreSQL local | RDS | 🔴 ALTA | 4h |
-| Cache/Sessão | Redis local | ElastiCache | 🔴 ALTA | 3h |
-| Filas | BullMQ + Redis | SQS/SNS | 🟡 MÉDIA | 8h |
-| Observabilidade | Sentry | CloudWatch | 🟡 MÉDIA | 4h |
-| Autenticação | JWT | Cognito | 🟢 BAIXA | 12h |
-| API Server | NestJS local | Lambda | 🟡 MÉDIA | 12h |
-| Web Frontend | Next.js local | Vercel | 🟢 BAIXA | 6h |
+### Roadmap de Migração AWS (Revisado)
+| Ferramenta | Atual | Phase 1 | Phase 2 | Phase 3 | Effort | Economia |
+|-----------|-------|---------|---------|---------|--------|----------|
+| Email | Nodemailer | **SES** ✅ | — | — | 2h | 90% ⬆️ |
+| Banco de dados | PostgreSQL local | RDS | — | — | 4h | 20-30% ⬆️ |
+| Cache/Sessão | Redis local | ElastiCache | — | — | 3h | 80% ⬆️ |
+| **API Server** | NestJS local | — | **ECS Fargate+ALB** | — | 8h | 40% ⬆️ |
+| Filas | BullMQ+Redis | — | **Keep BullMQ** | EventBridge | 0h | 0% (já pago) |
+| Observabilidade | Sentry | — | **CloudWatch+X-Ray** | — | 4h | 50% ⬆️ |
+| Frontend Web | Next.js local | — | **Vercel** | — | 2h | 60% ⬆️ |
+| Autenticação | JWT | — | — | **Cognito** | 12h | Enterprise |
 
-### Notas Importantes
-- Manter Expo Mobile externo (OK — é a opção padrão)
-- Prisma ORM é agnóstico, compatível com RDS
-- BullMQ pode coexistir com SQS durante migração
-- CloudWatch substitui Sentry mantendo mesma funcionalidade
+### Notas Importantes (Atualizado)
+- ✅ **Manter Expo Mobile externo** — é a opção padrão, não precisa migração
+- ✅ **Prisma ORM é agnóstico** — funciona com RDS sem mudanças
+- ✅ **Keep BullMQ em Phase 2** — escala bem, apenas migrar para EventBridge em Phase 3 se necessário
+- ✅ **CloudWatch + X-Ray** — substitui Sentry, integrado com AWS, economiza custos
+- ⚠️ **Lambda NÃO é adequado para NestJS** — usar ECS Fargate (servidor 24/7, melhor custo para workload contínuo)
+- ⚠️ **SQS/SNS para BullMQ é prematuro** — manter BullMQ, usar EventBridge apenas para comunicação cross-service em Phase 3
+
+### Custo Estimado por Phase
+**Phase 1 (Current)**: ~$150/mês (S3, SES, local resources)
+**Phase 2 (Scalable)**: ~$195/mês (RDS, ElastiCache, ECS Fargate, Vercel, CloudWatch)
+**Phase 3 (Enterprise)**: ~$300-400/mês (EventBridge, Cognito, WAF, RI discounts)

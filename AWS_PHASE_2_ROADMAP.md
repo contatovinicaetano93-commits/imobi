@@ -99,49 +99,71 @@ Phase 2 scales the imobi platform beyond MVP limitations by:
 
 ---
 
-## Phase 2C: Job Queues (SQS/SNS replacement for BullMQ)
+## Phase 2C: Job Queues (Keep BullMQ + Redis via ElastiCache)
 
 ### Current state
 - BullMQ jobs (parcel release, email dispatch)
-- Stored in Redis
-- Single-point-of-failure if Redis goes down
+- Stored in Redis (locally or via ElastiCache in Phase 2)
+- Works well for MVP-scale volumes (<10k jobs/day)
 
-### Target state
-- AWS SQS for parcel release queue
-- AWS SNS for event broadcasting (KYC approved, etc.)
-- DLQ (Dead Letter Queue) for failed jobs
-- CloudWatch monitoring
+### Target state (Phase 2)
+- **Keep BullMQ + Redis** (via ElastiCache, 80% cost reduction)
+- Enhanced monitoring via CloudWatch
+- Add dead-letter queue (DLQ) handling in BullMQ
+- Structured logging for job failures
 
-### Effort
-- Replace BullMQ with SQS client → 2h
-- Set up SNS topics → 1h
-- Create DLQ handling → 1h
-- Write workers to consume from SQS → 2h
-- Test with CloudWatch Logs → 1h
-- **Subtotal:** ~7 hours
+### Why NOT SQS/SNS in Phase 2?
+- ❌ **SQS latency:** ~100ms vs <10ms with Redis (5-10x slower)
+- ❌ **SQS FIFO limits:** Max 300 msg/sec (bottleneck)
+- ❌ **No ordering:** Standard SQS has no message ordering
+- ❌ **Overkill for current volume:** BullMQ scales well up to 100k jobs/day
+- ✅ **Cost:** ElastiCache Redis is 80% cheaper than self-managed Redis
+- ✅ **Simplicity:** No migration needed, focused on observability instead
+
+### Target state (Phase 3) — IF needed
+- Evaluate EventBridge for **cross-service async** (not intra-service queues)
+- Only if volume exceeds 100k jobs/day AND cross-service communication needed
+- Keep BullMQ for high-speed job processing (parcel release, immediate tasks)
+
+### Effort (Phase 2)
+- Enhance BullMQ error handling → 1h
+- Add CloudWatch integration → 1h
+- Configure DLQ in BullMQ → 1h
+- Create monitoring dashboard → 1h
+- Load testing with current volume → 1h
+- **Subtotal:** ~5 hours (vs 7h for SQS migration + ongoing complexity)
 
 ### Cost (after free tier)
-- **SQS:** $0.40 per 1M requests = ~$0.50/month (MVP volume)
-- **SNS:** $0.50 per 1M published messages = ~$0.50/month
-- **Total:** ~$1/month
+- **ElastiCache Redis:** ~$15/month (vs $0/month self-managed or $1/month SQS)
+- **BullMQ:** $0 (open source, already paid Redis)
+- **CloudWatch monitoring:** ~$5/month
+- **Total:** ~$20/month (same as SQS but with better performance)
 
-### Implementation steps
-1. Create SQS queue: `imobi-parcel-release`
-2. Create SNS topic: `imobi-events`
-3. Subscribe Lambda/ECS tasks to SQS
-4. Migrate job producers from `bullQueue.add()` → `sqs.sendMessage()`
-5. Migrate job consumers from `bullQueue.process()` → `sqs.receiveMessage()`
-6. Set up DLQ for failed messages
+### Implementation steps (Phase 2)
+1. Configure ElastiCache Redis in Terraform (already done in Phase 1)
+2. Update BullMQ config to use ElastiCache endpoint
+3. Add CloudWatch metrics export from BullMQ
+4. Implement DLQ handling with retry backoff
+5. Create CloudWatch alarms for queue depth > threshold
+6. Load test with 5k-10k jobs/day to verify performance
 
-### Files to create
-- `services/workers/sqs-consumer.ts` (queue consumer)
-- `services/api/src/modules/queue/sqs.service.ts` (SQS SDK wrapper)
-- `aws/sqs-setup.yaml` (CloudFormation template)
-- `AWS_SQS_SETUP.md` (setup guide)
+### When to migrate to EventBridge (Phase 3)
+- Only if: volume > 100k jobs/day AND need cross-service async
+- Example: "When parcel released, trigger email, SMS, notification via separate services"
+- EventBridge is enterprise-grade, adds operational complexity
+
+### Files to update/create (Phase 2)
+- `services/api/src/modules/queue/bullmq.module.ts` (add monitoring)
+- `services/api/src/workers/liberacao-parcela.worker.ts` (enhance DLQ handling)
+- `services/api/src/common/queue-monitoring.service.ts` (already exists, enhance metrics)
+- `aws/cloudwatch-queue-dashboard.json` (queue metrics dashboard)
+- `AWS_BULLMQ_BESTPRACTICES.md` (operational guide)
 
 ### Notes
-- BullMQ and SQS can coexist during migration
-- SQS is more reliable (AWS-managed vs. Redis downtime risk)
+- ✅ BullMQ with ElastiCache = sweet spot for MVP-to-scale transition
+- ✅ No data migration needed (same Redis API)
+- ⚠️ Only switch to EventBridge when business logic demands cross-service async
+- ⚠️ Premature SQS migration = 5-10x latency increase for no benefit
 
 ---
 
