@@ -263,6 +263,27 @@ Veja `.env.example` para lista completa.
 - Test suite → `test-security-validation.sh` (632 linhas)
 - Report → [`SECURITY_VALIDATION_REPORT.md`](./SECURITY_VALIDATION_REPORT.md)
 
+### 🚀 AWS Phase 1 Migration (Free Tier)
+**Status**: ✅ Infrastructure prepared and documented
+- Quick Start → [`QUICK_START_PHASE1.md`](./QUICK_START_PHASE1.md) (5-minute deployment)
+- Detailed Setup → [`AWS_SETUP.md`](./AWS_SETUP.md) (70+ page guide)
+- Architecture → [`PHASE1_ARCHITECTURE.md`](./PHASE1_ARCHITECTURE.md) (diagrams)
+- Deployment Checklist → [`PHASE1_DEPLOYMENT_CHECKLIST.md`](./PHASE1_DEPLOYMENT_CHECKLIST.md)
+- Migration Summary → [`PHASE1_MIGRATION_SUMMARY.md`](./PHASE1_MIGRATION_SUMMARY.md)
+- Terraform Config → `infrastructure/terraform/aws-phase1/`
+
+**Phase 1 Services** (Free Tier, $0/month):
+- RDS PostgreSQL t2.micro (750h + 20GB)
+- ElastiCache Redis cache.t2.micro
+- AWS SES (50k emails/day, free forever)
+- VPC + Private Subnets + CloudWatch
+
+**To Deploy Phase 1**:
+```bash
+./infrastructure/scripts/aws-phase1-deploy.sh
+# Or follow: QUICK_START_PHASE1.md
+```
+
 ### 🚀 Production Deployment
 - Deployment guide → [`AWS_DEPLOYMENT_GUIDE.md`](./AWS_DEPLOYMENT_GUIDE.md)
 - Infrastructure → Consultar DevOps lead
