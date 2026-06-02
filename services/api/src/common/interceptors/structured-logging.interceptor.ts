@@ -34,6 +34,13 @@ export class StructuredLoggingInterceptor implements NestInterceptor {
         const duration = Date.now() - request.startTime;
         const res = context.switchToHttp().getResponse();
 
+        let responseSize = 0;
+        try {
+          responseSize = JSON.stringify(response).length;
+        } catch {
+          // Skip size calculation if response contains circular references
+        }
+
         this.logger.log(
           `${method} ${DataRedactionUtil.redactUrl(url)} - ${res.statusCode}`,
           "HTTP",
@@ -41,7 +48,7 @@ export class StructuredLoggingInterceptor implements NestInterceptor {
             ...logContext,
             statusCode: res.statusCode,
             duration: `${duration}ms`,
-            responseSize: JSON.stringify(response).length,
+            responseSize,
           },
         );
       }),

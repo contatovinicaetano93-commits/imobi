@@ -36,12 +36,16 @@ import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([
-      { ttl: 60000, limit: 100 }, // General: 100 req/min
-      { ttl: 60000, limit: 10, name: "auth" }, // Auth endpoints: 10 req/min
-      { ttl: 60000, limit: 5, name: "upload" }, // File uploads: 5 req/min
-      { ttl: 60000, limit: 20, name: "manager" }, // Manager ops: 20 req/min
-    ]),
+    ...(process.env.NODE_ENV !== "test"
+      ? [
+          ThrottlerModule.forRoot([
+            { ttl: 60000, limit: 100 }, // General: 100 req/min
+            { ttl: 60000, limit: 10, name: "auth" }, // Auth endpoints: 10 req/min
+            { ttl: 60000, limit: 5, name: "upload" }, // File uploads: 5 req/min
+            { ttl: 60000, limit: 20, name: "manager" }, // Manager ops: 20 req/min
+          ]),
+        ]
+      : []),
     CacheModule.register({
       isGlobal: true,
       store: "redis",
@@ -82,10 +86,14 @@ import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
     HealthService,
     LoggerService,
     ...(process.env.NODE_ENV !== "test" ? [ScoreUpdateWorker, LiberacaoParcelaWorker] : []),
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    ...(process.env.NODE_ENV !== "test"
+      ? [
+          {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
+          },
+        ]
+      : []),
     {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,

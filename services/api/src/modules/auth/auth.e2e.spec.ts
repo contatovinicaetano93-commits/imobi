@@ -155,8 +155,10 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .post("/api/v1/auth/registrar")
         .send({
           email,
-          password,
+          senha: password,
           nome: "DB Test User",
+          cpf: "12345678909",
+          telefone: "11999999999",
         })
         .expect(201);
 
@@ -177,6 +179,8 @@ describe("Auth E2E - Comprehensive Suite", () => {
         email: testEmail,
         senha: testPassword,
         nome: "Login Test User",
+        cpf: "12345678909",
+        telefone: "11999999999",
       });
     });
 
@@ -288,6 +292,8 @@ describe("Auth E2E - Comprehensive Suite", () => {
         email: testEmail,
         senha: testPassword,
         nome: "Refresh Test User",
+        cpf: "12345678909",
+        telefone: "11999999999",
       });
 
       const loginRes = await request(app.getHttpServer())
@@ -347,6 +353,8 @@ describe("Auth E2E - Comprehensive Suite", () => {
         email: testEmail,
         senha: testPassword,
         nome: "Logout Test User",
+        cpf: "12345678909",
+        telefone: "11999999999",
       });
 
       const loginRes = await request(app.getHttpServer())

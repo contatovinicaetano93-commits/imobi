@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, Res } from "@nestjs/common";
+import { Controller, Post, Body, HttpCode, Res, BadRequestException } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { ApiOperation, ApiResponse, ApiTags, ApiBody } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
@@ -99,8 +99,9 @@ export class AuthController {
     const result = await this.auth.login(body as never);
     this.setRefreshTokenCookie(res, result.refreshToken);
     return res.send({
-      usuario: result.usuario,
+      ...result.usuario,
       access_token: result.accessToken,
+      refreshToken: result.refreshToken,
     });
   }
 
@@ -164,6 +165,9 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: "RefreshToken não fornecido" })
   async logout(@Body("refreshToken") token: string, @Res() res: any) {
+    if (!token) {
+      throw new BadRequestException("RefreshToken é obrigatório");
+    }
     await this.auth.revogarToken(token);
     res.clearCookie?.("refreshToken");
     return res.send();
