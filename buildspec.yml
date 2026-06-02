@@ -1,0 +1,34 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI_API=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/imobi-api-staging
+      - REPOSITORY_URI_WEB=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/imobi-web-staging
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+
+  build:
+    commands:
+      - echo "Building API Docker image on `date`"
+      - docker build -t $REPOSITORY_URI_API:$IMAGE_TAG -f services/api/Dockerfile .
+      - docker tag $REPOSITORY_URI_API:$IMAGE_TAG $REPOSITORY_URI_API:latest
+      - echo "Building Web Docker image on `date`"
+      - docker build -t $REPOSITORY_URI_WEB:$IMAGE_TAG -f apps/web/Dockerfile --build-arg NEXT_PUBLIC_API_URL=https://api.staging.imbobi.com/api/v1 .
+      - docker tag $REPOSITORY_URI_WEB:$IMAGE_TAG $REPOSITORY_URI_WEB:latest
+
+  post_build:
+    commands:
+      - echo "Pushing API image to ECR on `date`"
+      - docker push $REPOSITORY_URI_API:$IMAGE_TAG
+      - docker push $REPOSITORY_URI_API:latest
+      - echo "Pushing Web image to ECR on `date`"
+      - docker push $REPOSITORY_URI_WEB:$IMAGE_TAG
+      - docker push $REPOSITORY_URI_WEB:latest
+      - echo "Build completed on `date`"
+      - printf '[{"name":"imobi-api-staging","imageUri":"%s"},{"name":"imobi-web-staging","imageUri":"%s"}]' $REPOSITORY_URI_API:$IMAGE_TAG $REPOSITORY_URI_WEB:$IMAGE_TAG > imagedefinitions.json
+
+artifacts:
+  files: imagedefinitions.json
