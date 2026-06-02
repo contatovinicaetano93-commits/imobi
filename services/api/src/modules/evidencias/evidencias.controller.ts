@@ -34,7 +34,7 @@ export class EvidenciasController {
   @Post()
   upload(@UsuarioAtual() u: IUsuario, @Body() body: any) {
     try {
-      const input: UploadEvidenciaInput = UploadEvidenciaSchema.parse({
+      const input = UploadEvidenciaSchema.parse({
         etapaId: body.etapaId,
         latitude: Number(body.latitude),
         longitude: Number(body.longitude),
