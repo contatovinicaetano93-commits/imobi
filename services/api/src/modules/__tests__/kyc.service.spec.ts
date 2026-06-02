@@ -304,10 +304,28 @@ describe("KycService", () => {
     it("should throw BadRequestException if motivo is empty", async () => {
       const kycDocumentoId = "doc-123";
       const gestorId = "gestor-123";
+      const usuario = {
+        usuarioId: "user-123",
+        nome: "João",
+        email: "joao@test.com",
+      };
+
+      const documento = {
+        kycDocumentoId,
+        usuarioId: usuario.usuarioId,
+        tipo: "RG",
+        usuario,
+      };
+
+      prisma.kycDocumento.findUnique.mockResolvedValue(documento as any);
 
       await expect(
         service.rejeitarDocumento(kycDocumentoId, gestorId, ""),
       ).rejects.toThrow(BadRequestException);
+
+      prisma.kycDocumento.findUnique.mockClear();
+      prisma.kycDocumento.findUnique.mockResolvedValue(documento as any);
+
       await expect(
         service.rejeitarDocumento(kycDocumentoId, gestorId, "   "),
       ).rejects.toThrow("Motivo da rejeição é obrigatório");
@@ -386,10 +404,9 @@ describe("KycService", () => {
 
     it("should return false if documents are not approved", async () => {
       const usuarioId = "user-123";
-      const documentos = [
-        { kycDocumentoId: "doc-1", tipo: "RG", status: "PENDENTE" },
-        { kycDocumentoId: "doc-2", tipo: "Selfie", status: "PENDENTE" },
-      ];
+      // Note: verificarKycCompleto only checks APROVADO documents
+      // So if we return empty array (no approved docs), completo should be false
+      const documentos: any[] = [];
 
       prisma.kycDocumento.findMany.mockResolvedValue(documentos as any);
 

@@ -140,6 +140,8 @@ describe("EvidenciasService", () => {
         accuracyMetros: 20, // Exceeds 15m limit
       };
 
+      prisma.etapaObra.findUnique.mockResolvedValue(etapaWithObra as any);
+
       await expect(
         service.upload(usuarioId, badAccuracyInput, fileBuffer, mimeType),
       ).rejects.toThrow(BadRequestException);
