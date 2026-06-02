@@ -33,6 +33,7 @@ import { AppModule } from "./app.module";
 import { StructuredExceptionFilter } from "./common/filters/structured-exception.filter";
 import { SentryExceptionFilter } from "./common/filters/sentry-exception.filter";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
+import { JsonLoggingMiddleware } from "./common/json-logging.middleware";
 import { LoggerService } from "./common/logger.service";
 import { validateJwtSecret } from "./common/validators/jwt-secret.validator";
 
@@ -65,6 +66,10 @@ async function bootstrap() {
   // Request ID middleware for tracing
   const requestIdMiddleware = new RequestIdMiddleware();
   app.use(requestIdMiddleware.use.bind(requestIdMiddleware));
+
+  // JSON logging middleware for structured logs to CloudWatch
+  const jsonLoggingMiddleware = new JsonLoggingMiddleware();
+  app.use(jsonLoggingMiddleware.use.bind(jsonLoggingMiddleware));
 
   // Exception filters (Sentry first for error tracking, then structured logging)
   app.useGlobalFilters(
