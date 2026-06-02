@@ -1,0 +1,39 @@
+# Node modules are installed during build
+node_modules
+.next
+.env
+.env.local
+.env*.local
+
+# Version control
+.git
+.gitignore
+
+# Build outputs
+dist
+build
+out
+
+# Package manager lock files (managed by Vercel)
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# IDE and editors
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+
+# Testing
+.playwright
+test-results
+coverage
+
+# Development
+.turbo
+
+# Documentation
+docs
+README.md
