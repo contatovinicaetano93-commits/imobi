@@ -164,8 +164,12 @@ export class LiberacaoParcelaWorker {
             `Job ${job.id} marcado como falha permanente após ${job.attemptsMade} tentativas`,
           );
         } else {
+          const delayMs =
+            typeof job.opts.backoff === "object" && job.opts.backoff?.delay
+              ? job.opts.backoff.delay
+              : "unknown";
           this.logger.debug(
-            `Job ${job.id} será retentado (próxima tentativa em ${job.opts.backoff?.delay}ms)`,
+            `Job ${job.id} será retentado (próxima tentativa em ${delayMs}ms)`,
           );
         }
       })

@@ -102,7 +102,7 @@ export class QueueMonitoringService {
 
   async cleanQueue(status: "failed" | "completed" = "completed", maxAge: number = 86400000) {
     try {
-      const count = await this.liberacaoQueue.clean(maxAge, 1000, status);
+      const count = await this.liberacaoQueue.clean(maxAge, status as "completed" | "failed");
       this.logger.log(`Limpeza de fila (${status}): ${count} jobs removidos`);
       return { success: true, cleaned: count };
     } catch (error) {
