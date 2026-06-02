@@ -25,12 +25,13 @@ echo "🚀 Deploying NestJS API to $API_IP..."
 # Copy repository to EC2
 echo "📦 Copying application code..."
 ssh -i "$SSH_KEY" ubuntu@"$API_IP" "rm -rf /opt/imobi/*"
-scp -i "$SSH_KEY" -r \
+rsync -avz -e "ssh -i $SSH_KEY" \
   --exclude=node_modules \
   --exclude=.next \
   --exclude=dist \
   --exclude=.env \
   --exclude=.env.production \
+  --exclude=.git \
   . ubuntu@"$API_IP":/opt/imobi/
 
 # Install dependencies and build
