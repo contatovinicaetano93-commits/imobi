@@ -65,6 +65,82 @@ variable "ses_mail_from_domain" {
 }
 
 # ────────────────────────────────────────────────────────
+# Secrets & Security
+# ────────────────────────────────────────────────────────
+variable "jwt_secret" {
+  description = "JWT secret key (min 64 chars)"
+  type        = string
+  sensitive   = true
+
+  validation {
+    condition     = length(var.jwt_secret) >= 64
+    error_message = "JWT secret must be at least 64 characters long."
+  }
+}
+
+variable "encryption_key" {
+  description = "AES-256-GCM encryption key (base64-encoded 32 bytes)"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_access_key_id" {
+  description = "AWS Access Key ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_secret_access_key" {
+  description = "AWS Secret Access Key"
+  type        = string
+  sensitive   = true
+}
+
+# ────────────────────────────────────────────────────────
+# Application Configuration
+# ────────────────────────────────────────────────────────
+variable "s3_bucket_name" {
+  description = "S3 bucket name for evidence storage"
+  type        = string
+  default     = "imbobi-evidencias-production"
+}
+
+variable "cors_origin" {
+  description = "CORS allowed origin"
+  type        = string
+  default     = "https://app.imbobi.com.br"
+}
+
+variable "app_url" {
+  description = "Application base URL"
+  type        = string
+  default     = "https://app.imbobi.com.br"
+}
+
+variable "api_url" {
+  description = "API base URL"
+  type        = string
+  default     = "https://api.imbobi.com.br"
+}
+
+# ────────────────────────────────────────────────────────
+# External APIs
+# ────────────────────────────────────────────────────────
+variable "unico_api_key" {
+  description = "Unico API key for identity validation"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "serpro_token" {
+  description = "SERPRO API token for government certificate queries"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+# ────────────────────────────────────────────────────────
 # Tags
 # ────────────────────────────────────────────────────────
 variable "tags" {

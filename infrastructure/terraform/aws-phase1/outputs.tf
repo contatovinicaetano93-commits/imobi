@@ -136,6 +136,39 @@ output "ses_alerts_topic" {
 }
 
 # ────────────────────────────────────────────────────────
+# AWS Secrets Manager Outputs
+# ────────────────────────────────────────────────────────
+output "secrets_manager_production_secret_name" {
+  description = "Production secrets name in AWS Secrets Manager"
+  value       = aws_secretsmanager_secret.imbobi_production.name
+}
+
+output "secrets_manager_production_secret_arn" {
+  description = "Production secrets ARN in AWS Secrets Manager"
+  value       = aws_secretsmanager_secret.imbobi_production.arn
+}
+
+output "secrets_manager_staging_secret_name" {
+  description = "Staging secrets name in AWS Secrets Manager"
+  value       = aws_secretsmanager_secret.imbobi_staging.name
+}
+
+output "secrets_manager_staging_secret_arn" {
+  description = "Staging secrets ARN in AWS Secrets Manager"
+  value       = aws_secretsmanager_secret.imbobi_staging.arn
+}
+
+output "secrets_manager_policy_arn" {
+  description = "IAM policy ARN for Secrets Manager access"
+  value       = aws_iam_policy.secrets_manager_access.arn
+}
+
+output "secrets_audit_log_group" {
+  description = "CloudWatch log group for Secrets Manager audit"
+  value       = aws_cloudwatch_log_group.secrets_audit.name
+}
+
+# ────────────────────────────────────────────────────────
 # Environment Summary
 # ────────────────────────────────────────────────────────
 output "environment_summary" {
@@ -144,9 +177,10 @@ output "environment_summary" {
     environment = var.environment
     region      = var.aws_region
     services = {
-      rds_endpoint   = aws_db_instance.postgres.address
-      redis_endpoint = aws_elasticache_cluster.redis.cache_nodes[0].address
-      ses_from_email = aws_sesv2_email_identity.imbobi.email_address
+      rds_endpoint        = aws_db_instance.postgres.address
+      redis_endpoint      = aws_elasticache_cluster.redis.cache_nodes[0].address
+      ses_from_email      = aws_sesv2_email_identity.imbobi.email_address
+      secrets_manager_arn = aws_secretsmanager_secret.imbobi_production.arn
     }
     free_tier_limits = {
       rds_monthly_hours     = 750
