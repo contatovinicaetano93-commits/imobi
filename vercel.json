@@ -1,0 +1,7 @@
+{
+  "buildCommand": "turbo run build --filter=@imbobi/web",
+  "installCommand": "pnpm install",
+  "env": {
+    "NODE_ENV": "development"
+  }
+}
