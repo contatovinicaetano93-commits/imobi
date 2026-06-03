@@ -6,13 +6,13 @@ import { TOMADOR, GESTOR, ENGENHEIRO } from '../../fixtures/auth.fixture';
 const authDir = path.resolve(__dirname, '../../.auth');
 
 async function saveAuthState(page: Page, email: string, password: string, outFile: string) {
-  page.setDefaultNavigationTimeout(180_000);
-  await page.goto('/login');
+  setup.setTimeout(600_000); // 10 min: Next.js + NestJS/PostgreSQL WSL2 cold start
+  await page.goto('/login', { timeout: 180_000 });
   await expect(page.getByRole('heading', { name: 'imbobi' })).toBeVisible({ timeout: 120_000 });
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole('button', { name: /Entrar/ }).click();
-  await page.waitForURL(/dashboard/, { timeout: 120_000 });
+  await page.waitForURL(/dashboard/, { timeout: 300_000 });
   await page.context().storageState({ path: outFile });
 }
 
