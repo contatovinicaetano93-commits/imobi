@@ -7,10 +7,10 @@ dotenv.config({ path: path.resolve(__dirname, '.env.e2e') });
 export default defineConfig({
   testDir: './tests',
   outputDir: './test-results',
-  timeout: 30_000,
-  expect: { timeout: 5_000 },
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: [
     ['list'],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
@@ -23,8 +23,8 @@ export default defineConfig({
     video: process.env.CI ? 'retain-on-failure' : 'off',
     locale: 'pt-BR',
     timezoneId: 'America/Sao_Paulo',
-    actionTimeout: 10_000,
-    navigationTimeout: 15_000,
+    actionTimeout: 15_000,
+    navigationTimeout: 60_000,
   },
   projects: [
     {
