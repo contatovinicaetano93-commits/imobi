@@ -6,7 +6,8 @@ test.use({ storageState: TOMADOR.storageState });
 test.describe('Simulador de Crédito', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/dashboard/simulador');
-    await expect(page.getByRole('heading', { name: 'Simulador de Crédito' })).toBeVisible();
+    // Explicit 30s timeout: on first Next.js dev compile this route can be slow.
+    await expect(page.getByRole('heading', { name: 'Simulador de Crédito' })).toBeVisible({ timeout: 30_000 });
   });
 
   test('renders sliders and result cards', async ({ page }) => {
@@ -21,8 +22,8 @@ test.describe('Simulador de Crédito', () => {
   });
 
   test('slider labels show BRL and month formatting', async ({ page }) => {
-    // Default values appear in labels
-    await expect(page.getByText(/R\$.*desejado/i).or(page.getByText(/Valor desejado/))).toBeVisible();
+    // Default values appear in labels — label reads "Valor desejado: R$ 150.000,00"
+    await expect(page.getByText(/Valor desejado/i)).toBeVisible();
     await expect(page.getByText(/meses/)).toBeVisible();
     await expect(page.getByText('R$ 10.000')).toBeVisible();
     await expect(page.getByText('R$ 1.000.000')).toBeVisible();
