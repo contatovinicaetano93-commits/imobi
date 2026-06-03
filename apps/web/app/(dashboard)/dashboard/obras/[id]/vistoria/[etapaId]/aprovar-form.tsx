@@ -22,7 +22,7 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
       const res = await fetch(`/api/etapas/${etapaId}/validar`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ observacao: obs }),
+        body: JSON.stringify({ aprovado, observacao: obs }),
       });
 
       if (!res.ok) {
@@ -32,7 +32,6 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
       }
 
       router.push(`/dashboard/obras/${obraId}`);
-      router.refresh();
     });
   };
 

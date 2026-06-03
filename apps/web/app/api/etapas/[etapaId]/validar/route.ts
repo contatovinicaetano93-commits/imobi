@@ -10,15 +10,22 @@ export async function PATCH(
   const jar = await cookies();
   const token = jar.get("access_token")?.value;
 
-  const body = await req.json() as unknown;
+  const body = await req.json() as { aprovado?: boolean; observacao?: string };
+  const { aprovado, observacao } = body;
 
-  const res = await fetch(`${API_URL}/api/v1/etapas/${params.etapaId}/aprovar`, {
+  const nestPath = aprovado !== false
+    ? `/api/v1/manager/etapas/${params.etapaId}/aprovar`
+    : `/api/v1/manager/etapas/${params.etapaId}/rejeitar`;
+
+  const res = await fetch(`${API_URL}${nestPath}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(aprovado !== false
+      ? { observacao }
+      : { motivo: observacao }),
   });
 
   const data = await res.json().catch(() => ({}));
