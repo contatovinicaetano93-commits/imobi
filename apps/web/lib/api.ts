@@ -1,4 +1,4 @@
-const API_URL = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
+const API_URL = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000/api/v1";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -10,10 +10,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
 
-  // In a browser context, credentials: 'include' will automatically send cookies
-  // In SSR context, the request context already includes cookies
-
-  const res = await fetch(`${API_URL}/api/v1${path}`, {
+  const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers,
     cache: "no-store",
