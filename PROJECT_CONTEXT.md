@@ -1,8 +1,74 @@
-# IMOBI — CONTEXTO INTEGRADO (Phase 5: Testing & Production)
+# PROJECT_CONTEXT.md — imbobi Complete Overview
 
-## 🎯 Status Global
+**Last Updated**: 2026-06-03  
+**Project**: imbobi — Construction Credit Platform  
+**Status**: Production Ready (Phase 4-C Complete, Phase 2 Infrastructure Ready)  
+**Contact**: contato.vinicaetano93@gmail.com  
 
-**Data**: 3 de Junho de 2026, 02:00 UTC (GO-LIVE Target)
+---
+
+## 1. Project Mission
+
+imbobi is a construction credit platform designed to bridge financing gap for small-to-medium builders in Brazil. The platform enables:
+- **Builders (Tomadores)**: Apply for credit, track obra progress, upload evidence of work completion
+- **Obra Managers (Gestores)**: Inspect construction stages via GPS-validated evidence, approve disbursements
+- **Platform Admins**: Manage KYC, configure rules, monitor operations
+
+---
+
+## 2. Technical Stack Overview
+
+### Frontend Layer
+- **Web**: Next.js 14 (App Router) — `apps/web`
+  - Built-in SSR, streaming, and server components
+  - Shadcn/ui component library with Tailwind CSS
+  - Form validation via React Hook Form + Zod
+  - Authentication: JWT stored in HttpOnly cookies
+  
+- **Mobile**: Expo 51 + Expo Router — `apps/mobile`
+  - React Native cross-platform (iOS/Android)
+  - GPS integration via `expo-location`
+  - Image capture via `expo-image-picker`
+  - Shared validation schemas (@imbobi/schemas)
+
+### Backend Layer
+- **API**: NestJS + Fastify — `services/api`
+  - TypeScript-first modular architecture
+  - Passport.js authentication with JWT strategy
+  - Rate limiting on all endpoints
+  - Error handling with custom exception filters
+  
+- **Workers**: BullMQ job queues — `services/workers`
+  - Background processing for payment releases
+  - Async notification delivery (email, FCM)
+  - Event-driven architecture for stage approvals
+
+### Database Layer
+- **PostgreSQL 14+** with PostGIS extension
+  - Prisma ORM for type-safe queries
+  - Automatic migrations management
+  - Indexing on frequently queried columns (user_id, obra_id, stage_id)
+  - LTREE for hierarchical stage relationships
+  
+- **Redis**
+  - BullMQ job queue storage
+  - Session caching (5min TTL default)
+  - Rate limiting counters
+  - Feature flags and feature toggles
+
+### Storage Layer
+- **AWS S3**: Evidence media (photos, PDFs)
+  - Signed URLs for secure file access
+  - Automatic cleanup via S3 lifecycle policies
+  - CloudFront CDN integration (future Phase 2)
+
+### Shared Packages (Monorepo)
+```
+packages/
+├── schemas/          # Zod validation schemas (web + mobile + api)
+├── core/            # Hooks, utilities, API client (zero native deps)
+└── ui/              # Base components (shadcn for web, RN for mobile)
+```
 **Milestone**: Phase 4 ✅ COMPLETO | Phase 5 🚀 EM PROGRESSO
 
 | Layer | Status | Branch | URL/Info |
