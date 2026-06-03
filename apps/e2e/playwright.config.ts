@@ -49,18 +49,20 @@ export default defineConfig({
       grep: /@cross-browser/,
     },
   ],
-  webServer: [
-    {
-      command: 'NODE_ENV=test pnpm --filter @imbobi/api exec nest start',
-      url: 'http://localhost:4000/api/v1/health',
-      reuseExistingServer: !process.env.CI,
-      timeout: 180_000,
-    },
-    {
-      command: 'pnpm --filter @imbobi/web dev',
-      url: 'http://localhost:3000',
-      reuseExistingServer: !process.env.CI,
-      timeout: 180_000,
-    },
-  ],
+  webServer: process.env.E2E_SKIP_SERVERS
+    ? []
+    : [
+        {
+          command: 'NODE_ENV=test pnpm --filter @imbobi/api exec nest start',
+          url: 'http://localhost:4000/api/v1/health',
+          reuseExistingServer: !process.env.CI,
+          timeout: 180_000,
+        },
+        {
+          command: 'pnpm --filter @imbobi/web dev',
+          url: 'http://localhost:3000',
+          reuseExistingServer: !process.env.CI,
+          timeout: 180_000,
+        },
+      ],
 });
