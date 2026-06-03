@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { creditoApi, type CreditoResumo } from "@/lib/api";
+import { creditoServerApi, type CreditoResumo } from "@/lib/api.server";
 import { formatarBRL } from "@imbobi/core";
 
 export const dynamic = 'force-dynamic';
@@ -40,7 +40,7 @@ function gerarCalendarioPagamento(
 }
 
 export default async function CreditoPage() {
-  const creditos = await creditoApi.meus().catch(() => []);
+  const creditos = await creditoServerApi.meus().catch(() => []);
 
   if (creditos.length === 0) {
     return (

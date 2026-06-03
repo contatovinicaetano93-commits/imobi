@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { scoreApi, type ScoreAtual, type ScoreHistorico } from "@/lib/api";
+import { scoreServerApi, type ScoreAtual, type ScoreHistorico } from "@/lib/api.server";
 
 export const dynamic = 'force-dynamic';
 
@@ -30,8 +30,8 @@ function getNivelThresholds(nivel: string): { proximo: string; proximoScore: num
 
 export default async function ScorePage() {
   const [scoreAtual, historico] = await Promise.all([
-    scoreApi.atual(),
-    scoreApi.historico(12),
+    scoreServerApi.atual(),
+    scoreServerApi.historico(12),
   ]);
 
   const { proximo, proximoScore, progresso } = getNivelThresholds(scoreAtual.nivel);

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { usuariosApi } from "@/lib/api";
+import { usuariosServerApi } from "@/lib/api.server";
 import { formatarCPF, formatarTelefone } from "@imbobi/core";
 import { PerfilForm } from "./perfil-form";
 
@@ -22,7 +22,7 @@ const USER_TYPE_MAP: Record<string, string> = {
 };
 
 export default async function PerfilPage() {
-  const usuario = await usuariosApi.meuPerfil();
+  const usuario = await usuariosServerApi.meuPerfil();
   const kycInfo = KYC_STATUS_MAP[usuario.kycStatus] || KYC_STATUS_MAP.PENDENTE;
 
   return (

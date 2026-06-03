@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { engenheirosApi, type Visita } from "@/lib/api";
+import { engenheirosServerApi, type Visita } from "@/lib/api.server";
 import { formatarBRL } from "@imbobi/core";
 import { VisitQueue } from "./_components/VisitQueue";
 import { DynamicVisitQueueClient } from "./_components/DynamicVisitQueueClient";
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: "Portal do Engenheiro — imbobi" };
 
 export default async function EngenheiroPortalPage() {
-  const visitas = await engenheirosApi.listarVisitas().catch(() => []);
+  const visitas = await engenheirosServerApi.listarVisitas().catch(() => []);
 
   const agendadas = visitas.filter((v: Visita) => v.status === "AGENDADA");
   const iniciadas = visitas.filter((v: Visita) => v.status === "INICIADA");

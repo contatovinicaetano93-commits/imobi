@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { obrasApi, creditoApi } from "@/lib/api";
+import { obrasServerApi, creditoServerApi } from "@/lib/api.server";
 import { formatarBRL } from "@imbobi/core";
 import { PortfolioChart } from "./_components/PortfolioChart";
 import { RegionalDistribution } from "./_components/RegionalDistribution";
@@ -17,8 +17,8 @@ export const metadata: Metadata = { title: "Fundos — imbobi" };
 
 export default async function FundosPage() {
   const [obras, creditos] = await Promise.all([
-    obrasApi.listar().catch(() => []),
-    creditoApi.meus().catch(() => []),
+    obrasServerApi.listar().catch(() => []),
+    creditoServerApi.meus().catch(() => []),
   ]);
 
   // Total desembolsado

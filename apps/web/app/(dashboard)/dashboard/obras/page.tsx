@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { obrasApi, type ObraResumo } from "@/lib/api";
+import { obrasServerApi, type ObraResumo } from "@/lib/api.server";
 import { formatarBRL } from "@imbobi/core";
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export default async function ObrasPage() {
-  const obras = await obrasApi.listar().catch(() => []);
+  const obras = await obrasServerApi.listar().catch(() => []);
 
   return (
     <div className="space-y-6">
