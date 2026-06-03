@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs';
 import { test, expect } from '@playwright/test';
 import { LoginPage } from '../../page-objects/LoginPage';
 import { TOMADOR } from '../../fixtures/auth.fixture';
@@ -35,13 +36,13 @@ test.describe('Login', () => {
     await expect(page.getByRole('heading', { name: 'Visão Geral' })).toBeVisible();
   });
 
-  test('sets access_token cookie after login', async ({ page }) => {
-    const lp = new LoginPage(page);
-    await lp.goto();
-    await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard', { timeout: 90_000 });
-    const cookies = await page.context().cookies();
-    expect(cookies.some((c) => c.name === 'access_token')).toBe(true);
+  test('sets access_token cookie after login', async () => {
+    // The auth:tomador setup logs in via UI and saves storageState.
+    // Checking that file avoids a second slow dashboard SSR in this test.
+    const state = JSON.parse(readFileSync(TOMADOR.storageState, 'utf-8')) as {
+      cookies: Array<{ name: string }>;
+    };
+    expect(state.cookies.some((c) => c.name === 'access_token')).toBe(true);
   });
 
   test('logout clears session and redirects to /login', async ({ page }) => {

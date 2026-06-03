@@ -25,7 +25,7 @@ async function serverFetch<T>(path: string, init: RequestInit = {}): Promise<T> 
     ...init,
     headers,
     cache: "no-store",
-    signal: AbortSignal.timeout(25_000),
+    signal: AbortSignal.timeout(45_000),
   });
 
   if (!res.ok) {

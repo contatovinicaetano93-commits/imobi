@@ -24,7 +24,7 @@ test.describe('KYC flow', () => {
     await expect(page.getByText('Status Geral')).toBeVisible();
     await expect(page.getByText('Pendentes')).toBeVisible();
     await expect(page.getByText('Aprovados', { exact: true })).toBeVisible();
-    await expect(page.getByText('Rejeitados')).toBeVisible();
+    await expect(page.getByText('Rejeitados', { exact: true })).toBeVisible();
   });
 
   test('Enviar RG button triggers upload and shows Enviando state', async ({ page }) => {

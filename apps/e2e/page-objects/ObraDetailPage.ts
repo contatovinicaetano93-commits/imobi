@@ -10,7 +10,7 @@ export class ObraDetailPage {
     await this.page.goto(`/dashboard/obras/${obraId}`);
     // Server component fetches obra data from NestJS; allow extra time for
     // first Next.js dev compilation and API round-trip.
-    await this.cronogramaHeading.waitFor({ timeout: 30_000 });
+    await this.cronogramaHeading.waitFor({ timeout: 70_000 });
   }
 
   getEtapaRows(): Locator {
