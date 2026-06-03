@@ -51,10 +51,10 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'NODE_ENV=test pnpm --filter @imbobi/api start',
+      command: 'NODE_ENV=test pnpm --filter @imbobi/api dev',
       url: 'http://localhost:4000/api/v1/health',
       reuseExistingServer: !process.env.CI,
-      timeout: 60_000,
+      timeout: 120_000,
     },
     {
       command: 'pnpm --filter @imbobi/web dev',
