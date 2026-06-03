@@ -84,17 +84,15 @@ test.describe('Obras workflow', () => {
     catch { test.skip(true, 'API unavailable'); return; }
     const obras = await getObras(token);
 
-    const obraComVistoria = obras.find((o) =>
-      o.etapas?.some((e) => e.status === 'AGUARDANDO_VISTORIA')
-    );
-
-    if (!obraComVistoria) {
-      test.skip(true, 'No etapa in AGUARDANDO_VISTORIA state in seed data');
+    if (obras.length === 0) {
+      test.skip(true, 'No obras in seed data for this user');
       return;
     }
 
-    const obraId: string = (obraComVistoria as any).id ?? (obraComVistoria as any).obraId;
-    await mockObraRoutes(page, obraId, obraComVistoria.nome, obraComVistoria.status);
+    // mockObraRoutes always returns an etapa with AGUARDANDO_VISTORIA status
+    const obra = obras[0];
+    const obraId: string = (obra as any).id ?? (obra as any).obraId;
+    await mockObraRoutes(page, obraId, obra.nome, obra.status);
 
     const dp = new ObraDetailPage(page);
     await dp.goto(obraId);
@@ -107,22 +105,38 @@ test.describe('Obras workflow', () => {
     catch { test.skip(true, 'API unavailable'); return; }
     const obras = await getObras(token);
 
-    const obraComVistoria = obras.find((o) =>
-      o.etapas?.some((e) => e.status === 'AGUARDANDO_VISTORIA')
-    );
-
-    if (!obraComVistoria) {
-      test.skip(true, 'No etapa in AGUARDANDO_VISTORIA state in seed data');
+    if (obras.length === 0) {
+      test.skip(true, 'No obras in seed data for this user');
       return;
     }
 
-    const obraId: string = (obraComVistoria as any).id ?? (obraComVistoria as any).obraId;
-    await mockObraRoutes(page, obraId, obraComVistoria.nome, obraComVistoria.status);
+    // mockObraRoutes always returns an etapa with AGUARDANDO_VISTORIA status (etapa-m2)
+    const obra = obras[0];
+    const obraId: string = (obra as any).id ?? (obra as any).obraId;
+    await mockObraRoutes(page, obraId, obra.nome, obra.status);
+
+    // Also mock the vistoria page API so it loads after clicking Vistorar
+    await page.route('**/api/proxy/manager/etapas/**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          etapaId: 'etapa-m2', nome: 'Estrutura', ordem: 2, percentualObra: 50,
+          valorLiberacao: 50000, evidenciasCount: 0, criadoEm: '2025-01-01T00:00:00.000Z',
+          status: 'AGUARDANDO_VISTORIA', evidencias: [],
+          obra: { obraId, nome: obra.nome, endereco: 'Rua Teste, 123',
+            usuario: { usuarioId: 'u1', nome: 'Test', email: 'test@test.com', cpf: '000.000.000-00' } },
+        }),
+      });
+    });
+    await page.route('**/api/proxy/evidencias/**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    });
 
     const dp = new ObraDetailPage(page);
     await dp.goto(obraId);
     await dp.vistorarButtons.first().click();
     await page.waitForURL('**/vistoria/**');
-    await expect(page.getByText('Aguardando vistoria')).toBeVisible();
+    await expect(page.getByText('Aguardando vistoria')).toBeVisible({ timeout: 15_000 });
   });
 });

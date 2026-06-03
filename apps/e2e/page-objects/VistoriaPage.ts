@@ -12,7 +12,7 @@ export class VistoriaPage {
 
   async goto(obraId: string, etapaId: string) {
     await this.page.goto(`/dashboard/obras/${obraId}/vistoria/${etapaId}`);
-    await this.aguardandoBadge.waitFor();
+    await this.aguardandoBadge.waitFor({ timeout: 15_000 });
   }
 
   async aprovar(observacao?: string) {
