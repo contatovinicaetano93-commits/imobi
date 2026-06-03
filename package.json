@@ -13,6 +13,8 @@
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
+    "e2e": "turbo run e2e",
+    "e2e:ui": "pnpm --filter @imbobi/e2e test:ui",
     "db:generate": "pnpm --filter @imbobi/api prisma generate",
     "db:migrate": "pnpm --filter @imbobi/api prisma migrate dev",
     "db:studio": "pnpm --filter @imbobi/api prisma studio"

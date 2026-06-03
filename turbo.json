@@ -24,6 +24,23 @@
       "inputs": ["$TURBO_DEFAULT$"],
       "outputs": ["coverage/**"]
     },
+    "e2e": {
+      "dependsOn": ["@imbobi/web#build", "@imbobi/api#build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env.e2e"],
+      "outputs": ["playwright-report/**", "test-results/**"],
+      "cache": false,
+      "env": [
+        "BASE_URL",
+        "API_URL",
+        "CI",
+        "E2E_TOMADOR_EMAIL",
+        "E2E_TOMADOR_PASSWORD",
+        "E2E_GESTOR_EMAIL",
+        "E2E_GESTOR_PASSWORD",
+        "E2E_ENGENHEIRO_EMAIL",
+        "E2E_ENGENHEIRO_PASSWORD"
+      ]
+    },
     "db:generate": {
       "cache": false
     },
