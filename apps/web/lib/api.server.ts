@@ -58,3 +58,16 @@ export const obrasServerApi = {
   buscar: (id: string) => serverFetch<ObraResumo>(`/obras/${id}`),
   progresso: (id: string) => serverFetch<number>(`/obras/${id}/progresso`),
 };
+
+// ── Evidências (server-side) ───────────────────────────────────────────
+
+export type EvidenciaDetalhe = {
+  id: string; fotoUrl: string; latCaptura: number; lngCaptura: number;
+  accuracyMetros: number; distanciaObra?: number; validada: boolean;
+  observacao?: string; criadoEm: string;
+};
+
+export const evidenciasServerApi = {
+  listarPorEtapa: (etapaId: string) =>
+    serverFetch<EvidenciaDetalhe[]>(`/evidencias/etapa/${etapaId}`),
+};

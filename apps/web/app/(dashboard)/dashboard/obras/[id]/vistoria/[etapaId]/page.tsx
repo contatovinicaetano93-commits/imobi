@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { obrasApi, evidenciasApi, type EvidenciaDetalhe } from "@/lib/api";
+import { obrasServerApi, evidenciasServerApi, type EvidenciaDetalhe } from "@/lib/api.server";
 import { formatarBRL } from "@imbobi/core";
 import { AprovarEtapaForm } from "./aprovar-form";
 
@@ -14,12 +14,16 @@ export default async function VistoriaPage({
   params: { id: string; etapaId: string };
 }) {
   const [obra, evidencias] = await Promise.all([
-    obrasApi.buscar(params.id).catch(() => null),
-    evidenciasApi.listarPorEtapa(params.etapaId).catch(() => []),
+    obrasServerApi.buscar(params.id).catch(() => null),
+    evidenciasServerApi.listarPorEtapa(params.etapaId).catch(() => []),
   ]);
   if (!obra) notFound();
 
-  const etapa = obra.etapas?.find((e) => e.id === params.etapaId);
+  // The NestJS API returns etapas with field "etapaId"; fall back to "id" for
+  // forward-compatibility if the shape ever normalises.
+  const etapa = obra.etapas?.find(
+    (e) => ((e as unknown as Record<string, string>).etapaId ?? e.id) === params.etapaId
+  );
   if (!etapa) notFound();
 
   return (
