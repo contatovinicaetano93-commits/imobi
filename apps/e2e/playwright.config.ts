@@ -20,7 +20,7 @@ export default defineConfig({
     baseURL: process.env.BASE_URL ?? 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: process.env.CI ? 'retain-on-failure' : 'off',
     locale: 'pt-BR',
     timezoneId: 'America/Sao_Paulo',
     actionTimeout: 10_000,
