@@ -24,7 +24,7 @@ test.describe('Simulador de Crédito', () => {
   test('slider labels show BRL and month formatting', async ({ page }) => {
     // Default values appear in labels — label reads "Valor desejado: R$ 150.000,00"
     await expect(page.getByText(/Valor desejado/i)).toBeVisible();
-    await expect(page.getByText(/meses/)).toBeVisible();
+    await expect(page.getByText(/meses/).first()).toBeVisible();
     await expect(page.getByText('R$ 10.000')).toBeVisible();
     await expect(page.getByText('R$ 1.000.000')).toBeVisible();
     await expect(page.getByText('12 meses')).toBeVisible();

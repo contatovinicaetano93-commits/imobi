@@ -23,7 +23,7 @@ test.describe('KYC flow', () => {
   test('shows 4 stat cards: Status Geral, Pendentes, Aprovados, Rejeitados', async ({ page }) => {
     await expect(page.getByText('Status Geral')).toBeVisible();
     await expect(page.getByText('Pendentes')).toBeVisible();
-    await expect(page.getByText('Aprovados')).toBeVisible();
+    await expect(page.getByText('Aprovados', { exact: true })).toBeVisible();
     await expect(page.getByText('Rejeitados')).toBeVisible();
   });
 
@@ -41,7 +41,7 @@ test.describe('KYC flow', () => {
 
     // Click the button and immediately check for "Enviando..." state
     const clickPromise = kp.enviarRgBtn.click();
-    await expect(page.getByRole('button', { name: /Enviando/ })).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole('button', { name: /Enviando/ }).first()).toBeVisible({ timeout: 5_000 });
 
     // Let the request complete
     resolveUpload();

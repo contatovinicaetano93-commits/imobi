@@ -6,7 +6,7 @@ export class VistoriaPage {
   readonly aprovarBtn = this.page.getByRole('button', { name: /Aprovar etapa/ });
   readonly rejeitarBtn = this.page.getByRole('button', { name: /Rejeitar/ });
   readonly erroMsg = this.page.locator('p.text-red-600');
-  readonly breadcrumbObras = this.page.getByRole('link', { name: 'Obras' });
+  readonly breadcrumbObras = this.page.getByRole('link', { name: 'Obras', exact: true });
 
   constructor(private page: Page) {}
 

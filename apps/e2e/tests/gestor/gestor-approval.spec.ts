@@ -17,8 +17,8 @@ test.describe('Gestor approval panel', () => {
     const gp = new GestorPage(page);
     await gp.goto();
 
-    const etapasCard = page.getByRole('link').filter({ hasText: 'Etapas Pendentes' });
-    const kycCard = page.getByRole('link').filter({ hasText: 'KYC Pendentes' });
+    const etapasCard = page.getByRole('link').filter({ hasText: 'Etapas Pendentes' }).first();
+    const kycCard = page.getByRole('link').filter({ hasText: 'KYC Pendentes' }).first();
 
     await expect(etapasCard).toBeVisible();
     await expect(kycCard).toBeVisible();

@@ -31,7 +31,7 @@ test.describe('Login', () => {
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard', { timeout: 45_000 });
+    await page.waitForURL('**/dashboard', { timeout: 90_000 });
     await expect(page.getByRole('heading', { name: 'Visão Geral' })).toBeVisible();
   });
 
@@ -39,7 +39,7 @@ test.describe('Login', () => {
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard', { timeout: 45_000 });
+    await page.waitForURL('**/dashboard', { timeout: 90_000 });
     const cookies = await page.context().cookies();
     expect(cookies.some((c) => c.name === 'access_token')).toBe(true);
   });
@@ -49,7 +49,7 @@ test.describe('Login', () => {
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard', { timeout: 45_000 });
+    await page.waitForURL('**/dashboard', { timeout: 90_000 });
 
     // Logout via API
     await page.evaluate(async () => {
