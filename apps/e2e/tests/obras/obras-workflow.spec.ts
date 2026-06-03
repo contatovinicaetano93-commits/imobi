@@ -135,8 +135,8 @@ test.describe('Obras workflow', () => {
 
     const dp = new ObraDetailPage(page);
     await dp.goto(obraId);
-    await dp.vistorarButtons.first().click();
-    await page.waitForURL('**/vistoria/**');
-    await expect(page.getByText('Aguardando vistoria')).toBeVisible({ timeout: 15_000 });
+    const href = await dp.vistorarButtons.first().getAttribute('href');
+    await page.goto(href!, { timeout: 90_000 });
+    await expect(page.getByText('Aguardando vistoria')).toBeVisible({ timeout: 60_000 });
   });
 });

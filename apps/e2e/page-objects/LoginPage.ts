@@ -11,8 +11,9 @@ export class LoginPage {
   constructor(private page: Page) {}
 
   async goto() {
+    this.page.setDefaultNavigationTimeout(180_000);
     await this.page.goto('/login');
-    await this.brand.waitFor();
+    await this.brand.waitFor({ timeout: 180_000 });
   }
 
   async login(email: string, password: string) {

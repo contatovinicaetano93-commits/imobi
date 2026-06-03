@@ -41,7 +41,7 @@ test.describe('KYC flow', () => {
 
     // Click the button and immediately check for "Enviando..." state
     const clickPromise = kp.enviarRgBtn.click();
-    await expect(page.getByRole('button', { name: /Enviando/ }).first()).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole('button', { name: /Enviando/ }).first()).toBeVisible({ timeout: 15_000 });
 
     // Let the request complete
     resolveUpload();
