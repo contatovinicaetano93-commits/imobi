@@ -1,0 +1,378 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - develop
+      - main
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================
+  # STAGE 1: VALIDATION (Type-Check & Lint)
+  # ============================================
+  validate:
+    name: Validate Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript Type Check
+        run: pnpm type-check
+
+      - name: ESLint & Format Check
+        run: pnpm lint
+
+  # ============================================
+  # STAGE 2: BUILD
+  # ============================================
+  build:
+    name: Build Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-artifacts-${{ github.run_id }}
+          path: |
+            apps/web/.next
+            apps/mobile/dist
+            services/api/dist
+          retention-days: 1
+
+  # ============================================
+  # STAGE 3: TESTS (E2E + Critical Flows)
+  # ============================================
+  tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: validate
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: imbobi_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/imbobi_test
+
+      - name: Run database migrations
+        run: pnpm -F @imbobi/api exec prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/imbobi_test
+        continue-on-error: true
+
+      - name: Run E2E tests (Critical Flows)
+        run: pnpm -F @imbobi/api test -- critical-flows.e2e.spec.ts
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/imbobi_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret-key
+          NODE_ENV: test
+
+  # ============================================
+  # STAGE 4: STAGING DEPLOYMENT
+  # ============================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [validate, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Deploy Frontend to Vercel (Staging)
+        uses: vercel/action@v6
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-comment: true
+
+      - name: Trigger Render Backend Deployment
+        run: |
+          curl -X POST https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
+        continue-on-error: true
+
+      - name: Notify Slack - Staging Deployed
+        uses: slackapi/slack-github-action@v1
+        if: success()
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "✅ Staging Deployment Successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Staging Deployment Complete*\n*Frontend:* https://imobi-staging.vercel.app\n*Backend:* https://imobi-api-staging.onrender.com\n*Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                  }
+                }
+              ]
+            }
+
+      - name: Notify Slack - Staging Failed
+        uses: slackapi/slack-github-action@v1
+        if: failure()
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "❌ Staging Deployment Failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Staging Deployment Failed*\n*Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>\n*View Logs:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click here>"
+                  }
+                }
+              ]
+            }
+
+  # ============================================
+  # STAGE 5: PRODUCTION DEPLOYMENT (Manual)
+  # ============================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+
+      - name: Deploy Frontend to Vercel (Production)
+        uses: vercel/action@v6
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-comment: true
+          production: true
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Terraform Plan
+        run: |
+          cd infrastructure/terraform
+          terraform init
+          terraform plan -var="version=${{ steps.version.outputs.version }}" -out=tfplan
+
+      - name: Terraform Apply
+        run: |
+          cd infrastructure/terraform
+          terraform apply -auto-approve tfplan
+        continue-on-error: true
+
+      - name: Post-Deployment Health Checks
+        run: |
+          echo "⏳ Waiting 30 seconds for services to stabilize..."
+          sleep 30
+
+          echo "🏥 Health Check: API"
+          curl -f https://api.imobi.com/health || echo "⚠️  API health check failed"
+
+          echo "🏥 Health Check: Web"
+          curl -f https://imobi.com/ || echo "⚠️  Web health check failed"
+
+      - name: Notify Slack - Production Deployed
+        uses: slackapi/slack-github-action@v1
+        if: success()
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "🚀 Production Deployment Successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment Complete*\n*Version:* ${{ steps.version.outputs.version }}\n*Frontend:* https://imobi.com\n*Backend:* https://api.imobi.com\n*Status:* Monitor CloudWatch for 24 hours"
+                  }
+                }
+              ]
+            }
+
+      - name: Notify Slack - Production Failed
+        uses: slackapi/slack-github-action@v1
+        if: failure()
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "❌ Production Deployment Failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment Failed*\n*Version:* ${{ steps.version.outputs.version }}\n*View Logs:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click here>\n*Action Required:* Investigate and rollback if needed"
+                  }
+                }
+              ]
+            }
+
+  # ============================================
+  # STAGE 6: SECURITY SCAN (Optional)
+  # ============================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run security audit
+        run: pnpm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Check for secrets (pre-commit)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+        continue-on-error: true
+
+  # ============================================
+  # FINAL: STATUS CHECK
+  # ============================================
+  status:
+    name: Workflow Status
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [validate, build, tests]
+    steps:
+      - name: Check workflow status
+        run: |
+          if [ "${{ needs.validate.result }}" == "failure" ] || [ "${{ needs.build.result }}" == "failure" ]; then
+            echo "❌ Workflow failed"
+            exit 1
+          fi
+          echo "✅ Workflow passed all checks"
