@@ -1,3 +1,5 @@
+import type { Lead, DashboardStats, LeadsListResponse, CreateLeadInput, AddLeadActivityInput } from "@imbobi/schemas";
+
 const API_URL = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
 
 export class ApiError extends Error {
@@ -330,4 +332,27 @@ export const notificacoesApi = {
     apiFetch("/notificacoes/marcar-todas-lidas", { method: "PATCH" }),
   deletar: (id: string) =>
     apiFetch(`/notificacoes/${id}`, { method: "DELETE" }),
+};
+
+// ── Comercial ──────────────────────────────────────────────────────────
+
+export const comercialApi = {
+  dashboardStats: () => apiFetch<DashboardStats>("/comercial/dashboard/stats"),
+  listarLeads: (limit = 20, offset = 0, searchTerm?: string) => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+    });
+    if (searchTerm) params.set("searchTerm", searchTerm);
+    return apiFetch<LeadsListResponse>(`/comercial/leads?${params}`);
+  },
+  obterLead: (leadId: string) =>
+    apiFetch<Lead>(`/comercial/leads/${leadId}`),
+  criarLead: (data: CreateLeadInput) =>
+    apiFetch<Lead>("/comercial/leads", { method: "POST", body: JSON.stringify(data) }),
+  adicionarAtividade: (leadId: string, data: AddLeadActivityInput) =>
+    apiFetch(`/comercial/leads/${leadId}/atividades`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };

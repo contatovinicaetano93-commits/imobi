@@ -11,7 +11,7 @@ import {
 import { ComercialService } from './comercial.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
-@Controller('api/comercial')
+@Controller('comercial')
 @UseGuards(JwtAuthGuard)
 export class ComercialController {
   constructor(private readonly comercialService: ComercialService) {}

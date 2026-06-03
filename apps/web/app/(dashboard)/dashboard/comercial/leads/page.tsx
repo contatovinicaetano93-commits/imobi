@@ -1,15 +1,9 @@
 'use client';
 
-import { useEffect, useState, ChangeEvent } from 'react';
-import { Lead } from '@imbobi/schemas';
+import { useEffect, useState } from 'react';
+import type { Lead } from '@imbobi/schemas';
+import { comercialApi } from '@/lib/api';
 import { LeadCard } from '@/components/dashboard/comercial/LeadCard';
-
-interface LeadsListResponse {
-  leads: Lead[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
 
 export default function LeadsList() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -22,31 +16,27 @@ export default function LeadsList() {
   const totalPages = Math.ceil(total / pageSize);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchLeads = async () => {
       try {
         setLoading(true);
         const offset = (page - 1) * pageSize;
-        const query = new URLSearchParams({
-          limit: pageSize.toString(),
-          offset: offset.toString(),
-          filters: JSON.stringify({ searchTerm }),
-        });
-
-        const response = await fetch(`/api/comercial/leads?${query}`);
-        if (response.ok) {
-          const data: LeadsListResponse = await response.json();
-          setLeads(data.leads);
-          setTotal(data.total);
-        }
-      } catch (error) {
-        console.error('Failed to fetch leads:', error);
+        const data = await comercialApi.listarLeads(pageSize, offset, searchTerm || undefined);
+        setLeads(data.leads);
+        setTotal(data.total);
+      } catch {
+        // ignore aborted requests
       } finally {
         setLoading(false);
       }
     };
 
-    const timer = setTimeout(fetchLeads, 500);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(fetchLeads, 300);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [searchTerm, page]);
 
   return (
