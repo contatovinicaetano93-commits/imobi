@@ -15,7 +15,7 @@
     "test": "turbo run test",
     "e2e": "turbo run e2e",
     "e2e:ui": "pnpm --filter @imbobi/e2e test:ui",
-    "e2e:setup": "pnpm --filter @imbobi/api prisma:migrate:test && pnpm --filter @imbobi/api seed:test && pnpm --filter @imbobi/api build",
+    "e2e:setup": "pnpm --filter @imbobi/api prisma:migrate:test && pnpm --filter @imbobi/api seed:test",
     "db:generate": "pnpm --filter @imbobi/api prisma generate",
     "db:migrate": "pnpm --filter @imbobi/api prisma migrate dev",
     "db:studio": "pnpm --filter @imbobi/api prisma studio"
