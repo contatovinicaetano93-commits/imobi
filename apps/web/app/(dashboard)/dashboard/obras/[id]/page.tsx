@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { obrasApi, type EtapaResumo } from "@/lib/api";
+import { obrasServerApi, type EtapaResumo } from "@/lib/api.server";
 import { formatarBRL } from "@imbobi/core";
 
 export const dynamic = 'force-dynamic';
@@ -16,10 +16,10 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export default async function ObraDetailPage({ params }: { params: { id: string } }) {
-  const obra = await obrasApi.buscar(params.id).catch(() => null);
+  const obra = await obrasServerApi.buscar(params.id).catch(() => null);
   if (!obra) notFound();
 
-  const progresso = await obrasApi.progresso(params.id).catch(() => 0);
+  const progresso = await obrasServerApi.progresso(params.id).catch(() => 0);
   const etapas = obra.etapas ?? [];
 
   return (
