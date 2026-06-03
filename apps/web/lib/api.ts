@@ -18,6 +18,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     ...init,
     headers,
     cache: "no-store",
+    signal: AbortSignal.timeout(20_000),
   });
 
   if (!res.ok) {

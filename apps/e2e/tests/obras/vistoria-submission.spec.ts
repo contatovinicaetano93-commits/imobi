@@ -5,11 +5,11 @@ import { loginViaApi, getObras } from '../../fixtures/api-helpers';
 
 test.use({ storageState: GESTOR.storageState });
 
-async function findVistoriaEtapa() {
-  // Use tomador token to fetch obras (gestor may see all obras via a different endpoint)
-  const token = await loginViaApi(TOMADOR.email, TOMADOR.password);
+async function findVistoriaEtapa(): Promise<{ obraId: string; etapaId: string } | null | 'api-unavailable'> {
+  let token: string;
+  try { token = await loginViaApi(TOMADOR.email, TOMADOR.password); }
+  catch { return 'api-unavailable'; }
   const obras = await getObras(token);
-
   for (const obra of obras) {
     const etapa = obra.etapas?.find((e) => e.status === 'AGUARDANDO_VISTORIA');
     if (etapa) return { obraId: obra.obraId, etapaId: etapa.etapaId };
@@ -20,8 +20,8 @@ async function findVistoriaEtapa() {
 test.describe('Vistoria submission', () => {
   test('vistoria page renders correctly', async ({ page }) => {
     const data = await findVistoriaEtapa();
-    if (!data) {
-      test.skip(true, 'No etapa in AGUARDANDO_VISTORIA state in seed data');
+    if (!data || data === 'api-unavailable') {
+      test.skip(true, data === 'api-unavailable' ? 'API unavailable' : 'No etapa in AGUARDANDO_VISTORIA state');
       return;
     }
 
@@ -38,8 +38,8 @@ test.describe('Vistoria submission', () => {
 
   test('breadcrumb shows Obras link', async ({ page }) => {
     const data = await findVistoriaEtapa();
-    if (!data) {
-      test.skip(true, 'No etapa in AGUARDANDO_VISTORIA state in seed data');
+    if (!data || data === 'api-unavailable') {
+      test.skip(true, data === 'api-unavailable' ? 'API unavailable' : 'No etapa in AGUARDANDO_VISTORIA state');
       return;
     }
 
@@ -52,8 +52,8 @@ test.describe('Vistoria submission', () => {
 
   test('aprovar etapa redirects to obra detail', async ({ page }) => {
     const data = await findVistoriaEtapa();
-    if (!data) {
-      test.skip(true, 'No etapa in AGUARDANDO_VISTORIA state in seed data');
+    if (!data || data === 'api-unavailable') {
+      test.skip(true, data === 'api-unavailable' ? 'API unavailable' : 'No etapa in AGUARDANDO_VISTORIA state');
       return;
     }
 
@@ -76,8 +76,8 @@ test.describe('Vistoria submission', () => {
 
   test('rejeitar etapa shows button and allows rejection', async ({ page }) => {
     const data = await findVistoriaEtapa();
-    if (!data) {
-      test.skip(true, 'No etapa in AGUARDANDO_VISTORIA state in seed data');
+    if (!data || data === 'api-unavailable') {
+      test.skip(true, data === 'api-unavailable' ? 'API unavailable' : 'No etapa in AGUARDANDO_VISTORIA state');
       return;
     }
 

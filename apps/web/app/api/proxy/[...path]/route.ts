@@ -25,6 +25,7 @@ async function proxy(req: NextRequest, params: { path: string[] }) {
     headers: upstreamHeaders,
     body,
     cache: "no-store",
+    signal: AbortSignal.timeout(15_000),
   });
 
   const data = await res.text();

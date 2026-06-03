@@ -1,11 +1,17 @@
 const API_URL = process.env.API_URL ?? 'http://localhost:4000/api/v1';
 
 export async function loginViaApi(email: string, password: string): Promise<string> {
-  const res = await fetch(`${API_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, senha: password }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha: password }),
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    throw new Error(`API unreachable at ${API_URL} — is the NestJS server running?`);
+  }
   if (!res.ok) throw new Error(`API login failed for ${email}: ${res.status}`);
   const data = await res.json() as { accessToken: string };
   return data.accessToken;

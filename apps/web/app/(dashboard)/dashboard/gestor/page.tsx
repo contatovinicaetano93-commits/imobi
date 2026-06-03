@@ -51,50 +51,45 @@ export default function GestorPage() {
     );
   }
 
-  if (error || !stats) {
-    return (
-      <div className="space-y-6 sm:space-y-8">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Painel do Gestor</h1>
-        </div>
-        <div className="bg-red-50 rounded-2xl border border-red-100 p-4 sm:p-6">
-          <p className="text-xs sm:text-sm text-red-700">{error || "Erro ao carregar dados"}</p>
-        </div>
-      </div>
-    );
-  }
+  const effectiveStats = stats ?? { filaAprovacoes: 0, filaKyc: 0, creditosAtivos: 0, obrasAtivas: 0 };
 
   return (
     <div className="space-y-6 sm:space-y-8">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Painel do Gestor</h1>
         <p className="text-xs sm:text-sm text-gray-500 mt-1">
-          {stats.filaAprovacoes + stats.filaKyc} itens pendentes de análise
+          {effectiveStats.filaAprovacoes + effectiveStats.filaKyc} itens pendentes de análise
         </p>
       </div>
+
+      {error && (
+        <div className="bg-red-50 rounded-2xl border border-red-100 p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-red-700">{error}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <StatCard
           label="Etapas Pendentes"
-          value={stats.filaAprovacoes}
-          color={stats.filaAprovacoes > 10 ? "red" : stats.filaAprovacoes > 5 ? "yellow" : "green"}
+          value={effectiveStats.filaAprovacoes}
+          color={effectiveStats.filaAprovacoes > 10 ? "red" : effectiveStats.filaAprovacoes > 5 ? "yellow" : "green"}
           href="/dashboard/gestor/etapas"
         />
         <StatCard
           label="KYC Pendentes"
-          value={stats.filaKyc}
-          color={stats.filaKyc > 10 ? "red" : stats.filaKyc > 5 ? "yellow" : "green"}
+          value={effectiveStats.filaKyc}
+          color={effectiveStats.filaKyc > 10 ? "red" : effectiveStats.filaKyc > 5 ? "yellow" : "green"}
           href="/dashboard/gestor/kyc"
         />
         <StatCard
           label="Créditos Ativos"
-          value={stats.creditosAtivos}
+          value={effectiveStats.creditosAtivos}
           color="green"
           href="/dashboard/credito"
         />
         <StatCard
           label="Obras em Execução"
-          value={stats.obrasAtivas}
+          value={effectiveStats.obrasAtivas}
           color="green"
           href="/dashboard/obras"
         />
@@ -107,21 +102,21 @@ export default function GestorPage() {
             <Link
               href="/dashboard/gestor/etapas"
               className="flex items-center justify-between p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-12 sm:min-h-auto"
-              aria-label={`Revisar Etapas com ${stats.filaAprovacoes} itens pendentes`}
+              aria-label={`Revisar Etapas com ${effectiveStats.filaAprovacoes} itens pendentes`}
             >
               <span className="font-medium text-xs sm:text-sm text-blue-900">Revisar Etapas</span>
               <span className="text-xs sm:text-sm bg-blue-200 text-blue-900 px-2 py-1 rounded font-semibold">
-                {stats.filaAprovacoes}
+                {effectiveStats.filaAprovacoes}
               </span>
             </Link>
             <Link
               href="/dashboard/gestor/kyc"
               className="flex items-center justify-between p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 min-h-12 sm:min-h-auto"
-              aria-label={`Revisar KYC com ${stats.filaKyc} itens pendentes`}
+              aria-label={`Revisar KYC com ${effectiveStats.filaKyc} itens pendentes`}
             >
               <span className="font-medium text-xs sm:text-sm text-purple-900">Revisar KYC</span>
               <span className="text-xs sm:text-sm bg-purple-200 text-purple-900 px-2 py-1 rounded font-semibold">
-                {stats.filaKyc}
+                {effectiveStats.filaKyc}
               </span>
             </Link>
           </div>
