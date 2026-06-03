@@ -12,16 +12,16 @@ export async function loginViaApi(email: string, password: string): Promise<stri
 }
 
 interface EtapaResumo {
-  id: string;
+  etapaId: string;
   nome: string;
   status: string;
   ordem: number;
-  valorLiberacao: string;
-  percentualObra: number;
+  valorLiberacao?: string;
+  percentualObra?: number;
 }
 
 interface ObraResumo {
-  id: string;
+  obraId: string;
   nome: string;
   status: string;
   etapas?: EtapaResumo[];
@@ -46,6 +46,7 @@ export async function findEtapaWithStatus(
   }
   return null;
 }
+
 
 export async function getAllObrasAsAdmin(adminToken: string): Promise<ObraResumo[]> {
   // Gestor/admin can list all obras via manager endpoint

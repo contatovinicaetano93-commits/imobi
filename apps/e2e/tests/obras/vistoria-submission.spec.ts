@@ -12,7 +12,7 @@ async function findVistoriaEtapa() {
 
   for (const obra of obras) {
     const etapa = obra.etapas?.find((e) => e.status === 'AGUARDANDO_VISTORIA');
-    if (etapa) return { obraId: obra.id, etapaId: etapa.id };
+    if (etapa) return { obraId: obra.obraId, etapaId: etapa.etapaId };
   }
   return null;
 }
