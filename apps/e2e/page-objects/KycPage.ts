@@ -11,7 +11,9 @@ export class KycPage {
 
   async goto() {
     await this.page.goto('/dashboard/kyc');
-    await this.heading.waitFor();
+    // Explicit timeout: KYC page fetches from the API on mount; on first
+    // Next.js dev compile the response can be slow, so give it 30s.
+    await this.heading.waitFor({ timeout: 30_000 });
   }
 
   getStatCard(label: string) {

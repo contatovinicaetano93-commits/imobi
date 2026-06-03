@@ -34,7 +34,7 @@ test.describe('KYC flow', () => {
     let resolveUpload!: () => void;
     const uploadPromise = new Promise<void>((resolve) => { resolveUpload = resolve; });
 
-    await page.route('**/kyc**', async (route) => {
+    await page.route('**/api/proxy/kyc/**', async (route) => {
       await uploadPromise;
       await route.continue();
     });
