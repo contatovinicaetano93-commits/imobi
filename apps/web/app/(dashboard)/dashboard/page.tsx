@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { obrasApi, creditoApi, type ObraResumo, type CreditoResumo, type EtapaResumo } from "@/lib/api";
+import { obrasServerApi, creditoServerApi, type ObraResumo, type CreditoResumo, type EtapaResumo } from "@/lib/api.server";
 import { formatarBRL } from "@imbobi/core";
 
 export const dynamic = 'force-dynamic';
@@ -8,8 +8,8 @@ export const metadata: Metadata = { title: "Dashboard — imbobi" };
 
 export default async function DashboardPage() {
   const [obras, creditos] = await Promise.all([
-    obrasApi.listar().catch(() => []),
-    creditoApi.meus().catch(() => []),
+    obrasServerApi.listar().catch(() => []),
+    creditoServerApi.meus().catch(() => []),
   ]);
 
   const ativas = obras.filter((o: ObraResumo) => o.status === "EM_ANDAMENTO");

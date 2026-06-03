@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   };
 
   const jar = await cookies();
-  jar.set("access_token", accessToken, { ...COOKIE_OPTS, maxAge: 60 * 15 });          // 15 min
+  jar.set("access_token", accessToken, { ...COOKIE_OPTS, maxAge: 60 * 60 * 8 });       // 8 h (covers full E2E suite)
   jar.set("refresh_token", refreshToken, { ...COOKIE_OPTS, maxAge: 60 * 60 * 24 * 7 }); // 7 dias
 
   return NextResponse.json({ ok: true });

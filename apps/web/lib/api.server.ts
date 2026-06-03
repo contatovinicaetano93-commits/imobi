@@ -59,6 +59,21 @@ export const obrasServerApi = {
   progresso: (id: string) => serverFetch<number>(`/obras/${id}/progresso`),
 };
 
+// ── Crédito (server-side) ─────────────────────────────────────────────
+
+export type CreditoResumo = {
+  id: string; valorAprovado: number; valorLiberado: number;
+  taxaMensal: number; prazoMeses: number; status: string;
+  dataAprovacao?: string; dataVencimento?: string;
+  obras?: { id: string; nome: string; status: string }[];
+  liberacoes?: { id: string; valor: number; status: string; processadoEm?: string }[];
+};
+
+export const creditoServerApi = {
+  meus: () => serverFetch<CreditoResumo[]>("/credito/meus"),
+  extrato: (id: string) => serverFetch<CreditoResumo>(`/credito/${id}/extrato`),
+};
+
 // ── Evidências (server-side) ───────────────────────────────────────────
 
 export type EvidenciaDetalhe = {
@@ -91,4 +106,68 @@ export type EtapaDetalheMgr = {
 export const managerServerApi = {
   obterEtapaDetalhe: (etapaId: string) =>
     serverFetch<EtapaDetalheMgr>(`/manager/etapas/${etapaId}`),
+};
+
+// ── Score (server-side) ───────────────────────────────────────────────
+
+export type ScoreAtual = {
+  score: number;
+  nivel: string;
+  cor: string;
+  descricao: string;
+};
+
+export type ScoreHistorico = {
+  id: string;
+  score: number;
+  motivo: string;
+  criadoEm: string;
+};
+
+export const scoreServerApi = {
+  atual: () => serverFetch<ScoreAtual>("/score/atual"),
+  historico: (limit?: number) =>
+    serverFetch<ScoreHistorico[]>(`/score/historico${limit ? `?limit=${limit}` : ""}`),
+};
+
+// ── Usuários (server-side) ────────────────────────────────────────────
+
+export type UsuarioPerfil = {
+  usuarioId: string;
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  tipo: string;
+  kycStatus: string;
+  criadoEm: string;
+  atualizadoEm: string;
+};
+
+export const usuariosServerApi = {
+  meuPerfil: () => serverFetch<UsuarioPerfil>("/usuarios/meu-perfil"),
+};
+
+// ── Engenheiros (server-side) ─────────────────────────────────────────
+
+export type Visita = {
+  visitaId: string;
+  status: "AGENDADA" | "INICIADA" | "CONCLUIDA";
+  etapaId: string;
+  etapaNome: string;
+  obraId: string;
+  obraNome: string;
+  dataAgendada: string;
+  dataInicio?: string;
+  dataConclusao?: string;
+  observacoes?: string;
+  obra: {
+    nome: string;
+    endereco?: string;
+  };
+  criadoEm: string;
+};
+
+export const engenheirosServerApi = {
+  listarVisitas: () => serverFetch<Visita[]>("/engenheiros/visitas"),
 };
