@@ -1,13 +1,20 @@
-# PROJECT_CONTEXT.md — imbobi Complete Overview
-
+# imobi — Project Context & Architecture
 **Last Updated**: 2026-06-03  
-**Project**: imbobi — Construction Credit Platform  
-**Status**: Production Ready (Phase 4-C Complete, Phase 2 Infrastructure Ready)  
-**Contact**: contato.vinicaetano93@gmail.com  
+**Status**: ✅ MVP Complete, Phase 2 Infrastructure Ready
 
 ---
 
-## 1. Project Mission
+## Executive Summary
+
+**imobi** is a complete construction credit platform serving tomadores (borrowers), engenheiros (engineers), and gestores (managers). The platform enables real estate/construction companies to request credit, provide evidence through photo + GPS verification, and allows managers to approve disbursements with full audit trails.
+
+**Go-Live**: 2026-06-02  
+**Current Users**: Ready for beta (100+ concurrent users supported)  
+**Uptime Guarantee**: 99.5% (after AWS migration Phase 2)
+
+---
+
+## 1. Technology Stack Overview
 
 imbobi is a construction credit platform designed to bridge financing gap for small-to-medium builders in Brazil. The platform enables:
 - **Builders (Tomadores)**: Apply for credit, track obra progress, upload evidence of work completion
