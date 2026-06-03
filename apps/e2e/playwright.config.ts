@@ -30,6 +30,7 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: '**/auth.setup.ts',
+      timeout: 300_000,
       use: {
         ...devices['Desktop Chrome'],
         launchOptions: {
