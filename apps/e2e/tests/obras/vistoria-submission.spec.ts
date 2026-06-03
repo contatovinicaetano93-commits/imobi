@@ -58,7 +58,7 @@ test.describe('Vistoria submission', () => {
     }
 
     // Mock the approval API so the test is idempotent
-    await page.route(`/api/etapas/${data.etapaId}/validar`, async (route) => {
+    await page.route(`**/api/etapas/${data.etapaId}/validar`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -82,7 +82,7 @@ test.describe('Vistoria submission', () => {
     }
 
     // Mock the rejection API
-    await page.route(`/api/etapas/${data.etapaId}/validar`, async (route) => {
+    await page.route(`**/api/etapas/${data.etapaId}/validar`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
