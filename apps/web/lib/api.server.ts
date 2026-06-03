@@ -71,3 +71,24 @@ export const evidenciasServerApi = {
   listarPorEtapa: (etapaId: string) =>
     serverFetch<EvidenciaDetalhe[]>(`/evidencias/etapa/${etapaId}`),
 };
+
+// ── Manager (server-side) ─────────────────────────────────────────────
+
+export type EtapaDetalheMgr = {
+  etapaId: string;
+  nome: string;
+  ordem: number;
+  percentualObra: number;
+  valorLiberacao: number;
+  status: string;
+  obra: {
+    obraId: string;
+    nome: string;
+    endereco: string;
+  };
+};
+
+export const managerServerApi = {
+  obterEtapaDetalhe: (etapaId: string) =>
+    serverFetch<EtapaDetalheMgr>(`/manager/etapas/${etapaId}`),
+};

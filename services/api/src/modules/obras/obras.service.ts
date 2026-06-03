@@ -57,7 +57,7 @@ export class ObrasService {
     });
   }
 
-  async buscar(usuarioId: string, obraId: string) {
+  async buscar(usuarioId: string, obraId: string, usuarioTipo?: string) {
     const obra = await this.prisma.obra.findUnique({
       where: { obraId },
       include: {
@@ -75,7 +75,9 @@ export class ObrasService {
       },
     });
     if (!obra) throw new NotFoundException("Obra não encontrada.");
-    if (obra.usuarioId !== usuarioId) throw new ForbiddenException();
+    // Gestores and admins can view any obra without ownership checks
+    const isManager = usuarioTipo === "GESTOR_OBRA" || usuarioTipo === "ADMIN";
+    if (!isManager && obra.usuarioId !== usuarioId) throw new ForbiddenException();
     return obra;
   }
 

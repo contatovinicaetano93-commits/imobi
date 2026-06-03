@@ -28,7 +28,7 @@ export class ObrasController {
 
   @Get(":id")
   buscar(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
-    return this.obras.buscar(u.id, id);
+    return this.obras.buscar(u.id, id, u.tipo);
   }
 
   @Get(":id/progresso")
