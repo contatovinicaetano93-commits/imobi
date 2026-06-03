@@ -1,4 +1,8 @@
-const API_URL = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000/api/v1";
+// All browser-side API calls go through the Next.js proxy at /api/proxy,
+// which reads the httpOnly access_token cookie and forwards it as a Bearer
+// token to the NestJS API.  This avoids cross-origin cookie issues and keeps
+// auth fully server-side.
+const API_URL = "/api/proxy";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -14,7 +18,6 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     ...init,
     headers,
     cache: "no-store",
-    credentials: "include",
   });
 
   if (!res.ok) {
