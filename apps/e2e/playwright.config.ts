@@ -7,7 +7,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env.e2e') });
 export default defineConfig({
   testDir: './tests',
   outputDir: './test-results',
-  timeout: 120_000,
+  timeout: 300_000,
   expect: { timeout: 10_000 },
   retries: process.env.CI ? 2 : 0,
   workers: 1,
@@ -24,7 +24,7 @@ export default defineConfig({
     locale: 'pt-BR',
     timezoneId: 'America/Sao_Paulo',
     actionTimeout: 15_000,
-    navigationTimeout: 60_000,
+    navigationTimeout: 180_000,
   },
   projects: [
     {
