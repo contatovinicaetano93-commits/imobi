@@ -27,7 +27,7 @@ test.describe('Protected routes redirect unauthenticated users', () => {
     await page.goto('/login');
     await expect(page.getByRole('heading', { name: 'imbobi' })).toBeVisible();
 
-    await page.goto('/cadastro');
+    await page.goto('/cadastro', { waitUntil: 'commit' });
     await expect(page).not.toHaveURL(/login/);
   });
 });

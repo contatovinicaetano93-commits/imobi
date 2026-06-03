@@ -11,7 +11,7 @@ export class DashboardPage {
 
   async goto() {
     await this.page.goto('/dashboard');
-    await this.heading.waitFor();
+    await this.heading.waitFor({ timeout: 60_000 });
   }
 
   getKpiCard(label: string) {

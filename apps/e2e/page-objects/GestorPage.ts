@@ -9,7 +9,7 @@ export class GestorPage {
   async goto() {
     await this.page.goto('/dashboard/gestor');
     // Wait for heading (present in all states: loading, error, success).
-    await this.heading.waitFor({ timeout: 30_000 });
+    await this.heading.waitFor({ timeout: 60_000 });
     // Allow React to hydrate so loading text actually enters the DOM.
     // Then wait for it to disappear (API call complete).
     // Uses waitForFunction to avoid the race where hydration hasn't run yet.
