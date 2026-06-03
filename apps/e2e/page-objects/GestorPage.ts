@@ -15,6 +15,7 @@ export class GestorPage {
     // Uses waitForFunction to avoid the race where hydration hasn't run yet.
     await this.page.waitForFunction(
       () => !document.body.textContent?.includes('Carregando...'),
+      undefined,
       { timeout: 60_000 }
     );
   }

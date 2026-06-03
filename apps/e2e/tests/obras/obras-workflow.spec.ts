@@ -1,19 +1,40 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { TOMADOR } from '../../fixtures/auth.fixture';
 import { ObraDetailPage } from '../../page-objects/ObraDetailPage';
 import { loginViaApi, getObras } from '../../fixtures/api-helpers';
 
 test.use({ storageState: TOMADOR.storageState });
 
+// Mock client-side proxy calls so tests don't depend on NestJS /obras/:id
+// response time (which can exceed 45 s on cold WSL2 PostgreSQL).
+async function mockObraRoutes(page: Page, obraId: string, obraNome: string, obraStatus: string) {
+  const etapas = [
+    { id: 'etapa-m1', nome: 'Fundação', ordem: 1, percentualObra: 50, valorLiberacao: 50000, status: 'APROVADA', evidencias: [] },
+    { id: 'etapa-m2', nome: 'Estrutura', ordem: 2, percentualObra: 50, valorLiberacao: 50000, status: 'AGUARDANDO_VISTORIA', evidencias: [] },
+  ];
+
+  await page.route('**/api/proxy/obras/**', async (route) => {
+    const url = route.request().url();
+    if (url.includes('/progresso')) {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '50' });
+    } else {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: obraId, nome: obraNome, status: obraStatus,
+          geoLatitude: -23.5505, geoLongitude: -46.6333, raioValidacaoMetros: 100, etapas }),
+      });
+    }
+  });
+}
+
 test.describe('Obras workflow', () => {
   test('obras list page loads', async ({ page }) => {
     await page.goto('/dashboard/obras');
-    // The page renders (either list or empty state)
     await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('clicking an obra navigates to detail page with cronograma', async ({ page }) => {
-    // Get first obra via API to ensure we have an ID
     let token: string;
     try { token = await loginViaApi(TOMADOR.email, TOMADOR.password); }
     catch { test.skip(true, 'API unavailable'); return; }
@@ -25,10 +46,12 @@ test.describe('Obras workflow', () => {
     }
 
     const obra = obras[0];
-    const dp = new ObraDetailPage(page);
-    await dp.goto(obra.id);
+    const obraId: string = (obra as any).id ?? (obra as any).obraId;
+    await mockObraRoutes(page, obraId, obra.nome, obra.status);
 
-    // h1 is the obra name
+    const dp = new ObraDetailPage(page);
+    await dp.goto(obraId);
+
     await expect(page.getByRole('heading', { level: 1 })).toContainText(obra.nome);
     await expect(dp.cronogramaHeading).toBeVisible();
   });
@@ -45,10 +68,12 @@ test.describe('Obras workflow', () => {
     }
 
     const obra = obras[0];
-    const dp = new ObraDetailPage(page);
-    await dp.goto(obra.id);
+    const obraId: string = (obra as any).id ?? (obra as any).obraId;
+    await mockObraRoutes(page, obraId, obra.nome, obra.status);
 
-    // At least one status badge should be visible
+    const dp = new ObraDetailPage(page);
+    await dp.goto(obraId);
+
     const badges = page.locator('span.text-xs.font-semibold.px-3.py-1\\.5.rounded-full');
     await expect(badges.first()).toBeVisible();
   });
@@ -68,8 +93,11 @@ test.describe('Obras workflow', () => {
       return;
     }
 
+    const obraId: string = (obraComVistoria as any).id ?? (obraComVistoria as any).obraId;
+    await mockObraRoutes(page, obraId, obraComVistoria.nome, obraComVistoria.status);
+
     const dp = new ObraDetailPage(page);
-    await dp.goto(obraComVistoria.id);
+    await dp.goto(obraId);
     await expect(dp.vistorarButtons.first()).toBeVisible();
   });
 
@@ -88,8 +116,11 @@ test.describe('Obras workflow', () => {
       return;
     }
 
+    const obraId: string = (obraComVistoria as any).id ?? (obraComVistoria as any).obraId;
+    await mockObraRoutes(page, obraId, obraComVistoria.nome, obraComVistoria.status);
+
     const dp = new ObraDetailPage(page);
-    await dp.goto(obraComVistoria.id);
+    await dp.goto(obraId);
     await dp.vistorarButtons.first().click();
     await page.waitForURL('**/vistoria/**');
     await expect(page.getByText('Aguardando vistoria')).toBeVisible();
