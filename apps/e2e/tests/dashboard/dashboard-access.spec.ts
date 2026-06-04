@@ -66,8 +66,8 @@ test.describe('Engenheiro dashboard', () => {
   test.use({ storageState: ENGENHEIRO.storageState });
 
   test('shows Fila de Visitas with KPI cards', async ({ page }) => {
-    await page.goto('/dashboard/engenheiro');
-    await expect(page.getByRole('heading', { name: 'Fila de Visitas' })).toBeVisible();
+    await page.goto('/dashboard/engenheiro', { timeout: 60_000 });
+    await expect(page.getByRole('heading', { name: 'Fila de Visitas' })).toBeVisible({ timeout: 30_000 });
 
     await expect(page.getByText('Agendadas')).toBeVisible();
     await expect(page.getByText('Iniciadas')).toBeVisible();

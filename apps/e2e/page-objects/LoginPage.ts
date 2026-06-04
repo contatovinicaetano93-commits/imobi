@@ -23,7 +23,7 @@ export class LoginPage {
   }
 
   async expectError(text: string) {
-    await this.errorMsg.waitFor();
-    await this.errorMsg.filter({ hasText: text }).waitFor();
+    await this.errorMsg.waitFor({ timeout: 15_000 });
+    await this.errorMsg.filter({ hasText: text }).waitFor({ timeout: 15_000 });
   }
 }

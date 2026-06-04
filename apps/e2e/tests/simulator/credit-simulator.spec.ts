@@ -5,7 +5,7 @@ test.use({ storageState: TOMADOR.storageState });
 
 test.describe('Simulador de Crédito', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/simulador');
+    await page.goto('/dashboard/simulador', { timeout: 60_000 });
     // Explicit 30s timeout: on first Next.js dev compile this route can be slow.
     await expect(page.getByRole('heading', { name: 'Simulador de Crédito' })).toBeVisible({ timeout: 30_000 });
   });

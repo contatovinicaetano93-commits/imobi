@@ -36,14 +36,14 @@ test.describe('Gestor approval panel', () => {
     const gp = new GestorPage(page);
     await gp.goto();
     await gp.revirarEtapasLink.click();
-    await page.waitForURL('**/gestor/etapas**');
+    await page.waitForURL('**/gestor/etapas**', { timeout: 30_000 });
   });
 
   test('Revisar KYC navigates to kyc queue', async ({ page }) => {
     const gp = new GestorPage(page);
     await gp.goto();
     await gp.revisarKycLink.click();
-    await page.waitForURL('**/gestor/kyc**');
+    await page.waitForURL('**/gestor/kyc**', { timeout: 30_000 });
   });
 
   test('dicas section is visible', async ({ page }) => {

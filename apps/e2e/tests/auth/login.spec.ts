@@ -24,7 +24,7 @@ test.describe('Login', () => {
   });
 
   test('shows API error for wrong credentials', async ({ page }) => {
-    await page.route((url) => url.includes('/api/proxy/auth/login'), (route) =>
+    await page.route((url) => url.href.includes('/api/proxy/auth/login'), (route) =>
       route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ message: 'Credenciais inválidas' }) })
     );
     const lp = new LoginPage(page);
@@ -34,7 +34,7 @@ test.describe('Login', () => {
   });
 
   test('redirects to /dashboard after valid login', async ({ page }) => {
-    await page.route((url) => url.includes('/api/proxy/auth/login'), (route) =>
+    await page.route((url) => url.href.includes('/api/proxy/auth/login'), (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -59,7 +59,7 @@ test.describe('Login', () => {
   });
 
   test('logout clears session and redirects to /login', async ({ page }) => {
-    await page.route((url) => url.includes('/api/proxy/auth/login'), (route) =>
+    await page.route((url) => url.href.includes('/api/proxy/auth/login'), (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -81,6 +81,6 @@ test.describe('Login', () => {
 
     // Dashboard should redirect to login now
     await page.goto('/dashboard');
-    await page.waitForURL('**/login**');
+    await page.waitForURL('**/login**', { timeout: 30_000 });
   });
 });

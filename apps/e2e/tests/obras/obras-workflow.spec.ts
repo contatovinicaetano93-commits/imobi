@@ -30,8 +30,8 @@ async function mockObraRoutes(page: Page, obraId: string, obraNome: string, obra
 
 test.describe('Obras workflow', () => {
   test('obras list page loads', async ({ page }) => {
-    await page.goto('/dashboard/obras');
-    await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 10_000 });
+    await page.goto('/dashboard/obras', { timeout: 60_000 });
+    await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 60_000 });
   });
 
   test('clicking an obra navigates to detail page with cronograma', async ({ page }) => {

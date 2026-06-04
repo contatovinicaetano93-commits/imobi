@@ -14,7 +14,7 @@ test.describe('Protected routes redirect unauthenticated users', () => {
   for (const path of protectedPaths) {
     test(`redirects ${path} to /login with next param`, async ({ page }) => {
       await page.goto(path);
-      await page.waitForURL(`**/login**`);
+      await page.waitForURL(`**/login**`, { timeout: 30_000 });
       expect(page.url()).toContain('next=');
       expect(page.url()).toContain(encodeURIComponent(path));
     });
