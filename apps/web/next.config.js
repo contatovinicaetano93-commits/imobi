@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@imbobi/core", "@imbobi/schemas", "@imbobi/ui"],
-  serverExternalPackages: ["@opentelemetry/instrumentation", "require-in-the-middle"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**.amazonaws.com" },
@@ -10,6 +9,7 @@ const nextConfig = {
   },
   experimental: {
     typedRoutes: true,
+    serverComponentsExternalPackages: ["@opentelemetry/instrumentation", "require-in-the-middle"],
   },
   webpack: (config) => {
     config.ignoreWarnings = [
