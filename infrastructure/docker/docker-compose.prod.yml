@@ -17,6 +17,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - postgres_backups:/var/backups/imobi/postgres
       - ./postgres.conf:/etc/postgresql/postgresql.conf:ro
+      - ./init-postgis.sql:/docker-entrypoint-initdb.d/01-postgis.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-imbobi} -d ${DATABASE_NAME:-imbobi_prod}"]
       interval: 10s

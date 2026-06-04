@@ -25,19 +25,23 @@
 ## FASE 2 — Infraestrutura (1 dia)
 
 ### 2.1 Banco de dados de produção
-- [ ] Provisionar PostgreSQL + PostGIS (AWS RDS ou Supabase)
-- [ ] Rodar migrations: `pnpm db:migrate`
-- [ ] Rodar seed inicial (usuários admin, estágios)
-- [ ] Testar backup automático
+- [x] PostGIS init SQL: `infrastructure/docker/init-postgis.sql`
+- [x] Docker Compose monta init automaticamente no primeiro start
+- [ ] **VOCÊ**: Provisionar servidor (VPS/Railway/Render) e rodar `docker compose -f infrastructure/docker/docker-compose.prod.yml up -d postgres`
+- [ ] **VOCÊ**: Rodar migrations: `DATABASE_URL=... npx prisma migrate deploy`
+- [ ] **VOCÊ**: Rodar seed: `pnpm --filter @imbobi/api seed`
+- [ ] **VOCÊ**: Verificar backup automático (ofelia scheduler no compose)
 
 ### 2.2 Redis de produção
-- [ ] Provisionar Redis (AWS ElastiCache ou Upstash)
-- [ ] Testar conexão BullMQ
+- [x] Redis já configurado no Docker Compose com persistência RDB+AOF
+- [ ] **VOCÊ**: Subir com `docker compose ... up -d redis`
+- [ ] **VOCÊ**: Testar: `redis-cli -h HOST ping`
 
 ### 2.3 AWS S3
-- [ ] Criar bucket `imbobi-evidencias-prod`
-- [ ] Configurar CORS do bucket
-- [ ] Criar IAM user com permissão mínima (só esse bucket)
+- [x] IAM policy mínima criada: `infrastructure/aws-iam-s3-policy.json`
+- [ ] **VOCÊ**: Criar bucket `imbobi-evidencias-prod` na AWS Console
+- [ ] **VOCÊ**: Criar IAM user, anexar a policy acima, gerar Access Key
+- [ ] **VOCÊ**: Configurar CORS do bucket (permite PUT do domínio da API)
 
 ---
 
