@@ -59,18 +59,24 @@ test.describe('Login', () => {
   });
 
   test('logout clears session and redirects to /login', async ({ page }) => {
-    await page.route((url) => url.href.includes('/api/proxy/auth/login'), (route) =>
-      route.fulfill({
+    await page.route((url) => url.href.includes('/api/proxy/auth/login'), async (route) => {
+      // route.fulfill Set-Cookie doesn't propagate to Chromium cookie jar for
+      // fetch() responses; set the cookie explicitly before fulfilling.
+      await page.context().addCookies([{
+        name: 'access_token', value: 'mock_token',
+        domain: 'localhost', path: '/',
+        httpOnly: true, secure: false, sameSite: 'Lax',
+      }]);
+      await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        headers: { 'Set-Cookie': MOCK_SESSION_COOKIE },
         body: JSON.stringify({ ok: true }),
-      })
-    );
+      });
+    });
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard', { timeout: 120_000 });
+    await page.waitForURL('**/dashboard', { timeout: 60_000 });
 
     // Logout via API
     await page.evaluate(async () => {
