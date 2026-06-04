@@ -23,6 +23,7 @@ export class LoginPage {
         }
         return false;
       },
+      undefined,
       { timeout: 60_000 }
     );
   }
