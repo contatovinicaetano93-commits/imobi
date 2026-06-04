@@ -14,8 +14,9 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (typeof window === "undefined") {
     try {
       const { cookies } = await import("next/headers");
-      const jar = await (cookies as () => Promise<{ get: (key: string) => { value: string } | undefined }>)();
-      const token = jar.get("access_token")?.value;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const jar = await (cookies as any)();
+      const token = jar?.get?.("access_token")?.value;
       if (token) headers.set("Authorization", `Bearer ${token}`);
     } catch { /* not in Next.js server component context */ }
   }
