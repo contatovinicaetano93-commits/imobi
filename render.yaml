@@ -7,7 +7,7 @@ services:
     dockerContext: .
     plan: starter
     region: oregon
-    healthCheckPath: /health
+    healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_ENV
         value: production
