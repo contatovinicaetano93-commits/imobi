@@ -21,9 +21,14 @@ model Usuario {
   passwordHash  String
   tipo          UsuarioTipo @default(TOMADOR)
   comercialRole ComercialRole?
-  kycStatus     KycStatus @default(PENDENTE)
-  deletadoEm    DateTime?  // LGPD Article 17 - soft delete timestamp
-  criadoEm      DateTime  @default(now())
+  kycStatus           KycStatus @default(PENDENTE)
+  consentidoTermos    Boolean   @default(false)
+  consentidoPrivacy   Boolean   @default(false)
+  consentidoKyc       Boolean   @default(false)
+  consentidoMarketing Boolean   @default(false)
+  consentidoEm        DateTime?
+  deletadoEm          DateTime?
+  criadoEm            DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt
 
   sessoes       SessaoToken[]
