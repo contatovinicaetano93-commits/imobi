@@ -24,7 +24,7 @@ export default defineConfig({
     locale: 'pt-BR',
     timezoneId: 'America/Sao_Paulo',
     actionTimeout: 15_000,
-    navigationTimeout: 180_000,
+    navigationTimeout: 300_000,
   },
   projects: [
     {

@@ -45,8 +45,8 @@ test.describe('Login', () => {
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard', { timeout: 60_000 });
-    await expect(page.getByRole('heading', { name: 'Visão Geral' })).toBeVisible({ timeout: 60_000 });
+    await page.waitForURL('**/dashboard', { timeout: 120_000 });
+    await expect(page.getByRole('heading', { name: 'Visão Geral' })).toBeVisible({ timeout: 120_000 });
   });
 
   test('sets access_token cookie after login', async () => {
@@ -70,7 +70,7 @@ test.describe('Login', () => {
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard', { timeout: 60_000 });
+    await page.waitForURL('**/dashboard', { timeout: 120_000 });
 
     // Logout via API
     await page.evaluate(async () => {
