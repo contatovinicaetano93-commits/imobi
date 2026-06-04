@@ -42,11 +42,17 @@ function fakeObra(obraId: string, etapaId: string) {
 }
 
 async function mockObraAndEvidencias(page: import('@playwright/test').Page, obraId: string, etapaId: string) {
-  await page.route((url) => url.href.includes(`/api/proxy/obras/${obraId}`), (route) =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(fakeObra(obraId, etapaId)) })
+  await page.route(
+    (url) => url.href.includes(`/api/proxy/obras/${obraId}/progresso`),
+    (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '75' })
   );
-  await page.route((url) => url.href.includes(`/api/proxy/evidencias/${etapaId}`), (route) =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+  await page.route(
+    (url) => url.href.includes(`/api/proxy/obras/${obraId}`) && !url.href.includes('/progresso'),
+    (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(fakeObra(obraId, etapaId)) })
+  );
+  await page.route(
+    (url) => url.href.includes(`/api/proxy/evidencias/${etapaId}`),
+    (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
   );
 }
 
