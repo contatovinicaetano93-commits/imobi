@@ -47,32 +47,20 @@
 
 ## FASE 3 — Variáveis de ambiente (2h)
 
-Configurar no Vercel (web) e servidor/Railway (API):
+- [x] `.env.example` corrigido (nomes consistentes `AWS_S3_BUCKET`, `AWS_S3_REGION`)
+- [x] Script de validação: `sh scripts/validate-env.sh` (rode antes do deploy)
+- [ ] **VOCÊ**: Copie `.env.example` → `.env.prod` e preencha todos os valores reais
+- [ ] **VOCÊ**: `ENV_FILE=.env.prod sh scripts/validate-env.sh` → deve retornar OK
+- [ ] **VOCÊ**: Configure as vars no painel do Vercel (web) e no servidor/Railway (API)
 
-**API (services/api):**
-```
-DATABASE_URL=
-REDIS_URL=
-JWT_SECRET=          # 64+ chars aleatórios
-CORS_ORIGIN=https://seudominio.com.br
-APP_URL=https://seudominio.com.br
-AWS_S3_BUCKET=imbobi-evidencias-prod
-AWS_S3_REGION=
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-SENDGRID_API_KEY=    # ou SMTP_HOST/SMTP_PORT
-SMTP_FROM=noreply@seudominio.com.br
-FIREBASE_PROJECT_ID=
-FIREBASE_PRIVATE_KEY=
-FIREBASE_CLIENT_EMAIL=
-SENTRY_DSN=
-NODE_ENV=production
+**Gerar JWT_SECRET seguro (T1):**
+```bash
+openssl rand -base64 48
 ```
 
-**Web (apps/web) — Vercel:**
-```
-NEXT_PUBLIC_API_URL=https://api.seudominio.com.br
-```
+**Vars obrigatórias API:** `DATABASE_URL`, `REDIS_HOST`, `REDIS_PORT`, `JWT_SECRET`, `CORS_ORIGIN`, `APP_URL`, `AWS_S3_BUCKET`, `AWS_S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `FIREBASE_*`, `SENTRY_DSN`, `NODE_ENV=production`
+
+**Var obrigatória Web (Vercel):** `NEXT_PUBLIC_API_URL=https://api.seudominio.com.br`
 
 ---
 
