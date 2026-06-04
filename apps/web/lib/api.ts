@@ -10,8 +10,13 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
 
-  // In a browser context, credentials: 'include' will automatically send cookies
-  // In SSR context, the request context already includes cookies
+  if (typeof window === "undefined") {
+    try {
+      const { cookies } = await import("next/headers");
+      const token = (cookies as any)().get?.("access_token")?.value;
+      if (token) headers.set("Authorization", `Bearer ${token}`);
+    } catch { /* not in Next.js server component context */ }
+  }
 
   const res = await fetch(`${API_URL}/api/v1${path}`, {
     ...init,

@@ -26,8 +26,16 @@ test.describe('Tomador dashboard', () => {
   });
 });
 
+const MOCK_STATS = { filaAprovacoes: 3, filaKyc: 2, creditosAtivos: 5, obrasAtivas: 8 };
+
 test.describe('Gestor dashboard', () => {
   test.use({ storageState: GESTOR.storageState });
+
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/v1/manager/dashboard**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_STATS) })
+    );
+  });
 
   test('shows Painel do Gestor with stat cards', async ({ page }) => {
     const gp = new GestorPage(page);

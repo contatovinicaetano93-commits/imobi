@@ -57,7 +57,7 @@ export class ObrasService {
     });
   }
 
-  async buscar(usuarioId: string, obraId: string) {
+  async buscar(usuario: { id: string; tipo: string }, obraId: string) {
     const obra = await this.prisma.obra.findUnique({
       where: { obraId },
       include: {
@@ -75,7 +75,7 @@ export class ObrasService {
       },
     });
     if (!obra) throw new NotFoundException("Obra não encontrada.");
-    if (obra.usuarioId !== usuarioId) throw new ForbiddenException();
+    if (usuario.tipo !== "ADMIN" && obra.usuarioId !== usuario.id) throw new ForbiddenException();
     return obra;
   }
 

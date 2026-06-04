@@ -4,7 +4,15 @@ import { GestorPage } from '../../page-objects/GestorPage';
 
 test.use({ storageState: GESTOR.storageState });
 
+const MOCK_STATS = { filaAprovacoes: 3, filaKyc: 2, creditosAtivos: 5, obrasAtivas: 8 };
+
 test.describe('Gestor approval panel', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/v1/manager/dashboard**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_STATS) })
+    );
+  });
+
   test('gestor page loads with heading and summary', async ({ page }) => {
     const gp = new GestorPage(page);
     await gp.goto();
