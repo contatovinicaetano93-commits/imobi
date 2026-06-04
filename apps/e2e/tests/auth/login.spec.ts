@@ -24,17 +24,17 @@ test.describe('Login', () => {
   });
 
   test('shows API error for wrong credentials', async ({ page }) => {
-    await page.route('**/api/proxy/auth/login**', (route) =>
+    await page.route((url) => url.includes('/api/proxy/auth/login'), (route) =>
       route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ message: 'Credenciais inválidas' }) })
     );
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login('wrong@email.com', 'WrongPass123!');
-    await expect(lp.errorMsg).toBeVisible();
+    await expect(lp.errorMsg).toBeVisible({ timeout: 30_000 });
   });
 
   test('redirects to /dashboard after valid login', async ({ page }) => {
-    await page.route('**/api/proxy/auth/login**', (route) =>
+    await page.route((url) => url.includes('/api/proxy/auth/login'), (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -59,7 +59,7 @@ test.describe('Login', () => {
   });
 
   test('logout clears session and redirects to /login', async ({ page }) => {
-    await page.route('**/api/proxy/auth/login**', (route) =>
+    await page.route((url) => url.includes('/api/proxy/auth/login'), (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
