@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LoginSchema, type LoginInput } from "@imbobi/schemas";
-import { apiClient, ApiError } from "@imbobi/core";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,19 +19,16 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginInput) => {
     setErro(null);
     try {
-      const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
-        "/auth/login",
-        data
-      );
-      // Armazena em cookie HttpOnly via endpoint next (ver route handler)
-      await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(res),
+      const res = await fetch('/api/proxy/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
       });
-      router.push("/dashboard");
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.message ?? 'Credenciais inválidas');
+      router.push('/dashboard');
     } catch (e) {
-      setErro(e instanceof ApiError ? e.message : "Erro inesperado.");
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     }
   };
 

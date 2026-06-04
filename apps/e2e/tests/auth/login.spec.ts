@@ -3,6 +3,8 @@ import { test, expect } from '@playwright/test';
 import { LoginPage } from '../../page-objects/LoginPage';
 import { TOMADOR } from '../../fixtures/auth.fixture';
 
+const MOCK_SESSION_COOKIE = 'access_token=mock_token; Path=/; SameSite=Lax';
+
 test.describe('Login', () => {
   test('renders login form', async ({ page }) => {
     const lp = new LoginPage(page);
@@ -22,6 +24,9 @@ test.describe('Login', () => {
   });
 
   test('shows API error for wrong credentials', async ({ page }) => {
+    await page.route('**/api/proxy/auth/login**', (route) =>
+      route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ message: 'Credenciais inválidas' }) })
+    );
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login('wrong@email.com', 'WrongPass123!');
@@ -29,10 +34,18 @@ test.describe('Login', () => {
   });
 
   test('redirects to /dashboard after valid login', async ({ page }) => {
+    await page.route('**/api/proxy/auth/login**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Set-Cookie': MOCK_SESSION_COOKIE },
+        body: JSON.stringify({ ok: true }),
+      })
+    );
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard', { timeout: 180_000 });
+    await page.waitForURL('**/dashboard', { timeout: 60_000 });
     await expect(page.getByRole('heading', { name: 'Visão Geral' })).toBeVisible({ timeout: 60_000 });
   });
 
@@ -46,11 +59,18 @@ test.describe('Login', () => {
   });
 
   test('logout clears session and redirects to /login', async ({ page }) => {
-    // Login first
+    await page.route('**/api/proxy/auth/login**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Set-Cookie': MOCK_SESSION_COOKIE },
+        body: JSON.stringify({ ok: true }),
+      })
+    );
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard', { timeout: 180_000 });
+    await page.waitForURL('**/dashboard', { timeout: 60_000 });
 
     // Logout via API
     await page.evaluate(async () => {
