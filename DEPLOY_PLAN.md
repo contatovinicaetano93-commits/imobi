@@ -6,26 +6,19 @@
 ## FASE 1 — Dev (1-2 dias)
 
 ### 1.1 Migration LGPD (2h)
-- [ ] Adicionar campos ao schema Prisma:
-  ```
-  consentidoTermos     Boolean @default(false)
-  consentidoPrivacy    Boolean @default(false)
-  consentidoKyc        Boolean @default(false)
-  consentidoMarketing  Boolean @default(false)
-  consentidoEm         DateTime?
-  ```
-- [ ] Rodar `pnpm db:migrate`
-- [ ] Rodar `pnpm db:generate`
+- [x] Adicionar campos ao schema Prisma
+- [x] Migration SQL criada (`migrations/6_add_lgpd_consent_fields`)
+- [ ] Rodar `pnpm db:migrate` em produção
 
 ### 1.2 Formulário de cadastro com consentimento (3h)
-- [ ] Adicionar 4 checkboxes em `apps/web/app/(auth)/cadastro/page.tsx`
-- [ ] Bloquear submit se Termos/Privacidade/KYC não marcados
-- [ ] Enviar `consentidoEm: new Date()` para a API
+- [x] Adicionar 4 checkboxes em `apps/web/app/(auth)/cadastro/page.tsx`
+- [x] Bloquear submit se Termos/Privacidade/KYC não marcados (Zod `z.literal(true)`)
+- [x] Enviar `consentidoEm: new Date()` para a API
 
 ### 1.3 Segurança (2h)
-- [ ] Configurar `git-secrets` no repositório
-- [ ] Documentar rotação de secrets (trimestral)
-- [ ] Ativar Sentry: setar `SENTRY_DSN` no `.env`
+- [x] Pre-commit hook anti-secrets (`scripts/setup-git-hooks.sh`)
+- [ ] Rotação de secrets: trimestral — anotar no calendário do time
+- [x] Sentry já integrado na API — só setar `SENTRY_DSN` no `.env` de produção
 
 ---
 
@@ -145,8 +138,8 @@ NEXT_PUBLIC_API_URL=https://api.seudominio.com.br
 
 Só fazer deploy quando tudo marcado:
 
-- [ ] Migration LGPD aplicada em produção
-- [ ] Formulário de cadastro com consentimento
+- [ ] Migration LGPD aplicada em produção (`migrations/6_add_lgpd_consent_fields`)
+- [x] Formulário de cadastro com consentimento
 - [ ] Todos env vars configurados
 - [ ] Health check da API retorna 200
 - [ ] Build do Next.js sem erros
