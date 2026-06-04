@@ -14,6 +14,8 @@ export class LoginPage {
     this.page.setDefaultNavigationTimeout(180_000);
     await this.page.goto('/login');
     await this.brand.waitFor({ timeout: 180_000 });
+    // React hydration: RSC payload + JS events not attached until networkidle
+    await this.page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
   }
 
   async login(email: string, password: string) {
