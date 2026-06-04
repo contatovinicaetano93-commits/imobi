@@ -24,6 +24,11 @@ pnpm build            # build de produção
 - `@imbobi/core` — hooks, utils, api-client (zero deps nativas)
 - `@imbobi/ui` — componentes base (web: shadcn | native: RN)
 
+## Comunicação
+- O dono do projeto é generalista e curioso, sem formação técnica formal.
+- Explique conceitos técnicos com analogias simples quando introduzir algo novo.
+- Respostas curtas e diretas. Só detalhe quando perguntado.
+
 ## Regras críticas
 1. **Nunca commitar `.env`** — use `.env.example`
 2. **GPS validation** ocorre em duas camadas: client (UX) + server (PostGIS). A validação server é incontornável.
