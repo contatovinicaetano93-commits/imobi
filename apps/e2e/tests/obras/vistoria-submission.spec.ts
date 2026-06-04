@@ -3,10 +3,8 @@ import { GESTOR, TOMADOR } from '../../fixtures/auth.fixture';
 import { VistoriaPage } from '../../page-objects/VistoriaPage';
 import { loginViaApi, findEtapaWithStatus } from '../../fixtures/api-helpers';
 
-// Gestor (ADMIN) reviews vistorias; after NestJS buscar fix, ADMIN can access any obra.
 test.use({ storageState: GESTOR.storageState });
 
-// Get a real obra/etapa with AGUARDANDO_VISTORIA from the TOMADOR's obras (seeded data).
 async function getVistoriaIds(): Promise<{ obraId: string; etapaId: string } | null> {
   try {
     const token = await loginViaApi(TOMADOR.email, TOMADOR.password);
@@ -22,11 +20,43 @@ async function getVistoriaIds(): Promise<{ obraId: string; etapaId: string } | n
   }
 }
 
+function fakeObra(obraId: string, etapaId: string) {
+  return {
+    id: obraId,
+    nome: 'Obra Teste',
+    status: 'EM_ANDAMENTO',
+    geoLatitude: -23.5,
+    geoLongitude: -46.6,
+    raioValidacaoMetros: 100,
+    etapas: [
+      {
+        id: etapaId,
+        nome: 'Etapa Teste',
+        ordem: 1,
+        percentualObra: 10,
+        valorLiberacao: 10000,
+        status: 'AGUARDANDO_VISTORIA',
+      },
+    ],
+  };
+}
+
+async function mockObraAndEvidencias(page: import('@playwright/test').Page, obraId: string, etapaId: string) {
+  await page.route((url) => url.href.includes(`/api/proxy/obras/${obraId}`), (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(fakeObra(obraId, etapaId)) })
+  );
+  await page.route((url) => url.href.includes(`/api/proxy/evidencias/${etapaId}`), (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+  );
+}
+
 test.describe('Vistoria submission', () => {
   test('vistoria page renders correctly', async ({ page }) => {
     const ids = await getVistoriaIds();
     if (!ids) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
     const { obraId, etapaId } = ids;
+
+    await mockObraAndEvidencias(page, obraId, etapaId);
 
     const vp = new VistoriaPage(page);
     await vp.goto(obraId, etapaId);
@@ -44,6 +74,8 @@ test.describe('Vistoria submission', () => {
     if (!ids) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
     const { obraId, etapaId } = ids;
 
+    await mockObraAndEvidencias(page, obraId, etapaId);
+
     const vp = new VistoriaPage(page);
     await vp.goto(obraId, etapaId);
 
@@ -56,7 +88,7 @@ test.describe('Vistoria submission', () => {
     if (!ids) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
     const { obraId, etapaId } = ids;
 
-    // Mock the Next.js API route so we don't actually modify DB state
+    await mockObraAndEvidencias(page, obraId, etapaId);
     await page.route(`**/api/etapas/${etapaId}/validar`, (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) })
     );
@@ -74,6 +106,7 @@ test.describe('Vistoria submission', () => {
     if (!ids) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
     const { obraId, etapaId } = ids;
 
+    await mockObraAndEvidencias(page, obraId, etapaId);
     await page.route(`**/api/etapas/${etapaId}/validar`, (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) })
     );
