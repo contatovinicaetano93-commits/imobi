@@ -1,7 +1,7 @@
 {
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
-  "entryFile": "services/api/src/main",
+  "entryFile": "main",
   "compilerOptions": {
     "outDir": "./dist",
     "deleteOutDir": true
