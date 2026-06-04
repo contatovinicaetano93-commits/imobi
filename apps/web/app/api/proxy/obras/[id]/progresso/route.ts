@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const API = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
+const _base = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
+const API = _base.endsWith('/api/v1') ? _base : `${_base}/api/v1`;
 
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
-  const token = cookies().get('access_token')?.value;
-  const res = await fetch(`${API}/api/v1/obras/${params.id}/progresso`, {
+  const token = (await cookies()).get('access_token')?.value;
+  const res = await fetch(`${API}/obras/${params.id}/progresso`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     cache: 'no-store',
   }).catch(() => null);

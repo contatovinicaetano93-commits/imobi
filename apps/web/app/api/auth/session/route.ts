@@ -8,6 +8,12 @@ const COOKIE_OPTS = {
   path: "/",
 };
 
+export async function GET() {
+  const jar = await cookies();
+  const hasToken = !!jar.get("access_token")?.value;
+  return NextResponse.json({ authenticated: hasToken });
+}
+
 export async function POST(req: Request) {
   const { accessToken, refreshToken } = await req.json() as {
     accessToken: string;

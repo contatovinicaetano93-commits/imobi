@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-const API_URL = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
+const _base = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
+const API_URL = _base.endsWith("/api/v1") ? _base : `${_base}/api/v1`;
 
 export async function PATCH(
   req: Request,
@@ -12,7 +13,7 @@ export async function PATCH(
 
   const body = await req.json() as unknown;
 
-  const res = await fetch(`${API_URL}/api/v1/etapas/${params.etapaId}/aprovar`, {
+  const res = await fetch(`${API_URL}/etapas/${params.etapaId}/aprovar`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

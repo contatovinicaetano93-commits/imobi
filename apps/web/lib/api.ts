@@ -1,4 +1,5 @@
-const API_URL = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
+const _base = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
+const API_URL = _base.endsWith("/api/v1") ? _base : `${_base}/api/v1`;
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -13,12 +14,13 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (typeof window === "undefined") {
     try {
       const { cookies } = await import("next/headers");
-      const token = (cookies as any)().get?.("access_token")?.value;
+      const jar = await (cookies as () => Promise<{ get: (key: string) => { value: string } | undefined }>)();
+      const token = jar.get("access_token")?.value;
       if (token) headers.set("Authorization", `Bearer ${token}`);
     } catch { /* not in Next.js server component context */ }
   }
 
-  const res = await fetch(`${API_URL}/api/v1${path}`, {
+  const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers,
     cache: "no-store",

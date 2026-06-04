@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const API = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000/api/v1';
+const _base = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
+const API = _base.endsWith('/api/v1') ? _base : `${_base}/api/v1`;
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: data.message ?? 'Credenciais inválidas' }, { status: res.status });
   }
 
-  const jar = cookies();
+  const jar = await cookies();
   jar.set('access_token', data.accessToken, {
     httpOnly: true,
     secure: process.env['NODE_ENV'] === 'production',
