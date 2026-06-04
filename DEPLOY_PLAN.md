@@ -98,21 +98,22 @@ openssl rand -base64 48
 
 ## FASE 5 — Validação (1 dia)
 
-### 5.1 Testes funcionais (manual)
+### 5.1 Testes funcionais (manual — você faz)
 - [ ] Login / logout funciona
-- [ ] Cadastro com consentimento salva flags no banco
-- [ ] Upload de evidência com GPS funciona (S3)
-- [ ] E-mail de boas-vindas chega
+- [ ] Cadastro com consentimento salva flags no banco (`consentidoTermos=true`)
+- [ ] Upload de evidência com GPS funciona (arquivo aparece no S3)
+- [ ] E-mail de boas-vindas chega (caixa de entrada)
 - [ ] Push notification FCM chega no mobile
 
 ### 5.2 Testes de carga
-- [ ] 100 usuários simultâneos (k6 ou Artillery)
-- [ ] Verificar p99 < 500ms nas rotas principais
+- [x] Script k6 já existe: `scripts/cutover-load-test.js`
+- [ ] **VOCÊ**: `k6 run -e API_URL=https://api.seudominio.com.br scripts/cutover-load-test.js`
+- [ ] p95 < 200ms, error rate < 1%
 
 ### 5.3 Segurança
-- [ ] Verificar HTTPS em todos os endpoints
-- [ ] Verificar CORS bloqueando origens não autorizadas
-- [ ] Verificar rate limiting (10 tentativas de login → 429)
+- [x] Script criado: `scripts/validate-security.sh`
+- [ ] **VOCÊ**: `API_URL=https://api.seudominio.com.br WEB_URL=https://seudominio.com.br sh scripts/validate-security.sh`
+- [ ] Deve passar: HTTPS, CORS, rate limit 429, security headers
 
 ---
 
