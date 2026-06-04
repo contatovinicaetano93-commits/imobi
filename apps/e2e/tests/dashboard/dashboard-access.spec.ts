@@ -32,7 +32,7 @@ test.describe('Gestor dashboard', () => {
   test.use({ storageState: GESTOR.storageState });
 
   test.beforeEach(async ({ page }) => {
-    await page.route('**/api/v1/manager/dashboard**', (route) =>
+    await page.route('**/api/proxy/manager/dashboard**', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_STATS) })
     );
   });

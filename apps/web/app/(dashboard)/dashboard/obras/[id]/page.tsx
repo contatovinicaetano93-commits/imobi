@@ -1,11 +1,9 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { obrasApi, type EtapaResumo } from "@/lib/api";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { ObraResumo, EtapaResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
-
-export const dynamic = 'force-dynamic';
-
-export const metadata: Metadata = { title: "Detalhe da Obra — imbobi" };
 
 const STATUS_STYLE: Record<string, string> = {
   APROVADA:            "bg-green-50 text-green-700 border-green-200",
@@ -15,20 +13,37 @@ const STATUS_STYLE: Record<string, string> = {
   REJEITADA:           "bg-red-50 text-red-700 border-red-200",
 };
 
-export default async function ObraDetailPage({ params }: { params: { id: string } }) {
-  const obra = await obrasApi.buscar(params.id).catch(() => null);
-  if (!obra) notFound();
+export default function ObraDetailPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
+  const [obra, setObra] = useState<ObraResumo | null>(null);
+  const [progresso, setProgresso] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
 
-  const progresso = await obrasApi.progresso(params.id).catch(() => 0);
+  useEffect(() => {
+    Promise.all([
+      fetch(`/api/proxy/obras/${params.id}`).then((r) => (r.ok ? r.json() : null)),
+      fetch(`/api/proxy/obras/${params.id}/progresso`).then((r) => (r.ok ? r.json() : 0)).catch(() => 0),
+    ])
+      .then(([obraData, progressoData]) => {
+        if (!obraData) { router.replace('/dashboard/obras'); return; }
+        setObra(obraData);
+        setProgresso(progressoData ?? 0);
+      })
+      .finally(() => setLoading(false));
+  }, [params.id, router]);
+
+  if (loading) {
+    return <div className="text-gray-400 p-8">Carregando...</div>;
+  }
+  if (!obra) return null;
+
   const etapas = obra.etapas ?? [];
 
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">{obra.nome}</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          {obra.status.replace(/_/g, " ")}
-        </p>
+        <p className="text-gray-500 text-sm mt-1">{obra.status.replace(/_/g, " ")}</p>
       </div>
 
       {obra.credito && (
@@ -40,9 +55,7 @@ export default async function ObraDetailPage({ params }: { params: { id: string 
           ].map((k) => (
             <div key={k.label} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
               <p className="text-sm text-gray-500 mb-1">{k.label}</p>
-              <p className={`text-2xl font-bold ${k.green ? "text-brand-600" : "text-gray-900"}`}>
-                {k.value}
-              </p>
+              <p className={`text-2xl font-bold ${k.green ? "text-brand-600" : "text-gray-900"}`}>{k.value}</p>
             </div>
           ))}
         </div>
@@ -62,7 +75,10 @@ export default async function ObraDetailPage({ params }: { params: { id: string 
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Cronograma de Etapas</h2>
         <div className="space-y-3">
           {etapas.map((etapa: EtapaResumo) => (
-            <div key={etapa.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+            <div
+              key={etapa.id}
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4"
+            >
               <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600 shrink-0">
                 {etapa.ordem}
               </div>
@@ -76,7 +92,9 @@ export default async function ObraDetailPage({ params }: { params: { id: string 
                 <p className="text-lg font-bold text-gray-900">{etapa.evidencias?.length ?? 0}</p>
                 <p className="text-xs text-gray-400">fotos</p>
               </div>
-              <span className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${STATUS_STYLE[etapa.status] ?? STATUS_STYLE["PENDENTE"]}`}>
+              <span
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${STATUS_STYLE[etapa.status] ?? STATUS_STYLE["PENDENTE"]}`}
+              >
                 {etapa.status.replace(/_/g, " ")}
               </span>
               {etapa.status === "AGUARDANDO_VISTORIA" && (

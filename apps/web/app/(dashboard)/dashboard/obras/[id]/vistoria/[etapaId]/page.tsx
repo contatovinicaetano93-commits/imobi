@@ -1,26 +1,35 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { obrasApi, evidenciasApi, type EvidenciaDetalhe } from "@/lib/api";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { ObraResumo, EvidenciaDetalhe } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { AprovarEtapaForm } from "./aprovar-form";
 
-export const dynamic = 'force-dynamic';
+export default function VistoriaPage({ params }: { params: { id: string; etapaId: string } }) {
+  const router = useRouter();
+  const [obra, setObra] = useState<ObraResumo | null>(null);
+  const [evidencias, setEvidencias] = useState<EvidenciaDetalhe[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export const metadata: Metadata = { title: "Vistoria — imbobi" };
+  useEffect(() => {
+    Promise.all([
+      fetch(`/api/proxy/obras/${params.id}`).then((r) => (r.ok ? r.json() : null)),
+      fetch(`/api/proxy/evidencias/${params.etapaId}`).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+    ])
+      .then(([obraData, evidenciasData]) => {
+        if (!obraData) { router.replace('/dashboard/obras'); return; }
+        setObra(obraData);
+        setEvidencias(evidenciasData ?? []);
+      })
+      .finally(() => setLoading(false));
+  }, [params.id, params.etapaId, router]);
 
-export default async function VistoriaPage({
-  params,
-}: {
-  params: { id: string; etapaId: string };
-}) {
-  const [obra, evidencias] = await Promise.all([
-    obrasApi.buscar(params.id).catch(() => null),
-    evidenciasApi.listarPorEtapa(params.etapaId).catch(() => []),
-  ]);
-  if (!obra) notFound();
+  if (loading) return <div className="text-gray-400 p-8">Carregando...</div>;
+  if (!obra) return null;
 
   const etapa = obra.etapas?.find((e) => e.id === params.etapaId);
-  if (!etapa) notFound();
+  if (!etapa) return <div className="p-8 text-red-600">Etapa não encontrada.</div>;
 
   return (
     <div className="max-w-3xl space-y-8">
