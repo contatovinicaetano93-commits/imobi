@@ -51,10 +51,15 @@ async function mockObraAndEvidencias(page: import('@playwright/test').Page, obra
 }
 
 test.describe('Vistoria submission', () => {
+  let sharedIds: { obraId: string; etapaId: string } | null = null;
+
+  test.beforeAll(async () => {
+    sharedIds = await getVistoriaIds();
+  });
+
   test('vistoria page renders correctly', async ({ page }) => {
-    const ids = await getVistoriaIds();
-    if (!ids) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
-    const { obraId, etapaId } = ids;
+    if (!sharedIds) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
+    const { obraId, etapaId } = sharedIds;
 
     await mockObraAndEvidencias(page, obraId, etapaId);
 
@@ -70,9 +75,8 @@ test.describe('Vistoria submission', () => {
   });
 
   test('breadcrumb shows Obras link', async ({ page }) => {
-    const ids = await getVistoriaIds();
-    if (!ids) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
-    const { obraId, etapaId } = ids;
+    if (!sharedIds) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
+    const { obraId, etapaId } = sharedIds;
 
     await mockObraAndEvidencias(page, obraId, etapaId);
 
@@ -84,9 +88,8 @@ test.describe('Vistoria submission', () => {
   });
 
   test('aprovar etapa redirects to obra detail', async ({ page }) => {
-    const ids = await getVistoriaIds();
-    if (!ids) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
-    const { obraId, etapaId } = ids;
+    if (!sharedIds) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
+    const { obraId, etapaId } = sharedIds;
 
     await mockObraAndEvidencias(page, obraId, etapaId);
     await page.route(`**/api/etapas/${etapaId}/validar`, (route) =>
@@ -102,9 +105,8 @@ test.describe('Vistoria submission', () => {
   });
 
   test('rejeitar etapa shows button and allows rejection', async ({ page }) => {
-    const ids = await getVistoriaIds();
-    if (!ids) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
-    const { obraId, etapaId } = ids;
+    if (!sharedIds) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
+    const { obraId, etapaId } = sharedIds;
 
     await mockObraAndEvidencias(page, obraId, etapaId);
     await page.route(`**/api/etapas/${etapaId}/validar`, (route) =>
