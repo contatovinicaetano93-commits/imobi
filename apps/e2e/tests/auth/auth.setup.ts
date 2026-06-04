@@ -25,7 +25,7 @@ async function saveAuthState(email: string, password: string, outFile: string) {
   const data = await res.json() as { accessToken: string; refreshToken?: string };
 
   const now = Math.floor(Date.now() / 1000);
-  const base = { domain: 'localhost', path: '/', httpOnly: true, secure: false, sameSite: 'Lax' as const };
+  const base = { domain: '', path: '/', httpOnly: true, secure: false, sameSite: 'Lax' as const };
 
   await writeFile(outFile, JSON.stringify({
     cookies: [

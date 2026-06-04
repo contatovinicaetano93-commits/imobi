@@ -14,14 +14,14 @@ export class LoginPage {
     this.page.setDefaultNavigationTimeout(180_000);
     await this.page.goto('/login');
     await this.brand.waitFor({ timeout: 180_000 });
-    // Wait for React to finish hydrating the form (React sets __reactFiber$ on DOM nodes)
+    // Wait for React to hydrate. Fails loudly if not done in 60s (better than silent swallow).
     await this.page.waitForFunction(
       () => {
         const el = document.querySelector('input[type="email"]');
         return el != null && Object.keys(el).some(k => k.startsWith('__reactFiber$'));
       },
       { timeout: 60_000 }
-    ).catch(() => {});
+    );
   }
 
   async login(email: string, password: string) {
