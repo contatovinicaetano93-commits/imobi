@@ -41,15 +41,19 @@ setup.beforeAll(async () => {
   await mkdir(authDir, { recursive: true });
 });
 
-// Warm up Next.js dev server so the first browser navigation doesn't time out.
-// Next.js compiles pages on first request — on WSL2 this can take >3 min.
-// We hit /login (public) and /dashboard (with real JWT) concurrently while
-// saving auth state so the extra wait costs almost nothing.
-setup('auth:all', async () => {
-  // Start /login warm-up immediately (public, no auth needed)
-  const loginWarmup = fetch(`${BASE_URL}/login`, {
-    signal: AbortSignal.timeout(240_000),
-  }).catch(() => {});
+// Warm up Next.js dev server using a real Chromium browser so that Next.js
+// compiles BOTH the HTML route AND the JavaScript chunks on first visit.
+// A plain Node.js fetch only triggers HTML compilation; the JS chunks (which
+// tests depend on) are compiled lazily on the first browser request and can
+// add 3-8 minutes to the first test.  Running the browser warm-up concurrently
+// with the NestJS auth saves means the extra cost is near-zero.
+setup('auth:all', async ({ page }) => {
+  // Start /login warm-up immediately using the real browser so Next.js
+  // compiles JS chunks.  waitUntil:'domcontentloaded' means we don't wait for
+  // every resource — just enough to guarantee the chunk compilation kicked off.
+  const loginWarmup = page
+    .goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 280_000 })
+    .catch(() => {});
 
   // Save all three auth states in parallel (~4 s on WSL2)
   const [tomadorToken] = await Promise.all([
@@ -58,13 +62,22 @@ setup('auth:all', async () => {
     saveAuthState(ENGENHEIRO.email, ENGENHEIRO.password, path.join(authDir, 'engenheiro.json')),
   ]);
 
-  // Warm up /dashboard with real JWT while login warm-up may still be running
+  // Warm up /dashboard with a real JWT cookie so the authenticated route's
+  // JS chunks are also compiled before the actual tests run.
+  await page.context().addCookies([{
+    name: 'access_token',
+    value: tomadorToken,
+    domain: 'localhost',
+    path: '/',
+    httpOnly: true,
+    secure: false,
+    sameSite: 'Lax',
+  }]);
+
   await Promise.all([
     loginWarmup,
-    fetch(`${BASE_URL}/dashboard`, {
-      headers: { Cookie: `access_token=${tomadorToken}` },
-      redirect: 'follow',
-      signal: AbortSignal.timeout(120_000),
-    }).catch(() => {}),
+    page
+      .goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded', timeout: 280_000 })
+      .catch(() => {}),
   ]);
 });

@@ -11,8 +11,8 @@ export class LoginPage {
   constructor(private page: Page) {}
 
   async goto() {
-    await this.page.goto('/login');
-    await this.brand.waitFor({ timeout: 180_000 });
+    await this.page.goto('/login', { waitUntil: 'domcontentloaded' });
+    await this.brand.waitFor({ timeout: 300_000 });
     await this.email.waitFor({ state: 'visible', timeout: 60_000 });
   }
 
