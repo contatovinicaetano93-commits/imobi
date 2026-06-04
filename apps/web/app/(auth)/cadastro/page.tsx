@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import React, { useState } from "react";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
 import { apiClient, ApiError, formatarCPF, formatarTelefone } from "@imbobi/core";
 
@@ -25,7 +25,7 @@ export default function CadastroPage() {
     try {
       const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
         "/auth/registrar",
-        data
+        { ...data, consentidoEm: new Date().toISOString() }
       );
       await fetch("/api/auth/session", {
         method: "POST",
@@ -79,6 +79,45 @@ export default function CadastroPage() {
             </Field>
           </div>
 
+          <div className="space-y-3 pt-2 border-t border-gray-100">
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Consentimentos (LGPD)</p>
+
+            <ConsentCheck
+              id="consentidoTermos"
+              error={errors.consentidoTermos?.message}
+              {...register("consentidoTermos")}
+            >
+              Li e aceito os{" "}
+              <a href="/termos" target="_blank" className="text-brand-600 underline">Termos de Uso</a>
+              {" "}*
+            </ConsentCheck>
+
+            <ConsentCheck
+              id="consentidoPrivacy"
+              error={errors.consentidoPrivacy?.message}
+              {...register("consentidoPrivacy")}
+            >
+              Li e aceito a{" "}
+              <a href="/privacidade" target="_blank" className="text-brand-600 underline">Política de Privacidade</a>
+              {" "}*
+            </ConsentCheck>
+
+            <ConsentCheck
+              id="consentidoKyc"
+              error={errors.consentidoKyc?.message}
+              {...register("consentidoKyc")}
+            >
+              Autorizo a verificação de identidade (KYC) junto à Unico/SERPRO *
+            </ConsentCheck>
+
+            <ConsentCheck
+              id="consentidoMarketing"
+              {...register("consentidoMarketing")}
+            >
+              Aceito receber comunicações de marketing (opcional)
+            </ConsentCheck>
+          </div>
+
           {erro && (
             <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2">{erro}</p>
           )}
@@ -113,6 +152,20 @@ function Field({
       <label className="text-sm font-medium text-gray-700">{label}</label>
       {children}
       {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
+function ConsentCheck({
+  id, error, children, ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & { id: string; error?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-0.5">
+      <label htmlFor={id} className="flex items-start gap-2 cursor-pointer">
+        <input id={id} type="checkbox" className="mt-0.5 accent-brand-600" {...props} />
+        <span className="text-sm text-gray-700">{children}</span>
+      </label>
+      {error && <p className="text-xs text-red-500 ml-5">{error}</p>}
     </div>
   );
 }
