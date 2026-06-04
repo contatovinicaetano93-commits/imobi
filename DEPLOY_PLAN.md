@@ -66,33 +66,33 @@ openssl rand -base64 48
 
 ## FASE 4 — Deploy (1 dia)
 
-### 4.1 API
-- [x] `services/api/Dockerfile` criado (multi-stage, Node 20 Alpine)
-- [x] Serviço `api` adicionado ao `docker-compose.prod.yml`
-- [ ] **VOCÊ** (no servidor, pasta do projeto):
-  ```bash
-  # Valide env vars primeiro
-  ENV_FILE=.env.prod sh scripts/validate-env.sh
+### 4.1 API + Banco + Redis (Render)
+- [x] `render.yaml` criado — define API + PostgreSQL + Redis em um arquivo
+- [x] PostGIS habilitado na migration `0_init`
+- [ ] **VOCÊ**:
+  1. render.com → New → Blueprint → conecte o repo
+  2. Render lê o `render.yaml` e cria os 3 serviços automaticamente
+  3. No painel, preencha as env vars marcadas como `sync: false`:
+     `JWT_SECRET`, `CORS_ORIGIN`, `APP_URL`, `AWS_*`, `FIREBASE_*`, `SENTRY_DSN`, `EMAIL_PROVIDER`, `SENDGRID_API_KEY`
+  4. Gere o JWT_SECRET: `openssl rand -base64 48`
+  5. Após o deploy, rode as migrations:
+     ```bash
+     # Render fornece a DATABASE_URL no painel — copie e rode local:
+     DATABASE_URL="..." npx prisma migrate deploy --schema services/api/prisma/schema.prisma
+     ```
 
-  # Suba banco + cache + api
-  docker compose -f infrastructure/docker/docker-compose.prod.yml --env-file .env.prod up -d
-
-  # Verifique
-  curl http://localhost:4000/health
-  docker compose -f infrastructure/docker/docker-compose.prod.yml logs api
-  ```
-
-### 4.2 Web
-- [x] `vercel.json` atualizado com `outputDirectory` e `framework`
-- [ ] **VOCÊ**: Acesse vercel.com → Import Git Repository → `contatovinicaetano93-commits/imobi`
-- [ ] **VOCÊ**: Root Directory: `apps/web`
-- [ ] **VOCÊ**: Adicione `NEXT_PUBLIC_API_URL=https://api.seudominio.com.br` no painel Vercel
-- [ ] **VOCÊ**: Deploy automático ao fazer `git push`
+### 4.2 Web (Vercel)
+- [x] `vercel.json` configurado
+- [ ] **VOCÊ**:
+  1. vercel.com → Add New Project → Import repo
+  2. Root Directory: `apps/web`
+  3. Env var: `NEXT_PUBLIC_API_URL=https://imobi-api.onrender.com`
+  4. Deploy (automático no `git push`)
 
 ### 4.3 DNS
-- [ ] **VOCÊ**: Domínio (ex: `imbobi.com.br`) → aponte para Vercel (CNAME `cname.vercel-dns.com`)
-- [ ] **VOCÊ**: Subdomínio `api.imbobi.com.br` → aponte para IP do servidor da API (A record)
-- [ ] Aguardar propagação SSL (automático no Vercel; use Caddy ou nginx+certbot na API)
+- [ ] **VOCÊ**: Domínio → aponte para Vercel (CNAME `cname.vercel-dns.com`)
+- [ ] **VOCÊ**: Subdomínio `api.` → Settings do serviço no Render → Custom Domain
+- [ ] SSL automático em ambos
 
 ---
 

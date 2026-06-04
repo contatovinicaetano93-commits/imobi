@@ -1,3 +1,7 @@
+-- Enable required extensions
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- CreateEnum
 CREATE TYPE "UsuarioTipo" AS ENUM ('TOMADOR', 'GESTOR_OBRA', 'ADMIN', 'PARCEIRO');
 

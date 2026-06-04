@@ -1,0 +1,77 @@
+services:
+  # ── NestJS API ────────────────────────────────────────
+  - type: web
+    name: imobi-api
+    runtime: docker
+    dockerfilePath: ./services/api/Dockerfile
+    dockerContext: .
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: imobi-postgres
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          name: imobi-redis
+          type: redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          name: imobi-redis
+          type: redis
+          property: port
+      - key: REDIS_PASSWORD
+        fromService:
+          name: imobi-redis
+          type: redis
+          property: password
+      # Setar manualmente no painel Render:
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: AWS_S3_BUCKET
+        sync: false
+      - key: AWS_S3_REGION
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: EMAIL_PROVIDER
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+
+databases:
+  # ── PostgreSQL ────────────────────────────────────────
+  - name: imobi-postgres
+    plan: starter
+    region: oregon
+    databaseName: imobi_prod
+    user: imobi
+    postgresMajorVersion: 15
+
+  # ── Redis ─────────────────────────────────────────────
+  - name: imobi-redis
+    type: redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
