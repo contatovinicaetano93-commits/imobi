@@ -30,14 +30,15 @@ async function bootstrap() {
   app.setGlobalPrefix("api/v1");
 
   const nodeEnv = process.env["NODE_ENV"] || "development";
-  const corsOrigins = process.env["CORS_ORIGIN"]?.split(",");
+  const corsOrigins = process.env["CORS_ORIGIN"]?.split(",").map((o) => o.trim()).filter(Boolean);
+  const isDev = nodeEnv === "development" || nodeEnv === "test" || nodeEnv === "staging";
 
-  if (nodeEnv === "production" && !corsOrigins) {
+  if (!isDev && !corsOrigins?.length) {
     throw new Error("CORS_ORIGIN is required in production mode. Please set it as a comma-separated list of allowed origins.");
   }
 
   app.enableCors({
-    origin: corsOrigins ?? ["http://localhost:3000"],
+    origin: corsOrigins?.length ? corsOrigins : (isDev ? true : ["http://localhost:3000"]),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
