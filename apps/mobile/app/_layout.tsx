@@ -3,6 +3,7 @@ import { View, ActivityIndicator } from "react-native";
 import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useRouter, useSegments } from "expo-router";
+import { setOnUnauthorized } from "../lib/api";
 
 type RootLayoutProps = {
   children?: React.ReactNode;
@@ -13,6 +14,12 @@ export default function RootLayout() {
   const segments = useSegments();
   const [isLoading, setIsLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
+
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      setIsSignedIn(false);
+    });
+  }, []);
 
   useEffect(() => {
     const bootstrapAsync = async () => {
