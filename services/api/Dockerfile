@@ -29,4 +29,4 @@ RUN pnpm install --frozen-lockfile --prod
 ENV NODE_ENV=production
 EXPOSE 4000
 
-CMD ["node", "services/api/dist/main.js"]
+CMD ["sh", "-c", "pnpm --filter @imbobi/api start"]

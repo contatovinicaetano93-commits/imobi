@@ -1,4 +1,11 @@
 services:
+  # ── Redis ─────────────────────────────────────────────
+  - type: redis
+    name: imobi-redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+
   # ── NestJS API ────────────────────────────────────────
   - type: web
     name: imobi-api
@@ -68,10 +75,3 @@ databases:
     databaseName: imobi_prod
     user: imobi
     postgresMajorVersion: 15
-
-  # ── Redis ─────────────────────────────────────────────
-  - name: imobi-redis
-    type: redis
-    plan: starter
-    region: oregon
-    maxmemoryPolicy: allkeys-lru
