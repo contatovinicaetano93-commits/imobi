@@ -29,9 +29,9 @@ exports.CadastroUsuarioSchema = zod_1.z.object({
         .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
         .regex(/[0-9]/, "Deve conter ao menos um número"),
     tipo: exports.TipoUsuarioEnum.default("TOMADOR"),
-    consentidoTermos: zod_1.z.literal(true, { errorMap: () => ({ message: "Obrigatório" }) }),
-    consentidoPrivacy: zod_1.z.literal(true, { errorMap: () => ({ message: "Obrigatório" }) }),
-    consentidoKyc: zod_1.z.literal(true, { errorMap: () => ({ message: "Obrigatório" }) }),
+    consentidoTermos: zod_1.z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
+    consentidoPrivacy: zod_1.z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
+    consentidoKyc: zod_1.z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
     consentidoMarketing: zod_1.z.boolean().default(false),
 });
 exports.LoginSchema = zod_1.z.object({

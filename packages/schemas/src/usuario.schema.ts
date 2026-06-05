@@ -29,9 +29,9 @@ export const CadastroUsuarioSchema = z.object({
     .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
     .regex(/[0-9]/, "Deve conter ao menos um número"),
   tipo: TipoUsuarioEnum.default("TOMADOR"),
-  consentidoTermos: z.literal(true, { errorMap: () => ({ message: "Obrigatório" }) }),
-  consentidoPrivacy: z.literal(true, { errorMap: () => ({ message: "Obrigatório" }) }),
-  consentidoKyc: z.literal(true, { errorMap: () => ({ message: "Obrigatório" }) }),
+  consentidoTermos: z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
+  consentidoPrivacy: z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
+  consentidoKyc: z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
   consentidoMarketing: z.boolean().default(false),
 });
 
