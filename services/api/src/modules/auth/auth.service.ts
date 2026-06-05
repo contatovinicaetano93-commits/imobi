@@ -29,7 +29,7 @@ export class AuthService {
       select: { usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true },
     });
 
-    return { usuario, ...this.gerarTokens(usuario.usuarioId) };
+    return { usuario, ...await this.gerarTokens(usuario.usuarioId) };
   }
 
   async login(input: LoginInput) {
@@ -43,7 +43,7 @@ export class AuthService {
 
     return {
       usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
-      ...this.gerarTokens(usuario.usuarioId),
+      ...await this.gerarTokens(usuario.usuarioId),
     };
   }
 
@@ -68,11 +68,11 @@ export class AuthService {
     });
   }
 
-  private gerarTokens(usuarioId: string) {
+  private async gerarTokens(usuarioId: string) {
     const accessToken = this.jwt.sign({ sub: usuarioId }, { expiresIn: "15m" });
     const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
 
-    void this.prisma.sessaoToken.create({
+    await this.prisma.sessaoToken.create({
       data: {
         usuarioId,
         refreshToken,

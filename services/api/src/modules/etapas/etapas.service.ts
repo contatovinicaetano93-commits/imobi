@@ -23,9 +23,6 @@ export class EtapasService {
       include: { obra: { include: { credito: true, usuario: true } } },
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
-    if (etapa.status !== "AGUARDANDO_VISTORIA") {
-      throw new BadRequestException("Etapa não está aguardando vistoria.");
-    }
 
     // Exige ao menos 1 evidência validada
     const evidencias = await this.prisma.evidenciaEtapa.count({
@@ -35,10 +32,14 @@ export class EtapasService {
       throw new BadRequestException("Etapa precisa ter ao menos uma evidência validada.");
     }
 
-    await this.prisma.etapaObra.update({
-      where: { etapaId },
+    // Atomic check + update: prevents double approval under concurrent requests
+    const updated = await this.prisma.etapaObra.updateMany({
+      where: { etapaId, status: "AGUARDANDO_VISTORIA" },
       data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
     });
+    if (updated.count === 0) {
+      throw new BadRequestException("Etapa não está aguardando vistoria.");
+    }
 
     // Create audit log entry
     await this.prisma.etapaAuditLog.create({
@@ -84,10 +85,10 @@ export class EtapasService {
     // Dispara liberação de parcela via fila (assíncrono)
     if (credito && credito.status === "ATIVO") {
       const valorLiberacao = Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
-      await this.prisma.liberacaoParcela.create({
+      const liberacao = await this.prisma.liberacaoParcela.create({
         data: { creditoId: credito.creditoId, valor: valorLiberacao, status: "PENDENTE" },
       });
-      await this.liberacaoQueue.add({ creditoId: credito.creditoId, etapaId, valor: valorLiberacao });
+      await this.liberacaoQueue.add({ creditoId: credito.creditoId, etapaId, liberacaoId: liberacao.liberacaoId, valor: valorLiberacao });
     }
 
     return { ok: true, observacao };

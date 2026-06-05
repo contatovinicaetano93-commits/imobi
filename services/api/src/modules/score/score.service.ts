@@ -60,10 +60,15 @@ export class ScoreService {
 
   async buscarScoreAtual(usuarioId: string) {
     const score = await this.calcularScore(usuarioId);
-    // Registra no histórico
-    await this.prisma.scoreHistorico.create({
-      data: { usuarioId, score, motivo: "Cálculo automático" },
+    const ultimo = await this.prisma.scoreHistorico.findFirst({
+      where: { usuarioId },
+      orderBy: { criadoEm: "desc" },
     });
+    if (!ultimo || ultimo.score !== score) {
+      await this.prisma.scoreHistorico.create({
+        data: { usuarioId, score, motivo: "Cálculo automático" },
+      });
+    }
     return score;
   }
 

@@ -28,7 +28,7 @@ export class LiberacaoParcelaWorker {
 
   @Process()
   async handle(job: Job<LiberacaoJob>) {
-    const { creditoId, valor } = job.data;
+    const { creditoId, liberacaoId, valor } = job.data;
 
     try {
       const credito = await this.prisma.credito.findUnique({
@@ -44,9 +44,9 @@ export class LiberacaoParcelaWorker {
           data: { valorLiberado: { increment: valor } },
         });
 
-        // Marca liberação como concluída
-        await tx.liberacaoParcela.updateMany({
-          where: { creditoId, status: "PENDENTE" },
+        // Marca apenas esta liberação como concluída (evita tocar outras pendentes)
+        await tx.liberacaoParcela.update({
+          where: { liberacaoId },
           data: { status: "CONCLUIDA", processadoEm: new Date() },
         });
       });
@@ -105,8 +105,8 @@ export class LiberacaoParcelaWorker {
       .then(async (credito) => {
         if (!credito) return;
 
-        await this.prisma.liberacaoParcela.updateMany({
-          where: { creditoId: job.data.creditoId, status: "PENDENTE" },
+        await this.prisma.liberacaoParcela.update({
+          where: { liberacaoId: job.data.liberacaoId },
           data: { status: "FALHA", processadoEm: new Date() },
         });
 

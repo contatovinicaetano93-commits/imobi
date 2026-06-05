@@ -9,7 +9,7 @@ export class EngenheirosController {
 
   @Get("visitas")
   listarVisitas(@Req() req: any) {
-    return this.engenheirosService.listarVisitas(req.user.sub);
+    return this.engenheirosService.listarVisitas(req.user.id);
   }
 
   @Get("visitas/:visitaId")
@@ -23,6 +23,6 @@ export class EngenheirosController {
     @Param("visitaId") visitaId: string,
     @Body() body: { status?: string; dataAgendada?: string; observacoes?: string }
   ) {
-    return this.engenheirosService.atualizarVisita(req.user.sub, visitaId, body);
+    return this.engenheirosService.atualizarVisita(req.user.id, visitaId, body);
   }
 }

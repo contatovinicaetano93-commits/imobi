@@ -34,7 +34,7 @@ export class CreditoController {
   @Get(":id/extrato")
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(300) // 5 min
-  extrato(@Param("id") id: string) {
-    return this.credito.extrato(id);
+  extrato(@Param("id") id: string, @UsuarioAtual() u: IUsuario) {
+    return this.credito.extrato(id, u.id);
   }
 }
