@@ -27,7 +27,7 @@ export class EngenheirosService {
           ? "AGENDADA"
           : e.status === "CONCLUIDA"
           ? "CONCLUIDA"
-          : "CONCLUIDA",
+          : "REPROVADA",
       etapaId: e.etapaId,
       etapaNome: e.nome,
       obraId: e.obra.obraId,
@@ -75,14 +75,11 @@ export class EngenheirosService {
     if (!etapa) throw new NotFoundException("Visita não encontrada.");
 
     const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
-    if (!usuario || (usuario.tipo !== "GESTOR_OBRA" && usuario.tipo !== "ADMIN")) {
-      throw new ForbiddenException("Apenas gestores podem atualizar visitas.");
-    }
+    if (!usuario) throw new ForbiddenException("Usuário não encontrado.");
 
-    // Traduz status da visita de volta para status de etapa
     const statusMap: Record<string, string> = {
       INICIADA: "EM_EXECUCAO",
-      CONCLUIDA: "AGUARDANDO_VISTORIA",
+      CONCLUIDA: "CONCLUIDA",
     };
 
     const newStatus = data.status ? statusMap[data.status] : undefined;
