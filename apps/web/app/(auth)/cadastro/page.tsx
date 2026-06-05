@@ -21,7 +21,7 @@ export default function CadastroPage() {
   });
 
   const onError = (errs: unknown) => {
-    console.error("[cadastro] validation errors:", JSON.stringify(errs, null, 2));
+    console.error("[cadastro] validation errors:", errs);
   };
 
   const onSubmit = async (data: CadastroUsuarioInput) => {
