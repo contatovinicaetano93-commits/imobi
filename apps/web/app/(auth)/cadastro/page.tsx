@@ -17,7 +17,13 @@ export default function CadastroPage() {
     formState: { errors, isSubmitting },
   } = useForm<CadastroUsuarioInput>({
     resolver: zodResolver(CadastroUsuarioSchema),
-    defaultValues: { tipo: "TOMADOR" },
+    defaultValues: {
+      tipo: "TOMADOR",
+      consentidoTermos: false,
+      consentidoPrivacy: false,
+      consentidoKyc: false,
+      consentidoMarketing: false,
+    },
   });
 
   const onError = (errs: unknown) => {
@@ -165,7 +171,7 @@ function ConsentCheck({
 }: React.InputHTMLAttributes<HTMLInputElement> & { id: string; error?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-0.5">
-      <label htmlFor={id} className="flex items-start gap-2 cursor-pointer">
+      <label className="flex items-start gap-2 cursor-pointer">
         <input id={id} type="checkbox" className="mt-0.5 accent-brand-600" {...props} />
         <span className="text-sm text-gray-700">{children}</span>
       </label>
