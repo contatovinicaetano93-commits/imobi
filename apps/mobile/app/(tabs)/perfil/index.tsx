@@ -2,18 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { apiClient } from "@imbobi/core";
-
-type UsuarioPerfil = {
-  usuarioId: string;
-  nome: string;
-  email: string;
-  cpf: string;
-  telefone: string;
-  tipo: string;
-  kycStatus: string;
-  criadoEm: string;
-};
+import { usuariosApi, type UsuarioPerfil } from "../../../lib/api";
 
 export default function PerfilScreen() {
   const router = useRouter();
@@ -24,11 +13,8 @@ export default function PerfilScreen() {
   useEffect(() => {
     const carregarPerfil = async () => {
       try {
-        const token = await SecureStore.getItemAsync("accessToken");
-        if (token) {
-          const data = await apiClient.get<UsuarioPerfil>("/api/v1/usuarios/me", token);
-          setUsuario(data);
-        }
+        const data = await usuariosApi.obterPerfil();
+        setUsuario(data);
       } catch (e: any) {
         console.error("Erro ao carregar perfil:", e);
       } finally {

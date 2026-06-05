@@ -25,6 +25,14 @@ async function callApi<T>(fn: () => Promise<T>): Promise<T> {
 
 export { ApiError };
 
+export const usuariosApi = {
+  obterPerfil: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<UsuarioPerfil>("/api/v1/usuarios/me", token ?? undefined);
+    }),
+};
+
 export const obrasApi = {
   listar: () =>
     callApi(async () => {
@@ -114,4 +122,15 @@ export type ScoreData = {
   nivel: string;
   cor: string;
   descricao: string;
+};
+
+export type UsuarioPerfil = {
+  usuarioId: string;
+  nome: string;
+  email: string;
+  cpf: string;
+  telefone: string;
+  tipo: string;
+  kycStatus: string;
+  criadoEm: string;
 };

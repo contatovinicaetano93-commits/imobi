@@ -100,14 +100,14 @@ export class EtapasService {
       include: { obra: { include: { usuario: true } } },
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
-    if (etapa.status !== "AGUARDANDO_VISTORIA") {
-      throw new BadRequestException("Etapa não está aguardando vistoria.");
-    }
 
-    await this.prisma.etapaObra.update({
-      where: { etapaId },
+    const updated = await this.prisma.etapaObra.updateMany({
+      where: { etapaId, status: "AGUARDANDO_VISTORIA" },
       data: { status: "REPROVADA" },
     });
+    if (updated.count === 0) {
+      throw new BadRequestException("Etapa não está aguardando vistoria.");
+    }
 
     // Create audit log entry
     await this.prisma.etapaAuditLog.create({

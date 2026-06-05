@@ -13,12 +13,13 @@
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
-    "validate:schemas": "npx tsx scripts/validate-schema-sync.ts",
+    "validate:schemas": "tsx scripts/validate-schema-sync.ts",
     "db:generate": "pnpm --filter @imbobi/api run prisma:generate",
     "db:migrate": "pnpm --filter @imbobi/api prisma migrate dev",
     "db:studio": "pnpm --filter @imbobi/api prisma studio"
   },
   "devDependencies": {
+    "tsx": "^4.22.0",
     "turbo": "^2.0.0",
     "typescript": "^5.5.0"
   },
