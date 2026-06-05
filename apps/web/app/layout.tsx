@@ -1,24 +1,12 @@
-"use client";
-
 import type { ReactNode } from "react";
-import { useEffect } from "react";
 import { Analytics } from "@vercel/analytics/react";
-import { initSentry } from "@/lib/sentry";
-
-// Initialize Sentry on first load
-if (typeof window !== "undefined") {
-  initSentry();
-}
+import { ClientInit } from "./client-init";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    // Initialize Sentry on component mount as fallback
-    initSentry();
-  }, []);
-
   return (
     <html lang="pt-BR">
       <body>
+        <ClientInit />
         {children}
         <Analytics />
       </body>
