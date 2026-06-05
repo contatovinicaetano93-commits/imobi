@@ -1,7 +1,7 @@
 export function validateEnvironment(config: Record<string, any>): string[] {
   const errorMessages: string[] = [];
   const nodeEnv = config.NODE_ENV || 'development';
-  const isDev = nodeEnv === 'development' || nodeEnv === 'test';
+  const isDev = nodeEnv === 'development' || nodeEnv === 'test' || nodeEnv === 'staging';
 
   // Critical: DATABASE_URL always required
   if (!config.DATABASE_URL) {
