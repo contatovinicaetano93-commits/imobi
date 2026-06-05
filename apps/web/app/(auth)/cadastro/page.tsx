@@ -1,11 +1,11 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
-import { apiClient, ApiError, formatarCPF, formatarTelefone } from "@imbobi/core";
+import { apiClient, ApiError } from "@imbobi/core";
 
 export default function CadastroPage() {
   const router = useRouter();
@@ -14,6 +14,7 @@ export default function CadastroPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CadastroUsuarioInput>({
     resolver: zodResolver(CadastroUsuarioSchema),
@@ -25,10 +26,6 @@ export default function CadastroPage() {
       consentidoMarketing: false,
     },
   });
-
-  const onError = (errs: unknown) => {
-    console.error("[cadastro] validation errors:", errs);
-  };
 
   const onSubmit = async (data: CadastroUsuarioInput) => {
     setErro(null);
@@ -56,7 +53,7 @@ export default function CadastroPage() {
           <p className="text-gray-500 text-sm mt-2">Crie sua conta gratuitamente</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Nome completo" error={errors.nome?.message} className="col-span-2">
               <input {...register("nome")} placeholder="João da Silva" className={input(!!errors.nome)} />
@@ -92,40 +89,40 @@ export default function CadastroPage() {
           <div className="space-y-3 pt-2 border-t border-gray-100">
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Consentimentos (LGPD)</p>
 
-            <ConsentCheck
-              id="consentidoTermos"
+            <ConsentController
+              control={control}
+              name="consentidoTermos"
               error={errors.consentidoTermos?.message}
-              {...register("consentidoTermos")}
             >
               Li e aceito os{" "}
               <a href="/termos" target="_blank" className="text-brand-600 underline">Termos de Uso</a>
               {" "}*
-            </ConsentCheck>
+            </ConsentController>
 
-            <ConsentCheck
-              id="consentidoPrivacy"
+            <ConsentController
+              control={control}
+              name="consentidoPrivacy"
               error={errors.consentidoPrivacy?.message}
-              {...register("consentidoPrivacy")}
             >
               Li e aceito a{" "}
               <a href="/privacidade" target="_blank" className="text-brand-600 underline">Política de Privacidade</a>
               {" "}*
-            </ConsentCheck>
+            </ConsentController>
 
-            <ConsentCheck
-              id="consentidoKyc"
+            <ConsentController
+              control={control}
+              name="consentidoKyc"
               error={errors.consentidoKyc?.message}
-              {...register("consentidoKyc")}
             >
               Autorizo a verificação de identidade (KYC) junto à Unico/SERPRO *
-            </ConsentCheck>
+            </ConsentController>
 
-            <ConsentCheck
-              id="consentidoMarketing"
-              {...register("consentidoMarketing")}
+            <ConsentController
+              control={control}
+              name="consentidoMarketing"
             >
               Aceito receber comunicações de marketing (opcional)
-            </ConsentCheck>
+            </ConsentController>
           </div>
 
           {erro && (
@@ -152,6 +149,34 @@ export default function CadastroPage() {
   );
 }
 
+function ConsentController({
+  control, name, error, children,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: any; name: string; error?: string; children: React.ReactNode;
+}) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <div className="space-y-0.5">
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-0.5 accent-brand-600"
+              checked={!!field.value}
+              onChange={(e) => field.onChange(e.target.checked)}
+            />
+            <span className="text-sm text-gray-700">{children}</span>
+          </label>
+          {error && <p className="text-xs text-red-500 ml-5">{error}</p>}
+        </div>
+      )}
+    />
+  );
+}
+
 function Field({
   label, error, children, className = "",
 }: {
@@ -162,20 +187,6 @@ function Field({
       <label className="text-sm font-medium text-gray-700">{label}</label>
       {children}
       {error && <p className="text-xs text-red-500">{error}</p>}
-    </div>
-  );
-}
-
-function ConsentCheck({
-  id, error, children, ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { id: string; error?: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-0.5">
-      <label className="flex items-start gap-2 cursor-pointer">
-        <input id={id} type="checkbox" className="mt-0.5 accent-brand-600" {...props} />
-        <span className="text-sm text-gray-700">{children}</span>
-      </label>
-      {error && <p className="text-xs text-red-500 ml-5">{error}</p>}
     </div>
   );
 }
