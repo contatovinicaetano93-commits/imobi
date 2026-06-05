@@ -1,6 +1,6 @@
 import { z } from "zod";
 export declare const TipoUsuarioEnum: z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO"]>;
-export declare const KycStatusEnum: z.ZodEnum<["PENDENTE", "APROVADO", "REJEITADO", "EM_ANALISE"]>;
+export declare const KycStatusEnum: z.ZodEnum<["PENDENTE", "EM_VERIFICACAO", "APROVADO", "REJEITADO"]>;
 export declare const CadastroUsuarioSchema: z.ZodObject<{
     nome: z.ZodString;
     cpf: z.ZodString;

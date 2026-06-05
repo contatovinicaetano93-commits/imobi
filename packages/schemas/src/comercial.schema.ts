@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-export const FonteEnum = z.enum(["PARCEIRO", "INDICACAO", "WEBSITE", "OFFLINE"]);
+export const FonteEnum = z.enum([
+  "WEBSITE",
+  "INDICACAO",
+  "MARKETPLACE",
+  "CAMPANHA_DIGITAL",
+  "OFFLINE",
+  "PARCEIRO",
+]);
 
 export const SegmentoClienteEnum = z.enum([
   "NOVO",
@@ -16,13 +23,18 @@ export const TipoObraEnum = z.enum([
 ]);
 
 export const LeadActivityTypeEnum = z.enum([
-  "CALL",
-  "EMAIL",
-  "MEETING",
-  "PROPOSAL",
-  "VISIT",
-  "FOLLOW_UP",
-  "NOTE",
+  "CALL_OUTBOUND",
+  "CALL_INBOUND",
+  "EMAIL_SENT",
+  "EMAIL_RECEIVED",
+  "MEETING_SCHEDULED",
+  "MEETING_COMPLETED",
+  "PROPOSAL_SENT",
+  "DOCUMENT_REQUESTED",
+  "PAYMENT_RECEIVED",
+  "STAGE_CHANGED",
+  "NOTE_ADDED",
+  "FOLLOW_UP_SET",
 ]);
 
 export const CreateLeadSchema = z.object({
