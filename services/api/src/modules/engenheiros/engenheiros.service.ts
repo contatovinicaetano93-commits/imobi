@@ -52,7 +52,7 @@ export class EngenheirosService {
     if (!etapa) throw new NotFoundException("Visita não encontrada.");
     return {
       visitaId: etapa.etapaId,
-      status: etapa.status === "AGUARDANDO_VISTORIA" ? "AGENDADA" : "CONCLUIDA",
+      status: etapa.status === "AGUARDANDO_VISTORIA" ? "AGENDADA" : etapa.status === "REPROVADA" ? "REPROVADA" : "CONCLUIDA",
       etapaId: etapa.etapaId,
       etapaNome: etapa.nome,
       obraId: etapa.obra.obraId,

@@ -28,7 +28,7 @@ export class LiberacaoParcelaWorker {
 
   @Process()
   async handle(job: Job<LiberacaoJob>) {
-    const { creditoId, valor } = job.data;
+    const { creditoId, etapaId, valor } = job.data;
 
     try {
       const credito = await this.prisma.credito.findUnique({
@@ -46,7 +46,7 @@ export class LiberacaoParcelaWorker {
 
         // Marca liberação como concluída
         await tx.liberacaoParcela.updateMany({
-          where: { creditoId, status: "PENDENTE" },
+          where: { creditoId, etapaId, status: "PENDENTE" },
           data: { status: "CONCLUIDA", processadoEm: new Date() },
         });
       });
@@ -62,7 +62,7 @@ export class LiberacaoParcelaWorker {
         credito.usuarioId,
         "PARCELA_LIBERADA",
         "Parcela liberada com sucesso",
-        `Liberação de R$ ${formattedValue} foi processada para ${obra?.nome || "sua obra"}.`,
+        `Liberação de ${formattedValue} foi processada para ${obra?.nome || "sua obra"}.`,
         obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
       );
 
@@ -70,7 +70,7 @@ export class LiberacaoParcelaWorker {
       this.pushNotificacoes.enviarPush({
         usuarioId: credito.usuarioId,
         titulo: "Parcela Liberada!",
-        mensagem: `R$ ${formattedValue} foi creditado para ${obra?.nome || "sua obra"}.`,
+        mensagem: `${formattedValue} foi creditado para ${obra?.nome || "sua obra"}.`,
         tipo: "PARCELA_LIBERADA",
         dados: { creditoId, valor: String(valor) },
       }).catch((e) => this.logger.error(`Erro ao enviar push: ${e}`));
@@ -106,7 +106,7 @@ export class LiberacaoParcelaWorker {
         if (!credito) return;
 
         await this.prisma.liberacaoParcela.updateMany({
-          where: { creditoId: job.data.creditoId, status: "PENDENTE" },
+          where: { creditoId: job.data.creditoId, etapaId: job.data.etapaId, status: "PENDENTE" },
           data: { status: "FALHA", processadoEm: new Date() },
         });
 
