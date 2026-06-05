@@ -21,5 +21,6 @@ __exportStar(require("./utils/credito"), exports);
 // Hooks
 __exportStar(require("./hooks/useGeoValidation"), exports);
 __exportStar(require("./hooks/useSimuladorCredito"), exports);
+__exportStar(require("./hooks/useComercialApi"), exports);
 // Services
 __exportStar(require("./services/api-client"), exports);
