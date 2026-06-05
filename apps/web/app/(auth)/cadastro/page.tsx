@@ -20,6 +20,10 @@ export default function CadastroPage() {
     defaultValues: { tipo: "TOMADOR" },
   });
 
+  const onError = (errs: unknown) => {
+    console.error("[cadastro] validation errors:", JSON.stringify(errs, null, 2));
+  };
+
   const onSubmit = async (data: CadastroUsuarioInput) => {
     setErro(null);
     try {
@@ -46,7 +50,7 @@ export default function CadastroPage() {
           <p className="text-gray-500 text-sm mt-2">Crie sua conta gratuitamente</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Nome completo" error={errors.nome?.message} className="col-span-2">
               <input {...register("nome")} placeholder="João da Silva" className={input(!!errors.nome)} />
