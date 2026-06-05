@@ -22,6 +22,7 @@ COPY --from=builder /app/packages/ ./packages/
 COPY --from=builder /app/services/api/package.json ./services/api/
 COPY --from=builder /app/services/api/dist/ ./services/api/dist/
 COPY --from=builder /app/services/api/prisma/ ./services/api/prisma/
+COPY --from=builder /app/node_modules/.prisma/ ./node_modules/.prisma/
 
 RUN pnpm install --frozen-lockfile --prod
 
