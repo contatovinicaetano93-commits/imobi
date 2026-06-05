@@ -66,13 +66,14 @@ export class EvidenciasService {
       );
     }
 
-    const { url } = await this.storage.upload(fileBuffer, mimeType, input.etapaId);
+    // Salva a key S3, não a URL pré-assinada — URLs expiram em 1h, keys são permanentes
+    const { key } = await this.storage.upload(fileBuffer, mimeType, input.etapaId);
 
     return this.prisma.evidenciaEtapa.create({
       data: {
         etapaId: input.etapaId,
         obraId: etapa.obra.obraId,
-        fotoUrl: url,
+        fotoUrl: key,
         latCaptura: input.latitude,
         lngCaptura: input.longitude,
         accuracyMetros: input.accuracyMetros,
@@ -83,10 +84,18 @@ export class EvidenciasService {
   }
 
   async listarPorEtapa(etapaId: string) {
-    return this.prisma.evidenciaEtapa.findMany({
+    const evidencias = await this.prisma.evidenciaEtapa.findMany({
       where: { etapaId },
       orderBy: { criadoEm: "desc" },
     });
+
+    // Gera URLs pré-assinadas frescas (1h) para cada foto
+    return Promise.all(
+      evidencias.map(async (e) => ({
+        ...e,
+        fotoUrl: await this.storage.getSignedUrl(e.fotoUrl),
+      }))
+    );
   }
 
   async validar(gestorId: string, evidenciaId: string, aprovado: boolean, observacao?: string) {
