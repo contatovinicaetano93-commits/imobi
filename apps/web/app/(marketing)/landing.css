@@ -6,8 +6,8 @@
   --blue: #1B4FD8;
   --blue-light: #EEF3FF;
   --blue-mid: #DBEAFE;
-  --mint: #10B981;
-  --mint-light: #D1FAE5;
+  --mint: #22C55E;
+  --mint-light: #DCFCE7;
   --ink: #0F172A;
   --ink-soft: #1E293B;
   --gray: #64748B;
@@ -118,22 +118,22 @@ nav {
 .hero-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .hsg-item { border-radius: 16px; padding: 1.75rem 1.5rem; display: flex; flex-direction: column; gap: 0.2rem; }
 .hsg-blue { background: var(--blue); }
-.hsg-mint { background: #A8E6C3; }
+.hsg-mint { background: #22C55E; }
 .hsg-light { background: var(--blue-light); }
 .hsg-outline { background: white; border: 1.5px solid var(--border); }
 .hsg-val { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; margin-bottom: 0.3rem; }
 .hsg-blue .hsg-val { color: white; }
-.hsg-mint .hsg-val { color: #0D2B6B; }
+.hsg-mint .hsg-val { color: #fff; }
 .hsg-light .hsg-val { color: var(--blue); }
 .hsg-outline .hsg-val { color: var(--ink); }
 .hsg-label { font-size: 0.78rem; font-weight: 600; }
 .hsg-blue .hsg-label { color: rgba(255,255,255,0.9); }
-.hsg-mint .hsg-label { color: rgba(13,43,107,0.85); }
+.hsg-mint .hsg-label { color: rgba(255,255,255,0.9); }
 .hsg-light .hsg-label { color: var(--blue); }
 .hsg-outline .hsg-label { color: var(--ink); }
 .hsg-sub { font-size: 0.7rem; font-weight: 400; }
 .hsg-blue .hsg-sub { color: rgba(255,255,255,0.6); }
-.hsg-mint .hsg-sub { color: rgba(13,43,107,0.55); }
+.hsg-mint .hsg-sub { color: rgba(255,255,255,0.65); }
 .hsg-light .hsg-sub { color: var(--gray); }
 .hsg-outline .hsg-sub { color: var(--gray-light); }
 

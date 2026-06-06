@@ -89,11 +89,11 @@ export default function LandingPage() {
           <li><a href="#analise">Contato</a></li>
         </ul>
         <div className="nav-actions">
-          <button className="btn-login" onClick={() => setModalOpen(true)}>Entrar</button>
+          <button className="btn-login" onClick={() => setModalOpen(true)}>Login</button>
         </div>
         {isMobile && (
           <div className="nav-mobile-auth">
-            <button className="btn-login" onClick={() => setModalOpen(true)}>Entrar</button>
+            <button className="btn-login" onClick={() => setModalOpen(true)}>Login</button>
           </div>
         )}
       </nav>
@@ -118,7 +118,7 @@ export default function LandingPage() {
               <span className="modal-logo-name">IMOBI</span>
             </div>
             <div className="modal-tabs">
-              <button className={`modal-tab${activeTab === "login" ? " active" : ""}`} onClick={() => setActiveTab("login")}>Entrar</button>
+              <button className={`modal-tab${activeTab === "login" ? " active" : ""}`} onClick={() => setActiveTab("login")}>Login</button>
               <button className={`modal-tab${activeTab === "criar" ? " active" : ""}`} onClick={() => setActiveTab("criar")}>Criar conta</button>
             </div>
             {activeTab === "login" && (
@@ -132,7 +132,7 @@ export default function LandingPage() {
                   <input type="password" className="form-input" placeholder="••••••••" />
                 </div>
                 <div className="modal-forgot"><a href="#">Esqueci minha senha</a></div>
-                <button className="form-submit">Entrar na plataforma</button>
+                <button className="form-submit">Login na plataforma</button>
                 <div className="modal-or">ou</div>
                 <button className="modal-wa" onClick={() => window.open(`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20para%20acessar%20minha%20conta%20IMOBI.`, "_blank")}>
                   <WaIcon size={16} color="currentColor" />
