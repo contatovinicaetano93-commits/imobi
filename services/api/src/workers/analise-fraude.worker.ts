@@ -3,6 +3,7 @@ import { Job } from "bull";
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../modules/prisma/prisma.service";
 import { NotificacoesService } from "../modules/notificacoes/notificacoes.service";
+import { ScoreService } from "../modules/score/score.service";
 import { QUEUE_ANALISE_FRAUDE, type AnaliseFraudeJob } from "../common/constants";
 
 interface SinalRisco {
@@ -31,9 +32,14 @@ export class AnaliseFraudeWorker {
   // Peso mínimo acumulado para acionar alerta ao gestor
   private readonly LIMIAR_ALERTA = 40;
 
+  // Score penalizado quando o peso de fraude ultrapassa o limiar crítico
+  private readonly LIMIAR_PENALIDADE = 55;
+  private readonly PONTOS_PENALIDADE = 40;
+
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notificacoes: NotificacoesService
+    private readonly notificacoes: NotificacoesService,
+    private readonly scoreService: ScoreService
   ) {}
 
   @Process()
@@ -120,8 +126,16 @@ export class AnaliseFraudeWorker {
       await this.alertarGestores(evidenciaId, obraId, obra.nome, usuarioId, sinais, pesoTotal);
     }
 
+    // Penaliza score do usuário quando o risco é crítico
+    if (pesoTotal >= this.LIMIAR_PENALIDADE) {
+      const motivoSinais = sinais.map((s) => s.codigo).join(", ");
+      await this.scoreService
+        .penalizarFraude(usuarioId, motivoSinais, this.PONTOS_PENALIDADE)
+        .catch((e) => this.logger.error(`Erro ao penalizar score: ${e}`));
+    }
+
     this.logger.log(
-      `Análise concluída: evidência ${evidenciaId}, peso=${pesoTotal}, alertado=${pesoTotal >= this.LIMIAR_ALERTA}`
+      `Análise concluída: evidência ${evidenciaId}, peso=${pesoTotal}, alertado=${pesoTotal >= this.LIMIAR_ALERTA}, penalizado=${pesoTotal >= this.LIMIAR_PENALIDADE}`
     );
   }
 

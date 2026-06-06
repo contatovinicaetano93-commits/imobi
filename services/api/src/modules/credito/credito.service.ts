@@ -1,11 +1,17 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificacoesService } from "../notificacoes/notificacoes.service";
+import { CreditAnalysisService } from "./credit-analysis.service";
 import { simularCredito } from "@imbobi/core";
 import type { SolicitacaoCreditoInput, SimulacaoCreditoInput } from "@imbobi/schemas";
 
 @Injectable()
 export class CreditoService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly analise: CreditAnalysisService,
+    private readonly notificacoes: NotificacoesService
+  ) {}
 
   simular(input: SimulacaoCreditoInput) {
     const TAXA_MENSAL = 0.0099;
@@ -13,15 +19,46 @@ export class CreditoService {
   }
 
   async solicitar(usuarioId: string, input: SolicitacaoCreditoInput) {
-    return this.prisma.credito.create({
+    const decisao = await this.analise.analisar(usuarioId, input);
+
+    if (!decisao.aprovado) {
+      return {
+        aprovado: false,
+        score: decisao.score,
+        motivo: decisao.motivo,
+      };
+    }
+
+    const credito = await this.prisma.credito.create({
       data: {
         usuarioId,
-        valorAprovado: input.valorSolicitado,
+        valorAprovado: decisao.valorAprovado,
         valorLiberado: 0,
-        taxaMensal: 0.0099,
-        prazoMeses: input.prazoMeses,
+        taxaMensal: decisao.taxaMensal,
+        prazoMeses: decisao.prazoMeses,
       },
     });
+
+    // Notifica o tomador sobre a aprovação (fire-and-forget)
+    this.notificacoes
+      .criar(
+        usuarioId,
+        "CREDITO_APROVADO" as never,
+        "Crédito aprovado!",
+        `Seu crédito de R$ ${decisao.valorAprovado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} foi aprovado com taxa de ${(decisao.taxaMensal * 100).toFixed(2)}% a.m.`,
+        "/dashboard/credito"
+      )
+      .catch(() => {});
+
+    return {
+      aprovado: true,
+      creditoId: credito.creditoId,
+      valorAprovado: decisao.valorAprovado,
+      taxaMensal: decisao.taxaMensal,
+      prazoMeses: decisao.prazoMeses,
+      score: decisao.score,
+      motivo: decisao.motivo,
+    };
   }
 
   async buscarPorUsuario(usuarioId: string) {
@@ -42,14 +79,11 @@ export class CreditoService {
   async extrato(creditoId: string, usuarioId: string) {
     const credito = await this.prisma.credito.findUnique({
       where: { creditoId },
-      include: {
-        liberacoes: {
-          orderBy: { criadoEm: "desc" },
-        },
-      },
+      include: { liberacoes: { orderBy: { criadoEm: "desc" } } },
     });
     if (!credito) throw new NotFoundException("Crédito não encontrado.");
     if (credito.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
+
     return {
       creditoId: credito.creditoId,
       valorAprovado: credito.valorAprovado,
