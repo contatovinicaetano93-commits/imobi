@@ -22,9 +22,13 @@ COPY --from=builder /app/packages/ ./packages/
 COPY --from=builder /app/services/api/package.json ./services/api/
 COPY --from=builder /app/services/api/dist/ ./services/api/dist/
 COPY --from=builder /app/services/api/prisma/ ./services/api/prisma/
-COPY --from=builder /app/node_modules/.prisma/ ./node_modules/.prisma/
 
 RUN pnpm install --frozen-lockfile --prod
+
+# Copia após pnpm install para não ser sobrescrito
+COPY --from=builder /app/node_modules/.prisma/ ./node_modules/.prisma/
+COPY --from=builder /app/node_modules/prisma/ ./node_modules/prisma/
+COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 
 ENV NODE_ENV=production
 EXPOSE 4000

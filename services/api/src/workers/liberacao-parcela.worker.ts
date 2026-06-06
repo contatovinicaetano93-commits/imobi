@@ -5,14 +5,7 @@ import { PrismaService } from "../modules/prisma/prisma.service";
 import { NotificacoesService } from "../modules/notificacoes/notificacoes.service";
 import { EmailService } from "../modules/email/email.service";
 import { PushNotificacoesService } from "../modules/push-notificacoes/push-notificacoes.service";
-
-export const QUEUE_LIBERACAO = "liberacao-parcela";
-
-export interface LiberacaoJob {
-  creditoId: string;
-  etapaId: string;
-  valor: number;
-}
+import { QUEUE_LIBERACAO, type LiberacaoJob } from "../common/constants";
 
 @Injectable()
 @Processor(QUEUE_LIBERACAO)
@@ -28,28 +21,44 @@ export class LiberacaoParcelaWorker {
 
   @Process()
   async handle(job: Job<LiberacaoJob>) {
-    const { creditoId, etapaId, valor } = job.data;
+    const { creditoId, liberacaoId, valor } = job.data;
 
     try {
+      // Idempotency guard: if a previous attempt already committed, skip silently
+      const liberacao = await this.prisma.liberacaoParcela.findUnique({
+        where: { liberacaoId },
+      });
+      if (!liberacao || liberacao.status !== "PENDENTE") {
+        this.logger.log(`Liberação ${liberacaoId} já processada, ignorando retry`);
+        return;
+      }
+
       const credito = await this.prisma.credito.findUnique({
         where: { creditoId },
         include: { usuario: true, obras: true },
       });
       if (!credito) throw new Error(`Crédito ${creditoId} não encontrado`);
 
+      // Re-check + update atomically inside the transaction
+      let processed = false;
       await this.prisma.$transaction(async (tx) => {
-        // Atualiza saldo liberado no crédito
+        const lib = await tx.liberacaoParcela.findUnique({ where: { liberacaoId } });
+        if (!lib || lib.status !== "PENDENTE") return;
+
         await tx.credito.update({
           where: { creditoId },
           data: { valorLiberado: { increment: valor } },
         });
 
-        // Marca liberação como concluída
-        await tx.liberacaoParcela.updateMany({
-          where: { creditoId, etapaId, status: "PENDENTE" },
+        await tx.liberacaoParcela.update({
+          where: { liberacaoId },
           data: { status: "CONCLUIDA", processadoEm: new Date() },
         });
+
+        processed = true;
       });
+
+      if (!processed) return;
 
       // Notifica usuário sobre liberação bem-sucedida
       const obra = credito.obras?.[0];
@@ -66,7 +75,6 @@ export class LiberacaoParcelaWorker {
         obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
       );
 
-      // Envia push notification
       this.pushNotificacoes.enviarPush({
         usuarioId: credito.usuarioId,
         titulo: "Parcela Liberada!",
@@ -75,7 +83,6 @@ export class LiberacaoParcelaWorker {
         dados: { creditoId, valor: String(valor) },
       }).catch((e) => this.logger.error(`Erro ao enviar push: ${e}`));
 
-      // Envia email
       this.email
         .parcelaLiberadaEmail(
           credito.usuario.nome,
@@ -96,7 +103,6 @@ export class LiberacaoParcelaWorker {
   onFailed(job: Job, err: Error) {
     this.logger.error(`Job ${job.id} falhou: ${err.message}`);
 
-    // Registra a falha no banco de dados e notifica
     this.prisma.credito
       .findUnique({
         where: { creditoId: job.data.creditoId },
@@ -105,12 +111,13 @@ export class LiberacaoParcelaWorker {
       .then(async (credito) => {
         if (!credito) return;
 
+        // Use updateMany with status filter to avoid clobbering a CONCLUIDA record
+        // (job may have succeeded but crashed before BullMQ ACK)
         await this.prisma.liberacaoParcela.updateMany({
-          where: { creditoId: job.data.creditoId, etapaId: job.data.etapaId, status: "PENDENTE" },
+          where: { liberacaoId: job.data.liberacaoId, status: "PENDENTE" },
           data: { status: "FALHA", processadoEm: new Date() },
         });
 
-        // Notifica usuário sobre falha
         const obra = credito.obras?.[0];
         await this.notificacoes
           .criar(

@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+const JWT_RE = /^[\w-]+\.[\w-]+\.[\w-]+$/;
+
 const COOKIE_OPTS = {
   httpOnly: true,
   secure: process.env["NODE_ENV"] === "production",
@@ -19,6 +21,10 @@ export async function POST(req: Request) {
     accessToken: string;
     refreshToken: string;
   };
+
+  if (!JWT_RE.test(accessToken ?? "") || !JWT_RE.test(refreshToken ?? "")) {
+    return NextResponse.json({ error: "Token inválido" }, { status: 400 });
+  }
 
   const jar = await cookies();
   jar.set("access_token", accessToken, { ...COOKIE_OPTS, maxAge: 60 * 15 });          // 15 min

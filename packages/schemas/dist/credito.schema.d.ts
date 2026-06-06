@@ -1,5 +1,5 @@
 import { z } from "zod";
-export declare const StatusCreditoEnum: z.ZodEnum<["ANALISE", "APROVADO", "ATIVO", "QUITADO", "INADIMPLENTE", "CANCELADO"]>;
+export declare const StatusCreditoEnum: z.ZodEnum<["ATIVO", "SUSPENSO", "VENCIDO", "QUITADO"]>;
 export declare const SimulacaoCreditoSchema: z.ZodObject<{
     valorSolicitado: z.ZodNumber;
     prazoMeses: z.ZodNumber;

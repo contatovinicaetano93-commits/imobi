@@ -1,12 +1,10 @@
 import { z } from "zod";
 
 export const StatusCreditoEnum = z.enum([
-  "ANALISE",
-  "APROVADO",
   "ATIVO",
+  "SUSPENSO",
+  "VENCIDO",
   "QUITADO",
-  "INADIMPLENTE",
-  "CANCELADO",
 ]);
 
 export const SimulacaoCreditoSchema = z.object({

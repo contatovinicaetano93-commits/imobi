@@ -1,46 +1,78 @@
 import * as SecureStore from "expo-secure-store";
 import { apiClient, ApiError } from "@imbobi/core";
 
+let _onUnauthorized: (() => void) | null = null;
+
+export function setOnUnauthorized(cb: () => void) {
+  _onUnauthorized = cb;
+}
+
 async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync("accessToken");
 }
 
+async function callApi<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401) {
+      await SecureStore.deleteItemAsync("accessToken");
+      _onUnauthorized?.();
+    }
+    throw e;
+  }
+}
+
 export { ApiError };
 
+export const usuariosApi = {
+  obterPerfil: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<UsuarioPerfil>("/api/v1/usuarios/me", token ?? undefined);
+    }),
+};
+
 export const obrasApi = {
-  listar: async () => {
-    const token = await getToken();
-    return apiClient.get<Obra[]>("/api/v1/obras", token ?? undefined);
-  },
-  buscar: async (obraId: string) => {
-    const token = await getToken();
-    return apiClient.get<ObraDetalhe>(`/api/v1/obras/${obraId}`, token ?? undefined);
-  },
-  progresso: async (obraId: string) => {
-    const token = await getToken();
-    return apiClient.get<number>(`/api/v1/obras/${obraId}/progresso`, token ?? undefined);
-  },
+  listar: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<Obra[]>("/api/v1/obras", token ?? undefined);
+    }),
+  buscar: (obraId: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<ObraDetalhe>(`/api/v1/obras/${obraId}`, token ?? undefined);
+    }),
+  progresso: (obraId: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<number>(`/api/v1/obras/${obraId}/progresso`, token ?? undefined);
+    }),
 };
 
 export const creditoApi = {
-  meus: async () => {
-    const token = await getToken();
-    return apiClient.get<Credito[]>("/api/v1/credito/meus", token ?? undefined);
-  },
+  meus: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<Credito[]>("/api/v1/credito/meus", token ?? undefined);
+    }),
 };
 
 export const scoreApi = {
-  obter: async () => {
-    const token = await getToken();
-    return apiClient.get<ScoreData>("/api/v1/score", token ?? undefined);
-  },
+  obter: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<ScoreData>("/api/v1/score", token ?? undefined);
+    }),
 };
 
 export const pushApi = {
-  registrarToken: async (fcmToken: string) => {
-    const token = await getToken();
-    return apiClient.post("/api/v1/push-notificacoes/registrar-token", { token: fcmToken }, token ?? undefined);
-  },
+  registrarToken: (fcmToken: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post("/api/v1/push-notificacoes/registrar-token", { token: fcmToken }, token ?? undefined);
+    }),
 };
 
 // Types
@@ -90,4 +122,15 @@ export type ScoreData = {
   nivel: string;
   cor: string;
   descricao: string;
+};
+
+export type UsuarioPerfil = {
+  usuarioId: string;
+  nome: string;
+  email: string;
+  cpf: string;
+  telefone: string;
+  tipo: string;
+  kycStatus: string;
+  criadoEm: string;
 };

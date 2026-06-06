@@ -21,7 +21,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = exception.message;
       }
     } else if (exception instanceof Error) {
-      message = exception.message;
+      // Never expose internal error details (Prisma errors, stack traces, schema names)
+      message = "Erro interno do servidor";
     }
 
     reply.status(status).send({

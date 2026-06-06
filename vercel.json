@@ -1,4 +1,6 @@
 {
   "buildCommand": "turbo run build --filter=@imbobi/web --no-cache",
-  "installCommand": "pnpm install"
+  "installCommand": "pnpm install",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs"
 }

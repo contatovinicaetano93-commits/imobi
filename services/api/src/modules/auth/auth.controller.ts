@@ -1,8 +1,9 @@
-import { Controller, Post, Body, HttpCode } from "@nestjs/common";
+import { Controller, Post, Body, HttpCode, UseGuards } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { CadastroUsuarioSchema, LoginSchema } from "@imbobi/schemas";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 
 @Controller("auth")
 export class AuthController {
@@ -28,6 +29,7 @@ export class AuthController {
     return this.auth.renovarToken(token);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post("logout")
   @HttpCode(204)
   logout(@Body("refreshToken") token: string) {

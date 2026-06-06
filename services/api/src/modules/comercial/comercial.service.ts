@@ -45,12 +45,11 @@ export class ComercialService {
     if (filters?.stageId) where.stageId = filters.stageId;
     if (filters?.fonte) where.fonte = filters.fonte;
     if (filters?.segmentoCliente) where.segmentoCliente = filters.segmentoCliente;
-    if (filters?.scoreMin || filters?.scoreMax) {
-      where.scoreHistorico = {};
-      if (filters?.scoreMin)
-        where.scoreHistorico.some = { scoreFinal: { gte: filters.scoreMin } };
-      if (filters?.scoreMax)
-        where.scoreHistorico.some = { scoreFinal: { lte: filters.scoreMax } };
+    if (filters?.scoreMin !== undefined || filters?.scoreMax !== undefined) {
+      const scoreFilter: any = {};
+      if (filters.scoreMin !== undefined) scoreFilter.gte = filters.scoreMin;
+      if (filters.scoreMax !== undefined) scoreFilter.lte = filters.scoreMax;
+      where.scoreHistorico = { some: { scoreFinal: scoreFilter } };
     }
     if (filters?.searchTerm) {
       where.OR = [

@@ -79,7 +79,11 @@ export class ObrasService {
     return obra;
   }
 
-  async progressoGeral(obraId: string): Promise<number> {
+  async progressoGeral(usuario: { id: string; tipo: string }, obraId: string): Promise<number> {
+    const obra = await this.prisma.obra.findUnique({ where: { obraId }, select: { usuarioId: true } });
+    if (!obra) throw new NotFoundException("Obra não encontrada.");
+    if (usuario.tipo !== "ADMIN" && obra.usuarioId !== usuario.id) throw new ForbiddenException();
+
     const etapas = await this.prisma.etapaObra.findMany({ where: { obraId } });
     const concluidas = etapas.filter((e) => e.status === "CONCLUIDA");
     const total = etapas.reduce((acc, e) => acc + Number(e.percentualObra), 0);

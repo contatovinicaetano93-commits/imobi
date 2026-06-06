@@ -30,7 +30,11 @@ export class UsuariosService {
   async atualizarPerfil(usuarioId: string, data: { nome?: string; telefone?: string }) {
     return this.prisma.usuario.update({
       where: { usuarioId },
-      data: { ...data, atualizadoEm: new Date() },
+      data: {
+        nome: data.nome,
+        telefone: data.telefone,
+        atualizadoEm: new Date(),
+      },
       select: {
         usuarioId: true,
         nome: true,
@@ -90,7 +94,7 @@ export class UsuariosService {
 
     // Mask sensitive information
     const maskedCpf = usuario.cpf.replace(/\d(?=\d{2})/g, "*");
-    const maskedPhone = usuario.telefone.replace(/\d(?=\d{4})/g, "*");
+    const maskedPhone = usuario.telefone?.replace(/\d(?=\d{4})/g, "*") ?? "";
 
     return {
       usuario: {

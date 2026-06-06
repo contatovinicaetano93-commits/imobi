@@ -8,6 +8,11 @@ export function validateEnvironment(config: Record<string, any>): string[] {
     errorMessages.push('DATABASE_URL is required');
   }
 
+  // Critical: JWT_SECRET must be set and non-empty (empty string allows token forgery)
+  if (!config.JWT_SECRET || config.JWT_SECRET.trim() === '') {
+    errorMessages.push('JWT_SECRET is required and must not be empty');
+  }
+
   // Redis: validate either REDIS_URL or REDIS_HOST + REDIS_PORT
   const hasRedisUrl = !!config.REDIS_URL;
   const hasRedisHostPort = config.REDIS_HOST && config.REDIS_PORT;

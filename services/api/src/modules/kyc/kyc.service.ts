@@ -43,9 +43,20 @@ export class KycService {
     const aprovados = documentos.filter((d) => d.status === "APROVADO").length;
     const rejeitados = documentos.filter((d) => d.status === "REJEITADO").length;
 
+    let status: string;
+    if (documentos.length === 0) {
+      status = "NENHUM";
+    } else if (rejeitados > 0) {
+      status = "REJEITADO";
+    } else if (aprovados > 0 && pendentes === 0) {
+      status = "APROVADO";
+    } else {
+      status = "ENVIADO";
+    }
+
     return {
       usuarioId,
-      status: documentos.length === 0 ? "NENHUM" : "ENVIADO",
+      status,
       documentos,
       resumo: { pendentes, aprovados, rejeitados },
     };

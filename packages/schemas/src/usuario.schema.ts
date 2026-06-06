@@ -9,9 +9,9 @@ export const TipoUsuarioEnum = z.enum([
 
 export const KycStatusEnum = z.enum([
   "PENDENTE",
+  "EM_VERIFICACAO",
   "APROVADO",
   "REJEITADO",
-  "EM_ANALISE",
 ]);
 
 export const CadastroUsuarioSchema = z.object({
