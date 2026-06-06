@@ -5,15 +5,23 @@ import Link from "next/link";
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link href="/login">
-            <Button variant="ghost" className="mb-4">
-              ← Voltar
-            </Button>
-          </Link>
+    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #1B4FD8 0%, #1e40af 100%)" }}>
+      {/* Header fixo */}
+      <div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3" style={{ background: "#1B4FD8", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+        <Link href="/cadastro">
+          <button className="text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-white/10 transition">
+            ← Voltar
+          </button>
+        </Link>
+        <span style={{ color: "white", fontWeight: 700 }}>imbobi</span>
+        <div className="ml-auto h-1 w-6 rounded-full" style={{ backgroundColor: "#22c55e" }} />
+      </div>
+
+      <div className="max-w-3xl mx-auto p-4 pb-12">
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+          <div className="h-1.5 w-full" style={{ backgroundColor: "#16a34a" }} />
+          <div className="p-6 sm:p-8">
+          <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Política de Privacidade
           </h1>
@@ -267,10 +275,17 @@ export default function PrivacyPolicyPage() {
             Ao usar imbobi, você concorda com esta Política de Privacidade.
           </p>
           <Link href="/login">
-            <Button className="w-full sm:w-auto">Voltar ao Login</Button>
+            <button
+              className="text-white font-bold py-2.5 px-6 rounded-xl text-sm hover:opacity-90 transition"
+              style={{ backgroundColor: "#16a34a" }}
+            >
+              Voltar ao Login
+            </button>
           </Link>
         </div>
-      </div>
-    </div>
+        </div>{/* fecha p-6 */}
+        </div>{/* fecha card */}
+      </div>{/* fecha max-w-3xl */}
+    </div>{/* fecha outer */}
   );
 }
