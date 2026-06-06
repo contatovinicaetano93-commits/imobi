@@ -4,6 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "dev": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
@@ -32,7 +33,6 @@
     "@hookform/resolvers": "^3.6.0",
     "zod": "^3.23.0",
     "zustand": "^4.5.0",
-    "react-native-maps": "1.14.0",
     "@react-native-community/slider": "^4.5.0"
   },
   "devDependencies": {
