@@ -16,6 +16,17 @@ export default function LandingPage() {
   const [loginErro, setLoginErro] = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
 
+  const [cadNome, setCadNome] = useState("");
+  const [cadCpf, setCadCpf] = useState("");
+  const [cadEmail, setCadEmail] = useState("");
+  const [cadTelefone, setCadTelefone] = useState("");
+  const [cadSenha, setCadSenha] = useState("");
+  const [cadTermos, setCadTermos] = useState(false);
+  const [cadPrivacy, setCadPrivacy] = useState(false);
+  const [cadKyc, setCadKyc] = useState(false);
+  const [cadErro, setCadErro] = useState<string | null>(null);
+  const [cadLoading, setCadLoading] = useState(false);
+
   useEffect(() => {
     setIsMobile(window.innerWidth <= 768);
   }, []);
@@ -42,6 +53,41 @@ export default function LandingPage() {
       setLoginErro(e instanceof Error ? e.message : "Erro inesperado.");
     } finally {
       setLoginLoading(false);
+    }
+  }
+
+  async function handleCadastro(e: React.FormEvent) {
+    e.preventDefault();
+    setCadErro(null);
+    if (!cadTermos || !cadPrivacy || !cadKyc) {
+      setCadErro("Aceite todos os termos para continuar.");
+      return;
+    }
+    setCadLoading(true);
+    try {
+      const res = await fetch("/api/proxy/auth/registrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: cadNome,
+          cpf: cadCpf.replace(/\D/g, ""),
+          email: cadEmail,
+          telefone: cadTelefone.replace(/\D/g, ""),
+          senha: cadSenha,
+          tipo: "TOMADOR",
+          consentidoTermos: cadTermos,
+          consentidoPrivacy: cadPrivacy,
+          consentidoKyc: cadKyc,
+          consentidoMarketing: false,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.message ?? "Erro ao criar conta.");
+      router.push("/dashboard");
+    } catch (e) {
+      setCadErro(e instanceof Error ? e.message : "Erro inesperado.");
+    } finally {
+      setCadLoading(false);
     }
   }
 
@@ -171,17 +217,33 @@ export default function LandingPage() {
               </form>
             )}
             {activeTab === "criar" && (
-              <div className="modal-form active">
+              <form className="modal-form active" onSubmit={handleCadastro}>
+                <div className="form-group"><label className="form-label">Nome completo</label><input type="text" className="form-input" placeholder="Seu nome" value={cadNome} onChange={(e) => setCadNome(e.target.value)} required /></div>
+                <div className="form-group"><label className="form-label">CPF</label><input type="text" className="form-input" placeholder="000.000.000-00" value={cadCpf} onChange={(e) => setCadCpf(e.target.value)} required /></div>
                 <div className="modal-form-row">
-                  <div className="form-group"><label className="form-label">Nome</label><input type="text" className="form-input" placeholder="Seu nome" /></div>
-                  <div className="form-group"><label className="form-label">Cargo</label><input type="text" className="form-input" placeholder="Diretor, Sócio..." /></div>
+                  <div className="form-group"><label className="form-label">E-mail</label><input type="email" className="form-input" placeholder="seu@email.com.br" value={cadEmail} onChange={(e) => setCadEmail(e.target.value)} required /></div>
+                  <div className="form-group"><label className="form-label">WhatsApp</label><input type="tel" className="form-input" placeholder="(11) 99999-9999" value={cadTelefone} onChange={(e) => setCadTelefone(e.target.value)} required /></div>
                 </div>
-                <div className="form-group"><label className="form-label">Empresa</label><input type="text" className="form-input" placeholder="Nome da incorporadora" /></div>
-                <div className="form-group"><label className="form-label">E-mail</label><input type="email" className="form-input" placeholder="seu@email.com.br" /></div>
-                <div className="form-group"><label className="form-label">Senha</label><input type="password" className="form-input" placeholder="Mínimo 8 caracteres" /></div>
-                <button className="form-submit">Criar minha conta</button>
-                <p className="modal-disc">Ao criar uma conta você concorda com nossa política de privacidade.</p>
-              </div>
+                <div className="form-group"><label className="form-label">Senha</label><input type="password" className="form-input" placeholder="Mín. 8 chars, 1 maiúscula, 1 número" value={cadSenha} onChange={(e) => setCadSenha(e.target.value)} required /></div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", margin: "0.75rem 0" }}>
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", fontSize: "0.72rem", color: "var(--gray)", cursor: "pointer" }}>
+                    <input type="checkbox" checked={cadTermos} onChange={(e) => setCadTermos(e.target.checked)} style={{ marginTop: "2px", flexShrink: 0 }} />
+                    Aceito os <a href="/termos" target="_blank" style={{ color: "var(--blue)" }}>Termos de Uso</a>
+                  </label>
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", fontSize: "0.72rem", color: "var(--gray)", cursor: "pointer" }}>
+                    <input type="checkbox" checked={cadPrivacy} onChange={(e) => setCadPrivacy(e.target.checked)} style={{ marginTop: "2px", flexShrink: 0 }} />
+                    Aceito a <a href="/privacy-policy" target="_blank" style={{ color: "var(--blue)" }}>Política de Privacidade</a>
+                  </label>
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", fontSize: "0.72rem", color: "var(--gray)", cursor: "pointer" }}>
+                    <input type="checkbox" checked={cadKyc} onChange={(e) => setCadKyc(e.target.checked)} style={{ marginTop: "2px", flexShrink: 0 }} />
+                    Autorizo a coleta de dados para validação de identidade (KYC)
+                  </label>
+                </div>
+                {cadErro && <p style={{ color: "#EF4444", fontSize: "0.78rem", marginBottom: "0.5rem" }}>{cadErro}</p>}
+                <button type="submit" className="form-submit" disabled={cadLoading}>
+                  {cadLoading ? "Criando conta..." : "Criar minha conta"}
+                </button>
+              </form>
             )}
           </div>
         </div>

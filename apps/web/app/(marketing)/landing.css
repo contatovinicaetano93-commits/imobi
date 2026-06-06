@@ -137,6 +137,7 @@ nav {
 .hsg-light .hsg-sub { color: var(--gray); }
 .hsg-outline .hsg-sub { color: var(--gray-light); }
 
+#vantagens { background: #22C55E; }
 .vs { max-width: 1200px; margin: 0 auto; padding: 5rem 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
 .vs-card { border-radius: 16px; overflow: hidden; }
 .vs-card.them { background: var(--surface); border: 1px solid var(--border); }
