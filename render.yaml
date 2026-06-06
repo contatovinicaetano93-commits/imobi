@@ -2,7 +2,7 @@ services:
   # ── Redis ─────────────────────────────────────────────
   - type: redis
     name: imobi-redis
-    plan: starter
+    plan: free
     region: oregon
     maxmemoryPolicy: allkeys-lru
     ipAllowList: []
@@ -13,7 +13,7 @@ services:
     runtime: docker
     dockerfilePath: ./services/api/Dockerfile
     dockerContext: .
-    plan: starter
+    plan: free
     region: oregon
     healthCheckPath: /api/v1/health
     envVars:
@@ -74,7 +74,7 @@ services:
 databases:
   # ── PostgreSQL ────────────────────────────────────────
   - name: imobi-postgres
-    plan: starter
+    plan: free
     region: oregon
     databaseName: imobi_prod
     user: imobi
