@@ -5,6 +5,7 @@ services:
     plan: starter
     region: oregon
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
 
   # ── NestJS API ────────────────────────────────────────
   - type: web
@@ -34,11 +35,14 @@ services:
           name: imobi-redis
           type: redis
           property: port
-      - key: REDIS_PASSWORD
+      - key: REDIS_URL
         fromService:
           name: imobi-redis
           type: redis
-          property: password
+          property: connectionString
+      # Setar manualmente: senha do Redis (visível no painel do imobi-redis > Connect)
+      - key: REDIS_PASSWORD
+        sync: false
       # Setar manualmente no painel Render:
       - key: JWT_SECRET
         sync: false
