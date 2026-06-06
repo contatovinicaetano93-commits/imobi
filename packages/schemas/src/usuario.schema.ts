@@ -40,6 +40,19 @@ export const LoginSchema = z.object({
   senha: z.string().min(1),
 });
 
+export const EsqueceuSenhaSchema = z.object({
+  email: z.string().email(),
+});
+
+export const RedefinirSenhaSchema = z.object({
+  token: z.string().min(1),
+  novaSenha: z
+    .string()
+    .min(8, "Mínimo 8 caracteres")
+    .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
+    .regex(/[0-9]/, "Deve conter ao menos um número"),
+});
+
 export const UpdateUsuarioSchema = CadastroUsuarioSchema.omit({
   senha: true,
   cpf: true,
@@ -50,3 +63,5 @@ export type KycStatus = z.infer<typeof KycStatusEnum>;
 export type CadastroUsuarioInput = z.infer<typeof CadastroUsuarioSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
 export type UpdateUsuarioInput = z.infer<typeof UpdateUsuarioSchema>;
+export type EsqueceuSenhaInput = z.infer<typeof EsqueceuSenhaSchema>;
+export type RedefinirSenhaInput = z.infer<typeof RedefinirSenhaSchema>;

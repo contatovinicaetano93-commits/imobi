@@ -27,6 +27,8 @@ model Usuario {
   consentidoKyc       Boolean   @default(false)
   consentidoMarketing Boolean   @default(false)
   consentidoEm        DateTime?
+  passwordResetToken    String?
+  passwordResetExpires  DateTime?
   deletadoEm          DateTime?
   criadoEm            DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt
