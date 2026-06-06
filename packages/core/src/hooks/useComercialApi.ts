@@ -30,7 +30,7 @@ export function useComercialApi(token?: string) {
         });
 
         const response = await apiClient.get<LeadsListResponse>(
-          `/api/comercial/leads?${query}`,
+          `/comercial/leads?${query}`,
           token
         );
         setState({ loading: false, error: null });
@@ -49,7 +49,7 @@ export function useComercialApi(token?: string) {
       setState({ loading: true, error: null });
       try {
         const response = await apiClient.get<LeadDetail>(
-          `/api/comercial/leads/${leadId}`,
+          `/comercial/leads/${leadId}`,
           token
         );
         setState({ loading: false, error: null });
@@ -68,7 +68,7 @@ export function useComercialApi(token?: string) {
       setState({ loading: true, error: null });
       try {
         const response = await apiClient.get<DashboardStats>(
-          `/api/comercial/dashboard/stats`,
+          `/comercial/dashboard/stats`,
           token
         );
         setState({ loading: false, error: null });
@@ -91,7 +91,7 @@ export function useComercialApi(token?: string) {
       setState({ loading: true, error: null });
       try {
         await apiClient.post(
-          `/api/comercial/leads/${leadId}/atividades`,
+          `/comercial/leads/${leadId}/atividades`,
           { tipo, descricao },
           token
         );
