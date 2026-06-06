@@ -1,7 +1,9 @@
-import { Injectable, UnauthorizedException, ConflictException, Logger } from "@nestjs/common";
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Logger } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
+import * as crypto from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
+import { EmailService } from "../email/email.service";
 import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
 
 @Injectable()
@@ -10,7 +12,8 @@ export class AuthService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwt: JwtService
+    private readonly jwt: JwtService,
+    private readonly email: EmailService
   ) {}
 
   async registrar(input: CadastroUsuarioInput) {
@@ -68,6 +71,60 @@ export class AuthService {
       where: { refreshToken },
       data: { revogadoEm: new Date() },
     });
+  }
+
+  async esqueceuSenha(emailInput: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { email: emailInput },
+    });
+
+    if (!usuario) {
+      return { message: "Se o email estiver cadastrado, você receberá um link em breve" };
+    }
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const expires = new Date(Date.now() + 60 * 60 * 1000);
+
+    await this.prisma.usuario.update({
+      where: { usuarioId: usuario.usuarioId },
+      data: {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: expires,
+      },
+    });
+
+    await this.email.recuperacaoSenhaEmail(usuario.nome, usuario.email, rawToken);
+
+    return { message: "Se o email estiver cadastrado, você receberá um link em breve" };
+  }
+
+  async redefinirSenha(token: string, novaSenha: string) {
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const usuario = await this.prisma.usuario.findFirst({
+      where: {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { gt: new Date() },
+      },
+    });
+
+    if (!usuario) {
+      throw new BadRequestException("Link inválido ou expirado");
+    }
+
+    const passwordHash = await bcrypt.hash(novaSenha, 12);
+
+    await this.prisma.usuario.update({
+      where: { usuarioId: usuario.usuarioId },
+      data: {
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+      },
+    });
+
+    return { message: "Senha redefinida com sucesso" };
   }
 
   private async gerarTokens(usuarioId: string) {
