@@ -26,8 +26,11 @@ import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notific
 import { VistoriaModule } from "./modules/vistoria/vistoria.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker } from "./workers/excluir-usuario.worker";
+import { NotificacaoWorker } from "./workers/notificacao.worker";
+import { AnaliseFraudeWorker } from "./workers/analise-fraude.worker";
 import { HealthController } from "./common/health.controller";
 import { getRedisConfig } from "./common/config";
+import { QUEUE_NOTIFICACAO, QUEUE_ANALISE_FRAUDE } from "./common/constants";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
 import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
 
@@ -62,6 +65,10 @@ const redisConfig = getRedisConfig();
         retryStrategy: (times: number) => Math.min(times * 50, 2000),
       },
     }),
+    BullModule.registerQueue(
+      { name: QUEUE_NOTIFICACAO },
+      { name: QUEUE_ANALISE_FRAUDE }
+    ),
     PrismaModule,
     AuthModule,
     UsuariosModule,
@@ -85,6 +92,8 @@ const redisConfig = getRedisConfig();
   providers: [
     LiberacaoParcelaWorker,
     ExcluirUsuarioWorker,
+    NotificacaoWorker,
+    AnaliseFraudeWorker,
     {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
