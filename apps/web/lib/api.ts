@@ -37,6 +37,22 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// ── Auth ──────────────────────────────────────────────────────────────
+
+// TODO: Add POST /auth/esqueceu-senha and POST /auth/redefinir-senha endpoints to the NestJS auth controller/service
+export const authApi = {
+  esqueceuSenha: (email: string) =>
+    apiFetch<void>("/auth/esqueceu-senha", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+  redefinirSenha: (token: string, senha: string) =>
+    apiFetch<void>("/auth/redefinir-senha", {
+      method: "POST",
+      body: JSON.stringify({ token, senha }),
+    }),
+};
+
 // ── Obras ─────────────────────────────────────────────────────────────
 
 export type ObraResumo = {
@@ -92,12 +108,23 @@ export const obrasApi = {
 
 // ── Crédito ───────────────────────────────────────────────────────────
 
+export type LiberacaoResumo = {
+  liberacaoId: string;
+  valor: number;
+  status: string;
+  motivo?: string;
+  processadoEm?: string;
+  criadoEm: string;
+};
+
 export type CreditoResumo = {
-  id: string; valorAprovado: number; valorLiberado: number;
+  creditoId: string;
+  id?: string;
+  valorAprovado: number; valorLiberado: number;
   taxaMensal: number; prazoMeses: number; status: string;
   dataAprovacao?: string; dataVencimento?: string;
-  obras?: { id: string; nome: string; status: string }[];
-  liberacoes?: { id: string; valor: number; status: string; processadoEm?: string }[];
+  obras?: { obraId?: string; id?: string; nome: string; status: string }[];
+  liberacoes?: LiberacaoResumo[];
 };
 
 export const creditoApi = {
