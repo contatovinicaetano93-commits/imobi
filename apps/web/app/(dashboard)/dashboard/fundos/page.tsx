@@ -202,11 +202,11 @@ export default async function FundosPage() {
           ) : (
             creditos.map((credito) => (
               <div
-                key={credito.id}
+                key={credito.creditoId}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900">Crédito #{credito.id.slice(0, 8)}</h3>
+                  <h3 className="font-semibold text-gray-900">Crédito #{credito.creditoId.slice(0, 8)}</h3>
                   <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
                     {credito.status}
                   </span>

@@ -78,7 +78,7 @@ export default async function CreditoPage() {
         const totalPago = calendário.reduce((sum, p) => sum + p.total, 0);
 
         return (
-          <div key={credito.id} className="space-y-6">
+          <div key={credito.creditoId} className="space-y-6">
             {/* Crédito Summary */}
             <div className="bg-gradient-to-r from-brand-50 to-brand-100 rounded-2xl border border-brand-200 p-6 shadow-sm">
               <div className="grid grid-cols-4 gap-4">
@@ -214,7 +214,7 @@ export default async function CreditoPage() {
                 <div className="space-y-2">
                   {credito.obras.map((obra) => (
                     <div
-                      key={obra.id}
+                      key={obra.obraId ?? obra.id}
                       className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
                     >
                       <div>
@@ -222,7 +222,7 @@ export default async function CreditoPage() {
                         <p className="text-xs text-gray-500">Status: {obra.status}</p>
                       </div>
                       <a
-                        href={`/dashboard/obras/${obra.id}`}
+                        href={`/dashboard/obras/${obra.obraId ?? obra.id}`}
                         className="text-brand-600 hover:text-brand-700 text-sm font-semibold"
                       >
                         Ver detalhes →

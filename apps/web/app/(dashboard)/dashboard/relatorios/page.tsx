@@ -183,7 +183,7 @@ export default function RelatoriosPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {todasLiberacoes.map((lib) => (
-                  <tr key={lib.id} className="hover:bg-gray-50">
+                  <tr key={lib.liberacaoId} className="hover:bg-gray-50">
                     <td className="py-3 pr-4 text-gray-700">
                       {lib.processadoEm ? formatDate(lib.processadoEm) : "—"}
                     </td>
