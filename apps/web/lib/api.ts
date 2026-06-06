@@ -54,10 +54,40 @@ export type EtapaResumo = {
   evidencias?: { id: string; fotoUrl: string; validada: boolean; criadoEm: string }[];
 };
 
+export type CriarObraPayload = {
+  nome: string;
+  endereco: {
+    logradouro: string;
+    numero: string;
+    complemento?: string;
+    bairro: string;
+    cidade: string;
+    uf: string;
+    cep: string;
+  };
+  geo: {
+    latitude: number;
+    longitude: number;
+    raioValidacaoMetros?: number;
+  };
+  areaM2: number;
+  datainicioISO?: string;
+  dataConclusaoPrevistaISO: string;
+  creditoId?: string;
+};
+
+export type ObraCriada = {
+  obraId: string;
+  nome: string;
+  status: string;
+};
+
 export const obrasApi = {
   listar: () => apiFetch<ObraResumo[]>("/obras"),
   buscar: (id: string) => apiFetch<ObraResumo>(`/obras/${id}`),
   progresso: (id: string) => apiFetch<number>(`/obras/${id}/progresso`),
+  criar: (data: CriarObraPayload) =>
+    apiFetch<ObraCriada>("/obras", { method: "POST", body: JSON.stringify(data) }),
 };
 
 // ── Crédito ───────────────────────────────────────────────────────────
@@ -86,6 +116,18 @@ export type EvidenciaDetalhe = {
 export const evidenciasApi = {
   listarPorEtapa: (etapaId: string) =>
     apiFetch<EvidenciaDetalhe[]>(`/evidencias/etapa/${etapaId}`),
+  upload: (data: {
+    etapaId: string;
+    latitude: number;
+    longitude: number;
+    accuracyMetros: number;
+    timestampCaptura: string;
+    descricao?: string;
+  }) =>
+    apiFetch<EvidenciaDetalhe>("/evidencias", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 // ── Score ─────────────────────────────────────────────────────────────

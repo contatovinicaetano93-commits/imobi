@@ -9,13 +9,70 @@ export class ComercialService {
     private scoringService: ConversionScoringService
   ) {}
 
-  async criarLead(data: any) {
+  async listarStages() {
+    const stages = await this.prisma.pipelineStage.findMany({
+      orderBy: { ordem: 'asc' },
+    });
+
+    if (stages.length === 0) {
+      const defaults = [
+        { nome: 'PROSPECÇÃO', ordem: 1, corHex: '#6366f1' },
+        { nome: 'QUALIFICAÇÃO', ordem: 2, corHex: '#f59e0b' },
+        { nome: 'PROPOSTA', ordem: 3, corHex: '#3b82f6' },
+        { nome: 'NEGOCIAÇÃO', ordem: 4, corHex: '#8b5cf6' },
+        { nome: 'FECHAMENTO', ordem: 5, corHex: '#10b981' },
+      ];
+
+      const created = await Promise.all(
+        defaults.map((d) =>
+          this.prisma.pipelineStage.create({ data: d })
+        )
+      );
+
+      return created.map((s) => ({
+        stageId: s.stageId,
+        nome: s.nome,
+        ordem: s.ordem,
+        cor: s.corHex,
+      }));
+    }
+
+    return stages.map((s) => ({
+      stageId: s.stageId,
+      nome: s.nome,
+      ordem: s.ordem,
+      cor: s.corHex,
+    }));
+  }
+
+  async criarLead(usuarioId: string, data: any) {
     const defaultStage = await this.prisma.pipelineStage.findFirst({
-      where: { nome: 'PROSPECÇÃO' },
+      orderBy: { ordem: 'asc' },
     });
 
     if (!defaultStage) {
-      throw new Error('Pipeline stage PROSPECÇÃO not found. Run seed first.');
+      const seedStage = await this.prisma.pipelineStage.create({
+        data: { nome: 'PROSPECÇÃO', ordem: 1, corHex: '#6366f1' },
+      });
+
+      const lead = await this.prisma.lead.create({
+        data: {
+          clienteNome: data.clienteNome,
+          clienteEmail: data.clienteEmail,
+          clienteTelefone: data.clienteTelefone,
+          fonte: data.fonte,
+          segmentoCliente: data.segmentoCliente,
+          stageId: seedStage.stageId,
+          usuarioId,
+          atribuidoEm: new Date(),
+        },
+        include: {
+          scoreHistorico: { take: 1, orderBy: { criadoEm: 'desc' } },
+        },
+      });
+
+      const score = await this.scoringService.calcularScore(lead.leadId);
+      return { ...lead, score };
     }
 
     const lead = await this.prisma.lead.create({
@@ -23,11 +80,11 @@ export class ComercialService {
         clienteNome: data.clienteNome,
         clienteEmail: data.clienteEmail,
         clienteTelefone: data.clienteTelefone,
-        clienteCpf: data.clienteCpf,
         fonte: data.fonte,
-        tipoObra: data.tipoObra,
         segmentoCliente: data.segmentoCliente,
         stageId: defaultStage.stageId,
+        usuarioId,
+        atribuidoEm: new Date(),
       },
       include: {
         scoreHistorico: { take: 1, orderBy: { criadoEm: 'desc' } },

@@ -42,10 +42,28 @@ export class CreditoService {
   async extrato(creditoId: string, usuarioId: string) {
     const credito = await this.prisma.credito.findUnique({
       where: { creditoId },
-      include: { liberacoes: { orderBy: { criadoEm: "desc" } } },
+      include: {
+        liberacoes: {
+          orderBy: { criadoEm: "desc" },
+        },
+      },
     });
     if (!credito) throw new NotFoundException("Crédito não encontrado.");
     if (credito.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
-    return credito;
+    return {
+      creditoId: credito.creditoId,
+      valorAprovado: credito.valorAprovado,
+      valorLiberado: credito.valorLiberado,
+      taxaMensal: credito.taxaMensal,
+      prazoMeses: credito.prazoMeses,
+      status: credito.status,
+      liberacoes: credito.liberacoes.map((lib) => ({
+        liberacaoId: lib.liberacaoId,
+        valor: lib.valor,
+        status: lib.status === "FALHA" ? "FALHOU" : lib.status,
+        criadoEm: lib.criadoEm.toISOString(),
+        motivo: lib.motivo ?? undefined,
+      })),
+    };
   }
 }

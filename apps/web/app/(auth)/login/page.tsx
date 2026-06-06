@@ -39,59 +39,84 @@ export default function LoginPage() {
       className="min-h-screen flex items-center justify-center p-4"
       style={{ background: "linear-gradient(135deg, #1B4FD8 0%, #1e40af 100%)" }}
     >
-      {/* Card */}
-      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm space-y-6">
-        {/* Logo */}
-        <div className="text-center space-y-1">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-600 mb-2">
-            <span className="text-white text-2xl font-bold">i</span>
+      {/* Card compacto */}
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs overflow-hidden">
+        {/* Faixa verde no topo */}
+        <div className="h-1.5 w-full bg-brand-600" />
+
+        <div className="px-6 py-6 space-y-5">
+          {/* Logo */}
+          <div className="text-center">
+            <span className="text-2xl font-bold text-brand-700">imbobi</span>
+            <p className="text-gray-400 text-xs mt-0.5">Acesse sua conta</p>
           </div>
-          <h1 className="text-3xl font-bold text-brand-700">imbobi</h1>
-          <p className="text-gray-500 text-sm">Acesse sua conta</p>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+            {/* E-mail */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-brand-700 uppercase tracking-wide">
+                E-mail
+              </label>
+              <input
+                {...register("email")}
+                type="email"
+                autoComplete="email"
+                placeholder="seu@email.com"
+                className={inputCls(!!errors.email)}
+              />
+              {errors.email && (
+                <p className="text-xs text-red-500">{errors.email.message}</p>
+              )}
+            </div>
+
+            {/* Senha */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-brand-700 uppercase tracking-wide">
+                Senha
+              </label>
+              <input
+                {...register("senha")}
+                type="password"
+                autoComplete="current-password"
+                placeholder="••••••••"
+                className={inputCls(!!errors.senha)}
+              />
+              {errors.senha && (
+                <p className="text-xs text-red-500">{errors.senha.message}</p>
+              )}
+            </div>
+
+            {erro && (
+              <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
+                {erro}
+              </p>
+            )}
+
+            {/* Botão login */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full text-white font-bold py-3 rounded-xl transition-all text-sm disabled:opacity-60 hover:opacity-90 active:scale-95"
+              style={{ backgroundColor: "#16a34a" }}
+            >
+              {isSubmitting ? "Entrando..." : "Entrar"}
+            </button>
+          </form>
+
+          <p className="text-center text-xs text-gray-400">
+            Não tem conta?{" "}
+            <a
+              href="/cadastro"
+              className="font-semibold hover:underline"
+              style={{ color: "#16a34a" }}
+            >
+              Cadastre-se
+            </a>
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Field label="E-mail" error={errors.email?.message}>
-            <input
-              {...register("email")}
-              type="email"
-              autoComplete="email"
-              placeholder="seu@email.com"
-              className={inputCls(!!errors.email)}
-            />
-          </Field>
-
-          <Field label="Senha" error={errors.senha?.message}>
-            <input
-              {...register("senha")}
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              className={inputCls(!!errors.senha)}
-            />
-          </Field>
-
-          {erro && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2">
-              {erro}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-semibold py-3.5 rounded-2xl transition-colors text-base shadow-md shadow-brand-600/30"
-          >
-            {isSubmitting ? "Entrando..." : "Entrar"}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-gray-500">
-          Não tem conta?{" "}
-          <a href="/cadastro" className="text-brand-600 font-semibold hover:underline">
-            Cadastre-se
-          </a>
-        </p>
+        {/* Faixa verde no rodapé */}
+        <div className="h-1 w-full bg-brand-500 opacity-40" />
       </div>
 
       {/* WhatsApp flutuante */}
@@ -111,25 +136,7 @@ export default function LoginPage() {
   );
 }
 
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-1">
-      <label className="text-sm font-semibold text-gray-700">{label}</label>
-      {children}
-      {error && <p className="text-xs text-red-500">{error}</p>}
-    </div>
-  );
-}
-
 const inputCls = (hasError: boolean) =>
-  `w-full border rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-brand-500 transition ${
+  `w-full border rounded-lg px-3 py-2.5 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-green-400 transition ${
     hasError ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 focus:bg-white"
   }`;
