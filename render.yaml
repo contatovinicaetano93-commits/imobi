@@ -1,12 +1,4 @@
 services:
-  # ── Redis ─────────────────────────────────────────────
-  - type: redis
-    name: imobi-redis
-    plan: free
-    region: oregon
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []
-
   # ── NestJS API ────────────────────────────────────────
   - type: web
     name: imobi-api
@@ -14,7 +6,7 @@ services:
     dockerfilePath: ./services/api/Dockerfile
     dockerContext: .
     plan: free
-    region: oregon
+    region: virginia
     healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_ENV
@@ -25,22 +17,13 @@ services:
         fromDatabase:
           name: imobi-postgres
           property: connectionString
-      - key: REDIS_HOST
-        fromService:
-          name: imobi-redis
-          type: redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          name: imobi-redis
-          type: redis
-          property: port
+      # Redis: copiar do imobi-staging-cache após deploy
       - key: REDIS_URL
-        fromService:
-          name: imobi-redis
-          type: redis
-          property: connectionString
-      # Setar manualmente: senha do Redis (visível no painel do imobi-redis > Connect)
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        sync: false
       - key: REDIS_PASSWORD
         sync: false
       # Setar manualmente no painel Render:
@@ -75,7 +58,7 @@ databases:
   # ── PostgreSQL ────────────────────────────────────────
   - name: imobi-postgres
     plan: free
-    region: oregon
+    region: virginia
     databaseName: imobi_prod
     user: imobi
     postgresMajorVersion: 15
