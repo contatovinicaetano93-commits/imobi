@@ -31,7 +31,7 @@ async function bootstrap() {
 
   const nodeEnv = process.env["NODE_ENV"] || "development";
   const corsOrigins = process.env["CORS_ORIGIN"]?.split(",").map((o) => o.trim()).filter(Boolean);
-  const isDev = nodeEnv === "development" || nodeEnv === "test" || nodeEnv === "staging";
+  const isDev = nodeEnv === "development" || nodeEnv === "test";
 
   if (!isDev && !corsOrigins?.length) {
     throw new Error("CORS_ORIGIN is required in production mode. Please set it as a comma-separated list of allowed origins.");

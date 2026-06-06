@@ -8,8 +8,8 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
 
   async getTracker(req: Record<string, any>): Promise<string> {
     // For authenticated requests, track by user ID from JWT
-    if (req.user && typeof req.user === 'object' && req.user.usuarioId) {
-      return `user:${req.user.usuarioId}`;
+    if (req.user && typeof req.user === 'object' && req.user.id) {
+      return `user:${req.user.id}`;
     }
 
     // For unauthenticated or malformed user objects, track by IP address

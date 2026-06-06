@@ -2,18 +2,18 @@ import { z } from "zod";
 
 export const StatusObraEnum = z.enum([
   "PLANEJAMENTO",
-  "EM_ANDAMENTO",
+  "EM_EXECUCAO",
   "PAUSADA",
   "CONCLUIDA",
   "CANCELADA",
 ]);
 
 export const StatusEtapaEnum = z.enum([
-  "PENDENTE",
-  "EM_PROGRESSO",
+  "PLANEJADA",
+  "EM_EXECUCAO",
   "AGUARDANDO_VISTORIA",
-  "APROVADA",
-  "REJEITADA",
+  "REPROVADA",
+  "CONCLUIDA",
 ]);
 
 export const EnderecoSchema = z.object({

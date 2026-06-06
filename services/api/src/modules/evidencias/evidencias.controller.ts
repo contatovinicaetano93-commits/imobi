@@ -21,8 +21,8 @@ export class EvidenciasController {
   }
 
   @Get("etapa/:etapaId")
-  listar(@Param("etapaId") etapaId: string) {
-    return this.evidencias.listarPorEtapa(etapaId);
+  listar(@UsuarioAtual() u: IUsuario, @Param("etapaId") etapaId: string) {
+    return this.evidencias.listarPorEtapa(u, etapaId);
   }
 
   @Patch(":id/validar")
@@ -32,6 +32,6 @@ export class EvidenciasController {
     @Body("aprovado") aprovado: boolean,
     @Body("observacao") obs?: string
   ) {
-    return this.evidencias.validar(u.id, id, aprovado, obs);
+    return this.evidencias.validar(u, id, aprovado, obs);
   }
 }

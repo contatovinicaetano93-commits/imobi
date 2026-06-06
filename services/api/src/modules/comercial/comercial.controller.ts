@@ -10,9 +10,12 @@ import {
 } from '@nestjs/common';
 import { ComercialService } from './comercial.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @Controller('comercial')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('COMERCIAL', 'ADMIN')
 export class ComercialController {
   constructor(private readonly comercialService: ComercialService) {}
 
@@ -69,7 +72,7 @@ export class ComercialController {
     @Body() data: any,
     @Req() req: any
   ) {
-    const usuarioId = req.user.usuarioId;
+    const usuarioId = req.user.id;
     return this.comercialService.adicionarAtividade(leadId, usuarioId, data);
   }
 }

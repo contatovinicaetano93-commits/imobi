@@ -29,8 +29,8 @@ export class NotificacoesController {
   }
 
   @Patch(":id/lida")
-  async marcarComoLida(@Param("id") id: string) {
-    return this.notificacoes.marcarComoLida(id);
+  async marcarComoLida(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
+    return this.notificacoes.marcarComoLida(u.id, id);
   }
 
   @Patch("marcar-todas-lidas")
@@ -40,8 +40,8 @@ export class NotificacoesController {
   }
 
   @Delete(":id")
-  async deletar(@Param("id") id: string) {
-    await this.notificacoes.deletar(id);
+  async deletar(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
+    await this.notificacoes.deletar(u.id, id);
     return { ok: true };
   }
 }

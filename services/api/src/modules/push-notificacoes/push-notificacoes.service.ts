@@ -145,8 +145,8 @@ export class PushNotificacoesService {
   }
 
   async desregistrarToken(usuarioId: string, token: string): Promise<void> {
-    await this.prisma.usuarioFcmToken.update({
-      where: { usuarioId_token: { usuarioId, token } },
+    await this.prisma.usuarioFcmToken.updateMany({
+      where: { usuarioId, token },
       data: { ativo: false },
     });
     this.logger.debug(`FCM token desativado para user ${usuarioId}`);

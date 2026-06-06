@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { simularCredito } from "@imbobi/core";
 import type { SolicitacaoCreditoInput, SimulacaoCreditoInput } from "@imbobi/schemas";
@@ -39,12 +39,13 @@ export class CreditoService {
     });
   }
 
-  async extrato(creditoId: string) {
+  async extrato(creditoId: string, usuarioId: string) {
     const credito = await this.prisma.credito.findUnique({
       where: { creditoId },
       include: { liberacoes: { orderBy: { criadoEm: "desc" } } },
     });
     if (!credito) throw new NotFoundException("Crédito não encontrado.");
+    if (credito.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
     return credito;
   }
 }

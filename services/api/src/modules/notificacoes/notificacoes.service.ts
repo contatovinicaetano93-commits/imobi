@@ -39,9 +39,9 @@ export class NotificacoesService {
     });
   }
 
-  async marcarComoLida(notificacaoId: string) {
-    return this.prisma.notificacao.update({
-      where: { notificacaoId },
+  async marcarComoLida(usuarioId: string, notificacaoId: string) {
+    return this.prisma.notificacao.updateMany({
+      where: { notificacaoId, usuarioId },
       data: { lida: true, lidoEm: new Date() },
     });
   }
@@ -53,9 +53,9 @@ export class NotificacoesService {
     });
   }
 
-  async deletar(notificacaoId: string) {
-    return this.prisma.notificacao.delete({
-      where: { notificacaoId },
+  async deletar(usuarioId: string, notificacaoId: string) {
+    return this.prisma.notificacao.deleteMany({
+      where: { notificacaoId, usuarioId },
     });
   }
 

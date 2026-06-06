@@ -83,7 +83,16 @@ export class EvidenciasService {
     });
   }
 
-  async listarPorEtapa(etapaId: string) {
+  async listarPorEtapa(usuario: { id: string; tipo: string }, etapaId: string) {
+    const etapa = await this.prisma.etapaObra.findUnique({
+      where: { etapaId },
+      include: { obra: { select: { usuarioId: true } } },
+    });
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+    if (usuario.tipo !== "ADMIN" && usuario.tipo !== "GESTOR_OBRA" && etapa.obra.usuarioId !== usuario.id) {
+      throw new ForbiddenException("Acesso negado.");
+    }
+
     const evidencias = await this.prisma.evidenciaEtapa.findMany({
       where: { etapaId },
       orderBy: { criadoEm: "desc" },
@@ -98,7 +107,11 @@ export class EvidenciasService {
     );
   }
 
-  async validar(gestorId: string, evidenciaId: string, aprovado: boolean, observacao?: string) {
+  async validar(usuario: { id: string; tipo: string }, evidenciaId: string, aprovado: boolean, observacao?: string) {
+    if (usuario.tipo !== "GESTOR_OBRA" && usuario.tipo !== "ADMIN") {
+      throw new ForbiddenException("Apenas gestores e administradores podem validar evidências.");
+    }
+
     const evidencia = await this.prisma.evidenciaEtapa.findUnique({
       where: { evidenciaId },
     });

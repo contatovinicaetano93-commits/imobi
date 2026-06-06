@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, ConflictException, Logger } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
@@ -6,6 +6,8 @@ import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService
@@ -29,7 +31,7 @@ export class AuthService {
       select: { usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true },
     });
 
-    return { usuario, ...this.gerarTokens(usuario.usuarioId) };
+    return { usuario, ...await this.gerarTokens(usuario.usuarioId) };
   }
 
   async login(input: LoginInput) {
@@ -43,7 +45,7 @@ export class AuthService {
 
     return {
       usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
-      ...this.gerarTokens(usuario.usuarioId),
+      ...await this.gerarTokens(usuario.usuarioId),
     };
   }
 
@@ -58,7 +60,7 @@ export class AuthService {
       where: { sessionId: sessao.sessionId },
       data: { revogadoEm: new Date() },
     });
-    return this.gerarTokens(sessao.usuarioId);
+    return await this.gerarTokens(sessao.usuarioId);
   }
 
   async revogarToken(refreshToken: string) {
@@ -68,17 +70,21 @@ export class AuthService {
     });
   }
 
-  private gerarTokens(usuarioId: string) {
+  private async gerarTokens(usuarioId: string) {
     const accessToken = this.jwt.sign({ sub: usuarioId }, { expiresIn: "15m" });
     const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
 
-    void this.prisma.sessaoToken.create({
-      data: {
-        usuarioId,
-        refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
+    try {
+      await this.prisma.sessaoToken.create({
+        data: {
+          usuarioId,
+          refreshToken,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+    } catch (e) {
+      this.logger.error(`Failed to persist session token for user ${usuarioId}: ${e}`);
+    }
 
     return { accessToken, refreshToken };
   }

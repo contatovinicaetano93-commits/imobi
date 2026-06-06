@@ -1,21 +1,21 @@
 import { z } from "zod";
-export declare const FonteEnum: z.ZodEnum<["PARCEIRO", "INDICACAO", "WEBSITE", "OFFLINE"]>;
+export declare const FonteEnum: z.ZodEnum<["WEBSITE", "INDICACAO", "MARKETPLACE", "CAMPANHA_DIGITAL", "OFFLINE", "PARCEIRO"]>;
 export declare const SegmentoClienteEnum: z.ZodEnum<["NOVO", "RETORNO", "CONCORRENTE"]>;
 export declare const TipoObraEnum: z.ZodEnum<["residencial", "comercial", "industrial", "reforma"]>;
-export declare const LeadActivityTypeEnum: z.ZodEnum<["CALL", "EMAIL", "MEETING", "PROPOSAL", "VISIT", "FOLLOW_UP", "NOTE"]>;
+export declare const LeadActivityTypeEnum: z.ZodEnum<["CALL_OUTBOUND", "CALL_INBOUND", "EMAIL_SENT", "EMAIL_RECEIVED", "MEETING_SCHEDULED", "MEETING_COMPLETED", "PROPOSAL_SENT", "DOCUMENT_REQUESTED", "PAYMENT_RECEIVED", "STAGE_CHANGED", "NOTE_ADDED", "FOLLOW_UP_SET"]>;
 export declare const CreateLeadSchema: z.ZodObject<{
     clienteNome: z.ZodString;
     clienteEmail: z.ZodString;
     clienteTelefone: z.ZodString;
     clienteCpf: z.ZodOptional<z.ZodString>;
-    fonte: z.ZodEnum<["PARCEIRO", "INDICACAO", "WEBSITE", "OFFLINE"]>;
+    fonte: z.ZodEnum<["WEBSITE", "INDICACAO", "MARKETPLACE", "CAMPANHA_DIGITAL", "OFFLINE", "PARCEIRO"]>;
     tipoObra: z.ZodEnum<["residencial", "comercial", "industrial", "reforma"]>;
     segmentoCliente: z.ZodEnum<["NOVO", "RETORNO", "CONCORRENTE"]>;
 }, "strip", z.ZodTypeAny, {
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "PARCEIRO" | "INDICACAO" | "WEBSITE" | "OFFLINE";
+    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
     tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     clienteCpf?: string | undefined;
@@ -23,7 +23,7 @@ export declare const CreateLeadSchema: z.ZodObject<{
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "PARCEIRO" | "INDICACAO" | "WEBSITE" | "OFFLINE";
+    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
     tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     clienteCpf?: string | undefined;
@@ -32,21 +32,21 @@ export declare const LeadActivitySchema: z.ZodObject<{
     leadActivityId: z.ZodString;
     leadId: z.ZodString;
     usuarioId: z.ZodString;
-    tipo: z.ZodEnum<["CALL", "EMAIL", "MEETING", "PROPOSAL", "VISIT", "FOLLOW_UP", "NOTE"]>;
+    tipo: z.ZodEnum<["CALL_OUTBOUND", "CALL_INBOUND", "EMAIL_SENT", "EMAIL_RECEIVED", "MEETING_SCHEDULED", "MEETING_COMPLETED", "PROPOSAL_SENT", "DOCUMENT_REQUESTED", "PAYMENT_RECEIVED", "STAGE_CHANGED", "NOTE_ADDED", "FOLLOW_UP_SET"]>;
     descricao: z.ZodString;
     criadoEm: z.ZodDate;
 }, "strip", z.ZodTypeAny, {
     leadActivityId: string;
     leadId: string;
     usuarioId: string;
-    tipo: "CALL" | "EMAIL" | "MEETING" | "PROPOSAL" | "VISIT" | "FOLLOW_UP" | "NOTE";
+    tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
     descricao: string;
     criadoEm: Date;
 }, {
     leadActivityId: string;
     leadId: string;
     usuarioId: string;
-    tipo: "CALL" | "EMAIL" | "MEETING" | "PROPOSAL" | "VISIT" | "FOLLOW_UP" | "NOTE";
+    tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
     descricao: string;
     criadoEm: Date;
 }>;
@@ -93,7 +93,7 @@ export declare const LeadSchema: z.ZodObject<{
     clienteEmail: z.ZodString;
     clienteTelefone: z.ZodString;
     clienteCpf: z.ZodOptional<z.ZodString>;
-    fonte: z.ZodEnum<["PARCEIRO", "INDICACAO", "WEBSITE", "OFFLINE"]>;
+    fonte: z.ZodEnum<["WEBSITE", "INDICACAO", "MARKETPLACE", "CAMPANHA_DIGITAL", "OFFLINE", "PARCEIRO"]>;
     tipoObra: z.ZodEnum<["residencial", "comercial", "industrial", "reforma"]>;
     segmentoCliente: z.ZodEnum<["NOVO", "RETORNO", "CONCORRENTE"]>;
     stageId: z.ZodString;
@@ -140,7 +140,7 @@ export declare const LeadSchema: z.ZodObject<{
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "PARCEIRO" | "INDICACAO" | "WEBSITE" | "OFFLINE";
+    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
     tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     leadId: string;
@@ -165,7 +165,7 @@ export declare const LeadSchema: z.ZodObject<{
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "PARCEIRO" | "INDICACAO" | "WEBSITE" | "OFFLINE";
+    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
     tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     leadId: string;
@@ -193,7 +193,7 @@ export declare const LeadDetailSchema: z.ZodObject<{
     clienteEmail: z.ZodString;
     clienteTelefone: z.ZodString;
     clienteCpf: z.ZodOptional<z.ZodString>;
-    fonte: z.ZodEnum<["PARCEIRO", "INDICACAO", "WEBSITE", "OFFLINE"]>;
+    fonte: z.ZodEnum<["WEBSITE", "INDICACAO", "MARKETPLACE", "CAMPANHA_DIGITAL", "OFFLINE", "PARCEIRO"]>;
     tipoObra: z.ZodEnum<["residencial", "comercial", "industrial", "reforma"]>;
     segmentoCliente: z.ZodEnum<["NOVO", "RETORNO", "CONCORRENTE"]>;
     stageId: z.ZodString;
@@ -254,21 +254,21 @@ export declare const LeadDetailSchema: z.ZodObject<{
         leadActivityId: z.ZodString;
         leadId: z.ZodString;
         usuarioId: z.ZodString;
-        tipo: z.ZodEnum<["CALL", "EMAIL", "MEETING", "PROPOSAL", "VISIT", "FOLLOW_UP", "NOTE"]>;
+        tipo: z.ZodEnum<["CALL_OUTBOUND", "CALL_INBOUND", "EMAIL_SENT", "EMAIL_RECEIVED", "MEETING_SCHEDULED", "MEETING_COMPLETED", "PROPOSAL_SENT", "DOCUMENT_REQUESTED", "PAYMENT_RECEIVED", "STAGE_CHANGED", "NOTE_ADDED", "FOLLOW_UP_SET"]>;
         descricao: z.ZodString;
         criadoEm: z.ZodDate;
     }, "strip", z.ZodTypeAny, {
         leadActivityId: string;
         leadId: string;
         usuarioId: string;
-        tipo: "CALL" | "EMAIL" | "MEETING" | "PROPOSAL" | "VISIT" | "FOLLOW_UP" | "NOTE";
+        tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
         descricao: string;
         criadoEm: Date;
     }, {
         leadActivityId: string;
         leadId: string;
         usuarioId: string;
-        tipo: "CALL" | "EMAIL" | "MEETING" | "PROPOSAL" | "VISIT" | "FOLLOW_UP" | "NOTE";
+        tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
         descricao: string;
         criadoEm: Date;
     }>, "many">>;
@@ -337,7 +337,7 @@ export declare const LeadDetailSchema: z.ZodObject<{
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "PARCEIRO" | "INDICACAO" | "WEBSITE" | "OFFLINE";
+    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
     tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     leadId: string;
@@ -367,7 +367,7 @@ export declare const LeadDetailSchema: z.ZodObject<{
         leadActivityId: string;
         leadId: string;
         usuarioId: string;
-        tipo: "CALL" | "EMAIL" | "MEETING" | "PROPOSAL" | "VISIT" | "FOLLOW_UP" | "NOTE";
+        tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
         descricao: string;
         criadoEm: Date;
     }[] | undefined;
@@ -398,7 +398,7 @@ export declare const LeadDetailSchema: z.ZodObject<{
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "PARCEIRO" | "INDICACAO" | "WEBSITE" | "OFFLINE";
+    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
     tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     leadId: string;
@@ -428,7 +428,7 @@ export declare const LeadDetailSchema: z.ZodObject<{
         leadActivityId: string;
         leadId: string;
         usuarioId: string;
-        tipo: "CALL" | "EMAIL" | "MEETING" | "PROPOSAL" | "VISIT" | "FOLLOW_UP" | "NOTE";
+        tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
         descricao: string;
         criadoEm: Date;
     }[] | undefined;
@@ -457,13 +457,13 @@ export declare const LeadDetailSchema: z.ZodObject<{
     proximoAcompanhamento?: Date | undefined;
 }>;
 export declare const AddLeadActivitySchema: z.ZodObject<{
-    tipo: z.ZodEnum<["CALL", "EMAIL", "MEETING", "PROPOSAL", "VISIT", "FOLLOW_UP", "NOTE"]>;
+    tipo: z.ZodEnum<["CALL_OUTBOUND", "CALL_INBOUND", "EMAIL_SENT", "EMAIL_RECEIVED", "MEETING_SCHEDULED", "MEETING_COMPLETED", "PROPOSAL_SENT", "DOCUMENT_REQUESTED", "PAYMENT_RECEIVED", "STAGE_CHANGED", "NOTE_ADDED", "FOLLOW_UP_SET"]>;
     descricao: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    tipo: "CALL" | "EMAIL" | "MEETING" | "PROPOSAL" | "VISIT" | "FOLLOW_UP" | "NOTE";
+    tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
     descricao: string;
 }, {
-    tipo: "CALL" | "EMAIL" | "MEETING" | "PROPOSAL" | "VISIT" | "FOLLOW_UP" | "NOTE";
+    tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
     descricao: string;
 }>;
 export declare const DashboardStatsSchema: z.ZodObject<{
@@ -489,7 +489,7 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteEmail: z.ZodString;
         clienteTelefone: z.ZodString;
         clienteCpf: z.ZodOptional<z.ZodString>;
-        fonte: z.ZodEnum<["PARCEIRO", "INDICACAO", "WEBSITE", "OFFLINE"]>;
+        fonte: z.ZodEnum<["WEBSITE", "INDICACAO", "MARKETPLACE", "CAMPANHA_DIGITAL", "OFFLINE", "PARCEIRO"]>;
         tipoObra: z.ZodEnum<["residencial", "comercial", "industrial", "reforma"]>;
         segmentoCliente: z.ZodEnum<["NOVO", "RETORNO", "CONCORRENTE"]>;
         stageId: z.ZodString;
@@ -536,7 +536,7 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteNome: string;
         clienteEmail: string;
         clienteTelefone: string;
-        fonte: "PARCEIRO" | "INDICACAO" | "WEBSITE" | "OFFLINE";
+        fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
         tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
         segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
         leadId: string;
@@ -561,7 +561,7 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteNome: string;
         clienteEmail: string;
         clienteTelefone: string;
-        fonte: "PARCEIRO" | "INDICACAO" | "WEBSITE" | "OFFLINE";
+        fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
         tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
         segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
         leadId: string;
@@ -591,7 +591,7 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteNome: string;
         clienteEmail: string;
         clienteTelefone: string;
-        fonte: "PARCEIRO" | "INDICACAO" | "WEBSITE" | "OFFLINE";
+        fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
         tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
         segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
         leadId: string;
@@ -621,7 +621,7 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteNome: string;
         clienteEmail: string;
         clienteTelefone: string;
-        fonte: "PARCEIRO" | "INDICACAO" | "WEBSITE" | "OFFLINE";
+        fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
         tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
         segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
         leadId: string;
