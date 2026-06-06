@@ -8,6 +8,8 @@ COPY packages/ ./packages/
 COPY services/api/ ./services/api/
 
 RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @imbobi/schemas build || true
+RUN pnpm --filter @imbobi/core build
 RUN pnpm --filter @imbobi/api run prisma:generate
 RUN pnpm --filter @imbobi/api build
 
