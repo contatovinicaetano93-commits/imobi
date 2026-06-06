@@ -300,6 +300,28 @@ export type KycAuditEntry = {
   criadoEm: string;
 };
 
+export type ObraGestor = {
+  obraId: string;
+  nome: string;
+  endereco: string;
+  status: string;
+  progresso: number;
+  etapasTotal: number;
+  etapasConcluidas: number;
+  tomador: { usuarioId: string; nome: string; email: string } | null;
+  credito: { creditoId: string; valorAprovado: number; valorLiberado: number; status: string } | null;
+};
+
+export type UsuarioGestor = {
+  usuarioId: string;
+  nome: string;
+  email: string;
+  cpf: string;
+  tipo: string;
+  kycStatus: string;
+  criadoEm: string;
+};
+
 export const managerApi = {
   dashboard: () => apiFetch<ManagerStats>("/manager/dashboard"),
   listarEtapasPendentes: (
@@ -345,6 +367,25 @@ export const managerApi = {
     apiFetch(`/manager/kyc/${id}/rejeitar`, { method: "PATCH", body: JSON.stringify({ motivo }) }),
   obterEtapaAuditLog: (id: string) => apiFetch<EtapaAuditEntry[]>(`/manager/etapas/${id}/audit-log`),
   obterKycAuditLog: (id: string) => apiFetch<KycAuditEntry[]>(`/manager/kyc/${id}/audit-log`),
+  listarObras: (limit?: number, offset?: number, filters?: { status?: string; searchTerm?: string }) => {
+    const params = new URLSearchParams();
+    if (limit) params.set("limit", String(limit));
+    if (offset) params.set("offset", String(offset));
+    if (filters?.status && filters.status !== "TODAS") params.set("status", filters.status);
+    if (filters?.searchTerm) params.set("searchTerm", filters.searchTerm);
+    const qs = params.toString();
+    return apiFetch<{ obras: ObraGestor[]; total: number }>(`/manager/obras${qs ? `?${qs}` : ""}`);
+  },
+  listarUsuarios: (limit?: number, offset?: number, filters?: { searchTerm?: string; tipo?: string; kycStatus?: string }) => {
+    const params = new URLSearchParams();
+    if (limit) params.set("limit", String(limit));
+    if (offset) params.set("offset", String(offset));
+    if (filters?.searchTerm) params.set("searchTerm", filters.searchTerm);
+    if (filters?.tipo && filters.tipo !== "TODOS") params.set("tipo", filters.tipo);
+    if (filters?.kycStatus && filters.kycStatus !== "TODOS") params.set("kycStatus", filters.kycStatus);
+    const qs = params.toString();
+    return apiFetch<{ usuarios: UsuarioGestor[]; total: number }>(`/manager/usuarios${qs ? `?${qs}` : ""}`);
+  },
 };
 
 // ── Engenheiros ──────────────────────────────────────────────────────
@@ -374,6 +415,86 @@ export const engenheirosApi = {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
+};
+
+// ── Comercial ─────────────────────────────────────────────────────────
+
+export type LeadFonte = "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+export type LeadSegmentoCliente = "NOVO" | "RETORNO" | "CONCORRENTE";
+export type LeadTipoObra = "residencial" | "comercial" | "industrial" | "reforma";
+
+export type CriarLeadPayload = {
+  clienteNome: string;
+  clienteEmail: string;
+  clienteTelefone: string;
+  clienteCpf?: string;
+  fonte: LeadFonte;
+  tipoObra: LeadTipoObra;
+  segmentoCliente: LeadSegmentoCliente;
+};
+
+export type LeadCriado = {
+  leadId: string;
+  clienteNome: string;
+  clienteEmail: string;
+  fonte: LeadFonte;
+  stageId: string;
+  criadoEm: string;
+};
+
+export type PipelineStage = {
+  stageId: string;
+  nome: string;
+  ordem: number;
+  pipelineId: string;
+  cor?: string;
+};
+
+export type LeadResumo = {
+  leadId: string;
+  clienteNome: string;
+  clienteEmail: string;
+  clienteTelefone: string;
+  fonte: LeadFonte;
+  tipoObra: LeadTipoObra;
+  segmentoCliente: LeadSegmentoCliente;
+  stageId: string;
+  criadoEm: string;
+  atualizadoEm: string;
+  stage?: { stageId: string; nome: string; pipelineId: string };
+  scoreHistorico?: { scoreFinal: number; probabilidadeClosing: number }[];
+};
+
+export type LeadsListResponse = {
+  leads: LeadResumo[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export const comercialApi = {
+  listarLeads: (params?: {
+    limit?: number;
+    offset?: number;
+    stageId?: string;
+    fonte?: string;
+    segmentoCliente?: string;
+    searchTerm?: string;
+  }) => {
+    const p = new URLSearchParams();
+    if (params?.limit) p.set("limit", String(params.limit));
+    if (params?.offset) p.set("offset", String(params.offset));
+    if (params?.stageId) p.set("stageId", params.stageId);
+    if (params?.fonte) p.set("fonte", params.fonte);
+    if (params?.segmentoCliente) p.set("segmentoCliente", params.segmentoCliente);
+    if (params?.searchTerm) p.set("searchTerm", params.searchTerm);
+    const qs = p.toString();
+    return apiFetch<LeadsListResponse>(`/comercial/leads${qs ? `?${qs}` : ""}`);
+  },
+  criarLead: (data: CriarLeadPayload) =>
+    apiFetch<LeadCriado>("/comercial/leads", { method: "POST", body: JSON.stringify(data) }),
+  listarStages: () =>
+    apiFetch<PipelineStage[]>("/comercial/pipeline/stages"),
 };
 
 // ── Notificações ──────────────────────────────────────────────────────
