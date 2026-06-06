@@ -3,3 +3,7 @@ export * from "./credito.schema";
 export * from "./obra.schema";
 export * from "./evidencia.schema";
 export * from "./comercial.schema";
+export * from "./etapa.schema";
+export * from "./vistoria.schema";
+export * from "./kyc.schema";
+export * from "./parceiro.schema";

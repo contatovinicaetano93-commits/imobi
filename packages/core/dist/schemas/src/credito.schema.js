@@ -3,12 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LiberacaoParcelaSchema = exports.SolicitacaoCreditoSchema = exports.SimulacaoCreditoSchema = exports.StatusCreditoEnum = void 0;
 const zod_1 = require("zod");
 exports.StatusCreditoEnum = zod_1.z.enum([
-    "ANALISE",
-    "APROVADO",
     "ATIVO",
+    "SUSPENSO",
+    "VENCIDO",
     "QUITADO",
-    "INADIMPLENTE",
-    "CANCELADO",
 ]);
 exports.SimulacaoCreditoSchema = zod_1.z.object({
     valorSolicitado: zod_1.z

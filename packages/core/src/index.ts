@@ -7,6 +7,10 @@ export * from "./utils/credito";
 export * from "./hooks/useGeoValidation";
 export * from "./hooks/useSimuladorCredito";
 export * from "./hooks/useComercialApi";
+export * from "./hooks/useAuth";
+export * from "./hooks/useObra";
+export * from "./hooks/useCredito";
+export * from "./hooks/useVistoria";
 
 // Services
 export * from "./services/api-client";

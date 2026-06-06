@@ -19,3 +19,7 @@ __exportStar(require("./credito.schema"), exports);
 __exportStar(require("./obra.schema"), exports);
 __exportStar(require("./evidencia.schema"), exports);
 __exportStar(require("./comercial.schema"), exports);
+__exportStar(require("./etapa.schema"), exports);
+__exportStar(require("./vistoria.schema"), exports);
+__exportStar(require("./kyc.schema"), exports);
+__exportStar(require("./parceiro.schema"), exports);

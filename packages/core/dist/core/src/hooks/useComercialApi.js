@@ -18,7 +18,7 @@ function useComercialApi(token) {
                 offset: offset.toString(),
                 filters,
             });
-            const response = await api_client_1.apiClient.get(`/api/comercial/leads?${query}`, token);
+            const response = await api_client_1.apiClient.get(`/comercial/leads?${query}`, token);
             setState({ loading: false, error: null });
             return response;
         }
@@ -31,7 +31,7 @@ function useComercialApi(token) {
     const getLeadDetail = (0, react_1.useCallback)(async (leadId) => {
         setState({ loading: true, error: null });
         try {
-            const response = await api_client_1.apiClient.get(`/api/comercial/leads/${leadId}`, token);
+            const response = await api_client_1.apiClient.get(`/comercial/leads/${leadId}`, token);
             setState({ loading: false, error: null });
             return response;
         }
@@ -44,7 +44,7 @@ function useComercialApi(token) {
     const getDashboardStats = (0, react_1.useCallback)(async () => {
         setState({ loading: true, error: null });
         try {
-            const response = await api_client_1.apiClient.get(`/api/comercial/dashboard/stats`, token);
+            const response = await api_client_1.apiClient.get(`/comercial/dashboard/stats`, token);
             setState({ loading: false, error: null });
             return response;
         }
@@ -57,7 +57,7 @@ function useComercialApi(token) {
     const addActivity = (0, react_1.useCallback)(async (leadId, tipo, descricao) => {
         setState({ loading: true, error: null });
         try {
-            await api_client_1.apiClient.post(`/api/comercial/leads/${leadId}/atividades`, { tipo, descricao }, token);
+            await api_client_1.apiClient.post(`/comercial/leads/${leadId}/atividades`, { tipo, descricao }, token);
             setState({ loading: false, error: null });
             return { success: true };
         }

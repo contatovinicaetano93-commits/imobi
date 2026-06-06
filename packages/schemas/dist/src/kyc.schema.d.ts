@@ -1,0 +1,11 @@
+import { z } from "zod";
+export declare const TipoDocumentoEnum: any;
+export declare const StatusDocumentoEnum: any;
+export declare const UploadDocumentoKycSchema: any;
+export declare const RejeitarDocumentoKycSchema: any;
+export declare const FiltroKycSchema: any;
+export type TipoDocumento = z.infer<typeof TipoDocumentoEnum>;
+export type StatusDocumento = z.infer<typeof StatusDocumentoEnum>;
+export type UploadDocumentoKycInput = z.infer<typeof UploadDocumentoKycSchema>;
+export type RejeitarDocumentoKycInput = z.infer<typeof RejeitarDocumentoKycSchema>;
+export type FiltroKycInput = z.infer<typeof FiltroKycSchema>;

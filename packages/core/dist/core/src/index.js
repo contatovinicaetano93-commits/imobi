@@ -22,5 +22,9 @@ __exportStar(require("./utils/credito"), exports);
 __exportStar(require("./hooks/useGeoValidation"), exports);
 __exportStar(require("./hooks/useSimuladorCredito"), exports);
 __exportStar(require("./hooks/useComercialApi"), exports);
+__exportStar(require("./hooks/useAuth"), exports);
+__exportStar(require("./hooks/useObra"), exports);
+__exportStar(require("./hooks/useCredito"), exports);
+__exportStar(require("./hooks/useVistoria"), exports);
 // Services
 __exportStar(require("./services/api-client"), exports);

@@ -2,7 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LeadsListResponseSchema = exports.DashboardStatsSchema = exports.AddLeadActivitySchema = exports.LeadDetailSchema = exports.LeadSchema = exports.ConversionScoreSchema = exports.LeadActivitySchema = exports.CreateLeadSchema = exports.LeadActivityTypeEnum = exports.TipoObraEnum = exports.SegmentoClienteEnum = exports.FonteEnum = void 0;
 const zod_1 = require("zod");
-exports.FonteEnum = zod_1.z.enum(["PARCEIRO", "INDICACAO", "WEBSITE", "OFFLINE"]);
+exports.FonteEnum = zod_1.z.enum([
+    "WEBSITE",
+    "INDICACAO",
+    "MARKETPLACE",
+    "CAMPANHA_DIGITAL",
+    "OFFLINE",
+    "PARCEIRO",
+]);
 exports.SegmentoClienteEnum = zod_1.z.enum([
     "NOVO",
     "RETORNO",
@@ -15,13 +22,18 @@ exports.TipoObraEnum = zod_1.z.enum([
     "reforma",
 ]);
 exports.LeadActivityTypeEnum = zod_1.z.enum([
-    "CALL",
-    "EMAIL",
-    "MEETING",
-    "PROPOSAL",
-    "VISIT",
-    "FOLLOW_UP",
-    "NOTE",
+    "CALL_OUTBOUND",
+    "CALL_INBOUND",
+    "EMAIL_SENT",
+    "EMAIL_RECEIVED",
+    "MEETING_SCHEDULED",
+    "MEETING_COMPLETED",
+    "PROPOSAL_SENT",
+    "DOCUMENT_REQUESTED",
+    "PAYMENT_RECEIVED",
+    "STAGE_CHANGED",
+    "NOTE_ADDED",
+    "FOLLOW_UP_SET",
 ]);
 exports.CreateLeadSchema = zod_1.z.object({
     clienteNome: zod_1.z.string().min(3, "Nome obrigatório"),

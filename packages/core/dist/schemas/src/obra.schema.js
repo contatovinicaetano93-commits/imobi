@@ -4,17 +4,17 @@ exports.EtapasPadraoEnum = exports.CriarEtapaSchema = exports.CriarObraSchema = 
 const zod_1 = require("zod");
 exports.StatusObraEnum = zod_1.z.enum([
     "PLANEJAMENTO",
-    "EM_ANDAMENTO",
+    "EM_EXECUCAO",
     "PAUSADA",
     "CONCLUIDA",
     "CANCELADA",
 ]);
 exports.StatusEtapaEnum = zod_1.z.enum([
-    "PENDENTE",
-    "EM_PROGRESSO",
+    "PLANEJADA",
+    "EM_EXECUCAO",
     "AGUARDANDO_VISTORIA",
-    "APROVADA",
-    "REJEITADA",
+    "REPROVADA",
+    "CONCLUIDA",
 ]);
 exports.EnderecoSchema = zod_1.z.object({
     logradouro: zod_1.z.string().min(3).max(200),
