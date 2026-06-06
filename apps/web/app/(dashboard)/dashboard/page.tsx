@@ -27,11 +27,62 @@ export default async function DashboardPage() {
     { label: "Aguardando vistoria", value: String(totalEtapas.filter((e: EtapaResumo) => e.status === "AGUARDANDO_VISTORIA").length), sub: "etapas", style: { background: "white", border: "1.5px solid #E2E8F0" } },
   ];
 
+  const quickActions = [
+    { label: "Obras ativas", icon: "🏗", href: "/dashboard/obras", bg: "#1B4FD8", color: "white" },
+    { label: "Crédito", icon: "💳", href: "/dashboard/credito", bg: "#16a34a", color: "white" },
+    { label: "Simulador", icon: "📊", href: "/dashboard/simulador", bg: "#1B4FD8", color: "white" },
+    { label: "Documentos", icon: "📋", href: "/dashboard/kyc", bg: "#16a34a", color: "white" },
+  ];
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
       <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#0F172A", letterSpacing: "-0.02em" }}>
         Visão Geral
       </h1>
+
+      {/* Ações Rápidas */}
+      <section>
+        <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#0F172A", marginBottom: "0.75rem" }}>
+          Ações Rápidas
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {quickActions.map((action) => (
+            <a
+              key={action.href}
+              href={action.href}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.5rem",
+                padding: "1.25rem 0.75rem",
+                borderRadius: 16,
+                background: action.bg,
+                color: action.color,
+                textDecoration: "none",
+                boxShadow: "0 2px 12px rgba(15,23,42,0.10)",
+                minHeight: 96,
+                overflow: "hidden",
+              }}
+            >
+              <span style={{ fontSize: "1.75rem", lineHeight: 1, flexShrink: 0 }}>{action.icon}</span>
+              <span
+                style={{
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  textAlign: "center",
+                  lineHeight: 1.3,
+                  wordBreak: "break-word",
+                  maxWidth: "100%",
+                }}
+              >
+                {action.label}
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
 
       {/* KPI Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
