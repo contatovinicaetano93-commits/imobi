@@ -1,6 +1,6 @@
 import { Controller, Get, Patch, Post, Delete, UseGuards, Body, UseInterceptors, Res } from "@nestjs/common";
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
-import { Response } from "express";
+import { FastifyReply } from "fastify";
 import { UsuariosService } from "./usuarios.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -40,12 +40,12 @@ export class UsuariosController {
    * Returns JSON file download
    */
   @Post("exportar-dados")
-  async exportarDados(@UsuarioAtual() u: IUsuario, @Res() res: Response) {
+  async exportarDados(@UsuarioAtual() u: IUsuario, @Res() res: FastifyReply) {
     const dados = await this.usuarios.exportarDados(u.id);
     const json = JSON.stringify(dados, null, 2);
 
-    res.setHeader("Content-Type", "application/json");
-    res.setHeader("Content-Disposition", `attachment; filename="dados-pessoais-${u.id}.json"`);
+    res.header("Content-Type", "application/json");
+    res.header("Content-Disposition", `attachment; filename="dados-pessoais-${u.id}.json"`);
     res.send(json);
   }
 
