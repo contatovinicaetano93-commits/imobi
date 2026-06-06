@@ -115,10 +115,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
 const NAV_ITEMS = [
   { label: "Início", href: "/dashboard", icon: "⬡" },
+  { label: "Fundos", href: "/dashboard/fundos", icon: "💰" },
   { label: "Minhas Obras", href: "/dashboard/obras", icon: "🏗" },
   { label: "Crédito", href: "/dashboard/credito", icon: "💳" },
-  { label: "Simulador", href: "/dashboard/simulador", icon: "📊" },
-  { label: "Documentos", href: "/dashboard/kyc", icon: "📋" },
   { label: "Score", href: "/dashboard/score", icon: "⭐" },
+  { label: "Simulador", href: "/dashboard/simulador", icon: "📊" },
+  { label: "Painel do Gestor", href: "/dashboard/gestor", icon: "🛡" },
+  { label: "Relatórios", href: "/dashboard/relatorios", icon: "📈" },
+  { label: "Notificações", href: "/dashboard/notificacoes", icon: "🔔" },
+  { label: "Documentos", href: "/dashboard/kyc", icon: "📋" },
   { label: "Perfil", href: "/dashboard/perfil", icon: "👤" },
 ];
