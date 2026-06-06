@@ -292,9 +292,8 @@ export default function TermosPage() {
             </button>
           </Link>
         </div>
-        </div>{/* fecha p-6 */}
-        </div>{/* fecha card */}
-      </div>{/* fecha max-w-3xl */}
-    </div>{/* fecha outer */}
+        </div>
+      </div>
+    </div>
   );
 }
