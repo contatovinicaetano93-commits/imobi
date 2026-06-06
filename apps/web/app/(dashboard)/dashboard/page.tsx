@@ -1,4 +1,15 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import {
+  Building2,
+  CreditCard,
+  BarChart3,
+  FileText,
+  TrendingUp,
+  Clock,
+  ArrowRight,
+  HardHat,
+} from "lucide-react";
 import { obrasApi, creditoApi, type ObraResumo, type CreditoResumo, type EtapaResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 
@@ -6,10 +17,26 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: "Dashboard — imbobi" };
 
+const STATUS_LABEL: Record<string, string> = {
+  EM_ANDAMENTO:        "Em andamento",
+  PLANEJAMENTO:        "Planejamento",
+  CONCLUIDA:           "Concluída",
+  PAUSADA:             "Pausada",
+  CANCELADA:           "Cancelada",
+};
+
+const STATUS_BADGE: Record<string, string> = {
+  EM_ANDAMENTO: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+  PLANEJAMENTO: "bg-gray-100 text-gray-600 ring-1 ring-gray-200",
+  CONCLUIDA:    "bg-green-50 text-green-700 ring-1 ring-green-200",
+  PAUSADA:      "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200",
+  CANCELADA:    "bg-red-50 text-red-600 ring-1 ring-red-200",
+};
+
 export default async function DashboardPage() {
   const [obras, creditos] = await Promise.all([
-    obrasApi.listar().catch(() => []),
-    creditoApi.meus().catch(() => []),
+    obrasApi.listar().catch(() => [] as ObraResumo[]),
+    creditoApi.meus().catch(() => [] as CreditoResumo[]),
   ]);
 
   const ativas = obras.filter((o: ObraResumo) => o.status === "EM_ANDAMENTO");
@@ -19,141 +46,184 @@ export default async function DashboardPage() {
     : 0;
   const totalEtapas = obras.flatMap((o: ObraResumo) => o.etapas ?? []);
   const etapasAprovadas = totalEtapas.filter((e: EtapaResumo) => e.status === "APROVADA");
+  const etapasAguardando = totalEtapas.filter((e: EtapaResumo) => e.status === "AGUARDANDO_VISTORIA");
+  const pctEtapas = totalEtapas.length
+    ? Math.round((etapasAprovadas.length / totalEtapas.length) * 100)
+    : 0;
 
   const kpis = [
-    { label: "Crédito disponível", value: formatarBRL(saldoDisponivel), sub: creditoAtivo ? "crédito ativo" : "sem crédito ativo", style: { background: "#1B4FD8", color: "white" } },
-    { label: "Obras ativas", value: String(ativas.length), sub: `${obras.length} no total`, style: { background: "#22C55E", color: "white" } },
-    { label: "Etapas concluídas", value: `${etapasAprovadas.length} / ${totalEtapas.length}`, sub: totalEtapas.length ? `${Math.round((etapasAprovadas.length / totalEtapas.length) * 100)}%` : "—", style: { background: "white", border: "1.5px solid #E2E8F0" } },
-    { label: "Aguardando vistoria", value: String(totalEtapas.filter((e: EtapaResumo) => e.status === "AGUARDANDO_VISTORIA").length), sub: "etapas", style: { background: "white", border: "1.5px solid #E2E8F0" } },
+    {
+      label: "Crédito disponível",
+      value: formatarBRL(saldoDisponivel),
+      sub: creditoAtivo ? "crédito ativo" : "sem crédito ativo",
+      icon: CreditCard,
+      topColor: "bg-[#1B4FD8]",
+      iconBg: "bg-blue-50",
+      iconColor: "text-[#1B4FD8]",
+      valueColor: "text-[#1B4FD8]",
+    },
+    {
+      label: "Obras ativas",
+      value: String(ativas.length),
+      sub: `${obras.length} no total`,
+      icon: Building2,
+      topColor: "bg-[#16a34a]",
+      iconBg: "bg-green-50",
+      iconColor: "text-[#16a34a]",
+      valueColor: "text-[#16a34a]",
+    },
+    {
+      label: "Etapas concluídas",
+      value: `${etapasAprovadas.length}/${totalEtapas.length}`,
+      sub: totalEtapas.length ? `${pctEtapas}% do total` : "Nenhuma etapa",
+      icon: TrendingUp,
+      topColor: "bg-gray-300",
+      iconBg: "bg-gray-50",
+      iconColor: "text-gray-500",
+      valueColor: "text-gray-900",
+    },
+    {
+      label: "Aguardando vistoria",
+      value: String(etapasAguardando.length),
+      sub: "etapas pendentes",
+      icon: Clock,
+      topColor: "bg-yellow-400",
+      iconBg: "bg-yellow-50",
+      iconColor: "text-yellow-600",
+      valueColor: "text-gray-900",
+    },
   ];
 
   const quickActions = [
-    { label: "Obras ativas", icon: "🏗", href: "/dashboard/obras", bg: "#1B4FD8", color: "white" },
-    { label: "Crédito", icon: "💳", href: "/dashboard/credito", bg: "#16a34a", color: "white" },
-    { label: "Simulador", icon: "📊", href: "/dashboard/simulador", bg: "#1B4FD8", color: "white" },
-    { label: "Documentos", icon: "📋", href: "/dashboard/kyc", bg: "#16a34a", color: "white" },
+    { label: "Obras ativas",  icon: Building2, href: "/dashboard/obras",     bg: "bg-[#1B4FD8] hover:bg-blue-800",   color: "text-white" },
+    { label: "Crédito",       icon: CreditCard, href: "/dashboard/credito",   bg: "bg-[#16a34a] hover:bg-green-700",  color: "text-white" },
+    { label: "Simulador",     icon: BarChart3,  href: "/dashboard/simulador", bg: "bg-[#1B4FD8] hover:bg-blue-800",   color: "text-white" },
+    { label: "Documentos",    icon: FileText,   href: "/dashboard/kyc",       bg: "bg-[#16a34a] hover:bg-green-700",  color: "text-white" },
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-      <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#0F172A", letterSpacing: "-0.02em" }}>
+    <div className="flex flex-col gap-8">
+      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
         Visão Geral
       </h1>
 
-      {/* Ações Rápidas */}
+      {/* Quick Actions */}
       <section>
-        <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#0F172A", marginBottom: "0.75rem" }}>
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
           Ações Rápidas
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {quickActions.map((action) => (
-            <a
-              key={action.href}
-              href={action.href}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.5rem",
-                padding: "1.25rem 0.75rem",
-                borderRadius: 16,
-                background: action.bg,
-                color: action.color,
-                textDecoration: "none",
-                boxShadow: "0 2px 12px rgba(15,23,42,0.10)",
-                minHeight: 96,
-                overflow: "hidden",
-              }}
-            >
-              <span style={{ fontSize: "1.75rem", lineHeight: 1, flexShrink: 0 }}>{action.icon}</span>
-              <span
-                style={{
-                  fontSize: "0.82rem",
-                  fontWeight: 600,
-                  textAlign: "center",
-                  lineHeight: 1.3,
-                  wordBreak: "break-word",
-                  maxWidth: "100%",
-                }}
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link
+                key={action.href}
+                href={action.href}
+                className={`group flex flex-col items-center justify-center gap-2.5 py-5 px-3 rounded-2xl ${action.bg} ${action.color} shadow-sm hover:shadow-md transition-all duration-200 min-h-[96px]`}
               >
-                {action.label}
-              </span>
-            </a>
-          ))}
+                <Icon className="w-6 h-6 shrink-0 opacity-90 group-hover:scale-110 transition-transform duration-200" />
+                <span className="text-xs font-semibold text-center leading-tight">
+                  {action.label}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
       {/* KPI Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-        {kpis.map((kpi) => (
-          <div
-            key={kpi.label}
-            style={{
-              borderRadius: 16, padding: "1.5rem",
-              boxShadow: "0 2px 12px rgba(15,23,42,0.06)",
-              ...kpi.style,
-            }}
-          >
-            <p style={{ fontSize: "0.78rem", fontWeight: 600, marginBottom: "0.4rem", opacity: 0.75 }}>
-              {kpi.label}
-            </p>
-            <p style={{ fontSize: "1.6rem", fontWeight: 700, letterSpacing: "-0.02em", color: kpi.style.color ?? "#0F172A" }}>
-              {kpi.value}
-            </p>
-            <p style={{ fontSize: "0.72rem", marginTop: "0.25rem", opacity: 0.6 }}>
-              {kpi.sub}
-            </p>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {kpis.map((kpi) => {
+          const Icon = kpi.icon;
+          return (
+            <div
+              key={kpi.label}
+              className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+            >
+              <div className={`h-1 w-full ${kpi.topColor}`} />
+              <div className="p-5 flex items-start gap-4">
+                <div className={`p-2.5 rounded-xl ${kpi.iconBg} shrink-0`}>
+                  <Icon className={`w-5 h-5 ${kpi.iconColor}`} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 truncate">
+                    {kpi.label}
+                  </p>
+                  <p className={`text-2xl font-bold tracking-tight leading-none ${kpi.valueColor}`}>
+                    {kpi.value}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1 truncate">{kpi.sub}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Obras em andamento */}
       <section>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
-          <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#0F172A" }}>Obras em andamento</h2>
-          <a href="/dashboard/obras" style={{ fontSize: "0.82rem", color: "#1B4FD8", fontWeight: 600, textDecoration: "none" }}>
-            Ver todas →
-          </a>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-gray-900">Obras em andamento</h2>
+          <Link
+            href="/dashboard/obras"
+            className="flex items-center gap-1 text-sm font-semibold text-[#1B4FD8] hover:text-blue-800 transition-colors"
+          >
+            Ver todas
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
 
         {ativas.length === 0 ? (
-          <div style={{ background: "white", borderRadius: 16, border: "1.5px solid #E2E8F0", padding: "2.5rem", textAlign: "center" }}>
-            <p style={{ color: "#94A3B8", fontSize: "0.875rem" }}>Nenhuma obra em andamento.</p>
-            <a href="/dashboard/obras" style={{ marginTop: "0.75rem", display: "inline-block", color: "#1B4FD8", fontSize: "0.875rem", fontWeight: 600, textDecoration: "none" }}>
-              Cadastrar obra →
-            </a>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex flex-col items-center gap-4">
+            <div className="p-4 bg-gray-50 rounded-2xl">
+              <HardHat className="w-10 h-10 text-gray-300" />
+            </div>
+            <div className="text-center">
+              <p className="font-semibold text-gray-700 mb-1">Nenhuma obra em andamento</p>
+              <p className="text-sm text-gray-400">Cadastre sua primeira obra para começar.</p>
+            </div>
+            <Link
+              href="/dashboard/obras/nova"
+              className="mt-1 inline-flex items-center gap-2 bg-[#1B4FD8] hover:bg-blue-800 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-sm hover:shadow transition-all duration-200"
+            >
+              <Building2 className="w-4 h-4" />
+              Cadastrar obra
+            </Link>
           </div>
         ) : (
-          <div style={{ background: "white", borderRadius: 16, border: "1.5px solid #E2E8F0", boxShadow: "0 2px 12px rgba(15,23,42,0.06)", overflow: "hidden" }}>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {ativas.map((obra: ObraResumo, i: number) => (
-              <a
+              <Link
                 key={obra.id}
                 href={`/dashboard/obras/${obra.id}`}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "1rem 1.5rem",
-                  borderTop: i > 0 ? "1px solid #F1F5F9" : "none",
-                  textDecoration: "none", transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#F8FAFC"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "white"; }}
+                className={`flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors ${i > 0 ? "border-t border-gray-50" : ""}`}
               >
-                <div>
-                  <p style={{ fontWeight: 600, color: "#0F172A", fontSize: "0.9rem" }}>{obra.nome}</p>
-                  <p style={{ fontSize: "0.78rem", color: "#64748B", marginTop: "0.15rem" }}>
-                    {obra.credito ? formatarBRL(Number(obra.credito.valorLiberado)) + " liberado" : "sem crédito"}
+                <div className="min-w-0 mr-4">
+                  <p className="font-semibold text-gray-900 text-sm truncate">{obra.nome}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {obra.credito
+                      ? `${formatarBRL(Number(obra.credito.valorLiberado))} liberado`
+                      : "sem crédito vinculado"}
                   </p>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <div style={{ height: 6, width: 96, background: "#E2E8F0", borderRadius: 99, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${obra.progresso ?? 0}%`, background: "#22C55E", borderRadius: 99 }} />
-                  </div>
-                  <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#1B4FD8", width: 32 }}>
-                    {obra.progresso ?? 0}%
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_BADGE[obra.status] ?? "bg-gray-100 text-gray-500"}`}>
+                    {STATUS_LABEL[obra.status] ?? obra.status.replace(/_/g, " ")}
                   </span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-20 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#16a34a] rounded-full transition-all"
+                        style={{ width: `${obra.progresso ?? 0}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-bold text-gray-500 w-8 text-right">
+                      {obra.progresso ?? 0}%
+                    </span>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-gray-300" />
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         )}
