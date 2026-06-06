@@ -26,11 +26,7 @@ COPY --from=builder /app/services/api/dist/ ./services/api/dist/
 COPY --from=builder /app/services/api/prisma/ ./services/api/prisma/
 
 RUN pnpm install --frozen-lockfile --prod
-
-# Copia após pnpm install para não ser sobrescrito
-COPY --from=builder /app/node_modules/.prisma/ ./node_modules/.prisma/
-COPY --from=builder /app/node_modules/prisma/ ./node_modules/prisma/
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+RUN pnpm --filter @imbobi/api run prisma:generate
 
 ENV NODE_ENV=production
 EXPOSE 4000
