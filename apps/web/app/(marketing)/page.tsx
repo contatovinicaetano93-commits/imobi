@@ -1,14 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import "./landing.css";
 
 const WA = "5511993455589";
 
 export default function LandingPage() {
+  const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
   const [modalOpen, setModalOpen] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginSenha, setLoginSenha] = useState("");
+  const [loginErro, setLoginErro] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
 
   useEffect(() => {
     setIsMobile(window.innerWidth <= 768);
@@ -18,6 +24,26 @@ export default function LandingPage() {
     document.body.style.overflow = modalOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [modalOpen]);
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginErro(null);
+    setLoginLoading(true);
+    try {
+      const res = await fetch("/api/proxy/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, senha: loginSenha }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.message ?? "Credenciais inválidas.");
+      router.push("/dashboard");
+    } catch (e) {
+      setLoginErro(e instanceof Error ? e.message : "Erro inesperado.");
+    } finally {
+      setLoginLoading(false);
+    }
+  }
 
   function scrollTo(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -122,24 +148,27 @@ export default function LandingPage() {
               <button className={`modal-tab${activeTab === "criar" ? " active" : ""}`} onClick={() => setActiveTab("criar")}>Criar conta</button>
             </div>
             {activeTab === "login" && (
-              <div className="modal-form active">
+              <form className="modal-form active" onSubmit={handleLogin}>
                 <div className="form-group">
                   <label className="form-label">E-mail</label>
-                  <input type="email" className="form-input" placeholder="seu@email.com.br" />
+                  <input type="email" className="form-input" placeholder="seu@email.com.br" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Senha</label>
-                  <input type="password" className="form-input" placeholder="••••••••" />
+                  <input type="password" className="form-input" placeholder="••••••••" value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} required />
                 </div>
+                {loginErro && <p style={{ color: "#EF4444", fontSize: "0.78rem", marginBottom: "0.5rem" }}>{loginErro}</p>}
                 <div className="modal-forgot"><a href="#">Esqueci minha senha</a></div>
-                <button className="form-submit">Login na plataforma</button>
+                <button type="submit" className="form-submit" disabled={loginLoading}>
+                  {loginLoading ? "Entrando..." : "Login na plataforma"}
+                </button>
                 <div className="modal-or">ou</div>
-                <button className="modal-wa" onClick={() => window.open(`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20para%20acessar%20minha%20conta%20IMOBI.`, "_blank")}>
+                <button type="button" className="modal-wa" onClick={() => window.open(`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20para%20acessar%20minha%20conta%20IMOBI.`, "_blank")}>
                   <WaIcon size={16} color="currentColor" />
                   Falar com a equipe IMOBI
                 </button>
                 <p className="modal-disc">Acesso protegido com criptografia.</p>
-              </div>
+              </form>
             )}
             {activeTab === "criar" && (
               <div className="modal-form active">
