@@ -23,10 +23,12 @@ COPY --from=builder /app/services/api/package.json ./services/api/
 COPY --from=builder /app/services/api/dist/ ./services/api/dist/
 COPY --from=builder /app/services/api/prisma/ ./services/api/prisma/
 COPY --from=builder /app/node_modules/.prisma/ ./node_modules/.prisma/
+COPY --from=builder /app/node_modules/prisma/ ./node_modules/prisma/
+COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 
 RUN pnpm install --frozen-lockfile --prod
 
 ENV NODE_ENV=production
 EXPOSE 4000
 
-CMD ["node", "services/api/dist/main.js"]
+CMD sh -c "node_modules/.bin/prisma migrate deploy --schema=services/api/prisma/schema.prisma && node services/api/dist/main.js"
