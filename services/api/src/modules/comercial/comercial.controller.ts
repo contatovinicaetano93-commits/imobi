@@ -12,12 +12,18 @@ import { ComercialService } from './comercial.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { UsuarioAtual, type UsuarioAtual as IUsuario } from '../../common/decorators/usuario-atual.decorator';
 
 @Controller('comercial')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('COMERCIAL', 'ADMIN')
 export class ComercialController {
   constructor(private readonly comercialService: ComercialService) {}
+
+  @Get('pipeline/stages')
+  async getPipelineStages() {
+    return this.comercialService.listarStages();
+  }
 
   @Get('dashboard/stats')
   async getDashboardStats() {
@@ -52,8 +58,8 @@ export class ComercialController {
   }
 
   @Post('leads')
-  async createLead(@Body() data: any) {
-    return this.comercialService.criarLead(data);
+  async createLead(@UsuarioAtual() u: IUsuario, @Body() data: any) {
+    return this.comercialService.criarLead(u.id, data);
   }
 
   @Get('leads/:leadId')
