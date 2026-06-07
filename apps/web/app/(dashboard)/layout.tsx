@@ -8,16 +8,17 @@ const WA = "5511993455589";
 
 const NAV_ITEMS = [
   { label: "Início", href: "/dashboard", icon: "⬡" },
-  { label: "Fundos", href: "/dashboard/fundos", icon: "💰" },
   { label: "Minhas Obras", href: "/dashboard/obras", icon: "🏗" },
   { label: "Crédito", href: "/dashboard/credito", icon: "💳" },
-  { label: "Score", href: "/dashboard/score", icon: "⭐" },
   { label: "Simulador", href: "/dashboard/simulador", icon: "📊" },
-  { label: "Painel do Gestor", href: "/dashboard/gestor", icon: "🛡" },
-  { label: "Relatórios", href: "/dashboard/relatorios", icon: "📈" },
+  { label: "Score", href: "/dashboard/score", icon: "⭐" },
+  { label: "Documentos KYC", href: "/dashboard/kyc", icon: "📋" },
   { label: "Notificações", href: "/dashboard/notificacoes", icon: "🔔" },
-  { label: "Documentos", href: "/dashboard/kyc", icon: "📋" },
   { label: "Perfil", href: "/dashboard/perfil", icon: "👤" },
+  { label: "Engenheiro", href: "/dashboard/engenheiro", icon: "🔧" },
+  { label: "Painel Gestor", href: "/dashboard/gestor", icon: "🛡" },
+  { label: "Relatórios", href: "/dashboard/relatorios", icon: "📈" },
+  { label: "Fundos", href: "/dashboard/fundos", icon: "💰" },
 ];
 
 function LogoMark({ size = 28, white = false }: { size?: number; white?: boolean }) {

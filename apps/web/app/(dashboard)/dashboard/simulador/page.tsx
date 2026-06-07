@@ -15,7 +15,7 @@ export default function SimuladorPage() {
         {/* Valor */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Valor desejado: <span className="text-brand-600 font-bold">{formatarBRL(valorSolicitado)}</span>
+            Valor desejado: <span className="font-bold text-[#1B4FD8]">{formatarBRL(valorSolicitado)}</span>
           </label>
           <input
             type="range"
@@ -24,7 +24,7 @@ export default function SimuladorPage() {
             step={5000}
             value={valorSolicitado}
             onChange={(e) => setValorSolicitado(Number(e.target.value))}
-            className="w-full accent-brand-600"
+            className="w-full accent-[#1B4FD8]"
           />
           <div className="flex justify-between text-xs text-gray-400 mt-1">
             <span>R$ 10.000</span>
@@ -35,7 +35,7 @@ export default function SimuladorPage() {
         {/* Prazo */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Prazo: <span className="text-brand-600 font-bold">{prazoMeses} meses</span>
+            Prazo: <span className="font-bold text-[#1B4FD8]">{prazoMeses} meses</span>
           </label>
           <input
             type="range"
@@ -44,7 +44,7 @@ export default function SimuladorPage() {
             step={12}
             value={prazoMeses}
             onChange={(e) => setPrazoMeses(Number(e.target.value))}
-            className="w-full accent-brand-600"
+            className="w-full accent-[#1B4FD8]"
           />
           <div className="flex justify-between text-xs text-gray-400 mt-1">
             <span>12 meses</span>
@@ -54,7 +54,7 @@ export default function SimuladorPage() {
       </div>
 
       {/* Resultado */}
-      <div className="bg-brand-600 text-white rounded-2xl p-6 grid grid-cols-2 gap-6">
+      <div className="rounded-2xl text-white p-6 grid grid-cols-2 gap-6" style={{ background: "#1B4FD8" }}>
         <ResultItem label="Parcela mensal" value={formatarBRL(resultado.parcelaMensal)} big />
         <ResultItem label="Total pago" value={formatarBRL(resultado.totalPago)} />
         <ResultItem label="Total de juros" value={formatarBRL(resultado.totalJuros)} />
@@ -75,7 +75,7 @@ export default function SimuladorPage() {
 function ResultItem({ label, value, big }: { label: string; value: string; big?: boolean }) {
   return (
     <div>
-      <p className="text-brand-200 text-xs mb-1">{label}</p>
+      <p className="text-blue-200 text-xs mb-1">{label}</p>
       <p className={`font-bold ${big ? "text-3xl" : "text-xl"}`}>{value}</p>
     </div>
   );
