@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Imobi mobile app is built with **Expo 51** and **Expo Router** using React Native. It provides construction project management features for borrowers to track obra (construction) progress, submit evidence of work completion, and manage credit financing.
+The Imobi mobile app is built with **Expo 54** and **Expo Router** using React Native. It provides construction project management features for borrowers to track obra (construction) progress, submit evidence of work completion, and manage credit financing.
 
 ## Architecture
 
@@ -21,7 +21,7 @@ The Imobi mobile app is built with **Expo 51** and **Expo Router** using React N
 ```
 
 ### Key Technologies
-- **Expo 51** - React Native development platform
+- **Expo 54** - React Native development platform
 - **Expo Router** - File-based routing (similar to Next.js)
 - **React Hook Form** - Form state management
 - **Zod** - Schema validation (shared with web & API)
@@ -29,7 +29,7 @@ The Imobi mobile app is built with **Expo 51** and **Expo Router** using React N
 - **Expo Secure Store** - Secure JWT token storage
 - **Expo Location** - GPS validation for work sites
 - **Expo Camera** - Photo capture for evidence
-- **React Native Maps** - Map display for work locations
+- **Expo Location** - GPS validation for geofencing
 
 ## Core Features Implemented
 

@@ -28,7 +28,7 @@ export default function CadastroScreen() {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-      <Text style={styles.logo}>imbobi</Text>
+      <Text style={styles.logo}>Imobi</Text>
       <Text style={styles.subtitle}>Crie sua conta</Text>
 
       <Controller
@@ -146,13 +146,13 @@ export default function CadastroScreen() {
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: "#fff" },
   container: { padding: 28, paddingTop: 56, gap: 12, paddingBottom: 40 },
-  logo: { fontSize: 36, fontWeight: "800", color: "#16a34a", textAlign: "center", marginBottom: 4 },
-  subtitle: { fontSize: 16, color: "#6b7280", textAlign: "center", marginBottom: 20 },
-  input: { borderWidth: 1.5, borderColor: "#e5e7eb", borderRadius: 14, padding: 14, fontSize: 15, color: "#111827" },
+  logo: { fontSize: 36, fontWeight: "800", color: "#1B4FD8", textAlign: "center", marginBottom: 4 },
+  subtitle: { fontSize: 16, color: "#64748B", textAlign: "center", marginBottom: 20 },
+  input: { borderWidth: 1.5, borderColor: "#E2E8F0", borderRadius: 14, padding: 14, fontSize: 15, color: "#0F172A" },
   inputError: { borderColor: "#ef4444" },
   errorText: { color: "#ef4444", fontSize: 12, marginTop: 4, marginBottom: 8 },
-  button: { backgroundColor: "#16a34a", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 8 },
+  button: { backgroundColor: "#1B4FD8", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 8 },
   buttonLoading: { opacity: 0.6 },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  link: { textAlign: "center", color: "#16a34a", fontSize: 14, fontWeight: "500", marginTop: 12 },
+  link: { textAlign: "center", color: "#1B4FD8", fontSize: 14, fontWeight: "500", marginTop: 12 },
 });

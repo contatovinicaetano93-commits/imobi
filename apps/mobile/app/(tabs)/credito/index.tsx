@@ -22,8 +22,8 @@ export default function CreditoScreen() {
           step={5000}
           value={valorSolicitado}
           onValueChange={setValorSolicitado}
-          minimumTrackTintColor="#16a34a"
-          thumbTintColor="#16a34a"
+          minimumTrackTintColor="#22C55E"
+          thumbTintColor="#22C55E"
         />
       </View>
 
@@ -39,8 +39,8 @@ export default function CreditoScreen() {
           step={12}
           value={prazoMeses}
           onValueChange={setPrazoMeses}
-          minimumTrackTintColor="#16a34a"
-          thumbTintColor="#16a34a"
+          minimumTrackTintColor="#22C55E"
+          thumbTintColor="#22C55E"
         />
       </View>
 
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   sliderBlock: { backgroundColor: "#fff", borderRadius: 16, padding: 16, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8 },
   sliderLabel: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
   label: { fontSize: 14, color: "#6b7280", fontWeight: "500" },
-  sliderValue: { fontSize: 15, color: "#16a34a", fontWeight: "700" },
-  resultCard: { backgroundColor: "#16a34a", borderRadius: 20, padding: 20, gap: 4 },
-  divider: { height: 1, backgroundColor: "#15803d", marginVertical: 8 },
+  sliderValue: { fontSize: 15, color: "#1B4FD8", fontWeight: "700" },
+  resultCard: { backgroundColor: "#1B4FD8", borderRadius: 20, padding: 20, gap: 4 },
+  divider: { height: 1, backgroundColor: "#1640B0", marginVertical: 8 },
 });

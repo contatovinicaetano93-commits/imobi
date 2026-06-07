@@ -58,7 +58,7 @@ export default function PerfilScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#16a34a" />
+        <ActivityIndicator size="large" color="#1B4FD8" />
       </View>
     );
   }
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: "700", color: "#111827", marginBottom: 20 },
   card: { backgroundColor: "#fff", borderRadius: 16, padding: 24, alignItems: "center", marginBottom: 24, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
   avatarContainer: { marginBottom: 16 },
-  avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: "#16a34a", justifyContent: "center", alignItems: "center" },
+  avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: "#1B4FD8", justifyContent: "center", alignItems: "center" },
   avatarText: { fontSize: 32, fontWeight: "700", color: "#fff" },
   name: { fontSize: 20, fontWeight: "700", color: "#111827" },
   email: { fontSize: 14, color: "#6b7280", marginTop: 4 },

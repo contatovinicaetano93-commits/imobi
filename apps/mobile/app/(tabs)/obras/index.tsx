@@ -30,7 +30,7 @@ export default function ObrasScreen() {
 
   useEffect(() => { carregar().finally(() => setLoading(false)); }, []);
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
+  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#1B4FD8" /></View>;
 
   return (
     <View style={styles.container}>
@@ -77,9 +77,9 @@ const styles = StyleSheet.create({
   card: { backgroundColor: "#fff", borderRadius: 16, padding: 16, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
   obraNome: { fontSize: 16, fontWeight: "600", color: "#111827", flex: 1, marginRight: 8 },
-  progresso: { fontSize: 16, fontWeight: "700", color: "#2563eb" },
+  progresso: { fontSize: 16, fontWeight: "700", color: "#1B4FD8" },
   progressBar: { height: 6, backgroundColor: "#e5e7eb", borderRadius: 3, marginBottom: 10, overflow: "hidden" },
-  progressFill: { height: "100%", backgroundColor: "#2563eb", borderRadius: 3 },
+  progressFill: { height: "100%", backgroundColor: "#1B4FD8", borderRadius: 3 },
   cardFooter: { flexDirection: "row", justifyContent: "space-between" },
   meta: { fontSize: 12, color: "#6b7280" },
 });

@@ -1,14 +1,14 @@
 import type { ExpoConfig } from "expo/config";
 
 const config: ExpoConfig = {
-  name: "imbobi",
-  slug: "imbobi",
-  scheme: "imbobi",
+  name: "Imobi",
+  slug: "imobi",
+  scheme: "imobi",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "automatic",
-  splash: { image: "./assets/splash.png", resizeMode: "contain", backgroundColor: "#15803d" },
+  splash: { image: "./assets/splash.png", resizeMode: "contain", backgroundColor: "#1B4FD8" },
   ios: {
     supportsTablet: false,
     bundleIdentifier: "com.imbobi.app",
@@ -25,7 +25,7 @@ const config: ExpoConfig = {
   },
   android: {
     package: "com.imbobi.app",
-    adaptiveIcon: { foregroundImage: "./assets/adaptive-icon.png", backgroundColor: "#15803d" },
+    adaptiveIcon: { foregroundImage: "./assets/adaptive-icon.png", backgroundColor: "#1B4FD8" },
     permissions: [
       "ACCESS_FINE_LOCATION",
       "ACCESS_COARSE_LOCATION",

@@ -29,7 +29,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.logo}>imbobi</Text>
+        <Text style={styles.logo}>Imobi</Text>
         <Text style={styles.subtitle}>Acesse sua conta</Text>
       </View>
 
@@ -96,14 +96,14 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 28, justifyContent: "space-between" },
   header: { justifyContent: "center", alignItems: "center", marginTop: 40 },
-  logo: { fontSize: 44, fontWeight: "800", color: "#16a34a", marginBottom: 8 },
-  subtitle: { fontSize: 16, color: "#6b7280" },
+  logo: { fontSize: 44, fontWeight: "800", color: "#1B4FD8", marginBottom: 8 },
+  subtitle: { fontSize: 16, color: "#64748B" },
   form: { gap: 16 },
-  input: { borderWidth: 1.5, borderColor: "#e5e7eb", borderRadius: 14, padding: 14, fontSize: 15, color: "#111827" },
+  input: { borderWidth: 1.5, borderColor: "#E2E8F0", borderRadius: 14, padding: 14, fontSize: 15, color: "#0F172A" },
   inputError: { borderColor: "#ef4444" },
   errorText: { color: "#ef4444", fontSize: 12, marginTop: -12, marginBottom: 4 },
-  button: { backgroundColor: "#16a34a", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 8 },
+  button: { backgroundColor: "#1B4FD8", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 8 },
   buttonLoading: { opacity: 0.6 },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  link: { textAlign: "center", color: "#16a34a", fontSize: 14, fontWeight: "500", marginBottom: 20 },
+  link: { textAlign: "center", color: "#1B4FD8", fontSize: 14, fontWeight: "500", marginBottom: 20 },
 });

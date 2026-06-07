@@ -1,9 +1,9 @@
-# imbobi — Guia do Projeto
+# Imobi — Guia do Projeto
 
 ## Stack
 - **Monorepo**: Turborepo + pnpm workspaces
 - **Web**: Next.js 14 (App Router) — `apps/web`
-- **Mobile**: Expo 51 + Expo Router — `apps/mobile`
+- **Mobile**: Expo 54 + Expo Router — `apps/mobile`
 - **API**: NestJS + Fastify — `services/api`
 - **DB**: PostgreSQL + PostGIS via Prisma ORM
 - **Cache/Filas**: Redis + BullMQ

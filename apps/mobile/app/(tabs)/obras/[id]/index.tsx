@@ -27,7 +27,7 @@ export default function ObraDetailScreen() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
+  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#1B4FD8" /></View>;
   if (error || !obra) return <View style={styles.center}><Text style={styles.error}>{error ?? "Obra não encontrada"}</Text></View>;
 
   const credito = obra.credito;
@@ -56,7 +56,7 @@ export default function ObraDetailScreen() {
           </View>
           <View style={styles.creditoRow}>
             <Text style={styles.creditoLabel}>Disponível</Text>
-            <Text style={[styles.creditoValue, { color: "#16a34a" }]}>{formatarBRL(saldoDisponivel)}</Text>
+            <Text style={[styles.creditoValue, { color: "#22C55E" }]}>{formatarBRL(saldoDisponivel)}</Text>
           </View>
         </View>
       )}
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   error: { color: "#dc2626" },
   back: { marginBottom: 16 },
-  backText: { color: "#2563eb", fontSize: 15 },
+  backText: { color: "#1B4FD8", fontSize: 15 },
   title: { fontSize: 22, fontWeight: "700", color: "#111827", marginBottom: 4 },
   sub: { fontSize: 13, color: "#6b7280", marginBottom: 16 },
   creditoCard: { backgroundColor: "#eff6ff", borderRadius: 16, padding: 16, marginBottom: 16 },
@@ -126,9 +126,9 @@ const styles = StyleSheet.create({
   progressSection: { marginBottom: 20 },
   progressHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
   sectionTitle: { fontSize: 16, fontWeight: "600", color: "#111827", marginBottom: 12 },
-  progressLabel: { fontSize: 16, fontWeight: "700", color: "#2563eb" },
+  progressLabel: { fontSize: 16, fontWeight: "700", color: "#1B4FD8" },
   progressBar: { height: 8, backgroundColor: "#e5e7eb", borderRadius: 4, overflow: "hidden" },
-  progressFill: { height: "100%", backgroundColor: "#2563eb", borderRadius: 4 },
+  progressFill: { height: "100%", backgroundColor: "#1B4FD8", borderRadius: 4 },
   etapasList: { gap: 10 },
   etapaCard: { backgroundColor: "#fff", borderRadius: 14, padding: 14, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
   etapaHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
@@ -136,6 +136,6 @@ const styles = StyleSheet.create({
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
   badgeText: { fontSize: 10, fontWeight: "600" },
   etapaValor: { fontSize: 13, color: "#6b7280", marginBottom: 8 },
-  enviarBtn: { backgroundColor: "#2563eb", borderRadius: 10, paddingVertical: 8, alignItems: "center" },
+  enviarBtn: { backgroundColor: "#1B4FD8", borderRadius: 10, paddingVertical: 8, alignItems: "center" },
   enviarBtnText: { color: "#fff", fontWeight: "600", fontSize: 13 },
 });
