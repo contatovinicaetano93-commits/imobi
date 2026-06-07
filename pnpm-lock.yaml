@@ -236,6 +236,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.0.0
         version: 3.1053.0
+      '@imbobi/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@imbobi/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas

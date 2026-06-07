@@ -103,16 +103,25 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-xs text-gray-400">
-            Não tem conta?{" "}
+          <div className="flex flex-col items-center gap-1">
             <a
-              href="/cadastro"
-              className="font-semibold hover:underline"
-              style={{ color: "#16a34a" }}
+              href="/esqueceu-senha"
+              className="text-xs hover:underline"
+              style={{ color: "#1B4FD8" }}
             >
-              Cadastre-se
+              Esqueci minha senha
             </a>
-          </p>
+            <p className="text-xs text-gray-400">
+              Não tem conta?{" "}
+              <a
+                href="/cadastro"
+                className="font-semibold hover:underline"
+                style={{ color: "#16a34a" }}
+              >
+                Cadastre-se
+              </a>
+            </p>
+          </div>
         </div>
 
         {/* Faixa verde no rodapé */}

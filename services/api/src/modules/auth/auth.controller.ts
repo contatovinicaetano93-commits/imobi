@@ -1,9 +1,10 @@
 import { Controller, Post, Body, HttpCode, UseGuards } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
-import { CadastroUsuarioSchema, LoginSchema } from "@imbobi/schemas";
+import { CadastroUsuarioSchema, LoginSchema, EsqueceuSenhaSchema, RedefinirSenhaSchema } from "@imbobi/schemas";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import type { EsqueceuSenhaInput, RedefinirSenhaInput } from "@imbobi/schemas";
 
 @Controller("auth")
 export class AuthController {
@@ -34,5 +35,19 @@ export class AuthController {
   @HttpCode(204)
   logout(@Body("refreshToken") token: string) {
     return this.auth.revogarToken(token);
+  }
+
+  @Post("esqueceu-senha")
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  esqueceuSenha(@Body(new ZodPipe(EsqueceuSenhaSchema)) body: EsqueceuSenhaInput) {
+    return this.auth.esqueceuSenha(body.email);
+  }
+
+  @Post("redefinir-senha")
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  redefinirSenha(@Body(new ZodPipe(RedefinirSenhaSchema)) body: RedefinirSenhaInput) {
+    return this.auth.redefinirSenha(body.token, body.novaSenha);
   }
 }

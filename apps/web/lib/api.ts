@@ -8,10 +8,16 @@ export class ApiError extends Error {
 }
 
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const isClient = typeof window !== "undefined";
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
 
-  if (typeof window === "undefined") {
+  let url: string;
+  if (isClient) {
+    // Client-side: route through Next.js proxy so httpOnly cookie is forwarded server-side
+    url = `/api/proxy${path}`;
+  } else {
+    url = `${API_URL}${path}`;
     try {
       const { cookies } = await import("next/headers");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,11 +27,11 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     } catch { /* not in Next.js server component context */ }
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(url, {
     ...init,
     headers,
     cache: "no-store",
-    credentials: "include",
+    ...(isClient ? {} : { credentials: "include" }),
   });
 
   if (!res.ok) {

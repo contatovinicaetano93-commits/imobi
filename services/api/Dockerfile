@@ -1,6 +1,7 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+RUN apk add --no-cache openssl
 RUN npm install -g pnpm@9
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
@@ -17,6 +18,7 @@ RUN pnpm --filter @imbobi/api build
 FROM node:20-alpine AS runner
 WORKDIR /app
 
+RUN apk add --no-cache openssl
 RUN npm install -g pnpm@9
 
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
@@ -26,11 +28,7 @@ COPY --from=builder /app/services/api/dist/ ./services/api/dist/
 COPY --from=builder /app/services/api/prisma/ ./services/api/prisma/
 
 RUN pnpm install --frozen-lockfile --prod
-
-# Copia após pnpm install para não ser sobrescrito
-COPY --from=builder /app/node_modules/.prisma/ ./node_modules/.prisma/
-COPY --from=builder /app/node_modules/prisma/ ./node_modules/prisma/
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+RUN pnpm --filter @imbobi/api run prisma:generate
 
 ENV NODE_ENV=production
 EXPOSE 4000

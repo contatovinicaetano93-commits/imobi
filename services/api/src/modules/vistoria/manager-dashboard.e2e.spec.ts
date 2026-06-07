@@ -175,7 +175,7 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
         .expect(200);
 
       const pendingEtapas = res.body.etapas.filter(
-        (e: any) => e.status === "AGUARDANDO_VISTORIA" || e.status === "AGUARDANDO_EVIDENCIA"
+        (e: any) => e.status === "PLANEJADA" || e.status === "EM_EXECUCAO" || e.status === "AGUARDANDO_VISTORIA"
       );
       expect(pendingEtapas.length).toBeGreaterThan(0);
     });
@@ -200,7 +200,7 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
 
       res.body.etapas.forEach((e: any) => {
         expect(e.nome).toBeDefined();
-        expect(e.id).toBeDefined();
+        expect(e.etapaId).toBeDefined();
         expect(e.status).toBeDefined();
       });
     });
@@ -230,11 +230,9 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
         .expect(200);
 
       const approvedEtapa = res.body.etapas.find(
-        (e: any) => e.id === etapaIds[1]
+        (e: any) => e.etapaId === etapaIds[1]
       );
-      expect(["APROVADA", "EM_LIBERACAO", "LIBERADA"]).toContain(
-        approvedEtapa.status
-      );
+      expect(approvedEtapa?.status).toBe("CONCLUIDA");
     });
 
     it("Manager should be able to provide observacoes for approval", async () => {
@@ -281,7 +279,7 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
         .expect(200);
 
       const rejectedEtapas = res.body.etapas.filter(
-        (e: any) => e.status === "REJEITADA"
+        (e: any) => e.status === "REPROVADA"
       );
       // May have 0 or more depending on setup
       expect(Array.isArray(rejectedEtapas)).toBe(true);
@@ -345,10 +343,7 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
       const etapas = res.body.etapas;
       const totalEtapas = etapas.length;
       const completedEtapas = etapas.filter(
-        (e: any) =>
-          e.status === "APROVADA" ||
-          e.status === "LIBERADA" ||
-          e.status === "EM_LIBERACAO"
+        (e: any) => e.status === "CONCLUIDA"
       ).length;
 
       expect(totalEtapas).toBeGreaterThan(0);
@@ -461,12 +456,12 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
       // Check manager can approve etapa
       const pendingEtapa = obraRes.body.etapas.find(
         (e: any) =>
-          e.status === "AGUARDANDO_VISTORIA" || e.status === "AGUARDANDO_EVIDENCIA"
+          e.status === "PLANEJADA" || e.status === "EM_EXECUCAO" || e.status === "AGUARDANDO_VISTORIA"
       );
 
       if (pendingEtapa) {
         const approveRes = await request(app.getHttpServer())
-          .post(`/api/v1/vistoria/${pendingEtapa.id}/aprovar`)
+          .post(`/api/v1/vistoria/${pendingEtapa.etapaId}/aprovar`)
           .set("Authorization", `Bearer ${managerToken}`)
           .send({
             obraId,
