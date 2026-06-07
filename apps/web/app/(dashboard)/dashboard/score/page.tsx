@@ -8,69 +8,72 @@ import {
   ShieldCheck,
   Star,
   History,
+  AlertCircle,
 } from "lucide-react";
 import { scoreApi, type ScoreAtual, type ScoreHistorico } from "@/lib/api";
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: "Score de Construtibilidade — imbobi" };
+export const metadata: Metadata = { title: "Score — IMOBI" };
 
 function getNivelThresholds(nivel: string): { proximo: string; proximoScore: number } {
   const thresholds = [
-    { level: "Iniciante",  min: 0,   max: 449,  next: "Regular",   nextScore: 450  },
-    { level: "Regular",   min: 450,  max: 649,  next: "Bom",       nextScore: 650  },
-    { level: "Bom",       min: 650,  max: 799,  next: "Excelente", nextScore: 800  },
-    { level: "Excelente", min: 800,  max: 1000, next: "Máximo",    nextScore: 1000 },
+    { level: "Iniciante",  next: "Regular",   nextScore: 450  },
+    { level: "Regular",    next: "Bom",        nextScore: 650  },
+    { level: "Bom",        next: "Excelente",  nextScore: 800  },
+    { level: "Excelente",  next: "Máximo",     nextScore: 1000 },
   ];
-  const current = thresholds.find((t) => t.level === nivel);
-  if (!current) return { proximo: "Desconhecido", proximoScore: 0 };
-  return { proximo: current.next, proximoScore: current.nextScore };
+  return thresholds.find((t) => t.level === nivel) ?? { proximo: "—", proximoScore: 1000 };
 }
 
-function getScoreColors(score: number): {
-  bg: string;
-  border: string;
-  badge: string;
-  bar: string;
-  text: string;
-  label: string;
-} {
-  if (score >= 800) return {
-    bg: "bg-green-50", border: "border-green-200",
-    badge: "bg-green-100 text-green-800 ring-1 ring-green-300",
-    bar: "bg-[#16a34a]", text: "text-[#16a34a]", label: "Excelente",
-  };
-  if (score >= 650) return {
-    bg: "bg-blue-50", border: "border-blue-200",
-    badge: "bg-blue-100 text-blue-800 ring-1 ring-blue-300",
-    bar: "bg-[#1B4FD8]", text: "text-[#1B4FD8]", label: "Bom",
-  };
-  if (score >= 450) return {
-    bg: "bg-yellow-50", border: "border-yellow-200",
-    badge: "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-300",
-    bar: "bg-yellow-500", text: "text-yellow-600", label: "Regular",
-  };
-  return {
-    bg: "bg-red-50", border: "border-red-200",
-    badge: "bg-red-100 text-red-800 ring-1 ring-red-300",
-    bar: "bg-red-500", text: "text-red-600", label: "Iniciante",
-  };
+function getScoreColors(score: number) {
+  if (score >= 800) return { bg: "bg-green-50", border: "border-green-200", badge: "bg-green-100 text-green-800 ring-1 ring-green-300", bar: "bg-[#16a34a]", text: "text-[#16a34a]", label: "Excelente" };
+  if (score >= 650) return { bg: "bg-blue-50", border: "border-blue-200", badge: "bg-blue-100 text-blue-800 ring-1 ring-blue-300", bar: "bg-[#1B4FD8]", text: "text-[#1B4FD8]", label: "Bom" };
+  if (score >= 450) return { bg: "bg-yellow-50", border: "border-yellow-200", badge: "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-300", bar: "bg-yellow-500", text: "text-yellow-600", label: "Regular" };
+  return { bg: "bg-red-50", border: "border-red-200", badge: "bg-red-100 text-red-800 ring-1 ring-red-300", bar: "bg-red-500", text: "text-red-600", label: "Iniciante" };
 }
 
 const BREAKDOWN_ITEMS = [
-  { icon: Star,        label: "Base (novo cliente)",              max: 600, pts: "600 pts" },
-  { icon: CheckCircle2, label: "Obras concluídas no prazo",       max: 200, pts: "até 200 pts" },
-  { icon: TrendingUp,  label: "Taxa de conclusão média",          max: 300, pts: "até 300 pts" },
-  { icon: Clock,       label: "Créditos sem atrasos",             max: 200, pts: "até 200 pts" },
-  { icon: Building2,   label: "Tempo como cliente",               max: 100, pts: "até 100 pts" },
-  { icon: ShieldCheck, label: "Documentação validada (KYC)",      max: 200, pts: "até 200 pts" },
+  { icon: Star,         label: "Base (novo cliente)",         pts: "600 pts" },
+  { icon: CheckCircle2, label: "Obras concluídas no prazo",   pts: "até 200 pts" },
+  { icon: TrendingUp,   label: "Taxa de conclusão média",     pts: "até 300 pts" },
+  { icon: Clock,        label: "Créditos sem atrasos",        pts: "até 200 pts" },
+  { icon: Building2,    label: "Tempo como cliente",          pts: "até 100 pts" },
+  { icon: ShieldCheck,  label: "Documentação validada (KYC)", pts: "até 200 pts" },
 ];
 
 export default async function ScorePage() {
   const [scoreAtual, historico] = await Promise.all([
-    scoreApi.atual() as Promise<ScoreAtual>,
-    scoreApi.historico(12) as Promise<ScoreHistorico[]>,
+    scoreApi.atual().catch(() => null as ScoreAtual | null),
+    scoreApi.historico(12).catch(() => [] as ScoreHistorico[]),
   ]);
+
+  if (!scoreAtual) {
+    return (
+      <div className="max-w-3xl space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-blue-50 rounded-xl">
+            <TrendingUp className="w-6 h-6 text-[#1B4FD8]" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Score de Construtibilidade</h1>
+            <p className="text-sm text-gray-500">Seu índice de confiança para crédito de obra</p>
+          </div>
+        </div>
+        <div className="bg-gray-50 rounded-2xl border border-gray-100 p-12 text-center">
+          <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-4" />
+          <p className="font-semibold text-gray-600 mb-2">Score ainda não calculado</p>
+          <p className="text-sm text-gray-400 max-w-xs mx-auto">
+            Seu score será calculado após as primeiras operações na plataforma.
+          </p>
+          <a href="/dashboard/kyc" className="inline-block mt-6 text-sm font-semibold text-[#1B4FD8] hover:underline">
+            Completar verificação de identidade →
+          </a>
+        </div>
+        <ScoreBreakdownCard />
+      </div>
+    );
+  }
 
   const { proximo, proximoScore } = getNivelThresholds(scoreAtual.nivel);
   const pontosFaltando = proximoScore - scoreAtual.score;
@@ -79,7 +82,6 @@ export default async function ScorePage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      {/* Page header */}
       <div className="flex items-center gap-3">
         <div className="p-2.5 bg-blue-50 rounded-xl">
           <TrendingUp className="w-6 h-6 text-[#1B4FD8]" />
@@ -90,7 +92,7 @@ export default async function ScorePage() {
         </div>
       </div>
 
-      {/* Score Hero Card */}
+      {/* Score Hero */}
       <div className={`rounded-2xl border ${colors.bg} ${colors.border} shadow-sm overflow-hidden`}>
         <div className="p-8">
           <div className="flex items-center justify-between gap-6">
@@ -104,9 +106,7 @@ export default async function ScorePage() {
               <p className={`text-7xl font-black tracking-tighter ${colors.text} leading-none`}>
                 {scoreAtual.score}
               </p>
-              <p className="text-sm text-gray-500 mt-3 max-w-xs">
-                {scoreAtual.descricao}
-              </p>
+              <p className="text-sm text-gray-500 mt-3 max-w-xs">{scoreAtual.descricao}</p>
             </div>
             <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
               <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Nível atual</p>
@@ -119,7 +119,7 @@ export default async function ScorePage() {
         </div>
       </div>
 
-      {/* Progress to Next Level */}
+      {/* Progress */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center gap-3 mb-5">
           <div className="p-2 bg-gray-50 rounded-xl">
@@ -136,51 +136,19 @@ export default async function ScorePage() {
           <span className="text-xs text-gray-400 font-medium">{progressPct}% concluído</span>
         </div>
         <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-          <div
-            className={`${colors.bar} h-full rounded-full transition-all duration-700`}
-            style={{ width: `${progressPct}%` }}
-          />
+          <div className={`${colors.bar} h-full rounded-full transition-all duration-700`} style={{ width: `${progressPct}%` }} />
         </div>
         {pontosFaltando > 0 && (
           <p className="text-sm text-gray-500 mt-4 bg-gray-50 rounded-xl px-4 py-3">
-            Faltam{" "}
-            <span className={`font-bold ${colors.text}`}>{pontosFaltando} pontos</span>{" "}
-            para alcançar o nível{" "}
-            <span className="font-semibold text-gray-700">{proximo}</span>.
+            Faltam <span className={`font-bold ${colors.text}`}>{pontosFaltando} pontos</span>{" "}
+            para alcançar o nível <span className="font-semibold text-gray-700">{proximo}</span>.
           </p>
         )}
       </div>
 
-      {/* Score Breakdown */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
-          <div className="p-2 bg-gray-50 rounded-xl">
-            <Star className="w-4 h-4 text-gray-500" />
-          </div>
-          <h3 className="font-semibold text-gray-900">Composição do Score</h3>
-          <span className="ml-auto text-xs text-gray-400 font-medium">Máximo: 1.600 pts</span>
-        </div>
-        <div className="divide-y divide-gray-50">
-          {BREAKDOWN_ITEMS.map((item) => {
-            const Icon = item.icon;
-            return (
-              <div key={item.label} className="px-6 py-4 flex items-center gap-4">
-                <div className="p-2 bg-gray-50 rounded-xl shrink-0">
-                  <Icon className="w-4 h-4 text-gray-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-700 font-medium truncate">{item.label}</p>
-                </div>
-                <span className="text-sm font-semibold text-gray-500 shrink-0 tabular-nums">
-                  {item.pts}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <ScoreBreakdownCard />
 
-      {/* Historical Scores */}
+      {/* Histórico */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
           <div className="p-2 bg-gray-50 rounded-xl">
@@ -213,6 +181,36 @@ export default async function ScorePage() {
             })}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ScoreBreakdownCard() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
+        <div className="p-2 bg-gray-50 rounded-xl">
+          <Star className="w-4 h-4 text-gray-500" />
+        </div>
+        <h3 className="font-semibold text-gray-900">Composição do Score</h3>
+        <span className="ml-auto text-xs text-gray-400 font-medium">Máximo: 1.600 pts</span>
+      </div>
+      <div className="divide-y divide-gray-50">
+        {BREAKDOWN_ITEMS.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div key={item.label} className="px-6 py-4 flex items-center gap-4">
+              <div className="p-2 bg-gray-50 rounded-xl shrink-0">
+                <Icon className="w-4 h-4 text-gray-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-700 font-medium truncate">{item.label}</p>
+              </div>
+              <span className="text-sm font-semibold text-gray-500 shrink-0 tabular-nums">{item.pts}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
