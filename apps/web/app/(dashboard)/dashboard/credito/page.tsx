@@ -118,7 +118,7 @@ export default async function CreditoPage() {
           : 0;
 
         return (
-          <div key={credito.id} className="space-y-6">
+          <div key={credito.creditoId} className="space-y-6">
             {/* Credit Summary Card */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="h-1.5 w-full bg-[#1B4FD8]" />
@@ -316,7 +316,7 @@ export default async function CreditoPage() {
                 <div className="divide-y divide-gray-50">
                   {credito.obras.map((obra) => (
                     <div
-                      key={obra.id}
+                      key={obra.obraId ?? obra.id}
                       className="flex justify-between items-center px-6 py-4"
                     >
                       <div className="flex items-center gap-3">
@@ -331,7 +331,7 @@ export default async function CreditoPage() {
                         </div>
                       </div>
                       <Link
-                        href={`/dashboard/obras/${obra.id}`}
+                        href={`/dashboard/obras/${obra.obraId ?? obra.id}`}
                         className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1B4FD8] hover:text-blue-800 transition-colors"
                       >
                         Ver detalhes

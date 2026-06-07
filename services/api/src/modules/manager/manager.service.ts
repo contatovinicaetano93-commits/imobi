@@ -284,6 +284,120 @@ export class ManagerService {
     return result;
   }
 
+  async listarObras(
+    limit = 20,
+    offset = 0,
+    filters?: {
+      status?: string;
+      searchTerm?: string;
+    }
+  ) {
+    const where: any = { deletadoEm: undefined };
+
+    if (filters?.status && filters.status !== "TODAS") {
+      where.status = filters.status;
+    }
+
+    if (filters?.searchTerm?.trim()) {
+      where.OR = [
+        { nome: { contains: filters.searchTerm, mode: "insensitive" } },
+        { endereco: { contains: filters.searchTerm, mode: "insensitive" } },
+      ];
+    }
+
+    const [obras, total] = await Promise.all([
+      this.prisma.obra.findMany({
+        where,
+        include: {
+          usuario: { select: { usuarioId: true, nome: true, email: true } },
+          credito: { select: { creditoId: true, valorAprovado: true, valorLiberado: true, status: true } },
+          etapas: { select: { etapaId: true, status: true } },
+        },
+        orderBy: { criadoEm: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      this.prisma.obra.count({ where }),
+    ]);
+
+    const result = {
+      obras: obras.map((o) => {
+        const etapasTotal = o.etapas.length;
+        const etapasConcluidas = o.etapas.filter((e) => e.status === "CONCLUIDA").length;
+        const progresso = etapasTotal > 0 ? Math.round((etapasConcluidas / etapasTotal) * 100) : 0;
+        return {
+          obraId: o.obraId,
+          nome: o.nome,
+          endereco: o.endereco,
+          status: o.status,
+          progresso,
+          etapasTotal,
+          etapasConcluidas,
+          tomador: o.usuario,
+          credito: o.credito
+            ? {
+                creditoId: o.credito.creditoId,
+                valorAprovado: Number(o.credito.valorAprovado),
+                valorLiberado: Number(o.credito.valorLiberado),
+                status: o.credito.status,
+              }
+            : null,
+        };
+      }),
+      total,
+    };
+
+    return result;
+  }
+
+  async listarUsuarios(
+    limit = 20,
+    offset = 0,
+    filters?: {
+      searchTerm?: string;
+      tipo?: string;
+      kycStatus?: string;
+    }
+  ) {
+    const where: any = { deletadoEm: null };
+
+    if (filters?.tipo && filters.tipo !== "TODOS") {
+      where.tipo = filters.tipo;
+    }
+
+    if (filters?.kycStatus && filters.kycStatus !== "TODOS") {
+      where.kycStatus = filters.kycStatus;
+    }
+
+    if (filters?.searchTerm?.trim()) {
+      where.OR = [
+        { nome: { contains: filters.searchTerm, mode: "insensitive" } },
+        { email: { contains: filters.searchTerm, mode: "insensitive" } },
+      ];
+    }
+
+    const [usuarios, total] = await Promise.all([
+      this.prisma.usuario.findMany({
+        where,
+        select: {
+          usuarioId: true,
+          nome: true,
+          email: true,
+          cpf: true,
+          tipo: true,
+          kycStatus: true,
+          criadoEm: true,
+        },
+        orderBy: { criadoEm: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      this.prisma.usuario.count({ where }),
+    ]);
+
+    return { usuarios, total };
+  }
+
   async obterEtapaAuditLog(etapaId: string) {
     const auditLogs = await this.prisma.etapaAuditLog.findMany({
       where: { etapaId },

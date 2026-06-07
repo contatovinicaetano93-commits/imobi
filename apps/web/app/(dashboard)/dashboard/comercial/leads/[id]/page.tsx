@@ -18,7 +18,7 @@ export default function LeadDetailPage({ params }: LeadDetailPageProps) {
   useEffect(() => {
     const fetchLead = async () => {
       try {
-        const response = await fetch(`/api/comercial/leads/${id}`);
+        const response = await fetch(`/api/proxy/comercial/leads/${id}`);
         if (response.ok) {
           const data: LeadDetail = await response.json();
           setLead(data);

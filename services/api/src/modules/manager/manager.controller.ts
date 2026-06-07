@@ -114,6 +114,33 @@ export class ManagerController {
     return this.kyc.rejeitarDocumento(id, u.id, motivo);
   }
 
+  @Get("obras")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  async listarObras(
+    @UsuarioAtual() u: IUsuario,
+    @Query("limit") limit: string = "20",
+    @Query("offset") offset: string = "0",
+    @Query("status") status?: string,
+    @Query("searchTerm") searchTerm?: string
+  ) {
+    await this.manager.verificarPermissao(u.id);
+    return this.manager.listarObras(Number(limit), Number(offset), { status, searchTerm });
+  }
+
+  @Get("usuarios")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  async listarUsuarios(
+    @UsuarioAtual() u: IUsuario,
+    @Query("limit") limit: string = "20",
+    @Query("offset") offset: string = "0",
+    @Query("searchTerm") searchTerm?: string,
+    @Query("tipo") tipo?: string,
+    @Query("kycStatus") kycStatus?: string
+  ) {
+    await this.manager.verificarPermissao(u.id);
+    return this.manager.listarUsuarios(Number(limit), Number(offset), { searchTerm, tipo, kycStatus });
+  }
+
   @Get("etapas/:id/audit-log")
   async obterEtapaAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     await this.manager.verificarPermissao(u.id);
