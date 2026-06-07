@@ -32,7 +32,7 @@ export default function LeadsList() {
           filters: JSON.stringify({ searchTerm }),
         });
 
-        const response = await fetch(`/api/comercial/leads?${query}`);
+        const response = await fetch(`/api/proxy/comercial/leads?${query}`);
         if (response.ok) {
           const data: LeadsListResponse = await response.json();
           setLeads(data.leads);

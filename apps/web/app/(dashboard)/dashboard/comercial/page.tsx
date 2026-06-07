@@ -23,7 +23,7 @@ export default function ComercialDashboard() {
     // Fetch dashboard stats
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/comercial/dashboard/stats');
+        const response = await fetch('/api/proxy/comercial/dashboard/stats');
         if (response.ok) {
           const data = await response.json();
           setStats(data);
