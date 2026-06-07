@@ -106,9 +106,50 @@ export type CreditoResumo = {
   liberacoes?: { id: string; valor: number; status: string; processadoEm?: string }[];
 };
 
+export type CreditoSolicitarPayload = {
+  valorSolicitado: number;
+  prazoMeses: number;
+  finalidade: string;
+  obraId?: string;
+};
+
+export type CreditoSimulacaoPayload = {
+  valorSolicitado: number;
+  prazoMeses: number;
+};
+
+export type CreditoSimulacao = {
+  valorSolicitado: number;
+  prazoMeses: number;
+  taxaMensal: number;
+  parcelaMensal: number;
+  totalPago: number;
+  totalJuros: number;
+  cet: number;
+};
+
+export type CreditoSolicitacao = {
+  creditoId: string;
+  valorSolicitado: number;
+  prazoMeses: number;
+  taxaMensal: number;
+  parcelaMensal: number;
+  status: string;
+};
+
 export const creditoApi = {
   meus: () => apiFetch<CreditoResumo[]>("/credito/meus"),
   extrato: (id: string) => apiFetch<CreditoResumo>(`/credito/${id}/extrato`),
+  simular: (data: CreditoSimulacaoPayload) =>
+    apiFetch<CreditoSimulacao>("/credito/simular", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  solicitar: (data: CreditoSolicitarPayload) =>
+    apiFetch<CreditoSolicitacao>("/credito/solicitar", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 // ── Evidências ────────────────────────────────────────────────────────

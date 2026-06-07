@@ -275,7 +275,7 @@ export default function NovaObraPage() {
               type="button"
               onClick={usarLocalizacao}
               disabled={loading || localizando}
-              className="text-sm font-semibold text-brand-600 hover:text-brand-700 disabled:opacity-50 transition-colors"
+              className="text-sm font-semibold text-[#1B4FD8] hover:text-blue-800 disabled:opacity-50 transition-colors"
             >
               {localizando ? "Obtendo localização..." : "Usar minha localização"}
             </button>
@@ -341,7 +341,8 @@ export default function NovaObraPage() {
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 bg-brand-600 text-white font-semibold py-3 rounded-xl hover:bg-brand-700 disabled:opacity-50 transition-colors text-sm"
+            className="flex-1 text-white font-semibold py-3 rounded-xl disabled:opacity-50 transition-colors text-sm"
+            style={{ background: "#1B4FD8" }}
           >
             {loading ? "Criando obra..." : "Criar Obra"}
           </button>

@@ -62,8 +62,9 @@ export default function SimuladorPage() {
       </div>
 
       <a
-        href="/dashboard/credito/solicitar"
-        className="block text-center bg-brand-600 text-white font-semibold py-4 rounded-2xl hover:bg-brand-700 transition-colors"
+        href={`/dashboard/credito/solicitar?valor=${valorSolicitado}&prazo=${prazoMeses}`}
+        className="block text-center font-semibold py-4 rounded-2xl transition-colors"
+        style={{ background: "#1B4FD8", color: "white" }}
       >
         Solicitar este crédito
       </a>
