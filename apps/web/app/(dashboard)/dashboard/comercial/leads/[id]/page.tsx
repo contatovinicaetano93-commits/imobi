@@ -4,14 +4,13 @@ import { useEffect, useState } from 'react';
 import { LeadDetail } from '@imbobi/schemas';
 import { ScoreBreakdown } from '@/components/dashboard/comercial/ScoreBreakdown';
 import { ConversionTimeline } from '@/components/dashboard/comercial/ConversionTimeline';
-import { use } from 'react';
 
 interface LeadDetailPageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 export default function LeadDetailPage({ params }: LeadDetailPageProps) {
-  const { id } = use(params);
+  const { id } = params;
   const [lead, setLead] = useState<LeadDetail | null>(null);
   const [loading, setLoading] = useState(true);
 

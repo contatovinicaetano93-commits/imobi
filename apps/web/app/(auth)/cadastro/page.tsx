@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
+import { useForm, useController } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -156,27 +156,22 @@ export default function CadastroPage() {
 
 function ConsentController({ control, name, error, children }: {
   control: any; name: string; error?: string; children: React.ReactNode;
-}) {
+}): React.ReactElement {
+  const { field } = useController({ control, name });
   return (
-    <Controller
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <div className="space-y-0.5">
-          <label className="flex items-start gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              className="mt-0.5"
-              style={{ accentColor: "#16a34a" }}
-              checked={!!field.value}
-              onChange={(e) => field.onChange(e.target.checked)}
-            />
-            <span className="text-xs text-gray-600">{children}</span>
-          </label>
-          {error && <p className="text-xs text-red-500 ml-5">{error}</p>}
-        </div>
-      )}
-    />
+    <div className="space-y-0.5">
+      <label className="flex items-start gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          className="mt-0.5"
+          style={{ accentColor: "#1B4FD8" }}
+          checked={!!field.value}
+          onChange={(e) => field.onChange(e.target.checked)}
+        />
+        <span className="text-xs text-gray-600">{children}</span>
+      </label>
+      {error && <p className="text-xs text-red-500 ml-5">{error}</p>}
+    </div>
   );
 }
 
