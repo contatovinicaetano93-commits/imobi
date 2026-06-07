@@ -3,6 +3,7 @@ import type { ExpoConfig } from "expo/config";
 const config: ExpoConfig = {
   name: "imbobi",
   slug: "imbobi",
+  scheme: "imbobi",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/icon.png",
