@@ -6,7 +6,7 @@ import { DynamicVisitQueueClient } from "./_components/DynamicVisitQueueClient";
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: "Portal do Engenheiro — imbobi" };
+export const metadata: Metadata = { title: "Portal do Engenheiro — Imobi" };
 
 export default async function EngenheiroPortalPage() {
   const visitas = await engenheirosApi.listarVisitas().catch(() => []);

@@ -150,7 +150,7 @@ export class EmailService {
 
   async bemVindoEmail(nome: string, email: string): Promise<boolean> {
     const html = `
-      <h2>Bem-vindo ao imbobi, ${nome}!</h2>
+      <h2>Bem-vindo ao Imobi, ${nome}!</h2>
       <p>Sua conta foi criada com sucesso.</p>
       <p>Próximos passos:</p>
       <ul>
@@ -164,7 +164,7 @@ export class EmailService {
 
     return this.enviarEmail({
       to: email,
-      subject: "Bem-vindo ao imbobi!",
+      subject: "Bem-vindo ao Imobi!",
       html,
     });
   }
@@ -279,7 +279,7 @@ export class EmailService {
     const html = `
       <h2>Sua Conta foi Permanentemente Excluída</h2>
       <p>Olá ${nome},</p>
-      <p>Sua conta no imbobi foi permanentemente excluída após o período de graça de 30 dias.</p>
+      <p>Sua conta no Imobi foi permanentemente excluída após o período de graça de 30 dias.</p>
       <h3>O que foi deletado:</h3>
       <ul>
         <li>Seu perfil de usuário</li>
@@ -295,7 +295,7 @@ export class EmailService {
       </ul>
       <p>Em conformidade com a Lei Geral de Proteção de Dados (LGPD), seus dados pessoais foram completamente removidos de nossos sistemas.</p>
       <p>Se tiver dúvidas sobre esta exclusão, entre em contato com nosso time de privacidade: privacidade@imbobi.com.br</p>
-      <p>Obrigado por ter usado o imbobi.</p>
+      <p>Obrigado por ter usado o Imobi.</p>
     `;
 
     return this.enviarEmail({

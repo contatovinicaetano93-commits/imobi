@@ -4,7 +4,7 @@ import { formatarBRL } from "@imbobi/core";
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: "Minhas Obras — imbobi" };
+export const metadata: Metadata = { title: "Minhas Obras — Imobi" };
 
 const STATUS_STYLE: Record<string, string> = {
   EM_ANDAMENTO: "bg-blue-50 text-blue-700",

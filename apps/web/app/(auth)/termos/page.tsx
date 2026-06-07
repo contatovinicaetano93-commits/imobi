@@ -13,7 +13,7 @@ export default function TermosPage() {
             ← Voltar
           </button>
         </Link>
-        <span style={{ color: "white", fontWeight: 700 }}>imbobi</span>
+        <span style={{ color: "white", fontWeight: 700 }}>Imobi</span>
         <div className="ml-auto h-1 w-6 rounded-full" style={{ backgroundColor: "#22c55e" }} />
       </div>
 
@@ -33,7 +33,7 @@ export default function TermosPage() {
         <div className="prose prose-lg max-w-none text-gray-700">
           <h2 className="text-2xl font-semibold mt-8 mb-4">1. Aceitação dos Termos</h2>
           <p>
-            Ao acessar e usar a plataforma imbobi, você aceita estar vinculado
+            Ao acessar e usar a plataforma Imobi, você aceita estar vinculado
             por estes Termos de Serviço e todas as políticas incorporadas por
             referência. Se não concordar com qualquer parte destes termos, você
             não pode usar nossos serviços.
@@ -41,7 +41,7 @@ export default function TermosPage() {
 
           <h2 className="text-2xl font-semibold mt-8 mb-4">2. Descrição do Serviço</h2>
           <p>
-            imbobi é uma plataforma digital que oferece:
+            Imobi é uma plataforma digital que oferece:
           </p>
           <ul className="list-disc pl-6 mb-4">
             <li>Processamento de solicitações de crédito construtor</li>
@@ -56,7 +56,7 @@ export default function TermosPage() {
           </ul>
 
           <h2 className="text-2xl font-semibold mt-8 mb-4">3. Elegibilidade</h2>
-          <p>Para usar imbobi, você deve:</p>
+          <p>Para usar Imobi, você deve:</p>
           <ul className="list-disc pl-6 mb-4">
             <li>Ter no mínimo 18 anos de idade</li>
             <li>Ser residente no Brasil</li>
@@ -85,7 +85,7 @@ export default function TermosPage() {
 
           <h2 className="text-2xl font-semibold mt-8 mb-4">5. Processo de Solicitação de Crédito</h2>
           <p>
-            Ao solicitar crédito através imbobi, você compreende que:
+            Ao solicitar crédito através Imobi, você compreende que:
           </p>
           <ul className="list-disc pl-6 mb-4">
             <li>
@@ -151,7 +151,7 @@ export default function TermosPage() {
             </li>
           </ul>
           <p>
-            imbobi se reserva o direito de atrasar ou reter fundos se
+            Imobi se reserva o direito de atrasar ou reter fundos se
             houver suspeita de fraude ou não conformidade.
           </p>
 
@@ -193,7 +193,7 @@ export default function TermosPage() {
 
           <h2 className="text-2xl font-semibold mt-8 mb-4">10. Suspensão e Encerramento</h2>
           <p>
-            imbobi pode suspender ou encerrar sua conta sem aviso prévio se:
+            Imobi pode suspender ou encerrar sua conta sem aviso prévio se:
           </p>
           <ul className="list-disc pl-6 mb-4">
             <li>
@@ -219,7 +219,7 @@ export default function TermosPage() {
           </p>
           <ul className="list-disc pl-6 mb-4">
             <li>
-              imbobi não é responsável por danos indiretos, acidentais
+              Imobi não é responsável por danos indiretos, acidentais
               ou punitivos
             </li>
             <li>
@@ -227,7 +227,7 @@ export default function TermosPage() {
               pagou em 30 dias
             </li>
             <li>
-              imbobi não garante aprovação de crédito ou liberação de
+              Imobi não garante aprovação de crédito ou liberação de
               fundos
             </li>
             <li>
@@ -248,7 +248,7 @@ export default function TermosPage() {
 
           <h2 className="text-2xl font-semibold mt-8 mb-4">13. Conformidade Legal</h2>
           <p>
-            imbobi operacionaliza em conformidade com:
+            Imobi operacionaliza em conformidade com:
           </p>
           <ul className="list-disc pl-6 mb-4">
             <li>Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018)</li>
@@ -259,7 +259,7 @@ export default function TermosPage() {
 
           <h2 className="text-2xl font-semibold mt-8 mb-4">14. Alterações nos Termos</h2>
           <p>
-            imbobi pode modificar estes Termos a qualquer momento. Notificaremos você sobre mudanças materiais. O uso continuado após notificação
+            Imobi pode modificar estes Termos a qualquer momento. Notificaremos você sobre mudanças materiais. O uso continuado após notificação
             constitui aceitação dos termos modificados.
           </p>
 
@@ -281,7 +281,7 @@ export default function TermosPage() {
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-gray-200">
           <p className="text-sm text-gray-500 mb-4">
-            Ao usar imbobi, você concorda com estes Termos de Serviço e com nossa Política de Privacidade.
+            Ao usar Imobi, você concorda com estes Termos de Serviço e com nossa Política de Privacidade.
           </p>
           <Link href="/login">
             <button

@@ -4,7 +4,7 @@ import { formatarBRL } from "@imbobi/core";
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: "Crédito — imbobi" };
+export const metadata: Metadata = { title: "Crédito — Imobi" };
 
 function gerarCalendarioPagamento(
   valorAprovado: number,

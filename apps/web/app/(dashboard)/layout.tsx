@@ -93,7 +93,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* WhatsApp flutuante */}
       <a
-        href="https://wa.me/5511993455589?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20imbobi."
+        href="https://wa.me/5511993455589?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20Imobi."
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Fale conosco no WhatsApp"

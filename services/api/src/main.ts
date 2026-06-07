@@ -54,7 +54,7 @@ async function bootstrap() {
   console.log(`[STARTUP] CORS Origins: ${corsOrigins?.join(", ") || "localhost:3000"}`);
 
   await app.listen(port, "0.0.0.0");
-  console.log(`imbobi API running on port ${port}`);
+  console.log(`Imobi API running on port ${port}`);
 }
 
 void bootstrap();

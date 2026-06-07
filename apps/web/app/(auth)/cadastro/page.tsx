@@ -59,7 +59,7 @@ export default function CadastroPage() {
         <div className="px-6 py-5 space-y-4">
           {/* Logo */}
           <div className="text-center">
-            <span className="text-2xl font-bold" style={{ color: "#15803d" }}>imbobi</span>
+            <span className="text-2xl font-bold" style={{ color: "#15803d" }}>Imobi</span>
             <p className="text-gray-400 text-xs mt-0.5">Crie sua conta gratuitamente</p>
           </div>
 
@@ -139,7 +139,7 @@ export default function CadastroPage() {
 
       {/* WhatsApp flutuante */}
       <a
-        href={`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20imbobi.`}
+        href={`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20Imobi.`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Fale conosco no WhatsApp"

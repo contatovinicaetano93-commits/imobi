@@ -4,7 +4,7 @@ import { formatarBRL } from "@imbobi/core";
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: "Dashboard — imbobi" };
+export const metadata: Metadata = { title: "Dashboard — Imobi" };
 
 export default async function DashboardPage() {
   const [obras, creditos] = await Promise.all([

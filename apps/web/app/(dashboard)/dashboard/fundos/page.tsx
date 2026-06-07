@@ -13,7 +13,7 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: "Fundos — imbobi" };
+export const metadata: Metadata = { title: "Fundos — Imobi" };
 
 export default async function FundosPage() {
   const [obras, creditos] = await Promise.all([

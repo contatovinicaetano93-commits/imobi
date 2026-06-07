@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
             ← Voltar
           </button>
         </Link>
-        <span style={{ color: "white", fontWeight: 700 }}>imbobi</span>
+        <span style={{ color: "white", fontWeight: 700 }}>Imobi</span>
         <div className="ml-auto h-1 w-6 rounded-full" style={{ backgroundColor: "#22c55e" }} />
       </div>
 
@@ -34,13 +34,13 @@ export default function PrivacyPolicyPage() {
         <div className="prose prose-lg max-w-none text-gray-700">
           <h2 className="text-2xl font-semibold mt-8 mb-4">1. Introdução</h2>
           <p>
-            A imbobi ("Empresa") está comprometida com a proteção de seus dados
+            A Imobi ("Empresa") está comprometida com a proteção de seus dados
             pessoais. Esta Política de Privacidade explica como coletamos,
             usamos, compartilhamos e protegemos suas informações quando você
             usa nossos serviços.
           </p>
           <p>
-            A imbobi opera em conformidade com a Lei Geral de Proteção de Dados
+            A Imobi opera em conformidade com a Lei Geral de Proteção de Dados
             (LGPD - Lei nº 13.709/2018) e regulamentações aplicáveis.
           </p>
 
@@ -272,7 +272,7 @@ export default function PrivacyPolicyPage() {
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-gray-200">
           <p className="text-sm text-gray-500 mb-4">
-            Ao usar imbobi, você concorda com esta Política de Privacidade.
+            Ao usar Imobi, você concorda com esta Política de Privacidade.
           </p>
           <Link href="/login">
             <button

@@ -47,7 +47,7 @@ export default function LoginPage() {
         <div className="px-6 py-6 space-y-5">
           {/* Logo */}
           <div className="text-center">
-            <span className="text-2xl font-bold text-brand-700">imbobi</span>
+            <span className="text-2xl font-bold text-brand-700">Imobi</span>
             <p className="text-gray-400 text-xs mt-0.5">Acesse sua conta</p>
           </div>
 
@@ -121,7 +121,7 @@ export default function LoginPage() {
 
       {/* WhatsApp flutuante */}
       <a
-        href={`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20imbobi.`}
+        href={`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20Imobi.`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Fale conosco no WhatsApp"
