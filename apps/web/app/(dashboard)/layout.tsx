@@ -1,10 +1,23 @@
-"use client";
-
 import type { ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { cookies } from "next/headers";
+import { NavBar } from "./NavBar";
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const path = usePathname();
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    const json = Buffer.from(payload, "base64url").toString("utf-8");
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
+  const jar = await cookies();
+  const token = jar.get("access_token")?.value;
+  const payload = token ? decodeJwtPayload(token) : null;
+  const userTipo = typeof payload?.tipo === "string" ? payload.tipo : undefined;
 
   return (
     <div className="flex min-h-screen" style={{ background: "#F0F5FF" }}>
@@ -39,31 +52,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </span>
         </div>
 
-        {/* Nav */}
-        <nav className="flex flex-col gap-1 flex-1">
-          {NAV_ITEMS.map((item) => {
-            const active = path === item.href || (item.href !== "/dashboard" && path.startsWith(item.href));
-            return (
-              <a
-                key={item.href}
-                href={item.href}
-                style={{
-                  display: "flex", alignItems: "center", gap: "0.65rem",
-                  padding: "0.55rem 0.85rem", borderRadius: 10,
-                  fontSize: "0.83rem", fontWeight: active ? 600 : 500,
-                  color: active ? "#1B4FD8" : "rgba(255,255,255,0.8)",
-                  background: active ? "#22C55E" : "transparent",
-                  textDecoration: "none", transition: "all 0.15s",
-                }}
-                onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)"; }}
-                onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-              >
-                <span style={{ fontSize: "1rem" }}>{item.icon}</span>
-                {item.label}
-              </a>
-            );
-          })}
-        </nav>
+        <NavBar userTipo={userTipo} />
 
         {/* Footer sidebar */}
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: "1rem", marginTop: "0.5rem" }}>
@@ -112,17 +101,3 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     </div>
   );
 }
-
-const NAV_ITEMS = [
-  { label: "Início", href: "/dashboard", icon: "⬡" },
-  { label: "Fundos", href: "/dashboard/fundos", icon: "💰" },
-  { label: "Minhas Obras", href: "/dashboard/obras", icon: "🏗" },
-  { label: "Crédito", href: "/dashboard/credito", icon: "💳" },
-  { label: "Score", href: "/dashboard/score", icon: "⭐" },
-  { label: "Simulador", href: "/dashboard/simulador", icon: "📊" },
-  { label: "Painel do Gestor", href: "/dashboard/gestor", icon: "🛡" },
-  { label: "Relatórios", href: "/dashboard/relatorios", icon: "📈" },
-  { label: "Notificações", href: "/dashboard/notificacoes", icon: "🔔" },
-  { label: "Documentos", href: "/dashboard/kyc", icon: "📋" },
-  { label: "Perfil", href: "/dashboard/perfil", icon: "👤" },
-];
