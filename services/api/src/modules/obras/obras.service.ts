@@ -9,12 +9,24 @@ export class ObrasService {
 
   async criar(usuarioId: string, input: CriarObraInput) {
     return this.prisma.$transaction(async (tx) => {
-      // BUG-002: Server-side GPS validation using PostGIS
-      if (input.geo?.latitude && input.geo?.longitude) {
-        const gpsValidation = await tx.$queryRaw<Array<{ valid: boolean }>>`
-          SELECT ST_IsValid(ST_GeomFromText('POINT(${input.geo.longitude} ${input.geo.latitude})', 4326)) AS valid
+      // Server-side GPS validation: coordinate range for Brazil + PostGIS within check
+      if (input.geo?.latitude !== undefined && input.geo?.longitude !== undefined) {
+        const lat = input.geo.latitude;
+        const lon = input.geo.longitude;
+        const BRAZIL_BOUNDS = { minLat: -34.0, maxLat: 5.3, minLon: -73.9, maxLon: -28.6 };
+        if (
+          lat < BRAZIL_BOUNDS.minLat || lat > BRAZIL_BOUNDS.maxLat ||
+          lon < BRAZIL_BOUNDS.minLon || lon > BRAZIL_BOUNDS.maxLon
+        ) {
+          throw new BadRequestException('GPS inválido (fora dos limites do Brasil)');
+        }
+        const gpsValidation = await tx.$queryRaw<Array<{ dentro: boolean }>>`
+          SELECT ST_Within(
+            ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326),
+            ST_MakeEnvelope(-73.9, -34.0, -28.6, 5.3, 4326)
+          ) AS dentro
         `;
-        if (!gpsValidation[0]?.valid) {
+        if (!gpsValidation[0]?.dentro) {
           throw new BadRequestException('GPS inválido (fora dos limites do Brasil)');
         }
       }
