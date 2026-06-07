@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { usuariosApi, type UsuarioPerfil } from "../../../lib/api";
+import { apiClient } from "@imbobi/core";
 
 export default function PerfilScreen() {
   const router = useRouter();
