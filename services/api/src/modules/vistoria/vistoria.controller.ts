@@ -1,6 +1,8 @@
 import { Controller, Post, Param, Body, UseGuards, HttpCode } from "@nestjs/common";
 import { VistoriaService } from "./vistoria.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { RolesGuard } from "../../common/guards/roles.guard";
+import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
 class AprovarDto {
@@ -12,7 +14,8 @@ class RejeitarDto {
   motivo!: string;
 }
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles("GESTOR_OBRA", "ENGENHEIRO", "ADMIN")
 @Controller("vistoria")
 export class VistoriaController {
   constructor(private readonly vistoria: VistoriaService) {}
