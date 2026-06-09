@@ -30,34 +30,31 @@ pnpm build            # build de produção
 3. Liberação de parcela é sempre assíncrona via BullMQ (`services/workers/liberacao-parcela.worker.ts`)
 4. Schemas Zod são a fonte de verdade para validação — não duplicar regras em outros lugares
 
-## Estratégia de commits e deploy
+## Fluxo de trabalho inteligente
 
-### Agrupe antes de fazer push
-- **Nunca fazer push de um arquivo isolado.** Reúna todas as mudanças relacionadas em um único commit antes de qualquer `git push`.
-- Pergunte-se: "existe algo mais nesta área que deveria ser corrigido junto?" antes de commitar.
-- Exemplos de agrupamentos naturais:
-  - Todos os bugs de segurança de uma sessão → 1 commit `fix(security): ...`
-  - Refactor de um módulo inteiro → 1 commit `refactor(modulo): ...`
-  - Novos testes para features existentes → 1 commit `test: ...`
-  - Ajustes de config/infra → 1 commit `chore: ...`
+### Quando fazer push
+Não faça push após cada correção isolada. Acumule mudanças até fechar uma **unidade lógica completa**:
+- Uma sessão de revisão de bugs → 1 commit com todos os fixes da sessão
+- Uma feature nova do início ao fim → 1 ou poucos commits organizados por camada
+- Uma tarefa de refactor → 1 commit quando o módulo estiver completo
+
+Antes de commitar, pergunte: *"Tem mais algo relacionado que seria natural incluir aqui?"*
 
 ### Pipeline de produção
 ```
-feature branch → PR review → staging deploy → smoke tests → merge main → produção
+feature branch → PR review → staging → smoke tests → merge main → produção
 ```
-- **Nunca fazer push direto em `main`.**
-- Branch de trabalho padrão: `claude/relaxed-goldberg-Bx6o1`
-- Antes de qualquer deploy, rodar: `pnpm type-check && pnpm build`
+- Branch de trabalho: `claude/relaxed-goldberg-Bx6o1`
+- Nunca push direto em `main`
+- Antes de deploy: `pnpm type-check && pnpm build`
 
-### Prioridade de tarefas em uma sessão
-1. **Segurança** — bugs que expõem dados ou bypass de auth
-2. **Correção** — lógica de negócio errada (ex: liberar parcela sem evidência)
-3. **Atomicidade** — race conditions, transações incompletas
-4. **Qualidade** — constantes duplicadas, tipos `as never`, código morto
-5. **Docs/infra** — CLAUDE.md, scripts, configs
+### Prioridade de revisão por sessão
+1. **Segurança** — auth bypass, vazamento de dados, cache sem isolamento
+2. **Correção de negócio** — lógica errada que afeta fluxo financeiro ou de aprovação
+3. **Atomicidade** — race conditions, transações incompletas, filas sem rollback
+4. **Qualidade** — duplicações, tipos `as never`, constantes soltas
 
-### Regra de tokens
-- Usar subagents só para extração paralela de grafo — custo alto
-- Queries ao grafo (`graphify query`) são gratuitas, usar livremente
-- Gemini requer billing ativo no projeto "Gemini imobi" (aistudio.google.com)
-- Subagents têm limite semanal — reservar para tarefas que realmente precisam de paralelismo
+### Uso eficiente de tokens
+- `graphify query` — gratuito, usar para navegar o código antes de ler arquivos
+- Subagents — caro e limitado semanalmente; só para extração paralela de grafo
+- Ler arquivos diretamente só após confirmar via grafo qual arquivo é relevante
