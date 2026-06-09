@@ -106,7 +106,7 @@ export default function VisitDetailPage() {
       async (position) => {
         const { latitude, longitude, accuracy } = position.coords;
         try {
-          const novo = await evidenciasApi.upload({
+          const novo = await evidenciasApi.upload(file, {
             etapaId: visita.etapaId,
             latitude,
             longitude,

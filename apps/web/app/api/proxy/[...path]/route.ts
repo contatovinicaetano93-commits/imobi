@@ -9,18 +9,29 @@ async function proxy(req: NextRequest, pathParts: string[], method: string) {
   const qs = req.nextUrl.search;
   const url = `${API}/${pathParts.join('/')}${qs}`;
 
-  const init: RequestInit = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    cache: 'no-store',
+  const contentType = req.headers.get('content-type') ?? '';
+  const isMultipart = contentType.includes('multipart/form-data');
+
+  const headers: Record<string, string> = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
+  // For multipart, forward the original Content-Type (includes boundary).
+  // For everything else, default to JSON.
+  if (isMultipart) {
+    headers['Content-Type'] = contentType;
+  } else {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const init: RequestInit = { method, headers, cache: 'no-store' };
 
   if (method !== 'GET' && method !== 'HEAD') {
-    const body = await req.text();
-    if (body) (init as any).body = body;
+    if (isMultipart) {
+      (init as any).body = await req.arrayBuffer();
+    } else {
+      const body = await req.text();
+      if (body) (init as any).body = body;
+    }
   }
 
   const res = await fetch(url, init).catch(() => null);

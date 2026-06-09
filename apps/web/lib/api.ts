@@ -7,6 +7,32 @@ export class ApiError extends Error {
   }
 }
 
+async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const isClient = typeof window !== "undefined";
+  const url = isClient ? `/api/proxy${path}` : `${API_URL}${path}`;
+
+  const headers: Record<string, string> = {};
+  if (!isClient) {
+    try {
+      const { cookies } = await import("next/headers");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const jar = await (cookies as any)();
+      const token = jar?.get?.("access_token")?.value;
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+    } catch { /* not in Next.js server component context */ }
+  }
+  // Do NOT set Content-Type — browser/fetch sets multipart boundary automatically
+
+  const res = await fetch(url, { method: "POST", headers, body: formData, cache: "no-store" });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { message?: string };
+    throw new ApiError(res.status, body.message ?? res.statusText);
+  }
+
+  return res.json() as Promise<T>;
+}
+
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const isClient = typeof window !== "undefined";
   const headers = new Headers(init.headers);
@@ -122,18 +148,27 @@ export type EvidenciaDetalhe = {
 export const evidenciasApi = {
   listarPorEtapa: (etapaId: string) =>
     apiFetch<EvidenciaDetalhe[]>(`/evidencias/etapa/${etapaId}`),
-  upload: (data: {
-    etapaId: string;
-    latitude: number;
-    longitude: number;
-    accuracyMetros: number;
-    timestampCaptura: string;
-    descricao?: string;
-  }) =>
-    apiFetch<EvidenciaDetalhe>("/evidencias", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+  upload: (
+    file: File,
+    data: {
+      etapaId: string;
+      latitude: number;
+      longitude: number;
+      accuracyMetros: number;
+      timestampCaptura: string;
+      descricao?: string;
+    }
+  ) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("etapaId", data.etapaId);
+    form.append("latitude", String(data.latitude));
+    form.append("longitude", String(data.longitude));
+    form.append("accuracyMetros", String(data.accuracyMetros));
+    form.append("timestampCaptura", data.timestampCaptura);
+    if (data.descricao) form.append("descricao", data.descricao);
+    return apiUpload<EvidenciaDetalhe>("/evidencias", form);
+  },
 };
 
 // ── Score ─────────────────────────────────────────────────────────────
