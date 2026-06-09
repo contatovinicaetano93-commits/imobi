@@ -3,6 +3,7 @@ import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
+import multipart from "@fastify/multipart";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { validateEnvironmentOrThrow, initSentry } from "./common/config";
@@ -26,6 +27,8 @@ async function bootstrap() {
   );
 
   // ThrottlerGuard is registered via AppModule providers
+  await app.register(multipart, { limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
+
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");
 
