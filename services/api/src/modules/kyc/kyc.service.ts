@@ -69,14 +69,16 @@ export class KycService {
     });
     if (!documento) throw new NotFoundException("Documento não encontrado");
 
-    const atualizado = await this.prisma.kycDocumento.update({
-      where: { kycDocumentoId },
-      data: {
-        status: "APROVADO",
-        analisadoPor: gestorId,
-        analisadoEm: new Date(),
-      },
+    // Atomic status guard: prevents double-approval under concurrent requests
+    const updated = await this.prisma.kycDocumento.updateMany({
+      where: { kycDocumentoId, status: "PENDENTE" },
+      data: { status: "APROVADO", analisadoPor: gestorId, analisadoEm: new Date() },
     });
+    if (updated.count === 0) {
+      throw new BadRequestException("Documento não está pendente de análise.");
+    }
+
+    const atualizado = await this.prisma.kycDocumento.findUnique({ where: { kycDocumentoId } });
 
     // Create audit log entry
     await this.prisma.kycAuditLog.create({
@@ -129,15 +131,16 @@ export class KycService {
       throw new BadRequestException("Motivo da rejeição é obrigatório");
     }
 
-    const atualizado = await this.prisma.kycDocumento.update({
-      where: { kycDocumentoId },
-      data: {
-        status: "REJEITADO",
-        analisadoPor: gestorId,
-        analisadoEm: new Date(),
-        motivo_rejeicao: motivo,
-      },
+    // Atomic status guard: prevents race conditions and re-rejection
+    const updated = await this.prisma.kycDocumento.updateMany({
+      where: { kycDocumentoId, status: "PENDENTE" },
+      data: { status: "REJEITADO", analisadoPor: gestorId, analisadoEm: new Date(), motivo_rejeicao: motivo },
     });
+    if (updated.count === 0) {
+      throw new BadRequestException("Documento não está pendente de análise.");
+    }
+
+    const atualizado = await this.prisma.kycDocumento.findUnique({ where: { kycDocumentoId } });
 
     // Create audit log entry
     await this.prisma.kycAuditLog.create({
