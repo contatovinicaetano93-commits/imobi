@@ -82,13 +82,22 @@ export class EtapasService {
       ).catch(() => {});
     }
 
-    // Dispara liberação de parcela via fila (assíncrono)
+    // Dispara liberação de parcela via fila — criação da liberação é atômica com enfileiramento
     if (credito && credito.status === "ATIVO") {
       const valorLiberacao = Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
       const liberacao = await this.prisma.liberacaoParcela.create({
         data: { creditoId: credito.creditoId, valor: valorLiberacao, status: "PENDENTE" },
       });
-      await this.liberacaoQueue.add({ creditoId: credito.creditoId, etapaId, liberacaoId: liberacao.liberacaoId, valor: valorLiberacao });
+      try {
+        await this.liberacaoQueue.add({ creditoId: credito.creditoId, etapaId, liberacaoId: liberacao.liberacaoId, valor: valorLiberacao });
+      } catch (err) {
+        // Se o enfileiramento falhar, marca a liberação como FALHA para evitar parcela presa em PENDENTE
+        await this.prisma.liberacaoParcela.update({
+          where: { liberacaoId: liberacao.liberacaoId },
+          data: { status: "FALHA", processadoEm: new Date() },
+        });
+        throw err;
+      }
     }
 
     return { ok: true, observacao };

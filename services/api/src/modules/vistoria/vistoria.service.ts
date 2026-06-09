@@ -30,8 +30,15 @@ export class VistoriaService {
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
+    const evidencias = await this.prisma.evidenciaEtapa.count({
+      where: { etapaId, validada: true },
+    });
+    if (evidencias === 0) {
+      throw new BadRequestException("Etapa precisa ter ao menos uma evidência validada.");
+    }
+
     const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: { in: STATUSES_VISTORIAVEL as any } },
+      where: { etapaId, status: "AGUARDANDO_VISTORIA" },
       data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
     });
     if (updated.count === 0) {
