@@ -236,11 +236,12 @@ export type KycStatus = {
 };
 
 export const kycApi = {
-  uploadDocumento: (tipo: string, url: string) =>
-    apiFetch<KycDocumento>("/kyc/upload", {
-      method: "POST",
-      body: JSON.stringify({ tipo, url }),
-    }),
+  uploadArquivo: (file: File, tipo: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("tipo", tipo);
+    return apiUpload<KycDocumento>("/kyc/upload-arquivo", form);
+  },
   listarDocumentos: () => apiFetch<KycDocumento[]>("/kyc/documentos"),
   obterStatus: () => apiFetch<KycStatus>("/kyc/status"),
   verificarKycCompleto: () => apiFetch<{ completo: boolean; documentos: KycDocumento[] }>("/kyc/verificar"),

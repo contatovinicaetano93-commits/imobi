@@ -26,13 +26,11 @@ export default function KycPage() {
     }
   };
 
-  const handleUpload = async (tipo: string) => {
+  const handleUpload = async (file: File, tipo: string) => {
     setUploading(true);
     setError(null);
     try {
-      // In real app, would upload file to S3 first and get URL
-      const mockUrl = `https://s3.example.com/kyc/${tipo}-${Date.now()}.jpg`;
-      await kycApi.uploadDocumento(tipo, mockUrl);
+      await kycApi.uploadArquivo(file, tipo);
       await loadStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao fazer upload");
@@ -116,24 +114,35 @@ export default function KycPage() {
       <div className="bg-gray-50 p-6 rounded">
         <h2 className="text-xl font-semibold mb-4">Enviar Documentos</h2>
         <p className="text-sm text-gray-600 mb-4">
-          Documentos requeridos: RG (frente e verso) e Selfie com documento
+          Documentos requeridos: RG (frente e verso) e Selfie com documento.
+          Formatos aceitos: JPEG, PNG, WEBP ou HEIC.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button
-            onClick={() => handleUpload("RG")}
-            disabled={uploading}
-            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {uploading ? "Enviando..." : "Enviar RG"}
-          </button>
-          <button
-            onClick={() => handleUpload("Selfie")}
-            disabled={uploading}
-            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {uploading ? "Enviando..." : "Enviar Selfie"}
-          </button>
+          {(["RG", "Selfie"] as const).map((tipo) => (
+            <label
+              key={tipo}
+              className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-6 cursor-pointer transition
+                ${uploading ? "opacity-50 pointer-events-none" : "hover:border-blue-400 hover:bg-blue-50"}`}
+            >
+              <span className="font-semibold text-gray-700">Enviar {tipo}</span>
+              <span className="text-xs text-gray-400">Clique para selecionar o arquivo</span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUpload(file, tipo);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          ))}
         </div>
+        {uploading && (
+          <p className="text-sm text-blue-600 mt-3 text-center">Enviando documento...</p>
+        )}
       </div>
 
       {/* Info */}
