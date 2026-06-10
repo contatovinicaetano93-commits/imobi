@@ -1,18 +1,11 @@
 'use client';
 
-import { useEffect, useState, ChangeEvent } from 'react';
-import { Lead } from '@imbobi/schemas';
+import { useEffect, useState } from 'react';
+import { comercialApi, type LeadItem } from '@/lib/api';
 import { LeadCard } from '@/components/dashboard/comercial/LeadCard';
 
-interface LeadsListResponse {
-  leads: Lead[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
 export default function LeadsList() {
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [leads, setLeads] = useState<LeadItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
@@ -26,18 +19,9 @@ export default function LeadsList() {
       try {
         setLoading(true);
         const offset = (page - 1) * pageSize;
-        const query = new URLSearchParams({
-          limit: pageSize.toString(),
-          offset: offset.toString(),
-          filters: JSON.stringify({ searchTerm }),
-        });
-
-        const response = await fetch(`/api/comercial/leads?${query}`);
-        if (response.ok) {
-          const data: LeadsListResponse = await response.json();
-          setLeads(data.leads);
-          setTotal(data.total);
-        }
+        const data = await comercialApi.listarLeads(pageSize, offset, searchTerm || undefined);
+        setLeads(data.leads);
+        setTotal(data.total);
       } catch (error) {
         console.error('Failed to fetch leads:', error);
       } finally {

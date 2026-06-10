@@ -391,6 +391,50 @@ export const engenheirosApi = {
     }),
 };
 
+// ── Comercial ─────────────────────────────────────────────────────────
+
+export type ComercialStats = {
+  totalLeads: number;
+  leadsThisWeek: number;
+  avgScore: number;
+  conversionRate: number;
+};
+
+export type LeadItem = {
+  leadId: string;
+  clienteNome: string;
+  clienteEmail: string;
+  clienteTelefone: string;
+  clienteCpf?: string;
+  fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+  tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
+  segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
+  stageId: string;
+  criadoEm: string;
+  atualizadoEm: string;
+  scoreHistorico?: { scoreFinal: number; probabilidadeClosing: number }[];
+  stage?: { nome: string };
+};
+
+export type LeadsListResponse = {
+  leads: LeadItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export const comercialApi = {
+  dashboard: () => apiFetch<ComercialStats>("/comercial/dashboard/stats"),
+  listarLeads: (limit = 20, offset = 0, searchTerm?: string) => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+    });
+    if (searchTerm) params.set("searchTerm", searchTerm);
+    return apiFetch<LeadsListResponse>(`/comercial/leads?${params}`);
+  },
+};
+
 // ── Notificações ──────────────────────────────────────────────────────
 
 export type Notificacao = {

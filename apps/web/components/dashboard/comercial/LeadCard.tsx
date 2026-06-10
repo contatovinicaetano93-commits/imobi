@@ -1,13 +1,10 @@
 'use client';
 
-import { Lead } from '@imbobi/schemas';
+import { type LeadItem } from '@/lib/api';
 import Link from 'next/link';
 
 interface LeadCardProps {
-  lead: Lead & {
-    scoreHistorico?: { scoreFinal: number; probabilidadeClosing: number }[];
-    stage?: { nome: string };
-  };
+  lead: LeadItem;
 }
 
 export function LeadCard({ lead }: LeadCardProps) {

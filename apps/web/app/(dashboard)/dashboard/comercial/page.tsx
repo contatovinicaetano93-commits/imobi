@@ -2,13 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-
-interface DashboardStats {
-  totalLeads: number;
-  leadsThisWeek: number;
-  avgScore: number;
-  conversionRate: number;
-}
+import { comercialApi, type ComercialStats as DashboardStats } from '@/lib/api';
 
 export default function ComercialDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -20,14 +14,10 @@ export default function ComercialDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch dashboard stats
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/comercial/dashboard/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data);
-        }
+        const data = await comercialApi.dashboard();
+        setStats(data);
       } catch (error) {
         console.error('Failed to fetch stats:', error);
       } finally {
