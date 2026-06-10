@@ -36,24 +36,21 @@ type NavItem = {
 const WA = "5511993455589";
 
 const NAV: NavItem[] = [
-  // Tomador / universal
-  { label: "Início",          href: "/dashboard",              icon: Home,        roles: ["TOMADOR", "ADMIN", "CONSTRUTOR", null], section: "geral" },
-  { label: "Minhas Obras",    href: "/dashboard/obras",        icon: HardHat,     roles: ["TOMADOR", "ADMIN", "CONSTRUTOR"] },
-  { label: "Crédito",         href: "/dashboard/credito",      icon: CreditCard,  roles: ["TOMADOR", "ADMIN"] },
-  { label: "Simulador",       href: "/dashboard/simulador",    icon: Calculator,  roles: ["TOMADOR", "ADMIN"] },
-  { label: "Score",           href: "/dashboard/score",        icon: Star,        roles: ["TOMADOR", "ADMIN"] },
-  { label: "Documentos",      href: "/dashboard/kyc",          icon: FileCheck2,  roles: ["TOMADOR", "ADMIN"] },
-  { label: "Notificações",    href: "/dashboard/notificacoes", icon: Bell,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
-  { label: "Perfil",          href: "/dashboard/perfil",       icon: User,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
-  // Operacional
-  { label: "Vistorias",       href: "/dashboard/engenheiro",   icon: Wrench,      roles: ["ENGENHEIRO", "ADMIN"],    section: "operacional" },
-  { label: "Painel Gestor",   href: "/dashboard/gestor",       icon: ShieldCheck, roles: ["GESTOR", "ADMIN"] },
-  { label: "Fundos",          href: "/dashboard/fundos",       icon: Banknote,    roles: ["GESTOR", "ADMIN"] },
-  { label: "Relatórios",      href: "/dashboard/relatorios",   icon: BarChart3,   roles: ["GESTOR", "ADMIN"] },
-  { label: "Comercial",       href: "/dashboard/comercial",    icon: Megaphone,   roles: ["COMERCIAL", "ADMIN"] },
-  { label: "Construtor",      href: "/dashboard/construtor",   icon: Building2,   roles: ["CONSTRUTOR", "ADMIN"] },
-  // Admin
-  { label: "Administração",   href: "/dashboard/admin",        icon: Settings,    roles: ["ADMIN"],                  section: "admin" },
+  { label: "Início",        href: "/dashboard",              icon: Home,        roles: ["TOMADOR", "ADMIN", "CONSTRUTOR", null], section: "geral" },
+  { label: "Minhas Obras",  href: "/dashboard/obras",        icon: HardHat,     roles: ["TOMADOR", "ADMIN", "CONSTRUTOR"] },
+  { label: "Crédito",       href: "/dashboard/credito",      icon: CreditCard,  roles: ["TOMADOR", "ADMIN"] },
+  { label: "Simulador",     href: "/dashboard/simulador",    icon: Calculator,  roles: ["TOMADOR", "ADMIN"] },
+  { label: "Score",         href: "/dashboard/score",        icon: Star,        roles: ["TOMADOR", "ADMIN"] },
+  { label: "Documentos",    href: "/dashboard/kyc",          icon: FileCheck2,  roles: ["TOMADOR", "ADMIN"] },
+  { label: "Notificações",  href: "/dashboard/notificacoes", icon: Bell,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
+  { label: "Perfil",        href: "/dashboard/perfil",       icon: User,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
+  { label: "Vistorias",     href: "/dashboard/engenheiro",   icon: Wrench,      roles: ["ENGENHEIRO", "ADMIN"],   section: "operacional" },
+  { label: "Painel Gestor", href: "/dashboard/gestor",       icon: ShieldCheck, roles: ["GESTOR", "ADMIN"] },
+  { label: "Fundos",        href: "/dashboard/fundos",       icon: Banknote,    roles: ["GESTOR", "ADMIN"] },
+  { label: "Relatórios",    href: "/dashboard/relatorios",   icon: BarChart3,   roles: ["GESTOR", "ADMIN"] },
+  { label: "Comercial",     href: "/dashboard/comercial",    icon: Megaphone,   roles: ["COMERCIAL", "ADMIN"] },
+  { label: "Construtor",    href: "/dashboard/construtor",   icon: Building2,   roles: ["CONSTRUTOR", "ADMIN"] },
+  { label: "Administração", href: "/dashboard/admin",        icon: Settings,    roles: ["ADMIN"],                 section: "admin" },
 ];
 
 const SECTION_LABELS: Record<string, string> = {
@@ -87,6 +84,55 @@ function Logo({ size = 28, white = false }: { size?: number; white?: boolean }) 
   );
 }
 
+function renderNav(
+  items: NavItem[],
+  activeFn: (href: string) => boolean,
+  onNavigate?: () => void,
+) {
+  let lastSection = "";
+  return items.map((item) => {
+    const active = activeFn(item.href);
+    const showSection = item.section && item.section !== lastSection;
+    if (item.section) lastSection = item.section;
+    const Icon = item.icon;
+    return (
+      <div key={item.href}>
+        {showSection && (
+          <p style={{
+            fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em",
+            textTransform: "uppercase", color: "rgba(255,255,255,0.35)",
+            padding: "1.1rem 0.75rem 0.4rem",
+          }}>
+            {SECTION_LABELS[item.section!]}
+          </p>
+        )}
+        <a
+          href={item.href}
+          onClick={onNavigate}
+          style={{
+            display: "flex", alignItems: "center", gap: "0.65rem",
+            padding: "0.5rem 0.75rem",
+            borderRadius: 10,
+            fontSize: "0.82rem",
+            fontWeight: active ? 600 : 400,
+            letterSpacing: active ? "-0.01em" : "0",
+            color: active ? "#ffffff" : "rgba(255,255,255,0.55)",
+            background: active ? "rgba(255,255,255,0.12)" : "transparent",
+            textDecoration: "none",
+            transition: "all 0.12s",
+            borderLeft: active ? "2.5px solid #16a34a" : "2.5px solid transparent",
+            paddingLeft: active ? "0.65rem" : "0.75rem",
+          }}
+        >
+          <Icon size={14} strokeWidth={active ? 2.2 : 1.8} />
+          {item.label}
+          {active && <ChevronRight size={11} style={{ marginLeft: "auto", opacity: 0.6 }} />}
+        </a>
+      </div>
+    );
+  });
+}
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const path = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -108,65 +154,48 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, []);
 
   const visibleNav = filterNav(role);
-
   const isActive = (href: string) =>
     href === "/dashboard" ? path === href : path.startsWith(href);
 
-  function NavList({ onNavigate }: { onNavigate?: () => void }) {
-    let lastSection = "";
-    return (
-      <>
-        {visibleNav.map((item) => {
-          const active = isActive(item.href);
-          const showSection = item.section && item.section !== lastSection;
-          if (item.section) lastSection = item.section;
-          const Icon = item.icon;
-          return (
-            <div key={item.href}>
-              {showSection && (
-                <p style={{
-                  fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em",
-                  textTransform: "uppercase", color: "rgba(255,255,255,0.35)",
-                  padding: "1.1rem 0.75rem 0.4rem",
-                }}>
-                  {SECTION_LABELS[item.section!]}
-                </p>
-              )}
-              <a
-                href={item.href}
-                onClick={onNavigate}
-                style={{
-                  display: "flex", alignItems: "center", gap: "0.65rem",
-                  padding: "0.5rem 0.75rem",
-                  borderRadius: 10,
-                  fontSize: "0.82rem",
-                  fontWeight: active ? 600 : 400,
-                  letterSpacing: active ? "-0.01em" : "0",
-                  color: active ? "#ffffff" : "rgba(255,255,255,0.55)",
-                  background: active ? "rgba(255,255,255,0.12)" : "transparent",
-                  textDecoration: "none",
-                  transition: "all 0.12s",
-                  borderLeft: active ? "2.5px solid #16a34a" : "2.5px solid transparent",
-                  paddingLeft: active ? "0.65rem" : "0.75rem",
-                  position: "relative",
-                }}
-              >
-                <Icon size={14} strokeWidth={active ? 2.2 : 1.8} />
-                {item.label}
-                {active && (
-                  <ChevronRight size={11} style={{ marginLeft: "auto", opacity: 0.6 }} />
-                )}
-              </a>
-            </div>
-          );
-        })}
-      </>
-    );
-  }
-
   const initials = userName
-    ? userName.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()
+    ? userName.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()
     : "?";
+
+  const userFooter = (compact = false) => (
+    <div style={{
+      borderTop: "1px solid rgba(255,255,255,0.1)",
+      padding: compact ? "0.75rem 0.85rem" : "0.85rem 1rem",
+      display: "flex", alignItems: "center", gap: "0.6rem",
+    }}>
+      <div style={{
+        width: compact ? 26 : 28, height: compact ? 26 : 28, borderRadius: "50%",
+        background: "rgba(22,163,74,0.25)",
+        border: "1.5px solid rgba(22,163,74,0.5)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: "0.63rem", fontWeight: 700, color: "#4ade80", flexShrink: 0,
+      }}>
+        {initials}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: compact ? "0.72rem" : "0.74rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {userName ?? "Usuário"}
+        </p>
+        <p style={{ fontSize: "0.63rem", color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {userEmail ?? role ?? ""}
+        </p>
+      </div>
+      <button
+        onClick={async () => {
+          await fetch("/api/auth/session", { method: "DELETE" });
+          window.location.href = "/login";
+        }}
+        title="Sair"
+        style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)", flexShrink: 0, padding: 0, display: "flex" }}
+      >
+        <LogOut size={13} />
+      </button>
+    </div>
+  );
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F0F5FF", fontFamily: "'Inter', system-ui, sans-serif" }}>
@@ -183,7 +212,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       }}
         className="md-sidebar"
       >
-        {/* Logo */}
         <div style={{ padding: "1.5rem 1rem 0.75rem" }}>
           <a href="/" style={{ display: "flex", alignItems: "center", gap: "0.55rem", textDecoration: "none" }}>
             <Logo size={24} white />
@@ -191,47 +219,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </a>
         </div>
 
-        {/* Nav */}
         <nav style={{ flex: 1, padding: "0 0.5rem", overflowY: "auto" }}>
-          <NavList />
+          {renderNav(visibleNav, isActive)}
         </nav>
 
-        {/* User footer */}
-        <div style={{
-          borderTop: "1px solid rgba(255,255,255,0.1)",
-          padding: "0.85rem 1rem",
-          display: "flex", alignItems: "center", gap: "0.6rem",
-        }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: "50%",
-            background: "rgba(22,163,74,0.25)",
-            border: "1.5px solid rgba(22,163,74,0.5)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "0.65rem", fontWeight: 700, color: "#4ade80", flexShrink: 0,
-          }}>
-            {initials}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: "0.74rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {userName ?? "Usuário"}
-            </p>
-            <p style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {userEmail ?? role ?? ""}
-            </p>
-          </div>
-          <a
-            href="/api/auth/session"
-            onClick={async (e) => {
-              e.preventDefault();
-              await fetch("/api/auth/session", { method: "DELETE" });
-              window.location.href = "/login";
-            }}
-            title="Sair"
-            style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }}
-          >
-            <LogOut size={13} />
-          </a>
-        </div>
+        {userFooter()}
       </aside>
 
       {/* Mobile header */}
@@ -269,17 +261,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             overflowY: "auto", display: "flex", flexDirection: "column",
           }}>
             <nav style={{ flex: 1, padding: "0.5rem 0.5rem 0" }}>
-              <NavList onNavigate={() => setMobileOpen(false)} />
+              {renderNav(visibleNav, isActive, () => setMobileOpen(false))}
             </nav>
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", padding: "0.85rem 1rem", display: "flex", alignItems: "center", gap: "0.6rem" }}>
-              <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(22,163,74,0.25)", border: "1.5px solid rgba(22,163,74,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: 700, color: "#4ade80", flexShrink: 0 }}>
-                {initials}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{userName ?? "Usuário"}</p>
-                <p style={{ fontSize: "0.63rem", color: "rgba(255,255,255,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{userEmail ?? role ?? ""}</p>
-              </div>
-            </div>
+            {userFooter(true)}
           </div>
         </>
       )}
@@ -290,7 +274,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
 
-      {/* WhatsApp flutuante */}
+      {/* WhatsApp */}
       <a
         href={`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20IMOBI.`}
         target="_blank"
@@ -316,10 +300,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           .md-hidden { display: none !important; }
           .md-spacer { display: none !important; }
           .main-content { padding: 2rem !important; }
-        }
-        nav a:hover:not([style*="rgba(255,255,255,0.12"]) {
-          background: rgba(255,255,255,0.06) !important;
-          color: rgba(255,255,255,0.82) !important;
         }
       `}</style>
     </div>

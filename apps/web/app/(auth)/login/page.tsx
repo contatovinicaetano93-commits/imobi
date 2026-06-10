@@ -30,7 +30,24 @@ function LoginForm() {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.message ?? "Credenciais inválidas");
-      router.push(next);
+
+      // Se há um `next` explícito na URL, honrá-lo sempre
+      if (searchParams.get("next")) {
+        router.push(next);
+        return;
+      }
+
+      // Redireciona por role
+      const me = await fetch("/api/auth/me").then((r) => r.ok ? r.json() : null).catch(() => null);
+      const role = me?.role ?? null;
+      const ROLE_HOME: Record<string, string> = {
+        ADMIN:      "/dashboard/admin",
+        GESTOR:     "/dashboard/gestor",
+        ENGENHEIRO: "/dashboard/engenheiro",
+        COMERCIAL:  "/dashboard/comercial",
+        CONSTRUTOR: "/dashboard/construtor",
+      };
+      router.push(ROLE_HOME[role] ?? "/dashboard");
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro inesperado.");
     }
