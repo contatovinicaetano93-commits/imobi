@@ -231,7 +231,7 @@ export default function ConstrutorPage() {
             <p className="text-gray-600 mb-4">Nenhuma obra registrada ainda</p>
             <Link
               href="/dashboard/obras"
-              className="inline-block bg-brand-600 text-white text-sm font-semibold px-6 py-2 rounded-lg hover:bg-brand-700 transition-colors"
+              className="inline-block bg-[#1B4FD8] text-white text-sm font-semibold px-6 py-2 rounded-lg hover:bg-blue-800 transition-colors"
             >
               Iniciar uma Obra
             </Link>
@@ -268,7 +268,7 @@ export default function ConstrutorPage() {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className="bg-brand-600 h-2 rounded-full transition-all"
+                        className="bg-[#16a34a] h-2 rounded-full transition-all"
                         style={{ width: `${obra.progresso}%` }}
                       />
                     </div>
@@ -278,7 +278,7 @@ export default function ConstrutorPage() {
                 {obra.credito && (
                   <div className="pt-4 border-t border-gray-100">
                     <p className="text-xs text-gray-500 mb-1">Crédito da Obra</p>
-                    <p className="text-sm font-bold text-brand-600">
+                    <p className="text-sm font-bold text-[#1B4FD8]">
                       {brl(obra.credito.valorLiberado)} / {brl(obra.credito.valorAprovado)}
                     </p>
                   </div>

@@ -105,7 +105,7 @@ export function QuickActions({ visita, onStatusUpdate }: QuickActionsProps) {
       {visita.status !== "CONCLUIDA" && (
         <button
           onClick={() => setShowRescheduleModal(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-brand-600 text-brand-600 rounded-lg hover:bg-brand-50 font-semibold transition-colors text-sm sm:text-base"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-[#1B4FD8] text-[#1B4FD8] rounded-lg hover:bg-blue-50 font-semibold transition-colors text-sm sm:text-base"
         >
           <Clock className="w-5 h-5" />
           Reagendar Visita
@@ -127,7 +127,7 @@ export function QuickActions({ visita, onStatusUpdate }: QuickActionsProps) {
                   type="date"
                   value={newDate}
                   onChange={(e) => setNewDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -139,7 +139,7 @@ export function QuickActions({ visita, onStatusUpdate }: QuickActionsProps) {
                   value={observacoes}
                   onChange={(e) => setObservacoes(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   placeholder="Motivo do reagendamento..."
                 />
               </div>
@@ -155,7 +155,7 @@ export function QuickActions({ visita, onStatusUpdate }: QuickActionsProps) {
               <button
                 onClick={handleReschedule}
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:bg-gray-400 font-semibold text-sm"
+                className="flex-1 px-4 py-2 bg-[#1B4FD8] text-white rounded-lg hover:bg-blue-800 disabled:bg-gray-400 font-semibold text-sm"
               >
                 {isLoading ? "Processando..." : "Confirmar"}
               </button>

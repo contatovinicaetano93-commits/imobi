@@ -34,9 +34,9 @@ export default function VistoriaPage({ params }: { params: { id: string; etapaId
   return (
     <div className="max-w-3xl space-y-8">
       <div className="text-sm text-gray-500 flex gap-2">
-        <a href="/dashboard/obras" className="hover:text-brand-600">Obras</a>
+        <a href="/dashboard/obras" className="hover:text-[#1B4FD8]">Obras</a>
         <span>/</span>
-        <a href={`/dashboard/obras/${params.id}`} className="hover:text-brand-600">{obra.nome}</a>
+        <a href={`/dashboard/obras/${params.id}`} className="hover:text-[#1B4FD8]">{obra.nome}</a>
         <span>/</span>
         <span className="text-gray-900 font-medium">Vistoria: {etapa.nome}</span>
       </div>
@@ -50,7 +50,7 @@ export default function VistoriaPage({ params }: { params: { id: string; etapaId
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-500 mb-1">Liberação ao aprovar</p>
-          <p className="text-2xl font-bold text-brand-600">{formatarBRL(Number(etapa.valorLiberacao))}</p>
+          <p className="text-2xl font-bold text-[#1B4FD8]">{formatarBRL(Number(etapa.valorLiberacao))}</p>
         </div>
       </div>
 

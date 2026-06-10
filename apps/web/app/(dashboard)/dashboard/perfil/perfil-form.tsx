@@ -70,7 +70,7 @@ export function PerfilForm({ usuario }: Props) {
           type="text"
           {...register("nome")}
           disabled={isPending}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none disabled:opacity-50"
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:opacity-50"
         />
         {errors.nome && (
           <p className="text-sm text-red-600 mt-1">{errors.nome.message}</p>
@@ -87,7 +87,7 @@ export function PerfilForm({ usuario }: Props) {
           {...register("telefone")}
           disabled={isPending}
           placeholder="(11) 99999-9999"
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none disabled:opacity-50"
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:opacity-50"
         />
         {errors.telefone && (
           <p className="text-sm text-red-600 mt-1">{errors.telefone.message}</p>
@@ -104,7 +104,8 @@ export function PerfilForm({ usuario }: Props) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full bg-brand-600 text-white font-semibold py-3 rounded-xl hover:bg-brand-700 disabled:opacity-50 transition-colors"
+        className="w-full text-white font-semibold py-3 rounded-xl disabled:opacity-50 transition-colors hover:opacity-90"
+        style={{ background: "#1B4FD8" }}
       >
         {isPending ? "Salvando..." : "Salvar Alterações"}
       </button>

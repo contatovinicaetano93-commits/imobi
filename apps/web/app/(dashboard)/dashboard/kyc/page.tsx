@@ -1,24 +1,34 @@
 "use client";
 
-
-
 import { useEffect, useState } from "react";
 import { kycApi, type KycStatus, type KycDocumento } from "@/lib/api";
+import { FileText, CheckCircle2, XCircle, Clock, Upload, AlertCircle } from "lucide-react";
+
+const BADGE: Record<string, { label: string; cls: string }> = {
+  PENDENTE:       { label: "Pendente",       cls: "bg-yellow-100 text-yellow-800" },
+  EM_VERIFICACAO: { label: "Em Verificação", cls: "bg-blue-100 text-blue-800" },
+  APROVADO:       { label: "Aprovado",       cls: "bg-green-100 text-green-800" },
+  REJEITADO:      { label: "Rejeitado",      cls: "bg-red-100 text-red-800" },
+};
+
+const DOC_TIPOS = [
+  { tipo: "RG_FRENTE",  label: "RG — Frente",       desc: "Documento de Identidade (frente)" },
+  { tipo: "RG_VERSO",   label: "RG — Verso",        desc: "Documento de Identidade (verso)" },
+  { tipo: "SELFIE",     label: "Selfie c/ documento", desc: "Foto sua segurando o documento" },
+  { tipo: "COMPROVANTE", label: "Comprovante de residência", desc: "Conta de luz, água ou banco" },
+];
 
 export default function KycPage() {
   const [status, setStatus] = useState<KycStatus | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadStatus();
-  }, []);
+  useEffect(() => { loadStatus(); }, []);
 
   const loadStatus = async () => {
     try {
-      const data = await kycApi.obterStatus();
-      setStatus(data);
+      setStatus(await kycApi.obterStatus());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar status KYC");
     } finally {
@@ -27,122 +37,137 @@ export default function KycPage() {
   };
 
   const handleUpload = async (tipo: string) => {
-    setUploading(true);
+    setUploading(tipo);
     setError(null);
     try {
-      // In real app, would upload file to S3 first and get URL
       const mockUrl = `https://s3.example.com/kyc/${tipo}-${Date.now()}.jpg`;
       await kycApi.uploadDocumento(tipo, mockUrl);
       await loadStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao fazer upload");
     } finally {
-      setUploading(false);
+      setUploading(null);
     }
   };
 
-  if (loading) return <div className="p-4">Carregando...</div>;
+  if (loading) {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <h1 className="text-2xl font-bold text-gray-900">Verificação de Identidade</h1>
+        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+          <p className="text-gray-400 text-sm">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const getStatusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      PENDENTE: "bg-yellow-100 text-yellow-800",
-      APROVADO: "bg-green-100 text-green-800",
-      REJEITADO: "bg-red-100 text-red-800",
-    };
-    return colors[status] || "bg-gray-100 text-gray-800";
-  };
+  const docs = status?.documentos ?? [];
+  const docMap = Object.fromEntries(docs.map((d: KycDocumento) => [d.tipo, d]));
+  const aprovados = status?.resumo.aprovados ?? 0;
+  const pendentes = status?.resumo.pendentes ?? 0;
+  const rejeitados = status?.resumo.rejeitados ?? 0;
+  const total = DOC_TIPOS.length;
+  const pct = Math.round((aprovados / total) * 100);
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-2">Verificação de Identidade (KYC)</h1>
-      <p className="text-gray-600 mb-6">
-        Envie seus documentos para completar a verificação de identidade.
-      </p>
+    <div className="max-w-2xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Verificação de Identidade</h1>
+        <p className="text-sm text-gray-500 mt-1">Envie seus documentos para desbloquear o crédito.</p>
+      </div>
 
-      {error && <div className="bg-red-50 text-red-700 p-3 rounded mb-6">{error}</div>}
+      {error && (
+        <div className="flex items-center gap-3 bg-red-50 border border-red-100 rounded-2xl px-4 py-3">
+          <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
 
-      {/* Status Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-blue-50 p-4 rounded">
-          <div className="text-sm text-gray-600">Status Geral</div>
-          <div className="text-lg font-bold">{status?.status === "NENHUM" ? "Pendente" : "Enviado"}</div>
+      {/* Progresso geral */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-900">Progresso</h2>
+          <span className="text-sm font-bold text-[#1B4FD8]">{aprovados}/{total} aprovados</span>
         </div>
-        <div className="bg-yellow-50 p-4 rounded">
-          <div className="text-sm text-gray-600">Pendentes</div>
-          <div className="text-lg font-bold">{status?.resumo.pendentes || 0}</div>
+        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden mb-4">
+          <div className="h-full bg-[#16a34a] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
         </div>
-        <div className="bg-green-50 p-4 rounded">
-          <div className="text-sm text-gray-600">Aprovados</div>
-          <div className="text-lg font-bold">{status?.resumo.aprovados || 0}</div>
-        </div>
-        <div className="bg-red-50 p-4 rounded">
-          <div className="text-sm text-gray-600">Rejeitados</div>
-          <div className="text-lg font-bold">{status?.resumo.rejeitados || 0}</div>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { icon: CheckCircle2, label: "Aprovados", value: aprovados, cls: "text-green-600", bg: "bg-green-50" },
+            { icon: Clock,        label: "Pendentes", value: pendentes, cls: "text-yellow-600", bg: "bg-yellow-50" },
+            { icon: XCircle,      label: "Rejeitados", value: rejeitados, cls: "text-red-500", bg: "bg-red-50" },
+          ].map(({ icon: Icon, label, value, cls, bg }) => (
+            <div key={label} className={`${bg} rounded-xl p-3 text-center`}>
+              <Icon className={`w-4 h-4 ${cls} mx-auto mb-1`} />
+              <p className={`text-lg font-bold ${cls}`}>{value}</p>
+              <p className="text-xs text-gray-500">{label}</p>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Documents List */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4">Documentos Enviados</h2>
-        {status?.documentos && status.documentos.length > 0 ? (
-          <div className="space-y-3">
-            {status.documentos.map((doc: KycDocumento) => (
-              <div key={doc.kycDocumentoId} className="border rounded p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold">{doc.tipo}</div>
-                    <div className="text-sm text-gray-600">
+      {/* Lista de documentos */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
+          <FileText className="w-4 h-4 text-gray-400" />
+          <h2 className="font-semibold text-gray-900">Documentos</h2>
+        </div>
+        <div className="divide-y divide-gray-50">
+          {DOC_TIPOS.map(({ tipo, label, desc }) => {
+            const doc: KycDocumento | undefined = docMap[tipo];
+            const badge = doc ? (BADGE[doc.status] ?? BADGE.PENDENTE) : null;
+            const isUploading = uploading === tipo;
+
+            return (
+              <div key={tipo} className="px-6 py-4 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-[#EEF3FF] flex items-center justify-center shrink-0">
+                  <FileText className="w-5 h-5 text-[#1B4FD8]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">{label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                  {doc?.motivo_rejeicao && (
+                    <p className="text-xs text-red-500 mt-1">Motivo: {doc.motivo_rejeicao}</p>
+                  )}
+                  {doc?.criadoEm && (
+                    <p className="text-xs text-gray-400 mt-0.5">
                       Enviado em {new Date(doc.criadoEm).toLocaleDateString("pt-BR")}
-                    </div>
-                    {doc.motivo_rejeicao && (
-                      <div className="text-sm text-red-600 mt-1">
-                        Motivo: {doc.motivo_rejeicao}
-                      </div>
-                    )}
-                  </div>
-                  <span className={`px-3 py-1 rounded text-sm font-medium ${getStatusBadge(doc.status)}`}>
-                    {doc.status}
-                  </span>
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {badge && (
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badge.cls}`}>
+                      {badge.label}
+                    </span>
+                  )}
+                  {(!doc || doc.status === "REJEITADO") && (
+                    <button
+                      onClick={() => handleUpload(tipo)}
+                      disabled={!!uploading}
+                      style={{ background: "#1B4FD8" }}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-white px-3 py-1.5 rounded-lg disabled:opacity-50 hover:opacity-90 transition-opacity"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      {isUploading ? "Enviando..." : "Enviar"}
+                    </button>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500">Nenhum documento enviado</p>
-        )}
-      </div>
-
-      {/* Upload Section */}
-      <div className="bg-gray-50 p-6 rounded">
-        <h2 className="text-xl font-semibold mb-4">Enviar Documentos</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Documentos requeridos: RG (frente e verso) e Selfie com documento
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button
-            onClick={() => handleUpload("RG")}
-            disabled={uploading}
-            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {uploading ? "Enviando..." : "Enviar RG"}
-          </button>
-          <button
-            onClick={() => handleUpload("Selfie")}
-            disabled={uploading}
-            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {uploading ? "Enviando..." : "Enviar Selfie"}
-          </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Info */}
-      <div className="mt-6 bg-blue-50 p-4 rounded text-sm">
-        <strong>Próximos passos:</strong>
-        <ul className="list-disc list-inside mt-2 text-gray-700">
-          <li>Seus documentos serão analisados em até 24 horas</li>
-          <li>Você receberá uma notificação quando forem aprovados ou rejeitados</li>
-          <li>Se rejeitado, você pode enviar novamente</li>
+      {/* Informações */}
+      <div className="bg-[#EEF3FF] rounded-2xl border border-blue-100 p-5">
+        <p className="text-sm font-semibold text-[#1B4FD8] mb-2">Como funciona</p>
+        <ul className="space-y-1.5 text-sm text-gray-600">
+          <li className="flex items-start gap-2"><span className="text-[#1B4FD8] font-bold mt-0.5">·</span>Documentos analisados em até 24 horas</li>
+          <li className="flex items-start gap-2"><span className="text-[#1B4FD8] font-bold mt-0.5">·</span>Você receberá uma notificação ao concluir</li>
+          <li className="flex items-start gap-2"><span className="text-[#1B4FD8] font-bold mt-0.5">·</span>Se rejeitado, é possível reenviar o documento</li>
+          <li className="flex items-start gap-2"><span className="text-[#1B4FD8] font-bold mt-0.5">·</span>Aprovação completa libera acesso total ao crédito</li>
         </ul>
       </div>
     </div>

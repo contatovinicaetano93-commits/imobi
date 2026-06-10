@@ -106,7 +106,7 @@ export function VisitQueue({ visits, onSelectVisit }: VisitQueueProps) {
                 className={`aspect-square rounded-lg border flex flex-col items-center justify-center text-xs font-semibold cursor-pointer transition-all ${
                   day
                     ? dayVisits.length > 0
-                      ? "bg-brand-50 border-brand-200 text-brand-900 hover:bg-brand-100"
+                      ? "bg-blue-50 border-blue-200 text-gray-900 hover:bg-blue-100"
                       : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
                     : "bg-white border-transparent"
                 }`}
@@ -115,7 +115,7 @@ export function VisitQueue({ visits, onSelectVisit }: VisitQueueProps) {
                   <>
                     <span>{day}</span>
                     {dayVisits.length > 0 && (
-                      <span className="text-xs mt-0.5 bg-brand-600 text-white px-1 rounded">
+                      <span className="text-xs mt-0.5 bg-[#1B4FD8] text-white px-1 rounded">
                         {dayVisits.length}
                       </span>
                     )}
@@ -135,7 +135,7 @@ export function VisitQueue({ visits, onSelectVisit }: VisitQueueProps) {
                 <button
                   key={visit.visitaId}
                   onClick={() => onSelectVisit(visit.visitaId)}
-                  className="w-full text-left p-2 rounded-lg bg-gray-50 hover:bg-brand-50 transition-colors text-xs sm:text-sm"
+                  className="w-full text-left p-2 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors text-xs sm:text-sm"
                 >
                   <div className="font-semibold text-gray-900">{visit.obra.nome}</div>
                   <div className="text-gray-600">
@@ -172,7 +172,7 @@ export function VisitQueue({ visits, onSelectVisit }: VisitQueueProps) {
             <button
               key={visit.visitaId}
               onClick={() => onSelectVisit(visit.visitaId)}
-              className="w-full text-left p-4 rounded-lg border border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-all"
+              className="w-full text-left p-4 rounded-lg border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">

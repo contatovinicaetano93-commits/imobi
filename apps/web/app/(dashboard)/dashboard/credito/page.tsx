@@ -100,6 +100,13 @@ export default async function CreditoPage() {
             {creditos.length} crédito{creditos.length !== 1 ? "s" : ""} encontrado{creditos.length !== 1 ? "s" : ""}
           </p>
         </div>
+        <Link
+          href="/dashboard/credito/solicitar"
+          className="ml-auto inline-flex items-center gap-2 bg-[#1B4FD8] hover:bg-blue-800 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all"
+        >
+          <CreditCard className="w-4 h-4" />
+          Solicitar Crédito
+        </Link>
       </div>
 
       {creditos.map((credito) => {

@@ -43,7 +43,7 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
         value={obs}
         onChange={(e) => setObs(e.target.value)}
         placeholder="Observações (opcional)..."
-        className="w-full border border-gray-200 rounded-xl p-3 text-sm text-gray-700 resize-none outline-none focus:ring-2 focus:ring-brand-500"
+        className="w-full border border-gray-200 rounded-xl p-3 text-sm text-gray-700 resize-none outline-none focus:ring-2 focus:ring-blue-500"
         rows={3}
       />
 
@@ -53,7 +53,8 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
         <button
           onClick={() => acao(true)}
           disabled={isPending}
-          className="flex-1 bg-brand-600 text-white font-semibold py-3 rounded-xl hover:bg-brand-700 disabled:opacity-50 transition-colors"
+          className="flex-1 text-white font-semibold py-3 rounded-xl disabled:opacity-50 transition-colors"
+          style={{ background: "#16a34a" }}
         >
           ✓ Aprovar etapa
         </button>

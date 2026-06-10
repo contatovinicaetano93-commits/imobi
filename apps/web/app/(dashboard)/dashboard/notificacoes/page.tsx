@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Route } from "next";
 import {
   Bell,
   BellOff,
@@ -69,7 +70,7 @@ export default function NotificacoesPage() {
       );
     }
     if (notificacao.link) {
-      router.push(notificacao.link);
+      router.push(notificacao.link as Route);
     }
   }
 

@@ -85,11 +85,11 @@ export function ReportExport({
   };
 
   return (
-    <div className="bg-gradient-to-r from-brand-50 to-brand-100 rounded-2xl border border-brand-200 p-6">
+    <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border border-blue-200 p-6">
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold text-brand-900 mb-2">Exportar Relatório</h3>
-          <p className="text-sm text-brand-700">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Exportar Relatório</h3>
+          <p className="text-sm text-blue-700">
             Baixe um relatório completo do seu portfólio em diferentes formatos
           </p>
         </div>
@@ -98,7 +98,7 @@ export function ReportExport({
           <button
             onClick={handleCSVExport}
             disabled={isExporting}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-brand-700 border border-brand-300 rounded-lg hover:bg-brand-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-blue-700 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >
             {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             Exportar CSV
@@ -107,7 +107,7 @@ export function ReportExport({
           <button
             onClick={handleJSONExport}
             disabled={isExporting}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-brand-700 border border-brand-300 rounded-lg hover:bg-brand-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-blue-700 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >
             {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             Exportar JSON
@@ -116,14 +116,15 @@ export function ReportExport({
           <button
             onClick={handlePDFExport}
             disabled={isExporting}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="flex items-center justify-center gap-2 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium hover:opacity-90"
+            style={{ background: "#1B4FD8" }}
           >
             {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             Imprimir/PDF
           </button>
         </div>
 
-        <p className="text-xs text-brand-600 mt-3">
+        <p className="text-xs text-[#1B4FD8] mt-3">
           Os relatórios contêm informações consolidadas de todos os seus fundos, ROI esperado vs real, distribuição regional e análise de risco.
         </p>
       </div>

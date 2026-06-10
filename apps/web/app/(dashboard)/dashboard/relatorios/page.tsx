@@ -215,7 +215,7 @@ export default function RelatoriosPage() {
                 </span>
                 <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
                   <div
-                    className="h-full bg-brand-500 rounded-full transition-all flex items-center justify-end pr-2"
+                    className="h-full bg-[#16a34a] rounded-full transition-all flex items-center justify-end pr-2"
                     style={{ width: `${Math.max(4, (item.score / maxScore) * 100)}%` }}
                   >
                     <span className="text-xs font-bold text-white">{item.score}</span>

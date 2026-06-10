@@ -133,7 +133,7 @@ export default async function FundosPage() {
             </p>
             <a
               href="/dashboard/gestor/etapas"
-              className="inline-block text-sm text-brand-600 font-medium hover:text-brand-700"
+              className="inline-block text-sm text-[#1B4FD8] font-medium hover:text-[#1638a8]"
             >
               Ver fila →
             </a>
