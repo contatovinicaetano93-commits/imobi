@@ -60,14 +60,24 @@ export class ScoreService {
 
   async buscarScoreAtual(usuarioId: string) {
     const score = await this.calcularScore(usuarioId);
-    const ultimo = await this.prisma.scoreHistorico.findFirst({
-      where: { usuarioId },
-      orderBy: { criadoEm: "desc" },
-    });
-    if (!ultimo || ultimo.score !== score) {
-      await this.prisma.scoreHistorico.create({
-        data: { usuarioId, score, motivo: "Cálculo automático" },
-      });
+    try {
+      await this.prisma.$transaction(
+        async (tx) => {
+          const ultimo = await tx.scoreHistorico.findFirst({
+            where: { usuarioId },
+            orderBy: { criadoEm: "desc" },
+          });
+          if (!ultimo || ultimo.score !== score) {
+            await tx.scoreHistorico.create({
+              data: { usuarioId, score, motivo: "Cálculo automático" },
+            });
+          }
+        },
+        { isolationLevel: "Serializable" },
+      );
+    } catch (e: any) {
+      // P2034 = serialization conflict: a concurrent request already recorded the same score
+      if (e?.code !== "P2034") throw e;
     }
     return score;
   }
