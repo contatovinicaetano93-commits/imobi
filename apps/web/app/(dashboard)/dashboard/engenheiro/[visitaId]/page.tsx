@@ -315,7 +315,7 @@ export default function VisitDetailPage() {
               </div>
             )}
 
-            <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${uploading ? "border-gray-200 bg-gray-50 cursor-not-allowed" : "border-blue-300 hover:border-brand-500 hover:bg-blue-50"}`}>
+            <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${uploading ? "border-gray-200 bg-gray-50 cursor-not-allowed" : "border-blue-300 hover:border-[#16a34a] hover:bg-blue-50"}`}>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -327,7 +327,7 @@ export default function VisitDetailPage() {
               />
               {uploading ? (
                 <div className="text-center">
-                  <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <div className="w-8 h-8 border-2 border-[#16a34a] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                   <p className="text-sm text-gray-500">Obtendo GPS e enviando...</p>
                 </div>
               ) : (

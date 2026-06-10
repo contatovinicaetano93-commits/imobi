@@ -2,46 +2,85 @@
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  Home,
+  HardHat,
+  CreditCard,
+  Calculator,
+  Star,
+  FileCheck2,
+  Bell,
+  User,
+  Wrench,
+  ShieldCheck,
+  BarChart3,
+  Banknote,
+  Megaphone,
+  Settings,
+  LogOut,
+  ChevronRight,
+  Building2,
+} from "lucide-react";
+
+type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "TOMADOR" | "COMERCIAL" | "CONSTRUTOR" | null;
+
+type NavItem = {
+  label: string;
+  href: string;
+  icon: React.FC<{ size?: number; strokeWidth?: number; className?: string }>;
+  roles: UserRole[];
+  section?: string;
+};
 
 const WA = "5511993455589";
 
-const NAV_ITEMS = [
-  // Tomador
-  { label: "Início",          href: "/dashboard",              icon: "⬡" },
-  { label: "Minhas Obras",    href: "/dashboard/obras",        icon: "🏗" },
-  { label: "Crédito",         href: "/dashboard/credito",      icon: "💳" },
-  { label: "Simulador",       href: "/dashboard/simulador",    icon: "📊" },
-  { label: "Score",           href: "/dashboard/score",        icon: "⭐" },
-  { label: "Documentos KYC", href: "/dashboard/kyc",          icon: "📋" },
-  { label: "Notificações",    href: "/dashboard/notificacoes", icon: "🔔" },
-  { label: "Perfil",          href: "/dashboard/perfil",       icon: "👤" },
+const NAV: NavItem[] = [
+  // Tomador / universal
+  { label: "Início",          href: "/dashboard",              icon: Home,        roles: ["TOMADOR", "ADMIN", "CONSTRUTOR", null], section: "geral" },
+  { label: "Minhas Obras",    href: "/dashboard/obras",        icon: HardHat,     roles: ["TOMADOR", "ADMIN", "CONSTRUTOR"] },
+  { label: "Crédito",         href: "/dashboard/credito",      icon: CreditCard,  roles: ["TOMADOR", "ADMIN"] },
+  { label: "Simulador",       href: "/dashboard/simulador",    icon: Calculator,  roles: ["TOMADOR", "ADMIN"] },
+  { label: "Score",           href: "/dashboard/score",        icon: Star,        roles: ["TOMADOR", "ADMIN"] },
+  { label: "Documentos",      href: "/dashboard/kyc",          icon: FileCheck2,  roles: ["TOMADOR", "ADMIN"] },
+  { label: "Notificações",    href: "/dashboard/notificacoes", icon: Bell,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
+  { label: "Perfil",          href: "/dashboard/perfil",       icon: User,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
   // Operacional
-  { label: "Engenheiro",      href: "/dashboard/engenheiro",   icon: "🔧" },
-  { label: "Painel Gestor",   href: "/dashboard/gestor",       icon: "🛡" },
-  { label: "Relatórios",      href: "/dashboard/relatorios",   icon: "📈" },
-  { label: "Fundos",          href: "/dashboard/fundos",       icon: "💰" },
-  { label: "Comercial",       href: "/dashboard/comercial",    icon: "📣" },
+  { label: "Vistorias",       href: "/dashboard/engenheiro",   icon: Wrench,      roles: ["ENGENHEIRO", "ADMIN"],    section: "operacional" },
+  { label: "Painel Gestor",   href: "/dashboard/gestor",       icon: ShieldCheck, roles: ["GESTOR", "ADMIN"] },
+  { label: "Fundos",          href: "/dashboard/fundos",       icon: Banknote,    roles: ["GESTOR", "ADMIN"] },
+  { label: "Relatórios",      href: "/dashboard/relatorios",   icon: BarChart3,   roles: ["GESTOR", "ADMIN"] },
+  { label: "Comercial",       href: "/dashboard/comercial",    icon: Megaphone,   roles: ["COMERCIAL", "ADMIN"] },
+  { label: "Construtor",      href: "/dashboard/construtor",   icon: Building2,   roles: ["CONSTRUTOR", "ADMIN"] },
   // Admin
-  { label: "Admin",           href: "/dashboard/admin",        icon: "⚙️" },
+  { label: "Administração",   href: "/dashboard/admin",        icon: Settings,    roles: ["ADMIN"],                  section: "admin" },
 ];
 
-function LogoMark({ size = 28, white = false }: { size?: number; white?: boolean }) {
-  const color = white ? "rgba(255,255,255,0.9)" : "var(--blue, #1B4FD8)";
-  const border = white ? "2px solid rgba(255,255,255,0.6)" : "2px solid #1B4FD8";
+const SECTION_LABELS: Record<string, string> = {
+  geral:       "Geral",
+  operacional: "Operacional",
+  admin:       "Sistema",
+};
+
+function filterNav(role: UserRole): NavItem[] {
+  return NAV.filter((item) => item.roles.includes(role));
+}
+
+function Logo({ size = 28, white = false }: { size?: number; white?: boolean }) {
+  const fill = white ? "rgba(255,255,255,0.92)" : "#1B4FD8";
+  const border = white ? "rgba(255,255,255,0.35)" : "#1B4FD8";
   return (
     <div style={{
-      width: size, height: size,
-      border,
-      borderRadius: 6, display: "grid",
+      width: size, height: size, border: `1.5px solid ${border}`,
+      borderRadius: 7, display: "grid",
       gridTemplateColumns: "1fr 1fr 1fr",
       gridTemplateRows: "1fr 1fr 1fr",
-      gap: 2, padding: 4, flexShrink: 0,
+      gap: 2.5, padding: 4.5, flexShrink: 0,
     }}>
       {[0,1,2,3,4,5,6,7,8].map((i) => (
         <span key={i} style={{
-          background: [1,3,5,7].includes(i) ? "transparent" : color,
-          borderRadius: 1, display: "block",
+          background: [1,3,5,7].includes(i) ? "transparent" : fill,
+          borderRadius: 1.5, display: "block",
         }} />
       ))}
     </div>
@@ -51,150 +90,222 @@ function LogoMark({ size = 28, white = false }: { size?: number; white?: boolean
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const path = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [role, setRole] = useState<UserRole>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.ok ? r.json() : null)
+      .catch(() => null)
+      .then((d) => {
+        if (d?.authenticated) {
+          setRole(d.role ?? null);
+          setUserName(d.nome ?? null);
+          setUserEmail(d.email ?? null);
+        }
+      });
+  }, []);
+
+  const visibleNav = filterNav(role);
 
   const isActive = (href: string) =>
     href === "/dashboard" ? path === href : path.startsWith(href);
 
+  function NavList({ onNavigate }: { onNavigate?: () => void }) {
+    let lastSection = "";
+    return (
+      <>
+        {visibleNav.map((item) => {
+          const active = isActive(item.href);
+          const showSection = item.section && item.section !== lastSection;
+          if (item.section) lastSection = item.section;
+          const Icon = item.icon;
+          return (
+            <div key={item.href}>
+              {showSection && (
+                <p style={{
+                  fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em",
+                  textTransform: "uppercase", color: "rgba(255,255,255,0.35)",
+                  padding: "1.1rem 0.75rem 0.4rem",
+                }}>
+                  {SECTION_LABELS[item.section!]}
+                </p>
+              )}
+              <a
+                href={item.href}
+                onClick={onNavigate}
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.65rem",
+                  padding: "0.5rem 0.75rem",
+                  borderRadius: 10,
+                  fontSize: "0.82rem",
+                  fontWeight: active ? 600 : 400,
+                  letterSpacing: active ? "-0.01em" : "0",
+                  color: active ? "#ffffff" : "rgba(255,255,255,0.55)",
+                  background: active ? "rgba(255,255,255,0.12)" : "transparent",
+                  textDecoration: "none",
+                  transition: "all 0.12s",
+                  borderLeft: active ? "2.5px solid #16a34a" : "2.5px solid transparent",
+                  paddingLeft: active ? "0.65rem" : "0.75rem",
+                  position: "relative",
+                }}
+              >
+                <Icon size={14} strokeWidth={active ? 2.2 : 1.8} />
+                {item.label}
+                {active && (
+                  <ChevronRight size={11} style={{ marginLeft: "auto", opacity: 0.6 }} />
+                )}
+              </a>
+            </div>
+          );
+        })}
+      </>
+    );
+  }
+
+  const initials = userName
+    ? userName.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()
+    : "?";
+
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F0F5FF", fontFamily: "Inter, sans-serif" }}>
-      {/* ── Sidebar desktop ── */}
+    <div style={{ display: "flex", minHeight: "100vh", background: "#F0F5FF", fontFamily: "'Inter', system-ui, sans-serif" }}>
+
+      {/* Sidebar desktop */}
       <aside style={{
-        width: 232, flexShrink: 0,
+        width: 220, flexShrink: 0,
         display: "none",
         flexDirection: "column",
-        padding: "1.5rem 1rem",
-        gap: 2,
         background: "#1B4FD8",
         minHeight: "100vh",
-        position: "sticky",
-        top: 0,
+        position: "sticky", top: 0,
         alignSelf: "flex-start",
       }}
         className="md-sidebar"
       >
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "2rem", textDecoration: "none" }}>
-          <LogoMark size={26} white />
-          <span style={{ color: "white", fontWeight: 700, fontSize: "1rem", letterSpacing: "-0.02em" }}>IMOBI</span>
-        </a>
+        {/* Logo */}
+        <div style={{ padding: "1.5rem 1rem 0.75rem" }}>
+          <a href="/" style={{ display: "flex", alignItems: "center", gap: "0.55rem", textDecoration: "none" }}>
+            <Logo size={24} white />
+            <span style={{ color: "white", fontWeight: 700, fontSize: "0.95rem", letterSpacing: "-0.03em" }}>IMOBI</span>
+          </a>
+        </div>
 
-        <nav style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
-          {NAV_ITEMS.map((item) => {
-            const active = isActive(item.href);
-            return (
-              <a
-                key={item.href}
-                href={item.href}
-                style={{
-                  display: "flex", alignItems: "center", gap: "0.6rem",
-                  padding: "0.55rem 0.85rem", borderRadius: 10,
-                  fontSize: "0.83rem", fontWeight: active ? 600 : 500,
-                  color: active ? "#1B4FD8" : "rgba(255,255,255,0.78)",
-                  background: active ? "#22C55E" : "transparent",
-                  textDecoration: "none", transition: "all 0.15s",
-                }}
-              >
-                <span style={{ fontSize: "0.95rem", lineHeight: 1 }}>{item.icon}</span>
-                {item.label}
-              </a>
-            );
-          })}
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: "0 0.5rem", overflowY: "auto" }}>
+          <NavList />
         </nav>
 
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: "1rem", marginTop: "0.5rem" }}>
-          <a href="/" style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.45)", textDecoration: "none" }}>
-            ← Voltar ao site
+        {/* User footer */}
+        <div style={{
+          borderTop: "1px solid rgba(255,255,255,0.1)",
+          padding: "0.85rem 1rem",
+          display: "flex", alignItems: "center", gap: "0.6rem",
+        }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: "50%",
+            background: "rgba(22,163,74,0.25)",
+            border: "1.5px solid rgba(22,163,74,0.5)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "0.65rem", fontWeight: 700, color: "#4ade80", flexShrink: 0,
+          }}>
+            {initials}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: "0.74rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {userName ?? "Usuário"}
+            </p>
+            <p style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {userEmail ?? role ?? ""}
+            </p>
+          </div>
+          <a
+            href="/api/auth/session"
+            onClick={async (e) => {
+              e.preventDefault();
+              await fetch("/api/auth/session", { method: "DELETE" });
+              window.location.href = "/login";
+            }}
+            title="Sair"
+            style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }}
+          >
+            <LogOut size={13} />
           </a>
         </div>
       </aside>
 
-      {/* ── Mobile header ── */}
+      {/* Mobile header */}
       <div style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        height: 56, background: "#1B4FD8",
+        height: 52, background: "#1B4FD8",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 1rem",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
       }}
         className="md-hidden"
       >
         <a href="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none" }}>
-          <LogoMark size={22} white />
-          <span style={{ color: "white", fontWeight: 700, fontSize: "0.95rem" }}>IMOBI</span>
+          <Logo size={20} white />
+          <span style={{ color: "white", fontWeight: 700, fontSize: "0.9rem", letterSpacing: "-0.03em" }}>IMOBI</span>
         </a>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Menu"
-          style={{ background: "none", border: "none", cursor: "pointer", color: "white", padding: "0.4rem", display: "flex", flexDirection: "column", gap: 5 }}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: "0.4rem", display: "flex", flexDirection: "column", gap: 4.5 }}
         >
-          <span style={{ display: "block", width: 22, height: 2, background: "white", borderRadius: 2, transition: "all 0.2s", transform: mobileOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
-          <span style={{ display: "block", width: 22, height: 2, background: "white", borderRadius: 2, transition: "all 0.2s", opacity: mobileOpen ? 0 : 1 }} />
-          <span style={{ display: "block", width: 22, height: 2, background: "white", borderRadius: 2, transition: "all 0.2s", transform: mobileOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
+          <span style={{ display: "block", width: 20, height: 1.5, background: "rgba(255,255,255,0.8)", borderRadius: 2, transition: "all 0.2s", transform: mobileOpen ? "rotate(45deg) translate(4.5px,4.5px)" : "none" }} />
+          <span style={{ display: "block", width: 20, height: 1.5, background: "rgba(255,255,255,0.8)", borderRadius: 2, transition: "all 0.2s", opacity: mobileOpen ? 0 : 1 }} />
+          <span style={{ display: "block", width: 20, height: 1.5, background: "rgba(255,255,255,0.8)", borderRadius: 2, transition: "all 0.2s", transform: mobileOpen ? "rotate(-45deg) translate(4.5px,-4.5px)" : "none" }} />
         </button>
       </div>
 
-      {/* ── Mobile drawer ── */}
+      {/* Mobile drawer */}
       {mobileOpen && (
         <>
-          <div
-            onClick={() => setMobileOpen(false)}
-            style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)", zIndex: 150 }}
-          />
+          <div onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", zIndex: 150 }} />
           <div style={{
-            position: "fixed", top: 56, left: 0, bottom: 0, width: 240,
-            background: "#1B4FD8", zIndex: 200, padding: "1rem",
-            overflowY: "auto", display: "flex", flexDirection: "column", gap: 2,
+            position: "fixed", top: 52, left: 0, bottom: 0, width: 230,
+            background: "#1B4FD8", zIndex: 200,
+            overflowY: "auto", display: "flex", flexDirection: "column",
           }}>
-            {NAV_ITEMS.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "0.6rem",
-                    padding: "0.65rem 0.9rem", borderRadius: 10,
-                    fontSize: "0.88rem", fontWeight: active ? 600 : 500,
-                    color: active ? "#1B4FD8" : "rgba(255,255,255,0.82)",
-                    background: active ? "#22C55E" : "transparent",
-                    textDecoration: "none",
-                  }}
-                >
-                  <span>{item.icon}</span>
-                  {item.label}
-                </a>
-              );
-            })}
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: "1rem", marginTop: "auto" }}>
-              <a href="/" style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.45)", textDecoration: "none" }}>
-                ← Voltar ao site
-              </a>
+            <nav style={{ flex: 1, padding: "0.5rem 0.5rem 0" }}>
+              <NavList onNavigate={() => setMobileOpen(false)} />
+            </nav>
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", padding: "0.85rem 1rem", display: "flex", alignItems: "center", gap: "0.6rem" }}>
+              <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(22,163,74,0.25)", border: "1.5px solid rgba(22,163,74,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: 700, color: "#4ade80", flexShrink: 0 }}>
+                {initials}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{userName ?? "Usuário"}</p>
+                <p style={{ fontSize: "0.63rem", color: "rgba(255,255,255,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{userEmail ?? role ?? ""}</p>
+              </div>
             </div>
           </div>
         </>
       )}
 
-      {/* ── Main content ── */}
+      {/* Main */}
       <main style={{ flex: 1, overflow: "auto", padding: "2rem" }} className="main-content">
-        <div style={{ height: 56 }} className="md-spacer" />
+        <div style={{ height: 52 }} className="md-spacer" />
         {children}
       </main>
 
-      {/* ── WhatsApp flutuante ── */}
+      {/* WhatsApp flutuante */}
       <a
         href={`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20IMOBI.`}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Fale conosco no WhatsApp"
+        aria-label="Suporte via WhatsApp"
         style={{
           position: "fixed", bottom: 24, right: 24,
-          width: 48, height: 48, borderRadius: "50%",
+          width: 44, height: 44, borderRadius: "50%",
           backgroundColor: "#25D366", display: "flex",
           alignItems: "center", justifyContent: "center",
-          boxShadow: "0 4px 14px rgba(37,211,102,0.4)",
-          zIndex: 50, textDecoration: "none", color: "white",
+          boxShadow: "0 4px 16px rgba(37,211,102,0.35)",
+          zIndex: 50, textDecoration: "none",
         }}
       >
-        <svg viewBox="0 0 24 24" fill="white" width={24} height={24}>
+        <svg viewBox="0 0 24 24" fill="white" width={22} height={22}>
           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
         </svg>
       </a>
@@ -205,6 +316,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           .md-hidden { display: none !important; }
           .md-spacer { display: none !important; }
           .main-content { padding: 2rem !important; }
+        }
+        nav a:hover:not([style*="rgba(255,255,255,0.12"]) {
+          background: rgba(255,255,255,0.06) !important;
+          color: rgba(255,255,255,0.82) !important;
         }
       `}</style>
     </div>
