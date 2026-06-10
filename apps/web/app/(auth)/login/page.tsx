@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
+import type { Route } from "next";
 import { useState, Suspense } from "react";
 import { LoginSchema, type LoginInput } from "@imbobi/schemas";
 
@@ -11,7 +12,6 @@ const WA = "5511993455589";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/dashboard";
   const [erro, setErro] = useState<string | null>(null);
 
   const {
@@ -31,16 +31,17 @@ function LoginForm() {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.message ?? "Credenciais inválidas");
 
-      // Se há um `next` explícito na URL, honrá-lo sempre
-      if (searchParams.get("next")) {
-        router.push(next);
+      // Se há um `next` explícito na URL, honrá-lo (apenas caminhos internos)
+      const nextParam = searchParams.get("next");
+      if (nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")) {
+        router.push(nextParam as Route);
         return;
       }
 
       // Redireciona por role
       const me = await fetch("/api/auth/me").then((r) => r.ok ? r.json() : null).catch(() => null);
-      const role = me?.role ?? null;
-      const ROLE_HOME: Record<string, string> = {
+      const role: string = me?.role ?? "";
+      const ROLE_HOME: Record<string, Route> = {
         ADMIN:      "/dashboard/admin",
         GESTOR:     "/dashboard/gestor",
         ENGENHEIRO: "/dashboard/engenheiro",

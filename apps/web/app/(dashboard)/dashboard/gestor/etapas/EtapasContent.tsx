@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import type { Route } from "next";
 import { managerApi, type EtapaPendente } from "@/lib/api";
 import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions";
 import { AdvancedFilters, type FilterState } from "@/components/dashboard/AdvancedFilters";
@@ -165,7 +166,7 @@ export default function EtapasContent() {
             params.set("priority", newFilters.priority);
           }
           const queryString = params.toString();
-          router.push(`?${queryString}`);
+          router.push(`?${queryString}` as Route);
         }}
         onReset={() => {
           setFilters({ status: "todas", dataInicio: "", dataFim: "", obraType: "", priority: "todas" });
