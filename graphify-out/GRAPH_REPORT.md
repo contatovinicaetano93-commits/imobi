@@ -1,15 +1,16 @@
-# Graph Report - /home/user/imobi  (2026-06-10)
+# Graph Report - imobi  (2026-06-10)
 
 ## Corpus Check
-- cluster-only mode — file stats not available
+- 283 files · ~121,173 words
+- Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1295 nodes · 2055 edges · 141 communities (92 shown, 49 thin omitted)
+- 1312 nodes · 2069 edges · 145 communities (91 shown, 54 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 21 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b08cf227`
+- Built from commit: `8685ae0c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -90,6 +91,7 @@
 - [[_COMMUNITY_Community 73|Community 73]]
 - [[_COMMUNITY_Community 74|Community 74]]
 - [[_COMMUNITY_Community 75|Community 75]]
+- [[_COMMUNITY_Community 76|Community 76]]
 - [[_COMMUNITY_Community 77|Community 77]]
 - [[_COMMUNITY_Community 78|Community 78]]
 - [[_COMMUNITY_Community 79|Community 79]]
@@ -136,6 +138,9 @@
 - [[_COMMUNITY_Community 131|Community 131]]
 - [[_COMMUNITY_Community 133|Community 133]]
 - [[_COMMUNITY_Community 134|Community 134]]
+- [[_COMMUNITY_Community 142|Community 142]]
+- [[_COMMUNITY_Community 143|Community 143]]
+- [[_COMMUNITY_Community 144|Community 144]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `PrismaService` - 62 edges
@@ -154,17 +159,17 @@
   apps/mobile/app/(tabs)/obras/[id]/index.tsx → packages/core/src/utils/formatters.ts
 - `SolicitarForm()` --calls--> `formatarBRL()`  [INFERRED]
   apps/web/app/(dashboard)/dashboard/credito/solicitar/page.tsx → packages/core/src/utils/formatters.ts
+- `DashboardPage()` --calls--> `formatarBRL()`  [INFERRED]
+  apps/web/app/(dashboard)/dashboard/page.tsx → packages/core/src/utils/formatters.ts
 - `CreditoScreen()` --calls--> `formatarBRL()`  [INFERRED]
   apps/mobile/app/(tabs)/credito/index.tsx → packages/core/src/utils/formatters.ts
 - `QuickSimulator()` --calls--> `formatarBRL()`  [INFERRED]
   apps/web/app/(dashboard)/_components/QuickSimulator.tsx → packages/core/src/utils/formatters.ts
-- `FundosPage()` --calls--> `formatarBRL()`  [INFERRED]
-  apps/web/app/(dashboard)/dashboard/fundos/page.tsx → packages/core/src/utils/formatters.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (141 total, 49 thin omitted)
+## Communities (145 total, 54 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.08
@@ -183,20 +188,20 @@ Cohesion: 0.07
 Nodes (5): ComercialController, ComercialService, ConversionScoringService, Roles(), RolesGuard
 
 ### Community 4 - "Community 4"
-Cohesion: 0.13
-Nodes (17): getApp(), ComercialModule, CreditoModule, EmailModule, EtapasModule, KycModule, ManagerModule, MarketplaceModule (+9 more)
+Cohesion: 0.24
+Nodes (9): ETAPA_STATUS_MAP, EmailModule, EtapasModule, KycModule, ManagerModule, CACHE_KEYS, NotificacoesModule, PushNotificacoesModule (+1 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.14
-Nodes (5): JwtPayload, PrismaService, AppModule, LoadTestConfig, PerformanceMetric
+Cohesion: 0.10
+Nodes (14): ComercialModule, CreditoModule, EngenheirosModule, MarketplaceModule, ProductionMiddleware, ParceirosModule, PrismaModule, PrismaService (+6 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.08
 Nodes (21): brl(), ConstrutorPage(), brl(), CreditComparisonProps, CreditSimulator(), percent(), NotificationFeed(), getScoreColor() (+13 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.12
-Nodes (20): aggregateByRegion(), calculateInadimplenciaRate(), calculateRoiTimeline(), generateCSVReport(), InadimplenciaDataPoint, PortfolioPerformance, RegionalMetrics, RoiDataPoint (+12 more)
+Cohesion: 0.16
+Nodes (18): aggregateByRegion(), calculateInadimplenciaRate(), calculateRoiTimeline(), generateCSVReport(), InadimplenciaDataPoint, PortfolioPerformance, RegionalMetrics, RoiDataPoint (+10 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.12
@@ -214,10 +219,6 @@ Nodes (24): AddLeadActivityInput, AddLeadActivitySchema, ConversionScore, Conver
 Cohesion: 0.10
 Nodes (17): creditoApi, obrasApi, scoreApi, UsuarioPerfil, usuariosApi, BADGE, DOC_TIPOS, ApiError (+9 more)
 
-### Community 12 - "Community 12"
-Cohesion: 0.11
-Nodes (4): AuthController, AuthModule, AuthService, JwtStrategy
-
 ### Community 13 - "Community 13"
 Cohesion: 0.15
 Nodes (3): EmailService, ExcluirUsuarioJob, ExcluirUsuarioWorker
@@ -232,15 +233,19 @@ Nodes (3): EtapasController, EtapasService, KycService
 
 ### Community 16 - "Community 16"
 Cohesion: 0.12
-Nodes (13): metadata, STATUS_BADGE, STATUS_LABEL, GpsState, STATUS_LABEL, STATUS_STYLE, UploadState, EtapaResumo (+5 more)
+Nodes (11): metadata, DashboardPage(), metadata, STATUS_BADGE, STATUS_LABEL, GpsState, STATUS_LABEL, STATUS_STYLE (+3 more)
+
+### Community 17 - "Community 17"
+Cohesion: 0.28
+Nodes (3): JwtAuthGuard, AprovarDto, RejeitarDto
 
 ### Community 18 - "Community 18"
 Cohesion: 0.12
 Nodes (10): baseInputStyle, cardStyle, fieldErrorStyle, inputErrorStyle, inputStyle, labelStyle, linkStyle, pageStyle (+2 more)
 
 ### Community 19 - "Community 19"
-Cohesion: 0.14
-Nodes (4): ETAPAS_PADRAO, ObrasController, ObrasModule, ObrasService
+Cohesion: 0.12
+Nodes (5): ETAPAS_PADRAO, ObrasController, ObrasModule, ObrasService, ZodPipe
 
 ### Community 21 - "Community 21"
 Cohesion: 0.42
@@ -275,12 +280,8 @@ Cohesion: 0.13
 Nodes (14): CadastroUsuarioInput, CadastroUsuarioSchema, EsqueceuSenhaInput, EsqueceuSenhaSchema, KycStatus, KycStatusEnum, LoginInput, LoginSchema (+6 more)
 
 ### Community 29 - "Community 29"
-Cohesion: 0.22
-Nodes (8): DynamicVisitQueueClient(), DynamicVisitQueueClientProps, QuickActionsProps, VisitQueue(), VisitQueueProps, metadata, engenheirosApi, Visita
-
-### Community 30 - "Community 30"
-Cohesion: 0.21
-Nodes (3): EngenheirosController, EngenheirosModule, EngenheirosService
+Cohesion: 0.17
+Nodes (12): DynamicVisitQueueClient(), DynamicVisitQueueClientProps, QuickActionsProps, VisitQueue(), VisitQueueProps, metadata, engenheirosApi, Visita (+4 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.49
@@ -291,8 +292,8 @@ Cohesion: 0.29
 Nodes (12): cutover-health-check.sh script, check_api_health(), check_database(), check_dns(), check_redis(), check_s3(), check_web(), determine_status() (+4 more)
 
 ### Community 34 - "Community 34"
-Cohesion: 0.20
-Nodes (9): QuickSimulator(), QuickSimulatorProps, DashboardPage(), AprovarEtapaForm(), Props, VistoriaPage(), ObraDetailPage(), EvidenciaDetalhe (+1 more)
+Cohesion: 0.22
+Nodes (8): QuickSimulator(), QuickSimulatorProps, AprovarEtapaForm(), Props, VistoriaPage(), ObraDetailPage(), EvidenciaDetalhe, formatarBRL()
 
 ### Community 35 - "Community 35"
 Cohesion: 0.18
@@ -386,10 +387,6 @@ Nodes (3): authDir, ENGENHEIRO, TOMADOR
 Cohesion: 0.62
 Nodes (6): backup-redis.sh script, log(), error_exit(), main(), notify_slack(), redis_cli()
 
-### Community 64 - "Community 64"
-Cohesion: 0.29
-Nodes (3): AprovarDto, RejeitarDto, VistoriaController
-
 ### Community 65 - "Community 65"
 Cohesion: 0.60
 Nodes (5): GET(), PATCH(), POST(), proxy(), getToken()
@@ -419,8 +416,12 @@ Cohesion: 0.73
 Nodes (5): SECURITY_AUDIT_SCRIPT.sh script, check_env_var(), fail(), pass(), warn()
 
 ### Community 74 - "Community 74"
-Cohesion: 0.33
-Nodes (4): CreditoSimulacao, FINALIDADES, PRAZOS, SolicitarForm()
+Cohesion: 0.15
+Nodes (9): CreditoSimulacao, ObraResumo, metadata, STATUS_BADGE, STATUS_LABEL, STATUS_PROGRESS_COLOR, FINALIDADES, PRAZOS (+1 more)
+
+### Community 76 - "Community 76"
+Cohesion: 0.29
+Nodes (3): AuthModule, JwtPayload, JwtStrategy
 
 ### Community 77 - "Community 77"
 Cohesion: 0.60
@@ -446,10 +447,6 @@ Nodes (4): disaster-recovery.sh script, log(), restore_postgres(), restore_redis
 Cohesion: 0.70
 Nodes (4): validate-security.sh script, fail(), info(), ok()
 
-### Community 86 - "Community 86"
-Cohesion: 0.70
-Nodes (4): formatDate(), getStatusColor(), getStatusLabel(), VisitDetailPage()
-
 ### Community 87 - "Community 87"
 Cohesion: 0.50
 Nodes (3): envPath, fs, path
@@ -458,22 +455,26 @@ Nodes (3): envPath, fs, path
 Cohesion: 0.67
 Nodes (3): backup-postgres.sh script, PGPASSWORD, log()
 
+### Community 142 - "Community 142"
+Cohesion: 0.40
+Nodes (3): MOCK, TIPO_CONFIG, UsuarioAdmin
+
 ## Knowledge Gaps
-- **256 isolated node(s):** `CRITICAL_TESTS_VALIDATION.sh script`, `SMOKE_TESTS.sh script`, `VERIFY_INFRASTRUCTURE.sh script`, `EtapaResumo`, `ObraResumo` (+251 more)
+- **263 isolated node(s):** `CRITICAL_TESTS_VALIDATION.sh script`, `SMOKE_TESTS.sh script`, `VERIFY_INFRASTRUCTURE.sh script`, `EtapaResumo`, `ObraResumo` (+258 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **49 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **54 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `formatarBRL()` connect `Community 34` to `Community 7`, `Community 9`, `Community 74`, `Community 46`, `Community 50`?**
-  _High betweenness centrality (0.147) - this node is a cross-community bridge._
-- **Why does `CreditoService` connect `Community 2` to `Community 17`, `Community 67`, `Community 4`, `Community 5`?**
-  _High betweenness centrality (0.082) - this node is a cross-community bridge._
+- **Why does `formatarBRL()` connect `Community 34` to `Community 7`, `Community 9`, `Community 74`, `Community 46`, `Community 16`, `Community 50`?**
+  _High betweenness centrality (0.144) - this node is a cross-community bridge._
+- **Why does `CreditoService` connect `Community 2` to `Community 17`, `Community 67`, `Community 5`?**
+  _High betweenness centrality (0.076) - this node is a cross-community bridge._
 - **What connects `CRITICAL_TESTS_VALIDATION.sh script`, `SMOKE_TESTS.sh script`, `VERIFY_INFRASTRUCTURE.sh script` to the rest of the system?**
-  _256 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _263 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.07973421926910298 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08246225319396051 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.08637873754152824 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**

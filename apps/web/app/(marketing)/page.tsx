@@ -458,16 +458,107 @@ export default function LandingPage() {
         </section>
       </div>
 
+      {/* DEPOIMENTOS */}
+      <section className="depoimentos">
+        <div className="dep-inner">
+          <div className="section-chip" style={{ margin: "0 auto 1.5rem", display: "table" }}>Depoimentos</div>
+          <h2 className="dep-title">Quem já estruturou <span>com a IMOBI</span></h2>
+          <div className="dep-grid">
+            {[
+              { nome: "Rafael Moura", cargo: "Diretor, MR Incorporações", texto: "Em 12 dias tínhamos o capital disponível. Com o banco, havíamos tentado 4 meses antes. A IMOBI entendeu o projeto desde o início.", stars: 5 },
+              { nome: "Fernanda Lima", cargo: "Sócia, FL Construções", texto: "O processo é 100% digital e transparente. Sabemos exatamente onde está cada etapa. Recomendo a qualquer incorporadora.", stars: 5 },
+              { nome: "Bruno Salles", cargo: "CEO, Salles Projetos", texto: "Estruturamos nossa segunda operação com a IMOBI. Primeiro projeto foi tão bom que não faria sentido ir a outro lugar.", stars: 5 },
+            ].map((d) => (
+              <div key={d.nome} className="dep-card">
+                <div className="dep-stars">{Array.from({ length: d.stars }).map((_, i) => <span key={i}>★</span>)}</div>
+                <p className="dep-texto">{d.texto}</p>
+                <div className="dep-autor">
+                  <div className="dep-avatar">{d.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}</div>
+                  <div>
+                    <p className="dep-nome">{d.nome}</p>
+                    <p className="dep-cargo">{d.cargo}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="faq-section" id="faq">
+        <div className="faq-inner">
+          <div className="section-chip" style={{ margin: "0 auto 1.5rem", display: "table" }}>Dúvidas</div>
+          <h2 className="faq-title">Perguntas <span>frequentes</span></h2>
+          <div className="faq-list">
+            {[
+              { q: "Quais são os pré-requisitos para solicitar crédito?", a: "Trabalhamos com incorporadoras e construtoras com CNPJ ativo, projeto de construção documentado e matrícula do imóvel. Não exigimos garantias bancárias tradicionais — avaliamos principalmente a viabilidade do projeto." },
+              { q: "Em quanto tempo recebo a aprovação?", a: "Nosso SLA é de até 15 dias úteis após a entrega completa da documentação. Em projetos com documentação em ordem, temos conseguido aprovar em 7–10 dias úteis." },
+              { q: "Como funciona a liberação das parcelas?", a: "As liberações são feitas conforme o avanço da obra, validadas por vistorias fotográficas com geolocalização e aprovadas pela equipe técnica IMOBI. O processo é 100% rastreável pela plataforma." },
+              { q: "Qual o valor mínimo e máximo de operação?", a: "Trabalhamos com operações a partir de R$500 mil, sem limite máximo definido. Projetos acima de R$50M passam por análise de comitê diferenciada." },
+              { q: "Preciso assinar documentos fisicamente?", a: "Não. Todo o processo — da proposta à assinatura do contrato — é realizado digitalmente, com validade jurídica por assinatura eletrônica." },
+            ].map((faq, i) => (
+              <FAQItem key={i} pergunta={faq.q} resposta={faq.a} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA STRIP */}
+      <section className="cta-strip">
+        <div className="cta-inner">
+          <div>
+            <h2 className="cta-title">Pronto para estruturar <span>seu projeto?</span></h2>
+            <p className="cta-sub">Aprovação em até 15 dias úteis. Análise preliminar gratuita, sem compromisso.</p>
+          </div>
+          <div className="cta-actions">
+            <button className="btn-hero-primary" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
+            <a className="cta-wa" href={`https://wa.me/${WA}?text=Olá!%20Gostaria%20de%20estruturar%20um%20projeto%20com%20a%20IMOBI.`} target="_blank" rel="noopener noreferrer">
+              <WaIcon size={18} color="currentColor" /> Falar no WhatsApp
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* FOOTER */}
       <footer>
         <div className="footer-inner">
-          <a className="logo" href="#">
-            <LogoIcon />
-            <span className="logo-name">IMOBI</span>
-          </a>
-          <span className="footer-note">Crédito imobiliário estruturado · São Paulo, Brasil · © 2026</span>
+          <div className="footer-top">
+            <a className="logo" href="#">
+              <LogoIcon />
+              <span className="logo-name">IMOBI</span>
+            </a>
+            <div className="footer-links">
+              <a href="#vantagens">Vantagens</a>
+              <a href="#como">Como funciona</a>
+              <a href="#modalidades">Modalidades</a>
+              <a href="#faq">Dúvidas</a>
+              <a href="#analise">Contato</a>
+              <a href="/login">Login</a>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <span className="footer-note">Crédito imobiliário estruturado · São Paulo, Brasil · © 2026</span>
+            <div className="footer-legal">
+              <a href="/termos">Termos de Uso</a>
+              <a href="/privacy-policy">Privacidade</a>
+            </div>
+          </div>
         </div>
       </footer>
     </>
+  );
+}
+
+function FAQItem({ pergunta, resposta }: { pergunta: string; resposta: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`faq-item ${open ? "open" : ""}`}>
+      <button className="faq-q" onClick={() => setOpen(!open)}>
+        <span>{pergunta}</span>
+        <span className="faq-chevron">{open ? "−" : "+"}</span>
+      </button>
+      {open && <p className="faq-a">{resposta}</p>}
+    </div>
   );
 }

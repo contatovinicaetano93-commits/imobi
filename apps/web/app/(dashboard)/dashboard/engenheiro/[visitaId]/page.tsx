@@ -179,7 +179,7 @@ export default function VisitDetailPage() {
           <h1 className="text-2xl font-bold text-gray-900">Visita não encontrada</h1>
           <Link
             href="/dashboard/engenheiro"
-            className="text-brand-600 hover:text-brand-700 text-sm font-semibold"
+            className="text-[#1B4FD8] hover:text-blue-700 text-sm font-semibold"
           >
             ← Voltar
           </Link>
@@ -200,7 +200,7 @@ export default function VisitDetailPage() {
         </div>
         <Link
           href="/dashboard/engenheiro"
-          className="text-brand-600 hover:text-brand-700 text-sm font-semibold"
+          className="text-[#1B4FD8] hover:text-blue-700 text-sm font-semibold"
         >
           ← Voltar
         </Link>
@@ -281,7 +281,7 @@ export default function VisitDetailPage() {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className="bg-brand-600 h-2 rounded-full transition-all"
+                        className="bg-[#1B4FD8] h-2 rounded-full transition-all"
                         style={{ width: `${obra.progresso}%` }}
                       />
                     </div>
@@ -315,7 +315,7 @@ export default function VisitDetailPage() {
               </div>
             )}
 
-            <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${uploading ? "border-gray-200 bg-gray-50 cursor-not-allowed" : "border-brand-300 hover:border-brand-500 hover:bg-brand-50"}`}>
+            <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${uploading ? "border-gray-200 bg-gray-50 cursor-not-allowed" : "border-blue-300 hover:border-brand-500 hover:bg-blue-50"}`}>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -332,7 +332,7 @@ export default function VisitDetailPage() {
                 </div>
               ) : (
                 <div className="text-center">
-                  <p className="text-brand-600 font-semibold text-sm">Tirar foto</p>
+                  <p className="text-[#1B4FD8] font-semibold text-sm">Tirar foto</p>
                   <p className="text-xs text-gray-400 mt-1">GPS será capturado automaticamente</p>
                 </div>
               )}

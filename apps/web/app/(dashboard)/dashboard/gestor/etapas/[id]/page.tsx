@@ -215,7 +215,7 @@ export default function EtapaDetailPage() {
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-gray-600 mb-2">Valor a liberar</p>
-                <p className="text-2xl font-bold text-brand-600">{brl(etapa.valorLiberacao)}</p>
+                <p className="text-2xl font-bold text-[#1B4FD8]">{brl(etapa.valorLiberacao)}</p>
               </div>
 
               <div className="pt-4 border-t border-gray-100 space-y-3">

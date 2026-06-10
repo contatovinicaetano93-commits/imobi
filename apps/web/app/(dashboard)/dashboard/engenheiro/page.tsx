@@ -55,7 +55,7 @@ export default async function EngenheiroPortalPage() {
               <a
                 key={visita.visitaId}
                 href={`/dashboard/engenheiro/${visita.visitaId}`}
-                className="bg-white rounded-xl border border-gray-100 p-3 sm:p-6 hover:shadow-md hover:border-brand-200 transition-all focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 min-h-24 sm:min-h-auto flex flex-col justify-center"
+                className="bg-white rounded-xl border border-gray-100 p-3 sm:p-6 hover:shadow-md hover:border-blue-200 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-24 sm:min-h-auto flex flex-col justify-center"
                 aria-label={`Visita em ${visita.obra.nome}, agendada em ${new Date(visita.dataAgendada).toLocaleDateString('pt-BR')}`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -77,7 +77,7 @@ export default async function EngenheiroPortalPage() {
             {agendadas.length > 3 && (
               <a
                 href="#"
-                className="text-center py-3 text-brand-600 font-semibold text-sm hover:text-brand-700"
+                className="text-center py-3 text-[#1B4FD8] font-semibold text-sm hover:text-blue-700"
               >
                 Ver todas as {agendadas.length} visitas →
               </a>

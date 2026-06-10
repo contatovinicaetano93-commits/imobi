@@ -203,7 +203,7 @@ function EtapasContent() {
                       prev.length === filteredEtapas.length ? [] : filteredEtapas.map((e) => e.etapaId)
                     );
                   }}
-                  className="w-5 h-5 rounded border-gray-300 text-brand-600 cursor-pointer"
+                  className="w-5 h-5 rounded border-gray-300 text-[#1B4FD8] cursor-pointer"
                   title="Selecionar/desselecionar todos"
                 />
                 <span className="text-sm text-gray-700">
@@ -224,7 +224,7 @@ function EtapasContent() {
               <div
                 key={etapa.etapaId}
                 className={`bg-white rounded-2xl border shadow-sm p-6 transition-all ${
-                  isSelected ? "border-brand-300 bg-brand-50" : "border-gray-100 hover:shadow-md"
+                  isSelected ? "border-blue-300 bg-blue-50" : "border-gray-100 hover:shadow-md"
                 }`}
               >
                 <div className="flex items-start gap-4">
@@ -233,7 +233,7 @@ function EtapasContent() {
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => handleSelectEtapa(etapa.etapaId)}
-                    className="w-5 h-5 rounded border-gray-300 text-brand-600 cursor-pointer mt-0.5 shrink-0"
+                    className="w-5 h-5 rounded border-gray-300 text-[#1B4FD8] cursor-pointer mt-0.5 shrink-0"
                   />
 
                   {/* Urgência */}
@@ -255,7 +255,7 @@ function EtapasContent() {
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-xs text-gray-400">Liberação</p>
-                          <p className="text-lg font-bold text-brand-600">{brl(etapa.valorLiberacao)}</p>
+                          <p className="text-lg font-bold text-[#1B4FD8]">{brl(etapa.valorLiberacao)}</p>
                         </div>
                       </div>
                     </div>
@@ -285,7 +285,7 @@ function EtapasContent() {
                   <div className="shrink-0 flex gap-2">
                     <Link
                       href={`/dashboard/gestor/etapas/${etapa.etapaId}`}
-                      className="bg-brand-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors"
+                      className="bg-[#1B4FD8] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors"
                     >
                       Revisar
                     </Link>
