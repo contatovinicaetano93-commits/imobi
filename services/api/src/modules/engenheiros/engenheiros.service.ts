@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -49,7 +49,8 @@ export class EngenheirosService {
         },
       },
     });
-    if (!etapa) throw new NotFoundException("Visita não encontrada.");
+    const VISTORIA_STATUSES = ["AGUARDANDO_VISTORIA", "EM_EXECUCAO", "CONCLUIDA", "REPROVADA"];
+    if (!etapa || !VISTORIA_STATUSES.includes(etapa.status)) throw new NotFoundException("Visita não encontrada.");
     return {
       visitaId: etapa.etapaId,
       status: etapa.status === "AGUARDANDO_VISTORIA" ? "AGENDADA" : etapa.status === "REPROVADA" ? "REPROVADA" : "CONCLUIDA",
@@ -65,29 +66,27 @@ export class EngenheirosService {
   }
 
   async atualizarVisita(
-    usuarioId: string,
+    _usuarioId: string,
     visitaId: string,
     data: { status?: string; dataAgendada?: string; observacoes?: string }
   ) {
-    const etapa = await this.prisma.etapaObra.findUnique({
-      where: { etapaId: visitaId },
-    });
-    if (!etapa) throw new NotFoundException("Visita não encontrada.");
-
-    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
-    if (!usuario) throw new ForbiddenException("Usuário não encontrado.");
-
-    const statusMap: Record<string, string> = {
-      INICIADA: "EM_EXECUCAO",
-      CONCLUIDA: "CONCLUIDA",
+    const statusMap: Record<string, { target: string; from: string[] }> = {
+      INICIADA: { target: "EM_EXECUCAO", from: ["AGUARDANDO_VISTORIA"] },
+      CONCLUIDA: { target: "CONCLUIDA",   from: ["EM_EXECUCAO"] },
     };
 
-    const newStatus = data.status ? statusMap[data.status] : undefined;
-
-    await this.prisma.etapaObra.update({
-      where: { etapaId: visitaId },
-      data: { ...(newStatus ? { status: newStatus as any } : {}) },
-    });
+    if (data.status) {
+      const transition = statusMap[data.status];
+      if (!transition) throw new BadRequestException("Status inválido.");
+      const result = await this.prisma.etapaObra.updateMany({
+        where: { etapaId: visitaId, status: { in: transition.from as any[] } },
+        data: { status: transition.target as any },
+      });
+      if (result.count === 0) throw new BadRequestException("Transição de status inválida ou visita não encontrada.");
+    } else {
+      const exists = await this.prisma.etapaObra.findUnique({ where: { etapaId: visitaId } });
+      if (!exists) throw new NotFoundException("Visita não encontrada.");
+    }
 
     return this.obterVisita(visitaId);
   }
