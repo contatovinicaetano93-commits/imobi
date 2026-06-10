@@ -31,6 +31,14 @@ export class ObrasService {
         }
       }
 
+      if (input.creditoId) {
+        const credito = await tx.credito.findFirst({
+          where: { creditoId: input.creditoId, usuarioId },
+          select: { creditoId: true },
+        });
+        if (!credito) throw new BadRequestException("Crédito não encontrado ou não pertence ao usuário.");
+      }
+
       const obra = await tx.obra.create({
         data: {
           usuarioId,

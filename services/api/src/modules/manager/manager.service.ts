@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException, Inject } from "@nestjs/common";
+import { Injectable, ForbiddenException, NotFoundException, Inject } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
@@ -227,7 +227,7 @@ export class ManagerService {
       },
     });
 
-    if (!etapa) return null;
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
     return {
       ...etapa,
@@ -244,7 +244,7 @@ export class ManagerService {
   }
 
   async obterKycDetalhe(kycDocumentoId: string) {
-    return this.prisma.kycDocumento.findUnique({
+    const documento = await this.prisma.kycDocumento.findUnique({
       where: { kycDocumentoId },
       include: {
         usuario: {
@@ -259,6 +259,8 @@ export class ManagerService {
         },
       },
     });
+    if (!documento) throw new NotFoundException("Documento KYC não encontrado.");
+    return documento;
   }
 
   async obterEstatisticas() {

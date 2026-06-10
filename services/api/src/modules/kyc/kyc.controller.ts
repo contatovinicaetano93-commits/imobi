@@ -46,6 +46,12 @@ export class KycController {
     @UsuarioAtual() u: IUsuario,
     @Body() body: { tipo: string; url: string }
   ) {
+    if (!body.tipo || !ALLOWED_TIPOS.includes(body.tipo)) {
+      throw new BadRequestException(`Tipo de documento inválido. Use: ${ALLOWED_TIPOS.join(", ")}.`);
+    }
+    if (!body.url || !body.url.startsWith("kyc/")) {
+      throw new BadRequestException("URL de documento inválida.");
+    }
     return this.kyc.uploadDocumento(u.id, body.tipo, body.url);
   }
 
