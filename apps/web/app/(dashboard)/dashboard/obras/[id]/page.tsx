@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { ObraResumo, EtapaResumo } from "@/lib/api";
+import { obrasApi, type ObraResumo, type EtapaResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -21,8 +21,8 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/proxy/obras/${params.id}`).then((r) => (r.ok ? r.json() : null)),
-      fetch(`/api/proxy/obras/${params.id}/progresso`).then((r) => (r.ok ? r.json() : 0)).catch(() => 0),
+      obrasApi.buscar(params.id).catch(() => null),
+      obrasApi.progresso(params.id).catch(() => 0),
     ])
       .then(([obraData, progressoData]) => {
         if (!obraData) { router.replace('/dashboard/obras'); return; }

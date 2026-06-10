@@ -3,7 +3,7 @@
 
 
 import { useEffect, useState } from "react";
-import type { ManagerStats } from "@/lib/api";
+import { managerApi, type ManagerStats } from "@/lib/api";
 import Link from "next/link";
 
 function brl(v: number) {
@@ -31,13 +31,9 @@ export default function GestorPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/proxy/manager/dashboard')
-      .then((r) => {
-        if (!r.ok) throw new Error('Erro ao carregar dados');
-        return r.json() as Promise<ManagerStats>;
-      })
+    managerApi.dashboard()
       .then(setStats)
-      .catch((err) => setError(err.message))
+      .catch((err) => setError(err instanceof Error ? err.message : "Erro ao carregar dados"))
       .finally(() => setLoading(false));
   }, []);
 
