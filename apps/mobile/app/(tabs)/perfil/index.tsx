@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { usuariosApi, type UsuarioPerfil } from "../../../lib/api";
+import { usuariosApi, authApi, type UsuarioPerfil } from "../../../lib/api";
 
 export default function PerfilScreen() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function PerfilScreen() {
           try {
             const refreshToken = await SecureStore.getItemAsync("refreshToken");
             if (refreshToken) {
-              await apiClient.post("/auth/logout", { refreshToken });
+              await authApi.logout(refreshToken);
             }
           } catch (e) {
             console.error("Erro ao fazer logout:", e);

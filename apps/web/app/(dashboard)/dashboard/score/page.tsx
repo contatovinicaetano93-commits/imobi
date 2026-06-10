@@ -18,10 +18,10 @@ export const metadata: Metadata = { title: "Score — IMOBI" };
 
 function getNivelThresholds(nivel: string): { proximo: string; proximoScore: number } {
   const thresholds = [
-    { level: "Iniciante",  next: "Regular",   nextScore: 450  },
-    { level: "Regular",    next: "Bom",        nextScore: 650  },
-    { level: "Bom",        next: "Excelente",  nextScore: 800  },
-    { level: "Excelente",  next: "Máximo",     nextScore: 1000 },
+    { level: "Iniciante",  proximo: "Regular",   proximoScore: 450  },
+    { level: "Regular",    proximo: "Bom",        proximoScore: 650  },
+    { level: "Bom",        proximo: "Excelente",  proximoScore: 800  },
+    { level: "Excelente",  proximo: "Máximo",     proximoScore: 1000 },
   ];
   return thresholds.find((t) => t.level === nivel) ?? { proximo: "—", proximoScore: 1000 };
 }

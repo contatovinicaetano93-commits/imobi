@@ -21,6 +21,7 @@ import {
   LogOut,
   ChevronRight,
   Building2,
+  type LucideIcon,
 } from "lucide-react";
 
 type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "TOMADOR" | "COMERCIAL" | "CONSTRUTOR" | null;
@@ -28,7 +29,7 @@ type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "TOMADOR" | "COMERCIAL" | "C
 type NavItem = {
   label: string;
   href: string;
-  icon: React.FC<{ size?: number; strokeWidth?: number; className?: string }>;
+  icon: LucideIcon;
   roles: UserRole[];
   section?: string;
 };

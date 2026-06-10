@@ -67,6 +67,14 @@ export const scoreApi = {
     }),
 };
 
+export const authApi = {
+  logout: (refreshToken: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post("/api/v1/auth/logout", { refreshToken }, token ?? undefined);
+    }),
+};
+
 export const pushApi = {
   registrarToken: (fcmToken: string) =>
     callApi(async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -153,7 +153,7 @@ function LogoHeader() {
 }
 
 function ConsentController({ control, name, error, children }: {
-  control: Parameters<typeof Controller>[0]["control"];
+  control: Control<CadastroUsuarioInput>;
   name: string;
   error?: string;
   children: React.ReactNode;
