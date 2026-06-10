@@ -1,0 +1,24 @@
+# Ignore doc/markdown files so graphify runs code-only (no API key needed)
+*.md
+*.txt
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.gif
+*.webp
+docs/
+node_modules/
+dist/
+.next/
+.turbo/
+coverage/
+graphify-out/
+*.json
+*.yaml
+*.yml
+*.env*
+*.toml
+*.lock
+*.log
