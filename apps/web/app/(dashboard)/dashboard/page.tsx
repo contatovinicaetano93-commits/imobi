@@ -99,7 +99,7 @@ export default async function DashboardPage() {
     { label: "Crédito",       icon: CreditCard, href: "/dashboard/credito",   bg: "bg-[#16a34a] hover:bg-green-700",  color: "text-white" },
     { label: "Simulador",     icon: BarChart3,  href: "/dashboard/simulador", bg: "bg-[#1B4FD8] hover:bg-blue-800",   color: "text-white" },
     { label: "Documentos",    icon: FileText,   href: "/dashboard/kyc",       bg: "bg-[#16a34a] hover:bg-green-700",  color: "text-white" },
-  ];
+  ] as const;
 
   return (
     <div className="flex flex-col gap-8">
