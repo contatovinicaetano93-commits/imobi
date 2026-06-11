@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateUsuarioSchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
+exports.UpdateUsuarioSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
 const zod_1 = require("zod");
 exports.TipoUsuarioEnum = zod_1.z.enum([
     "TOMADOR",
@@ -37,6 +37,17 @@ exports.CadastroUsuarioSchema = zod_1.z.object({
 exports.LoginSchema = zod_1.z.object({
     email: zod_1.z.string().email(),
     senha: zod_1.z.string().min(1),
+});
+exports.EsqueceuSenhaSchema = zod_1.z.object({
+    email: zod_1.z.string().email(),
+});
+exports.RedefinirSenhaSchema = zod_1.z.object({
+    token: zod_1.z.string().min(1),
+    novaSenha: zod_1.z
+        .string()
+        .min(8, "Mínimo 8 caracteres")
+        .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
+        .regex(/[0-9]/, "Deve conter ao menos um número"),
 });
 exports.UpdateUsuarioSchema = exports.CadastroUsuarioSchema.omit({
     senha: true,
