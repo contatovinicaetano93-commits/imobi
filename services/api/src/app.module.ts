@@ -24,6 +24,7 @@ import { ComercialModule } from "./modules/comercial/comercial.module";
 import { EngenheirosModule } from "./modules/engenheiros/engenheiros.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { VistoriaModule } from "./modules/vistoria/vistoria.module";
+import { DossieModule } from "./modules/dossie/dossie.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker } from "./workers/excluir-usuario.worker";
 import { HealthController } from "./common/health.controller";
@@ -80,6 +81,7 @@ const redisConfig = getRedisConfig();
     ComercialModule,
     EngenheirosModule,
     VistoriaModule,
+    DossieModule,
   ],
   controllers: [HealthController],
   providers: [
