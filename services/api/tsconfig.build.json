@@ -2,6 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "paths": {
+      "@imbobi/*": ["../../packages/*/src"],
       "@/*": ["src/*"]
     }
   },
