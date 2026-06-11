@@ -1,4 +1,4 @@
-import { Controller, Post, Delete, Body, UseGuards, Req } from "@nestjs/common";
+import { BadRequestException, Controller, Delete, Post, Req, Body, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { PushNotificacoesService } from "./push-notificacoes.service";
 
@@ -9,13 +9,19 @@ export class PushNotificacoesController {
 
   @Post("registrar-token")
   async registrarToken(@Req() req: any, @Body() body: { token: string }) {
-    await this.pushNotificacoes.registrarToken(req.user.id, body.token);
+    if (!body.token || typeof body.token !== "string" || body.token.trim().length === 0) {
+      throw new BadRequestException("token é obrigatório");
+    }
+    await this.pushNotificacoes.registrarToken(req.user.id, body.token.trim());
     return { ok: true };
   }
 
   @Delete("desregistrar-token")
   async desregistrarToken(@Req() req: any, @Body() body: { token: string }) {
-    await this.pushNotificacoes.desregistrarToken(req.user.id, body.token);
+    if (!body.token || typeof body.token !== "string" || body.token.trim().length === 0) {
+      throw new BadRequestException("token é obrigatório");
+    }
+    await this.pushNotificacoes.desregistrarToken(req.user.id, body.token.trim());
     return { ok: true };
   }
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { EtapasService } from "./etapas.service";
 
 const GESTOR_ID = "gestor-uuid-001";
@@ -295,5 +295,109 @@ describe("EtapasService.rejeitar — validações", () => {
     const { service, liberacaoQueue } = buildService();
     await service.rejeitar(GESTOR_ID, ETAPA_ID, "motivo");
     expect(liberacaoQueue.add).not.toHaveBeenCalled();
+  });
+});
+
+// ─── listarPorObra — IDOR guard (Bug: missing ownership check) ───────────────
+
+function buildServiceWithObra(obraOwner: string | null) {
+  const prisma = {
+    etapaObra: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+    obra: {
+      findUnique: jest.fn().mockResolvedValue(
+        obraOwner !== null ? { usuarioId: obraOwner } : null
+      ),
+    },
+  } as any;
+
+  const service = new EtapasService(
+    prisma,
+    { criar: jest.fn() } as any,
+    { etapaAprovadaEmail: jest.fn() } as any,
+    { enviarPush: jest.fn() } as any,
+    { add: jest.fn() } as any
+  );
+  return { service, prisma };
+}
+
+describe("EtapasService.listarPorObra — IDOR guard", () => {
+  it("retorna etapas quando o usuário é o dono da obra", async () => {
+    const { service } = buildServiceWithObra(USUARIO_ID);
+    await expect(service.listarPorObra(OBRA_ID, USUARIO_ID, false)).resolves.toEqual([]);
+  });
+
+  it("lança ForbiddenException quando o usuário não é dono da obra", async () => {
+    const { service } = buildServiceWithObra("outro-usuario-uuid");
+    await expect(service.listarPorObra(OBRA_ID, USUARIO_ID, false)).rejects.toThrow(ForbiddenException);
+  });
+
+  it("lança NotFoundException quando a obra não existe (não-manager)", async () => {
+    const { service } = buildServiceWithObra(null);
+    await expect(service.listarPorObra(OBRA_ID, USUARIO_ID, false)).rejects.toThrow(NotFoundException);
+  });
+
+  it("NÃO verifica dono quando isManager=true (ADMIN/GESTOR bypass)", async () => {
+    const { service, prisma } = buildServiceWithObra("qualquer-dono");
+    await service.listarPorObra(OBRA_ID, GESTOR_ID, true);
+    expect(prisma.obra.findUnique).not.toHaveBeenCalled();
+    expect(prisma.etapaObra.findMany).toHaveBeenCalled();
+  });
+});
+
+// ─── atualizarStatus — state machine guard (Bug: bare update, no transition guard) ──
+
+function buildServiceForStatus(updateManyCount = 1) {
+  const prisma = {
+    etapaObra: {
+      updateMany: jest.fn().mockResolvedValue({ count: updateManyCount }),
+    },
+  } as any;
+
+  const service = new EtapasService(
+    prisma,
+    { criar: jest.fn() } as any,
+    { etapaAprovadaEmail: jest.fn() } as any,
+    { enviarPush: jest.fn() } as any,
+    { add: jest.fn() } as any
+  );
+  return { service, prisma };
+}
+
+describe("EtapasService.atualizarStatus — state machine guard", () => {
+  it("permite PLANEJADA → EM_EXECUCAO usando updateMany com allowedFrom", async () => {
+    const { service, prisma } = buildServiceForStatus(1);
+    await service.atualizarStatus(ETAPA_ID, "EM_EXECUCAO");
+    expect(prisma.etapaObra.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ etapaId: ETAPA_ID }),
+      })
+    );
+  });
+
+  it("lança BadRequestException quando transição não é permitida (count=0)", async () => {
+    const { service } = buildServiceForStatus(0);
+    await expect(service.atualizarStatus(ETAPA_ID, "CONCLUIDA")).rejects.toThrow(BadRequestException);
+  });
+
+  it("lança BadRequestException para status de destino inválido", async () => {
+    const { service } = buildServiceForStatus(1);
+    await expect(service.atualizarStatus(ETAPA_ID, "INVALIDO")).rejects.toThrow(BadRequestException);
+  });
+
+  it("PLANEJADA reset: usa notIn CONCLUIDA em vez de lista positiva", async () => {
+    const { service, prisma } = buildServiceForStatus(1);
+    await service.atualizarStatus(ETAPA_ID, "PLANEJADA");
+    expect(prisma.etapaObra.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ status: { notIn: ["CONCLUIDA"] } }),
+      })
+    );
+  });
+
+  it("PLANEJADA reset: lança BadRequestException se etapa já está CONCLUIDA (count=0)", async () => {
+    const { service } = buildServiceForStatus(0);
+    await expect(service.atualizarStatus(ETAPA_ID, "PLANEJADA")).rejects.toThrow(BadRequestException);
   });
 });

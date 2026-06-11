@@ -433,6 +433,17 @@ export const comercialApi = {
     if (searchTerm) params.set("searchTerm", searchTerm);
     return apiFetch<LeadsListResponse>(`/comercial/leads?${params}`);
   },
+  obterLead: (leadId: string) => apiFetch<LeadItem>(`/comercial/leads/${leadId}`),
+};
+
+// ── Etapas ────────────────────────────────────────────────────────────
+
+export const etapasApi = {
+  validar: (etapaId: string, data: { observacao?: string }) =>
+    apiFetch(`/etapas/${etapaId}/validar`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
 };
 
 // ── Notificações ──────────────────────────────────────────────────────

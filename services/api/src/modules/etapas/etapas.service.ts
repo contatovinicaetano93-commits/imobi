@@ -20,7 +20,14 @@ export class EtapasService {
   async aprovar(gestorId: string, etapaId: string, observacao?: string) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId },
-      include: { obra: { include: { credito: true, usuario: true } } },
+      include: {
+        obra: {
+          include: {
+            credito: { select: { creditoId: true, status: true, valorAprovado: true } },
+            usuario: { select: { usuarioId: true, nome: true, email: true } },
+          },
+        },
+      },
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
@@ -106,7 +113,13 @@ export class EtapasService {
   async rejeitar(gestorId: string, etapaId: string, motivo: string) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId },
-      include: { obra: { include: { usuario: true } } },
+      include: {
+        obra: {
+          include: {
+            usuario: { select: { usuarioId: true, nome: true, email: true } },
+          },
+        },
+      },
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
@@ -139,14 +152,57 @@ export class EtapasService {
     return { ok: true, motivo };
   }
 
+  // Valid state transitions. ADMIN can force transitions but only along allowed edges
+  // to prevent illegal combinations (e.g. CONCLUIDA → PLANEJADA) that would corrupt the
+  // credit-release flow.
+  private static readonly ALLOWED_TRANSITIONS: Record<string, string[]> = {
+    PLANEJADA: [],
+    EM_EXECUCAO: ["PLANEJADA"],
+    AGUARDANDO_VISTORIA: ["EM_EXECUCAO"],
+    CONCLUIDA: ["AGUARDANDO_VISTORIA"],
+    REPROVADA: ["AGUARDANDO_VISTORIA"],
+  };
+
   async atualizarStatus(etapaId: string, status: string) {
-    return this.prisma.etapaObra.update({
-      where: { etapaId },
+    const allowedFrom = EtapasService.ALLOWED_TRANSITIONS[status];
+    if (!allowedFrom) throw new BadRequestException(`Status de destino inválido: ${status}.`);
+
+    // Allow admin to reset back to PLANEJADA only from non-terminal states
+    // PLANEJADA has no allowed predecessors in the map above because it is the initial
+    // state. To allow admin reset use a special-case: any non-CONCLUIDA state can be
+    // reset to PLANEJADA.
+    if (status === "PLANEJADA") {
+      const updated = await this.prisma.etapaObra.updateMany({
+        where: { etapaId, status: { notIn: ["CONCLUIDA"] as never[] } },
+        data: { status: "PLANEJADA" as never },
+      });
+      if (updated.count === 0)
+        throw new BadRequestException("Etapa não encontrada ou já está concluída — não é possível regredir ao status PLANEJADA.");
+      return { ok: true };
+    }
+
+    const updated = await this.prisma.etapaObra.updateMany({
+      where: { etapaId, status: { in: allowedFrom as never[] } },
       data: { status: status as never },
     });
+    if (updated.count === 0)
+      throw new BadRequestException(
+        `Transição inválida para ${status}. Estado atual não é um dos permitidos: ${allowedFrom.join(", ")}.`
+      );
+    return { ok: true };
   }
 
-  async listarPorObra(obraId: string) {
+  async listarPorObra(obraId: string, usuarioId: string, isManager: boolean) {
+    // IDOR guard: unless the caller is a manager/admin, the obra must belong to them.
+    if (!isManager) {
+      const obra = await this.prisma.obra.findUnique({
+        where: { obraId },
+        select: { usuarioId: true },
+      });
+      if (!obra) throw new NotFoundException("Obra não encontrada.");
+      if (obra.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
+    }
+
     return this.prisma.etapaObra.findMany({
       where: { obraId },
       orderBy: { ordem: "asc" },
