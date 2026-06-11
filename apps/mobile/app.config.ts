@@ -2,7 +2,7 @@ import type { ExpoConfig } from "expo/config";
 
 const config: ExpoConfig = {
   name: "Imobi",
-  slug: "imobi",
+  slug: "imobi-app",
   scheme: "imobi",
   version: "1.0.0",
   orientation: "portrait",
