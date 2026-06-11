@@ -53,8 +53,6 @@ exports.UpdateUsuarioSchema = exports.CadastroUsuarioSchema.omit({
     senha: true,
     cpf: true,
 }).partial();
-// ── Fiscalização (Admin) ────────────────────────────────────────────
-// Funções de painel que o admin pode liberar/bloquear por usuário.
 exports.FUNCOES_PAINEL = [
     "obras",
     "credito",
