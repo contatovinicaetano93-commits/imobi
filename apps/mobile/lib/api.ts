@@ -1,5 +1,7 @@
 import * as SecureStore from "expo-secure-store";
-import { apiClient, ApiError } from "@imbobi/core";
+import { apiClient, ApiError, configureApiBaseUrl } from "@imbobi/core";
+
+export { configureApiBaseUrl };
 
 let _onUnauthorized: (() => void) | null = null;
 

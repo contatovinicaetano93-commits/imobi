@@ -3,7 +3,11 @@ import { View, ActivityIndicator } from "react-native";
 import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useRouter, useSegments } from "expo-router";
-import { setOnUnauthorized } from "../lib/api";
+import Constants from "expo-constants";
+import { configureApiBaseUrl, setOnUnauthorized } from "../lib/api";
+
+const apiUrl = Constants.expoConfig?.extra?.apiUrl as string | undefined;
+if (apiUrl) configureApiBaseUrl(apiUrl);
 
 type RootLayoutProps = {
   children?: React.ReactNode;

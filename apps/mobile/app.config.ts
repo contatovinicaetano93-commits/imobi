@@ -50,7 +50,7 @@ const config: ExpoConfig = {
     policy: "sdkVersion",
   },
   extra: {
-    apiUrl: process.env["EXPO_PUBLIC_API_URL"],
+    apiUrl: process.env["EXPO_PUBLIC_API_URL"] ?? "https://imobi-api-efgg.onrender.com",
     eas: { projectId: "6bf955c5-863a-4344-ac39-6a55c89658d4" },
   },
 };
