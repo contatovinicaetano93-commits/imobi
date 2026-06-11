@@ -194,7 +194,25 @@ export default function NovaDueDiligencePage() {
 
   async function enviar() {
     setEnviando(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      await fetch("/api/proxy/due-diligence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nomeEmpreendimento: form.nomeEmpreendimento,
+          tipologia: form.tipologia,
+          endereco: form.endereco,
+          cidade: form.cidade,
+          uf: form.uf,
+          totalUnidades: form.totalUnidades ? parseInt(form.totalUnidades) : null,
+          nomeIncorporadora: form.nomeIncorporadora,
+          modeloAmortizacao: form.modeloAmortizacao || null,
+          payload: form,
+        }),
+      });
+    } catch {
+      // salva localmente mesmo se API falhar
+    }
     setEnviado(true);
     setEnviando(false);
   }

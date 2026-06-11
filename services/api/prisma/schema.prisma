@@ -44,6 +44,7 @@ model Usuario {
   kycAuditLogs  KycAuditLog[] @relation("KycAuditLogs")
   leadsGerenciados Lead[] @relation("LeadUsuarios")
   mailingContatos MailingContato[]
+  dueDiligences   DueDiligence[]
 
   @@index([email])
   @@index([cpf])
@@ -502,4 +503,41 @@ enum MailingStatus {
   NOVO
   CONTATADO
   CONVERTIDO
+}
+
+// ── Due Diligence ───────────────────────────────────────────────────────
+
+model DueDiligence {
+  id                    String   @id @default(uuid())
+  gestor                Usuario  @relation(fields: [gestorId], references: [usuarioId])
+  gestorId              String
+  nomeEmpreendimento    String
+  tipologia             String?
+  endereco              String?
+  cidade                String?
+  uf                    String?
+  totalUnidades         Int?
+  areaTotal             Float?
+  dataEntregaPrevista   DateTime?
+  nomeIncorporadora     String?
+  cnpjIncorporadora     String?
+  modeloAmortizacao     String?
+  totalCarteira         Float?
+  totalAReceber         Float?
+  estruturaSocietaria   String?
+  payload               Json     // Armazena o JSON completo do wizard
+  status                DueDiligenceStatus @default(RASCUNHO)
+  criadoEm              DateTime @default(now())
+  atualizadoEm          DateTime @updatedAt
+
+  @@index([gestorId])
+  @@index([status])
+}
+
+enum DueDiligenceStatus {
+  RASCUNHO
+  ENVIADO
+  EM_ANALISE
+  APROVADO
+  REPROVADO
 }

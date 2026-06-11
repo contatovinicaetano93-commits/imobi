@@ -26,6 +26,7 @@ import { AdminModule } from "./modules/admin/admin.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { VistoriaModule } from "./modules/vistoria/vistoria.module";
 import { SetupModule } from "./modules/setup/setup.module";
+import { DueDiligenceModule } from "./modules/due-diligence/due-diligence.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker } from "./workers/excluir-usuario.worker";
 import { HealthController } from "./common/health.controller";
@@ -84,6 +85,7 @@ const redisConfig = getRedisConfig();
     AdminModule,
     VistoriaModule,
     SetupModule,
+    DueDiligenceModule,
   ],
   controllers: [HealthController],
   providers: [
