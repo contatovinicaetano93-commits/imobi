@@ -7,7 +7,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
-import { useGeoValidation } from "@imbobi/core";
+import { useGeoValidation } from "@imbobi/core/hooks";
 
 type GeoStatus = "idle" | "checking" | "inside_radius" | "outside_radius" | "poor_accuracy" | "permission_denied" | "unavailable";
 
@@ -55,7 +55,6 @@ export default function RegistrarEtapaScreen() {
   const podeCapturar = status === "inside_radius";
 
   const handleCapturar = async () => {
-    // Revalida antes de abrir a câmera
     const dentro = await validar();
     if (!dentro) return;
 

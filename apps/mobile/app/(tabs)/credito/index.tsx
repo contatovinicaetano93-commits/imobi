@@ -1,5 +1,6 @@
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-import { useSimuladorCredito, formatarBRL, formatarPercentual } from "@imbobi/core";
+import { useSimuladorCredito } from "@imbobi/core/hooks";
+import { formatarBRL, formatarPercentual } from "@imbobi/core";
 import { useState } from "react";
 import Slider from "@react-native-community/slider";
 
