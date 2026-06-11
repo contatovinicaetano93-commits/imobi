@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Users,
   Download,
+  Star,
 } from "lucide-react";
 import { formatarBRL } from "@imbobi/core";
 import type { ParceiroResumo, OperacaoIndicada, ContatoMailing } from "@/lib/api";
@@ -149,21 +150,55 @@ export default function ParceiroComercialPage() {
 
   return (
     <div className="space-y-8 max-w-6xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2.5">
-            <Handshake className="w-6 h-6 text-[#1B4FD8]" />
-            Portal do Parceiro
-          </h1>
-          <p className="text-sm text-gray-500 mt-0.5">Suas indicações, comissões e contatos — com total transparência</p>
+      {/* Hero comercial - âmbar/dourado */}
+      <div style={{ background: "linear-gradient(135deg, #78350f 0%, #92400e 100%)", borderRadius: 16, padding: "1.5rem", marginBottom: "1.5rem", color: "white" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+          <div style={{ background: "#d9770622", border: "1px solid #d9770644", borderRadius: 8, padding: "0.4rem" }}>
+            <Star size={18} color="#d97706" />
+          </div>
+          <div>
+            <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Portal Comercial</p>
+            <h1 style={{ fontSize: "1.2rem", fontWeight: 700, margin: 0 }}>Indicações &amp; Comissões</h1>
+          </div>
         </div>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full self-start">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Dados de demonstração
-          </span>
-        )}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+          <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.65)", margin: 0 }}>
+            Acompanhe suas indicações, comissões e pipeline de leads em tempo real.
+          </p>
+          {isDemo && (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.375rem", fontSize: "0.7rem", fontWeight: 600, color: "#fde68a", background: "rgba(253,230,138,0.12)", border: "1px solid rgba(253,230,138,0.25)", borderRadius: 999, padding: "0.25rem 0.75rem" }}>
+              <AlertTriangle size={12} />
+              Dados de demonstração
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Pipeline de leads */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-2">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-[#d97706]" />
+          Pipeline de leads
+        </h2>
+        <div className="flex items-center gap-0 overflow-x-auto">
+          {[
+            { label: "Novo",        count: 1, color: "#6b7280", bg: "#f3f4f6" },
+            { label: "Contatado",   count: 1, color: "#0369a1", bg: "#e0f2fe" },
+            { label: "Qualificado", count: 2, color: "#7c3aed", bg: "#ede9fe" },
+            { label: "Proposta",    count: 1, color: "#d97706", bg: "#fef3c7" },
+            { label: "Convertido",  count: 2, color: "#16a34a", bg: "#dcfce7" },
+          ].map((stage, i, arr) => (
+            <div key={stage.label} className="flex items-center min-w-0 shrink-0">
+              <div className="flex flex-col items-center px-3 py-2 rounded-xl text-center" style={{ background: stage.bg, minWidth: 90 }}>
+                <span className="text-lg font-bold tabular-nums" style={{ color: stage.color }}>{stage.count}</span>
+                <span className="text-xs font-medium" style={{ color: stage.color }}>{stage.label}</span>
+              </div>
+              {i < arr.length - 1 && (
+                <span className="text-gray-300 mx-1 text-lg font-light select-none">›</span>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Link de indicação */}

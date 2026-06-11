@@ -10,6 +10,57 @@ import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions"
 import { AdvancedFilters, type FilterState } from "@/components/dashboard/AdvancedFilters";
 import Link from "next/link";
 
+// ── Dados de demonstração (exibidos quando a API não está disponível) ──
+const DEMO_ETAPAS: EtapaPendente[] = [
+  {
+    etapaId: "demo-e1",
+    nome: "Fundação",
+    ordem: 2,
+    percentualObra: 20,
+    valorLiberacao: 96_000,
+    evidenciasCount: 8,
+    criadoEm: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+    obra: {
+      obraId: "demo-o1",
+      nome: "Residencial Vila Nova — Casa 12",
+      endereco: "Rua das Palmeiras, 120 — Jardim América, SP",
+      usuario: { usuarioId: "demo-u1", nome: "Carlos Mendes", email: "c.mendes@exemplo.com", cpf: "***.***.***-01" },
+      credito: { creditoId: "demo-c1", valorAprovado: 480_000 },
+    },
+  },
+  {
+    etapaId: "demo-e2",
+    nome: "Estrutura",
+    ordem: 3,
+    percentualObra: 25,
+    valorLiberacao: 120_000,
+    evidenciasCount: 5,
+    criadoEm: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
+    obra: {
+      obraId: "demo-o2",
+      nome: "Sobrado Jardim das Acácias",
+      endereco: "Av. das Acácias, 450 — Jd. Acácias, SP",
+      usuario: { usuarioId: "demo-u2", nome: "Fernanda Souza", email: "f.souza@exemplo.com", cpf: "***.***.***-02" },
+      credito: { creditoId: "demo-c2", valorAprovado: 320_000 },
+    },
+  },
+  {
+    etapaId: "demo-e3",
+    nome: "Alvenaria & Vedações",
+    ordem: 4,
+    percentualObra: 15,
+    valorLiberacao: 72_000,
+    evidenciasCount: 3,
+    criadoEm: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    obra: {
+      obraId: "demo-o3",
+      nome: "Casa Térrea Condomínio Bosque Verde",
+      endereco: "Rua Bosque Verde, 88 — Campinas, SP",
+      usuario: { usuarioId: "demo-u3", nome: "Roberto Andrade", email: "r.andrade@exemplo.com", cpf: "***.***.***-03" },
+    },
+  },
+];
+
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -28,6 +79,7 @@ function EtapasContent() {
   const [data, setData] = useState<{ etapas: EtapaPendente[]; total: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
   const [offset, setOffset] = useState(0);
   const [selectedEtapas, setSelectedEtapas] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -63,8 +115,16 @@ function EtapasContent() {
     setLoading(true);
     managerApi
       .listarEtapasPendentes(limit, offset, filters)
-      .then(setData)
-      .catch((err) => setError(err.message))
+      .then((d) => {
+        setData(d);
+        setIsDemo(false);
+        setError(null);
+      })
+      .catch(() => {
+        setData({ etapas: DEMO_ETAPAS, total: DEMO_ETAPAS.length });
+        setIsDemo(true);
+        setError(null);
+      })
       .finally(() => setLoading(false));
   }, [offset, filters]);
 
@@ -79,7 +139,7 @@ function EtapasContent() {
     );
   }
 
-  if (error || !data) {
+  if (!data) {
     return (
       <div className="space-y-6">
         <div>
@@ -133,6 +193,15 @@ function EtapasContent() {
           >
             ×
           </button>
+        </div>
+      )}
+
+      {isDemo && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
+          <span className="text-amber-600 text-lg shrink-0">⚠️</span>
+          <p className="text-amber-800 text-sm font-medium">
+            Dados de demonstração — a API não está disponível no momento. As etapas exibidas são exemplos.
+          </p>
         </div>
       )}
 

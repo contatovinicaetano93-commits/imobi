@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Circle,
   Clock,
+  Wrench,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -106,28 +107,50 @@ export default async function EngenheiroPortalPage() {
 
   return (
     <div className="space-y-8 max-w-6xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Portal do Engenheiro</h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            Visão técnica e financeira das obras sob sua responsabilidade
-          </p>
+      {/* Hero engenheiro - laranja */}
+      <div style={{ background: "linear-gradient(135deg, #431407 0%, #7c2d12 100%)", borderRadius: 16, padding: "1.5rem", marginBottom: "1.5rem", color: "white" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+          <div style={{ background: "#ea580c22", border: "1px solid #ea580c44", borderRadius: 8, padding: "0.4rem" }}>
+            <Wrench size={18} color="#ea580c" />
+          </div>
+          <div>
+            <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Portal do Engenheiro</p>
+            <h1 style={{ fontSize: "1.2rem", fontWeight: 700, margin: 0 }}>Vistorias e Obras</h1>
+          </div>
         </div>
-        {isDemo && (
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full self-start">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Dados de demonstração — aguardando integração da API
-          </span>
-        )}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+          <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.65)", margin: 0 }}>
+            Gerencie suas inspeções de campo e valide etapas de construção.
+          </p>
+          {isDemo && (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.375rem", fontSize: "0.7rem", fontWeight: 600, color: "#fbbf24", background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.25)", borderRadius: 999, padding: "0.25rem 0.75rem" }}>
+              <AlertTriangle size={12} />
+              Dados de demonstração
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* KPIs resumo rápido */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-2">
+        {[
+          { label: "Obras ativas",            value: String(financeiro.length),           color: "#ea580c" },
+          { label: "Etapas aguardando",        value: String(etapas.filter(e => e.status === "PENDENTE").length), color: "#d97706" },
+          { label: "Visitas agendadas",        value: String(agendadas.length),            color: "#b45309" },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+            <p className="text-2xl font-bold tabular-nums" style={{ color }}>{value}</p>
+            <p className="text-xs text-gray-400 mt-1">{label}</p>
+          </div>
+        ))}
       </div>
 
       {/* KPIs financeiros */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
-          { icon: Wallet,    label: "Valor total das obras", value: formatarBRL(totalObras),     color: "#1B4FD8", sub: `${financeiro.length} obra(s) ativa(s)` },
-          { icon: Package,   label: "Valor de material",     value: formatarBRL(totalMaterial),  color: "#1B4FD8", sub: `${totalObras > 0 ? Math.round((totalMaterial / totalObras) * 100) : 0}% do orçamento` },
-          { icon: Hammer,    label: "Mão de obra & serviços",value: formatarBRL(totalMaoDeObra), color: "#0369a1", sub: `${totalObras > 0 ? Math.round((totalMaoDeObra / totalObras) * 100) : 0}% do orçamento` },
+          { icon: Wallet,    label: "Valor total das obras", value: formatarBRL(totalObras),     color: "#ea580c", sub: `${financeiro.length} obra(s) ativa(s)` },
+          { icon: Package,   label: "Valor de material",     value: formatarBRL(totalMaterial),  color: "#d97706", sub: `${totalObras > 0 ? Math.round((totalMaterial / totalObras) * 100) : 0}% do orçamento` },
+          { icon: Hammer,    label: "Mão de obra & serviços",value: formatarBRL(totalMaoDeObra), color: "#b45309", sub: `${totalObras > 0 ? Math.round((totalMaoDeObra / totalObras) * 100) : 0}% do orçamento` },
           { icon: TrendingUp,label: "Executado financeiro",  value: formatarBRL(totalExecutado), color: "#16a34a", sub: `${pctExecutado}% do total` },
         ].map(({ icon: Icon, label, value, color, sub }) => (
           <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
@@ -146,7 +169,7 @@ export default async function EngenheiroPortalPage() {
       {/* Obras — detalhamento financeiro */}
       <section aria-labelledby="obras-fin-title">
         <h2 id="obras-fin-title" className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <HardHat className="w-4 h-4 text-[#1B4FD8]" />
+          <HardHat className="w-4 h-4 text-[#ea580c]" />
           Obras sob responsabilidade
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -186,7 +209,7 @@ export default async function EngenheiroPortalPage() {
       {/* Pipeline de etapas */}
       <section aria-labelledby="etapas-title">
         <h2 id="etapas-title" className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <CalendarClock className="w-4 h-4 text-[#1B4FD8]" />
+          <CalendarClock className="w-4 h-4 text-[#ea580c]" />
           Etapas do projeto
         </h2>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -195,18 +218,18 @@ export default async function EngenheiroPortalPage() {
               const done = etapa.status === "CONCLUIDA";
               const current = etapa.status === "EM_ANDAMENTO";
               return (
-                <div key={etapa.id} className={`flex items-center gap-4 px-5 py-3.5 ${current ? "bg-blue-50/50" : ""}`}>
+                <div key={etapa.id} className={`flex items-center gap-4 px-5 py-3.5 ${current ? "bg-orange-50/50" : ""}`}>
                   <div className="relative flex flex-col items-center shrink-0">
                     {done ? (
                       <CheckCircle2 className="w-5 h-5 text-[#16a34a]" />
                     ) : current ? (
-                      <Clock className="w-5 h-5 text-[#1B4FD8]" />
+                      <Clock className="w-5 h-5 text-[#ea580c]" />
                     ) : (
                       <Circle className="w-5 h-5 text-gray-200" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${done ? "text-gray-400" : current ? "text-[#1B4FD8] font-semibold" : "text-gray-700"}`}>
+                    <p className={`text-sm font-medium truncate ${done ? "text-gray-400" : current ? "text-[#ea580c] font-semibold" : "text-gray-700"}`}>
                       {idx + 1}. {etapa.nome}
                     </p>
                     {etapa.dataConclusao && (
@@ -228,7 +251,7 @@ export default async function EngenheiroPortalPage() {
       <section aria-labelledby="licencas-title">
         <div className="flex items-center justify-between mb-4">
           <h2 id="licencas-title" className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#1B4FD8]" />
+            <ShieldCheck className="w-4 h-4 text-[#ea580c]" />
             Licenças e regularização
           </h2>
           {licencasAtencao > 0 && (
@@ -281,7 +304,7 @@ export default async function EngenheiroPortalPage() {
       <section aria-labelledby="visitas-title">
         <div className="flex items-center justify-between mb-4">
           <h2 id="visitas-title" className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <CalendarClock className="w-4 h-4 text-[#1B4FD8]" />
+            <CalendarClock className="w-4 h-4 text-[#ea580c]" />
             Fila de visitas
           </h2>
           <span className="text-xs text-gray-400">{agendadas.length} agendada(s)</span>
