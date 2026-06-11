@@ -191,6 +191,17 @@ export class UsuariosService {
       throw new BadRequestException("Usuário não encontrado");
     }
 
+    // Idempotency guard: if already marked for deletion, do not enqueue a duplicate job.
+    if (usuario.deletadoEm) {
+      const deletionScheduledFor = new Date(usuario.deletadoEm.getTime() + 30 * 24 * 60 * 60 * 1000);
+      return {
+        message: "Conta já marcada para exclusão",
+        gracePeriodDays: 30,
+        deletionScheduledFor,
+        notaGraca: "Você pode fazer login novamente durante o período de 30 dias para restaurar sua conta",
+      };
+    }
+
     // Soft delete: mark account with deletadoEm timestamp
     const now = new Date();
     const deletionScheduledFor = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);

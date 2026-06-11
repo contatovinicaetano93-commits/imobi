@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { ObraResumo, EvidenciaDetalhe } from "@/lib/api";
+import { obrasApi, evidenciasApi, type ObraResumo, type EvidenciaDetalhe } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { AprovarEtapaForm } from "./aprovar-form";
 
@@ -14,14 +14,14 @@ export default function VistoriaPage({ params }: { params: { id: string; etapaId
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/proxy/obras/${params.id}`).then((r) => (r.ok ? r.json() : null)),
-      fetch(`/api/proxy/evidencias/${params.etapaId}`).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+      obrasApi.buscar(params.id),
+      evidenciasApi.listarPorEtapa(params.etapaId).catch(() => [] as EvidenciaDetalhe[]),
     ])
       .then(([obraData, evidenciasData]) => {
-        if (!obraData) { router.replace('/dashboard/obras'); return; }
         setObra(obraData);
-        setEvidencias(evidenciasData ?? []);
+        setEvidencias(evidenciasData);
       })
+      .catch(() => { router.replace('/dashboard/obras'); })
       .finally(() => setLoading(false));
   }, [params.id, params.etapaId, router]);
 

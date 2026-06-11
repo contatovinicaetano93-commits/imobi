@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LeadDetail } from '@imbobi/schemas';
+import { comercialApi, type LeadDetalhe } from '@/lib/api';
 import { ScoreBreakdown } from '@/components/dashboard/comercial/ScoreBreakdown';
 import { ConversionTimeline } from '@/components/dashboard/comercial/ConversionTimeline';
 import { use } from 'react';
@@ -12,25 +12,16 @@ interface LeadDetailPageProps {
 
 export default function LeadDetailPage({ params }: LeadDetailPageProps) {
   const { id } = use(params);
-  const [lead, setLead] = useState<LeadDetail | null>(null);
+  const [lead, setLead] = useState<LeadDetalhe | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchLead = async () => {
-      try {
-        const response = await fetch(`/api/comercial/leads/${id}`);
-        if (response.ok) {
-          const data: LeadDetail = await response.json();
-          setLead(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch lead:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLead();
+    comercialApi
+      .obterLead(id)
+      .then(setLead)
+      .catch((err) => setError(err instanceof Error ? err.message : 'Erro ao carregar lead'))
+      .finally(() => setLoading(false));
   }, [id]);
 
   if (loading) {
@@ -41,10 +32,10 @@ export default function LeadDetailPage({ params }: LeadDetailPageProps) {
     );
   }
 
-  if (!lead) {
+  if (error || !lead) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Lead não encontrado</p>
+        <p className="text-gray-500">{error ?? 'Lead não encontrado'}</p>
       </div>
     );
   }

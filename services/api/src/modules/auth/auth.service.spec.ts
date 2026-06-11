@@ -290,3 +290,66 @@ describe("AuthService.esqueceuSenha — prevenção de enumeração de usuários
     expect(salvo).not.toBe(tokenCru);
   });
 });
+
+// ─── Novos bugs encontrados na auditoria ──────────────────────────────────────
+
+describe("AuthService.login — Bug: usuário soft-deletado não deve conseguir autenticar", () => {
+  const usuarioDeletado = { ...baseUsuarioDB, deletadoEm: new Date(Date.now() - 1000) };
+
+  it("lança UnauthorizedException para usuário com deletadoEm definido", async () => {
+    const { service } = buildAuthService({ usuarioPorEmail: usuarioDeletado });
+    await expect(
+      service.login({ email: "joao@test.com", senha: "Senha@123" })
+    ).rejects.toThrow(UnauthorizedException);
+  });
+
+  it("NÃO retorna tokens para usuário soft-deletado mesmo com senha correta", async () => {
+    const { service } = buildAuthService({ usuarioPorEmail: usuarioDeletado });
+    let result: any;
+    try {
+      result = await service.login({ email: "joao@test.com", senha: "Senha@123" });
+    } catch (_) {
+      result = undefined;
+    }
+    expect(result).toBeUndefined();
+  });
+});
+
+describe("AuthService.redefinirSenha — Bug: sessões existentes não eram revogadas após reset", () => {
+  const usuarioComToken = {
+    ...baseUsuarioDB,
+    passwordResetToken: crypto.createHash("sha256").update("raw-token-abc").digest("hex"),
+    passwordResetExpires: new Date(Date.now() + 30 * 60 * 1000),
+  };
+
+  function buildAuthServiceComResetToken() {
+    const prisma = {
+      usuario: {
+        findFirst: jest.fn().mockResolvedValue(usuarioComToken),
+        update: jest.fn().mockResolvedValue({}),
+      },
+      sessaoToken: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
+      },
+    } as any;
+
+    const jwt = { sign: jest.fn().mockReturnValue("fake-token") } as any;
+    const email = { recuperacaoSenhaEmail: jest.fn() } as any;
+    const service = new AuthService(prisma, jwt, email);
+    return { service, prisma };
+  }
+
+  it("revoga todas as sessões do usuário após redefinição de senha", async () => {
+    const { service, prisma } = buildAuthServiceComResetToken();
+    await service.redefinirSenha("raw-token-abc", "NovaSenha@456");
+    expect(prisma.sessaoToken.deleteMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { usuarioId: baseUsuarioDB.usuarioId } })
+    );
+  });
+
+  it("retorna mensagem de sucesso após redefinição", async () => {
+    const { service } = buildAuthServiceComResetToken();
+    const result = await service.redefinirSenha("raw-token-abc", "NovaSenha@456");
+    expect(result.message).toMatch(/redefinida/i);
+  });
+});

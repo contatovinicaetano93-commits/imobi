@@ -6,6 +6,7 @@ const ETAPA_ID = "etapa-uuid-001";
 const OBRA_ID = "obra-uuid-001";
 const USUARIO_ID = "user-uuid-001";
 const OUTRO_ID = "user-uuid-002";
+const EVIDENCIA_ID = "ev-uuid-001";
 
 const baseEtapa = {
   etapaId: ETAPA_ID,
@@ -60,6 +61,40 @@ function buildService(overrides: { etapa?: any; dentro?: boolean; uploadKey?: st
   return { service, prisma, storage };
 }
 
+const GESTOR = { id: "gestor-uuid-001", tipo: "GESTOR_OBRA" };
+const ENGENHEIRO = { id: USUARIO_ID, tipo: "ENGENHEIRO" };
+
+function buildValidarService(opts: { evidencia?: any; updateManyCount?: number } = {}) {
+  const evidencia =
+    opts.evidencia !== undefined ? opts.evidencia : { evidenciaId: EVIDENCIA_ID, validada: false };
+  const updateManyCount = opts.updateManyCount ?? 1;
+
+  const updatedEvidencia = {
+    evidenciaId: EVIDENCIA_ID,
+    validada: true,
+    etapaId: ETAPA_ID,
+    obraId: OBRA_ID,
+    observacao: null,
+    criadoEm: new Date(),
+    atualizadoEm: new Date(),
+  };
+
+  const prisma = {
+    evidenciaEtapa: {
+      findUnique: jest
+        .fn()
+        .mockResolvedValueOnce(evidencia)
+        .mockResolvedValueOnce(updatedEvidencia),
+      updateMany: jest.fn().mockResolvedValue({ count: updateManyCount }),
+    },
+  } as any;
+
+  const storage = { upload: jest.fn(), getSignedUrl: jest.fn() } as any;
+
+  const service = new EvidenciasService(prisma, storage);
+  return { service, prisma };
+}
+
 describe("EvidenciasService.upload — Bug 9: buffer real deve chegar ao S3", () => {
   it("passa o buffer real (não vazio) para storage.upload", async () => {
     const { service, storage } = buildService();
@@ -110,33 +145,36 @@ describe("EvidenciasService.upload — Bug 9: buffer real deve chegar ao S3", ()
 describe("EvidenciasService.upload — validações de negócio", () => {
   it("lança NotFoundException se etapa não existe", async () => {
     const { service } = buildService({ etapa: null });
-    await expect(service.upload(USUARIO_ID, makeInput(), FAKE_JPEG, "image/jpeg"))
-      .rejects.toThrow(NotFoundException);
+    await expect(service.upload(USUARIO_ID, makeInput(), FAKE_JPEG, "image/jpeg")).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it("lança ForbiddenException se usuário não é dono da obra", async () => {
     const { service } = buildService();
-    await expect(service.upload(OUTRO_ID, makeInput(), FAKE_JPEG, "image/jpeg"))
-      .rejects.toThrow(ForbiddenException);
+    await expect(service.upload(OUTRO_ID, makeInput(), FAKE_JPEG, "image/jpeg")).rejects.toThrow(
+      ForbiddenException,
+    );
   });
 
   it("lança BadRequestException se accuracy > 15m", async () => {
     const { service } = buildService();
     const input = makeInput({ accuracyMetros: 16 });
-    await expect(service.upload(USUARIO_ID, input, FAKE_JPEG, "image/jpeg"))
-      .rejects.toThrow(BadRequestException);
+    await expect(service.upload(USUARIO_ID, input, FAKE_JPEG, "image/jpeg")).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it("lança ForbiddenException se coordenadas fora do raio (PostGIS retorna dentro=false)", async () => {
     const { service } = buildService({ dentro: false });
-    await expect(service.upload(USUARIO_ID, makeInput(), FAKE_JPEG, "image/jpeg"))
-      .rejects.toThrow(ForbiddenException);
+    await expect(service.upload(USUARIO_ID, makeInput(), FAKE_JPEG, "image/jpeg")).rejects.toThrow(
+      ForbiddenException,
+    );
   });
 
   it("NÃO chama storage.upload se GPS fora do raio", async () => {
     const { service, storage } = buildService({ dentro: false });
-    await expect(service.upload(USUARIO_ID, makeInput(), FAKE_JPEG, "image/jpeg"))
-      .rejects.toThrow();
+    await expect(service.upload(USUARIO_ID, makeInput(), FAKE_JPEG, "image/jpeg")).rejects.toThrow();
     expect(storage.upload).not.toHaveBeenCalled();
   });
 
@@ -144,8 +182,50 @@ describe("EvidenciasService.upload — validações de negócio", () => {
     const { service, storage, prisma } = buildService();
     storage.upload.mockRejectedValueOnce(new Error("S3 unavailable"));
 
-    await expect(service.upload(USUARIO_ID, makeInput(), FAKE_JPEG, "image/jpeg"))
-      .rejects.toThrow("S3 unavailable");
+    await expect(service.upload(USUARIO_ID, makeInput(), FAKE_JPEG, "image/jpeg")).rejects.toThrow(
+      "S3 unavailable",
+    );
     expect(prisma.evidenciaEtapa.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("EvidenciasService.validar — estado máquina e race condition", () => {
+  it("lança ForbiddenException se usuário não é GESTOR_OBRA nem ADMIN", async () => {
+    const { service } = buildValidarService();
+    await expect(service.validar(ENGENHEIRO, EVIDENCIA_ID, true)).rejects.toThrow(ForbiddenException);
+  });
+
+  it("lança NotFoundException se evidência não existe", async () => {
+    const { service } = buildValidarService({ evidencia: null });
+    await expect(service.validar(GESTOR, EVIDENCIA_ID, true)).rejects.toThrow(NotFoundException);
+  });
+
+  it("lança BadRequestException ao tentar aprovar evidência já aprovada", async () => {
+    const { service } = buildValidarService({
+      evidencia: { evidenciaId: EVIDENCIA_ID, validada: true },
+    });
+    await expect(service.validar(GESTOR, EVIDENCIA_ID, true)).rejects.toThrow(BadRequestException);
+  });
+
+  it("lança BadRequestException ao tentar reverter evidência já aprovada", async () => {
+    const { service } = buildValidarService({
+      evidencia: { evidenciaId: EVIDENCIA_ID, validada: true },
+    });
+    await expect(service.validar(GESTOR, EVIDENCIA_ID, false)).rejects.toThrow(BadRequestException);
+  });
+
+  it("usa updateMany com where validada:false para prevenir race condition", async () => {
+    const { service, prisma } = buildValidarService();
+    await service.validar(GESTOR, EVIDENCIA_ID, true);
+    expect(prisma.evidenciaEtapa.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ evidenciaId: EVIDENCIA_ID, validada: false }),
+      }),
+    );
+  });
+
+  it("lança BadRequestException se updateMany não atualiza nenhum registro (race condition ganhou)", async () => {
+    const { service } = buildValidarService({ updateManyCount: 0 });
+    await expect(service.validar(GESTOR, EVIDENCIA_ID, true)).rejects.toThrow(BadRequestException);
   });
 });

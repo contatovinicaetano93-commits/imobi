@@ -416,6 +416,17 @@ export type LeadItem = {
   stage?: { nome: string };
 };
 
+export type LeadDetalhe = LeadItem & {
+  atividades?: {
+    leadActivityId: string;
+    tipo: string;
+    descricao: string;
+    criadoEm: string;
+  }[];
+  proximoAcompanhamento?: string;
+  obra?: { obraId: string; nome: string };
+};
+
 export type LeadsListResponse = {
   leads: LeadItem[];
   total: number;
@@ -433,7 +444,7 @@ export const comercialApi = {
     if (searchTerm) params.set("searchTerm", searchTerm);
     return apiFetch<LeadsListResponse>(`/comercial/leads?${params}`);
   },
-  obterLead: (leadId: string) => apiFetch<LeadItem>(`/comercial/leads/${leadId}`),
+  obterLead: (leadId: string) => apiFetch<LeadDetalhe>(`/comercial/leads/${leadId}`),
 };
 
 // ── Etapas ────────────────────────────────────────────────────────────

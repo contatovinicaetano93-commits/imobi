@@ -41,10 +41,14 @@ export class AuthService {
     const usuario = await this.prisma.usuario.findUnique({
       where: { email: input.email },
     });
-    if (!usuario) throw new UnauthorizedException("Credenciais inválidas.");
 
-    const senhaOk = await bcrypt.compare(input.senha, usuario.passwordHash);
-    if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
+    // Always run bcrypt.compare even when user doesn't exist to prevent user enumeration
+    // via timing differences (constant-time response regardless of whether email is registered).
+    const senhaOk = usuario
+      ? await bcrypt.compare(input.senha, usuario.passwordHash)
+      : await bcrypt.compare(input.senha, "$2a$12$dummyhashusedtoensureconstanttime.....invalid");
+
+    if (!usuario || usuario.deletadoEm || !senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
 
     return {
       usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
@@ -122,6 +126,12 @@ export class AuthService {
         passwordResetToken: null,
         passwordResetExpires: null,
       },
+    });
+
+    // Invalidate all existing sessions so any compromised sessions are revoked
+    // after the user resets their password.
+    await this.prisma.sessaoToken.deleteMany({
+      where: { usuarioId: usuario.usuarioId },
     });
 
     return { message: "Senha redefinida com sucesso" };

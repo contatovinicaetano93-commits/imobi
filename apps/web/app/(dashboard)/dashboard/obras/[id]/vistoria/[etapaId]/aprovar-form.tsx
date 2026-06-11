@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { etapasApi } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 
 interface Props {
@@ -16,23 +17,16 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
   const [isPending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
 
-  const acao = async (aprovado: boolean) => {
+  const acao = async (_aprovado: boolean) => {
     setErro(null);
     startTransition(async () => {
-      const res = await fetch(`/api/etapas/${etapaId}/validar`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ observacao: obs }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json() as { message?: string };
-        setErro(body.message ?? "Erro ao processar.");
-        return;
+      try {
+        await etapasApi.validar(etapaId, { observacao: obs });
+        router.push(`/dashboard/obras/${obraId}`);
+        router.refresh();
+      } catch (err) {
+        setErro(err instanceof Error ? err.message : "Erro ao processar.");
       }
-
-      router.push(`/dashboard/obras/${obraId}`);
-      router.refresh();
     });
   };
 
