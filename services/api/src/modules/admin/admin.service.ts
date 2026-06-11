@@ -1,5 +1,14 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, ConflictException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import * as bcrypt from "bcryptjs";
+import { UsuarioTipo } from "@prisma/client";
+
+export interface CriarUsuarioAdminDto {
+  nome: string;
+  email: string;
+  senha: string;
+  tipo: UsuarioTipo;
+}
 
 export interface AdminOverview {
   totalUsuarios: number;
@@ -123,5 +132,48 @@ export class AdminService {
     );
 
     return eventos.slice(0, limit);
+  }
+
+  async listarUsuarios() {
+    const rows = await this.prisma.usuario.findMany({
+      where: { deletadoEm: null },
+      orderBy: { criadoEm: "desc" },
+      select: {
+        usuarioId: true,
+        nome: true,
+        email: true,
+        tipo: true,
+        kycStatus: true,
+        criadoEm: true,
+      },
+    });
+    return rows.map(({ usuarioId, ...rest }) => ({ id: usuarioId, ...rest }));
+  }
+
+  async criarUsuario(dto: CriarUsuarioAdminDto) {
+    const existe = await this.prisma.usuario.findUnique({ where: { email: dto.email } });
+    if (existe) throw new ConflictException("E-mail já cadastrado");
+    const passwordHash = await bcrypt.hash(dto.senha, 10);
+    const { usuarioId, ...rest } = await this.prisma.usuario.create({
+      data: {
+        nome: dto.nome,
+        email: dto.email,
+        cpf: `000.000.000-${Math.floor(Math.random() * 100).toString().padStart(2, "0")}`,
+        telefone: "",
+        passwordHash,
+        tipo: dto.tipo,
+        consentidoTermos: true,
+        consentidoPrivacy: true,
+      },
+      select: {
+        usuarioId: true,
+        nome: true,
+        email: true,
+        tipo: true,
+        kycStatus: true,
+        criadoEm: true,
+      },
+    });
+    return { id: usuarioId, ...rest };
   }
 }
