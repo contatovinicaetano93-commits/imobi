@@ -3,11 +3,12 @@ import { PrismaService } from "../prisma/prisma.service";
 import { hash } from "bcryptjs";
 
 const STAFF_USERS = [
-  { nome: "Administrador IMOBI", email: "admin@imobi.com.br",      cpf: "00000000001", telefone: "11900000001", senha: "Admin@123",    tipo: "ADMIN"      },
-  { nome: "Gestor de Fundo",      email: "gestor@imobi.com.br",     cpf: "00000000002", telefone: "11900000002", senha: "Gestor@123",   tipo: "GESTOR"     },
-  { nome: "Engenheiro IMOBI",     email: "eng@imobi.com.br",        cpf: "00000000003", telefone: "11900000003", senha: "Eng@123",      tipo: "ENGENHEIRO" },
-  { nome: "Parceiro Comercial",   email: "comercial@imobi.com.br",  cpf: "00000000004", telefone: "11900000004", senha: "Comercial@123",tipo: "COMERCIAL"  },
-  { nome: "Cliente Tomador",      email: "tomador@imobi.com.br",    cpf: "00000000005", telefone: "11900000005", senha: "Tomador@123",  tipo: "TOMADOR"    },
+  { nome: "Administrador IMOBI", email: "admin@imobi.com.br",       cpf: "00000000001", telefone: "11900000001", senha: "Admin@123",      tipo: "ADMIN"      },
+  { nome: "Gestor de Fundo",      email: "gestor@imobi.com.br",      cpf: "00000000002", telefone: "11900000002", senha: "Gestor@123",     tipo: "GESTOR"     },
+  { nome: "Engenheiro IMOBI",     email: "eng@imobi.com.br",         cpf: "00000000003", telefone: "11900000003", senha: "Eng@123",        tipo: "ENGENHEIRO" },
+  { nome: "Parceiro Comercial",   email: "comercial@imobi.com.br",   cpf: "00000000004", telefone: "11900000004", senha: "Comercial@123",  tipo: "COMERCIAL"  },
+  { nome: "Cliente Tomador",      email: "tomador@imobi.com.br",     cpf: "00000000005", telefone: "11900000005", senha: "Tomador@123",    tipo: "TOMADOR"    },
+  { nome: "Construtor IMOBI",     email: "construtor@imobi.com.br",  cpf: "00000000006", telefone: "11900000006", senha: "Construtor@123", tipo: "CONSTRUTOR" },
 ];
 
 @Controller("setup")
@@ -60,6 +61,7 @@ export class SetupController {
       GESTOR:     "/dashboard/gestor",
       ENGENHEIRO: "/dashboard/engenheiro",
       COMERCIAL:  "/dashboard/comercial",
+      CONSTRUTOR: "/dashboard/construtor",
       TOMADOR:    "/dashboard",
     };
     return mapa[tipo] ?? "/dashboard";
