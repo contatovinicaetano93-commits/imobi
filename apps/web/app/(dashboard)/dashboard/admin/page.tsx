@@ -119,23 +119,35 @@ export default function AdminPage() {
 
       {/* KPIs principais */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {[
-          { icon: Users,     label: "Usuários",       val: String(ov.totalUsuarios),          color: "#1B4FD8", sub: "contas na plataforma" },
-          { icon: Building2, label: "Obras ativas",   val: `${ov.obrasAtivas}`,               color: "#0369a1", sub: `de ${ov.obrasTotal} no total` },
-          { icon: CreditCard,label: "Crédito aprovado", val: formatarBRL(ov.creditoAprovado), color: "#7c3aed", sub: "carteira total" },
-          { icon: Banknote,  label: "Crédito liberado", val: formatarBRL(ov.creditoLiberado), color: "#16a34a", sub: `${pctLiberado}% do aprovado` },
-        ].map(({ icon: Icon, label, val, color, sub }) => (
-          <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: color + "14" }}>
-                <Icon className="w-4 h-4" style={{ color }} />
+        {overview === null
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 animate-pulse shrink-0" />
+                  <div className="h-3 w-20 bg-gray-100 rounded-lg animate-pulse" />
+                </div>
+                <div className="h-6 w-24 bg-gray-100 rounded-lg animate-pulse" />
+                <div className="h-3 w-16 bg-gray-100 rounded-lg animate-pulse mt-1" />
               </div>
-              <span className="text-xs text-gray-500 font-medium leading-tight">{label}</span>
-            </div>
-            <p className="text-lg sm:text-xl font-bold text-gray-900 tabular-nums">{val}</p>
-            <p className="text-xs text-gray-400 mt-1">{sub}</p>
-          </div>
-        ))}
+            ))
+          : [
+              { icon: Users,     label: "Usuários",       val: String(ov.totalUsuarios),          color: "#1B4FD8", sub: "contas na plataforma" },
+              { icon: Building2, label: "Obras ativas",   val: `${ov.obrasAtivas}`,               color: "#0369a1", sub: `de ${ov.obrasTotal} no total` },
+              { icon: CreditCard,label: "Crédito aprovado", val: formatarBRL(ov.creditoAprovado), color: "#7c3aed", sub: "carteira total" },
+              { icon: Banknote,  label: "Crédito liberado", val: formatarBRL(ov.creditoLiberado), color: "#16a34a", sub: `${pctLiberado}% do aprovado` },
+            ].map(({ icon: Icon, label, val, color, sub }) => (
+              <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: color + "14" }}>
+                    <Icon className="w-4 h-4" style={{ color }} />
+                  </div>
+                  <span className="text-xs text-gray-500 font-medium leading-tight">{label}</span>
+                </div>
+                <p className="text-lg sm:text-xl font-bold text-gray-900 tabular-nums">{val}</p>
+                <p className="text-xs text-gray-400 mt-1">{sub}</p>
+              </div>
+            ))
+        }
       </div>
 
       {/* Pendências + Atividade */}

@@ -188,23 +188,35 @@ export default function ParceiroComercialPage() {
 
       {/* KPIs de comissão */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {[
-          { icon: Banknote,    label: "A receber",        val: formatarBRL(rs.comissoesAReceber),  color: "#1B4FD8", sub: "comissões liberadas + pendentes" },
-          { icon: CheckCircle2,label: "Pagas no mês",     val: formatarBRL(rs.comissoesPagasMes),  color: "#16a34a", sub: "recebidas neste mês" },
-          { icon: TrendingUp,  label: "Total recebido",   val: formatarBRL(rs.comissoesPagasTotal),color: "#16a34a", sub: "desde o início da parceria" },
-          { icon: Users,       label: "Operações ativas", val: String(rs.operacoesAtivas),         color: "#0369a1", sub: `${rs.taxaAprovacao}% de aprovação` },
-        ].map(({ icon: Icon, label, val, color, sub }) => (
-          <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: color + "14" }}>
-                <Icon className="w-4 h-4" style={{ color }} />
+        {resumo === null
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 animate-pulse shrink-0" />
+                  <div className="h-3 w-20 bg-gray-100 rounded-lg animate-pulse" />
+                </div>
+                <div className="h-6 w-24 bg-gray-100 rounded-lg animate-pulse" />
+                <div className="h-3 w-16 bg-gray-100 rounded-lg animate-pulse mt-1" />
               </div>
-              <span className="text-xs text-gray-500 font-medium leading-tight">{label}</span>
-            </div>
-            <p className="text-lg sm:text-xl font-bold text-gray-900 tabular-nums">{val}</p>
-            <p className="text-xs text-gray-400 mt-1">{sub}</p>
-          </div>
-        ))}
+            ))
+          : [
+              { icon: Banknote,    label: "A receber",        val: formatarBRL(rs.comissoesAReceber),  color: "#1B4FD8", sub: "comissões liberadas + pendentes" },
+              { icon: CheckCircle2,label: "Pagas no mês",     val: formatarBRL(rs.comissoesPagasMes),  color: "#16a34a", sub: "recebidas neste mês" },
+              { icon: TrendingUp,  label: "Total recebido",   val: formatarBRL(rs.comissoesPagasTotal),color: "#16a34a", sub: "desde o início da parceria" },
+              { icon: Users,       label: "Operações ativas", val: String(rs.operacoesAtivas),         color: "#0369a1", sub: `${rs.taxaAprovacao}% de aprovação` },
+            ].map(({ icon: Icon, label, val, color, sub }) => (
+              <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: color + "14" }}>
+                    <Icon className="w-4 h-4" style={{ color }} />
+                  </div>
+                  <span className="text-xs text-gray-500 font-medium leading-tight">{label}</span>
+                </div>
+                <p className="text-lg sm:text-xl font-bold text-gray-900 tabular-nums">{val}</p>
+                <p className="text-xs text-gray-400 mt-1">{sub}</p>
+              </div>
+            ))
+        }
       </div>
 
       {/* Operações indicadas */}
