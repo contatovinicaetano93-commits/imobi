@@ -1,10 +1,16 @@
 "use client";
 
-
-
 import { useEffect, useState } from "react";
 import type { ManagerStats } from "@/lib/api";
 import Link from "next/link";
+import { ShieldCheck, FileCheck2, Building2, CreditCard, Clock, AlertTriangle } from "lucide-react";
+
+const DEMO_STATS: ManagerStats = {
+  filaAprovacoes: 7,
+  filaKyc: 4,
+  creditosAtivos: 18,
+  obrasAtivas: 12,
+};
 
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -54,50 +60,60 @@ export default function GestorPage() {
     );
   }
 
-  if (error || !stats) {
-    return (
-      <div className="space-y-6 sm:space-y-8">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Painel do Gestor</h1>
-        </div>
-        <div className="bg-red-50 rounded-2xl border border-red-100 p-4 sm:p-6">
-          <p className="text-xs sm:text-sm text-red-700">{error || "Erro ao carregar dados"}</p>
-        </div>
-      </div>
-    );
-  }
+  const isDemo = error || !stats;
+  const s = stats ?? DEMO_STATS;
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Painel do Gestor</h1>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1">
-          {stats.filaAprovacoes + stats.filaKyc} itens pendentes de análise
-        </p>
+      {/* Hero gestor — roxo */}
+      <div style={{ background: "linear-gradient(135deg, #3b0764 0%, #4c1d95 100%)", borderRadius: 16, padding: "1.5rem 2rem", color: "white" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.35rem" }}>
+              <ShieldCheck size={18} color="#a78bfa" />
+              <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Painel do Gestor</p>
+            </div>
+            <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0 0 0.4rem" }}>Fila de Aprovações</h1>
+            <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.65)", margin: 0 }}>
+              {s.filaAprovacoes + s.filaKyc} {s.filaAprovacoes + s.filaKyc === 1 ? "item pendente" : "itens pendentes"} de análise
+            </p>
+          </div>
+          {isDemo && (
+            <span style={{ fontSize: "0.65rem", background: "rgba(251,191,36,0.2)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 6, padding: "0.3rem 0.6rem", whiteSpace: "nowrap", flexShrink: 0 }}>
+              Demo
+            </span>
+          )}
+        </div>
+        {(s.filaAprovacoes > 10 || s.filaKyc > 10) && (
+          <div style={{ marginTop: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "0.5rem 0.75rem" }}>
+            <AlertTriangle size={14} color="#f87171" />
+            <p style={{ fontSize: "0.75rem", color: "#fca5a5", margin: 0 }}>Fila crítica — mais de 10 itens aguardando aprovação</p>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <StatCard
           label="Etapas Pendentes"
-          value={stats.filaAprovacoes}
-          color={stats.filaAprovacoes > 10 ? "red" : stats.filaAprovacoes > 5 ? "yellow" : "green"}
+          value={s.filaAprovacoes}
+          color={s.filaAprovacoes > 10 ? "red" : s.filaAprovacoes > 5 ? "yellow" : "green"}
           href="/dashboard/gestor/etapas"
         />
         <StatCard
           label="KYC Pendentes"
-          value={stats.filaKyc}
-          color={stats.filaKyc > 10 ? "red" : stats.filaKyc > 5 ? "yellow" : "green"}
+          value={s.filaKyc}
+          color={s.filaKyc > 10 ? "red" : s.filaKyc > 5 ? "yellow" : "green"}
           href="/dashboard/gestor/kyc"
         />
         <StatCard
           label="Créditos Ativos"
-          value={stats.creditosAtivos}
+          value={s.creditosAtivos}
           color="green"
           href="/dashboard/credito"
         />
         <StatCard
           label="Obras em Execução"
-          value={stats.obrasAtivas}
+          value={s.obrasAtivas}
           color="green"
           href="/dashboard/obras"
         />
@@ -114,7 +130,7 @@ export default function GestorPage() {
             >
               <span className="font-medium text-xs sm:text-sm text-blue-900">Revisar Etapas</span>
               <span className="text-xs sm:text-sm bg-blue-200 text-blue-900 px-2 py-1 rounded font-semibold">
-                {stats.filaAprovacoes}
+                {s.filaAprovacoes}
               </span>
             </Link>
             <Link
@@ -124,7 +140,7 @@ export default function GestorPage() {
             >
               <span className="font-medium text-xs sm:text-sm text-purple-900">Revisar KYC</span>
               <span className="text-xs sm:text-sm bg-purple-200 text-purple-900 px-2 py-1 rounded font-semibold">
-                {stats.filaKyc}
+                {s.filaKyc}
               </span>
             </Link>
             <Link
