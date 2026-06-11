@@ -41,7 +41,7 @@ const config: ExpoConfig = {
     "expo-updates",
   ],
   updates: {
-    url: `https://u.expo.dev/${process.env["EAS_PROJECT_ID"] ?? ""}`,
+    url: "https://u.expo.dev/6bf955c5-863a-4344-ac39-6a55c89658d4",
     enabled: true,
     checkAutomatically: "ON_LOAD",
     fallbackToCacheTimeout: 0,
@@ -51,7 +51,7 @@ const config: ExpoConfig = {
   },
   extra: {
     apiUrl: process.env["EXPO_PUBLIC_API_URL"],
-    eas: { projectId: process.env["EAS_PROJECT_ID"] },
+    eas: { projectId: "6bf955c5-863a-4344-ac39-6a55c89658d4" },
   },
 };
 
