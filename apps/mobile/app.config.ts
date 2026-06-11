@@ -1,5 +1,7 @@
 import type { ExpoConfig } from "expo/config";
 
+const EAS_PROJECT_ID = "6bf955c5-863a-4344-ac39-6a55c89658d4";
+
 const config: ExpoConfig = {
   name: "imbobi",
   slug: "imbobi",
@@ -8,6 +10,10 @@ const config: ExpoConfig = {
   icon: "./assets/icon.png",
   userInterfaceStyle: "automatic",
   splash: { image: "./assets/splash.png", resizeMode: "contain", backgroundColor: "#15803d" },
+  runtimeVersion: { policy: "appVersion" },
+  updates: {
+    url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
+  },
   ios: {
     supportsTablet: false,
     bundleIdentifier: "com.imbobi.app",
@@ -37,10 +43,11 @@ const config: ExpoConfig = {
     ["expo-location", { locationAlwaysAndWhenInUsePermission: "Validação de presença na obra." }],
     "expo-camera",
     "expo-secure-store",
+    "expo-updates",
   ],
   extra: {
     apiUrl: process.env["EXPO_PUBLIC_API_URL"],
-    eas: { projectId: process.env["EAS_PROJECT_ID"] },
+    eas: { projectId: EAS_PROJECT_ID },
   },
 };
 
