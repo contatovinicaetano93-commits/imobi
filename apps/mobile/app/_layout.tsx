@@ -48,20 +48,14 @@ export default function RootLayout() {
     }
   }, [isSignedIn, isLoading, segments]);
 
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#1B4FD8" />
-      </View>
-    );
-  }
-
   return (
     <Stack
       screenOptions={{
         headerShown: false,
       }}
     >
+      <Stack.Screen name="index" />
+      <Stack.Screen name="+not-found" />
       <Stack.Screen
         name="(auth)"
         options={{
