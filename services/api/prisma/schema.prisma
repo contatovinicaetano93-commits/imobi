@@ -43,6 +43,7 @@ model Usuario {
   etapaAuditLogs EtapaAuditLog[] @relation("EtapaAuditLogs")
   kycAuditLogs  KycAuditLog[] @relation("KycAuditLogs")
   leadsGerenciados Lead[] @relation("LeadUsuarios")
+  mailingContatos MailingContato[]
 
   @@index([email])
   @@index([cpf])
@@ -480,4 +481,25 @@ model LeadActivity {
   @@index([leadId])
   @@index([tipo])
   @@index([criadoEm])
+}
+
+// ── Parceiros: Mailing ─────────────────────────────────────────────────
+
+model MailingContato {
+  id        String        @id @default(uuid())
+  usuarioId String
+  usuario   Usuario       @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  nome      String
+  email     String
+  telefone  String?
+  status    MailingStatus @default(NOVO)
+  criadoEm  DateTime      @default(now())
+
+  @@index([usuarioId])
+}
+
+enum MailingStatus {
+  NOVO
+  CONTATADO
+  CONVERTIDO
 }
