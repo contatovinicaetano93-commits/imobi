@@ -125,6 +125,7 @@ function Logo({ size = 28, white = false }: { size?: number; white?: boolean }) 
 function renderNav(
   items: NavItem[],
   activeFn: (href: string) => boolean,
+  accentColor: string,
   onNavigate?: () => void,
 ) {
   let lastSection = "";
@@ -158,7 +159,7 @@ function renderNav(
             background: active ? "rgba(255,255,255,0.12)" : "transparent",
             textDecoration: "none",
             transition: "all 0.12s",
-            borderLeft: active ? `2.5px solid ${ROLE_META[role ?? ""] ? ROLE_META[role!].accent : "#16a34a"}` : "2.5px solid transparent",
+            borderLeft: active ? `2.5px solid ${accentColor}` : "2.5px solid transparent",
             paddingLeft: active ? "0.65rem" : "0.75rem",
           }}
         >
@@ -282,7 +283,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
 
         <nav style={{ flex: 1, padding: "0 0.5rem", overflowY: "auto" }}>
-          {renderNav(visibleNav, isActive)}
+          {renderNav(visibleNav, isActive, accentColor)}
         </nav>
 
         {userFooter()}
@@ -323,7 +324,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             overflowY: "auto", display: "flex", flexDirection: "column",
           }}>
             <nav style={{ flex: 1, padding: "0.5rem 0.5rem 0" }}>
-              {renderNav(visibleNav, isActive, () => setMobileOpen(false))}
+              {renderNav(visibleNav, isActive, accentColor, () => setMobileOpen(false))}
             </nav>
             {userFooter(true)}
           </div>

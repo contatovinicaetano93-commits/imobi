@@ -126,7 +126,7 @@ export default function GestorPage() {
             <Link
               href="/dashboard/gestor/etapas"
               className="flex items-center justify-between p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-12 sm:min-h-auto"
-              aria-label={`Revisar Etapas com ${stats.filaAprovacoes} itens pendentes`}
+              aria-label={`Revisar Etapas com ${s.filaAprovacoes} itens pendentes`}
             >
               <span className="font-medium text-xs sm:text-sm text-blue-900">Revisar Etapas</span>
               <span className="text-xs sm:text-sm bg-blue-200 text-blue-900 px-2 py-1 rounded font-semibold">
@@ -136,7 +136,7 @@ export default function GestorPage() {
             <Link
               href="/dashboard/gestor/kyc"
               className="flex items-center justify-between p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 min-h-12 sm:min-h-auto"
-              aria-label={`Revisar KYC com ${stats.filaKyc} itens pendentes`}
+              aria-label={`Revisar KYC com ${s.filaKyc} itens pendentes`}
             >
               <span className="font-medium text-xs sm:text-sm text-purple-900">Revisar KYC</span>
               <span className="text-xs sm:text-sm bg-purple-200 text-purple-900 px-2 py-1 rounded font-semibold">
