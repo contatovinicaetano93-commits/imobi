@@ -1,6 +1,6 @@
 "use client";
 
-import { useSimuladorCredito } from "@imbobi/core";
+import { useSimuladorCredito } from "@imbobi/core/hooks";
 import { formatarBRL, formatarPercentual } from "@imbobi/core";
 
 export default function SimuladorPage() {

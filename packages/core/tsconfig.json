@@ -6,10 +6,6 @@
     "moduleResolution": "node",
     "declaration": true,
     "outDir": "./dist",
-    "baseUrl": ".",
-    "paths": {
-      "@imbobi/*": ["../../packages/*/src"]
-    },
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
