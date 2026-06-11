@@ -38,7 +38,17 @@ const config: ExpoConfig = {
     ["expo-location", { locationAlwaysAndWhenInUsePermission: "Validação de presença na obra." }],
     "expo-camera",
     "expo-secure-store",
+    "expo-updates",
   ],
+  updates: {
+    url: `https://u.expo.dev/${process.env["EAS_PROJECT_ID"] ?? ""}`,
+    enabled: true,
+    checkAutomatically: "ON_LOAD",
+    fallbackToCacheTimeout: 0,
+  },
+  runtimeVersion: {
+    policy: "appVersion",
+  },
   extra: {
     apiUrl: process.env["EXPO_PUBLIC_API_URL"],
     eas: { projectId: process.env["EAS_PROJECT_ID"] },
