@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    return NextResponse.json({ message: data.message ?? 'Credenciais inválidas' }, { status: res.status });
+    const msg = data.message ?? data.error ?? `Erro ${res.status}`;
+    return NextResponse.json({ message: msg }, { status: res.status });
   }
 
   const jar = await cookies();
