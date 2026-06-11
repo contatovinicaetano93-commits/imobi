@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import PasswordInput from "../_components/PasswordInput";
 
 const WA = "5511993455589";
 
@@ -64,11 +65,11 @@ function RedefinirForm() {
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
             <label style={labelStyle}>Nova senha</label>
-            <input type="password" required minLength={8} value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} placeholder="Mínimo 8 caracteres" style={inputStyle} />
+            <PasswordInput required minLength={8} value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} placeholder="Mínimo 8 caracteres" style={inputStyle} />
           </div>
           <div>
             <label style={labelStyle}>Confirmar senha</label>
-            <input type="password" required minLength={8} value={confirmar} onChange={(e) => setConfirmar(e.target.value)} placeholder="Repita a nova senha" style={inputStyle} />
+            <PasswordInput required minLength={8} value={confirmar} onChange={(e) => setConfirmar(e.target.value)} placeholder="Repita a nova senha" style={inputStyle} />
           </div>
 
           {error && (

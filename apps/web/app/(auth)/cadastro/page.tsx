@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
 import { apiClient, ApiError } from "@imbobi/core";
+import PasswordInput from "../_components/PasswordInput";
 
 const WA = "5511993455589";
 
@@ -78,7 +79,13 @@ export default function CadastroPage() {
           </Field>
 
           <Field label="Senha" error={errors.senha?.message}>
-            <input {...register("senha")} type="password" placeholder="Mín. 8 caracteres, 1 maiúscula, 1 número" style={errors.senha ? inputErrorStyle : inputStyle} />
+            <PasswordInput
+              {...register("senha")}
+              placeholder="Mín. 8 caracteres, 1 maiúscula, 1 número"
+              hasError={!!errors.senha}
+              style={inputStyle}
+              errorStyle={inputErrorStyle}
+            />
           </Field>
 
           <div style={{ borderTop: "1px solid var(--border)", paddingTop: "1rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
