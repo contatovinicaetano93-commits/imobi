@@ -6,7 +6,10 @@ import type { FastifyRequest } from "fastify";
 import { EvidenciasService } from "./evidencias.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
-import { UploadEvidenciaSchema } from "@imbobi/schemas";
+import { RolesGuard } from "../../common/guards/roles.guard";
+import { Roles } from "../../common/decorators/roles.decorator";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { UploadEvidenciaSchema, ValidarEvidenciaSchema, type ValidarEvidenciaInput } from "@imbobi/schemas";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 
@@ -32,6 +35,10 @@ export class EvidenciasController {
 
     const buffer: Buffer = await part.toBuffer();
     if (buffer.length === 0) throw new BadRequestException("Arquivo vazio.");
+    const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB — prevents OOM / excessive S3 cost
+    if (buffer.length > MAX_FILE_SIZE_BYTES) {
+      throw new BadRequestException("Arquivo muito grande. Tamanho máximo permitido: 10MB.");
+    }
 
     const f = part.fields as Record<string, any>;
     const parsed = UploadEvidenciaSchema.safeParse({
@@ -52,13 +59,17 @@ export class EvidenciasController {
     return this.evidencias.listarPorEtapa(u, etapaId);
   }
 
+  // Bug fix: RolesGuard enforces role at controller layer (defence-in-depth);
+  // ZodPipe validates body so "aprovado" is always a boolean, never a raw string.
   @Patch(":id/validar")
+  @UseGuards(RolesGuard)
+  @Roles("GESTOR_OBRA", "ADMIN")
   validar(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
-    @Body("aprovado") aprovado: boolean,
-    @Body("observacao") obs?: string
+    @Body(new ZodPipe(ValidarEvidenciaSchema.omit({ evidenciaId: true })))
+    body: Omit<ValidarEvidenciaInput, "evidenciaId">,
   ) {
-    return this.evidencias.validar(u, id, aprovado, obs);
+    return this.evidencias.validar(u, id, body.aprovado, body.observacao);
   }
 }
