@@ -47,7 +47,7 @@ const config: ExpoConfig = {
     fallbackToCacheTimeout: 0,
   },
   runtimeVersion: {
-    policy: "appVersion",
+    policy: "sdkVersion",
   },
   extra: {
     apiUrl: process.env["EXPO_PUBLIC_API_URL"],
