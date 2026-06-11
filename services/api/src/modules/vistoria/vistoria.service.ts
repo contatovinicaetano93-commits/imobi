@@ -26,7 +26,14 @@ export class VistoriaService {
   async aprovar(gestorId: string, etapaId: string, observacoes?: string) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId },
-      include: { obra: { include: { credito: true, usuario: true } } },
+      include: {
+        obra: {
+          include: {
+            credito: true,
+            usuario: { select: { usuarioId: true, nome: true, email: true } },
+          },
+        },
+      },
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
@@ -108,7 +115,13 @@ export class VistoriaService {
   async rejeitar(gestorId: string, etapaId: string, motivo: string) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId },
-      include: { obra: { include: { usuario: true } } },
+      include: {
+        obra: {
+          include: {
+            usuario: { select: { usuarioId: true, nome: true, email: true } },
+          },
+        },
+      },
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 

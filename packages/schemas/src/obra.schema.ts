@@ -64,6 +64,14 @@ export const EtapasPadraoEnum = z.enum([
   "ENTREGA",
 ]);
 
+export const AprovarVistoriaSchema = z.object({
+  observacoes: z.string().max(1000).optional(),
+});
+
+export const RejeitarVistoriaSchema = z.object({
+  motivo: z.string().min(10, "Motivo deve ter ao menos 10 caracteres").max(1000),
+});
+
 export type StatusObra = z.infer<typeof StatusObraEnum>;
 export type StatusEtapa = z.infer<typeof StatusEtapaEnum>;
 export type EnderecoInput = z.infer<typeof EnderecoSchema>;
@@ -71,3 +79,5 @@ export type GeolocalizacaoInput = z.infer<typeof GeolocalizacaoSchema>;
 export type CriarObraInput = z.infer<typeof CriarObraSchema>;
 export type CriarEtapaInput = z.infer<typeof CriarEtapaSchema>;
 export type EtapaPadrao = z.infer<typeof EtapasPadraoEnum>;
+export type AprovarVistoriaInput = z.infer<typeof AprovarVistoriaSchema>;
+export type RejeitarVistoriaInput = z.infer<typeof RejeitarVistoriaSchema>;
