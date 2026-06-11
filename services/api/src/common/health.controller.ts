@@ -81,6 +81,11 @@ export class HealthController {
   private hasEmailConfig(provider: string): boolean {
     const provider_lower = provider.toLowerCase();
 
+    // Modo console (EmailService loga emails em vez de enviar) não exige env vars
+    if (provider_lower === "console") {
+      return true;
+    }
+
     if (provider_lower === "sendgrid") {
       return !!process.env["SENDGRID_API_KEY"];
     }
