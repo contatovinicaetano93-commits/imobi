@@ -23,11 +23,10 @@ import { formatarBRL } from "@imbobi/core";
 import type { AdminOverview, AtividadeRecente } from "@/lib/api";
 
 const TEST_USERS = [
-  { role: "ADMIN",      email: "admin@imobi.com.br",      senha: "Admin@123",    label: "Administrador",    color: "#7c3aed", bg: "#f5f3ff" },
-  { role: "GESTOR",     email: "gestor@imobi.com.br",     senha: "Gestor@123",   label: "Gestor de Fundo",  color: "#1B4FD8", bg: "#eff6ff" },
-  { role: "ENGENHEIRO", email: "eng@imobi.com.br",        senha: "Eng@123",      label: "Engenheiro",       color: "#0369a1", bg: "#f0f9ff" },
-  { role: "TOMADOR",    email: "tomador@imobi.com.br",    senha: "Tomador@123",  label: "Tomador (cliente)",color: "#16a34a", bg: "#f0fdf4" },
-  { role: "COMERCIAL",  email: "comercial@imobi.com.br",  senha: "Comercial@123",label: "Comercial",        color: "#d97706", bg: "#fffbeb" },
+  { role: "ADMIN",      email: "admin@imobi.com.br",      senha: "Admin@123",     label: "Administrador",   color: "#7c3aed", bg: "#f5f3ff" },
+  { role: "GESTOR",     email: "gestor@imobi.com.br",     senha: "Gestor@123",    label: "Gestor de Fundo", color: "#1B4FD8", bg: "#eff6ff" },
+  { role: "ENGENHEIRO", email: "eng@imobi.com.br",        senha: "Eng@123",       label: "Engenheiro",      color: "#0369a1", bg: "#f0f9ff" },
+  { role: "COMERCIAL",  email: "comercial@imobi.com.br",  senha: "Comercial@123", label: "Comercial",       color: "#d97706", bg: "#fffbeb" },
   { role: "CONSTRUTOR", email: "construtor@imobi.com.br", senha: "Construtor@123",label: "Construtor",      color: "#0891b2", bg: "#ecfeff" },
 ];
 

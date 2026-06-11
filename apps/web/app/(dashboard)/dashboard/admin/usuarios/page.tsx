@@ -68,8 +68,7 @@ const DEMO: UsuarioAdmin[] = [
   { id: "2", nome: "Gestor de Fundo",      email: "gestor@imobi.com.br",     tipo: "GESTOR",     kycStatus: "APROVADO", criadoEm: "2026-01-01", funcoesBloqueadas: [] },
   { id: "3", nome: "Engenheiro IMOBI",     email: "eng@imobi.com.br",        tipo: "ENGENHEIRO", kycStatus: "APROVADO", criadoEm: "2026-01-01", funcoesBloqueadas: [] },
   { id: "4", nome: "Parceiro Comercial",   email: "comercial@imobi.com.br",  tipo: "COMERCIAL",  kycStatus: "APROVADO", criadoEm: "2026-01-01", funcoesBloqueadas: [] },
-  { id: "5", nome: "Cliente Tomador",      email: "tomador@imobi.com.br",    tipo: "TOMADOR",    kycStatus: "APROVADO", criadoEm: "2026-01-01", funcoesBloqueadas: [] },
-  { id: "6", nome: "Construtor IMOBI",     email: "construtor@imobi.com.br", tipo: "CONSTRUTOR", kycStatus: "APROVADO", criadoEm: "2026-01-01", funcoesBloqueadas: [] },
+  { id: "5", nome: "Construtor IMOBI",     email: "construtor@imobi.com.br", tipo: "CONSTRUTOR", kycStatus: "APROVADO", criadoEm: "2026-01-01", funcoesBloqueadas: [] },
 ];
 
 const inp = "w-full text-sm border border-gray-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1B4FD8] focus:border-transparent bg-white";
