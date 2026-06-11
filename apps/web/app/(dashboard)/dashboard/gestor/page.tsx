@@ -127,6 +127,14 @@ export default function GestorPage() {
                 {stats.filaKyc}
               </span>
             </Link>
+            <Link
+              href="/dashboard/gestor/due-diligence/nova"
+              className="flex items-center justify-between p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 min-h-12 sm:min-h-auto"
+              aria-label="Nova Análise de Empreendimento"
+            >
+              <span className="font-medium text-xs sm:text-sm text-green-900">Nova Análise de Empreendimento</span>
+              <span className="text-xs text-green-700 font-semibold">Due Diligence</span>
+            </Link>
           </div>
         </div>
 
