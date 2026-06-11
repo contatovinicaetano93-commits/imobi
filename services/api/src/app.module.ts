@@ -22,6 +22,7 @@ import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { ComercialModule } from "./modules/comercial/comercial.module";
 import { EngenheirosModule } from "./modules/engenheiros/engenheiros.module";
+import { AdminModule } from "./modules/admin/admin.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { VistoriaModule } from "./modules/vistoria/vistoria.module";
 import { SetupModule } from "./modules/setup/setup.module";
@@ -80,6 +81,7 @@ const redisConfig = getRedisConfig();
     ParceirosModule,
     ComercialModule,
     EngenheirosModule,
+    AdminModule,
     VistoriaModule,
     SetupModule,
   ],
