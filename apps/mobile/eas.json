@@ -5,10 +5,7 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "ios": {
-        "simulator": false
-      }
+      "distribution": "internal"
     },
     "preview": {
       "distribution": "internal",
@@ -17,8 +14,5 @@
     "production": {
       "channel": "production"
     }
-  },
-  "update": {
-    "channel": "main"
   }
 }
