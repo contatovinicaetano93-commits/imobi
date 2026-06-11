@@ -45,11 +45,11 @@ const NAV: NavItem[] = [
   { label: "Documentos",    href: "/dashboard/kyc",          icon: FileCheck2,  roles: ["TOMADOR", "ADMIN"] },
   { label: "Notificações",  href: "/dashboard/notificacoes", icon: Bell,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
   { label: "Perfil",        href: "/dashboard/perfil",       icon: User,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
-  { label: "Vistorias",     href: "/dashboard/engenheiro",   icon: Wrench,      roles: ["ENGENHEIRO", "ADMIN"],   section: "operacional" },
+  { label: "Engenharia",    href: "/dashboard/engenheiro",   icon: Wrench,      roles: ["ENGENHEIRO", "ADMIN"],   section: "operacional" },
   { label: "Painel Gestor", href: "/dashboard/gestor",       icon: ShieldCheck, roles: ["GESTOR", "ADMIN"] },
   { label: "Fundos",        href: "/dashboard/fundos",       icon: Banknote,    roles: ["GESTOR", "ADMIN"] },
   { label: "Relatórios",    href: "/dashboard/relatorios",   icon: BarChart3,   roles: ["GESTOR", "ADMIN"] },
-  { label: "Comercial",     href: "/dashboard/comercial",    icon: Megaphone,   roles: ["COMERCIAL", "ADMIN"] },
+  { label: "Parceiro",      href: "/dashboard/comercial",    icon: Megaphone,   roles: ["COMERCIAL", "ADMIN"] },
   { label: "Construtor",    href: "/dashboard/construtor",   icon: Building2,   roles: ["CONSTRUTOR", "ADMIN"] },
   { label: "Administração", href: "/dashboard/admin",        icon: Settings,    roles: ["ADMIN"],                 section: "admin" },
 ];

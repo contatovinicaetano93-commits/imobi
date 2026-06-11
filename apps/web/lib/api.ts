@@ -396,6 +396,117 @@ export const engenheirosApi = {
     }),
 };
 
+// ── Engenheiro: Financeiro, Etapas e Licenças ────────────────────────
+
+export type ObraFinanceiro = {
+  obraId: string;
+  nome: string;
+  valorTotal: number;
+  valorMaterial: number;
+  valorMaoDeObra: number;
+  valorExecutado: number;
+  progresso: number;
+  etapaAtual: string;
+};
+
+export type EtapaProjeto = {
+  id: string;
+  nome: string;
+  ordem: number;
+  status: "CONCLUIDA" | "EM_ANDAMENTO" | "PENDENTE";
+  valorLiberacao: number;
+  percentualObra: number;
+  dataConclusao?: string;
+};
+
+export type Licenca = {
+  id: string;
+  nome: string;
+  categoria: "CONSTRUCAO" | "OPERACIONAL";
+  orgao: string;
+  numero?: string;
+  status: "VALIDA" | "PENDENTE" | "VENCENDO" | "VENCIDA";
+  validade?: string;
+  obraNome?: string;
+};
+
+export const engenheiroObraApi = {
+  financeiro: () => apiFetch<ObraFinanceiro[]>("/engenheiros/financeiro"),
+  etapas: (obraId: string) => apiFetch<EtapaProjeto[]>(`/engenheiros/obras/${obraId}/etapas`),
+  licencas: () => apiFetch<Licenca[]>("/engenheiros/licencas"),
+};
+
+// ── Parceiro Comercial ───────────────────────────────────────────────
+
+export type ParceiroResumo = {
+  comissoesAReceber: number;
+  comissoesPagasMes: number;
+  comissoesPagasTotal: number;
+  operacoesAtivas: number;
+  taxaAprovacao: number;
+  codigoIndicacao: string;
+};
+
+export type OperacaoIndicada = {
+  id: string;
+  codigo: string;
+  clienteRef: string;
+  status: "INDICADA" | "EM_ANALISE" | "APROVADA" | "EM_OBRA" | "CONCLUIDA" | "RECUSADA";
+  valorBase: number;
+  percentualComissao: number;
+  valorComissao: number;
+  comissaoStatus: "PENDENTE" | "LIBERADA" | "PAGA";
+  validadeIndicacao: string;
+  criadoEm: string;
+};
+
+export type ContatoMailing = {
+  id: string;
+  nome: string;
+  email: string;
+  telefone?: string;
+  status: "NOVO" | "CONTATADO" | "CONVERTIDO";
+  criadoEm: string;
+};
+
+export const parceiroApi = {
+  resumo: () => apiFetch<ParceiroResumo>("/parceiros/resumo"),
+  operacoes: () => apiFetch<OperacaoIndicada[]>("/parceiros/operacoes"),
+  mailing: () => apiFetch<ContatoMailing[]>("/parceiros/mailing"),
+  adicionarContato: (data: { nome: string; email: string; telefone?: string }) =>
+    apiFetch<ContatoMailing>("/parceiros/mailing", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
+// ── Admin: visão geral da operação ───────────────────────────────────
+
+export type AdminOverview = {
+  totalUsuarios: number;
+  obrasAtivas: number;
+  obrasTotal: number;
+  creditoAprovado: number;
+  creditoLiberado: number;
+  kycPendentes: number;
+  etapasPendentes: number;
+  visitasAgendadas: number;
+  filaLiberacao: number;
+};
+
+export type AtividadeRecente = {
+  id: string;
+  tipo: string;
+  descricao: string;
+  criadoEm: string;
+};
+
+export const adminApi = {
+  overview: () => apiFetch<AdminOverview>("/admin/overview"),
+  atividades: (limit?: number) =>
+    apiFetch<AtividadeRecente[]>(`/admin/atividades${limit ? `?limit=${limit}` : ""}`),
+};
+
 // ── Notificações ──────────────────────────────────────────────────────
 
 export type Notificacao = {
