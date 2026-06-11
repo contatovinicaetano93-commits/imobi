@@ -43,6 +43,8 @@ model Usuario {
   etapaAuditLogs EtapaAuditLog[] @relation("EtapaAuditLogs")
   kycAuditLogs  KycAuditLog[] @relation("KycAuditLogs")
   leadsGerenciados Lead[] @relation("LeadUsuarios")
+  dossies       DossieCredito[]
+  dossieAuditLogs DossieAuditLog[] @relation("DossieAuditLogs")
 
   @@index([email])
   @@index([cpf])
@@ -109,6 +111,7 @@ model Credito {
 
   obras           Obra[]
   liberacoes      LiberacaoParcela[]
+  dossies         DossieCredito[]
 
   @@index([usuarioId])
   @@index([status])
@@ -475,5 +478,220 @@ model LeadActivity {
 
   @@index([leadId])
   @@index([tipo])
+  @@index([criadoEm])
+}
+
+// ── Dossiê de Crédito (Phase 12) ────────────────────────────────────
+
+enum DossieStatus {
+  RASCUNHO
+  EM_ANALISE
+  PENDENCIA
+  APROVADO
+  REPROVADO
+}
+
+enum DossieUnidadeStatus {
+  VENDIDA
+  PERMUTA
+  ESTOQUE
+  QUITADA
+}
+
+enum SistemaAmortizacao {
+  PRICE
+  SAC
+  SACOC
+}
+
+enum DossieDocumentoTipo {
+  DEMONSTRACAO_FINANCEIRA
+  APRESENTACAO_PROJETO
+  APRESENTACAO_EMPRESA
+  ORGANOGRAMA_SOCIETARIO
+  ACORDO_PERMUTA
+  CRONOGRAMA_FISICO_FINANCEIRO
+  OUTRO
+}
+
+model DossieCredito {
+  dossieId         String   @id @default(uuid())
+  creditoId        String?
+  credito          Credito? @relation(fields: [creditoId], references: [creditoId], onDelete: SetNull)
+  usuarioId        String
+  usuario          Usuario  @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  status           DossieStatus @default(RASCUNHO)
+  etapasConcluidas Int[]    @default([]) // etapas do wizard web (1..7) já concluídas
+
+  // Ficha do Empreendimento
+  nomeEmpreendimento   String
+  speRazaoSocial       String?
+  speCnpj              String?
+  endereco             String?
+  cidade               String?
+  uf                   String?
+  tipoEmpreendimento   String?  // RESIDENCIAL, COMERCIAL, MISTO
+  patrimonioAfetacao   Boolean  @default(false)
+  areaTerrenoM2        Float?
+  areaConstruidaM2     Float?
+  areaPrivativaTotalM2 Float?
+  valorTerreno         Float?
+  dataLancamento       DateTime?
+  dataInicioObras      DateTime?
+  dataPrevisaoTermino  DateTime?
+  dataHabiteSe         DateTime?
+  alienacaoFiduciariaTerreno  Boolean @default(false)
+  alienacaoFiduciariaUnidades Boolean @default(false)
+  seguroObra           Boolean  @default(false)
+  percentualEntrada    Float?
+  percentualObras      Float?
+  percentualChaves     Float?
+  orcamentoOriginal    Float?
+  orcamentoAtual       Float?
+  custoIncorrido       Float?
+  custoAIncorrer       Float?
+  percentualCronogramaFisico     Float?
+  percentualCronogramaFinanceiro Float?
+
+  // Permutas (relevante apenas quando há unidades PERMUTA)
+  possuiAcordoNaoConcorrenciaPermuta Boolean?
+
+  // Empresa desenvolvedora/controladora
+  empresaNome        String?
+  empresaCnpj        String?
+  empresaWebsite     String?
+  empresaAnoFundacao Int?
+
+  submetidoEm  DateTime?
+  analisadoPor String?  // usuarioId of reviewer
+  analisadoEm  DateTime?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  unidades   DossieUnidade[]
+  recebiveis DossieRecebivel[]
+  distratos  DossieDistrato[]
+  documentos DossieDocumento[]
+  auditLogs  DossieAuditLog[]
+
+  @@index([usuarioId])
+  @@index([creditoId])
+  @@index([status])
+  @@index([criadoEm])
+}
+
+// ── Tabela de Unidades do Dossiê ────────────────────────────────────
+
+model DossieUnidade {
+  unidadeId          String   @id @default(uuid())
+  dossieId           String
+  dossie             DossieCredito @relation(fields: [dossieId], references: [dossieId], onDelete: Cascade)
+  numeroContrato     String?
+  numeroUnidade      String
+  areaPrivativaM2    Float
+  clienteNome        String?
+  clienteCpfCnpj     String?
+  dataVenda          DateTime?
+  valorVenda         Float?
+  valorTabela        Float?
+  status             DossieUnidadeStatus @default(ESTOQUE)
+  indexador          String?  // INCC, IGP-M, IPCA, etc.
+  taxaJurosMensal    Float?   // % a.m.
+  sistemaAmortizacao SistemaAmortizacao?
+  criadoEm           DateTime @default(now())
+  atualizadoEm       DateTime @updatedAt
+
+  recebiveis DossieRecebivel[]
+  distratos  DossieDistrato[]
+
+  @@unique([dossieId, numeroUnidade])
+  @@index([dossieId])
+  @@index([status])
+}
+
+// ── Carteira de Recebíveis do Dossiê ────────────────────────────────
+
+model DossieRecebivel {
+  recebivelId    String   @id @default(uuid())
+  dossieId       String
+  dossie         DossieCredito @relation(fields: [dossieId], references: [dossieId], onDelete: Cascade)
+  unidadeId      String?
+  unidade        DossieUnidade? @relation(fields: [unidadeId], references: [unidadeId], onDelete: SetNull)
+  numeroContrato String?
+  numeroUnidade  String
+  clienteNome    String?
+  parcelaAtual   Int
+  totalParcelas  Int
+  dataVencimento DateTime
+  dataPagamento  DateTime?
+  valorParcela   Float
+  valorRecebido  Float?
+  criadoEm       DateTime @default(now())
+  atualizadoEm   DateTime @updatedAt
+
+  @@index([dossieId])
+  @@index([unidadeId])
+  @@index([dataVencimento])
+  @@index([dataPagamento])
+}
+
+// ── Distratos do Dossiê ─────────────────────────────────────────────
+
+model DossieDistrato {
+  distratoId      String   @id @default(uuid())
+  dossieId        String
+  dossie          DossieCredito @relation(fields: [dossieId], references: [dossieId], onDelete: Cascade)
+  unidadeId       String?
+  unidade         DossieUnidade? @relation(fields: [unidadeId], references: [unidadeId], onDelete: SetNull)
+  numeroContrato  String?
+  numeroUnidade   String
+  clienteNome     String?
+  dataVenda       DateTime?
+  dataDistrato    DateTime
+  valorRecebido   Float?
+  valorRestituido Float?
+  motivo          String?
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+
+  @@index([dossieId])
+  @@index([unidadeId])
+  @@index([dataDistrato])
+}
+
+// ── Documentos do Dossiê (S3) ───────────────────────────────────────
+
+model DossieDocumento {
+  dossieDocumentoId String   @id @default(uuid())
+  dossieId          String
+  dossie            DossieCredito @relation(fields: [dossieId], references: [dossieId], onDelete: Cascade)
+  tipo              DossieDocumentoTipo
+  url               String   // S3 URL
+  nomeArquivo       String?
+  anoExercicio      Int?     // obrigatório quando tipo = DEMONSTRACAO_FINANCEIRA
+  descricao         String?  // obrigatório quando tipo = OUTRO
+  criadoEm          DateTime @default(now())
+  atualizadoEm      DateTime @updatedAt
+
+  @@index([dossieId])
+  @@index([tipo])
+}
+
+// ── Auditoria do Dossiê ─────────────────────────────────────────────
+
+model DossieAuditLog {
+  auditId        String   @id @default(uuid())
+  dossieId       String
+  dossie         DossieCredito @relation(fields: [dossieId], references: [dossieId], onDelete: Cascade)
+  acaoTipo       String   // SUBMETIDO, STATUS_ALTERADO, ETAPA_CONCLUIDA, etc.
+  statusAnterior DossieStatus?
+  statusNovo     DossieStatus?
+  usuarioId      String
+  usuario        Usuario  @relation("DossieAuditLogs", fields: [usuarioId], references: [usuarioId], onDelete: Restrict)
+  observacoes    String?
+  criadoEm       DateTime @default(now())
+
+  @@index([dossieId])
+  @@index([usuarioId])
   @@index([criadoEm])
 }

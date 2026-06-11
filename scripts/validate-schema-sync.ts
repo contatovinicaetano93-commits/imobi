@@ -73,6 +73,26 @@ const checks: Array<{
     zodExport: "LeadActivityTypeEnum",
     prismaEnum: "LeadActivityTipo",
   },
+  {
+    zodFile: "packages/schemas/src/dossie.schema.ts",
+    zodExport: "StatusDossieEnum",
+    prismaEnum: "DossieStatus",
+  },
+  {
+    zodFile: "packages/schemas/src/dossie.schema.ts",
+    zodExport: "StatusUnidadeDossieEnum",
+    prismaEnum: "DossieUnidadeStatus",
+  },
+  {
+    zodFile: "packages/schemas/src/dossie.schema.ts",
+    zodExport: "SistemaAmortizacaoEnum",
+    prismaEnum: "SistemaAmortizacao",
+  },
+  {
+    zodFile: "packages/schemas/src/dossie.schema.ts",
+    zodExport: "TipoDocumentoDossieEnum",
+    prismaEnum: "DossieDocumentoTipo",
+  },
 ];
 
 function extractZodEnumValues(
