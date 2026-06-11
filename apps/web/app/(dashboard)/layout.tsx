@@ -21,6 +21,7 @@ import {
   LogOut,
   ChevronRight,
   Building2,
+  FolderOpen,
   type LucideIcon,
 } from "lucide-react";
 
@@ -40,6 +41,7 @@ const NAV: NavItem[] = [
   { label: "Início",        href: "/dashboard",              icon: Home,        roles: ["TOMADOR", "ADMIN", "CONSTRUTOR", null], section: "geral" },
   { label: "Minhas Obras",  href: "/dashboard/obras",        icon: HardHat,     roles: ["TOMADOR", "ADMIN", "CONSTRUTOR"] },
   { label: "Crédito",       href: "/dashboard/credito",      icon: CreditCard,  roles: ["TOMADOR", "ADMIN"] },
+  { label: "Dossiês",       href: "/dashboard/dossies",      icon: FolderOpen,  roles: ["TOMADOR", "CONSTRUTOR", "GESTOR", "ADMIN"] },
   { label: "Simulador",     href: "/dashboard/simulador",    icon: Calculator,  roles: ["TOMADOR", "ADMIN"] },
   { label: "Score",         href: "/dashboard/score",        icon: Star,        roles: ["TOMADOR", "ADMIN"] },
   { label: "Documentos",    href: "/dashboard/kyc",          icon: FileCheck2,  roles: ["TOMADOR", "ADMIN"] },

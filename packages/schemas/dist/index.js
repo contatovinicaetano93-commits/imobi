@@ -19,3 +19,4 @@ __exportStar(require("./credito.schema"), exports);
 __exportStar(require("./obra.schema"), exports);
 __exportStar(require("./evidencia.schema"), exports);
 __exportStar(require("./comercial.schema"), exports);
+__exportStar(require("./dossie.schema"), exports);

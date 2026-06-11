@@ -1,3 +1,17 @@
+import type {
+  AtualizarEmpresaDesenvolvedoraInput,
+  AtualizarFichaEmpreendimentoInput,
+  CriarDossieInput,
+  DistratoDossieInput,
+  DocumentoDossieInput,
+  RecebivelDossieInput,
+  SistemaAmortizacao,
+  StatusDossie,
+  StatusUnidadeDossie,
+  TipoDocumentoDossie,
+  UnidadeDossieInput,
+} from "@imbobi/schemas";
+
 const _base = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
 const API_URL = _base.endsWith("/api/v1") ? _base : `${_base}/api/v1`;
 
@@ -427,4 +441,164 @@ export const notificacoesApi = {
     apiFetch("/notificacoes/marcar-todas-lidas", { method: "PATCH" }),
   deletar: (id: string) =>
     apiFetch(`/notificacoes/${id}`, { method: "DELETE" }),
+};
+
+// ── Dossiê de Crédito ─────────────────────────────────────────────────
+
+export type DossieResumo = {
+  dossieId: string;
+  nomeEmpreendimento: string;
+  speRazaoSocial?: string | null;
+  status: StatusDossie;
+  etapasConcluidas: number[];
+  criadoEm: string;
+  atualizadoEm: string;
+};
+
+export type DossieUnidadeItem = UnidadeDossieInput & {
+  unidadeId?: string;
+  status: StatusUnidadeDossie;
+  sistemaAmortizacao?: SistemaAmortizacao | null;
+};
+
+export type DossieRecebivelItem = RecebivelDossieInput & {
+  recebivelId?: string;
+};
+
+export type DossieDistratoItem = DistratoDossieInput & {
+  distratoId?: string;
+};
+
+export type DossieDocumentoItem = DocumentoDossieInput & {
+  dossieDocumentoId: string;
+  tipo: TipoDocumentoDossie;
+  criadoEm?: string;
+};
+
+export type DossieMetricas = {
+  vgv?: number;
+  valorMedioM2?: number;
+  percentualVendido?: number;
+  totalUnidades?: number;
+  unidadesVendidas?: number;
+  unidadesPermuta?: number;
+  unidadesEstoque?: number;
+  unidadesQuitadas?: number;
+  valorRecebido?: number;
+  valorAReceber?: number;
+  parcelasVencidas?: number;
+  inadimplencia?: number;
+  atrasoMedioDias?: number;
+};
+
+// Campos da ficha vêm "achatados" no agregado (espelha o modelo Prisma
+// DossieCredito) — valores ausentes chegam como null.
+export type DossieDetalhe = DossieResumo & {
+  creditoId?: string | null;
+  speCnpj?: string | null;
+  endereco?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  tipoEmpreendimento?: string | null;
+  patrimonioAfetacao?: boolean | null;
+  areaTerrenoM2?: number | null;
+  areaConstruidaM2?: number | null;
+  areaPrivativaTotalM2?: number | null;
+  valorTerreno?: number | null;
+  dataLancamento?: string | null;
+  dataInicioObras?: string | null;
+  dataPrevisaoTermino?: string | null;
+  dataHabiteSe?: string | null;
+  alienacaoFiduciariaTerreno?: boolean | null;
+  alienacaoFiduciariaUnidades?: boolean | null;
+  seguroObra?: boolean | null;
+  percentualEntrada?: number | null;
+  percentualObras?: number | null;
+  percentualChaves?: number | null;
+  orcamentoOriginal?: number | null;
+  orcamentoAtual?: number | null;
+  custoIncorrido?: number | null;
+  custoAIncorrer?: number | null;
+  percentualCronogramaFisico?: number | null;
+  percentualCronogramaFinanceiro?: number | null;
+  possuiAcordoNaoConcorrenciaPermuta?: boolean | null;
+  empresaNome?: string | null;
+  empresaCnpj?: string | null;
+  empresaWebsite?: string | null;
+  empresaAnoFundacao?: number | null;
+  submetidoEm?: string | null;
+  unidades?: DossieUnidadeItem[];
+  recebiveis?: DossieRecebivelItem[];
+  distratos?: DossieDistratoItem[];
+  documentos?: DossieDocumentoItem[];
+  metricas?: DossieMetricas;
+};
+
+export type DossieImportResultado = {
+  importadas: number;
+  erros: { linha: number; mensagens: string[] }[];
+};
+
+export const dossiesApi = {
+  listar: () => apiFetch<DossieResumo[]>("/dossies"),
+  buscar: (id: string) => apiFetch<DossieDetalhe>(`/dossies/${id}`),
+  criar: (data: CriarDossieInput) =>
+    apiFetch<DossieDetalhe>("/dossies", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  atualizarFicha: (id: string, data: AtualizarFichaEmpreendimentoInput) =>
+    apiFetch<DossieDetalhe>(`/dossies/${id}/ficha`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  salvarUnidades: (id: string, unidades: UnidadeDossieInput[]) =>
+    apiFetch<DossieDetalhe>(`/dossies/${id}/unidades`, {
+      method: "PUT",
+      body: JSON.stringify(unidades),
+    }),
+  importarUnidades: (id: string, rows: Record<string, unknown>[]) =>
+    apiFetch<DossieImportResultado>(`/dossies/${id}/unidades/import`, {
+      method: "POST",
+      body: JSON.stringify(rows),
+    }),
+  atualizarPermuta: (id: string, possuiAcordoNaoConcorrenciaPermuta: boolean | null) =>
+    apiFetch<DossieDetalhe>(`/dossies/${id}/permuta`, {
+      method: "PATCH",
+      body: JSON.stringify({ possuiAcordoNaoConcorrenciaPermuta }),
+    }),
+  salvarRecebiveis: (id: string, recebiveis: RecebivelDossieInput[]) =>
+    apiFetch<DossieDetalhe>(`/dossies/${id}/recebiveis`, {
+      method: "PUT",
+      body: JSON.stringify(recebiveis),
+    }),
+  importarRecebiveis: (id: string, rows: Record<string, unknown>[]) =>
+    apiFetch<DossieImportResultado>(`/dossies/${id}/recebiveis/import`, {
+      method: "POST",
+      body: JSON.stringify(rows),
+    }),
+  salvarDistratos: (id: string, distratos: DistratoDossieInput[]) =>
+    apiFetch<DossieDetalhe>(`/dossies/${id}/distratos`, {
+      method: "PUT",
+      body: JSON.stringify(distratos),
+    }),
+  atualizarEmpresa: (id: string, data: AtualizarEmpresaDesenvolvedoraInput) =>
+    apiFetch<DossieDetalhe>(`/dossies/${id}/empresa`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  adicionarDocumento: (id: string, data: DocumentoDossieInput) =>
+    apiFetch<DossieDocumentoItem>(`/dossies/${id}/documentos`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  removerDocumento: (id: string, docId: string) =>
+    apiFetch<void>(`/dossies/${id}/documentos/${docId}`, { method: "DELETE" }),
+  concluirEtapa: (id: string, numero: number) =>
+    apiFetch<DossieDetalhe>(`/dossies/${id}/etapas/${numero}/concluir`, {
+      method: "POST",
+    }),
+  submeter: (id: string) =>
+    apiFetch<DossieDetalhe>(`/dossies/${id}/submeter`, { method: "POST" }),
+  metricas: (id: string) => apiFetch<DossieMetricas>(`/dossies/${id}/metricas`),
 };
