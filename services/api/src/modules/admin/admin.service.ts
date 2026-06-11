@@ -1,7 +1,8 @@
-import { Injectable, ConflictException } from "@nestjs/common";
+import { Injectable, ConflictException, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import * as bcrypt from "bcryptjs";
 import { UsuarioTipo } from "@prisma/client";
+import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
 
 export interface CriarUsuarioAdminDto {
   nome: string;
@@ -142,12 +143,60 @@ export class AdminService {
         usuarioId: true,
         nome: true,
         email: true,
+        telefone: true,
         tipo: true,
         kycStatus: true,
+        bloqueadoEm: true,
+        funcoesBloqueadas: true,
+        criadoEm: true,
+        _count: { select: { obras: true, creditos: true } },
+      },
+    });
+    return rows.map(({ usuarioId, _count, ...rest }) => ({
+      id: usuarioId,
+      ...rest,
+      totalObras: _count.obras,
+      totalCreditos: _count.creditos,
+    }));
+  }
+
+  async atualizarUsuario(id: string, dto: AtualizarUsuarioAdminInput, adminId: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId: id } });
+    if (!usuario || usuario.deletadoEm) throw new NotFoundException("Usuário não encontrado");
+
+    // O admin não pode bloquear a própria conta nem rebaixar o próprio perfil
+    if (id === adminId && (dto.bloqueado === true || (dto.tipo && dto.tipo !== "ADMIN"))) {
+      throw new BadRequestException("Não é possível bloquear ou rebaixar a própria conta de administrador.");
+    }
+
+    const { usuarioId, ...atualizado } = await this.prisma.usuario.update({
+      where: { usuarioId: id },
+      data: {
+        ...(dto.tipo !== undefined && { tipo: dto.tipo as UsuarioTipo }),
+        ...(dto.bloqueado !== undefined && { bloqueadoEm: dto.bloqueado ? new Date() : null }),
+        ...(dto.funcoesBloqueadas !== undefined && { funcoesBloqueadas: dto.funcoesBloqueadas }),
+      },
+      select: {
+        usuarioId: true,
+        nome: true,
+        email: true,
+        tipo: true,
+        kycStatus: true,
+        bloqueadoEm: true,
+        funcoesBloqueadas: true,
         criadoEm: true,
       },
     });
-    return rows.map(({ usuarioId, ...rest }) => ({ id: usuarioId, ...rest }));
+
+    // Bloqueio de conta derruba as sessões ativas do usuário
+    if (dto.bloqueado === true) {
+      await this.prisma.sessaoToken.updateMany({
+        where: { usuarioId: id, revogadoEm: null },
+        data: { revogadoEm: new Date() },
+      });
+    }
+
+    return { id: usuarioId, ...atualizado };
   }
 
   async criarUsuario(dto: CriarUsuarioAdminDto) {

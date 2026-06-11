@@ -29,6 +29,8 @@ model Usuario {
   consentidoEm        DateTime?
   passwordResetToken    String?
   passwordResetExpires  DateTime?
+  bloqueadoEm         DateTime?
+  funcoesBloqueadas   String[]  @default([])
   deletadoEm          DateTime?
   criadoEm            DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt

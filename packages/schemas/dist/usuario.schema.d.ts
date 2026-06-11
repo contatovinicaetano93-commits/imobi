@@ -90,6 +90,21 @@ export declare const UpdateUsuarioSchema: z.ZodObject<{
     consentidoKyc?: boolean | undefined;
     consentidoMarketing?: boolean | undefined;
 }>;
+export declare const FUNCOES_PAINEL: readonly ["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"];
+export declare const FuncaoPainelEnum: z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>;
+export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
+    tipo: z.ZodOptional<z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"]>>;
+    bloqueado: z.ZodOptional<z.ZodBoolean>;
+    funcoesBloqueadas: z.ZodOptional<z.ZodArray<z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>, "many">>;
+}, "strip", z.ZodTypeAny, {
+    tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
+    bloqueado?: boolean | undefined;
+    funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
+}, {
+    tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
+    bloqueado?: boolean | undefined;
+    funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
+}>;
 export type TipoUsuario = z.infer<typeof TipoUsuarioEnum>;
 export type KycStatus = z.infer<typeof KycStatusEnum>;
 export type CadastroUsuarioInput = z.infer<typeof CadastroUsuarioSchema>;
@@ -97,3 +112,5 @@ export type LoginInput = z.infer<typeof LoginSchema>;
 export type UpdateUsuarioInput = z.infer<typeof UpdateUsuarioSchema>;
 export type EsqueceuSenhaInput = z.infer<typeof EsqueceuSenhaSchema>;
 export type RedefinirSenhaInput = z.infer<typeof RedefinirSenhaSchema>;
+export type FuncaoPainel = z.infer<typeof FuncaoPainelEnum>;
+export type AtualizarUsuarioAdminInput = z.infer<typeof AtualizarUsuarioAdminSchema>;

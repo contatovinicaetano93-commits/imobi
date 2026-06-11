@@ -15,6 +15,7 @@ export async function GET() {
       email: decoded.email ?? null,
       nome: decoded.nome ?? decoded.name ?? null,
       role: decoded.role ?? decoded.tipo ?? null,
+      funcoesBloqueadas: Array.isArray(decoded.funcoesBloqueadas) ? decoded.funcoesBloqueadas : [],
     });
   } catch {
     return NextResponse.json({ authenticated: false }, { status: 401 });

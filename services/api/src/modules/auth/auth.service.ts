@@ -46,6 +46,10 @@ export class AuthService {
     const senhaOk = await bcrypt.compare(input.senha, usuario.passwordHash);
     if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
 
+    if (usuario.bloqueadoEm) {
+      throw new UnauthorizedException("Conta bloqueada pelo administrador. Entre em contato com o suporte.");
+    }
+
     return {
       usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
       ...await this.gerarTokens(usuario.usuarioId),
@@ -130,10 +134,16 @@ export class AuthService {
   private async gerarTokens(usuarioId: string) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId },
-      select: { tipo: true, nome: true, email: true },
+      select: { tipo: true, nome: true, email: true, funcoesBloqueadas: true },
     });
     const accessToken = this.jwt.sign(
-      { sub: usuarioId, role: usuario?.tipo ?? null, nome: usuario?.nome ?? null, email: usuario?.email ?? null },
+      {
+        sub: usuarioId,
+        role: usuario?.tipo ?? null,
+        nome: usuario?.nome ?? null,
+        email: usuario?.email ?? null,
+        funcoesBloqueadas: usuario?.funcoesBloqueadas ?? [],
+      },
       { expiresIn: "15m" }
     );
     const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });

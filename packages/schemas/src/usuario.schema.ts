@@ -58,6 +58,34 @@ export const UpdateUsuarioSchema = CadastroUsuarioSchema.omit({
   cpf: true,
 }).partial();
 
+// ── Fiscalização (Admin) ────────────────────────────────────────────
+// Funções de painel que o admin pode liberar/bloquear por usuário.
+export const FUNCOES_PAINEL = [
+  "obras",
+  "credito",
+  "simulador",
+  "score",
+  "kyc",
+  "notificacoes",
+  "engenharia",
+  "gestor",
+  "due-diligence",
+  "fundos",
+  "relatorios",
+  "comercial",
+  "construtor",
+] as const;
+
+export const FuncaoPainelEnum = z.enum(FUNCOES_PAINEL);
+
+export const AtualizarUsuarioAdminSchema = z.object({
+  tipo: z
+    .enum(["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"])
+    .optional(),
+  bloqueado: z.boolean().optional(),
+  funcoesBloqueadas: z.array(FuncaoPainelEnum).optional(),
+});
+
 export type TipoUsuario = z.infer<typeof TipoUsuarioEnum>;
 export type KycStatus = z.infer<typeof KycStatusEnum>;
 export type CadastroUsuarioInput = z.infer<typeof CadastroUsuarioSchema>;
@@ -65,3 +93,5 @@ export type LoginInput = z.infer<typeof LoginSchema>;
 export type UpdateUsuarioInput = z.infer<typeof UpdateUsuarioSchema>;
 export type EsqueceuSenhaInput = z.infer<typeof EsqueceuSenhaSchema>;
 export type RedefinirSenhaInput = z.infer<typeof RedefinirSenhaSchema>;
+export type FuncaoPainel = z.infer<typeof FuncaoPainelEnum>;
+export type AtualizarUsuarioAdminInput = z.infer<typeof AtualizarUsuarioAdminSchema>;

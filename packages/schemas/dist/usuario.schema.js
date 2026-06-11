@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateUsuarioSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
+exports.AtualizarUsuarioAdminSchema = exports.FuncaoPainelEnum = exports.FUNCOES_PAINEL = exports.UpdateUsuarioSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
 const zod_1 = require("zod");
 exports.TipoUsuarioEnum = zod_1.z.enum([
     "TOMADOR",
@@ -53,3 +53,28 @@ exports.UpdateUsuarioSchema = exports.CadastroUsuarioSchema.omit({
     senha: true,
     cpf: true,
 }).partial();
+// ── Fiscalização (Admin) ────────────────────────────────────────────
+// Funções de painel que o admin pode liberar/bloquear por usuário.
+exports.FUNCOES_PAINEL = [
+    "obras",
+    "credito",
+    "simulador",
+    "score",
+    "kyc",
+    "notificacoes",
+    "engenharia",
+    "gestor",
+    "due-diligence",
+    "fundos",
+    "relatorios",
+    "comercial",
+    "construtor",
+];
+exports.FuncaoPainelEnum = zod_1.z.enum(exports.FUNCOES_PAINEL);
+exports.AtualizarUsuarioAdminSchema = zod_1.z.object({
+    tipo: zod_1.z
+        .enum(["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"])
+        .optional(),
+    bloqueado: zod_1.z.boolean().optional(),
+    funcoesBloqueadas: zod_1.z.array(exports.FuncaoPainelEnum).optional(),
+});

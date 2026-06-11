@@ -32,26 +32,28 @@ type NavItem = {
   icon: LucideIcon;
   roles: UserRole[];
   section?: string;
+  /** chave de função controlável pelo admin (fiscalização) */
+  funcao?: string;
 };
 
 const WA = "5511993455589";
 
 const NAV: NavItem[] = [
   { label: "Início",        href: "/dashboard",              icon: Home,        roles: ["TOMADOR", "ADMIN", "CONSTRUTOR", null], section: "geral" },
-  { label: "Minhas Obras",  href: "/dashboard/obras",        icon: HardHat,     roles: ["TOMADOR", "ADMIN", "CONSTRUTOR"] },
-  { label: "Crédito",       href: "/dashboard/credito",      icon: CreditCard,  roles: ["TOMADOR", "ADMIN"] },
-  { label: "Simulador",     href: "/dashboard/simulador",    icon: Calculator,  roles: ["TOMADOR", "ADMIN"] },
-  { label: "Score",         href: "/dashboard/score",        icon: Star,        roles: ["TOMADOR", "ADMIN"] },
-  { label: "Documentos",    href: "/dashboard/kyc",          icon: FileCheck2,  roles: ["TOMADOR", "ADMIN"] },
-  { label: "Notificações",  href: "/dashboard/notificacoes", icon: Bell,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
+  { label: "Minhas Obras",  href: "/dashboard/obras",        icon: HardHat,     roles: ["TOMADOR", "ADMIN", "CONSTRUTOR"], funcao: "obras" },
+  { label: "Crédito",       href: "/dashboard/credito",      icon: CreditCard,  roles: ["TOMADOR", "ADMIN"], funcao: "credito" },
+  { label: "Simulador",     href: "/dashboard/simulador",    icon: Calculator,  roles: ["TOMADOR", "ADMIN"], funcao: "simulador" },
+  { label: "Score",         href: "/dashboard/score",        icon: Star,        roles: ["TOMADOR", "ADMIN"], funcao: "score" },
+  { label: "Documentos",    href: "/dashboard/kyc",          icon: FileCheck2,  roles: ["TOMADOR", "ADMIN"], funcao: "kyc" },
+  { label: "Notificações",  href: "/dashboard/notificacoes", icon: Bell,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null], funcao: "notificacoes" },
   { label: "Perfil",        href: "/dashboard/perfil",       icon: User,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
-  { label: "Engenharia",    href: "/dashboard/engenheiro",   icon: Wrench,      roles: ["ENGENHEIRO", "ADMIN"],   section: "operacional" },
-  { label: "Painel Gestor", href: "/dashboard/gestor",       icon: ShieldCheck, roles: ["GESTOR", "ADMIN"] },
-  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: FileCheck2, roles: ["GESTOR", "ADMIN"] },
-  { label: "Fundos",        href: "/dashboard/fundos",       icon: Banknote,    roles: ["GESTOR", "ADMIN"] },
-  { label: "Relatórios",    href: "/dashboard/relatorios",   icon: BarChart3,   roles: ["GESTOR", "ADMIN"] },
-  { label: "Parceiro",      href: "/dashboard/comercial",    icon: Megaphone,   roles: ["COMERCIAL", "ADMIN"] },
-  { label: "Construtor",    href: "/dashboard/construtor",   icon: Building2,   roles: ["CONSTRUTOR", "ADMIN"] },
+  { label: "Engenharia",    href: "/dashboard/engenheiro",   icon: Wrench,      roles: ["ENGENHEIRO", "ADMIN"],   section: "operacional", funcao: "engenharia" },
+  { label: "Painel Gestor", href: "/dashboard/gestor",       icon: ShieldCheck, roles: ["GESTOR", "ADMIN"], funcao: "gestor" },
+  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: FileCheck2, roles: ["GESTOR", "ADMIN"], funcao: "due-diligence" },
+  { label: "Fundos",        href: "/dashboard/fundos",       icon: Banknote,    roles: ["GESTOR", "ADMIN"], funcao: "fundos" },
+  { label: "Relatórios",    href: "/dashboard/relatorios",   icon: BarChart3,   roles: ["GESTOR", "ADMIN"], funcao: "relatorios" },
+  { label: "Parceiro",      href: "/dashboard/comercial",    icon: Megaphone,   roles: ["COMERCIAL", "ADMIN"], funcao: "comercial" },
+  { label: "Construtor",    href: "/dashboard/construtor",   icon: Building2,   roles: ["CONSTRUTOR", "ADMIN"], funcao: "construtor" },
   { label: "Administração", href: "/dashboard/admin",        icon: Settings,    roles: ["ADMIN"],                 section: "admin" },
 ];
 
@@ -61,8 +63,13 @@ const SECTION_LABELS: Record<string, string> = {
   admin:       "Sistema",
 };
 
-function filterNav(role: UserRole): NavItem[] {
-  return NAV.filter((item) => item.roles.includes(role));
+function filterNav(role: UserRole, funcoesBloqueadas: string[]): NavItem[] {
+  return NAV.filter((item) => {
+    if (!item.roles.includes(role)) return false;
+    // ADMIN nunca perde funções; demais perfis respeitam o bloqueio do admin
+    if (role !== "ADMIN" && item.funcao && funcoesBloqueadas.includes(item.funcao)) return false;
+    return true;
+  });
 }
 
 function Logo({ size = 28, white = false }: { size?: number; white?: boolean }) {
@@ -141,6 +148,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<UserRole>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [funcoesBloqueadas, setFuncoesBloqueadas] = useState<string[]>([]);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -151,11 +159,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           setRole(d.role ?? null);
           setUserName(d.nome ?? null);
           setUserEmail(d.email ?? null);
+          setFuncoesBloqueadas(Array.isArray(d.funcoesBloqueadas) ? d.funcoesBloqueadas : []);
         }
       });
   }, []);
 
-  const visibleNav = filterNav(role);
+  const visibleNav = filterNav(role, funcoesBloqueadas);
   const isActive = (href: string) =>
     href === "/dashboard" ? path === href : path.startsWith(href);
 
