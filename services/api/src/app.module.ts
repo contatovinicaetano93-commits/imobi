@@ -22,8 +22,11 @@ import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { ComercialModule } from "./modules/comercial/comercial.module";
 import { EngenheirosModule } from "./modules/engenheiros/engenheiros.module";
+import { AdminModule } from "./modules/admin/admin.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { VistoriaModule } from "./modules/vistoria/vistoria.module";
+import { SetupModule } from "./modules/setup/setup.module";
+import { DueDiligenceModule } from "./modules/due-diligence/due-diligence.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker } from "./workers/excluir-usuario.worker";
 import { HealthController } from "./common/health.controller";
@@ -37,10 +40,10 @@ const redisConfig = getRedisConfig();
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([
-      { ttl: 60000, limit: 100 }, // General: 100 req/min
-      { ttl: 60000, limit: 10, name: "auth" }, // Auth endpoints: 10 req/min
-      { ttl: 60000, limit: 5, name: "upload" }, // File uploads: 5 req/min
-      { ttl: 60000, limit: 20, name: "manager" }, // Manager ops: 20 req/min
+      { ttl: 60000, limit: 100 },
+      { ttl: 60000, limit: 10, name: "auth" },
+      { ttl: 60000, limit: 5, name: "upload" },
+      { ttl: 60000, limit: 20, name: "manager" },
     ]),
     CacheModule.register({
       isGlobal: true,
@@ -48,7 +51,7 @@ const redisConfig = getRedisConfig();
       host: redisConfig.host,
       port: redisConfig.port,
       ...(redisConfig.password && { password: redisConfig.password }),
-      ttl: 300, // 5 min default TTL
+      ttl: 300,
       lazyConnect: true,
       retryStrategy: (times: number) => Math.min(times * 50, 2000),
     }),
@@ -79,7 +82,10 @@ const redisConfig = getRedisConfig();
     ParceirosModule,
     ComercialModule,
     EngenheirosModule,
+    AdminModule,
     VistoriaModule,
+    SetupModule,
+    DueDiligenceModule,
   ],
   controllers: [HealthController],
   providers: [
