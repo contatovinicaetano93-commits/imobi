@@ -10,7 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ── Usuários ──────────────────────────────────────────────────────────
+// ── Usuários ────────────────────────────────────────────────────────
 
 model Usuario {
   usuarioId     String   @id @default(uuid())
@@ -29,6 +29,8 @@ model Usuario {
   consentidoEm        DateTime?
   passwordResetToken    String?
   passwordResetExpires  DateTime?
+  bloqueadoEm         DateTime?
+  funcoesBloqueadas   String[]  @default([])
   deletadoEm          DateTime?
   criadoEm            DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt
@@ -69,7 +71,7 @@ enum KycStatus {
   REJEITADO
 }
 
-// ── Sessões ───────────────────────────────────────────────────────────
+// ── Sessões ───────────────────────────────────────────────────────
 
 model SessaoToken {
   sessionId     String    @id @default(uuid())
@@ -97,7 +99,7 @@ model UsuarioFcmToken {
   @@map("usuario_fcm_tokens")
 }
 
-// ── Créditos ──────────────────────────────────────────────────────────
+// ── Créditos ──────────────────────────────────────────────────────
 
 model Credito {
   creditoId       String    @id @default(uuid())
@@ -127,7 +129,7 @@ enum CreditoStatus {
   QUITADO
 }
 
-// ── Obras ─────────────────────────────────────────────────────────────
+// ── Obras ─────────────────────────────────────────────────────────
 
 model Obra {
   obraId              String   @id @default(uuid())
@@ -163,7 +165,7 @@ enum ObraStatus {
   CANCELADA
 }
 
-// ── Etapas de Obra ────────────────────────────────────────────────────
+// ── Etapas de Obra ──────────────────────────────────────────────────
 
 model EtapaObra {
   etapaId             String   @id @default(uuid())
@@ -195,7 +197,7 @@ enum EtapaStatus {
   CONCLUIDA
 }
 
-// ── Evidências de Etapa ───────────────────────────────────────────────
+// ── Evidências de Etapa ─────────────────────────────────────────────
 
 model EvidenciaEtapa {
   evidenciaId       String   @id @default(uuid())
@@ -218,7 +220,7 @@ model EvidenciaEtapa {
   @@index([validada])
 }
 
-// ── Liberações de Parcelas ────────────────────────────────────────────
+// ── Liberações de Parcelas ──────────────────────────────────────────
 
 model LiberacaoParcela {
   liberacaoId     String   @id @default(uuid())
@@ -242,7 +244,7 @@ enum LiberacaoStatus {
   FALHA
 }
 
-// ── Score de Construtibilidade ────────────────────────────────────────
+// ── Score de Construtibilidade ──────────────────────────────────────
 
 model ScoreHistorico {
   scoreId     String   @id @default(uuid())
@@ -256,17 +258,17 @@ model ScoreHistorico {
   @@index([criadoEm])
 }
 
-// ── KYC Documents ──────────────────────────────────────────────────────
+// ── KYC Documents ────────────────────────────────────────────────────
 
 model KycDocumento {
   kycDocumentoId String   @id @default(uuid())
   usuarioId      String
   usuario        Usuario  @relation("KycDocumentos", fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
-  tipo           String
-  url            String
+  tipo           String   // RG, CNH, Selfie, Comprovante de Residência, etc.
+  url            String   // S3 URL
   status         KycDocumentoStatus @default(PENDENTE)
   motivo_rejeicao String?
-  analisadoPor   String?
+  analisadoPor   String?  // usuarioId of reviewer
   analisadoEm    DateTime?
   criadoEm       DateTime @default(now())
   atualizadoEm   DateTime @updatedAt
@@ -283,7 +285,7 @@ enum KycDocumentoStatus {
   REJEITADO
 }
 
-// ── Notificações ───────────────────────────────────────────────────
+// ── Notificações ─────────────────────────────────────────────────
 
 model Notificacao {
   notificacaoId String   @id @default(uuid())
@@ -315,13 +317,13 @@ enum TipoNotificacao {
   VISTORIA_PENDENTE
 }
 
-// ── Auditoria de Etapas ─────────────────────────────────────────────
+// ── Auditoria de Etapas ───────────────────────────────────────────────
 
 model EtapaAuditLog {
   auditId         String   @id @default(uuid())
   etapaId         String
   etapa           EtapaObra @relation(fields: [etapaId], references: [etapaId], onDelete: Cascade)
-  acaoTipo        String
+  acaoTipo        String   // APROVADA, REJEITADA, EDITADA
   usuarioId       String
   usuario         Usuario  @relation("EtapaAuditLogs", fields: [usuarioId], references: [usuarioId], onDelete: Restrict)
   observacoes     String?
@@ -332,13 +334,13 @@ model EtapaAuditLog {
   @@index([criadoEm])
 }
 
-// ── Auditoria de KYC ────────────────────────────────────────────────
+// ── Auditoria de KYC ──────────────────────────────────────────────────
 
 model KycAuditLog {
   auditId         String      @id @default(uuid())
   kycDocumentoId  String
   kyc             KycDocumento @relation(fields: [kycDocumentoId], references: [kycDocumentoId], onDelete: Cascade)
-  acaoTipo        String
+  acaoTipo        String      // APROVADO, REJEITADO
   usuarioId       String
   usuario         Usuario     @relation("KycAuditLogs", fields: [usuarioId], references: [usuarioId], onDelete: Restrict)
   motivo          String?
@@ -349,7 +351,7 @@ model KycAuditLog {
   @@index([criadoEm])
 }
 
-// ── Comercial: Leads & Pipeline ──────────────────────────
+// ── Comercial: Leads & Pipeline (Phase 11) ──────────────────────────────────
 
 enum LeadFonte {
   WEBSITE
@@ -525,7 +527,7 @@ model DueDiligence {
   totalCarteira         Float?
   totalAReceber         Float?
   estruturaSocietaria   String?
-  payload               Json
+  payload               Json     // Armazena o JSON completo do wizard
   status                DueDiligenceStatus @default(RASCUNHO)
   criadoEm              DateTime @default(now())
   atualizadoEm          DateTime @updatedAt
