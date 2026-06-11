@@ -54,6 +54,10 @@ enum UsuarioTipo {
   GESTOR_OBRA
   ADMIN
   PARCEIRO
+  GESTOR
+  ENGENHEIRO
+  COMERCIAL
+  CONSTRUTOR
 }
 
 enum KycStatus {

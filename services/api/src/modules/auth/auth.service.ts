@@ -128,7 +128,14 @@ export class AuthService {
   }
 
   private async gerarTokens(usuarioId: string) {
-    const accessToken = this.jwt.sign({ sub: usuarioId }, { expiresIn: "15m" });
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { usuarioId },
+      select: { tipo: true, nome: true, email: true },
+    });
+    const accessToken = this.jwt.sign(
+      { sub: usuarioId, role: usuario?.tipo ?? null, nome: usuario?.nome ?? null, email: usuario?.email ?? null },
+      { expiresIn: "15m" }
+    );
     const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
 
     try {
