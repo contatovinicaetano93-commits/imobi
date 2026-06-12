@@ -69,7 +69,7 @@ export default function NotificacoesPage() {
       );
     }
     if (notificacao.link) {
-      router.push(notificacao.link);
+      router.push(notificacao.link as Parameters<typeof router.push>[0]);
     }
   }
 
