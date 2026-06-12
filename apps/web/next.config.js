@@ -8,7 +8,6 @@ const nextConfig = {
     ],
   },
   experimental: {
-    typedRoutes: true,
     serverComponentsExternalPackages: ["@opentelemetry/instrumentation", "require-in-the-middle"],
   },
   webpack: (config) => {
