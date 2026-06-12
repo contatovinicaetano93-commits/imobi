@@ -74,9 +74,14 @@ export default function ParceiroComercialPage() {
   const [adicionando, setAdicionando] = useState(false);
 
   useEffect(() => {
+    // Try primary endpoint; if it fails, fall back to comercial/dashboard/stats
     fetch("/api/proxy/parceiros/resumo")
-      .then((r) => (r.ok ? r.json() : null))
-      .catch(() => null)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .catch(() =>
+        fetch("/api/proxy/comercial/dashboard/stats")
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null)
+      )
       .then((d: ParceiroResumo | null) => {
         if (d) { setResumo(d); } else { setResumo(DEMO_RESUMO); setIsDemo(true); }
       });
