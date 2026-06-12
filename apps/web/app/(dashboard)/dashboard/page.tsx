@@ -23,7 +23,7 @@ function decodeRole(token: string): string | null {
   try {
     const payload = token.split(".")[1];
     const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64 + "===".slice((base64.length % 4) || 4);
+    const padded = base64 + "===".slice(0, (4 - base64.length % 4) % 4);
     const decoded = JSON.parse(Buffer.from(padded, "base64").toString("utf-8"));
     return decoded.role ?? decoded.tipo ?? null;
   } catch { return null; }

@@ -1,5 +1,18 @@
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.8; }
+}
+
+.dash-main {
+  padding: 1rem;
+  overflow-x: hidden;
+  /* clearance for fixed WhatsApp FAB on mobile */
+  padding-bottom: 88px;
+}
+
 @media (min-width: 768px) {
   .dash-sidebar  { display: flex !important; }
   .dash-mhidden  { display: none !important; }
   .dash-spacer   { display: none !important; }
+  .dash-main     { padding: 2rem; padding-bottom: 2rem; }
 }

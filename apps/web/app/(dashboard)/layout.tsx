@@ -1,13 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import "./layout.css";
 import { useEffect, useState } from "react";
 import {
   Home, HardHat, CreditCard, Calculator, Star, FileCheck2, Bell, User,
   Wrench, ShieldCheck, BarChart3, Banknote, Megaphone, Settings, LogOut,
-  ChevronRight, Building2, type LucideIcon,
+  ChevronRight, Building2, ArrowLeft, type LucideIcon,
 } from "lucide-react";
 
 type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "TOMADOR" | "COMERCIAL" | "CONSTRUTOR" | null;
@@ -21,46 +22,46 @@ const NAVY = "#0C1A3D";
 const MINT = "#4ADE80";
 
 const NAV: NavItem[] = [
-  { label: "Início",        href: "/dashboard/construtor",              icon: Building2,   roles: ["CONSTRUTOR"], section: "geral",       funcao: "construtor" },
-  { label: "Minhas Obras",  href: "/dashboard/obras",                   icon: HardHat,     roles: ["CONSTRUTOR"],                         funcao: "obras" },
-  { label: "Crédito",       href: "/dashboard/credito",                 icon: CreditCard,  roles: ["CONSTRUTOR"],                         funcao: "credito" },
-  { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["CONSTRUTOR"],                         funcao: "simulador" },
-  { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["CONSTRUTOR"],                         funcao: "score" },
-  { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["CONSTRUTOR"],                         funcao: "kyc" },
+  { label: "Início",        href: "/dashboard/construtor",              icon: Building2,   roles: ["CONSTRUTOR"], section: "geral",    funcao: "construtor" },
+  { label: "Minhas Obras",  href: "/dashboard/obras",                   icon: HardHat,     roles: ["CONSTRUTOR"],                      funcao: "obras" },
+  { label: "Crédito",       href: "/dashboard/credito",                 icon: CreditCard,  roles: ["CONSTRUTOR"],                      funcao: "credito" },
+  { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["CONSTRUTOR"],                      funcao: "simulador" },
+  { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["CONSTRUTOR"],                      funcao: "score" },
+  { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["CONSTRUTOR"],                      funcao: "kyc" },
   { label: "Início",        href: "/dashboard",                         icon: Home,        roles: ["TOMADOR", null], section: "geral" },
-  { label: "Minhas Obras",  href: "/dashboard/obras",                   icon: HardHat,     roles: ["TOMADOR"],                            funcao: "obras" },
-  { label: "Crédito",       href: "/dashboard/credito",                 icon: CreditCard,  roles: ["TOMADOR"],                            funcao: "credito" },
-  { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["TOMADOR"],                            funcao: "simulador" },
-  { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["TOMADOR"],                            funcao: "score" },
-  { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["TOMADOR"],                            funcao: "kyc" },
-  { label: "Painel",        href: "/dashboard/gestor",                  icon: ShieldCheck, roles: ["GESTOR"],        section: "geral",    funcao: "gestor" },
-  { label: "Etapas",        href: "/dashboard/gestor/etapas",           icon: FileCheck2,  roles: ["GESTOR"],                             funcao: "gestor" },
-  { label: "KYC",           href: "/dashboard/gestor/kyc",              icon: FileCheck2,  roles: ["GESTOR"],                             funcao: "kyc" },
-  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2, roles: ["GESTOR"],                             funcao: "due-diligence" },
-  { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["GESTOR"],                             funcao: "fundos" },
-  { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["GESTOR"],                             funcao: "relatorios" },
-  { label: "Engenharia",    href: "/dashboard/engenheiro",              icon: Wrench,      roles: ["ENGENHEIRO"],    section: "geral",    funcao: "engenharia" },
-  { label: "Painel",        href: "/dashboard/comercial",               icon: Megaphone,   roles: ["COMERCIAL"],     section: "geral",    funcao: "comercial" },
-  { label: "Leads",         href: "/dashboard/comercial/leads",         icon: Star,        roles: ["COMERCIAL"],                          funcao: "comercial" },
+  { label: "Minhas Obras",  href: "/dashboard/obras",                   icon: HardHat,     roles: ["TOMADOR"],                         funcao: "obras" },
+  { label: "Crédito",       href: "/dashboard/credito",                 icon: CreditCard,  roles: ["TOMADOR"],                         funcao: "credito" },
+  { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["TOMADOR"],                         funcao: "simulador" },
+  { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["TOMADOR"],                         funcao: "score" },
+  { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["TOMADOR"],                         funcao: "kyc" },
+  { label: "Painel",        href: "/dashboard/gestor",                  icon: ShieldCheck, roles: ["GESTOR"],        section: "geral",  funcao: "gestor" },
+  { label: "Etapas",        href: "/dashboard/gestor/etapas",           icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "gestor" },
+  { label: "KYC",           href: "/dashboard/gestor/kyc",              icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "kyc" },
+  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2, roles: ["GESTOR"],                          funcao: "due-diligence" },
+  { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["GESTOR"],                          funcao: "fundos" },
+  { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["GESTOR"],                          funcao: "relatorios" },
+  { label: "Engenharia",    href: "/dashboard/engenheiro",              icon: Wrench,      roles: ["ENGENHEIRO"],    section: "geral",  funcao: "engenharia" },
+  { label: "Painel",        href: "/dashboard/comercial",               icon: Megaphone,   roles: ["COMERCIAL"],     section: "geral",  funcao: "comercial" },
+  { label: "Leads",         href: "/dashboard/comercial/leads",         icon: Star,        roles: ["COMERCIAL"],                       funcao: "comercial" },
   { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","COMERCIAL","ADMIN","CONSTRUTOR",null], funcao: "notificacoes" },
   { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","COMERCIAL","ADMIN","CONSTRUTOR",null] },
   { label: "Visão Geral",   href: "/dashboard/admin",                   icon: Settings,    roles: ["ADMIN"],         section: "admin" },
   { label: "Usuários",      href: "/dashboard/admin/usuarios",          icon: User,        roles: ["ADMIN"] },
   { label: "Configurações", href: "/dashboard/admin/configuracoes",     icon: Settings,    roles: ["ADMIN"] },
-  { label: "Obras",         href: "/dashboard/obras",                   icon: HardHat,     roles: ["ADMIN"],                              funcao: "obras" },
-  { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["ADMIN"],                              funcao: "fundos" },
-  { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["ADMIN"],                              funcao: "relatorios" },
+  { label: "Obras",         href: "/dashboard/obras",                   icon: HardHat,     roles: ["ADMIN"],                           funcao: "obras" },
+  { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["ADMIN"],                           funcao: "fundos" },
+  { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["ADMIN"],                           funcao: "relatorios" },
 ];
 
 const SECTION_LABELS: Record<string, string> = { geral: "Geral", operacional: "Operacional", admin: "Admin" };
 
 const ROLE_META: Record<string, { label: string; accent: string }> = {
-  CONSTRUTOR: { label: "Construtor",    accent: "#38bdf8" },
-  TOMADOR:    { label: "Tomador",       accent: MINT },
-  GESTOR:     { label: "Gestor",        accent: "#a78bfa" },
-  ENGENHEIRO: { label: "Engenheiro",    accent: "#fb923c" },
-  COMERCIAL:  { label: "Parceiro",      accent: "#fbbf24" },
-  ADMIN:      { label: "Admin",         accent: MINT },
+  CONSTRUTOR: { label: "Construtor", accent: "#38bdf8" },
+  TOMADOR:    { label: "Tomador",    accent: MINT },
+  GESTOR:     { label: "Gestor",     accent: "#a78bfa" },
+  ENGENHEIRO: { label: "Engenheiro", accent: "#fb923c" },
+  COMERCIAL:  { label: "Parceiro",   accent: "#fbbf24" },
+  ADMIN:      { label: "Admin",      accent: MINT },
 };
 
 function filterNav(role: UserRole, funcoesBloqueadas: string[]): NavItem[] {
@@ -69,6 +70,14 @@ function filterNav(role: UserRole, funcoesBloqueadas: string[]): NavItem[] {
     if (role !== "ADMIN" && item.funcao && funcoesBloqueadas.includes(item.funcao)) return false;
     return true;
   });
+}
+
+// Returns the parent path for a back button, or null if at root level.
+function getParentPath(path: string): string | null {
+  const parts = path.split("/").filter(Boolean);
+  // /dashboard or /dashboard/admin — no parent to show
+  if (parts.length <= 2) return null;
+  return "/" + parts.slice(0, -1).join("/");
 }
 
 function Logo({ size = 26 }: { size?: number }) {
@@ -91,6 +100,21 @@ function Logo({ size = 26 }: { size?: number }) {
   );
 }
 
+function NavSkeleton() {
+  return (
+    <div style={{ padding: "0 0.75rem", display: "flex", flexDirection: "column", gap: 6 }}>
+      {[80, 65, 70, 60, 75, 55].map((w, i) => (
+        <div key={i} style={{
+          height: 32, borderRadius: 8,
+          background: "rgba(255,255,255,0.07)",
+          width: `${w}%`,
+          animation: "pulse 1.5s ease-in-out infinite",
+        }} />
+      ))}
+    </div>
+  );
+}
+
 function renderNav(
   items: NavItem[],
   activeFn: (href: string) => boolean,
@@ -98,13 +122,14 @@ function renderNav(
   onNavigate?: () => void,
 ) {
   let lastSection = "";
-  return items.map((item) => {
+  return items.map((item, idx) => {
     const active = activeFn(item.href);
     const showSection = item.section && item.section !== lastSection;
     if (item.section) lastSection = item.section;
     const Icon = item.icon;
+    // Use index + href as key to avoid collisions when multiple roles share same href
     return (
-      <div key={item.href}>
+      <div key={`${idx}-${item.href}`}>
         {showSection && (
           <p style={{
             fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em",
@@ -115,12 +140,12 @@ function renderNav(
             {SECTION_LABELS[item.section!]}
           </p>
         )}
-        <a
-          href={item.href}
+        <Link
+          href={item.href as any}
           onClick={onNavigate}
           style={{
             display: "flex", alignItems: "center", gap: "0.6rem",
-            padding: "0.48rem 0.75rem",
+            padding: "0.55rem 0.75rem",
             borderRadius: 8,
             fontSize: "0.82rem",
             fontWeight: active ? 600 : 400,
@@ -130,12 +155,13 @@ function renderNav(
             transition: "all 0.12s",
             borderLeft: active ? `2px solid ${accent}` : "2px solid transparent",
             fontFamily: "'Jost', sans-serif",
+            minHeight: 40,
           }}
         >
           <Icon size={13} strokeWidth={active ? 2.2 : 1.8} style={{ flexShrink: 0 }} />
           <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</span>
           {active && <ChevronRight size={10} style={{ opacity: 0.5 }} />}
-        </a>
+        </Link>
       </div>
     );
   });
@@ -143,8 +169,10 @@ function renderNav(
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const path = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [role, setRole] = useState<UserRole>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [funcoesBloqueadas, setFuncoesBloqueadas] = useState<string[]>([]);
@@ -160,8 +188,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           setUserEmail(d.email ?? null);
           setFuncoesBloqueadas(Array.isArray(d.funcoesBloqueadas) ? d.funcoesBloqueadas : []);
         }
+        setRoleLoading(false);
       });
   }, []);
+
+  // Close drawer on route change
+  useEffect(() => { setMobileOpen(false); }, [path]);
 
   const visibleNav = filterNav(role, funcoesBloqueadas);
   const isActive = (href: string) =>
@@ -173,6 +205,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const initials = userName
     ? userName.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()
     : "?";
+
+  const parentPath = getParentPath(path);
 
   const userFooter = (compact = false) => (
     <div>
@@ -214,17 +248,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {userEmail ?? role ?? ""}
           </p>
         </div>
+        {/* Logout — padded to 44×44 touch target */}
         <button
           onClick={async () => {
             await fetch("/api/auth/session", { method: "DELETE" });
             window.location.href = "/login";
           }}
           title="Sair"
-          style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.28)", flexShrink: 0, padding: 0, display: "flex", transition: "color 0.15s" }}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: "rgba(255,255,255,0.28)", flexShrink: 0,
+            padding: "0.75rem 0.6rem",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "color 0.15s", margin: "-0.75rem -0.6rem",
+          }}
           onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
           onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.28)")}
         >
-          <LogOut size={13} />
+          <LogOut size={14} />
         </button>
       </div>
     </div>
@@ -233,23 +274,23 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const sidebarContent = (onNavigate?: () => void) => (
     <>
       <div style={{ padding: "1.4rem 1rem 0.6rem" }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: "0.55rem", textDecoration: "none" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.55rem", textDecoration: "none" }}>
           <Logo size={22} />
           <span style={{
             color: "white", fontWeight: 800, fontSize: "1.1rem",
             letterSpacing: "0.04em", fontFamily: "'Barlow Condensed', sans-serif",
           }}>IMOBI</span>
-        </a>
+        </Link>
       </div>
       <nav style={{ flex: 1, padding: "0 0.4rem", overflowY: "auto" }}>
-        {renderNav(visibleNav, isActive, accent, onNavigate)}
+        {roleLoading ? <NavSkeleton /> : renderNav(visibleNav, isActive, accent, onNavigate)}
       </nav>
       {userFooter(!!onNavigate)}
     </>
   );
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#EEF3FF", fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
+    <div className="dash-root" style={{ display: "flex", minHeight: "100vh", background: "#EEF3FF", fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
 
       {/* Sidebar desktop */}
       <aside
@@ -274,16 +315,48 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "0 1rem",
           borderBottom: "1px solid rgba(255,255,255,0.06)",
+          gap: "0.5rem",
         }}
       >
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none" }}>
-          <Logo size={20} />
-          <span style={{ color: "white", fontWeight: 800, fontSize: "1rem", letterSpacing: "0.04em", fontFamily: "'Barlow Condensed', sans-serif" }}>IMOBI</span>
-        </a>
+        {/* Back button on sub-pages, logo on root pages */}
+        {parentPath ? (
+          <button
+            onClick={() => router.push(parentPath as any)}
+            aria-label="Voltar"
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              color: "white", display: "flex", alignItems: "center", gap: "0.35rem",
+              padding: "0.5rem", margin: "-0.5rem 0",
+              fontSize: "0.82rem", fontFamily: "'Jost', sans-serif",
+              fontWeight: 600, textDecoration: "none", flexShrink: 0,
+            }}
+          >
+            <ArrowLeft size={18} />
+          </button>
+        ) : (
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none", flexShrink: 0 }}>
+            <Logo size={20} />
+            <span style={{ color: "white", fontWeight: 800, fontSize: "1rem", letterSpacing: "0.04em", fontFamily: "'Barlow Condensed', sans-serif" }}>IMOBI</span>
+          </Link>
+        )}
+
+        {/* Center: logo when on sub-page */}
+        {parentPath && (
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.4rem", textDecoration: "none", flex: 1, justifyContent: "center" }}>
+            <Logo size={18} />
+            <span style={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.04em", fontFamily: "'Barlow Condensed', sans-serif" }}>IMOBI</span>
+          </Link>
+        )}
+
+        {/* Hamburger */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Menu"
-          style={{ background: "none", border: "none", cursor: "pointer", padding: "0.4rem", display: "flex", flexDirection: "column", gap: 4.5 }}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            padding: "0.5rem", display: "flex", flexDirection: "column",
+            gap: 4.5, flexShrink: 0,
+          }}
         >
           {[
             mobileOpen ? "rotate(45deg) translate(4.5px,4.5px)" : "none",
@@ -306,7 +379,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <>
           <div onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(12,26,61,0.6)", zIndex: 150 }} />
           <div style={{
-            position: "fixed", top: 52, left: 0, bottom: 0, width: 224,
+            position: "fixed", top: 52, left: 0, bottom: 0,
+            width: "min(224px, calc(100vw - 48px))",
             background: NAVY, zIndex: 200,
             overflowY: "auto", display: "flex", flexDirection: "column",
           }}>
@@ -316,7 +390,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Main */}
-      <main style={{ flex: 1, overflow: "auto", padding: "2rem" }}>
+      <main className="dash-main" style={{ flex: 1, overflowX: "hidden" }}>
         <div style={{ height: 52 }} className="dash-spacer" />
         {children}
       </main>
