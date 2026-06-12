@@ -1,17 +1,22 @@
 import { useEffect, useState } from "react";
-import { View, ActivityIndicator } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useRouter, useSegments } from "expo-router";
 import Constants from "expo-constants";
 import { configureApiBaseUrl, setOnUnauthorized } from "../lib/api";
 
 const apiUrl = Constants.expoConfig?.extra?.apiUrl as string | undefined;
 if (apiUrl) configureApiBaseUrl(apiUrl);
 
-type RootLayoutProps = {
-  children?: React.ReactNode;
-};
+function decodeRole(token: string): string | null {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    const json = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    return json.tipo ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export default function RootLayout() {
   const router = useRouter();
@@ -29,9 +34,15 @@ export default function RootLayout() {
     const bootstrapAsync = async () => {
       try {
         const token = await SecureStore.getItemAsync("accessToken");
-        setIsSignedIn(!!token);
-      } catch (e) {
-        console.error("Failed to restore token", e);
+        if (token) {
+          const role = decodeRole(token);
+          if (role) await SecureStore.setItemAsync("userRole", role);
+          setIsSignedIn(true);
+        } else {
+          setIsSignedIn(false);
+        }
+      } catch {
+        setIsSignedIn(false);
       } finally {
         setIsLoading(false);
       }
@@ -53,25 +64,11 @@ export default function RootLayout() {
   }, [isSignedIn, isLoading, segments]);
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="+not-found" />
-      <Stack.Screen
-        name="(auth)"
-        options={{
-          gestureEnabled: false,
-        }}
-      />
-      <Stack.Screen
-        name="(tabs)"
-        options={{
-          gestureEnabled: false,
-        }}
-      />
+      <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
     </Stack>
   );
 }
