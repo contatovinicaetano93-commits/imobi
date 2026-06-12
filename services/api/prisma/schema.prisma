@@ -10,7 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ── Usuários ──────────────────────────────────────────────────────────
+// ── Usuários ────────────────────────────────────────────────────────
 
 model Usuario {
   usuarioId     String   @id @default(uuid())
@@ -29,6 +29,8 @@ model Usuario {
   consentidoEm        DateTime?
   passwordResetToken    String?
   passwordResetExpires  DateTime?
+  bloqueadoEm         DateTime?
+  funcoesBloqueadas   String[]  @default([])
   deletadoEm          DateTime?
   criadoEm            DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt
@@ -43,6 +45,8 @@ model Usuario {
   etapaAuditLogs EtapaAuditLog[] @relation("EtapaAuditLogs")
   kycAuditLogs  KycAuditLog[] @relation("KycAuditLogs")
   leadsGerenciados Lead[] @relation("LeadUsuarios")
+  mailingContatos MailingContato[]
+  dueDiligences   DueDiligence[]
 
   @@index([email])
   @@index([cpf])
@@ -54,6 +58,10 @@ enum UsuarioTipo {
   GESTOR_OBRA
   ADMIN
   PARCEIRO
+  GESTOR
+  ENGENHEIRO
+  COMERCIAL
+  CONSTRUTOR
 }
 
 enum KycStatus {
@@ -63,7 +71,7 @@ enum KycStatus {
   REJEITADO
 }
 
-// ── Sessões ───────────────────────────────────────────────────────────
+// ── Sessões ───────────────────────────────────────────────────────
 
 model SessaoToken {
   sessionId     String    @id @default(uuid())
@@ -91,7 +99,7 @@ model UsuarioFcmToken {
   @@map("usuario_fcm_tokens")
 }
 
-// ── Créditos ──────────────────────────────────────────────────────────
+// ── Créditos ──────────────────────────────────────────────────────
 
 model Credito {
   creditoId       String    @id @default(uuid())
@@ -121,7 +129,7 @@ enum CreditoStatus {
   QUITADO
 }
 
-// ── Obras ─────────────────────────────────────────────────────────────
+// ── Obras ─────────────────────────────────────────────────────────
 
 model Obra {
   obraId              String   @id @default(uuid())
@@ -157,7 +165,7 @@ enum ObraStatus {
   CANCELADA
 }
 
-// ── Etapas de Obra ────────────────────────────────────────────────────
+// ── Etapas de Obra ──────────────────────────────────────────────────
 
 model EtapaObra {
   etapaId             String   @id @default(uuid())
@@ -189,7 +197,7 @@ enum EtapaStatus {
   CONCLUIDA
 }
 
-// ── Evidências de Etapa ───────────────────────────────────────────────
+// ── Evidências de Etapa ─────────────────────────────────────────────
 
 model EvidenciaEtapa {
   evidenciaId       String   @id @default(uuid())
@@ -212,7 +220,7 @@ model EvidenciaEtapa {
   @@index([validada])
 }
 
-// ── Liberações de Parcelas ────────────────────────────────────────────
+// ── Liberações de Parcelas ──────────────────────────────────────────
 
 model LiberacaoParcela {
   liberacaoId     String   @id @default(uuid())
@@ -236,7 +244,7 @@ enum LiberacaoStatus {
   FALHA
 }
 
-// ── Score de Construtibilidade ────────────────────────────────────────
+// ── Score de Construtibilidade ──────────────────────────────────────
 
 model ScoreHistorico {
   scoreId     String   @id @default(uuid())
@@ -250,17 +258,17 @@ model ScoreHistorico {
   @@index([criadoEm])
 }
 
-// ── KYC Documents ──────────────────────────────────────────────────────
+// ── KYC Documents ────────────────────────────────────────────────────
 
 model KycDocumento {
   kycDocumentoId String   @id @default(uuid())
   usuarioId      String
   usuario        Usuario  @relation("KycDocumentos", fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
-  tipo           String   // RG, CNH, Selfie, Comprovante de Residência, etc.
-  url            String   // S3 URL
+  tipo           String
+  url            String
   status         KycDocumentoStatus @default(PENDENTE)
   motivo_rejeicao String?
-  analisadoPor   String?  // usuarioId of reviewer
+  analisadoPor   String?
   analisadoEm    DateTime?
   criadoEm       DateTime @default(now())
   atualizadoEm   DateTime @updatedAt
@@ -277,7 +285,7 @@ enum KycDocumentoStatus {
   REJEITADO
 }
 
-// ── Notificações ───────────────────────────────────────────────────
+// ── Notificações ─────────────────────────────────────────────────
 
 model Notificacao {
   notificacaoId String   @id @default(uuid())
@@ -309,13 +317,13 @@ enum TipoNotificacao {
   VISTORIA_PENDENTE
 }
 
-// ── Auditoria de Etapas ─────────────────────────────────────────────
+// ── Auditoria de Etapas ───────────────────────────────────────────────
 
 model EtapaAuditLog {
   auditId         String   @id @default(uuid())
   etapaId         String
   etapa           EtapaObra @relation(fields: [etapaId], references: [etapaId], onDelete: Cascade)
-  acaoTipo        String   // APROVADA, REJEITADA, EDITADA
+  acaoTipo        String
   usuarioId       String
   usuario         Usuario  @relation("EtapaAuditLogs", fields: [usuarioId], references: [usuarioId], onDelete: Restrict)
   observacoes     String?
@@ -326,13 +334,13 @@ model EtapaAuditLog {
   @@index([criadoEm])
 }
 
-// ── Auditoria de KYC ────────────────────────────────────────────────
+// ── Auditoria de KYC ──────────────────────────────────────────────────
 
 model KycAuditLog {
   auditId         String      @id @default(uuid())
   kycDocumentoId  String
   kyc             KycDocumento @relation(fields: [kycDocumentoId], references: [kycDocumentoId], onDelete: Cascade)
-  acaoTipo        String      // APROVADO, REJEITADO
+  acaoTipo        String
   usuarioId       String
   usuario         Usuario     @relation("KycAuditLogs", fields: [usuarioId], references: [usuarioId], onDelete: Restrict)
   motivo          String?
@@ -343,7 +351,7 @@ model KycAuditLog {
   @@index([criadoEm])
 }
 
-// ── Comercial: Leads & Pipeline (Phase 11) ──────────────────────────
+// ── Comercial: Leads & Pipeline ──────────────────────────────────────────
 
 enum LeadFonte {
   WEBSITE
@@ -476,4 +484,62 @@ model LeadActivity {
   @@index([leadId])
   @@index([tipo])
   @@index([criadoEm])
+}
+
+// ── Parceiros: Mailing ─────────────────────────────────────────────────
+
+model MailingContato {
+  id        String        @id @default(uuid())
+  usuarioId String
+  usuario   Usuario       @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  nome      String
+  email     String
+  telefone  String?
+  status    MailingStatus @default(NOVO)
+  criadoEm  DateTime      @default(now())
+
+  @@index([usuarioId])
+}
+
+enum MailingStatus {
+  NOVO
+  CONTATADO
+  CONVERTIDO
+}
+
+// ── Due Diligence ───────────────────────────────────────────────────────
+
+model DueDiligence {
+  id                    String   @id @default(uuid())
+  gestor                Usuario  @relation(fields: [gestorId], references: [usuarioId])
+  gestorId              String
+  nomeEmpreendimento    String
+  tipologia             String?
+  endereco              String?
+  cidade                String?
+  uf                    String?
+  totalUnidades         Int?
+  areaTotal             Float?
+  dataEntregaPrevista   DateTime?
+  nomeIncorporadora     String?
+  cnpjIncorporadora     String?
+  modeloAmortizacao     String?
+  totalCarteira         Float?
+  totalAReceber         Float?
+  estruturaSocietaria   String?
+  payload               Json
+  status                DueDiligenceStatus @default(RASCUNHO)
+  criadoEm              DateTime @default(now())
+  atualizadoEm          DateTime @updatedAt
+
+  @@index([gestorId])
+  @@index([status])
+}
+
+enum DueDiligenceStatus {
+  RASCUNHO
+  ENVIADO
+  EM_ANALISE
+  APROVADO
+  REPROVADO
 }
