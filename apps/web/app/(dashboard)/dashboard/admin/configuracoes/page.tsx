@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { ChevronLeft, Save, AlertTriangle, Percent, DollarSign, Clock, MapPin, Settings, RefreshCw } from "lucide-react";
 
 const NAVY  = "#0C1A3D";
 const ROYAL = "#1B4FD8";
 const MINT  = "#4ADE80";
 
-const jost: React.CSSProperties = { fontFamily: "'Jost', sans-serif" };
-const card: React.CSSProperties = { background: "white", border: "1px solid rgba(12,26,61,0.08)", borderRadius: 16, overflow: "hidden" };
+const jost: CSSProperties = { fontFamily: "'Jost', sans-serif" };
+const card: CSSProperties = { background: "white", border: "1px solid rgba(12,26,61,0.08)", borderRadius: 16, overflow: "hidden" };
 
 type Config = {
   taxaMensalMin: number;
@@ -228,7 +229,7 @@ export default function ConfiguracoesPage() {
   );
 }
 
-function Section({ title, icon, accentColor, children }: { title: string; icon: React.ReactNode; accentColor: string; children: React.ReactNode }) {
+function Section({ title, icon, accentColor, children }: { title: string; icon: ReactNode; accentColor: string; children: ReactNode }) {
   return (
     <div style={{
       background: "white",
@@ -247,7 +248,7 @@ function Section({ title, icon, accentColor, children }: { title: string; icon: 
   );
 }
 
-function Row({ label, hint, children }: { label: string; hint: string; children: React.ReactNode }) {
+function Row({ label, hint, children }: { label: string; hint: string; children: ReactNode }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, padding: "0.9rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.04)" }}>
       <div>

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import "./layout.css";
 import { useEffect, useState } from "react";
 import {
   Home, HardHat, CreditCard, Calculator, Star, FileCheck2, Bell, User,
@@ -132,7 +133,7 @@ function renderNav(
           }}
         >
           <Icon size={13} strokeWidth={active ? 2.2 : 1.8} style={{ flexShrink: 0 }} />
-          <span style={{ flex: 1 }}>{item.label}</span>
+          <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</span>
           {active && <ChevronRight size={10} style={{ opacity: 0.5 }} />}
         </a>
       </div>
@@ -252,7 +253,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Sidebar desktop */}
       <aside
-        className="md-sidebar"
+        className="dash-sidebar"
         style={{
           width: 216, flexShrink: 0,
           display: "none", flexDirection: "column",
@@ -267,7 +268,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Mobile header */}
       <div
-        className="md-hidden"
+        className="dash-mhidden"
         style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
           height: 52, background: NAVY,
@@ -316,8 +317,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Main */}
-      <main style={{ flex: 1, overflow: "auto", padding: "2rem" }} className="main-content">
-        <div style={{ height: 52 }} className="md-spacer" />
+      <main style={{ flex: 1, overflow: "auto", padding: "2rem" }}>
+        <div style={{ height: 52 }} className="dash-spacer" />
         {children}
       </main>
 
@@ -341,15 +342,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </svg>
       </a>
 
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Jost:wght@300;400;500;600;700&display=swap');
-        @media (min-width: 768px) {
-          .md-sidebar  { display: flex !important; }
-          .md-hidden   { display: none !important; }
-          .md-spacer   { display: none !important; }
-          .main-content { padding: 2rem !important; }
-        }
-      `}</style>
     </div>
   );
 }

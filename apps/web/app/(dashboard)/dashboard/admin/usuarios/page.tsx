@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
+import type { CSSProperties, FC } from "react";
 import {
   Users, Search, Plus, Shield, Wrench, Building2, User, ChevronLeft, X,
   Lock, Unlock, Ban, CheckCircle2, SlidersHorizontal, ChevronDown, ChevronUp,
@@ -25,7 +26,7 @@ type UsuarioAdmin = {
   criadoEm: string;
 };
 
-const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.FC<{ className?: string }> }> = {
+const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; icon: FC<{ className?: string }> }> = {
   ADMIN:      { label: "Admin",      color: NAVY,    bg: "rgba(12,26,61,0.07)",  icon: Shield },
   GESTOR:     { label: "Gestor",     color: ROYAL,   bg: "rgba(27,79,216,0.08)", icon: Shield },
   ENGENHEIRO: { label: "Engenheiro", color: "#0369a1", bg: "#f0f9ff", icon: Wrench },
@@ -76,8 +77,8 @@ const DEMO: UsuarioAdmin[] = [
 type NovoUsuarioForm = { nome: string; email: string; senha: string; tipo: string };
 const FORM_VAZIO: NovoUsuarioForm = { nome: "", email: "", senha: "", tipo: "TOMADOR" };
 
-const jost: React.CSSProperties = { fontFamily: "'Jost', sans-serif" };
-const card: React.CSSProperties = { background: "white", border: "1px solid rgba(12,26,61,0.08)", borderRadius: 16, overflow: "hidden" };
+const jost: CSSProperties = { fontFamily: "'Jost', sans-serif" };
+const card: CSSProperties = { background: "white", border: "1px solid rgba(12,26,61,0.08)", borderRadius: 16, overflow: "hidden" };
 const inp = "w-full text-sm border border-gray-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:border-transparent bg-white";
 
 export default function UsuariosAdminPage() {
