@@ -6,7 +6,7 @@ import {
   Users, Building2, ShieldCheck, Settings,
   Copy, Eye, EyeOff, AlertTriangle, FileCheck2,
   Activity, TrendingUp, TrendingDown, BarChart3, AlertCircle,
-  Clock, Zap, ArrowRight, Target, Banknote,
+  Clock, Zap, ArrowRight, Target, Banknote, ChevronRight,
 } from "lucide-react";
 import { formatarBRL } from "@imbobi/core";
 
@@ -171,13 +171,45 @@ function SectionHeader({ title, icon }: { title: string; icon: ReactNode }) {
   );
 }
 
+// ─── API Types ────────────────────────────────────────────────────────────────
+
+type ApiOverview = {
+  totalUsuarios: number;
+  obrasAtivas: number;
+  obrasTotal: number;
+  creditoAprovado: number;
+  creditoLiberado: number;
+  kycPendentes: number;
+  etapasPendentes: number;
+  visitasAgendadas: number;
+  filaLiberacao: number;
+};
+
+type ApiAtividade = {
+  id: string;
+  tipo: string;
+  descricao: string;
+  criadoEm: string;
+};
+
+type ApiObra = {
+  id: string;
+  nome: string;
+  status: string;
+  tomador?: string;
+};
+
 // ─── Tab Views ────────────────────────────────────────────────────────────────
 
-function TabPortfolio() {
+function TabPortfolio({ overview }: { overview: ApiOverview | null }) {
   const p = DEMO.portfolio;
   const metaPct = Math.round((p.carteiraAtiva / p.meta) * 100);
   const receitaTotal = p.receitaJuros + p.receitaEstruturacao + p.receitaOperacional;
   const ebitdaPct = p.ebitdaMargem;
+
+  // Overlay real API data on top of DEMO KPIs when available
+  const obrasAtivas = overview?.obrasAtivas ?? p.operacoesAtivas;
+  const creditoAprovado = overview?.creditoAprovado ?? p.carteiraAtiva;
 
   return (
     <div className="space-y-6">
@@ -270,9 +302,9 @@ function TabPortfolio() {
         <div style={{ ...card, display: "flex", flexDirection: "column", justifyContent: "center", padding: "1.5rem 1.25rem" }}>
           <p style={{ ...j, fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(12,26,61,0.35)", marginBottom: 12 }}>Resumo de portfólio</p>
           {[
-            { label: "Operações ativas",       val: `${DEMO.portfolio.operacoesAtivas}` },
+            { label: "Operações ativas",       val: `${obrasAtivas}` },
             { label: "Incorporadoras",         val: `${DEMO.pipeline.incorporadorasAtivas}` },
-            { label: "Pipeline total",         val: formatarBRL(DEMO.pipeline.pipelineTotal) },
+            { label: "Crédito aprovado",       val: formatarBRL(creditoAprovado) },
           ].map(({ label, val }) => (
             <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid rgba(12,26,61,0.05)" }}>
               <span style={{ ...j, fontSize: "0.8rem", color: "rgba(12,26,61,0.5)" }}>{label}</span>
@@ -545,7 +577,13 @@ function TabObras() {
   );
 }
 
-function TabOperacional() {
+function TabOperacional({
+  atividades,
+  obras,
+}: {
+  atividades: ApiAtividade[] | null;
+  obras: ApiObra[] | null;
+}) {
   const op = DEMO.operacional;
 
   const URGENCIA_STYLE: Record<string, { color: string; bg: string }> = {
@@ -661,6 +699,54 @@ function TabOperacional() {
         </div>
       </div>
 
+      {/* Obras recentes */}
+      <div style={card}>
+        <SectionHeader title="Obras Recentes" icon={<Building2 size={14} color={NAVY} />} />
+        <div>
+          {(obras && obras.length > 0 ? obras : DEMO.obras.slice(0, 5).map((o, i) => ({ id: `demo-${i}`, nome: o.nome, status: o.status, tomador: "Incorporadora Demo" }))).map((o) => {
+            const statusMap: Record<string, { color: string; bg: string; label: string }> = {
+              ATRASADO:  { color: "#dc2626", bg: "#fef2f2", label: "Atrasado" },
+              NO_PRAZO:  { color: "#16a34a", bg: "rgba(74,222,128,0.1)", label: "No prazo" },
+              ADIANTADO: { color: ROYAL,     bg: "rgba(27,79,216,0.07)", label: "Adiantado" },
+            };
+            const st = statusMap[o.status] ?? { color: "rgba(12,26,61,0.5)", bg: "rgba(12,26,61,0.04)", label: o.status };
+            return (
+              <a
+                key={o.id}
+                href={`/dashboard/obras/${o.id}`}
+                style={{ display: "flex", alignItems: "center", gap: 12, padding: "0.85rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)", textDecoration: "none" }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ ...j, fontSize: "0.82rem", fontWeight: 600, color: NAVY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{o.nome}</p>
+                  {o.tomador && <p style={{ ...j, fontSize: "0.68rem", color: "rgba(12,26,61,0.4)", marginTop: 2 }}>{o.tomador}</p>}
+                </div>
+                <span style={{ ...j, fontSize: "0.68rem", fontWeight: 700, padding: "0.2rem 0.55rem", borderRadius: 999, background: st.bg, color: st.color, flexShrink: 0 }}>{st.label}</span>
+                <ChevronRight size={13} color="rgba(12,26,61,0.25)" style={{ flexShrink: 0 }} />
+              </a>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Atividades recentes */}
+      {atividades && atividades.length > 0 && (
+        <div style={card}>
+          <SectionHeader title="Atividades Recentes" icon={<Activity size={14} color={MINT} />} />
+          <div>
+            {atividades.map((a) => (
+              <div key={a.id} style={{ display: "flex", gap: 10, padding: "0.75rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)" }}>
+                <span style={{ marginTop: 5, width: 6, height: 6, borderRadius: "50%", background: ROYAL, flexShrink: 0, display: "block" }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ ...j, fontSize: "0.78rem", fontWeight: 700, color: NAVY }}>{a.tipo}</p>
+                  <p style={{ ...j, fontSize: "0.72rem", color: "rgba(12,26,61,0.5)" }}>{a.descricao}</p>
+                  <p style={{ ...j, fontSize: "0.65rem", color: "rgba(12,26,61,0.35)", marginTop: 2 }}>há {rel(a.criadoEm)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Credenciais de teste */}
       <div style={{ ...card, border: "1px solid rgba(251,191,36,0.35)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0.85rem 1.25rem", background: "rgba(254,243,199,0.6)", borderBottom: "1px solid rgba(251,191,36,0.25)" }}>
@@ -725,6 +811,30 @@ type TabId = typeof TABS[number]["id"];
 
 export default function AdminPage() {
   const [tab, setTab] = useState<TabId>("portfolio");
+  const [isDemo, setIsDemo] = useState(false);
+  const [overview, setOverview] = useState<ApiOverview | null>(null);
+  const [atividades, setAtividades] = useState<ApiAtividade[] | null>(null);
+  const [obras, setObras] = useState<ApiObra[] | null>(null);
+
+  useEffect(() => {
+    // Fetch overview data
+    fetch("/api/proxy/admin/overview")
+      .then((r) => (r.ok ? r.json() as Promise<ApiOverview> : Promise.reject()))
+      .then((data) => { setOverview(data); })
+      .catch(() => { setIsDemo(true); });
+
+    // Fetch atividades
+    fetch("/api/proxy/admin/atividades?limit=8")
+      .then((r) => (r.ok ? r.json() as Promise<ApiAtividade[]> : Promise.reject()))
+      .then((data) => { setAtividades(data); })
+      .catch(() => { /* silently fallback */ });
+
+    // Fetch obras recentes
+    fetch("/api/proxy/admin/obras?limit=5")
+      .then((r) => (r.ok ? r.json() as Promise<ApiObra[]> : Promise.reject()))
+      .then((data) => { setObras(data); })
+      .catch(() => { /* silently fallback */ });
+  }, []);
 
   return (
     <div style={{ ...j, maxWidth: 1100 }} className="space-y-6">
@@ -738,6 +848,19 @@ export default function AdminPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Data source badge */}
+          <span style={{
+            ...j,
+            display: "inline-flex", alignItems: "center", gap: 5,
+            fontSize: "0.68rem", fontWeight: 700,
+            padding: "0.28rem 0.65rem", borderRadius: 999,
+            background: isDemo ? "rgba(251,191,36,0.12)" : "rgba(74,222,128,0.12)",
+            color: isDemo ? "#92400e" : "#15803d",
+            border: `1px solid ${isDemo ? "rgba(251,191,36,0.35)" : "rgba(74,222,128,0.35)"}`,
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: isDemo ? "#f59e0b" : MINT, display: "inline-block" }} />
+            {isDemo ? "Demonstração" : "Dados ao vivo"}
+          </span>
           <a href="/dashboard/admin/usuarios" style={{ ...j, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8rem", fontWeight: 600, color: NAVY, border: "1px solid rgba(12,26,61,0.18)", background: "white", padding: "0.45rem 1rem", borderRadius: 10, textDecoration: "none" }}>
             <Users size={13} /> Usuários
           </a>
@@ -770,11 +893,11 @@ export default function AdminPage() {
       </div>
 
       {/* Tab Content */}
-      {tab === "portfolio"   && <TabPortfolio />}
+      {tab === "portfolio"   && <TabPortfolio overview={overview} />}
       {tab === "risco"       && <TabRisco />}
       {tab === "pipeline"    && <TabPipeline />}
       {tab === "obras"       && <TabObras />}
-      {tab === "operacional" && <TabOperacional />}
+      {tab === "operacional" && <TabOperacional atividades={atividades} obras={obras} />}
     </div>
   );
 }
