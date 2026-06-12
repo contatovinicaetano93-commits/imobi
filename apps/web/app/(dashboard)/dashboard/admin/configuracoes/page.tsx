@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { ChevronLeft, Save, AlertTriangle, Percent, DollarSign, Clock, MapPin, Settings, RefreshCw } from "lucide-react";
 
@@ -43,8 +43,16 @@ export default function ConfiguracoesPage() {
   const [config, setConfig] = useState<Config>(DEFAULTS);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveErro, setSaveErro] = useState("");
   const [regenerando, setRegenerando] = useState(false);
   const [regenerado, setRegenerado] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/proxy/admin/configuracoes")
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((d: Partial<Config> | null) => { if (d) setConfig((c) => ({ ...c, ...d })); });
+  }, []);
 
   function set<K extends keyof Config>(k: K, v: Config[K]) {
     setConfig((c) => ({ ...c, [k]: v }));
@@ -52,16 +60,21 @@ export default function ConfiguracoesPage() {
 
   async function handleSave() {
     setSaving(true);
+    setSaveErro("");
     try {
-      await fetch("/api/proxy/admin/configuracoes", {
+      const res = await fetch("/api/proxy/admin/configuracoes", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
       });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        setSaveErro("Erro ao salvar configurações. Tente novamente.");
+      }
     } catch {
-      // fallback gracioso
+      setSaveErro("Erro de conexão ao salvar.");
     } finally {
       setSaving(false);
     }
@@ -116,6 +129,14 @@ export default function ConfiguracoesPage() {
           {saving ? "Salvando..." : saved ? "Salvo!" : "Salvar"}
         </button>
       </div>
+
+      {/* Save error */}
+      {saveErro && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0.85rem 1.25rem", background: "rgba(254,242,242,0.9)", border: "1px solid rgba(220,38,38,0.3)", borderRadius: 12 }}>
+          <AlertTriangle size={14} color="#dc2626" style={{ flexShrink: 0 }} />
+          <p style={{ ...jost, fontSize: "0.82rem", color: "#dc2626" }}>{saveErro}</p>
+        </div>
+      )}
 
       {/* Warning */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "1rem 1.25rem", background: "rgba(254,243,199,0.7)", border: "1px solid rgba(251,191,36,0.4)", borderRadius: 12 }}>

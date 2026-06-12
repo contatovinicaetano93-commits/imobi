@@ -43,29 +43,23 @@ export class AdminService {
       kycPendentes,
       etapasPendentes,
       filaLiberacao,
+      visitasAgendadas,
     ] = await Promise.all([
-      this.prisma.usuario.count({
-        where: { deletadoEm: null },
-      }),
-      this.prisma.obra.count({
-        where: { status: "EM_EXECUCAO" },
-      }),
+      this.prisma.usuario.count({ where: { deletadoEm: null } }),
+      this.prisma.obra.count({ where: { status: "EM_EXECUCAO" } }),
       this.prisma.obra.count(),
       this.prisma.credito.aggregate({
         where: { status: { in: ["ATIVO"] } },
-        _sum: {
-          valorAprovado: true,
-          valorLiberado: true,
-        },
+        _sum: { valorAprovado: true, valorLiberado: true },
       }),
-      this.prisma.kycDocumento.count({
-        where: { status: { in: ["PENDENTE"] } },
-      }),
-      this.prisma.etapaObra.count({
-        where: { status: "AGUARDANDO_VISTORIA" },
-      }),
-      this.prisma.etapaObra.count({
-        where: { status: "CONCLUIDA" },
+      this.prisma.kycDocumento.count({ where: { status: { in: ["PENDENTE"] } } }),
+      // etapas aguardando aprovação de vistoria
+      this.prisma.etapaObra.count({ where: { status: "AGUARDANDO_VISTORIA" } }),
+      // etapas concluídas aguardando liberação financeira
+      this.prisma.etapaObra.count({ where: { status: "CONCLUIDA" } }),
+      // obras distintas com pelo menos uma etapa aguardando vistoria (site visits pending)
+      this.prisma.obra.count({
+        where: { etapas: { some: { status: "AGUARDANDO_VISTORIA" } } },
       }),
     ]);
 
@@ -73,11 +67,11 @@ export class AdminService {
       totalUsuarios,
       obrasAtivas,
       obrasTotal,
-      creditoAprovado: creditosAgregados._sum.valorAprovado ?? 0,
-      creditoLiberado: creditosAgregados._sum.valorLiberado ?? 0,
+      creditoAprovado: Number(creditosAgregados._sum.valorAprovado ?? 0),
+      creditoLiberado: Number(creditosAgregados._sum.valorLiberado ?? 0),
       kycPendentes,
       etapasPendentes,
-      visitasAgendadas: etapasPendentes,
+      visitasAgendadas,
       filaLiberacao,
     };
   }
@@ -204,12 +198,17 @@ export class AdminService {
       take: limit, skip: offset,
       orderBy: { criadoEm: "desc" },
       include: {
-        usuario: { select: { nome: true, email: true } },
-        etapas: { select: { status: true, valorLiberacao: true } },
-        credito: { select: { valorAprovado: true, valorLiberado: true, status: true } },
+        usuario: { select: { nome: true } },
+        etapas: { select: { status: true } },
       },
     });
-    return obras;
+    // Map to the ApiObra shape expected by the frontend (id, nome, status, tomador)
+    return obras.map((o) => ({
+      id: o.obraId,
+      nome: o.nome,
+      status: o.status,
+      tomador: o.usuario?.nome,
+    }));
   }
 
   async criarUsuario(dto: CriarUsuarioAdminDto) {
@@ -220,7 +219,11 @@ export class AdminService {
       data: {
         nome: dto.nome,
         email: dto.email,
-        cpf: `000.000.000-${Math.floor(Math.random() * 100).toString().padStart(2, "0")}`,
+        // Derive a deterministic placeholder CPF from the email (email is unique → CPF is unique)
+        cpf: (() => {
+          const h = Buffer.from(dto.email.toLowerCase()).toString("hex").replace(/[^0-9]/g, "").padStart(9, "0").slice(0, 9);
+          return `${h.slice(0, 3)}.${h.slice(3, 6)}.${h.slice(6, 9)}-00`;
+        })(),
         telefone: "",
         passwordHash,
         tipo: dto.tipo,

@@ -203,13 +203,13 @@ type ApiObra = {
 
 function TabPortfolio({ overview }: { overview: ApiOverview | null }) {
   const p = DEMO.portfolio;
-  const metaPct = Math.round((p.carteiraAtiva / p.meta) * 100);
   const receitaTotal = p.receitaJuros + p.receitaEstruturacao + p.receitaOperacional;
   const ebitdaPct = p.ebitdaMargem;
 
   // Overlay real API data on top of DEMO KPIs when available
   const obrasAtivas = overview?.obrasAtivas ?? p.operacoesAtivas;
   const creditoAprovado = overview?.creditoAprovado ?? p.carteiraAtiva;
+  const metaPct = Math.round((creditoAprovado / p.meta) * 100);
 
   return (
     <div className="space-y-6">
@@ -220,7 +220,7 @@ function TabPortfolio({ overview }: { overview: ApiOverview | null }) {
           <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 }}>
             <div>
               <p style={{ ...bc, fontWeight: 800, fontSize: "clamp(1.8rem,3.5vw,2.4rem)", color: NAVY, lineHeight: 1 }}>
-                {formatarBRL(p.carteiraAtiva)}
+                {formatarBRL(creditoAprovado)}
               </p>
               <p style={{ ...j, fontSize: "0.8rem", color: "rgba(12,26,61,0.45)", marginTop: 4 }}>
                 Meta {formatarBRL(p.meta)} até {p.metaData} — <strong style={{ color: ROYAL }}>{metaPct}% atingida</strong>
@@ -249,7 +249,7 @@ function TabPortfolio({ overview }: { overview: ApiOverview | null }) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard label="Taxa Méd. Ponderada" value={`${p.taxaMediaPonderada.toFixed(2)}% a.m.`} sub={`meta: ${p.taxaMeta}% a.m.`} accent={p.taxaMediaPonderada >= p.taxaMeta ? MINT : "#f59e0b"} delta={((p.taxaMediaPonderada - p.taxaMeta) / p.taxaMeta) * 100} />
         <KpiCard label="Spread Efetivo" value={`${p.spreadEfetivo.toFixed(2)}%`} sub="sobre CDI" accent={ROYAL} />
-        <KpiCard label="Ticket Méd./Operação" value={formatarBRL(p.ticketMedioPorOperacao)} sub={`${p.operacoesAtivas} operações ativas`} accent={NAVY} />
+        <KpiCard label="Ticket Méd./Operação" value={formatarBRL(p.ticketMedioPorOperacao)} sub={`${obrasAtivas} operações ativas`} accent={NAVY} />
         <KpiCard label="Ticket Méd./Incorporadora" value={formatarBRL(p.ticketMedioPorIncorporadora)} sub="por tomador" accent={NAVY} />
       </div>
 
@@ -344,7 +344,7 @@ function TabRisco() {
                   <span style={{ ...j, fontSize: "0.72rem", color: "#dc2626", fontWeight: 700 }}>{pct.toFixed(2)}%</span>
                 </div>
               </div>
-              <Bar pct={(pct / 1) * 20} color="#f59e0b" bg="rgba(245,158,11,0.1)" />
+              <Bar pct={pct * 20} color="#f59e0b" bg="rgba(245,158,11,0.1)" />
             </div>
           ))}
         </div>
@@ -713,8 +713,8 @@ function TabOperacional({
             return (
               <a
                 key={o.id}
-                href={`/dashboard/obras/${o.id}`}
-                style={{ display: "flex", alignItems: "center", gap: 12, padding: "0.85rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)", textDecoration: "none" }}
+                href={o.id.startsWith("demo-") ? undefined : `/dashboard/obras/${o.id}`}
+                style={{ display: "flex", alignItems: "center", gap: 12, padding: "0.85rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)", textDecoration: "none", cursor: o.id.startsWith("demo-") ? "default" : "pointer" }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...j, fontSize: "0.82rem", fontWeight: 600, color: NAVY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{o.nome}</p>
@@ -811,7 +811,7 @@ type TabId = typeof TABS[number]["id"];
 
 export default function AdminPage() {
   const [tab, setTab] = useState<TabId>("portfolio");
-  const [isDemo, setIsDemo] = useState(false);
+  const [isDemo, setIsDemo] = useState<boolean | null>(null); // null = loading
   const [overview, setOverview] = useState<ApiOverview | null>(null);
   const [atividades, setAtividades] = useState<ApiAtividade[] | null>(null);
   const [obras, setObras] = useState<ApiObra[] | null>(null);
@@ -820,7 +820,7 @@ export default function AdminPage() {
     // Fetch overview data
     fetch("/api/proxy/admin/overview")
       .then((r) => (r.ok ? r.json() as Promise<ApiOverview> : Promise.reject()))
-      .then((data) => { setOverview(data); })
+      .then((data) => { setOverview(data); setIsDemo(false); })
       .catch(() => { setIsDemo(true); });
 
     // Fetch atividades
@@ -854,12 +854,12 @@ export default function AdminPage() {
             display: "inline-flex", alignItems: "center", gap: 5,
             fontSize: "0.68rem", fontWeight: 700,
             padding: "0.28rem 0.65rem", borderRadius: 999,
-            background: isDemo ? "rgba(251,191,36,0.12)" : "rgba(74,222,128,0.12)",
-            color: isDemo ? "#92400e" : "#15803d",
-            border: `1px solid ${isDemo ? "rgba(251,191,36,0.35)" : "rgba(74,222,128,0.35)"}`,
+            background: isDemo === null ? "rgba(12,26,61,0.06)" : isDemo ? "rgba(251,191,36,0.12)" : "rgba(74,222,128,0.12)",
+            color: isDemo === null ? "rgba(12,26,61,0.4)" : isDemo ? "#92400e" : "#15803d",
+            border: `1px solid ${isDemo === null ? "rgba(12,26,61,0.15)" : isDemo ? "rgba(251,191,36,0.35)" : "rgba(74,222,128,0.35)"}`,
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: isDemo ? "#f59e0b" : MINT, display: "inline-block" }} />
-            {isDemo ? "Demonstração" : "Dados ao vivo"}
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: isDemo === null ? "rgba(12,26,61,0.3)" : isDemo ? "#f59e0b" : MINT, display: "inline-block" }} />
+            {isDemo === null ? "Verificando..." : isDemo ? "Demonstração" : "Dados ao vivo"}
           </span>
           <a href="/dashboard/admin/usuarios" style={{ ...j, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8rem", fontWeight: 600, color: NAVY, border: "1px solid rgba(12,26,61,0.18)", background: "white", padding: "0.45rem 1rem", borderRadius: 10, textDecoration: "none" }}>
             <Users size={13} /> Usuários

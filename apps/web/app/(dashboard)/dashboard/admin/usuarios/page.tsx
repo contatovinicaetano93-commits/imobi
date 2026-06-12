@@ -130,7 +130,7 @@ export default function UsuariosAdminPage() {
         setErroAcao((json as { message?: string })?.message ?? "Erro ao salvar alteração.");
         return;
       }
-      if (json) setUsuarios((prev) => prev.map((u) => (u.id === id ? { ...u, ...json } : u)));
+      setUsuarios((prev) => prev.map((u) => (u.id === id ? { ...u, ...(json ?? body) } : u)));
     } catch {
       setErroAcao("Erro de conexão ao salvar.");
     } finally {
