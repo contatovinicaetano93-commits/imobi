@@ -32,26 +32,49 @@ type NavItem = {
   icon: LucideIcon;
   roles: UserRole[];
   section?: string;
+  /** chave de função controlável pelo admin (fiscalização) */
+  funcao?: string;
 };
 
 const WA = "5511993455589";
 
 const NAV: NavItem[] = [
-  { label: "Início",        href: "/dashboard",              icon: Home,        roles: ["TOMADOR", "ADMIN", "CONSTRUTOR", null], section: "geral" },
-  { label: "Minhas Obras",  href: "/dashboard/obras",        icon: HardHat,     roles: ["TOMADOR", "ADMIN", "CONSTRUTOR"] },
-  { label: "Crédito",       href: "/dashboard/credito",      icon: CreditCard,  roles: ["TOMADOR", "ADMIN"] },
-  { label: "Simulador",     href: "/dashboard/simulador",    icon: Calculator,  roles: ["TOMADOR", "ADMIN"] },
-  { label: "Score",         href: "/dashboard/score",        icon: Star,        roles: ["TOMADOR", "ADMIN"] },
-  { label: "Documentos",    href: "/dashboard/kyc",          icon: FileCheck2,  roles: ["TOMADOR", "ADMIN"] },
-  { label: "Notificações",  href: "/dashboard/notificacoes", icon: Bell,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
+  // ── CONSTRUTOR ────────────────────────────────────────────────────────────
+  { label: "Início",        href: "/dashboard/construtor",   icon: Building2,   roles: ["CONSTRUTOR"], section: "geral", funcao: "construtor" },
+  { label: "Minhas Obras",  href: "/dashboard/obras",        icon: HardHat,     roles: ["CONSTRUTOR"], funcao: "obras" },
+  { label: "Crédito",       href: "/dashboard/credito",      icon: CreditCard,  roles: ["CONSTRUTOR"], funcao: "credito" },
+  { label: "Simulador",     href: "/dashboard/simulador",    icon: Calculator,  roles: ["CONSTRUTOR"], funcao: "simulador" },
+  { label: "Score",         href: "/dashboard/score",        icon: Star,        roles: ["CONSTRUTOR"], funcao: "score" },
+  { label: "Documentos",    href: "/dashboard/kyc",          icon: FileCheck2,  roles: ["CONSTRUTOR"], funcao: "kyc" },
+  // ── TOMADOR (acesso via /cadastro) ────────────────────────────────────────
+  { label: "Início",        href: "/dashboard",              icon: Home,        roles: ["TOMADOR", null], section: "geral" },
+  { label: "Minhas Obras",  href: "/dashboard/obras",        icon: HardHat,     roles: ["TOMADOR"], funcao: "obras" },
+  { label: "Crédito",       href: "/dashboard/credito",      icon: CreditCard,  roles: ["TOMADOR"], funcao: "credito" },
+  { label: "Simulador",     href: "/dashboard/simulador",    icon: Calculator,  roles: ["TOMADOR"], funcao: "simulador" },
+  { label: "Score",         href: "/dashboard/score",        icon: Star,        roles: ["TOMADOR"], funcao: "score" },
+  { label: "Documentos",    href: "/dashboard/kyc",          icon: FileCheck2,  roles: ["TOMADOR"], funcao: "kyc" },
+  // ── GESTOR ────────────────────────────────────────────────────────────────
+  { label: "Painel",        href: "/dashboard/gestor",       icon: ShieldCheck, roles: ["GESTOR"], section: "geral", funcao: "gestor" },
+  { label: "Etapas",        href: "/dashboard/gestor/etapas",icon: FileCheck2,  roles: ["GESTOR"], funcao: "gestor" },
+  { label: "KYC",           href: "/dashboard/gestor/kyc",   icon: FileCheck2,  roles: ["GESTOR"], funcao: "kyc" },
+  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2, roles: ["GESTOR"], funcao: "due-diligence" },
+  { label: "Fundos",        href: "/dashboard/fundos",       icon: Banknote,    roles: ["GESTOR"], funcao: "fundos" },
+  { label: "Relatórios",    href: "/dashboard/relatorios",   icon: BarChart3,   roles: ["GESTOR"], funcao: "relatorios" },
+  // ── ENGENHEIRO ────────────────────────────────────────────────────────────
+  { label: "Engenharia",    href: "/dashboard/engenheiro",   icon: Wrench,      roles: ["ENGENHEIRO"], section: "geral", funcao: "engenharia" },
+  // ── COMERCIAL ─────────────────────────────────────────────────────────────
+  { label: "Painel",        href: "/dashboard/comercial",    icon: Megaphone,   roles: ["COMERCIAL"], section: "geral", funcao: "comercial" },
+  { label: "Leads",         href: "/dashboard/comercial/leads", icon: Star,     roles: ["COMERCIAL"], funcao: "comercial" },
+  // ── COMUNS (todos os perfis autenticados) ─────────────────────────────────
+  { label: "Notificações",  href: "/dashboard/notificacoes", icon: Bell,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null], funcao: "notificacoes" },
   { label: "Perfil",        href: "/dashboard/perfil",       icon: User,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
-  { label: "Vistorias",     href: "/dashboard/engenheiro",   icon: Wrench,      roles: ["ENGENHEIRO", "ADMIN"],   section: "operacional" },
-  { label: "Painel Gestor", href: "/dashboard/gestor",       icon: ShieldCheck, roles: ["GESTOR", "ADMIN"] },
-  { label: "Fundos",        href: "/dashboard/fundos",       icon: Banknote,    roles: ["GESTOR", "ADMIN"] },
-  { label: "Relatórios",    href: "/dashboard/relatorios",   icon: BarChart3,   roles: ["GESTOR", "ADMIN"] },
-  { label: "Comercial",     href: "/dashboard/comercial",    icon: Megaphone,   roles: ["COMERCIAL", "ADMIN"] },
-  { label: "Construtor",    href: "/dashboard/construtor",   icon: Building2,   roles: ["CONSTRUTOR", "ADMIN"] },
-  { label: "Administração", href: "/dashboard/admin",        icon: Settings,    roles: ["ADMIN"],                 section: "admin" },
+  // ── ADMIN ─────────────────────────────────────────────────────────────────
+  { label: "Centro de Comando", href: "/dashboard/admin",    icon: Settings,    roles: ["ADMIN"], section: "admin" },
+  { label: "Usuários",      href: "/dashboard/admin/usuarios",icon: User,       roles: ["ADMIN"] },
+  { label: "Configurações", href: "/dashboard/admin/configuracoes", icon: Settings, roles: ["ADMIN"] },
+  { label: "Obras",         href: "/dashboard/obras",        icon: HardHat,     roles: ["ADMIN"], funcao: "obras" },
+  { label: "Fundos",        href: "/dashboard/fundos",       icon: Banknote,    roles: ["ADMIN"], funcao: "fundos" },
+  { label: "Relatórios",    href: "/dashboard/relatorios",   icon: BarChart3,   roles: ["ADMIN"], funcao: "relatorios" },
 ];
 
 const SECTION_LABELS: Record<string, string> = {
@@ -60,8 +83,22 @@ const SECTION_LABELS: Record<string, string> = {
   admin:       "Sistema",
 };
 
-function filterNav(role: UserRole): NavItem[] {
-  return NAV.filter((item) => item.roles.includes(role));
+const ROLE_META: Record<string, { label: string; accent: string; bg: string }> = {
+  CONSTRUTOR: { label: "Construtor",    accent: "#0891b2", bg: "#164e63" },
+  TOMADOR:    { label: "Tomador",       accent: "#16a34a", bg: "#14532d" },
+  GESTOR:     { label: "Gestor",        accent: "#7c3aed", bg: "#3b0764" },
+  ENGENHEIRO: { label: "Engenheiro",    accent: "#ea580c", bg: "#431407" },
+  COMERCIAL:  { label: "Parceiro",      accent: "#d97706", bg: "#451a03" },
+  ADMIN:      { label: "Administrador", accent: "#1B4FD8", bg: "#1e3a8a" },
+};
+
+function filterNav(role: UserRole, funcoesBloqueadas: string[]): NavItem[] {
+  return NAV.filter((item) => {
+    if (!item.roles.includes(role)) return false;
+    // ADMIN nunca perde funções; demais perfis respeitam o bloqueio do admin
+    if (role !== "ADMIN" && item.funcao && funcoesBloqueadas.includes(item.funcao)) return false;
+    return true;
+  });
 }
 
 function Logo({ size = 28, white = false }: { size?: number; white?: boolean }) {
@@ -88,6 +125,7 @@ function Logo({ size = 28, white = false }: { size?: number; white?: boolean }) 
 function renderNav(
   items: NavItem[],
   activeFn: (href: string) => boolean,
+  accentColor: string,
   onNavigate?: () => void,
 ) {
   let lastSection = "";
@@ -121,7 +159,7 @@ function renderNav(
             background: active ? "rgba(255,255,255,0.12)" : "transparent",
             textDecoration: "none",
             transition: "all 0.12s",
-            borderLeft: active ? "2.5px solid #16a34a" : "2.5px solid transparent",
+            borderLeft: active ? `2.5px solid ${accentColor}` : "2.5px solid transparent",
             paddingLeft: active ? "0.65rem" : "0.75rem",
           }}
         >
@@ -140,6 +178,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<UserRole>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [funcoesBloqueadas, setFuncoesBloqueadas] = useState<string[]>([]);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -150,51 +189,74 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           setRole(d.role ?? null);
           setUserName(d.nome ?? null);
           setUserEmail(d.email ?? null);
+          setFuncoesBloqueadas(Array.isArray(d.funcoesBloqueadas) ? d.funcoesBloqueadas : []);
         }
       });
   }, []);
 
-  const visibleNav = filterNav(role);
+  const visibleNav = filterNav(role, funcoesBloqueadas);
   const isActive = (href: string) =>
     href === "/dashboard" ? path === href : path.startsWith(href);
+
+  const meta = role ? ROLE_META[role] : null;
+  const accentColor = meta?.accent ?? "#16a34a";
+  const sidebarBg = meta?.bg ?? "#1e3a8a";
 
   const initials = userName
     ? userName.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()
     : "?";
 
   const userFooter = (compact = false) => (
-    <div style={{
-      borderTop: "1px solid rgba(255,255,255,0.1)",
-      padding: compact ? "0.75rem 0.85rem" : "0.85rem 1rem",
-      display: "flex", alignItems: "center", gap: "0.6rem",
-    }}>
+    <div>
+      {/* Role badge */}
+      {meta && (
+        <div style={{
+          margin: compact ? "0 0.75rem 0.5rem" : "0 0.75rem 0.6rem",
+          padding: "0.35rem 0.65rem",
+          borderRadius: 8,
+          background: `${accentColor}22`,
+          border: `1px solid ${accentColor}44`,
+          display: "flex", alignItems: "center", gap: "0.4rem",
+        }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: accentColor, flexShrink: 0 }} />
+          <span style={{ fontSize: "0.65rem", fontWeight: 700, color: accentColor, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+            {meta.label}
+          </span>
+        </div>
+      )}
       <div style={{
-        width: compact ? 26 : 28, height: compact ? 26 : 28, borderRadius: "50%",
-        background: "rgba(22,163,74,0.25)",
-        border: "1.5px solid rgba(22,163,74,0.5)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "0.63rem", fontWeight: 700, color: "#4ade80", flexShrink: 0,
+        borderTop: "1px solid rgba(255,255,255,0.1)",
+        padding: compact ? "0.75rem 0.85rem" : "0.85rem 1rem",
+        display: "flex", alignItems: "center", gap: "0.6rem",
       }}>
-        {initials}
+        <div style={{
+          width: compact ? 26 : 28, height: compact ? 26 : 28, borderRadius: "50%",
+          background: `${accentColor}33`,
+          border: `1.5px solid ${accentColor}66`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "0.63rem", fontWeight: 700, color: accentColor, flexShrink: 0,
+        }}>
+          {initials}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: compact ? "0.72rem" : "0.74rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {userName ?? "Usuário"}
+          </p>
+          <p style={{ fontSize: "0.63rem", color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {userEmail ?? role ?? ""}
+          </p>
+        </div>
+        <button
+          onClick={async () => {
+            await fetch("/api/auth/session", { method: "DELETE" });
+            window.location.href = "/login";
+          }}
+          title="Sair"
+          style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)", flexShrink: 0, padding: 0, display: "flex" }}
+        >
+          <LogOut size={13} />
+        </button>
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: compact ? "0.72rem" : "0.74rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {userName ?? "Usuário"}
-        </p>
-        <p style={{ fontSize: "0.63rem", color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {userEmail ?? role ?? ""}
-        </p>
-      </div>
-      <button
-        onClick={async () => {
-          await fetch("/api/auth/session", { method: "DELETE" });
-          window.location.href = "/login";
-        }}
-        title="Sair"
-        style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)", flexShrink: 0, padding: 0, display: "flex" }}
-      >
-        <LogOut size={13} />
-      </button>
     </div>
   );
 
@@ -206,7 +268,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         width: 220, flexShrink: 0,
         display: "none",
         flexDirection: "column",
-        background: "#1B4FD8",
+        background: `linear-gradient(180deg, ${sidebarBg} 0%, #0f172a 100%)`,
         minHeight: "100vh",
         position: "sticky", top: 0,
         alignSelf: "flex-start",
@@ -221,7 +283,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
 
         <nav style={{ flex: 1, padding: "0 0.5rem", overflowY: "auto" }}>
-          {renderNav(visibleNav, isActive)}
+          {renderNav(visibleNav, isActive, accentColor)}
         </nav>
 
         {userFooter()}
@@ -258,11 +320,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <div onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", zIndex: 150 }} />
           <div style={{
             position: "fixed", top: 52, left: 0, bottom: 0, width: 230,
-            background: "#1B4FD8", zIndex: 200,
+            background: `linear-gradient(180deg, ${sidebarBg} 0%, #0f172a 100%)`, zIndex: 200,
             overflowY: "auto", display: "flex", flexDirection: "column",
           }}>
             <nav style={{ flex: 1, padding: "0.5rem 0.5rem 0" }}>
-              {renderNav(visibleNav, isActive, () => setMobileOpen(false))}
+              {renderNav(visibleNav, isActive, accentColor, () => setMobileOpen(false))}
             </nav>
             {userFooter(true)}
           </div>

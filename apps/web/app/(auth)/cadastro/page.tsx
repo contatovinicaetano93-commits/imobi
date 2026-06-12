@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
-import { apiClient, ApiError } from "@imbobi/core";
+import PasswordInput from "../_components/PasswordInput";
 
 const WA = "5511993455589";
 
@@ -32,18 +32,21 @@ export default function CadastroPage() {
   const onSubmit = async (data: CadastroUsuarioInput) => {
     setErro(null);
     try {
-      const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
-        "/auth/registrar",
-        { ...data, consentidoEm: new Date().toISOString() }
-      );
+      const res = await fetch("/api/proxy/auth/registrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, consentidoEm: new Date().toISOString() }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((json as { message?: string }).message ?? "Erro ao criar conta.");
       await fetch("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(res),
+        body: JSON.stringify(json),
       });
       router.push("/dashboard");
     } catch (e) {
-      setErro(e instanceof ApiError ? e.message : "Erro inesperado.");
+      setErro(e instanceof Error ? e.message : "Erro inesperado.");
     }
   };
 
@@ -78,7 +81,13 @@ export default function CadastroPage() {
           </Field>
 
           <Field label="Senha" error={errors.senha?.message}>
-            <input {...register("senha")} type="password" placeholder="Mín. 8 caracteres, 1 maiúscula, 1 número" style={errors.senha ? inputErrorStyle : inputStyle} />
+            <PasswordInput
+              {...register("senha")}
+              placeholder="Mín. 8 caracteres, 1 maiúscula, 1 número"
+              hasError={!!errors.senha}
+              style={inputStyle}
+              errorStyle={inputErrorStyle}
+            />
           </Field>
 
           <div style={{ borderTop: "1px solid var(--border)", paddingTop: "1rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>

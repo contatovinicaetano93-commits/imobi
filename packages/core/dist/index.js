@@ -18,8 +18,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./utils/haversine"), exports);
 __exportStar(require("./utils/formatters"), exports);
 __exportStar(require("./utils/credito"), exports);
-// Hooks
-__exportStar(require("./hooks/useGeoValidation"), exports);
-__exportStar(require("./hooks/useSimuladorCredito"), exports);
 // Services
 __exportStar(require("./services/api-client"), exports);

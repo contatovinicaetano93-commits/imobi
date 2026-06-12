@@ -1,6 +1,6 @@
 {
-  "buildCommand": "turbo run build --filter=@imbobi/web --no-cache",
-  "installCommand": "pnpm install",
+  "buildCommand": "cd apps/web && next build",
+  "installCommand": "pnpm install --frozen-lockfile",
   "outputDirectory": "apps/web/.next",
   "framework": "nextjs"
 }

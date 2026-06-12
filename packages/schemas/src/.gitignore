@@ -1,0 +1,3 @@
+# Compiled output should go to dist/, not src/
+*.js
+*.d.ts

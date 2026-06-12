@@ -1,11 +1,14 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 import { useState, Suspense } from "react";
 import { LoginSchema, type LoginInput } from "@imbobi/schemas";
+import PasswordInput from "../_components/PasswordInput";
 
 const WA = "5511993455589";
 
@@ -70,12 +73,13 @@ function LoginForm() {
 
       <div>
         <label style={labelStyle}>Senha</label>
-        <input
+        <PasswordInput
           {...register("senha")}
-          type="password"
           autoComplete="current-password"
           placeholder="••••••••"
-          style={errors.senha ? inputErrorStyle : inputStyle}
+          hasError={!!errors.senha}
+          style={inputStyle}
+          errorStyle={inputErrorStyle}
         />
         {errors.senha && <p style={fieldErrorStyle}>{errors.senha.message}</p>}
       </div>

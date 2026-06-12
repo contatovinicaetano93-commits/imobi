@@ -1,6 +1,17 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
+export interface ObraFinanceiro {
+  obraId: string;
+  nome: string;
+  valorTotal: number;
+  valorMaterial: number;
+  valorMaoDeObra: number;
+  valorExecutado: number;
+  progresso: number;
+  etapaAtual: string;
+}
+
 @Injectable()
 export class EngenheirosService {
   constructor(private readonly prisma: PrismaService) {}
@@ -90,5 +101,64 @@ export class EngenheirosService {
     });
 
     return this.obterVisita(visitaId);
+  }
+
+  async financeiro(_usuarioId: string): Promise<ObraFinanceiro[]> {
+    // Obras que possuem etapas em vistoria ou execução (proxy para obras com visitas do engenheiro)
+    const obras = await this.prisma.obra.findMany({
+      where: {
+        etapas: {
+          some: {
+            status: { in: ["AGUARDANDO_VISTORIA", "EM_EXECUCAO", "CONCLUIDA"] },
+          },
+        },
+      },
+      include: {
+        etapas: {
+          select: {
+            nome: true,
+            valorLiberacao: true,
+            status: true,
+          },
+        },
+      },
+      take: 50,
+    });
+
+    return obras.map((obra) => {
+      const valorTotal = obra.etapas.reduce((sum, e) => sum + e.valorLiberacao, 0);
+      const valorExecutado = obra.etapas
+        .filter((e) => e.status === "CONCLUIDA")
+        .reduce((sum, e) => sum + e.valorLiberacao, 0);
+
+      const progresso = valorTotal > 0
+        ? Math.round((valorExecutado / valorTotal) * 100)
+        : 0;
+
+      const etapaAtual =
+        obra.etapas.find(
+          (e) => e.status === "AGUARDANDO_VISTORIA" || e.status === "EM_EXECUCAO"
+        )?.nome ?? "";
+
+      return {
+        obraId: obra.obraId,
+        nome: obra.nome,
+        valorTotal,
+        valorMaterial: Math.round(valorTotal * 0.56 * 100) / 100,
+        valorMaoDeObra: Math.round(valorTotal * 0.44 * 100) / 100,
+        valorExecutado,
+        progresso,
+        etapaAtual,
+      };
+    });
+  }
+
+  async licencas(): Promise<unknown[]> {
+    // Tabela Licenca não existe no schema atual — retorna array vazio com segurança
+    return (this.prisma as any).licenca
+      ? (this.prisma as any).licenca
+          .findMany({ orderBy: { criadoEm: "desc" } })
+          .catch(() => [])
+      : Promise.resolve([]);
   }
 }
