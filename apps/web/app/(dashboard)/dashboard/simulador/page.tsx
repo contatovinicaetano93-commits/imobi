@@ -1,82 +1,698 @@
 "use client";
 
-import { useSimuladorCredito } from "@imbobi/core/hooks";
-import { formatarBRL, formatarPercentual } from "@imbobi/core";
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import {
+  ChevronRight, ChevronLeft, AlertTriangle, CheckCircle2,
+  TrendingUp, Building2, Wallet, BarChart3, Info,
+} from "lucide-react";
 
-export default function SimuladorPage() {
-  const { valorSolicitado, setValorSolicitado, prazoMeses, setPrazoMeses, resultado } =
-    useSimuladorCredito();
+// ─── Formatters ──────────────────────────────────────────────────────────────
 
+function brl(v: number) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+}
+function pct(v: number) {
+  return v.toFixed(2).replace(".", ",") + "%";
+}
+function parseBRL(s: string): number {
+  const n = Number(s.replace(/\./g, "").replace(",", ".").replace(/[^0-9.]/g, ""));
+  return isNaN(n) ? 0 : n;
+}
+function fmtInput(v: number): string {
+  if (v === 0) return "";
+  return v.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+}
+
+// ─── Month helpers ───────────────────────────────────────────────────────────
+
+const MONTHS_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+function addMonths(base: Date, n: number): Date {
+  const d = new Date(base);
+  d.setMonth(d.getMonth() + n);
+  return d;
+}
+
+function fmtMonth(d: Date): string {
+  return `${MONTHS_PT[d.getMonth()]}/${d.getFullYear()}`;
+}
+
+// ─── Form state ──────────────────────────────────────────────────────────────
+
+type Form = {
+  nome: string;
+  vgv: number;
+  unidades: number;
+  prazo: number;          // construction months
+  dataInicio: string;     // YYYY-MM
+  custoObra: number;
+  despesasComerciais: number; // %
+  outrasDespesas: number;     // %
+  custoTerreno: number;
+  pctFinTerreno: number;  // %
+  pctFinObra: number;     // %
+};
+
+const DEFAULTS: Form = {
+  nome: "",
+  vgv: 0,
+  unidades: 20,
+  prazo: 24,
+  dataInicio: new Date().toISOString().slice(0, 7),
+  custoObra: 0,
+  despesasComerciais: 5,
+  outrasDespesas: 2,
+  custoTerreno: 0,
+  pctFinTerreno: 0,
+  pctFinObra: 25,
+};
+
+// ─── Viability calculation ────────────────────────────────────────────────────
+
+type CashFlowRow = {
+  label: string;
+  fase: "PRE" | "OBRA" | "POS";
+  evolFisica: number;     // cumulative %
+  aporteIncorporador: number;
+  entradaFinanciamento: number;
+  vendas: number;
+  custosMes: number;
+  saldoMensal: number;
+  saldoAcumulado: number;
+};
+
+type Viability = {
+  margemBruta: number;
+  margemBrutaPct: number;
+  margemLiquida: number;
+  margemLiquidaPct: number;
+  finTotalObra: number;
+  finTotalTerreno: number;
+  aporteTotal: number;
+  custoTotal: number;
+  rows: CashFlowRow[];
+  alertas: { tipo: "danger" | "warning" | "ok"; msg: string }[];
+};
+
+function calcViability(f: Form): Viability {
+  const despCom = (f.despesasComerciais / 100) * f.vgv;
+  const outrasDes = (f.outrasDespesas / 100) * f.vgv;
+  const finTerreno = (f.pctFinTerreno / 100) * f.custoTerreno;
+  const finObra = (f.pctFinObra / 100) * f.custoObra;
+  const custoTotal = f.custoObra + f.custoTerreno + despCom + outrasDes;
+  const margemBruta = f.vgv - custoTotal;
+  const margemBrutaPct = f.vgv > 0 ? (margemBruta / f.vgv) * 100 : 0;
+
+  // Simple financing cost: 0.99% /month on average balance
+  const txMes = 0.0099;
+  const avgBalanceObra = finObra / 2;
+  const jurosObra = avgBalanceObra * txMes * f.prazo;
+  const margemLiquida = margemBruta - jurosObra;
+  const margemLiquidaPct = f.vgv > 0 ? (margemLiquida / f.vgv) * 100 : 0;
+
+  // Equity needed
+  const aporteTerreno = f.custoTerreno - finTerreno;
+  const aporteObra = f.custoObra - finObra;
+  const aporteTotal = aporteTerreno + aporteObra;
+
+  // ── Build cash flow rows ──
+  // Phases: PRE_OBRA (-3...-1), OBRA (1...prazo), POS_OBRA (1...6)
+  const rows: CashFlowRow[] = [];
+  const base = new Date(f.dataInicio + "-01");
+  let saldoAcumulado = 0;
+
+  // PRE-OBRA: 3 months — land cost + equity
+  const preMonths = 3;
+  for (let i = 0; i < preMonths; i++) {
+    const d = addMonths(base, i - preMonths);
+    const isLastPre = i === preMonths - 1;
+    // Terreno cost spread: 50% in month -3, 50% in month -2 for equity; financing arrives in month -1
+    const aporteTerrMes = i < 2 ? aporteTerreno / 2 : 0;
+    const entFinMes = isLastPre ? finTerreno : 0;
+    const custoMes = i < 2 ? f.custoTerreno / 2 : 0;
+    const saldoMensal = entFinMes - aporteTerrMes - custoMes;
+    saldoAcumulado += saldoMensal;
+    rows.push({
+      label: fmtMonth(d), fase: "PRE",
+      evolFisica: 0,
+      aporteIncorporador: aporteTerrMes,
+      entradaFinanciamento: entFinMes,
+      vendas: 0,
+      custosMes: custoMes,
+      saldoMensal,
+      saldoAcumulado,
+    });
+  }
+
+  // OBRA: prazo months
+  const evolPorMes = f.prazo > 0 ? 100 / f.prazo : 0;
+  const finObraMensal = f.prazo > 0 ? finObra / f.prazo : 0;
+  const aporteObraMensal = f.prazo > 0 ? aporteObra / f.prazo : 0;
+  const custoObraMensal = f.prazo > 0 ? f.custoObra / f.prazo : 0;
+  // 30% of sales during obra
+  const vendasObra = f.vgv * 0.3;
+  const vendasObraMensal = f.prazo > 0 ? vendasObra / f.prazo : 0;
+  const despCadaMes = f.prazo > 0 ? (despCom + outrasDes) / f.prazo : 0;
+
+  let evolAcum = 0;
+  for (let i = 1; i <= f.prazo; i++) {
+    const d = addMonths(base, i - 1);
+    evolAcum += evolPorMes;
+    const saldoMensal = vendasObraMensal + finObraMensal - aporteObraMensal - custoObraMensal - despCadaMes;
+    saldoAcumulado += saldoMensal;
+    rows.push({
+      label: fmtMonth(d), fase: "OBRA",
+      evolFisica: Math.min(evolAcum, 100),
+      aporteIncorporador: aporteObraMensal,
+      entradaFinanciamento: finObraMensal,
+      vendas: vendasObraMensal,
+      custosMes: custoObraMensal + despCadaMes,
+      saldoMensal,
+      saldoAcumulado,
+    });
+  }
+
+  // POS-OBRA: 6 months — 70% of sales, financing repayment
+  const vendasPos = f.vgv * 0.7;
+  const posMonths = 6;
+  const vendasPosMensal = vendasPos / posMonths;
+  const repagFinMensal = (finObra + finTerreno) / posMonths;
+  for (let i = 1; i <= posMonths; i++) {
+    const d = addMonths(base, f.prazo + i - 1);
+    const saldoMensal = vendasPosMensal - repagFinMensal;
+    saldoAcumulado += saldoMensal;
+    rows.push({
+      label: fmtMonth(d), fase: "POS",
+      evolFisica: 100,
+      aporteIncorporador: 0,
+      entradaFinanciamento: -repagFinMensal,
+      vendas: vendasPosMensal,
+      custosMes: 0,
+      saldoMensal,
+      saldoAcumulado,
+    });
+  }
+
+  // ── Alertas ──
+  const alertas: Viability["alertas"] = [];
+
+  if (f.vgv === 0 || f.custoObra === 0) {
+    alertas.push({ tipo: "warning", msg: "Preencha o VGV e o custo de obra para gerar alertas." });
+  } else {
+    if (margemBrutaPct < 15) {
+      alertas.push({ tipo: "danger", msg: `Margem bruta muito baixa (${pct(margemBrutaPct)}). Mínimo recomendado: 15%.` });
+    } else if (margemBrutaPct < 20) {
+      alertas.push({ tipo: "warning", msg: `Margem bruta (${pct(margemBrutaPct)}) abaixo do ideal. Avalie reduzir custos.` });
+    } else {
+      alertas.push({ tipo: "ok", msg: `Margem bruta saudável: ${pct(margemBrutaPct)}.` });
+    }
+
+    if (f.custoObra > f.vgv * 0.6) {
+      alertas.push({ tipo: "danger", msg: "Custo de construção acima de 60% do VGV. Risco alto." });
+    }
+
+    if (f.pctFinObra > 40) {
+      alertas.push({ tipo: "warning", msg: `Financiamento de obra acima de 40% (${pct(f.pctFinObra)}). Verifique custo do capital.` });
+    }
+
+    if (margemLiquidaPct < 10) {
+      alertas.push({ tipo: "danger", msg: `Margem líquida após juros: ${pct(margemLiquidaPct)}. Projeto pode não ser viável.` });
+    }
+
+    const minNegRow = rows.reduce((min, r) => r.saldoAcumulado < min ? r.saldoAcumulado : min, 0);
+    if (minNegRow < 0 && Math.abs(minNegRow) > aporteTotal * 0.3) {
+      alertas.push({ tipo: "warning", msg: `Saldo acumulado negativo de ${brl(Math.abs(minNegRow))} previsto. Revise o aporte.` });
+    }
+  }
+
+  return {
+    margemBruta, margemBrutaPct,
+    margemLiquida, margemLiquidaPct,
+    finTotalObra: finObra,
+    finTotalTerreno: finTerreno,
+    aporteTotal,
+    custoTotal,
+    rows,
+    alertas,
+  };
+}
+
+// ─── UI Components ────────────────────────────────────────────────────────────
+
+function CurrencyInput({
+  label, value, onChange, hint,
+}: { label: string; value: number; onChange: (v: number) => void; hint?: string }) {
   return (
-    <div className="max-w-2xl space-y-8">
-      <h1 className="text-2xl font-bold text-gray-900">Simulador de Crédito</h1>
-
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-        {/* Valor */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Valor desejado: <span className="font-bold text-[#1B4FD8]">{formatarBRL(valorSolicitado)}</span>
-          </label>
-          <input
-            type="range"
-            min={10000}
-            max={1000000}
-            step={5000}
-            value={valorSolicitado}
-            onChange={(e) => setValorSolicitado(Number(e.target.value))}
-            className="w-full accent-[#1B4FD8]"
-          />
-          <div className="flex justify-between text-xs text-gray-400 mt-1">
-            <span>R$ 10.000</span>
-            <span>R$ 1.000.000</span>
-          </div>
-        </div>
-
-        {/* Prazo */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Prazo: <span className="font-bold text-[#1B4FD8]">{prazoMeses} meses</span>
-          </label>
-          <input
-            type="range"
-            min={12}
-            max={180}
-            step={12}
-            value={prazoMeses}
-            onChange={(e) => setPrazoMeses(Number(e.target.value))}
-            className="w-full accent-[#1B4FD8]"
-          />
-          <div className="flex justify-between text-xs text-gray-400 mt-1">
-            <span>12 meses</span>
-            <span>180 meses</span>
-          </div>
-        </div>
+    <div>
+      <label className="block text-sm font-semibold text-gray-700 mb-1.5">{label}</label>
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">R$</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={fmtInput(value)}
+          onChange={(e) => {
+            const raw = e.target.value.replace(/\./g, "").replace(",", ".");
+            const n = Number(raw.replace(/[^0-9.]/g, ""));
+            onChange(isNaN(n) ? 0 : n);
+          }}
+          placeholder="0"
+          className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1B4FD8] focus:border-transparent outline-none transition-all"
+        />
       </div>
-
-      {/* Resultado */}
-      <div className="rounded-2xl text-white p-6 grid grid-cols-2 gap-6" style={{ background: "#1B4FD8" }}>
-        <ResultItem label="Parcela mensal" value={formatarBRL(resultado.parcelaMensal)} big />
-        <ResultItem label="Total pago" value={formatarBRL(resultado.totalPago)} />
-        <ResultItem label="Total de juros" value={formatarBRL(resultado.totalJuros)} />
-        <ResultItem label="CET ao ano" value={formatarPercentual(resultado.cet)} />
-      </div>
-
-      <a
-        href={`/dashboard/credito/solicitar?valor=${valorSolicitado}&prazo=${prazoMeses}`}
-        className="block text-center font-semibold py-4 rounded-2xl transition-colors"
-        style={{ background: "#1B4FD8", color: "white" }}
-      >
-        Solicitar este crédito
-      </a>
+      {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
     </div>
   );
 }
 
-function ResultItem({ label, value, big }: { label: string; value: string; big?: boolean }) {
+function PctInput({
+  label, value, onChange, hint, min = 0, max = 100,
+}: { label: string; value: number; onChange: (v: number) => void; hint?: string; min?: number; max?: number }) {
   return (
     <div>
-      <p className="text-blue-200 text-xs mb-1">{label}</p>
-      <p className={`font-bold ${big ? "text-3xl" : "text-xl"}`}>{value}</p>
+      <label className="block text-sm font-semibold text-gray-700 mb-1.5">{label}</label>
+      <div className="relative">
+        <input
+          type="number"
+          min={min}
+          max={max}
+          step={0.1}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full pr-9 pl-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1B4FD8] focus:border-transparent outline-none transition-all"
+        />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">%</span>
+      </div>
+      {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+const STEPS = ["Empreendimento", "Custos", "Financiamento", "Resultado"];
+
+export default function SimuladorPage() {
+  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
+  const [form, setForm] = useState<Form>(DEFAULTS);
+  const [gerado, setGerado] = useState(false);
+
+  const set = (k: keyof Form, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
+
+  const viab = useMemo(() => calcViability(form), [form]);
+
+  const totals = useMemo(() => {
+    const r = viab.rows;
+    return {
+      aporte: r.reduce((s, x) => s + x.aporteIncorporador, 0),
+      financiamento: r.reduce((s, x) => s + x.entradaFinanciamento, 0),
+      vendas: r.reduce((s, x) => s + x.vendas, 0),
+      saldoFinal: r.length > 0 ? r[r.length - 1].saldoAcumulado : 0,
+    };
+  }, [viab]);
+
+  const canNext = [
+    form.nome.trim().length > 0 && form.vgv > 0 && form.prazo >= 6,
+    form.custoObra > 0,
+    true,
+    true,
+  ][step];
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Estudo de Viabilidade</h1>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Analise a viabilidade do seu empreendimento antes de solicitar o crédito.
+        </p>
+      </div>
+
+      {/* Stepper */}
+      <div className="flex items-center gap-0">
+        {STEPS.map((label, i) => {
+          const active = i === step;
+          const done = i < step || (i === 3 && gerado);
+          return (
+            <div key={i} className="flex items-center flex-1 last:flex-none">
+              <button
+                onClick={() => (done || i < step) && setStep(i as 0 | 1 | 2 | 3)}
+                disabled={i > step && !gerado}
+                className="flex items-center gap-2 shrink-0"
+              >
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  done ? "bg-[#16a34a] text-white" : active ? "bg-[#1B4FD8] text-white" : "bg-gray-100 text-gray-400"
+                }`}>
+                  {done && !active ? <CheckCircle2 size={14} /> : i + 1}
+                </div>
+                <span className={`text-xs font-semibold hidden sm:block ${active ? "text-[#1B4FD8]" : done ? "text-[#16a34a]" : "text-gray-400"}`}>
+                  {label}
+                </span>
+              </button>
+              {i < STEPS.length - 1 && (
+                <div className={`flex-1 h-px mx-2 ${i < step ? "bg-[#16a34a]" : "bg-gray-200"}`} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Steps */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+        {step === 0 && (
+          <>
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-[#1B4FD8]" />
+              Dados do Empreendimento
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nome do empreendimento</label>
+                <input
+                  type="text"
+                  value={form.nome}
+                  onChange={(e) => set("nome", e.target.value)}
+                  placeholder="Ex: Residencial Gralha Azul"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1B4FD8] focus:border-transparent outline-none"
+                />
+              </div>
+              <CurrencyInput
+                label="VGV — Valor Geral de Vendas"
+                value={form.vgv}
+                onChange={(v) => set("vgv", v)}
+                hint="Soma total do valor de todas as unidades"
+              />
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Número de unidades</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={form.unidades}
+                  onChange={(e) => set("unidades", Number(e.target.value))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1B4FD8] focus:border-transparent outline-none"
+                />
+                {form.vgv > 0 && form.unidades > 0 && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Ticket médio: {brl(form.vgv / form.unidades)}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Prazo de obra</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={6}
+                    max={120}
+                    value={form.prazo}
+                    onChange={(e) => set("prazo", Number(e.target.value))}
+                    className="w-full pr-16 pl-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1B4FD8] focus:border-transparent outline-none"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">meses</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Início previsto</label>
+                <input
+                  type="month"
+                  value={form.dataInicio}
+                  onChange={(e) => set("dataInicio", e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1B4FD8] focus:border-transparent outline-none"
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {step === 1 && (
+          <>
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-[#1B4FD8]" />
+              Custos do Projeto
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <CurrencyInput
+                  label="Custo total de construção"
+                  value={form.custoObra}
+                  onChange={(v) => set("custoObra", v)}
+                  hint={form.vgv > 0 ? `${pct((form.custoObra / form.vgv) * 100)} do VGV` : undefined}
+                />
+              </div>
+              <CurrencyInput
+                label="Custo do terreno"
+                value={form.custoTerreno}
+                onChange={(v) => set("custoTerreno", v)}
+                hint={form.vgv > 0 && form.custoTerreno > 0 ? `${pct((form.custoTerreno / form.vgv) * 100)} do VGV` : undefined}
+              />
+              <div>
+                {/* spacer or additional field */}
+              </div>
+              <PctInput
+                label="Despesas comerciais"
+                value={form.despesasComerciais}
+                onChange={(v) => set("despesasComerciais", v)}
+                hint={form.vgv > 0 ? brl((form.despesasComerciais / 100) * form.vgv) : "Corretagem, marketing etc."}
+              />
+              <PctInput
+                label="Outras despesas"
+                value={form.outrasDespesas}
+                onChange={(v) => set("outrasDespesas", v)}
+                hint={form.vgv > 0 ? brl((form.outrasDespesas / 100) * form.vgv) : "Registro, impostos etc."}
+              />
+            </div>
+
+            {/* Live margin preview */}
+            {form.vgv > 0 && form.custoObra > 0 && (
+              <div className={`rounded-xl p-4 flex items-center gap-3 ${viab.margemBrutaPct >= 20 ? "bg-green-50 border border-green-100" : viab.margemBrutaPct >= 15 ? "bg-yellow-50 border border-yellow-100" : "bg-red-50 border border-red-100"}`}>
+                <TrendingUp className={`w-5 h-5 shrink-0 ${viab.margemBrutaPct >= 20 ? "text-green-600" : viab.margemBrutaPct >= 15 ? "text-yellow-600" : "text-red-600"}`} />
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Margem bruta estimada: {brl(viab.margemBruta)} ({pct(viab.margemBrutaPct)})
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Calculada sobre o VGV menos todos os custos informados</p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Wallet className="w-5 h-5 text-[#1B4FD8]" />
+              Estrutura de Financiamento
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <PctInput
+                label="Financiamento do terreno"
+                value={form.pctFinTerreno}
+                onChange={(v) => set("pctFinTerreno", v)}
+                hint={form.custoTerreno > 0 ? `${brl((form.pctFinTerreno / 100) * form.custoTerreno)} financiado` : "% do custo do terreno"}
+              />
+              <PctInput
+                label="Financiamento ciclo de obra"
+                value={form.pctFinObra}
+                onChange={(v) => set("pctFinObra", v)}
+                hint={form.custoObra > 0 ? `${brl((form.pctFinObra / 100) * form.custoObra)} financiado (IMOBI)` : "% do custo de obra"}
+              />
+            </div>
+
+            {/* Summary boxes */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+              {[
+                { label: "Fin. terreno",    value: brl((form.pctFinTerreno / 100) * form.custoTerreno), color: "text-blue-700", bg: "bg-blue-50" },
+                { label: "Fin. ciclo obra",  value: brl((form.pctFinObra / 100) * form.custoObra),     color: "text-[#1B4FD8]", bg: "bg-blue-50" },
+                { label: "Aporte próprio",   value: brl(viab.aporteTotal),                              color: "text-gray-800",  bg: "bg-gray-50" },
+              ].map((item) => (
+                <div key={item.label} className={`${item.bg} rounded-xl p-3`}>
+                  <p className="text-xs text-gray-500 mb-0.5">{item.label}</p>
+                  <p className={`text-base font-bold ${item.color}`}>{item.value}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl">
+              <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-700">
+                O IMOBI cobre até <strong>40%</strong> do ciclo de obra com liberações por etapa vistoriada.
+                Taxa de referência: 0,99% ao mês sobre o saldo devedor.
+              </p>
+            </div>
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-[#1B4FD8]" />
+              Resultado do Estudo — {form.nome || "Empreendimento"}
+            </h2>
+
+            {/* KPIs */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: "VGV",             value: brl(form.vgv),               sub: "100%",                          top: "bg-gray-300" },
+                { label: "Custo total",     value: brl(viab.custoTotal),         sub: pct(form.vgv > 0 ? (viab.custoTotal / form.vgv) * 100 : 0), top: "bg-orange-400" },
+                { label: "Margem bruta",    value: brl(viab.margemBruta),        sub: pct(viab.margemBrutaPct),        top: viab.margemBrutaPct >= 20 ? "bg-[#16a34a]" : viab.margemBrutaPct >= 15 ? "bg-yellow-400" : "bg-red-500" },
+                { label: "Margem líquida",  value: brl(viab.margemLiquida),      sub: pct(viab.margemLiquidaPct),      top: viab.margemLiquidaPct >= 10 ? "bg-[#16a34a]" : "bg-red-500" },
+              ].map((kpi) => (
+                <div key={kpi.label} className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+                  <div className={`h-1 w-full ${kpi.top}`} />
+                  <div className="p-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{kpi.label}</p>
+                    <p className="text-lg font-bold text-gray-900 leading-none">{kpi.value}</p>
+                    <p className="text-xs text-gray-400 mt-1">{kpi.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Alertas */}
+            {viab.alertas.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                  Alertas
+                </h3>
+                {viab.alertas.map((a, i) => (
+                  <div key={i} className={`flex items-start gap-2 p-3 rounded-xl text-sm ${
+                    a.tipo === "danger" ? "bg-red-50 text-red-700 border border-red-100" :
+                    a.tipo === "warning" ? "bg-yellow-50 text-yellow-800 border border-yellow-100" :
+                    "bg-green-50 text-green-700 border border-green-100"
+                  }`}>
+                    {a.tipo === "ok"
+                      ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                      : <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />}
+                    {a.msg}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Cronograma */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Cronograma de Fluxo de Caixa</h3>
+              <div className="overflow-x-auto rounded-xl border border-gray-100">
+                <table className="w-full text-xs min-w-[700px]">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100">
+                      <th className="text-left font-semibold text-gray-600 px-3 py-2.5">Mês</th>
+                      <th className="text-right font-semibold text-gray-600 px-3 py-2.5">Evol. Física</th>
+                      <th className="text-right font-semibold text-gray-600 px-3 py-2.5">Aporte Incorporador</th>
+                      <th className="text-right font-semibold text-gray-600 px-3 py-2.5">Financiamento</th>
+                      <th className="text-right font-semibold text-gray-600 px-3 py-2.5">Vendas</th>
+                      <th className="text-right font-semibold text-gray-600 px-3 py-2.5">Saldo Mensal</th>
+                      <th className="text-right font-semibold text-gray-600 px-3 py-2.5">Saldo Acumulado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Totals row */}
+                    <tr className="bg-[#0C1A3D] text-white font-bold">
+                      <td className="px-3 py-2 font-bold">TOTAL</td>
+                      <td className="px-3 py-2 text-right">100%</td>
+                      <td className="px-3 py-2 text-right">{brl(totals.aporte)}</td>
+                      <td className="px-3 py-2 text-right">{brl(totals.financiamento)}</td>
+                      <td className="px-3 py-2 text-right">{brl(totals.vendas)}</td>
+                      <td className="px-3 py-2 text-right">—</td>
+                      <td className="px-3 py-2 text-right text-[#4ADE80]">{brl(totals.saldoFinal)}</td>
+                    </tr>
+
+                    {/* Phase headers + rows */}
+                    {(["PRE", "OBRA", "POS"] as const).map((fase) => {
+                      const faseRows = viab.rows.filter((r) => r.fase === fase);
+                      if (faseRows.length === 0) return null;
+                      const faseLabel = fase === "PRE" ? "PRÉ-OBRA" : fase === "OBRA" ? "OBRA" : "PÓS-OBRA";
+                      const faseBg = fase === "PRE" ? "bg-gray-50" : fase === "OBRA" ? "bg-blue-50" : "bg-green-50";
+                      const faseText = fase === "PRE" ? "text-gray-600" : fase === "OBRA" ? "text-blue-700" : "text-green-700";
+                      return (
+                        <>
+                          <tr key={`header-${fase}`} className={`${faseBg} border-t border-gray-100`}>
+                            <td colSpan={7} className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider ${faseText}`}>
+                              {faseLabel}
+                            </td>
+                          </tr>
+                          {faseRows.map((row, ri) => (
+                            <tr key={`${fase}-${ri}`} className="border-t border-gray-50 hover:bg-gray-50 transition-colors">
+                              <td className="px-3 py-2 font-medium text-gray-700">{row.label}</td>
+                              <td className="px-3 py-2 text-right text-gray-600">
+                                {fase === "PRE" ? "0,00%" : `${row.evolFisica.toFixed(2).replace(".", ",")}%`}
+                              </td>
+                              <td className="px-3 py-2 text-right text-gray-700">
+                                {row.aporteIncorporador > 0 ? brl(row.aporteIncorporador) : "—"}
+                              </td>
+                              <td className={`px-3 py-2 text-right ${row.entradaFinanciamento >= 0 ? "text-blue-600" : "text-red-500"}`}>
+                                {row.entradaFinanciamento !== 0 ? brl(Math.abs(row.entradaFinanciamento)) + (row.entradaFinanciamento < 0 ? "*" : "") : "—"}
+                              </td>
+                              <td className="px-3 py-2 text-right text-green-600">
+                                {row.vendas > 0 ? brl(row.vendas) : "—"}
+                              </td>
+                              <td className={`px-3 py-2 text-right font-medium ${row.saldoMensal >= 0 ? "text-gray-700" : "text-red-500"}`}>
+                                {brl(row.saldoMensal)}
+                              </td>
+                              <td className={`px-3 py-2 text-right font-semibold ${row.saldoAcumulado >= 0 ? "text-gray-900" : "text-red-600"}`}>
+                                {brl(row.saldoAcumulado)}
+                              </td>
+                            </tr>
+                          ))}
+                        </>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                <p className="text-xs text-gray-400 px-3 py-2 border-t border-gray-100">* Reembolso do financiamento no pós-obra</p>
+              </div>
+            </div>
+
+            {/* CTA */}
+            {viab.margemLiquidaPct >= 10 && (
+              <Link
+                href={`/dashboard/credito/solicitar?valor=${Math.round(viab.finTotalObra)}&prazo=${form.prazo}`}
+                className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold text-white text-sm shadow-sm hover:shadow-md transition-all"
+                style={{ background: "#1B4FD8" }}
+              >
+                Solicitar crédito de {brl(viab.finTotalObra)} para este projeto
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            )}
+          </>
+        )}
+
+        {/* Nav buttons */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+          <button
+            onClick={() => setStep((s) => Math.max(0, s - 1) as 0 | 1 | 2 | 3)}
+            disabled={step === 0}
+            className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-800 disabled:opacity-30 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Anterior
+          </button>
+
+          {step < 3 ? (
+            <button
+              onClick={() => {
+                setStep((s) => (s + 1) as 0 | 1 | 2 | 3);
+                if (step === 2) setGerado(true);
+              }}
+              disabled={!canNext}
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40 transition-all hover:shadow-md"
+              style={{ background: canNext ? "#1B4FD8" : undefined, backgroundColor: canNext ? undefined : "#9ca3af" }}
+            >
+              {step === 2 ? "Gerar estudo" : "Próximo"}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={() => { setStep(0); setGerado(false); setForm(DEFAULTS); }}
+              className="text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors"
+            >
+              Novo estudo
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
