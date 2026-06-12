@@ -50,10 +50,53 @@ export class ObrasService {
   }
 
   async listar(usuarioId: string) {
-    return this.prisma.obra.findMany({
+    const obras = await this.prisma.obra.findMany({
       where: { usuarioId },
-      include: { etapas: { select: { etapaId: true, nome: true, status: true, ordem: true } } },
+      include: {
+        etapas: {
+          select: {
+            etapaId: true, nome: true, status: true, ordem: true,
+            percentualObra: true, valorLiberacao: true,
+          },
+        },
+        credito: {
+          select: { creditoId: true, valorAprovado: true, valorLiberado: true, status: true },
+        },
+      },
       orderBy: { criadoEm: "desc" },
+    });
+
+    return obras.map((o) => {
+      const totalPct = o.etapas.reduce((acc, e) => acc + Number(e.percentualObra), 0);
+      const concluidoPct = o.etapas
+        .filter((e) => e.status === "CONCLUIDA")
+        .reduce((acc, e) => acc + Number(e.percentualObra), 0);
+      const progresso = totalPct > 0 ? Math.round((concluidoPct / totalPct) * 100) : 0;
+
+      return {
+        id: o.obraId,
+        nome: o.nome,
+        status: o.status,
+        endereco: o.endereco,
+        geoLatitude: o.geoLatitude,
+        geoLongitude: o.geoLongitude,
+        raioValidacaoMetros: o.raioValidacaoMetros,
+        progresso,
+        credito: o.credito ? {
+          id: o.credito.creditoId,
+          valorAprovado: Number(o.credito.valorAprovado),
+          valorLiberado: Number(o.credito.valorLiberado),
+          status: o.credito.status,
+        } : null,
+        etapas: o.etapas.map((e) => ({
+          id: e.etapaId,
+          nome: e.nome,
+          ordem: e.ordem,
+          status: e.status,
+          percentualObra: Number(e.percentualObra),
+          valorLiberacao: Number(e.valorLiberacao),
+        })),
+      };
     });
   }
 

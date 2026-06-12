@@ -30,6 +30,7 @@ function decodeRole(token: string): string | null {
 }
 
 const STATUS_LABEL: Record<string, string> = {
+  EM_EXECUCAO:         "Em andamento",
   EM_ANDAMENTO:        "Em andamento",
   PLANEJAMENTO:        "Planejamento",
   CONCLUIDA:           "Concluída",
@@ -38,6 +39,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_BADGE: Record<string, string> = {
+  EM_EXECUCAO:  "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
   EM_ANDAMENTO: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
   PLANEJAMENTO: "bg-gray-100 text-gray-600 ring-1 ring-gray-200",
   CONCLUIDA:    "bg-green-50 text-green-700 ring-1 ring-green-200",
@@ -62,13 +64,13 @@ export default async function DashboardPage() {
     creditoApi.meus().catch(() => [] as CreditoResumo[]),
   ]);
 
-  const ativas = obras.filter((o: ObraResumo) => o.status === "EM_ANDAMENTO");
+  const ativas = obras.filter((o: ObraResumo) => o.status === "EM_EXECUCAO" || o.status === "EM_ANDAMENTO");
   const creditoAtivo = creditos.find((c: CreditoResumo) => c.status === "ATIVO");
   const saldoDisponivel = creditoAtivo
     ? Number(creditoAtivo.valorAprovado) - Number(creditoAtivo.valorLiberado)
     : 0;
   const totalEtapas = obras.flatMap((o: ObraResumo) => o.etapas ?? []);
-  const etapasAprovadas = totalEtapas.filter((e: EtapaResumo) => e.status === "APROVADA");
+  const etapasAprovadas = totalEtapas.filter((e: EtapaResumo) => e.status === "CONCLUIDA" || e.status === "APROVADA");
   const etapasAguardando = totalEtapas.filter((e: EtapaResumo) => e.status === "AGUARDANDO_VISTORIA");
   const pctEtapas = totalEtapas.length
     ? Math.round((etapasAprovadas.length / totalEtapas.length) * 100)
