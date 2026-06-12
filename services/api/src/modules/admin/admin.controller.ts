@@ -35,6 +35,14 @@ export class AdminController {
     return this.adminService.criarUsuario(body);
   }
 
+  @Get("obras")
+  listarObras(
+    @Query("limit") limit: string = "20",
+    @Query("offset") offset: string = "0",
+  ) {
+    return this.adminService.listarObras(Number(limit), Number(offset));
+  }
+
   @Patch("usuarios/:id")
   atualizarUsuario(
     @Param("id") id: string,

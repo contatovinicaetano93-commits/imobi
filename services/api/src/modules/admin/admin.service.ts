@@ -199,6 +199,19 @@ export class AdminService {
     return { id: usuarioId, ...atualizado };
   }
 
+  async listarObras(limit: number, offset: number) {
+    const obras = await this.prisma.obra.findMany({
+      take: limit, skip: offset,
+      orderBy: { criadoEm: "desc" },
+      include: {
+        usuario: { select: { nome: true, email: true } },
+        etapas: { select: { status: true, valorLiberacao: true } },
+        credito: { select: { valorAprovado: true, valorLiberado: true, status: true } },
+      },
+    });
+    return obras;
+  }
+
   async criarUsuario(dto: CriarUsuarioAdminDto) {
     const existe = await this.prisma.usuario.findUnique({ where: { email: dto.email } });
     if (existe) throw new ConflictException("E-mail já cadastrado");

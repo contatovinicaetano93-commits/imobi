@@ -47,10 +47,24 @@ model Usuario {
   leadsGerenciados Lead[] @relation("LeadUsuarios")
   mailingContatos MailingContato[]
   dueDiligences   DueDiligence[]
+  documentos      Documento[]
 
   @@index([email])
   @@index([cpf])
   @@index([deletadoEm])
+}
+
+enum DocumentoTipo {
+  CONTRATO
+  GARANTIA
+  MATRICULA
+  ART
+  ALVARA
+  SEGURO
+  PROCURACAO
+  ESCRITURA
+  HABITE_SE
+  OUTROS
 }
 
 enum UsuarioTipo {
@@ -151,6 +165,7 @@ model Obra {
   etapas              EtapaObra[]
   evidencias          EvidenciaEtapa[]
   leads               Lead[]
+  documentos          Documento[]
 
   @@index([usuarioId])
   @@index([creditoId])
@@ -542,4 +557,26 @@ enum DueDiligenceStatus {
   EM_ANALISE
   APROVADO
   REPROVADO
+}
+
+// ── Documentos ───────────────────────────────────────────────────────────
+
+model Documento {
+  documentoId  String        @id @default(uuid())
+  obraId       String?
+  usuarioId    String
+  tipo         DocumentoTipo @default(OUTROS)
+  nome         String
+  url          String
+  mimeType     String        @default("application/pdf")
+  tamanhoBytes Int?
+  descricao    String?
+  vencimento   DateTime?
+  criadoEm    DateTime      @default(now())
+  atualizadoEm DateTime      @updatedAt
+
+  obra    Obra?   @relation(fields: [obraId], references: [obraId])
+  usuario Usuario @relation(fields: [usuarioId], references: [usuarioId])
+
+  @@map("documentos")
 }
