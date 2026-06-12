@@ -89,7 +89,7 @@ export class EvidenciasService {
       include: { obra: { select: { usuarioId: true } } },
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
-    if (usuario.tipo !== "ADMIN" && usuario.tipo !== "GESTOR_OBRA" && etapa.obra.usuarioId !== usuario.id) {
+    if (usuario.tipo !== "ADMIN" && usuario.tipo !== "GESTOR" && etapa.obra.usuarioId !== usuario.id) {
       throw new ForbiddenException("Acesso negado.");
     }
 
@@ -108,7 +108,7 @@ export class EvidenciasService {
   }
 
   async validar(usuario: { id: string; tipo: string }, evidenciaId: string, aprovado: boolean, observacao?: string) {
-    if (usuario.tipo !== "GESTOR_OBRA" && usuario.tipo !== "ADMIN") {
+    if (usuario.tipo !== "GESTOR" && usuario.tipo !== "ADMIN") {
       throw new ForbiddenException("Apenas gestores e administradores podem validar evidências.");
     }
 

@@ -128,7 +128,8 @@ export function calculateInadimplenciaRate(creditos: CreditoResumo[]): Inadimple
   const maxRate = 2.5;
 
   for (let i = 0; i < months; i++) {
-    const taxa = (i / months) * maxRate * (0.7 + Math.random() * 0.3); // Add slight variance
+    const variance = 0.7 + ((i * 7 + 3) % 10) / 33; // deterministic variance, no Math.random on server
+    const taxa = (i / months) * maxRate * variance;
     data.push({
       mes: monthNames[i],
       taxa: parseFloat(taxa.toFixed(2)),

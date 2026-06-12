@@ -43,7 +43,7 @@ export class ManagerService {
     const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId },
     });
-    if (!usuario || (usuario.tipo !== "GESTOR_OBRA" && usuario.tipo !== "ADMIN")) {
+    if (!usuario || (usuario.tipo !== "GESTOR" && usuario.tipo !== "ADMIN")) {
       throw new ForbiddenException("Acesso negado. Apenas gestores podem acessar.");
     }
   }
