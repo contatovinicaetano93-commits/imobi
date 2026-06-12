@@ -25,7 +25,7 @@ export class CreditoService {
   }
 
   async buscarPorUsuario(usuarioId: string) {
-    return this.prisma.credito.findMany({
+    const creditos = await this.prisma.credito.findMany({
       where: { usuarioId },
       include: {
         obras: { select: { obraId: true, nome: true, status: true } },
@@ -37,6 +37,23 @@ export class CreditoService {
       },
       orderBy: { criadoEm: "desc" },
     });
+
+    return creditos.map((c) => ({
+      id: c.creditoId,
+      valorAprovado: Number(c.valorAprovado),
+      valorLiberado: Number(c.valorLiberado),
+      taxaMensal: Number(c.taxaMensal),
+      prazoMeses: c.prazoMeses,
+      status: c.status,
+      dataAprovacao: c.criadoEm?.toISOString(),
+      obras: c.obras.map((o) => ({ id: o.obraId, nome: o.nome, status: o.status })),
+      liberacoes: c.liberacoes.map((l) => ({
+        id: l.liberacaoId,
+        valor: Number(l.valor),
+        status: l.status,
+        processadoEm: l.processadoEm?.toISOString(),
+      })),
+    }));
   }
 
   async extrato(creditoId: string, usuarioId: string) {
