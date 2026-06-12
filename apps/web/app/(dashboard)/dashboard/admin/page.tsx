@@ -2,32 +2,23 @@
 
 import { useEffect, useState } from "react";
 import {
-  Users,
-  Building2,
-  CreditCard,
-  ShieldCheck,
-  Settings,
-  ChevronRight,
-  Copy,
-  Eye,
-  EyeOff,
-  AlertTriangle,
-  Banknote,
-  Wrench,
-  FileCheck2,
-  Activity,
-  ListChecks,
-  Megaphone,
+  Users, Building2, CreditCard, ShieldCheck, Settings, ChevronRight,
+  Copy, Eye, EyeOff, AlertTriangle, Banknote, Wrench, FileCheck2,
+  Activity, ListChecks, Megaphone,
 } from "lucide-react";
 import { formatarBRL } from "@imbobi/core";
 import type { AdminOverview, AtividadeRecente } from "@/lib/api";
 
+const NAVY  = "#0C1A3D";
+const ROYAL = "#1B4FD8";
+const MINT  = "#4ADE80";
+
 const TEST_USERS = [
-  { role: "ADMIN",      email: "admin@imobi.com.br",      senha: "Admin@123",     label: "Administrador",   color: "#7c3aed", bg: "#f5f3ff" },
-  { role: "GESTOR",     email: "gestor@imobi.com.br",     senha: "Gestor@123",    label: "Gestor de Fundo", color: "#1B4FD8", bg: "#eff6ff" },
-  { role: "ENGENHEIRO", email: "eng@imobi.com.br",        senha: "Eng@123",       label: "Engenheiro",      color: "#0369a1", bg: "#f0f9ff" },
-  { role: "COMERCIAL",  email: "comercial@imobi.com.br",  senha: "Comercial@123", label: "Comercial",       color: "#d97706", bg: "#fffbeb" },
-  { role: "CONSTRUTOR", email: "construtor@imobi.com.br", senha: "Construtor@123",label: "Construtor",      color: "#0891b2", bg: "#ecfeff" },
+  { role: "ADMIN",      email: "admin@imobi.com.br",      senha: "Admin@123",      label: "Administrador" },
+  { role: "GESTOR",     email: "gestor@imobi.com.br",     senha: "Gestor@123",     label: "Gestor de Fundo" },
+  { role: "ENGENHEIRO", email: "eng@imobi.com.br",         senha: "Eng@123",        label: "Engenheiro" },
+  { role: "COMERCIAL",  email: "comercial@imobi.com.br",  senha: "Comercial@123",  label: "Comercial" },
+  { role: "CONSTRUTOR", email: "construtor@imobi.com.br", senha: "Construtor@123", label: "Construtor" },
 ];
 
 const DEMO_OVERVIEW: AdminOverview = {
@@ -43,11 +34,11 @@ const DEMO_OVERVIEW: AdminOverview = {
 };
 
 const DEMO_ATIVIDADES: AtividadeRecente[] = [
-  { id: "a1", tipo: "ETAPA_APROVADA",   descricao: "Etapa Fundação aprovada — Residencial Vila Nova (liberação de R$ 96.000 na fila)", criadoEm: new Date(Date.now() - 14 * 60_000).toISOString() },
-  { id: "a2", tipo: "KYC_ENVIADO",      descricao: "Novo documento KYC enviado para análise — usuário T. Almeida", criadoEm: new Date(Date.now() - 42 * 60_000).toISOString() },
-  { id: "a3", tipo: "EVIDENCIA_GPS",    descricao: "Evidência fotográfica validada por GPS (PostGIS) — Sobrado Jd. das Acácias", criadoEm: new Date(Date.now() - 2 * 3_600_000).toISOString() },
-  { id: "a4", tipo: "CREDITO_SOLICITADO", descricao: "Nova solicitação de crédito — R$ 280.000 / 36 meses", criadoEm: new Date(Date.now() - 5 * 3_600_000).toISOString() },
-  { id: "a5", tipo: "VISITA_CONCLUIDA", descricao: "Vistoria de engenharia concluída — etapa Estrutura", criadoEm: new Date(Date.now() - 8 * 3_600_000).toISOString() },
+  { id: "a1", tipo: "ETAPA_APROVADA",    descricao: "Etapa Fundação aprovada — Residencial Vila Nova (liberação de R$ 96.000 na fila)",   criadoEm: new Date(Date.now() - 14 * 60_000).toISOString() },
+  { id: "a2", tipo: "KYC_ENVIADO",       descricao: "Novo documento KYC enviado para análise — usuário T. Almeida",                       criadoEm: new Date(Date.now() - 42 * 60_000).toISOString() },
+  { id: "a3", tipo: "EVIDENCIA_GPS",     descricao: "Evidência fotográfica validada por GPS (PostGIS) — Sobrado Jd. das Acácias",         criadoEm: new Date(Date.now() - 2 * 3_600_000).toISOString() },
+  { id: "a4", tipo: "CREDITO_SOLICITADO",descricao: "Nova solicitação de crédito — R$ 280.000 / 36 meses",                               criadoEm: new Date(Date.now() - 5 * 3_600_000).toISOString() },
+  { id: "a5", tipo: "VISITA_CONCLUIDA",  descricao: "Vistoria de engenharia concluída — etapa Estrutura",                                 criadoEm: new Date(Date.now() - 8 * 3_600_000).toISOString() },
 ];
 
 function tempoRelativo(iso: string): string {
@@ -57,6 +48,15 @@ function tempoRelativo(iso: string): string {
   if (diffH < 24) return `há ${diffH} h`;
   return new Date(iso).toLocaleDateString("pt-BR");
 }
+
+const card: React.CSSProperties = {
+  background: "white",
+  border: "1px solid rgba(12,26,61,0.08)",
+  borderRadius: 16,
+  overflow: "hidden",
+};
+
+const jost: React.CSSProperties = { fontFamily: "'Jost', sans-serif" };
 
 export default function AdminPage() {
   const [showSenhas, setShowSenhas] = useState<Record<string, boolean>>({});
@@ -85,66 +85,82 @@ export default function AdminPage() {
     });
   }
 
-  function toggleSenha(email: string) {
-    setShowSenhas((p) => ({ ...p, [email]: !p[email] }));
-  }
-
   const ov = overview ?? DEMO_OVERVIEW;
   const pctLiberado = ov.creditoAprovado > 0 ? Math.round((ov.creditoLiberado / ov.creditoAprovado) * 100) : 0;
   const pendenciasTotal = ov.kycPendentes + ov.etapasPendentes + ov.filaLiberacao;
 
   return (
-    <div className="space-y-8 max-w-6xl">
+    <div style={{ ...jost, maxWidth: 1024 }} className="space-y-8">
+
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Centro de Comando</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Visão geral de toda a operação IMOBI</p>
+          <p style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: MINT, ...jost }}>
+            Admin
+          </p>
+          <h1 style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontWeight: 800, fontSize: "clamp(2rem, 5vw, 3rem)",
+            color: NAVY, letterSpacing: "0.02em", lineHeight: 1.05, marginTop: 4,
+          }}>
+            CENTRO DE COMANDO
+          </h1>
+          <p style={{ ...jost, fontSize: "0.84rem", color: "rgba(12,26,61,0.45)", marginTop: 4 }}>
+            Visão geral de toda a operação IMOBI
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {isDemo && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              Dados de demonstração
+            <span style={{
+              ...jost, display: "inline-flex", alignItems: "center", gap: 6,
+              fontSize: "0.72rem", fontWeight: 600, color: "#92400e",
+              background: "#fffbeb", border: "1px solid #fde68a",
+              padding: "0.35rem 0.85rem", borderRadius: 999,
+            }}>
+              <AlertTriangle size={12} /> Demonstração
             </span>
           )}
-          <a href="/dashboard/admin/usuarios" className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border border-gray-200 hover:border-[#1B4FD8] hover:text-[#1B4FD8] transition-colors">
-            <Users className="w-4 h-4" /> Usuários
+          <a href="/dashboard/admin/usuarios" style={{
+            ...jost, display: "inline-flex", alignItems: "center", gap: 6,
+            fontSize: "0.8rem", fontWeight: 600, color: NAVY,
+            border: `1px solid rgba(12,26,61,0.18)`, background: "white",
+            padding: "0.45rem 1rem", borderRadius: 10, textDecoration: "none",
+          }}>
+            <Users size={13} /> Usuários
           </a>
-          <a href="/dashboard/admin/configuracoes" className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl text-white transition-colors hover:opacity-90" style={{ background: "#1B4FD8" }}>
-            <Settings className="w-4 h-4" /> Configurações
+          <a href="/dashboard/admin/configuracoes" style={{
+            ...jost, display: "inline-flex", alignItems: "center", gap: 6,
+            fontSize: "0.8rem", fontWeight: 700, color: "white",
+            background: NAVY, padding: "0.45rem 1rem", borderRadius: 10, textDecoration: "none",
+          }}>
+            <Settings size={13} /> Configurações
           </a>
         </div>
       </div>
 
-      {/* KPIs principais */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {overview === null
           ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-gray-100 animate-pulse shrink-0" />
-                  <div className="h-3 w-20 bg-gray-100 rounded-lg animate-pulse" />
-                </div>
-                <div className="h-6 w-24 bg-gray-100 rounded-lg animate-pulse" />
-                <div className="h-3 w-16 bg-gray-100 rounded-lg animate-pulse mt-1" />
+              <div key={i} style={card} className="p-5">
+                <div className="w-full h-3 bg-gray-100 rounded animate-pulse mb-3" />
+                <div className="w-20 h-7 bg-gray-100 rounded animate-pulse" />
               </div>
             ))
           : [
-              { icon: Users,     label: "Usuários",       val: String(ov.totalUsuarios),          color: "#1B4FD8", sub: "contas na plataforma" },
-              { icon: Building2, label: "Obras ativas",   val: `${ov.obrasAtivas}`,               color: "#0369a1", sub: `de ${ov.obrasTotal} no total` },
-              { icon: CreditCard,label: "Crédito aprovado", val: formatarBRL(ov.creditoAprovado), color: "#7c3aed", sub: "carteira total" },
-              { icon: Banknote,  label: "Crédito liberado", val: formatarBRL(ov.creditoLiberado), color: "#16a34a", sub: `${pctLiberado}% do aprovado` },
-            ].map(({ icon: Icon, label, val, color, sub }) => (
-              <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: color + "14" }}>
-                    <Icon className="w-4 h-4" style={{ color }} />
-                  </div>
-                  <span className="text-xs text-gray-500 font-medium leading-tight">{label}</span>
-                </div>
-                <p className="text-lg sm:text-xl font-bold text-gray-900 tabular-nums">{val}</p>
-                <p className="text-xs text-gray-400 mt-1">{sub}</p>
+              { label: "Usuários",          val: String(ov.totalUsuarios),           sub: "contas na plataforma", accent: NAVY,  icon: Users },
+              { label: "Obras ativas",      val: `${ov.obrasAtivas}/${ov.obrasTotal}`, sub: "obras no total",     accent: ROYAL, icon: Building2 },
+              { label: "Crédito aprovado",  val: formatarBRL(ov.creditoAprovado),    sub: "carteira total",       accent: NAVY,  icon: CreditCard },
+              { label: "Liberado",          val: formatarBRL(ov.creditoLiberado),    sub: `${pctLiberado}% do aprovado`, accent: MINT, icon: Banknote },
+            ].map(({ label, val, sub, accent, icon: Icon }) => (
+              <div key={label} style={{ ...card, borderLeft: `3px solid ${accent}`, padding: "1.1rem 1.25rem" }}>
+                <p style={{ ...jost, fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(12,26,61,0.4)", marginBottom: 8 }}>
+                  {label}
+                </p>
+                <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "clamp(1.4rem,3vw,1.9rem)", color: NAVY, lineHeight: 1 }}>
+                  {val}
+                </p>
+                <p style={{ ...jost, fontSize: "0.7rem", color: "rgba(12,26,61,0.38)", marginTop: 5 }}>{sub}</p>
               </div>
             ))
         }
@@ -153,46 +169,56 @@ export default function AdminPage() {
       {/* Pendências + Atividade */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Fila de pendências */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-2">
-            <ListChecks className="w-4 h-4 text-[#1B4FD8]" />
-            <h2 className="text-sm font-semibold text-gray-900">Pendências da operação</h2>
+        <div style={card}>
+          <div style={{ padding: "0.9rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
+            <ListChecks size={14} color={ROYAL} />
+            <span style={{ ...jost, fontSize: "0.82rem", fontWeight: 600, color: NAVY }}>Pendências da operação</span>
             {pendenciasTotal > 0 && (
-              <span className="ml-auto text-xs font-bold text-white bg-[#1B4FD8] px-2 py-0.5 rounded-full tabular-nums">{pendenciasTotal}</span>
+              <span style={{ marginLeft: "auto", ...jost, fontSize: "0.7rem", fontWeight: 700, color: "white", background: ROYAL, padding: "0.15rem 0.55rem", borderRadius: 999 }}>
+                {pendenciasTotal}
+              </span>
             )}
           </div>
-          <div className="divide-y divide-gray-50">
+          <div>
             {[
-              { href: "/dashboard/gestor/kyc",    icon: FileCheck2,  label: "KYC aguardando análise",        count: ov.kycPendentes },
-              { href: "/dashboard/gestor/etapas", icon: ShieldCheck, label: "Etapas aguardando aprovação",    count: ov.etapasPendentes },
-              { href: "/dashboard/engenheiro",    icon: Wrench,      label: "Vistorias agendadas",            count: ov.visitasAgendadas },
-              { href: "/dashboard/gestor",        icon: Banknote,    label: "Liberações na fila (BullMQ)",    count: ov.filaLiberacao },
+              { href: "/dashboard/gestor/kyc",    icon: FileCheck2,  label: "KYC aguardando análise",     count: ov.kycPendentes },
+              { href: "/dashboard/gestor/etapas", icon: ShieldCheck, label: "Etapas aguardando aprovação", count: ov.etapasPendentes },
+              { href: "/dashboard/engenheiro",    icon: Wrench,      label: "Vistorias agendadas",         count: ov.visitasAgendadas },
+              { href: "/dashboard/gestor",        icon: Banknote,    label: "Liberações na fila (BullMQ)", count: ov.filaLiberacao },
             ].map(({ href, icon: Icon, label, count }) => (
-              <a key={label} href={href} className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors">
-                <Icon className="w-4 h-4 text-gray-400 shrink-0" />
-                <span className="flex-1 text-sm text-gray-700">{label}</span>
-                <span className={`text-sm font-bold tabular-nums ${count > 0 ? "text-[#1B4FD8]" : "text-gray-300"}`}>{count}</span>
-                <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+              <a key={label} href={href} style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "0.75rem 1.25rem",
+                borderBottom: "1px solid rgba(12,26,61,0.04)",
+                textDecoration: "none",
+              }}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(12,26,61,0.03)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+              >
+                <Icon size={13} color="rgba(12,26,61,0.3)" style={{ flexShrink: 0 }} />
+                <span style={{ ...jost, flex: 1, fontSize: "0.8rem", color: NAVY }}>{label}</span>
+                <span style={{ ...jost, fontSize: "0.82rem", fontWeight: 700, color: count > 0 ? ROYAL : "rgba(12,26,61,0.2)" }}>{count}</span>
+                <ChevronRight size={12} color="rgba(12,26,61,0.2)" />
               </a>
             ))}
           </div>
         </div>
 
         {/* Atividade recente */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-[#16a34a]" />
-            <h2 className="text-sm font-semibold text-gray-900">Atividade recente</h2>
+        <div style={{ ...card, gridColumn: "span 2" }} className="lg:col-span-2">
+          <div style={{ padding: "0.9rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
+            <Activity size={14} color={MINT} />
+            <span style={{ ...jost, fontSize: "0.82rem", fontWeight: 600, color: NAVY }}>Atividade recente</span>
           </div>
           {!atividades ? (
-            <p className="px-5 py-10 text-center text-sm text-gray-400">Carregando…</p>
+            <p style={{ ...jost, padding: "2.5rem", textAlign: "center", fontSize: "0.82rem", color: "rgba(12,26,61,0.3)" }}>Carregando…</p>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div>
               {atividades.map((a) => (
-                <div key={a.id} className="flex items-start gap-3 px-5 py-3.5">
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#16a34a] shrink-0" />
-                  <p className="flex-1 text-sm text-gray-700 leading-snug">{a.descricao}</p>
-                  <span className="text-xs text-gray-400 shrink-0 tabular-nums">{tempoRelativo(a.criadoEm)}</span>
+                <div key={a.id} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "0.8rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.04)" }}>
+                  <span style={{ marginTop: 7, width: 6, height: 6, borderRadius: "50%", background: MINT, flexShrink: 0, display: "block" }} />
+                  <p style={{ ...jost, flex: 1, fontSize: "0.8rem", color: "rgba(12,26,61,0.7)", lineHeight: 1.5 }}>{a.descricao}</p>
+                  <span style={{ ...jost, fontSize: "0.7rem", color: "rgba(12,26,61,0.3)", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{tempoRelativo(a.criadoEm)}</span>
                 </div>
               ))}
             </div>
@@ -200,30 +226,39 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Quick Nav por módulo */}
+      {/* Acesso rápido por módulo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { href: "/dashboard/admin/usuarios",      icon: Users,      title: "Gerenciar Usuários", desc: "Criar, editar e desativar contas de staff e clientes", color: "#1B4FD8" },
-          { href: "/dashboard/admin/configuracoes", icon: Settings,   title: "Configurações",      desc: "Taxas, limites e parâmetros do sistema",               color: "#7c3aed" },
-          { href: "/dashboard/gestor",              icon: ShieldCheck,title: "Painel Gestor",      desc: "Aprovação de etapas, KYC e liberações",                color: "#0369a1" },
-        ].map(({ href, icon: Icon, title, desc, color }) => (
-          <a key={href} href={href} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-gray-200 transition-all flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: color + "15" }}>
-              <Icon className="w-5 h-5" style={{ color }} />
+          { href: "/dashboard/admin/usuarios",      icon: Users,       title: "Gerenciar Usuários", desc: "Criar, editar e desativar contas de staff e clientes", accent: NAVY },
+          { href: "/dashboard/admin/configuracoes", icon: Settings,    title: "Configurações",      desc: "Taxas, limites e parâmetros do sistema",               accent: ROYAL },
+          { href: "/dashboard/gestor",              icon: ShieldCheck, title: "Painel Gestor",      desc: "Aprovação de etapas, KYC e liberações",                accent: MINT },
+        ].map(({ href, icon: Icon, title, desc, accent }) => (
+          <a key={href} href={href} style={{
+            ...card, display: "flex", alignItems: "center", gap: 16, padding: "1.1rem 1.25rem",
+            textDecoration: "none", borderLeft: `3px solid ${accent}`,
+            transition: "box-shadow 0.15s",
+          }}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.boxShadow = "0 4px 20px rgba(12,26,61,0.10)")}
+            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.boxShadow = "none")}
+          >
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: `${accent}14`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Icon size={17} color={accent} />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 text-sm">{title}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ ...jost, fontWeight: 600, fontSize: "0.84rem", color: NAVY }}>{title}</p>
+              <p style={{ ...jost, fontSize: "0.72rem", color: "rgba(12,26,61,0.42)", marginTop: 2 }}>{desc}</p>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+            <ChevronRight size={14} color="rgba(12,26,61,0.2)" />
           </a>
         ))}
       </div>
 
-      {/* Acessos por perfil */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">Acessos rápidos por perfil</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Acessos rápidos por perfil */}
+      <div style={card}>
+        <div style={{ padding: "0.9rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.06)" }}>
+          <p style={{ ...jost, fontSize: "0.82rem", fontWeight: 600, color: NAVY }}>Acessos por perfil</p>
+        </div>
+        <div style={{ padding: "1rem 1.25rem", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 8 }}>
           {[
             { href: "/dashboard",            label: "Início",       role: "Tomador",    icon: Building2 },
             { href: "/dashboard/obras",      label: "Obras",        role: "Tomador",    icon: Building2 },
@@ -234,44 +269,73 @@ export default function AdminPage() {
             { href: "/dashboard/comercial",  label: "Parceiro",     role: "Comercial",  icon: Megaphone },
             { href: "/dashboard/construtor", label: "Construtor",   role: "Construtor", icon: Building2 },
           ].map(({ href, label, role }) => (
-            <a key={href} href={href} className="flex flex-col gap-1 p-3 rounded-xl border border-gray-100 hover:border-[#1B4FD8] hover:bg-blue-50 transition-colors">
-              <span className="text-sm font-semibold text-gray-900">{label}</span>
-              <span className="text-xs text-gray-400">{role}</span>
+            <a key={href} href={href} style={{
+              display: "flex", flexDirection: "column", gap: 2, padding: "0.65rem 0.85rem",
+              borderRadius: 10, border: "1px solid rgba(12,26,61,0.08)",
+              textDecoration: "none", transition: "border-color 0.12s, background 0.12s",
+            }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = ROYAL; el.style.background = "rgba(27,79,216,0.04)"; }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "rgba(12,26,61,0.08)"; el.style.background = "transparent"; }}
+            >
+              <span style={{ ...jost, fontSize: "0.8rem", fontWeight: 600, color: NAVY }}>{label}</span>
+              <span style={{ ...jost, fontSize: "0.68rem", color: "rgba(12,26,61,0.38)" }}>{role}</span>
             </a>
           ))}
         </div>
       </div>
 
       {/* Credenciais de teste */}
-      <div className="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-3 px-5 py-4 bg-amber-50 border-b border-amber-200">
-          <AlertTriangle className="w-5 h-5 text-amber-600" />
+      <div style={{ ...card, border: "1px solid rgba(251,191,36,0.35)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0.9rem 1.25rem", background: "rgba(254,243,199,0.6)", borderBottom: "1px solid rgba(251,191,36,0.25)" }}>
+          <AlertTriangle size={15} color="#92400e" />
           <div>
-            <p className="text-sm font-semibold text-amber-800">Credenciais de Teste — ambiente DEV</p>
-            <p className="text-xs text-amber-600">Não usar em produção. Criar usuários reais via painel de usuários.</p>
+            <p style={{ ...jost, fontSize: "0.8rem", fontWeight: 700, color: "#92400e" }}>Credenciais de Teste — ambiente DEV</p>
+            <p style={{ ...jost, fontSize: "0.68rem", color: "#b45309" }}>Não usar em produção. Criar usuários reais via painel de usuários.</p>
           </div>
         </div>
-        <div className="divide-y divide-gray-50">
+        <div>
           {TEST_USERS.map((u) => (
-            <div key={u.email} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: u.bg, color: u.color }}>
+            <div key={u.email} style={{
+              display: "flex", alignItems: "center", gap: 12,
+              padding: "0.85rem 1.25rem",
+              borderBottom: "1px solid rgba(12,26,61,0.05)",
+            }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+                background: "rgba(12,26,61,0.07)", display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "0.75rem", color: NAVY,
+              }}>
                 {u.role.slice(0, 2)}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900">{u.label}</p>
-                <p className="text-xs text-gray-500 font-mono">{u.email}</p>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ ...jost, fontSize: "0.82rem", fontWeight: 600, color: NAVY }}>{u.label}</p>
+                <p style={{ fontFamily: "monospace", fontSize: "0.72rem", color: "rgba(12,26,61,0.45)" }}>{u.email}</p>
               </div>
-              <div className="flex items-center gap-2 font-mono text-sm text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg">
+              <div style={{
+                display: "flex", alignItems: "center", gap: 6,
+                fontFamily: "monospace", fontSize: "0.8rem", color: NAVY,
+                background: "rgba(12,26,61,0.04)", border: "1px solid rgba(12,26,61,0.08)",
+                padding: "0.3rem 0.75rem", borderRadius: 8,
+              }}>
                 <span>{showSenhas[u.email] ? u.senha : "•".repeat(u.senha.length)}</span>
-                <button onClick={() => toggleSenha(u.email)} className="text-gray-400 hover:text-gray-600">
-                  {showSenhas[u.email] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                <button onClick={() => setShowSenhas((p) => ({ ...p, [u.email]: !p[u.email] }))}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(12,26,61,0.35)", padding: 0, display: "flex" }}>
+                  {showSenhas[u.email] ? <EyeOff size={12} /> : <Eye size={12} />}
                 </button>
               </div>
               <button
                 onClick={() => copiar(`${u.email} / ${u.senha}`, u.email)}
-                className="shrink-0 flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:border-[#1B4FD8] hover:text-[#1B4FD8] transition-colors"
+                style={{
+                  ...jost, display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
+                  fontSize: "0.72rem", fontWeight: 600, cursor: "pointer",
+                  padding: "0.3rem 0.75rem", borderRadius: 8,
+                  border: `1px solid ${copied === u.email ? MINT : "rgba(12,26,61,0.12)"}`,
+                  color: copied === u.email ? "#16a34a" : NAVY,
+                  background: copied === u.email ? "rgba(74,222,128,0.08)" : "white",
+                  transition: "all 0.15s",
+                }}
               >
-                <Copy className="w-3.5 h-3.5" />
+                <Copy size={11} />
                 {copied === u.email ? "Copiado!" : "Copiar"}
               </button>
             </div>

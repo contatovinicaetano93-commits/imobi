@@ -7,6 +7,10 @@ import {
   HardHat, CreditCard, Phone,
 } from "lucide-react";
 
+const NAVY  = "#0C1A3D";
+const ROYAL = "#1B4FD8";
+const MINT  = "#4ADE80";
+
 type UsuarioAdmin = {
   id: string;
   nome: string;
@@ -22,8 +26,8 @@ type UsuarioAdmin = {
 };
 
 const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.FC<{ className?: string }> }> = {
-  ADMIN:      { label: "Admin",      color: "#7c3aed", bg: "#f5f3ff", icon: Shield },
-  GESTOR:     { label: "Gestor",     color: "#1B4FD8", bg: "#eff6ff", icon: Shield },
+  ADMIN:      { label: "Admin",      color: NAVY,    bg: "rgba(12,26,61,0.07)",  icon: Shield },
+  GESTOR:     { label: "Gestor",     color: ROYAL,   bg: "rgba(27,79,216,0.08)", icon: Shield },
   ENGENHEIRO: { label: "Engenheiro", color: "#0369a1", bg: "#f0f9ff", icon: Wrench },
   TOMADOR:    { label: "Tomador",    color: "#16a34a", bg: "#f0fdf4", icon: Building2 },
   COMERCIAL:  { label: "Comercial",  color: "#d97706", bg: "#fffbeb", icon: User },
@@ -31,13 +35,12 @@ const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; ic
 };
 
 const KYC_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  APROVADO:       { label: "Aprovado",    color: "#16a34a", bg: "#f0fdf4" },
-  PENDENTE:       { label: "Pendente",    color: "#d97706", bg: "#fffbeb" },
-  EM_VERIFICACAO: { label: "Em análise",  color: "#1B4FD8", bg: "#eff6ff" },
-  REJEITADO:      { label: "Rejeitado",   color: "#dc2626", bg: "#fef2f2" },
+  APROVADO:       { label: "Aprovado",   color: "#16a34a", bg: "#f0fdf4" },
+  PENDENTE:       { label: "Pendente",   color: "#d97706", bg: "#fffbeb" },
+  EM_VERIFICACAO: { label: "Em análise", color: ROYAL,     bg: "rgba(27,79,216,0.07)" },
+  REJEITADO:      { label: "Rejeitado",  color: "#dc2626", bg: "#fef2f2" },
 };
 
-// Rótulos das funções controláveis pelo admin (chaves = FUNCOES_PAINEL do @imbobi/schemas)
 const FUNCAO_LABELS: Record<string, string> = {
   "obras":         "Minhas Obras",
   "credito":       "Crédito",
@@ -54,7 +57,6 @@ const FUNCAO_LABELS: Record<string, string> = {
   "construtor":    "Painel Construtor",
 };
 
-// Funções relevantes por perfil (espelha o menu lateral de cada painel)
 const FUNCOES_POR_TIPO: Record<string, string[]> = {
   TOMADOR:    ["obras", "credito", "simulador", "score", "kyc", "notificacoes"],
   GESTOR:     ["gestor", "due-diligence", "fundos", "relatorios", "notificacoes"],
@@ -71,16 +73,12 @@ const DEMO: UsuarioAdmin[] = [
   { id: "5", nome: "Construtor IMOBI",     email: "construtor@imobi.com.br", tipo: "CONSTRUTOR", kycStatus: "APROVADO", criadoEm: "2026-01-01", funcoesBloqueadas: [] },
 ];
 
-const inp = "w-full text-sm border border-gray-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#1B4FD8] focus:border-transparent bg-white";
-
-type NovoUsuarioForm = {
-  nome: string;
-  email: string;
-  senha: string;
-  tipo: string;
-};
-
+type NovoUsuarioForm = { nome: string; email: string; senha: string; tipo: string };
 const FORM_VAZIO: NovoUsuarioForm = { nome: "", email: "", senha: "", tipo: "TOMADOR" };
+
+const jost: React.CSSProperties = { fontFamily: "'Jost', sans-serif" };
+const card: React.CSSProperties = { background: "white", border: "1px solid rgba(12,26,61,0.08)", borderRadius: 16, overflow: "hidden" };
+const inp = "w-full text-sm border border-gray-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:border-transparent bg-white";
 
 export default function UsuariosAdminPage() {
   const [usuarios, setUsuarios] = useState<UsuarioAdmin[]>([]);
@@ -104,9 +102,7 @@ export default function UsuariosAdminPage() {
   }, []);
 
   const filtrado = usuarios.filter((u) => {
-    const matchBusca =
-      u.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      u.email.toLowerCase().includes(busca.toLowerCase());
+    const matchBusca = u.nome.toLowerCase().includes(busca.toLowerCase()) || u.email.toLowerCase().includes(busca.toLowerCase());
     const matchTipo = filtroTipo === "TODOS" || u.tipo === filtroTipo;
     return matchBusca && matchTipo;
   });
@@ -132,9 +128,7 @@ export default function UsuariosAdminPage() {
         setErroAcao((json as { message?: string })?.message ?? "Erro ao salvar alteração.");
         return;
       }
-      if (json) {
-        setUsuarios((prev) => prev.map((u) => (u.id === id ? { ...u, ...json } : u)));
-      }
+      if (json) setUsuarios((prev) => prev.map((u) => (u.id === id ? { ...u, ...json } : u)));
     } catch {
       setErroAcao("Erro de conexão ao salvar.");
     } finally {
@@ -150,9 +144,7 @@ export default function UsuariosAdminPage() {
 
   function toggleFuncao(u: UsuarioAdmin, funcao: string) {
     const atuais = u.funcoesBloqueadas ?? [];
-    const novas = atuais.includes(funcao)
-      ? atuais.filter((f) => f !== funcao)
-      : [...atuais, funcao];
+    const novas = atuais.includes(funcao) ? atuais.filter((f) => f !== funcao) : [...atuais, funcao];
     patchUsuario(u.id, { funcoesBloqueadas: novas });
   }
 
@@ -163,10 +155,7 @@ export default function UsuariosAdminPage() {
 
   async function handleCriar(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.nome || !form.email || !form.senha) {
-      setErroForm("Preencha nome, e-mail e senha.");
-      return;
-    }
+    if (!form.nome || !form.email || !form.senha) { setErroForm("Preencha nome, e-mail e senha."); return; }
     setCriando(true);
     setErroForm("");
     try {
@@ -191,71 +180,85 @@ export default function UsuariosAdminPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div style={{ ...jost, maxWidth: 960 }} className="space-y-6">
+
       {/* Breadcrumb */}
-      <div className="flex items-center gap-3">
-        <a href="/dashboard/admin" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1B4FD8] transition-colors">
-          <ChevronLeft className="w-4 h-4" /> Admin
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <a href="/dashboard/admin" style={{ ...jost, display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.78rem", color: "rgba(12,26,61,0.4)", textDecoration: "none" }}>
+          <ChevronLeft size={14} /> Admin
         </a>
-        <span className="text-gray-300">/</span>
-        <span className="text-sm font-medium text-gray-900">Usuários & Fiscalização</span>
+        <span style={{ color: "rgba(12,26,61,0.2)" }}>/</span>
+        <span style={{ ...jost, fontSize: "0.78rem", fontWeight: 600, color: NAVY }}>Usuários & Fiscalização</span>
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Usuários</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p style={{ ...jost, fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: MINT }}>Admin</p>
+          <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "clamp(1.8rem,4vw,2.5rem)", color: NAVY, lineHeight: 1.05 }}>
+            USUÁRIOS
+          </h1>
+          <p style={{ ...jost, fontSize: "0.8rem", color: "rgba(12,26,61,0.42)", marginTop: 3 }}>
             {usuarios.length} contas cadastradas
-            {totalBloqueados > 0 && (
-              <span className="ml-2 text-red-600 font-semibold">· {totalBloqueados} bloqueada{totalBloqueados > 1 ? "s" : ""}</span>
-            )}
+            {totalBloqueados > 0 && <span style={{ marginLeft: 8, color: "#dc2626", fontWeight: 700 }}>· {totalBloqueados} bloqueada{totalBloqueados > 1 ? "s" : ""}</span>}
           </p>
         </div>
         <button
           onClick={() => { setShowForm((s) => !s); setErroForm(""); }}
-          className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl text-white hover:opacity-90 transition-opacity"
-          style={{ background: "#1B4FD8" }}
+          style={{
+            ...jost, display: "inline-flex", alignItems: "center", gap: 6,
+            fontSize: "0.8rem", fontWeight: 700, color: "white",
+            background: showForm ? "rgba(12,26,61,0.6)" : NAVY,
+            padding: "0.5rem 1.1rem", borderRadius: 10, border: "none", cursor: "pointer",
+            transition: "background 0.15s", flexShrink: 0,
+          }}
         >
-          {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          {showForm ? <X size={13} /> : <Plus size={13} />}
           {showForm ? "Cancelar" : "Criar usuário"}
         </button>
       </div>
 
       {/* Inline create form */}
       {showForm && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <h2 className="text-sm font-semibold text-gray-900 mb-4">Novo usuário</h2>
-          <form onSubmit={handleCriar} className="space-y-4">
+        <div style={card}>
+          <div style={{ padding: "0.9rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.06)" }}>
+            <p style={{ ...jost, fontSize: "0.82rem", fontWeight: 600, color: NAVY }}>Novo usuário</p>
+          </div>
+          <form onSubmit={handleCriar} style={{ padding: "1.25rem" }} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                { key: "nome",  label: "Nome",   type: "text",     placeholder: "Nome completo" },
+                { key: "email", label: "E-mail", type: "email",    placeholder: "usuario@imobi.com.br" },
+                { key: "senha", label: "Senha",  type: "password", placeholder: "Senha inicial" },
+              ].map(({ key, label, type, placeholder }) => (
+                <div key={key}>
+                  <label style={{ ...jost, display: "block", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(12,26,61,0.45)", marginBottom: 6 }}>{label}</label>
+                  <input
+                    className={inp}
+                    style={{ fontFamily: "'Jost', sans-serif" }}
+                    type={type}
+                    placeholder={placeholder}
+                    value={(form as Record<string, string>)[key]}
+                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                    required
+                  />
+                </div>
+              ))}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Nome</label>
-                <input className={inp} value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} placeholder="Nome completo" required />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">E-mail</label>
-                <input className={inp} type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="usuario@imobi.com.br" required />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Senha</label>
-                <input className={inp} type="password" value={form.senha} onChange={(e) => setForm((f) => ({ ...f, senha: e.target.value }))} placeholder="Senha inicial" required />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Perfil</label>
-                <select className={inp} value={form.tipo} onChange={(e) => setForm((f) => ({ ...f, tipo: e.target.value }))}>
+                <label style={{ ...jost, display: "block", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(12,26,61,0.45)", marginBottom: 6 }}>Perfil</label>
+                <select className={inp} style={{ fontFamily: "'Jost', sans-serif" }} value={form.tipo} onChange={(e) => setForm((f) => ({ ...f, tipo: e.target.value }))}>
                   {["ADMIN", "GESTOR", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR", "TOMADOR"].map((t) => (
                     <option key={t} value={t}>{TIPO_CONFIG[t]?.label ?? t}</option>
                   ))}
                 </select>
               </div>
             </div>
-            {erroForm && <p className="text-xs text-red-600">{erroForm}</p>}
-            <div className="flex justify-end">
+            {erroForm && <p style={{ ...jost, fontSize: "0.78rem", color: "#dc2626" }}>{erroForm}</p>}
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <button
                 type="submit"
                 disabled={criando}
-                className="text-sm font-semibold px-5 py-2 rounded-xl text-white hover:opacity-90 transition-opacity disabled:opacity-50"
-                style={{ background: "#1B4FD8" }}
+                style={{ ...jost, fontSize: "0.8rem", fontWeight: 700, color: "white", background: NAVY, padding: "0.5rem 1.25rem", borderRadius: 10, border: "none", cursor: "pointer", opacity: criando ? 0.6 : 1 }}
               >
                 {criando ? "Criando..." : "Criar usuário"}
               </button>
@@ -266,26 +269,28 @@ export default function UsuariosAdminPage() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div style={{ position: "relative", flex: 1 }}>
+          <Search size={14} color="rgba(12,26,61,0.35)" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
           <input
             type="text"
             placeholder="Buscar por nome ou e-mail..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            style={{ ...jost, width: "100%", paddingLeft: 36, paddingRight: 14, paddingTop: 10, paddingBottom: 10, border: "1px solid rgba(12,26,61,0.12)", borderRadius: 10, fontSize: "0.82rem", outline: "none", color: NAVY }}
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {["TODOS", "ADMIN", "GESTOR", "ENGENHEIRO", "TOMADOR", "COMERCIAL", "CONSTRUTOR"].map((t) => (
             <button
               key={t}
               onClick={() => setFiltroTipo(t)}
-              className={`text-xs font-semibold px-3 py-2 rounded-lg border transition-colors ${
-                filtroTipo === t
-                  ? "border-[#1B4FD8] bg-blue-50 text-[#1B4FD8]"
-                  : "border-gray-200 text-gray-600 hover:border-gray-300"
-              }`}
+              style={{
+                ...jost, fontSize: "0.72rem", fontWeight: 600,
+                padding: "0.4rem 0.75rem", borderRadius: 8, cursor: "pointer", transition: "all 0.12s",
+                border: filtroTipo === t ? `1px solid ${NAVY}` : "1px solid rgba(12,26,61,0.12)",
+                background: filtroTipo === t ? NAVY : "white",
+                color: filtroTipo === t ? "white" : "rgba(12,26,61,0.5)",
+              }}
             >
               {t === "TODOS" ? "Todos" : (TIPO_CONFIG[t]?.label ?? t)}
             </button>
@@ -294,28 +299,34 @@ export default function UsuariosAdminPage() {
       </div>
 
       {erroAcao && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{erroAcao}</p>
+        <p style={{ ...jost, fontSize: "0.8rem", color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "0.75rem 1rem" }}>{erroAcao}</p>
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div style={card}>
         {loading ? (
-          <div className="p-12 text-center text-gray-400 text-sm">Carregando...</div>
+          <p style={{ ...jost, padding: "3rem", textAlign: "center", fontSize: "0.82rem", color: "rgba(12,26,61,0.3)" }}>Carregando...</p>
         ) : filtrado.length === 0 ? (
-          <div className="p-12 text-center text-gray-400 text-sm">Nenhum usuário encontrado.</div>
+          <p style={{ ...jost, padding: "3rem", textAlign: "center", fontSize: "0.82rem", color: "rgba(12,26,61,0.3)" }}>Nenhum usuário encontrado.</p>
         ) : (
-          <table className="w-full">
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-5 py-3">Usuário</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-5 py-3 hidden md:table-cell">Perfil</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-5 py-3 hidden lg:table-cell">Status</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-5 py-3 hidden lg:table-cell">KYC</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-5 py-3 hidden lg:table-cell">Cadastro</th>
-                <th className="px-5 py-3 w-28" />
+              <tr style={{ borderBottom: "1px solid rgba(12,26,61,0.07)", background: "rgba(12,26,61,0.02)" }}>
+                {["Usuário", "Perfil", "Status", "KYC", "Cadastro", ""].map((h, i) => (
+                  <th key={i} style={{
+                    ...jost, textAlign: "left", fontSize: "0.6rem", fontWeight: 700,
+                    letterSpacing: "0.12em", textTransform: "uppercase",
+                    color: "rgba(12,26,61,0.35)", padding: "0.75rem 1.1rem",
+                    display: ["Perfil","Status","KYC","Cadastro"].includes(h) ? undefined : undefined,
+                  }}
+                    className={["Status","KYC","Cadastro"].includes(h) ? "hidden lg:table-cell" : h === "Perfil" ? "hidden md:table-cell" : ""}
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody>
               {filtrado.map((u) => {
                 const cfg = TIPO_CONFIG[u.tipo] ?? { label: u.tipo, color: "#6b7280", bg: "#f9fafb", icon: User };
                 const Icon = cfg.icon;
@@ -326,79 +337,100 @@ export default function UsuariosAdminPage() {
                 const nFuncoesBloq = (u.funcoesBloqueadas ?? []).filter((f) => funcoesDoTipo.includes(f)).length;
                 return (
                   <Fragment key={u.id}>
-                    <tr className={`transition-colors ${bloqueado ? "bg-red-50/40" : "hover:bg-gray-50"} ${aberto ? "bg-blue-50/40" : ""}`}>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                            style={{ background: cfg.bg, color: cfg.color, opacity: bloqueado ? 0.5 : 1 }}
-                          >
+                    <tr style={{
+                      borderBottom: "1px solid rgba(12,26,61,0.05)",
+                      background: bloqueado ? "rgba(220,38,38,0.03)" : aberto ? "rgba(27,79,216,0.03)" : "transparent",
+                      transition: "background 0.1s",
+                    }}>
+                      <td style={{ padding: "0.85rem 1.1rem" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
+                            background: cfg.bg, color: cfg.color,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "0.72rem",
+                            opacity: bloqueado ? 0.5 : 1,
+                          }}>
                             {u.nome.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <p className={`text-sm font-semibold ${bloqueado ? "text-gray-400 line-through" : "text-gray-900"}`}>{u.nome}</p>
-                            <p className="text-xs text-gray-500">{u.email}</p>
+                            <p style={{ ...jost, fontSize: "0.82rem", fontWeight: 600, color: bloqueado ? "rgba(12,26,61,0.35)" : NAVY, textDecoration: bloqueado ? "line-through" : "none" }}>{u.nome}</p>
+                            <p style={{ ...jost, fontSize: "0.7rem", color: "rgba(12,26,61,0.4)" }}>{u.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 hidden md:table-cell">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: cfg.bg, color: cfg.color }}>
+                      <td style={{ padding: "0.85rem 1.1rem" }} className="hidden md:table-cell">
+                        <span style={{
+                          ...jost, display: "inline-flex", alignItems: "center", gap: 5,
+                          fontSize: "0.7rem", fontWeight: 700,
+                          padding: "0.25rem 0.65rem", borderRadius: 999,
+                          background: cfg.bg, color: cfg.color,
+                        }}>
                           <Icon className="w-3 h-3" />
                           {cfg.label}
                         </span>
                       </td>
-                      <td className="px-5 py-4 hidden lg:table-cell">
+                      <td style={{ padding: "0.85rem 1.1rem" }} className="hidden lg:table-cell">
                         {bloqueado ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-50 text-red-600">
-                            <Ban className="w-3 h-3" /> Bloqueado
+                          <span style={{ ...jost, display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.7rem", fontWeight: 700, padding: "0.25rem 0.65rem", borderRadius: 999, background: "#fef2f2", color: "#dc2626" }}>
+                            <Ban size={10} /> Bloqueado
                           </span>
                         ) : nFuncoesBloq > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700">
-                            <Lock className="w-3 h-3" /> {nFuncoesBloq} função{nFuncoesBloq > 1 ? "ões" : ""} restrita{nFuncoesBloq > 1 ? "s" : ""}
+                          <span style={{ ...jost, display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.7rem", fontWeight: 700, padding: "0.25rem 0.65rem", borderRadius: 999, background: "#fffbeb", color: "#d97706" }}>
+                            <Lock size={10} /> {nFuncoesBloq} restrita{nFuncoesBloq > 1 ? "s" : ""}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-50 text-green-700">
-                            <CheckCircle2 className="w-3 h-3" /> Ativo
+                          <span style={{ ...jost, display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.7rem", fontWeight: 700, padding: "0.25rem 0.65rem", borderRadius: 999, background: "rgba(74,222,128,0.12)", color: "#16a34a" }}>
+                            <CheckCircle2 size={10} /> Ativo
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-4 hidden lg:table-cell">
-                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: kyc.bg, color: kyc.color }}>
+                      <td style={{ padding: "0.85rem 1.1rem" }} className="hidden lg:table-cell">
+                        <span style={{ ...jost, fontSize: "0.7rem", fontWeight: 700, padding: "0.25rem 0.65rem", borderRadius: 999, background: kyc.bg, color: kyc.color }}>
                           {kyc.label}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-sm text-gray-500 hidden lg:table-cell">
+                      <td style={{ ...jost, padding: "0.85rem 1.1rem", fontSize: "0.78rem", color: "rgba(12,26,61,0.4)" }} className="hidden lg:table-cell">
                         {formatDate(u.criadoEm)}
                       </td>
-                      <td className="px-5 py-4">
+                      <td style={{ padding: "0.85rem 1.1rem" }}>
                         <button
                           onClick={() => setGerenciando(aberto ? null : u.id)}
-                          className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
-                            aberto
-                              ? "border-[#1B4FD8] bg-blue-50 text-[#1B4FD8]"
-                              : "border-gray-200 text-gray-600 hover:border-[#1B4FD8] hover:text-[#1B4FD8]"
-                          }`}
+                          style={{
+                            ...jost, display: "inline-flex", alignItems: "center", gap: 5,
+                            fontSize: "0.72rem", fontWeight: 600,
+                            padding: "0.35rem 0.75rem", borderRadius: 8, cursor: "pointer",
+                            border: aberto ? `1px solid ${NAVY}` : "1px solid rgba(12,26,61,0.12)",
+                            background: aberto ? NAVY : "white",
+                            color: aberto ? "white" : "rgba(12,26,61,0.5)",
+                            transition: "all 0.12s",
+                          }}
                         >
-                          <SlidersHorizontal className="w-3.5 h-3.5" />
+                          <SlidersHorizontal size={11} />
                           Gerenciar
-                          {aberto ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                          {aberto ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
                         </button>
                       </td>
                     </tr>
 
-                    {/* Painel de fiscalização */}
                     {aberto && (
                       <tr>
-                        <td colSpan={6} className="px-5 pb-5 pt-1 bg-blue-50/40">
-                          <div className="bg-white rounded-xl border border-gray-100 p-5 space-y-5">
-                            {/* Info do usuário */}
-                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600">
-                              <span className="inline-flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-gray-400" />{u.telefone || "—"}</span>
-                              <span className="inline-flex items-center gap-1.5"><HardHat className="w-3.5 h-3.5 text-gray-400" />{u.totalObras ?? 0} obra{(u.totalObras ?? 0) !== 1 ? "s" : ""}</span>
-                              <span className="inline-flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5 text-gray-400" />{u.totalCreditos ?? 0} crédito{(u.totalCreditos ?? 0) !== 1 ? "s" : ""}</span>
+                        <td colSpan={6} style={{ padding: "0 1.1rem 1.1rem", background: "rgba(27,79,216,0.02)" }}>
+                          <div style={{ background: "white", border: "1px solid rgba(12,26,61,0.08)", borderRadius: 12, padding: "1.25rem" }} className="space-y-5">
+                            {/* Info linha */}
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem 1.5rem" }}>
+                              {[
+                                { icon: Phone,    val: u.telefone || "—" },
+                                { icon: HardHat,  val: `${u.totalObras ?? 0} obra${(u.totalObras ?? 0) !== 1 ? "s" : ""}` },
+                                { icon: CreditCard, val: `${u.totalCreditos ?? 0} crédito${(u.totalCreditos ?? 0) !== 1 ? "s" : ""}` },
+                              ].map(({ icon: Icon, val }) => (
+                                <span key={val} style={{ ...jost, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.78rem", color: "rgba(12,26,61,0.5)" }}>
+                                  <Icon size={13} color="rgba(12,26,61,0.3)" /> {val}
+                                </span>
+                              ))}
                               {u.bloqueadoEm && (
-                                <span className="inline-flex items-center gap-1.5 text-red-600 font-medium">
-                                  <Ban className="w-3.5 h-3.5" /> Bloqueado em {formatDate(u.bloqueadoEm)}
+                                <span style={{ ...jost, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.78rem", color: "#dc2626", fontWeight: 600 }}>
+                                  <Ban size={13} /> Bloqueado em {formatDate(u.bloqueadoEm)}
                                 </span>
                               )}
                             </div>
@@ -406,11 +438,11 @@ export default function UsuariosAdminPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                               {/* Conta */}
                               <div className="space-y-3">
-                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Conta</p>
-                                <div className="flex items-center gap-3">
-                                  <label className="text-xs text-gray-500">Perfil:</label>
+                                <p style={{ ...jost, fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(12,26,61,0.35)" }}>Conta</p>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                  <label style={{ ...jost, fontSize: "0.78rem", color: "rgba(12,26,61,0.5)" }}>Perfil:</label>
                                   <select
-                                    className="text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-[#1B4FD8]"
+                                    style={{ ...jost, fontSize: "0.8rem", border: "1px solid rgba(12,26,61,0.12)", borderRadius: 8, padding: "0.3rem 0.75rem", background: "white", color: NAVY, outline: "none" }}
                                     value={u.tipo}
                                     disabled={salvando === u.id}
                                     onChange={(e) => alterarTipo(u, e.target.value)}
@@ -423,27 +455,32 @@ export default function UsuariosAdminPage() {
                                 <button
                                   onClick={() => toggleBloqueioConta(u)}
                                   disabled={salvando === u.id}
-                                  className={`flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl border transition-colors disabled:opacity-50 ${
-                                    bloqueado
-                                      ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
-                                      : "border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
-                                  }`}
+                                  style={{
+                                    ...jost, display: "inline-flex", alignItems: "center", gap: 6,
+                                    fontSize: "0.8rem", fontWeight: 700, cursor: "pointer",
+                                    padding: "0.45rem 1rem", borderRadius: 10,
+                                    border: bloqueado ? "1px solid #bbf7d0" : "1px solid #fecaca",
+                                    background: bloqueado ? "#f0fdf4" : "#fef2f2",
+                                    color: bloqueado ? "#16a34a" : "#dc2626",
+                                    opacity: salvando === u.id ? 0.5 : 1,
+                                    transition: "all 0.12s",
+                                  }}
                                 >
-                                  {bloqueado ? <Unlock className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
+                                  {bloqueado ? <Unlock size={13} /> : <Ban size={13} />}
                                   {salvando === u.id ? "Salvando..." : bloqueado ? "Desbloquear conta" : "Bloquear conta"}
                                 </button>
-                                <p className="text-xs text-gray-400 leading-relaxed">
+                                <p style={{ ...jost, fontSize: "0.7rem", color: "rgba(12,26,61,0.35)", lineHeight: 1.5 }}>
                                   Bloquear a conta derruba as sessões ativas e impede novo login até a liberação.
                                 </p>
                               </div>
 
-                              {/* Funções do painel */}
+                              {/* Funções */}
                               <div className="space-y-3">
-                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Funções do painel</p>
+                                <p style={{ ...jost, fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(12,26,61,0.35)" }}>Funções do painel</p>
                                 {u.tipo === "ADMIN" ? (
-                                  <p className="text-xs text-gray-400">Contas ADMIN têm acesso total — funções não podem ser restritas.</p>
+                                  <p style={{ ...jost, fontSize: "0.78rem", color: "rgba(12,26,61,0.4)" }}>Contas ADMIN têm acesso total — funções não podem ser restritas.</p>
                                 ) : funcoesDoTipo.length === 0 ? (
-                                  <p className="text-xs text-gray-400">Nenhuma função controlável para este perfil.</p>
+                                  <p style={{ ...jost, fontSize: "0.78rem", color: "rgba(12,26,61,0.4)" }}>Nenhuma função controlável para este perfil.</p>
                                 ) : (
                                   <div className="space-y-1.5">
                                     {funcoesDoTipo.map((f) => {
@@ -453,18 +490,23 @@ export default function UsuariosAdminPage() {
                                           key={f}
                                           onClick={() => toggleFuncao(u, f)}
                                           disabled={salvando === u.id}
-                                          className={`w-full flex items-center justify-between gap-2 text-sm px-3.5 py-2 rounded-lg border transition-colors disabled:opacity-50 ${
-                                            fBloqueada
-                                              ? "border-red-100 bg-red-50/60 text-red-600"
-                                              : "border-gray-100 bg-gray-50/60 text-gray-700 hover:border-gray-200"
-                                          }`}
+                                          style={{
+                                            ...jost, width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+                                            fontSize: "0.8rem", cursor: "pointer",
+                                            padding: "0.45rem 0.85rem", borderRadius: 8,
+                                            border: fBloqueada ? "1px solid #fecaca" : "1px solid rgba(12,26,61,0.08)",
+                                            background: fBloqueada ? "#fef2f2" : "rgba(12,26,61,0.02)",
+                                            color: fBloqueada ? "#dc2626" : NAVY,
+                                            opacity: salvando === u.id ? 0.5 : 1,
+                                            transition: "all 0.12s",
+                                          }}
                                         >
-                                          <span className="font-medium">{FUNCAO_LABELS[f] ?? f}</span>
-                                          <span className="inline-flex items-center gap-1 text-xs font-semibold">
+                                          <span style={{ fontWeight: 500 }}>{FUNCAO_LABELS[f] ?? f}</span>
+                                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.68rem", fontWeight: 700 }}>
                                             {fBloqueada ? (
-                                              <><Lock className="w-3.5 h-3.5" /> Bloqueada</>
+                                              <><Lock size={10} /> Bloqueada</>
                                             ) : (
-                                              <><Unlock className="w-3.5 h-3.5 text-green-600" /> <span className="text-green-700">Liberada</span></>
+                                              <><Unlock size={10} color="#16a34a" /> <span style={{ color: "#16a34a" }}>Liberada</span></>
                                             )}
                                           </span>
                                         </button>
@@ -472,7 +514,7 @@ export default function UsuariosAdminPage() {
                                     })}
                                   </div>
                                 )}
-                                <p className="text-xs text-gray-400 leading-relaxed">
+                                <p style={{ ...jost, fontSize: "0.7rem", color: "rgba(12,26,61,0.35)", lineHeight: 1.5 }}>
                                   Funções bloqueadas somem do menu do usuário no próximo login (até 15 min para sessões ativas).
                                 </p>
                               </div>
@@ -489,11 +531,10 @@ export default function UsuariosAdminPage() {
         )}
       </div>
 
-      {/* Users icon for empty state context */}
       {!loading && usuarios.length === 0 && (
-        <div className="text-center py-12">
-          <Users className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-          <p className="text-sm text-gray-400">Nenhuma conta cadastrada ainda.</p>
+        <div style={{ textAlign: "center", padding: "3rem" }}>
+          <Users size={36} color="rgba(12,26,61,0.12)" style={{ margin: "0 auto 12px" }} />
+          <p style={{ ...jost, fontSize: "0.82rem", color: "rgba(12,26,61,0.3)" }}>Nenhuma conta cadastrada ainda.</p>
         </div>
       )}
     </div>

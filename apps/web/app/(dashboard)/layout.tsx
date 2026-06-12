@@ -4,118 +4,86 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Home,
-  HardHat,
-  CreditCard,
-  Calculator,
-  Star,
-  FileCheck2,
-  Bell,
-  User,
-  Wrench,
-  ShieldCheck,
-  BarChart3,
-  Banknote,
-  Megaphone,
-  Settings,
-  LogOut,
-  ChevronRight,
-  Building2,
-  type LucideIcon,
+  Home, HardHat, CreditCard, Calculator, Star, FileCheck2, Bell, User,
+  Wrench, ShieldCheck, BarChart3, Banknote, Megaphone, Settings, LogOut,
+  ChevronRight, Building2, type LucideIcon,
 } from "lucide-react";
 
 type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "TOMADOR" | "COMERCIAL" | "CONSTRUTOR" | null;
-
 type NavItem = {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-  roles: UserRole[];
-  section?: string;
-  /** chave de função controlável pelo admin (fiscalização) */
-  funcao?: string;
+  label: string; href: string; icon: LucideIcon;
+  roles: UserRole[]; section?: string; funcao?: string;
 };
 
 const WA = "5511993455589";
+const NAVY = "#0C1A3D";
+const MINT = "#4ADE80";
 
 const NAV: NavItem[] = [
-  // ── CONSTRUTOR ────────────────────────────────────────────────────────────
-  { label: "Início",        href: "/dashboard/construtor",   icon: Building2,   roles: ["CONSTRUTOR"], section: "geral", funcao: "construtor" },
-  { label: "Minhas Obras",  href: "/dashboard/obras",        icon: HardHat,     roles: ["CONSTRUTOR"], funcao: "obras" },
-  { label: "Crédito",       href: "/dashboard/credito",      icon: CreditCard,  roles: ["CONSTRUTOR"], funcao: "credito" },
-  { label: "Simulador",     href: "/dashboard/simulador",    icon: Calculator,  roles: ["CONSTRUTOR"], funcao: "simulador" },
-  { label: "Score",         href: "/dashboard/score",        icon: Star,        roles: ["CONSTRUTOR"], funcao: "score" },
-  { label: "Documentos",    href: "/dashboard/kyc",          icon: FileCheck2,  roles: ["CONSTRUTOR"], funcao: "kyc" },
-  // ── TOMADOR (acesso via /cadastro) ────────────────────────────────────────
-  { label: "Início",        href: "/dashboard",              icon: Home,        roles: ["TOMADOR", null], section: "geral" },
-  { label: "Minhas Obras",  href: "/dashboard/obras",        icon: HardHat,     roles: ["TOMADOR"], funcao: "obras" },
-  { label: "Crédito",       href: "/dashboard/credito",      icon: CreditCard,  roles: ["TOMADOR"], funcao: "credito" },
-  { label: "Simulador",     href: "/dashboard/simulador",    icon: Calculator,  roles: ["TOMADOR"], funcao: "simulador" },
-  { label: "Score",         href: "/dashboard/score",        icon: Star,        roles: ["TOMADOR"], funcao: "score" },
-  { label: "Documentos",    href: "/dashboard/kyc",          icon: FileCheck2,  roles: ["TOMADOR"], funcao: "kyc" },
-  // ── GESTOR ────────────────────────────────────────────────────────────────
-  { label: "Painel",        href: "/dashboard/gestor",       icon: ShieldCheck, roles: ["GESTOR"], section: "geral", funcao: "gestor" },
-  { label: "Etapas",        href: "/dashboard/gestor/etapas",icon: FileCheck2,  roles: ["GESTOR"], funcao: "gestor" },
-  { label: "KYC",           href: "/dashboard/gestor/kyc",   icon: FileCheck2,  roles: ["GESTOR"], funcao: "kyc" },
-  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2, roles: ["GESTOR"], funcao: "due-diligence" },
-  { label: "Fundos",        href: "/dashboard/fundos",       icon: Banknote,    roles: ["GESTOR"], funcao: "fundos" },
-  { label: "Relatórios",    href: "/dashboard/relatorios",   icon: BarChart3,   roles: ["GESTOR"], funcao: "relatorios" },
-  // ── ENGENHEIRO ────────────────────────────────────────────────────────────
-  { label: "Engenharia",    href: "/dashboard/engenheiro",   icon: Wrench,      roles: ["ENGENHEIRO"], section: "geral", funcao: "engenharia" },
-  // ── COMERCIAL ─────────────────────────────────────────────────────────────
-  { label: "Painel",        href: "/dashboard/comercial",    icon: Megaphone,   roles: ["COMERCIAL"], section: "geral", funcao: "comercial" },
-  { label: "Leads",         href: "/dashboard/comercial/leads", icon: Star,     roles: ["COMERCIAL"], funcao: "comercial" },
-  // ── COMUNS (todos os perfis autenticados) ─────────────────────────────────
-  { label: "Notificações",  href: "/dashboard/notificacoes", icon: Bell,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null], funcao: "notificacoes" },
-  { label: "Perfil",        href: "/dashboard/perfil",       icon: User,        roles: ["TOMADOR", "GESTOR", "ENGENHEIRO", "COMERCIAL", "ADMIN", "CONSTRUTOR", null] },
-  // ── ADMIN ─────────────────────────────────────────────────────────────────
-  { label: "Centro de Comando", href: "/dashboard/admin",    icon: Settings,    roles: ["ADMIN"], section: "admin" },
-  { label: "Usuários",      href: "/dashboard/admin/usuarios",icon: User,       roles: ["ADMIN"] },
-  { label: "Configurações", href: "/dashboard/admin/configuracoes", icon: Settings, roles: ["ADMIN"] },
-  { label: "Obras",         href: "/dashboard/obras",        icon: HardHat,     roles: ["ADMIN"], funcao: "obras" },
-  { label: "Fundos",        href: "/dashboard/fundos",       icon: Banknote,    roles: ["ADMIN"], funcao: "fundos" },
-  { label: "Relatórios",    href: "/dashboard/relatorios",   icon: BarChart3,   roles: ["ADMIN"], funcao: "relatorios" },
+  { label: "Início",        href: "/dashboard/construtor",              icon: Building2,   roles: ["CONSTRUTOR"], section: "geral",       funcao: "construtor" },
+  { label: "Minhas Obras",  href: "/dashboard/obras",                   icon: HardHat,     roles: ["CONSTRUTOR"],                         funcao: "obras" },
+  { label: "Crédito",       href: "/dashboard/credito",                 icon: CreditCard,  roles: ["CONSTRUTOR"],                         funcao: "credito" },
+  { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["CONSTRUTOR"],                         funcao: "simulador" },
+  { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["CONSTRUTOR"],                         funcao: "score" },
+  { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["CONSTRUTOR"],                         funcao: "kyc" },
+  { label: "Início",        href: "/dashboard",                         icon: Home,        roles: ["TOMADOR", null], section: "geral" },
+  { label: "Minhas Obras",  href: "/dashboard/obras",                   icon: HardHat,     roles: ["TOMADOR"],                            funcao: "obras" },
+  { label: "Crédito",       href: "/dashboard/credito",                 icon: CreditCard,  roles: ["TOMADOR"],                            funcao: "credito" },
+  { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["TOMADOR"],                            funcao: "simulador" },
+  { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["TOMADOR"],                            funcao: "score" },
+  { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["TOMADOR"],                            funcao: "kyc" },
+  { label: "Painel",        href: "/dashboard/gestor",                  icon: ShieldCheck, roles: ["GESTOR"],        section: "geral",    funcao: "gestor" },
+  { label: "Etapas",        href: "/dashboard/gestor/etapas",           icon: FileCheck2,  roles: ["GESTOR"],                             funcao: "gestor" },
+  { label: "KYC",           href: "/dashboard/gestor/kyc",              icon: FileCheck2,  roles: ["GESTOR"],                             funcao: "kyc" },
+  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2, roles: ["GESTOR"],                             funcao: "due-diligence" },
+  { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["GESTOR"],                             funcao: "fundos" },
+  { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["GESTOR"],                             funcao: "relatorios" },
+  { label: "Engenharia",    href: "/dashboard/engenheiro",              icon: Wrench,      roles: ["ENGENHEIRO"],    section: "geral",    funcao: "engenharia" },
+  { label: "Painel",        href: "/dashboard/comercial",               icon: Megaphone,   roles: ["COMERCIAL"],     section: "geral",    funcao: "comercial" },
+  { label: "Leads",         href: "/dashboard/comercial/leads",         icon: Star,        roles: ["COMERCIAL"],                          funcao: "comercial" },
+  { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","COMERCIAL","ADMIN","CONSTRUTOR",null], funcao: "notificacoes" },
+  { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","COMERCIAL","ADMIN","CONSTRUTOR",null] },
+  { label: "Visão Geral",   href: "/dashboard/admin",                   icon: Settings,    roles: ["ADMIN"],         section: "admin" },
+  { label: "Usuários",      href: "/dashboard/admin/usuarios",          icon: User,        roles: ["ADMIN"] },
+  { label: "Configurações", href: "/dashboard/admin/configuracoes",     icon: Settings,    roles: ["ADMIN"] },
+  { label: "Obras",         href: "/dashboard/obras",                   icon: HardHat,     roles: ["ADMIN"],                              funcao: "obras" },
+  { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["ADMIN"],                              funcao: "fundos" },
+  { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["ADMIN"],                              funcao: "relatorios" },
 ];
 
-const SECTION_LABELS: Record<string, string> = {
-  geral:       "Geral",
-  operacional: "Operacional",
-  admin:       "Sistema",
-};
+const SECTION_LABELS: Record<string, string> = { geral: "Geral", operacional: "Operacional", admin: "Admin" };
 
-const ROLE_META: Record<string, { label: string; accent: string; bg: string }> = {
-  CONSTRUTOR: { label: "Construtor",    accent: "#0891b2", bg: "#164e63" },
-  TOMADOR:    { label: "Tomador",       accent: "#16a34a", bg: "#14532d" },
-  GESTOR:     { label: "Gestor",        accent: "#7c3aed", bg: "#3b0764" },
-  ENGENHEIRO: { label: "Engenheiro",    accent: "#ea580c", bg: "#431407" },
-  COMERCIAL:  { label: "Parceiro",      accent: "#d97706", bg: "#451a03" },
-  ADMIN:      { label: "Administrador", accent: "#1B4FD8", bg: "#1e3a8a" },
+const ROLE_META: Record<string, { label: string; accent: string }> = {
+  CONSTRUTOR: { label: "Construtor",    accent: "#38bdf8" },
+  TOMADOR:    { label: "Tomador",       accent: MINT },
+  GESTOR:     { label: "Gestor",        accent: "#a78bfa" },
+  ENGENHEIRO: { label: "Engenheiro",    accent: "#fb923c" },
+  COMERCIAL:  { label: "Parceiro",      accent: "#fbbf24" },
+  ADMIN:      { label: "Admin",         accent: MINT },
 };
 
 function filterNav(role: UserRole, funcoesBloqueadas: string[]): NavItem[] {
   return NAV.filter((item) => {
     if (!item.roles.includes(role)) return false;
-    // ADMIN nunca perde funções; demais perfis respeitam o bloqueio do admin
     if (role !== "ADMIN" && item.funcao && funcoesBloqueadas.includes(item.funcao)) return false;
     return true;
   });
 }
 
-function Logo({ size = 28, white = false }: { size?: number; white?: boolean }) {
-  const fill = white ? "rgba(255,255,255,0.92)" : "#1B4FD8";
-  const border = white ? "rgba(255,255,255,0.35)" : "#1B4FD8";
+function Logo({ size = 26 }: { size?: number }) {
   return (
     <div style={{
-      width: size, height: size, border: `1.5px solid ${border}`,
-      borderRadius: 7, display: "grid",
+      width: size, height: size,
+      border: `1.5px solid ${MINT}`,
+      borderRadius: 6, display: "grid",
       gridTemplateColumns: "1fr 1fr 1fr",
       gridTemplateRows: "1fr 1fr 1fr",
-      gap: 2.5, padding: 4.5, flexShrink: 0,
+      gap: 2, padding: 4, flexShrink: 0,
     }}>
       {[0,1,2,3,4,5,6,7,8].map((i) => (
         <span key={i} style={{
-          background: [1,3,5,7].includes(i) ? "transparent" : fill,
-          borderRadius: 1.5, display: "block",
+          background: [1,3,5,7].includes(i) ? "transparent" : MINT,
+          borderRadius: 1, display: "block",
         }} />
       ))}
     </div>
@@ -125,7 +93,7 @@ function Logo({ size = 28, white = false }: { size?: number; white?: boolean }) 
 function renderNav(
   items: NavItem[],
   activeFn: (href: string) => boolean,
-  accentColor: string,
+  accent: string,
   onNavigate?: () => void,
 ) {
   let lastSection = "";
@@ -138,9 +106,10 @@ function renderNav(
       <div key={item.href}>
         {showSection && (
           <p style={{
-            fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em",
-            textTransform: "uppercase", color: "rgba(255,255,255,0.35)",
-            padding: "1.1rem 0.75rem 0.4rem",
+            fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em",
+            textTransform: "uppercase", color: "rgba(255,255,255,0.28)",
+            padding: "1.25rem 0.75rem 0.35rem",
+            fontFamily: "'Jost', sans-serif",
           }}>
             {SECTION_LABELS[item.section!]}
           </p>
@@ -149,23 +118,22 @@ function renderNav(
           href={item.href}
           onClick={onNavigate}
           style={{
-            display: "flex", alignItems: "center", gap: "0.65rem",
-            padding: "0.5rem 0.75rem",
-            borderRadius: 10,
+            display: "flex", alignItems: "center", gap: "0.6rem",
+            padding: "0.48rem 0.75rem",
+            borderRadius: 8,
             fontSize: "0.82rem",
             fontWeight: active ? 600 : 400,
-            letterSpacing: active ? "-0.01em" : "0",
-            color: active ? "#ffffff" : "rgba(255,255,255,0.55)",
-            background: active ? "rgba(255,255,255,0.12)" : "transparent",
+            color: active ? "#ffffff" : "rgba(255,255,255,0.5)",
+            background: active ? "rgba(74,222,128,0.1)" : "transparent",
             textDecoration: "none",
             transition: "all 0.12s",
-            borderLeft: active ? `2.5px solid ${accentColor}` : "2.5px solid transparent",
-            paddingLeft: active ? "0.65rem" : "0.75rem",
+            borderLeft: active ? `2px solid ${accent}` : "2px solid transparent",
+            fontFamily: "'Jost', sans-serif",
           }}
         >
-          <Icon size={14} strokeWidth={active ? 2.2 : 1.8} />
-          {item.label}
-          {active && <ChevronRight size={11} style={{ marginLeft: "auto", opacity: 0.6 }} />}
+          <Icon size={13} strokeWidth={active ? 2.2 : 1.8} style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>{item.label}</span>
+          {active && <ChevronRight size={10} style={{ opacity: 0.5 }} />}
         </a>
       </div>
     );
@@ -199,8 +167,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     href === "/dashboard" ? path === href : path.startsWith(href);
 
   const meta = role ? ROLE_META[role] : null;
-  const accentColor = meta?.accent ?? "#16a34a";
-  const sidebarBg = meta?.bg ?? "#1e3a8a";
+  const accent = meta?.accent ?? MINT;
 
   const initials = userName
     ? userName.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()
@@ -208,41 +175,41 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const userFooter = (compact = false) => (
     <div>
-      {/* Role badge */}
       {meta && (
         <div style={{
-          margin: compact ? "0 0.75rem 0.5rem" : "0 0.75rem 0.6rem",
-          padding: "0.35rem 0.65rem",
-          borderRadius: 8,
-          background: `${accentColor}22`,
-          border: `1px solid ${accentColor}44`,
+          margin: "0 0.75rem 0.5rem",
+          padding: "0.3rem 0.65rem",
+          borderRadius: 6,
+          background: `${accent}18`,
+          border: `1px solid ${accent}30`,
           display: "flex", alignItems: "center", gap: "0.4rem",
         }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: accentColor, flexShrink: 0 }} />
-          <span style={{ fontSize: "0.65rem", fontWeight: 700, color: accentColor, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+          <span style={{ width: 5, height: 5, borderRadius: "50%", background: accent, flexShrink: 0 }} />
+          <span style={{ fontSize: "0.6rem", fontWeight: 700, color: accent, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "'Jost', sans-serif" }}>
             {meta.label}
           </span>
         </div>
       )}
       <div style={{
-        borderTop: "1px solid rgba(255,255,255,0.1)",
-        padding: compact ? "0.75rem 0.85rem" : "0.85rem 1rem",
-        display: "flex", alignItems: "center", gap: "0.6rem",
+        borderTop: "1px solid rgba(255,255,255,0.07)",
+        padding: compact ? "0.7rem 0.85rem" : "0.8rem 0.85rem",
+        display: "flex", alignItems: "center", gap: "0.55rem",
       }}>
         <div style={{
           width: compact ? 26 : 28, height: compact ? 26 : 28, borderRadius: "50%",
-          background: `${accentColor}33`,
-          border: `1.5px solid ${accentColor}66`,
+          background: `${accent}22`,
+          border: `1.5px solid ${accent}55`,
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "0.63rem", fontWeight: 700, color: accentColor, flexShrink: 0,
+          fontSize: "0.6rem", fontWeight: 700, color: accent, flexShrink: 0,
+          fontFamily: "'Jost', sans-serif",
         }}>
           {initials}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: compact ? "0.72rem" : "0.74rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <p style={{ fontSize: "0.74rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "'Jost', sans-serif" }}>
             {userName ?? "Usuário"}
           </p>
-          <p style={{ fontSize: "0.63rem", color: "rgba(255,255,255,0.4)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <p style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.35)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "'Jost', sans-serif" }}>
             {userEmail ?? role ?? ""}
           </p>
         </div>
@@ -252,7 +219,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             window.location.href = "/login";
           }}
           title="Sair"
-          style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)", flexShrink: 0, padding: 0, display: "flex" }}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.28)", flexShrink: 0, padding: 0, display: "flex", transition: "color 0.15s" }}
+          onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
+          onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.28)")}
         >
           <LogOut size={13} />
         </button>
@@ -260,73 +229,88 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     </div>
   );
 
+  const sidebarContent = (onNavigate?: () => void) => (
+    <>
+      <div style={{ padding: "1.4rem 1rem 0.6rem" }}>
+        <a href="/" style={{ display: "flex", alignItems: "center", gap: "0.55rem", textDecoration: "none" }}>
+          <Logo size={22} />
+          <span style={{
+            color: "white", fontWeight: 800, fontSize: "1.1rem",
+            letterSpacing: "0.04em", fontFamily: "'Barlow Condensed', sans-serif",
+          }}>IMOBI</span>
+        </a>
+      </div>
+      <nav style={{ flex: 1, padding: "0 0.4rem", overflowY: "auto" }}>
+        {renderNav(visibleNav, isActive, accent, onNavigate)}
+      </nav>
+      {userFooter(!!onNavigate)}
+    </>
+  );
+
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F0F5FF", fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#EEF3FF", fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
 
       {/* Sidebar desktop */}
-      <aside style={{
-        width: 220, flexShrink: 0,
-        display: "none",
-        flexDirection: "column",
-        background: `linear-gradient(180deg, ${sidebarBg} 0%, #0f172a 100%)`,
-        minHeight: "100vh",
-        position: "sticky", top: 0,
-        alignSelf: "flex-start",
-      }}
+      <aside
         className="md-sidebar"
+        style={{
+          width: 216, flexShrink: 0,
+          display: "none", flexDirection: "column",
+          background: NAVY,
+          minHeight: "100vh",
+          position: "sticky", top: 0,
+          alignSelf: "flex-start",
+        }}
       >
-        <div style={{ padding: "1.5rem 1rem 0.75rem" }}>
-          <a href="/" style={{ display: "flex", alignItems: "center", gap: "0.55rem", textDecoration: "none" }}>
-            <Logo size={24} white />
-            <span style={{ color: "white", fontWeight: 700, fontSize: "0.95rem", letterSpacing: "-0.03em" }}>IMOBI</span>
-          </a>
-        </div>
-
-        <nav style={{ flex: 1, padding: "0 0.5rem", overflowY: "auto" }}>
-          {renderNav(visibleNav, isActive, accentColor)}
-        </nav>
-
-        {userFooter()}
+        {sidebarContent()}
       </aside>
 
       {/* Mobile header */}
-      <div style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        height: 52, background: "#1B4FD8",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 1rem",
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
-      }}
+      <div
         className="md-hidden"
+        style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+          height: 52, background: NAVY,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 1rem",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+        }}
       >
         <a href="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none" }}>
-          <Logo size={20} white />
-          <span style={{ color: "white", fontWeight: 700, fontSize: "0.9rem", letterSpacing: "-0.03em" }}>IMOBI</span>
+          <Logo size={20} />
+          <span style={{ color: "white", fontWeight: 800, fontSize: "1rem", letterSpacing: "0.04em", fontFamily: "'Barlow Condensed', sans-serif" }}>IMOBI</span>
         </a>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Menu"
           style={{ background: "none", border: "none", cursor: "pointer", padding: "0.4rem", display: "flex", flexDirection: "column", gap: 4.5 }}
         >
-          <span style={{ display: "block", width: 20, height: 1.5, background: "rgba(255,255,255,0.8)", borderRadius: 2, transition: "all 0.2s", transform: mobileOpen ? "rotate(45deg) translate(4.5px,4.5px)" : "none" }} />
-          <span style={{ display: "block", width: 20, height: 1.5, background: "rgba(255,255,255,0.8)", borderRadius: 2, transition: "all 0.2s", opacity: mobileOpen ? 0 : 1 }} />
-          <span style={{ display: "block", width: 20, height: 1.5, background: "rgba(255,255,255,0.8)", borderRadius: 2, transition: "all 0.2s", transform: mobileOpen ? "rotate(-45deg) translate(4.5px,-4.5px)" : "none" }} />
+          {[
+            mobileOpen ? "rotate(45deg) translate(4.5px,4.5px)" : "none",
+            "none",
+            mobileOpen ? "rotate(-45deg) translate(4.5px,-4.5px)" : "none",
+          ].map((transform, i) => (
+            <span key={i} style={{
+              display: "block", width: 20, height: 1.5,
+              background: "rgba(255,255,255,0.75)", borderRadius: 2,
+              transition: "all 0.2s",
+              transform,
+              opacity: i === 1 && mobileOpen ? 0 : 1,
+            }} />
+          ))}
         </button>
       </div>
 
       {/* Mobile drawer */}
       {mobileOpen && (
         <>
-          <div onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", zIndex: 150 }} />
+          <div onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(12,26,61,0.6)", zIndex: 150 }} />
           <div style={{
-            position: "fixed", top: 52, left: 0, bottom: 0, width: 230,
-            background: `linear-gradient(180deg, ${sidebarBg} 0%, #0f172a 100%)`, zIndex: 200,
+            position: "fixed", top: 52, left: 0, bottom: 0, width: 224,
+            background: NAVY, zIndex: 200,
             overflowY: "auto", display: "flex", flexDirection: "column",
           }}>
-            <nav style={{ flex: 1, padding: "0.5rem 0.5rem 0" }}>
-              {renderNav(visibleNav, isActive, accentColor, () => setMobileOpen(false))}
-            </nav>
-            {userFooter(true)}
+            {sidebarContent(() => setMobileOpen(false))}
           </div>
         </>
       )}
@@ -358,10 +342,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </a>
 
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Jost:wght@300;400;500;600;700&display=swap');
         @media (min-width: 768px) {
-          .md-sidebar { display: flex !important; }
-          .md-hidden { display: none !important; }
-          .md-spacer { display: none !important; }
+          .md-sidebar  { display: flex !important; }
+          .md-hidden   { display: none !important; }
+          .md-spacer   { display: none !important; }
           .main-content { padding: 2rem !important; }
         }
       `}</style>
