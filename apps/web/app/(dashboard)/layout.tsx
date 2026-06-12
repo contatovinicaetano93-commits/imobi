@@ -258,9 +258,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           width: 216, flexShrink: 0,
           display: "none", flexDirection: "column",
           background: NAVY,
-          minHeight: "100vh",
           position: "sticky", top: 0,
-          alignSelf: "flex-start",
+          height: "100vh", overflowY: "auto",
         }}
       >
         {sidebarContent()}

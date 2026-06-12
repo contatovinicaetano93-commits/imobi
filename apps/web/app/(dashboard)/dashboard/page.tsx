@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   Building2,
@@ -17,6 +19,16 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: "Dashboard — imbobi" };
 
+function decodeRole(token: string): string | null {
+  try {
+    const payload = token.split(".")[1];
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64 + "===".slice((base64.length % 4) || 4);
+    const decoded = JSON.parse(Buffer.from(padded, "base64").toString("utf-8"));
+    return decoded.role ?? decoded.tipo ?? null;
+  } catch { return null; }
+}
+
 const STATUS_LABEL: Record<string, string> = {
   EM_ANDAMENTO:        "Em andamento",
   PLANEJAMENTO:        "Planejamento",
@@ -34,6 +46,17 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 export default async function DashboardPage() {
+  // Redirect non-TOMADOR roles to their dedicated panels
+  const jar = await cookies();
+  const token = jar.get("access_token")?.value;
+  const role = token ? decodeRole(token) : null;
+
+  if (role === "ADMIN")       redirect("/dashboard/admin");
+  if (role === "GESTOR")      redirect("/dashboard/gestor");
+  if (role === "ENGENHEIRO")  redirect("/dashboard/engenheiro");
+  if (role === "COMERCIAL")   redirect("/dashboard/comercial");
+  if (role === "CONSTRUTOR")  redirect("/dashboard/construtor");
+
   const [obras, creditos] = await Promise.all([
     obrasApi.listar().catch(() => [] as ObraResumo[]),
     creditoApi.meus().catch(() => [] as CreditoResumo[]),
