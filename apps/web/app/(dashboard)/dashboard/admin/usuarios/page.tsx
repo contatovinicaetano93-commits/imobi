@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import type { CSSProperties, FC } from "react";
+import type { CSSProperties } from "react";
+import type { LucideIcon } from "lucide-react";
 import {
   Users, Search, Plus, Shield, Wrench, Building2, User, ChevronLeft, X,
   Lock, Unlock, Ban, CheckCircle2, SlidersHorizontal, ChevronDown, ChevronUp,
@@ -26,7 +27,7 @@ type UsuarioAdmin = {
   criadoEm: string;
 };
 
-const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; icon: FC<{ className?: string }> }> = {
+const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; icon: LucideIcon }> = {
   ADMIN:      { label: "Admin",      color: NAVY,    bg: "rgba(12,26,61,0.07)",  icon: Shield },
   GESTOR:     { label: "Gestor",     color: ROYAL,   bg: "rgba(27,79,216,0.08)", icon: Shield },
   ENGENHEIRO: { label: "Engenheiro", color: "#0369a1", bg: "#f0f9ff", icon: Wrench },

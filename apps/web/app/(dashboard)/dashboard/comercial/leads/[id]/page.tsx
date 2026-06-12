@@ -1,17 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { LeadDetail } from '@imbobi/schemas';
 import { ScoreBreakdown } from '@/components/dashboard/comercial/ScoreBreakdown';
 import { ConversionTimeline } from '@/components/dashboard/comercial/ConversionTimeline';
-import { use } from 'react';
 
-interface LeadDetailPageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default function LeadDetailPage({ params }: LeadDetailPageProps) {
-  const { id } = use(params);
+export default function LeadDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
   const [lead, setLead] = useState<LeadDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
