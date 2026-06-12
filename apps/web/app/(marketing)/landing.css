@@ -434,7 +434,7 @@ nav.scrolled .btn-login:hover { background: var(--surface); border-color: #CBD5E
 .mod-item:last-child { border-bottom: none; }
 .mod-n {
   font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
-  font-size: 5rem; line-height: 1; color: var(--royal-pale);
+  font-size: 5rem; line-height: 1; color: rgba(27,79,216,0.22);
   flex-shrink: 0; width: 4.5rem; padding-top: 0.15rem;
 }
 .mod-body { flex: 1; }

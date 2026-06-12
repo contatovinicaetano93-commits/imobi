@@ -7,11 +7,11 @@ import "./landing.css";
 const WA = "5511993455589";
 
 const OPERACOES = [
-  { valor: "R$8,2M",  tipo: "Aquisição",   uf: "SP" },
-  { valor: "R$7,4M",  tipo: "Obra",        uf: "RJ" },
-  { valor: "R$9,8M",  tipo: "Obra",        uf: "SP" },
-  { valor: "R$6,1M",  tipo: "Finalização", uf: "MG" },
-  { valor: "R$9,4M",  tipo: "Aquisição",   uf: "SP" },
+  { valor: "R$18M",  tipo: "Luxo",        uf: "SC" },
+  { valor: "R$8,5M", tipo: "Obra",        uf: "PR" },
+  { valor: "R$12M",  tipo: "Aquisição",   uf: "SC" },
+  { valor: "R$6,2M", tipo: "MCMV",        uf: "SP" },
+  { valor: "R$9,4M", tipo: "Finalização", uf: "SC" },
 ];
 
 export default function LandingPage() {
@@ -64,8 +64,8 @@ export default function LandingPage() {
         const tick = () => {
           const p = Math.min((Date.now() - t0) / dur, 1);
           const e2 = 1 - (1 - p) * (1 - p);
-          setCounterVal(Math.floor(e2 * 40));
-          if (p < 1) requestAnimationFrame(tick); else setCounterVal(40);
+          setCounterVal(Math.floor(e2 * 170));
+          if (p < 1) requestAnimationFrame(tick); else setCounterVal(170);
         };
         requestAnimationFrame(tick);
       }
@@ -183,13 +183,13 @@ export default function LandingPage() {
         <div className="hero-bg-grid" aria-hidden />
         <div className="hero-inner">
           <div className="hero-content">
-            <div className="hero-badge"><span className="badge-dot" />Parceria EverBlue · Crédito Imobiliário Estruturado</div>
+            <div className="hero-badge"><span className="badge-dot" />Crédito Imobiliário Estruturado</div>
             <h1 className="hero-h1">
               <span className="h1-line">CAPITAL</span>
               <span className="h1-line">PARA SUA</span>
               <span className="h1-line h1-accent">OBRA.</span>
             </h1>
-            <p className="hero-sub">Aprovação em até 15 dias úteis. Do pedido ao capital sem travar o cronograma — direto para construtoras e incorporadoras.</p>
+            <p className="hero-sub">Aprovação em 15 a 30 dias. Do pedido ao capital sem travar o cronograma — direto para construtoras e incorporadoras.</p>
             <div className="hero-actions">
               <button className="btn-hero-primary" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
               <button className="btn-hero-ghost"   onClick={() => scrollTo("como")}>Ver o processo →</button>
@@ -198,7 +198,7 @@ export default function LandingPage() {
 
           {/* TRACK RECORD RAIL */}
           <div className="rail-wrap" ref={railRef}>
-            <p className="rail-label">Track record — 5 operações estruturadas</p>
+            <p className="rail-label">Track record — SC · PR · SP · Luxo · MCMV</p>
             <div className="rail-track">
               <div className="rail-line-bg"   aria-hidden />
               <div className="rail-line-fill" aria-hidden />
@@ -216,7 +216,7 @@ export default function LandingPage() {
                 <span className="rail-sub">estruturados</span>
               </div>
               <div className="rail-pipeline">
-                <span className="rail-pipe-num">R$137M</span>
+                <span className="rail-pipe-num">R$800M</span>
                 <span className="rail-pipe-sub">em pipeline</span>
               </div>
             </div>
@@ -227,9 +227,9 @@ export default function LandingPage() {
       {/* ── NÚMEROS STRIP ── */}
       <div className="numeros-strip">
         {[
-          { val: "15 dias",  label: "Aprovação",         sub: "Bancos levam 90+ dias"       },
-          { val: "100%",     label: "Taxa de entrega",   sub: "Histórico de operações"      },
-          { val: "R$500k+",  label: "Operação mínima",   sub: "Sem teto máximo definido"    },
+          { val: "15–30 dias", label: "Aprovação",         sub: "Bancos levam 90+ dias"       },
+          { val: "100%",       label: "Taxa de entrega",   sub: "Histórico de operações"      },
+          { val: "R$1M+",      label: "Operação mínima",   sub: "Sem teto máximo definido"    },
         ].map(n => (
           <div className="num-item" key={n.label}>
             <div className="num-val">{n.val}</div>
@@ -253,7 +253,7 @@ export default function LandingPage() {
             </div>
             <div className="vs-col vs-us">
               <div className="vs-head"><span className="vs-tag-us">IMOBI</span></div>
-              {["Aprovação em até 15 dias úteis", "Taxa competitiva, documentada na proposta", "Processo 100% digital, equipe dedicada", "Atendemos incorporadoras de todos os portes", "Capital liberado no ritmo do cronograma"].map(t => (
+              {["Aprovação em 15 a 30 dias úteis", "Taxa competitiva, documentada na proposta", "Garantias RI ou receita de vendas", "Atendemos incorporadoras de todos os portes", "Capital liberado no ritmo do cronograma"].map(t => (
                 <div className="vs-item" key={t}><span className="vs-ck">✓</span><span>{t}</span></div>
               ))}
             </div>
@@ -272,7 +272,7 @@ export default function LandingPage() {
             {[
               { n:"01", t:"Você nos conta o projeto",    d:"Preencha o formulário. A equipe IMOBI retorna em até 24h para alinhar os próximos passos." },
               { n:"02", t:"Análise e proposta em dias",  d:"Avaliamos viabilidade técnica e financeira. Você recebe proposta com taxa, prazo e condições — sem enrolação." },
-              { n:"03", t:"Estruturação sob medida",     d:"Volume, cronograma de liberações e garantias alinhadas ao projeto. Tudo documentado e transparente." },
+              { n:"03", t:"Estruturação sob medida",     d:"Volume, cronograma de liberações e garantias definidas — RI ou receita de vendas. Tudo documentado e transparente." },
               { n:"04", t:"Capital no ritmo da obra",    d:"Liberações conforme avanço físico validado por vistoria técnica. Você recebe quando a obra avança." },
             ].map(s => (
               <div className="step" key={s.n}>
@@ -316,7 +316,7 @@ export default function LandingPage() {
             <h2 className="form-h2">Vamos estruturar<br /><em>seu projeto.</em></h2>
             <p className="form-desc">Preencha o formulário. A equipe IMOBI entra em contato em até 24 horas com uma análise preliminar sem compromisso.</p>
             <div className="promises">
-              {["Retorno em até 24h","Análise preliminar gratuita","Aprovação em até 15 dias úteis","Processo 100% digital"].map(t => (
+              {["Retorno em até 24h","Análise preliminar gratuita","Aprovação em 15 a 30 dias úteis","Processo 100% digital"].map(t => (
                 <div className="promise" key={t}><span className="promise-ck">✓</span>{t}</div>
               ))}
             </div>
@@ -389,10 +389,10 @@ export default function LandingPage() {
           <h2 className="sec-h2 faq-h2">Perguntas frequentes.</h2>
           <div className="faq-list">
             {[
-              { q:"Quais são os pré-requisitos para solicitar crédito?",   a:"CNPJ ativo, projeto de construção documentado e matrícula do imóvel. Não exigimos garantias bancárias tradicionais — avaliamos a viabilidade técnica e financeira do projeto." },
-              { q:"Em quanto tempo recebo a aprovação?",                    a:"Nosso SLA é de até 15 dias úteis após entrega completa da documentação. Em projetos com documentação em ordem, aprovamos em 7–10 dias úteis." },
+              { q:"Quais são os pré-requisitos para solicitar crédito?",   a:"CNPJ ativo, projeto de construção documentado e matrícula do imóvel. Utilizamos como garantia RI (Registro de Imóveis) ou receita de vendas do empreendimento — sem exigir garantias bancárias tradicionais." },
+              { q:"Em quanto tempo recebo a aprovação?",                    a:"Nosso prazo é de 15 a 30 dias úteis após entrega completa da documentação. Projetos com documentação em ordem costumam ser aprovados na faixa de 15 dias." },
               { q:"Como funciona a liberação das parcelas?",                a:"As liberações são feitas conforme o avanço da obra, validadas por vistorias técnicas com registro fotográfico georeferenciado. Rastreável 100% pela plataforma." },
-              { q:"Qual o valor mínimo e máximo de operação?",              a:"Operações a partir de R$500 mil, sem limite máximo definido. Projetos acima de R$50M passam por análise de comitê diferenciada." },
+              { q:"Qual o valor mínimo e máximo de operação?",              a:"Operações a partir de R$1 milhão, sem limite máximo definido. Projetos acima de R$50M passam por análise de comitê diferenciada." },
               { q:"Preciso assinar documentos fisicamente?",                a:"Não. Do protocolo da proposta à assinatura do contrato — tudo digital, com validade jurídica por assinatura eletrônica qualificada." },
             ].map((f, i) => <FAQItem key={i} pergunta={f.q} resposta={f.a} />)}
           </div>
@@ -404,7 +404,7 @@ export default function LandingPage() {
         <div className="cta-inner">
           <div>
             <h2 className="cta-h2">Pronto para estruturar<br /><em>seu projeto?</em></h2>
-            <p className="cta-sub">Aprovação em até 15 dias. Análise preliminar gratuita, sem compromisso.</p>
+            <p className="cta-sub">Aprovação em 15 a 30 dias. Análise preliminar gratuita, sem compromisso.</p>
           </div>
           <div className="cta-actions">
             <button className="btn-hero-primary" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
@@ -427,7 +427,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="footer-bottom">
-            <span className="footer-note">Crédito imobiliário estruturado · Parceria EverBlue · São Paulo, Brasil · © 2026</span>
+            <span className="footer-note">Crédito imobiliário estruturado · SC · PR · SP · © 2026</span>
             <div className="footer-legal"><a href="/termos">Termos de Uso</a><a href="/privacy-policy">Privacidade</a></div>
           </div>
         </div>
