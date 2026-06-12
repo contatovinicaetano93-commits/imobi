@@ -6,17 +6,19 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: "#1B4FD8",
-        tabBarInactiveTintColor: "#9ca3af",
+        tabBarInactiveTintColor: "#94A3B8",
         tabBarStyle: {
-          borderTopColor: "#f3f4f6",
+          borderTopColor: "#E2E8F0",
           backgroundColor: "#fff",
           borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 6,
         },
         headerShown: false,
-        tabBarShowLabel: true,
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "500",
+          fontSize: 11,
+          fontWeight: "600",
         },
       }}
     >
@@ -25,7 +27,7 @@ export default function TabLayout() {
         options={{
           title: "Obras",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+            <Ionicons name="construct" size={size} color={color} />
           ),
         }}
       />
@@ -34,7 +36,7 @@ export default function TabLayout() {
         options={{
           title: "Crédito",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calculator" size={size} color={color} />
+            <Ionicons name="cash" size={size} color={color} />
           ),
         }}
       />
@@ -43,7 +45,7 @@ export default function TabLayout() {
         options={{
           title: "Perfil",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+            <Ionicons name="person-circle" size={size} color={color} />
           ),
         }}
       />
