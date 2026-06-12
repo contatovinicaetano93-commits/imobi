@@ -44,14 +44,15 @@ type Form = {
   nome: string;
   vgv: number;
   unidades: number;
-  prazo: number;          // construction months
-  dataInicio: string;     // YYYY-MM
+  prazo: number;
+  dataInicio: string;
   custoObra: number;
-  despesasComerciais: number; // %
-  outrasDespesas: number;     // %
+  despesasComerciais: number;
+  outrasDespesas: number;
   custoTerreno: number;
-  pctFinTerreno: number;  // %
-  pctFinObra: number;     // %
+  pctFinTerreno: number;
+  pctFinObra: number;      // % of custo de obra (max 80)
+  taxaMensal: number;      // 1.4 – 1.9 %/mês
 };
 
 const DEFAULTS: Form = {
@@ -65,7 +66,8 @@ const DEFAULTS: Form = {
   outrasDespesas: 2,
   custoTerreno: 0,
   pctFinTerreno: 0,
-  pctFinObra: 25,
+  pctFinObra: 50,         // default 50% (within 80% cap)
+  taxaMensal: 1.65,       // mid-range default
 };
 
 // ─── Viability calculation ────────────────────────────────────────────────────
@@ -91,6 +93,14 @@ type Viability = {
   finTotalTerreno: number;
   aporteTotal: number;
   custoTotal: number;
+  // IMOBI cost breakdown
+  jurosTotal: number;
+  custoEstruturacao: number;     // 3% one-time on financed amount
+  custoLiberacao: number;        // 7% spread over all tranches
+  custoMonitoramento: number;    // 1% VGV one-time
+  totalCustoImobi: number;
+  cetMensal: number;             // approx effective monthly rate
+  cetAnual: number;
   rows: CashFlowRow[];
   alertas: { tipo: "danger" | "warning" | "ok"; msg: string }[];
 };
@@ -99,16 +109,34 @@ function calcViability(f: Form): Viability {
   const despCom = (f.despesasComerciais / 100) * f.vgv;
   const outrasDes = (f.outrasDespesas / 100) * f.vgv;
   const finTerreno = (f.pctFinTerreno / 100) * f.custoTerreno;
-  const finObra = (f.pctFinObra / 100) * f.custoObra;
+  // IMOBI cap: max 80% of custo de obra
+  const pctFinObra = Math.min(f.pctFinObra, 80);
+  const finObra = (pctFinObra / 100) * f.custoObra;
   const custoTotal = f.custoObra + f.custoTerreno + despCom + outrasDes;
   const margemBruta = f.vgv - custoTotal;
   const margemBrutaPct = f.vgv > 0 ? (margemBruta / f.vgv) * 100 : 0;
 
-  // Simple financing cost: 0.99% /month on average balance
-  const txMes = 0.0099;
-  const avgBalanceObra = finObra / 2;
-  const jurosObra = avgBalanceObra * txMes * f.prazo;
-  const margemLiquida = margemBruta - jurosObra;
+  // ── IMOBI cost breakdown ──
+  const txMes = f.taxaMensal / 100;
+  // Interest on declining balance (average = finObra/2 over prazo months)
+  const jurosTotal = (finObra / 2) * txMes * f.prazo;
+  // 3% one-time estruturação fee on financed amount
+  const custoEstruturacao = finObra * 0.03;
+  // 7% spread across all tranches = 7% of financed amount
+  const custoLiberacao = finObra * 0.07;
+  // 1% VGV one-time monitoring fee
+  const custoMonitoramento = f.vgv * 0.01;
+  const totalCustoImobi = jurosTotal + custoEstruturacao + custoLiberacao + custoMonitoramento;
+
+  // CET: approximate monthly rate that makes NPV of payments = finObra
+  // Simplified: (total repaid / finObra)^(1/prazo) - 1
+  const totalRepaid = finObra + totalCustoImobi;
+  const cetMensal = finObra > 0 && f.prazo > 0
+    ? (Math.pow(totalRepaid / finObra, 1 / f.prazo) - 1) * 100
+    : 0;
+  const cetAnual = (Math.pow(1 + cetMensal / 100, 12) - 1) * 100;
+
+  const margemLiquida = margemBruta - totalCustoImobi;
   const margemLiquidaPct = f.vgv > 0 ? (margemLiquida / f.vgv) * 100 : 0;
 
   // Equity needed
@@ -201,28 +229,32 @@ function calcViability(f: Form): Viability {
     alertas.push({ tipo: "warning", msg: "Preencha o VGV e o custo de obra para gerar alertas." });
   } else {
     if (margemBrutaPct < 15) {
-      alertas.push({ tipo: "danger", msg: `Margem bruta muito baixa (${pct(margemBrutaPct)}). Mínimo recomendado: 15%.` });
+      alertas.push({ tipo: "danger", msg: `Margem bruta muito baixa (${pct(margemBrutaPct)}). Mínimo recomendado pelo IMOBI: 15%.` });
     } else if (margemBrutaPct < 20) {
       alertas.push({ tipo: "warning", msg: `Margem bruta (${pct(margemBrutaPct)}) abaixo do ideal. Avalie reduzir custos.` });
     } else {
       alertas.push({ tipo: "ok", msg: `Margem bruta saudável: ${pct(margemBrutaPct)}.` });
     }
 
-    if (f.custoObra > f.vgv * 0.6) {
-      alertas.push({ tipo: "danger", msg: "Custo de construção acima de 60% do VGV. Risco alto." });
-    }
-
-    if (f.pctFinObra > 40) {
-      alertas.push({ tipo: "warning", msg: `Financiamento de obra acima de 40% (${pct(f.pctFinObra)}). Verifique custo do capital.` });
+    if (f.custoObra > f.vgv * 0.65) {
+      alertas.push({ tipo: "danger", msg: "Custo de construção acima de 65% do VGV. IMOBI pode reprovar a operação." });
     }
 
     if (margemLiquidaPct < 10) {
-      alertas.push({ tipo: "danger", msg: `Margem líquida após juros: ${pct(margemLiquidaPct)}. Projeto pode não ser viável.` });
+      alertas.push({ tipo: "danger", msg: `Margem líquida após custos IMOBI: ${pct(margemLiquidaPct)}. Projeto pode não ser aprovado.` });
+    } else if (margemLiquidaPct < 15) {
+      alertas.push({ tipo: "warning", msg: `Margem líquida (${pct(margemLiquidaPct)}) aceitável. Ideal ≥ 15% para aprovação facilitada.` });
+    } else {
+      alertas.push({ tipo: "ok", msg: `Margem líquida após todos os custos IMOBI: ${pct(margemLiquidaPct)}. Projeto elegível.` });
+    }
+
+    if (pctFinObra === 80) {
+      alertas.push({ tipo: "warning", msg: "Financiando no limite máximo (80%). Exigirá garantias adicionais e KYC completo." });
     }
 
     const minNegRow = rows.reduce((min, r) => r.saldoAcumulado < min ? r.saldoAcumulado : min, 0);
-    if (minNegRow < 0 && Math.abs(minNegRow) > aporteTotal * 0.3) {
-      alertas.push({ tipo: "warning", msg: `Saldo acumulado negativo de ${brl(Math.abs(minNegRow))} previsto. Revise o aporte.` });
+    if (minNegRow < -aporteTotal * 0.2) {
+      alertas.push({ tipo: "warning", msg: `Saldo acumulado negativo de ${brl(Math.abs(minNegRow))} previsto. Revise o cronograma de vendas.` });
     }
   }
 
@@ -233,6 +265,13 @@ function calcViability(f: Form): Viability {
     finTotalTerreno: finTerreno,
     aporteTotal,
     custoTotal,
+    jurosTotal,
+    custoEstruturacao,
+    custoLiberacao,
+    custoMonitoramento,
+    totalCustoImobi,
+    cetMensal,
+    cetAnual,
     rows,
     alertas,
   };
@@ -482,8 +521,33 @@ export default function SimuladorPage() {
           <>
             <h2 className="font-semibold text-gray-900 flex items-center gap-2">
               <Wallet className="w-5 h-5 text-[#1B4FD8]" />
-              Estrutura de Financiamento
+              Estrutura de Financiamento IMOBI
             </h2>
+
+            {/* Taxa mensal */}
+            <div className="bg-[#0C1A3D] rounded-xl p-4 space-y-3">
+              <div className="flex justify-between items-baseline">
+                <p className="text-sm font-semibold text-white">Taxa mensal</p>
+                <p className="text-2xl font-bold text-[#4ADE80]">{form.taxaMensal.toFixed(2).replace(".", ",")}% a.m.</p>
+              </div>
+              <input
+                type="range"
+                min={1.4}
+                max={1.9}
+                step={0.05}
+                value={form.taxaMensal}
+                onChange={(e) => set("taxaMensal", Number(e.target.value))}
+                className="w-full accent-[#4ADE80]"
+              />
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>1,40% a.m. (menor risco)</span>
+                <span>1,90% a.m. (maior risco)</span>
+              </div>
+              <p className="text-xs text-gray-400">
+                Taxa final definida após análise de risco e KYC. CET estimado: {pct(viab.cetAnual)} a.a.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <PctInput
                 label="Financiamento do terreno"
@@ -491,33 +555,67 @@ export default function SimuladorPage() {
                 onChange={(v) => set("pctFinTerreno", v)}
                 hint={form.custoTerreno > 0 ? `${brl((form.pctFinTerreno / 100) * form.custoTerreno)} financiado` : "% do custo do terreno"}
               />
-              <PctInput
-                label="Financiamento ciclo de obra"
-                value={form.pctFinObra}
-                onChange={(v) => set("pctFinObra", v)}
-                hint={form.custoObra > 0 ? `${brl((form.pctFinObra / 100) * form.custoObra)} financiado (IMOBI)` : "% do custo de obra"}
-              />
+              <div>
+                <PctInput
+                  label="Financiamento ciclo de obra (máx. 80%)"
+                  value={form.pctFinObra}
+                  onChange={(v) => set("pctFinObra", Math.min(v, 80))}
+                  hint={form.custoObra > 0 ? `${brl(Math.min(form.pctFinObra, 80) / 100 * form.custoObra)} financiado pelo IMOBI` : "% do custo de obra"}
+                  max={80}
+                />
+                {form.pctFinObra > 80 && (
+                  <p className="text-xs text-red-500 mt-1">Limite máximo do IMOBI: 80%</p>
+                )}
+              </div>
             </div>
 
             {/* Summary boxes */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { label: "Fin. terreno",    value: brl((form.pctFinTerreno / 100) * form.custoTerreno), color: "text-blue-700", bg: "bg-blue-50" },
-                { label: "Fin. ciclo obra",  value: brl((form.pctFinObra / 100) * form.custoObra),     color: "text-[#1B4FD8]", bg: "bg-blue-50" },
-                { label: "Aporte próprio",   value: brl(viab.aporteTotal),                              color: "text-gray-800",  bg: "bg-gray-50" },
+                { label: "Fin. terreno",      value: brl((form.pctFinTerreno / 100) * form.custoTerreno),                    color: "text-blue-700",   bg: "bg-blue-50" },
+                { label: "Fin. ciclo obra",    value: brl(Math.min(form.pctFinObra, 80) / 100 * form.custoObra),             color: "text-[#1B4FD8]",  bg: "bg-blue-50" },
+                { label: "Custo total IMOBI",  value: form.custoObra > 0 ? brl(viab.totalCustoImobi) : "—",                  color: "text-orange-600", bg: "bg-orange-50" },
+                { label: "Aporte próprio",     value: brl(viab.aporteTotal),                                                  color: "text-gray-800",   bg: "bg-gray-50" },
               ].map((item) => (
                 <div key={item.label} className={`${item.bg} rounded-xl p-3`}>
                   <p className="text-xs text-gray-500 mb-0.5">{item.label}</p>
-                  <p className={`text-base font-bold ${item.color}`}>{item.value}</p>
+                  <p className={`text-sm font-bold ${item.color}`}>{item.value}</p>
                 </div>
               ))}
             </div>
 
+            {/* Fee breakdown */}
+            {viab.finTotalObra > 0 && (
+              <div className="border border-gray-100 rounded-xl overflow-hidden">
+                <div className="bg-gray-50 px-4 py-2">
+                  <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">Composição do custo da operação</p>
+                </div>
+                {[
+                  { label: "Juros",                             value: brl(viab.jurosTotal),           hint: `${form.taxaMensal.toFixed(2).replace(".", ",")}%/mês sobre saldo médio` },
+                  { label: "Taxa de estruturação (3%)",         value: brl(viab.custoEstruturacao),    hint: "Cobrado uma única vez na abertura" },
+                  { label: "Taxa de liberação (7%)",            value: brl(viab.custoLiberacao),       hint: "7% sobre o total liberado por etapas" },
+                  { label: "Taxa de monitoramento (1% VGV)",   value: brl(viab.custoMonitoramento),   hint: "Cobrado uma única vez sobre o VGV do empreendimento" },
+                ].map((row) => (
+                  <div key={row.label} className="flex items-center justify-between px-4 py-2.5 border-t border-gray-100">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">{row.label}</p>
+                      <p className="text-xs text-gray-400">{row.hint}</p>
+                    </div>
+                    <p className="text-sm font-bold text-gray-900">{row.value}</p>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between px-4 py-3 bg-[#0C1A3D] text-white">
+                  <p className="text-sm font-bold">Total operação</p>
+                  <p className="text-base font-bold text-[#4ADE80]">{brl(viab.totalCustoImobi)}</p>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl">
               <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
               <p className="text-xs text-blue-700">
-                O IMOBI cobre até <strong>40%</strong> do ciclo de obra com liberações por etapa vistoriada.
-                Taxa de referência: 0,99% ao mês sobre o saldo devedor.
+                Liberações vinculadas a <strong>vistorias por engenheiro credenciado</strong> a cada etapa concluída.
+                Exige KYC completo, documentação da obra e aprovação de crédito.
               </p>
             </div>
           </>
@@ -545,6 +643,66 @@ export default function SimuladorPage() {
                     <p className="text-lg font-bold text-gray-900 leading-none">{kpi.value}</p>
                     <p className="text-xs text-gray-400 mt-1">{kpi.sub}</p>
                   </div>
+                </div>
+              ))}
+            </div>
+
+            {/* IMOBI cost card */}
+            {viab.finTotalObra > 0 && (
+              <div className="bg-[#0C1A3D] rounded-2xl p-5">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#4ADE80] mb-4">Custo da Operação IMOBI</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                  {[
+                    { label: "Financiamento liberado",   value: brl(viab.finTotalObra) },
+                    { label: `Juros (${form.taxaMensal.toFixed(2).replace(".", ",")}%/mês)`, value: brl(viab.jurosTotal) },
+                    { label: "Estruturação (3%)",        value: brl(viab.custoEstruturacao) },
+                    { label: "Taxa liberação (7%)",      value: brl(viab.custoLiberacao) },
+                    { label: "Monitoramento (1% VGV)",  value: brl(viab.custoMonitoramento) },
+                    { label: "Total custo IMOBI",        value: brl(viab.totalCustoImobi), highlight: true },
+                  ].map((item) => (
+                    <div key={item.label}>
+                      <p className="text-xs text-gray-400 mb-0.5">{item.label}</p>
+                      <p className={`text-sm font-bold ${item.highlight ? "text-[#4ADE80] text-base" : "text-white"}`}>{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-white/10 pt-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-400">CET estimado</p>
+                    <p className="text-white font-bold">{pct(viab.cetMensal)}/mês · {pct(viab.cetAnual)}/ano</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-400">Custo s/ VGV</p>
+                    <p className="text-white font-bold">{pct(form.vgv > 0 ? (viab.totalCustoImobi / form.vgv) * 100 : 0)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Eligibility checklist */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#16a34a]" />
+                Requisitos para aprovação IMOBI
+              </p>
+              {[
+                { label: "Margem bruta ≥ 15%",            ok: viab.margemBrutaPct >= 15 },
+                { label: "Margem líquida ≥ 10%",          ok: viab.margemLiquidaPct >= 10 },
+                { label: "Custo de obra ≤ 65% do VGV",    ok: form.custoObra <= form.vgv * 0.65 },
+                { label: "Financiamento ≤ 80% da obra",   ok: form.pctFinObra <= 80 },
+                { label: "KYC completo + documentação",    ok: null },
+                { label: "Projeto aprovado pela prefeitura", ok: null },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-2.5 py-1.5 border-b last:border-0 border-gray-50">
+                  {item.ok === null
+                    ? <div className="w-4 h-4 rounded-full border-2 border-gray-300 shrink-0" />
+                    : item.ok
+                      ? <CheckCircle2 className="w-4 h-4 text-[#16a34a] shrink-0" />
+                      : <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                  }
+                  <span className={`text-sm ${item.ok === false ? "text-red-600 font-semibold" : item.ok === null ? "text-gray-400" : "text-gray-700"}`}>
+                    {item.label}
+                  </span>
                 </div>
               ))}
             </div>
