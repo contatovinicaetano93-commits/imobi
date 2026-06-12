@@ -20,6 +20,15 @@ const card: CSSProperties = { background: "white", border: "1px solid rgba(12,26
 
 // ─── Demo Data ────────────────────────────────────────────────────────────────
 
+const PANEL_HREF: Record<string, string> = {
+  ADMIN:      "/dashboard/admin",
+  GESTOR:     "/dashboard/gestor",
+  ENGENHEIRO: "/dashboard/engenheiro",
+  COMERCIAL:  "/dashboard/comercial",
+  CONSTRUTOR: "/dashboard/construtor",
+  TOMADOR:    "/dashboard",
+};
+
 const DEMO = {
   portfolio: {
     carteiraAtiva: 42_800_000,
@@ -791,6 +800,16 @@ function CredenciaisTable() {
             style={{ ...j, display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontSize: "0.7rem", fontWeight: 600, cursor: "pointer", padding: "0.28rem 0.65rem", borderRadius: 8, border: `1px solid ${copied === u.email ? MINT : "rgba(12,26,61,0.12)"}`, color: copied === u.email ? "#16a34a" : NAVY, background: copied === u.email ? "rgba(74,222,128,0.08)" : "white", transition: "all 0.15s" }}>
             <Copy size={10} />{copied === u.email ? "Copiado!" : "Copiar"}
           </button>
+          {PANEL_HREF[u.role] && (
+            <a
+              href={PANEL_HREF[u.role]}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ ...j, display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontSize: "0.7rem", fontWeight: 600, cursor: "pointer", padding: "0.28rem 0.65rem", borderRadius: 8, border: "1px solid rgba(27,79,216,0.18)", color: ROYAL, background: "rgba(27,79,216,0.04)", textDecoration: "none", transition: "all 0.15s" }}
+            >
+              <ChevronRight size={10} />Abrir
+            </a>
+          )}
         </div>
       ))}
     </div>
@@ -867,6 +886,41 @@ export default function AdminPage() {
           <a href="/dashboard/admin/configuracoes" style={{ ...j, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8rem", fontWeight: 700, color: "white", background: NAVY, padding: "0.45rem 1rem", borderRadius: 10, textDecoration: "none" }}>
             <Settings size={13} /> Configurações
           </a>
+        </div>
+      </div>
+
+      {/* Acesso Rápido a Painéis */}
+      <div style={{ ...card, border: "1px solid rgba(27,79,216,0.12)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0.75rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.06)", background: "rgba(27,79,216,0.03)" }}>
+          <Zap size={13} color={ROYAL} />
+          <span style={{ ...j, fontSize: "0.78rem", fontWeight: 700, color: NAVY }}>Acesso Rápido a Painéis</span>
+          <span style={{ ...j, fontSize: "0.68rem", color: "rgba(12,26,61,0.35)", marginLeft: 4 }}>abre em nova aba</span>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "0.85rem 1.25rem" }}>
+          {[
+            { label: "Admin",      role: "ADMIN",      href: "/dashboard/admin",      color: NAVY,      bg: "rgba(12,26,61,0.06)"  },
+            { label: "Gestor",     role: "GESTOR",     href: "/dashboard/gestor",     color: ROYAL,     bg: "rgba(27,79,216,0.07)" },
+            { label: "Engenheiro", role: "ENGENHEIRO", href: "/dashboard/engenheiro", color: "#ea580c", bg: "rgba(234,88,12,0.07)"  },
+            { label: "Comercial",  role: "COMERCIAL",  href: "/dashboard/comercial",  color: "#7c3aed", bg: "rgba(124,58,237,0.07)" },
+            { label: "Construtor", role: "CONSTRUTOR", href: "/dashboard/construtor", color: "#0f766e", bg: "rgba(15,118,110,0.07)" },
+            { label: "Tomador",    role: "TOMADOR",    href: "/dashboard",            color: "#16a34a", bg: "rgba(22,163,74,0.07)"  },
+          ].map(({ label, role, href, color, bg }) => (
+            <a
+              key={role}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                ...j, display: "inline-flex", alignItems: "center", gap: 6,
+                fontSize: "0.78rem", fontWeight: 700, color, background: bg,
+                padding: "0.45rem 0.9rem", borderRadius: 10, textDecoration: "none",
+                border: `1px solid ${color}22`, transition: "all 0.12s",
+              }}
+            >
+              {label}
+              <ChevronRight size={11} />
+            </a>
+          ))}
         </div>
       </div>
 
