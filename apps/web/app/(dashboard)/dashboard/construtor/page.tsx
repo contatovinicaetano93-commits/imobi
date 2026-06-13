@@ -218,15 +218,15 @@ export default async function ConstrutorPage() {
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-gray-700">{fmtDate(p.venc)}</p>
-                      <p className="text-[10px] text-gray-400">{i === 0 ? "Próxima parcela" : `Parcela +${i + 1}`}</p>
+                      <p className="text-[11px] text-gray-400">{i === 0 ? "Próxima parcela" : `Parcela +${i + 1}`}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-bold text-gray-900">{formatarBRL(p.valor)}</p>
                     <div className="flex items-center gap-1.5 justify-end mt-0.5">
-                      <button className="text-[10px] text-blue-600 font-medium hover:underline">Boleto</button>
+                      <button className="text-xs text-blue-600 font-medium hover:underline px-2 py-2.5 -my-2.5">Boleto</button>
                       <span className="text-gray-200">|</span>
-                      <button className="text-[10px] text-blue-600 font-medium hover:underline">PIX</button>
+                      <button className="text-xs text-blue-600 font-medium hover:underline px-2 py-2.5 -my-2.5">PIX</button>
                     </div>
                   </div>
                 </div>
@@ -258,7 +258,7 @@ export default async function ConstrutorPage() {
               ].map(({ label, count, color, bg }) => (
                 <div key={label} className="flex flex-col items-center py-3 gap-0.5" style={{ background: bg }}>
                   <p className="text-lg font-black tabular-nums" style={{ color }}>{count}</p>
-                  <p className="text-[10px] text-gray-500">{label}</p>
+                  <p className="text-[11px] text-gray-500">{label}</p>
                 </div>
               ))}
             </div>
@@ -274,11 +274,11 @@ export default async function ConstrutorPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-gray-800 truncate">{e.nome}</p>
-                      <p className="text-[10px] text-gray-400 truncate">{(e as any).obraNome} · {e.percentualObra}% da obra</p>
+                      <p className="text-[11px] text-gray-400 truncate">{(e as any).obraNome} · {e.percentualObra}% da obra</p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-xs font-bold text-gray-900">{formatarBRL(e.valorLiberacao)}</p>
-                      <p className={`text-[10px] font-medium ${isLib ? "text-green-600" : isPend ? "text-amber-500" : "text-gray-400"}`}>
+                      <p className={`text-[11px] font-medium ${isLib ? "text-green-600" : isPend ? "text-amber-500" : "text-gray-400"}`}>
                         {isLib ? "Liberada" : isPend ? "Ag. vistoria" : "Pendente"}
                       </p>
                     </div>
@@ -315,7 +315,7 @@ export default async function ConstrutorPage() {
               <p className="text-xs font-semibold text-gray-700">Evolução física</p>
             </div>
             <p className="text-2xl font-black text-green-600 mb-1">{pctObra}%</p>
-            <p className="text-[10px] text-gray-400 mb-2">{etapasLiberadas.length} de {todasEtapas.length} etapas aprovadas</p>
+            <p className="text-[11px] text-gray-400 mb-2">{etapasLiberadas.length} de {todasEtapas.length} etapas aprovadas</p>
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
               <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${pctObra}%` }} />
             </div>
@@ -329,15 +329,15 @@ export default async function ConstrutorPage() {
             {etapasPendentes.length > 0 ? (
               <>
                 <p className="text-xs font-bold text-amber-600 mb-0.5">Vistoria agendada</p>
-                <p className="text-[10px] text-gray-500 mb-2">{etapasPendentes[0].nome}</p>
-                <Link href="/dashboard/obras" className="text-[10px] text-blue-600 font-semibold flex items-center gap-0.5 hover:underline">
+                <p className="text-[11px] text-gray-500 mb-2">{etapasPendentes[0].nome}</p>
+                <Link href="/dashboard/obras" className="text-[11px] text-blue-600 font-semibold flex items-center gap-0.5 hover:underline">
                   Ver detalhes <ArrowRight className="w-3 h-3" />
                 </Link>
               </>
             ) : etapasLiberadas.length > 0 ? (
               <>
                 <p className="text-xs font-bold text-green-600 mb-0.5">Última aprovada</p>
-                <p className="text-[10px] text-gray-500">{etapasLiberadas.at(-1)?.nome}</p>
+                <p className="text-[11px] text-gray-500">{etapasLiberadas.at(-1)?.nome}</p>
               </>
             ) : (
               <p className="text-xs text-gray-400">Sem vistoria registrada</p>
@@ -352,13 +352,13 @@ export default async function ConstrutorPage() {
                 <Building2 className="w-4 h-4 text-gray-300 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-gray-800 truncate">{o.nome}</p>
-                  <p className="text-[10px] text-gray-400">{o.etapas?.length ?? 0} etapas cadastradas</p>
+                  <p className="text-[11px] text-gray-400">{o.etapas?.length ?? 0} etapas cadastradas</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="h-1.5 w-16 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full bg-blue-500 rounded-full" style={{ width: `${o.progresso ?? 0}%` }} />
                   </div>
-                  <span className="text-[10px] font-bold text-gray-500 min-w-[26px] text-right">{o.progresso ?? 0}%</span>
+                  <span className="text-[11px] font-bold text-gray-500 min-w-[26px] text-right">{o.progresso ?? 0}%</span>
                   <ArrowRight className="w-3.5 h-3.5 text-gray-300" />
                 </div>
               </Link>
@@ -379,7 +379,7 @@ export default async function ConstrutorPage() {
             ].map(({ label, count, color, bg }) => (
               <div key={label} className="flex flex-col items-center py-3 gap-0.5" style={{ background: bg }}>
                 <p className="text-lg font-black tabular-nums" style={{ color }}>{count}</p>
-                <p className="text-[10px] text-gray-500">{label}</p>
+                <p className="text-[11px] text-gray-500">{label}</p>
               </div>
             ))}
           </div>
@@ -396,9 +396,9 @@ export default async function ConstrutorPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-gray-800">{doc.tipo.replace(/_/g, " ")}</p>
-                      {doc.motivo_rejeicao && <p className="text-[10px] text-red-500 truncate">{doc.motivo_rejeicao}</p>}
+                      {doc.motivo_rejeicao && <p className="text-[11px] text-red-500 truncate">{doc.motivo_rejeicao}</p>}
                     </div>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${isAprov ? "bg-green-50 text-green-700" : isRej ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"}`}>
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${isAprov ? "bg-green-50 text-green-700" : isRej ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"}`}>
                       {isAprov ? "Aprovado" : isRej ? "Rejeitado" : "Em análise"}
                     </span>
                   </div>
@@ -430,13 +430,13 @@ export default async function ConstrutorPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-gray-800">Desembolso</p>
-                    <p className="text-[10px] text-gray-400">
+                    <p className="text-[11px] text-gray-400">
                       {lib.processadoEm ? new Date(lib.processadoEm).toLocaleDateString("pt-BR") : "—"}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-bold text-green-700">+{formatarBRL(Number(lib.valor))}</p>
-                    <p className={`text-[10px] font-medium ${lib.status === "PROCESSADO" ? "text-green-600" : "text-amber-500"}`}>
+                    <p className={`text-[11px] font-medium ${lib.status === "PROCESSADO" ? "text-green-600" : "text-amber-500"}`}>
                       {lib.status === "PROCESSADO" ? "Processado" : "Pendente"}
                     </p>
                   </div>
@@ -452,7 +452,7 @@ export default async function ConstrutorPage() {
                 ].map(({ label, value, color }) => (
                   <div key={label} className="flex flex-col items-center py-3 px-2 gap-0.5 text-center">
                     <p className="text-xs font-bold tabular-nums" style={{ color }}>{value}</p>
-                    <p className="text-[9px] text-gray-400 leading-tight">{label}</p>
+                    <p className="text-xs text-gray-400 leading-tight">{label}</p>
                   </div>
                 ))}
               </div>
@@ -482,7 +482,7 @@ export default async function ConstrutorPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-800">{label}</p>
-                <p className="text-[10px] text-gray-400">{sub}</p>
+                <p className="text-[11px] text-gray-400">{sub}</p>
               </div>
               <ArrowRight className="w-4 h-4 text-gray-200 shrink-0" />
             </Link>
@@ -500,8 +500,8 @@ export default async function ConstrutorPage() {
                   <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-gray-800">{n.titulo}</p>
-                    <p className="text-[10px] text-gray-400 line-clamp-2">{n.mensagem}</p>
-                    <p className="text-[9px] text-gray-300 mt-0.5">{new Date(n.criadoEm).toLocaleDateString("pt-BR")}</p>
+                    <p className="text-[11px] text-gray-400 line-clamp-2">{n.mensagem}</p>
+                    <p className="text-xs text-gray-300 mt-0.5">{new Date(n.criadoEm).toLocaleDateString("pt-BR")}</p>
                   </div>
                 </div>
               ))}
@@ -531,14 +531,14 @@ export default async function ConstrutorPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className={`text-xs font-semibold ${disponivel ? "text-gray-800" : "text-gray-400"}`}>{label}</p>
-                  <p className="text-[10px] text-gray-400">{sub}</p>
+                  <p className="text-[11px] text-gray-400">{sub}</p>
                 </div>
                 {disponivel ? (
                   <Link href="/dashboard/credito" style={{ display: "flex", alignItems: "center", gap: 4, background: "#eff6ff", color: ROYAL, borderRadius: 8, padding: "5px 10px", fontSize: "0.68rem", fontWeight: 600, textDecoration: "none" }}>
                     <Download size={11} /> Baixar
                   </Link>
                 ) : (
-                  <span className="text-[10px] text-gray-300 bg-gray-50 px-2.5 py-1 rounded-lg font-medium">
+                  <span className="text-[11px] text-gray-300 bg-gray-50 px-2.5 py-1 rounded-lg font-medium">
                     Indisponível
                   </span>
                 )}

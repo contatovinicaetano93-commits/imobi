@@ -89,7 +89,7 @@ function LeadCard({
           <button
             onClick={() => setConfirmando(true)}
             title="Excluir operação"
-            style={{ background: "none", border: "1px solid #fecaca", borderRadius: 6, cursor: "pointer", color: "#ef4444", padding: "3px 6px", display: "flex", alignItems: "center", flexShrink: 0, transition: "all 0.12s" }}
+            style={{ background: "none", border: "1px solid #fecaca", borderRadius: 6, cursor: "pointer", color: "#ef4444", padding: "10px 10px", display: "flex", alignItems: "center", flexShrink: 0, transition: "all 0.12s" }}
           >
             <Trash2 size={12} />
           </button>
@@ -153,7 +153,7 @@ function LeadCard({
               key={e.key}
               onClick={() => onEtapaChange(lead.id, e.key)}
               style={{
-                fontSize: "0.65rem", fontWeight: 600, padding: "3px 8px", borderRadius: 20,
+                fontSize: "0.65rem", fontWeight: 600, padding: "8px 10px", borderRadius: 20,
                 border: `1px solid ${lead.etapa === e.key ? e.color : "#e5e7eb"}`,
                 background: lead.etapa === e.key ? e.bg : "white",
                 color: lead.etapa === e.key ? e.color : "#9ca3af",
@@ -242,7 +242,7 @@ export default function PipelinePage() {
                   key={e.key}
                   onClick={() => setFiltro(e.key)}
                   style={{
-                    ...jost, fontSize: "0.72rem", fontWeight: 600, padding: "5px 12px", borderRadius: 20,
+                    ...jost, fontSize: "0.72rem", fontWeight: 600, padding: "10px 12px", borderRadius: 20,
                     border: `1px solid ${active ? (etapaInfo?.color ?? ROYAL) : "#e5e7eb"}`,
                     background: active ? (etapaInfo?.bg ?? "#eff6ff") : "white",
                     color: active ? (etapaInfo?.color ?? ROYAL) : "#6b7280",

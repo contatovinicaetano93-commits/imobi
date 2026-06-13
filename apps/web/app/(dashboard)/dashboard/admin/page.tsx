@@ -97,11 +97,11 @@ function Bar({ pct, color, bg = "rgba(12,26,61,0.07)" }: { pct: number; color: s
   );
 }
 
-function KpiCard({ label, value, sub, accent = NAVY, delta, children }: {
-  label: string; value: string; sub?: string; accent?: string; delta?: number; children?: ReactNode;
+function KpiCard({ label, value, sub, accent = NAVY, delta, children, style: styleProp }: {
+  label: string; value: string; sub?: string; accent?: string; delta?: number; children?: ReactNode; style?: React.CSSProperties;
 }) {
   return (
-    <div style={{ ...card, borderLeft: `3px solid ${accent}`, padding: "1.1rem 1.25rem" }}>
+    <div style={{ ...card, borderLeft: `3px solid ${accent}`, padding: "1.1rem 1.25rem", ...styleProp }}>
       <p style={{ ...j, fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(12,26,61,0.38)", marginBottom: 6 }}>{label}</p>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
         <p style={{ ...bc, fontWeight: 800, fontSize: "clamp(1.3rem,2.5vw,1.75rem)", color: NAVY, lineHeight: 1 }}>{value}</p>
@@ -385,7 +385,7 @@ function TabPipeline() {
             const convPct = i > 0 ? Math.round((qtde / pl.funil[i-1].qtde) * 100) : 100;
             return (
               <div key={etapa}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 5 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 5, flexWrap: "wrap" }}>
                   <div style={{ width: 80, flexShrink: 0 }}>
                     <p style={{ ...j, fontSize: "0.78rem", fontWeight: 600, color: NAVY }}>{etapa}</p>
                     {i > 0 && <p style={{ ...j, fontSize: "0.65rem", color: "rgba(12,26,61,0.35)" }}>{convPct}% conv.</p>}
@@ -398,7 +398,7 @@ function TabPipeline() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ textAlign: "right", minWidth: 110 }}>
+                  <div style={{ textAlign: "right", minWidth: 80 }}>
                     <p style={{ ...j, fontSize: "0.78rem", fontWeight: 700, color: NAVY }}>{formatarBRL(valor)}</p>
                   </div>
                 </div>
@@ -445,10 +445,10 @@ function TabObras() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-3">
-        <KpiCard label="No Prazo"   value={String(noPrazo)}   sub="obras" accent={MINT} />
-        <KpiCard label="Atrasadas"  value={String(atrasadas)} sub="obras" accent="#dc2626" />
-        <KpiCard label="Adiantadas" value={String(adiantadas)}sub="obras" accent={ROYAL} />
+      <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
+        <KpiCard label="No Prazo"   value={String(noPrazo)}   sub="obras" accent={MINT}     style={{ padding: "0.6rem 0.75rem" }} />
+        <KpiCard label="Atrasadas"  value={String(atrasadas)} sub="obras" accent="#dc2626"  style={{ padding: "0.6rem 0.75rem" }} />
+        <KpiCard label="Adiantadas" value={String(adiantadas)}sub="obras" accent={ROYAL}    style={{ padding: "0.6rem 0.75rem" }} />
       </div>
 
       {/* Tabela obras */}
@@ -730,7 +730,7 @@ function CredenciaisTable() {
   return (
     <div>
       {DEMO.credenciais.map((u) => (
-        <div key={u.email} style={{ display: "flex", alignItems: "center", gap: 12, padding: "0.8rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)" }}>
+        <div key={u.email} style={{ display: "flex", alignItems: "center", gap: 8, padding: "0.8rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)", flexWrap: "wrap" }}>
           <div style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, background: "rgba(12,26,61,0.07)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ ...bc, fontWeight: 800, fontSize: "0.72rem", color: NAVY }}>{u.role.slice(0, 2)}</span>
           </div>
@@ -879,7 +879,7 @@ export default function AdminPage() {
             onClick={() => setTab(id)}
             style={{
               ...j, display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "0.6rem 1rem", fontSize: "0.8rem", fontWeight: tab === id ? 700 : 500,
+              padding: "0.75rem 1rem", fontSize: "0.8rem", fontWeight: tab === id ? 700 : 500,
               color: tab === id ? NAVY : "rgba(12,26,61,0.42)",
               background: "none", border: "none", cursor: "pointer",
               borderBottom: `2px solid ${tab === id ? MINT : "transparent"}`,

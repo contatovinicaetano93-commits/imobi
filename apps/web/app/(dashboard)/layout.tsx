@@ -147,7 +147,7 @@ function renderNav(
       <div key={`${idx}-${item.href}`}>
         {showSection && (
           <p style={{
-            fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em",
+            fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em",
             textTransform: "uppercase", color: "rgba(255,255,255,0.28)",
             padding: "1.25rem 0.75rem 0.35rem",
             fontFamily: "'Jost', sans-serif",
@@ -170,7 +170,7 @@ function renderNav(
             transition: "all 0.12s",
             borderLeft: active ? `2px solid ${accent}` : "2px solid transparent",
             fontFamily: "'Jost', sans-serif",
-            minHeight: 40,
+            minHeight: 44,
           }}
         >
           <Icon size={13} strokeWidth={active ? 2.2 : 1.8} style={{ flexShrink: 0 }} />
@@ -253,7 +253,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           display: "flex", alignItems: "center", gap: "0.4rem",
         }}>
           <span style={{ width: 5, height: 5, borderRadius: "50%", background: accent, flexShrink: 0 }} />
-          <span style={{ fontSize: "0.6rem", fontWeight: 700, color: accent, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "'Jost', sans-serif" }}>
+          <span style={{ fontSize: "0.72rem", fontWeight: 700, color: accent, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "'Jost', sans-serif" }}>
             {meta.label}
           </span>
         </div>
@@ -268,7 +268,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           background: `${accent}22`,
           border: `1.5px solid ${accent}55`,
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "0.6rem", fontWeight: 700, color: accent, flexShrink: 0,
+          fontSize: "0.65rem", fontWeight: 700, color: accent, flexShrink: 0,
           fontFamily: "'Jost', sans-serif",
         }}>
           {initials}
@@ -371,7 +371,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             style={{
               background: "none", border: "none", cursor: "pointer",
               color: "white", display: "flex", alignItems: "center", gap: "0.35rem",
-              padding: "0.5rem", margin: "-0.5rem 0",
+              padding: "0.5rem 0.6rem", minHeight: 44,
               fontSize: "0.82rem", fontFamily: "'Jost', sans-serif",
               fontWeight: 600, textDecoration: "none", flexShrink: 0,
             }}
@@ -399,7 +399,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           aria-label="Menu"
           style={{
             background: "none", border: "none", cursor: "pointer",
-            padding: "0.5rem", display: "flex", flexDirection: "column",
+            width: 44, height: 44, display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
             gap: 4.5, flexShrink: 0,
           }}
         >

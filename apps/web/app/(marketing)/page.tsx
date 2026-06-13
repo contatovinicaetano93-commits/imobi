@@ -6,24 +6,6 @@ import "./landing.css";
 
 const WA = "5511993455589";
 
-const OPERACOES = [
-  { valor: "R$18M",   tipo: "Luxo",        uf: "SC" },
-  { valor: "R$8,5M",  tipo: "Obra",        uf: "PR" },
-  { valor: "R$12M",   tipo: "Aquisição",   uf: "SC" },
-  { valor: "R$6,2M",  tipo: "MCMV",        uf: "SP" },
-  { valor: "R$9,4M",  tipo: "Finalização", uf: "SC" },
-  { valor: "R$24M",   tipo: "Residencial", uf: "RJ" },
-  { valor: "R$16M",   tipo: "Comercial",   uf: "SP" },
-  { valor: "R$18M",   tipo: "MCMV",        uf: "MG" },
-  { valor: "R$14M",   tipo: "Loteamento",  uf: "GO" },
-  { valor: "R$12M",   tipo: "Luxo",        uf: "SC" },
-  { valor: "R$9M",    tipo: "Retrofit",    uf: "PR" },
-  { valor: "R$7,5M",  tipo: "Industrial",  uf: "RS" },
-  { valor: "R$6M",    tipo: "Studio",      uf: "SP" },
-  { valor: "R$5,4M",  tipo: "Resort",      uf: "BA" },
-  { valor: "R$4M",    tipo: "Misto",       uf: "PE" },
-];
-// Sum: 18+8.5+12+6.2+9.4+24+16+18+14+12+9+7.5+6+5.4+4 = 170M
 
 export default function LandingPage() {
   const router = useRouter();
@@ -53,7 +35,6 @@ export default function LandingPage() {
   const railRef        = useRef<HTMLDivElement>(null);
   const [counterVal,      setCounterVal]      = useState(0);
   const [counterStarted,  setCounterStarted]  = useState(false);
-  const [marqueeStarted,  setMarqueeStarted]  = useState(false);
 
   useEffect(() => { setIsMobile(window.innerWidth <= 768); }, []);
 
@@ -83,7 +64,6 @@ export default function LandingPage() {
     const obs = new IntersectionObserver(([e]) => {
       if (e.isIntersecting && !counterStarted) {
         setCounterStarted(true);
-        setMarqueeStarted(true);
         const dur = 2200, t0 = Date.now();
         const tick = () => {
           const p = Math.min((Date.now() - t0) / dur, 1);
@@ -244,53 +224,23 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* TRACK RECORD RAIL */}
-          <div className="rail-wrap" ref={railRef}>
-            <p className="rail-label">Track record — SC · PR · SP · RJ · MG · GO · RS · BA · PE</p>
-            <div className="rail-scroll-wrap">
-              <div className="rail-line-bg" aria-hidden />
-              <div className={`rail-track-marquee${marqueeStarted ? " is-running" : ""}`}>
-                {[...OPERACOES, ...OPERACOES].map((op, i) => (
-                  <div
-                    className="rail-node"
-                    key={i}
-                    style={{ "--i": String(i % OPERACOES.length) } as React.CSSProperties}
-                  >
-                    <span className="rail-val">{op.valor}</span>
-                    <span className="rail-dot" />
-                    <span className="rail-tag">{op.tipo} · {op.uf}</span>
-                  </div>
-                ))}
+          {/* KPI CARDS */}
+          <div className="kpi-grid" ref={railRef}>
+            {([
+              { val: `R$${counterVal}M+`, lbl: "capital estruturado",  accent: "#4ADE80" },
+              { val: "15–30 dias",         lbl: "da análise ao capital", accent: "#60a5fa" },
+              { val: "100%",               lbl: "taxa de entrega",       accent: "#34d399" },
+              { val: "R$1M+",              lbl: "operação mínima",       accent: "#a78bfa" },
+            ] as { val: string; lbl: string; accent: string }[]).map(({ val, lbl, accent }) => (
+              <div className="kpi-card" key={lbl}>
+                <span className="kpi-val" style={{ color: accent }}>{val}</span>
+                <span className="kpi-lbl">{lbl}</span>
               </div>
-            </div>
-            <div className="rail-totals">
-              <div className="rail-realized">
-                <span className="rail-big">+R${counterVal}M</span>
-                <span className="rail-sub">estruturados</span>
-              </div>
-              <div className="rail-pipeline">
-                <span className="rail-pipe-num">R$800M</span>
-                <span className="rail-pipe-sub">em pipeline</span>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── NÚMEROS STRIP ── */}
-      <div className="numeros-strip">
-        {[
-          { val: "15–30 dias", label: "Aprovação",         sub: "Bancos levam 90+ dias"       },
-          { val: "100%",       label: "Taxa de entrega",   sub: "Histórico de operações"      },
-          { val: "R$1M+",      label: "Operação mínima",   sub: "Sem teto máximo definido"    },
-        ].map((n, i) => (
-          <div className={`num-item reveal${i ? ` d${i}` : ""}`} key={n.label}>
-            <div className="num-val">{n.val}</div>
-            <div className="num-label">{n.label}</div>
-            <div className="num-sub">{n.sub}</div>
-          </div>
-        ))}
-      </div>
 
       {/* ── VANTAGENS ── */}
       <section className="vantagens" id="vantagens">
