@@ -9,8 +9,8 @@ import { ToastProvider } from "@/hooks/toast-context";
 import { Toaster } from "@/components/ui/toaster";
 import {
   Home, HardHat, CreditCard, Calculator, Star, FileCheck2, Bell, User,
-  Wrench, ShieldCheck, BarChart3, Banknote, Megaphone, Settings, LogOut,
-  ChevronRight, Building2, ArrowLeft, Vote, LayoutDashboard, type LucideIcon,
+  ShieldCheck, BarChart3, Banknote, Settings, LogOut,
+  ChevronRight, Building2, ArrowLeft, Vote, LayoutDashboard, MapPin, TrendingUp, FileText, type LucideIcon,
 } from "lucide-react";
 
 type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "GESTOR_OBRA" | "TOMADOR" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | null;
@@ -32,17 +32,25 @@ const NAV: NavItem[] = [
   { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "simulador" },
   { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "score" },
   { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "kyc" },
-  { label: "Painel",        href: "/dashboard/gestor",                  icon: Banknote,    roles: ["GESTOR"],        section: "geral",  funcao: "gestor" },
-  { label: "Comitês",       href: "/dashboard/gestor/comite",           icon: Vote,        roles: ["GESTOR"],                          funcao: "gestor" },
-  { label: "Etapas",        href: "/dashboard/gestor/etapas",           icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "gestor" },
-  { label: "KYC",           href: "/dashboard/gestor/kyc",              icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "kyc" },
-  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2, roles: ["GESTOR"],                          funcao: "due-diligence" },
-  { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["GESTOR"],                          funcao: "fundos" },
-  { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["GESTOR"],                          funcao: "relatorios" },
-  { label: "Engenharia",    href: "/dashboard/engenheiro",              icon: Wrench,      roles: ["ENGENHEIRO","GESTOR_OBRA"], section: "geral", funcao: "engenharia" },
-  { label: "Pareceres",     href: "/dashboard/engenheiro/comite",       icon: Vote,        roles: ["ENGENHEIRO","GESTOR_OBRA"],        funcao: "engenharia" },
-  { label: "Painel",        href: "/dashboard/comercial",               icon: Megaphone,   roles: ["COMERCIAL","PARCEIRO"], section: "geral", funcao: "comercial" },
-  { label: "Leads",         href: "/dashboard/comercial/leads",         icon: Star,        roles: ["COMERCIAL","PARCEIRO"],            funcao: "comercial" },
+  { label: "Painel",        href: "/dashboard/gestor",                   icon: Home,        roles: ["GESTOR"],        section: "geral" },
+  { label: "Comitê",        href: "/dashboard/gestor/comite",            icon: Vote,        roles: ["GESTOR"] },
+  { label: "Etapas",        href: "/dashboard/gestor/etapas",            icon: FileCheck2,  roles: ["GESTOR"] },
+  { label: "KYC",           href: "/dashboard/gestor/kyc",               icon: ShieldCheck, roles: ["GESTOR"] },
+  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2,  roles: ["GESTOR"] },
+  { label: "Carteira",      href: "/dashboard/fundos",                   icon: Banknote,    roles: ["GESTOR"] },
+  { label: "Relatórios",    href: "/dashboard/relatorios",               icon: BarChart3,   roles: ["GESTOR"] },
+  { label: "Painel",        href: "/dashboard/engenheiro",               icon: Home,        roles: ["ENGENHEIRO","GESTOR_OBRA"], section: "geral" },
+  { label: "Minhas Obras",  href: "/dashboard/obras",                    icon: HardHat,     roles: ["ENGENHEIRO","GESTOR_OBRA"] },
+  { label: "Vistoria",      href: "/dashboard/engenheiro/vistoria",      icon: MapPin,      roles: ["ENGENHEIRO","GESTOR_OBRA"] },
+  { label: "Checklist",     href: "/dashboard/engenheiro/checklist",     icon: FileCheck2,  roles: ["ENGENHEIRO","GESTOR_OBRA"] },
+  { label: "Alertas",       href: "/dashboard/engenheiro/alertas",       icon: Bell,        roles: ["ENGENHEIRO","GESTOR_OBRA"] },
+  { label: "Comitê",        href: "/dashboard/engenheiro/comite",        icon: Vote,        roles: ["ENGENHEIRO","GESTOR_OBRA"] },
+  { label: "Painel",        href: "/dashboard/comercial",                icon: Home,        roles: ["COMERCIAL","PARCEIRO"], section: "geral" },
+  { label: "Indicações",    href: "/dashboard/comercial/leads",          icon: Star,        roles: ["COMERCIAL","PARCEIRO"] },
+  { label: "Comissões",     href: "/dashboard/comercial/comissoes",      icon: Banknote,    roles: ["COMERCIAL","PARCEIRO"] },
+  { label: "Simulador",     href: "/dashboard/comercial/simulador",      icon: Calculator,  roles: ["COMERCIAL","PARCEIRO"] },
+  { label: "Materiais",     href: "/dashboard/comercial/materiais",      icon: FileText,    roles: ["COMERCIAL","PARCEIRO"] },
+  { label: "Ranking",       href: "/dashboard/comercial/ranking",        icon: TrendingUp,  roles: ["COMERCIAL","PARCEIRO"] },
   { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], funcao: "notificacoes" },
   { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null] },
   { label: "Visão Geral",   href: "/dashboard/admin",                   icon: LayoutDashboard, roles: ["ADMIN"],     section: "admin" },
@@ -195,7 +203,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [funcoesBloqueadas, setFuncoesBloqueadas] = useState<string[]>([]);
 
   useEffect(() => {
-    // Try sessionStorage first (5-min TTL) to skip the network call on tab switches / reloads
+    // Apply cache immediately for instant render (avoids skeleton flash)
+    let hasCache = false;
     try {
       const raw = sessionStorage.getItem("imobi_auth");
       if (raw) {
@@ -206,11 +215,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           setUserEmail(d.email ?? null);
           setFuncoesBloqueadas(Array.isArray(d.funcoesBloqueadas) ? d.funcoesBloqueadas : []);
           setRoleLoading(false);
-          return;
+          hasCache = true;
         }
       }
     } catch { /* sessionStorage unavailable */ }
 
+    // Always validate with API (catches stale cache when role changes between sessions)
     fetch("/api/auth/me")
       .then((r) => r.ok ? r.json() : null)
       .catch(() => null)
@@ -221,8 +231,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           setUserName(d.nome ?? null);
           setUserEmail(d.email ?? null);
           setFuncoesBloqueadas(Array.isArray(d.funcoesBloqueadas) ? d.funcoesBloqueadas : []);
+        } else {
+          // Session invalid — clear stale cache
+          try { sessionStorage.removeItem("imobi_auth"); } catch { /* ignore */ }
+          setRole(null);
+          setUserName(null);
+          setUserEmail(null);
+          setFuncoesBloqueadas([]);
         }
-        setRoleLoading(false);
+        if (!hasCache) setRoleLoading(false);
       });
   }, []);
 
@@ -290,6 +307,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <button
           onClick={async () => {
             await fetch("/api/auth/session", { method: "DELETE" });
+            try { sessionStorage.removeItem("imobi_auth"); } catch { /* ignore */ }
             window.location.href = "/login";
           }}
           title="Sair"
