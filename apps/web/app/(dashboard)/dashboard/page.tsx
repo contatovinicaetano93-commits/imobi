@@ -19,14 +19,21 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: "Dashboard — imbobi" };
 
-function decodeRole(token: string): string | null {
+function decodeJwt(token: string): { role?: string; exp?: number } | null {
   try {
     const payload = token.split(".")[1];
     const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
     const padded = base64 + "===".slice(0, (4 - base64.length % 4) % 4);
-    const decoded = JSON.parse(Buffer.from(padded, "base64").toString("utf-8"));
-    return decoded.role ?? decoded.tipo ?? null;
+    return JSON.parse(Buffer.from(padded, "base64").toString("utf-8"));
   } catch { return null; }
+}
+
+function decodeRole(token: string): string | null {
+  const decoded = decodeJwt(token);
+  if (!decoded) return null;
+  // Reject expired tokens — fall through to login redirect
+  if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) return "__expired__";
+  return decoded.role ?? null;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -53,10 +60,12 @@ export default async function DashboardPage() {
   const token = jar.get("access_token")?.value;
   const role = token ? decodeRole(token) : null;
 
+  if (!token || role === "__expired__") redirect("/login");
   if (role === "ADMIN")       redirect("/dashboard/admin");
   if (role === "GESTOR")      redirect("/dashboard/gestor");
   if (role === "ENGENHEIRO")  redirect("/dashboard/engenheiro");
-  if (role === "COMERCIAL")   redirect("/dashboard/comercial");
+  if (role === "COMERCIAL" || role === "PARCEIRO") redirect("/dashboard/comercial");
+  if (role === "GESTOR_OBRA") redirect("/dashboard/engenheiro");
 
   const [obras, creditos] = await Promise.all([
     obrasApi.listar().catch(() => [] as ObraResumo[]),

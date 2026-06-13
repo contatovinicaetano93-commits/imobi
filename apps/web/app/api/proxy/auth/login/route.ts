@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     secure: process.env['NODE_ENV'] === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 15,
+    maxAge: 60 * 60 * 8,
   });
   if (data.refreshToken) {
     jar.set('refresh_token', data.refreshToken, {

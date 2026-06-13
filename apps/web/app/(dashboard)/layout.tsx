@@ -11,7 +11,7 @@ import {
   ChevronRight, Building2, ArrowLeft, type LucideIcon,
 } from "lucide-react";
 
-type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "TOMADOR" | "COMERCIAL" | "CONSTRUTOR" | null;
+type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "GESTOR_OBRA" | "TOMADOR" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | null;
 type NavItem = {
   label: string; href: string; icon: LucideIcon;
   roles: UserRole[]; section?: string; funcao?: string;
@@ -34,11 +34,11 @@ const NAV: NavItem[] = [
   { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2, roles: ["GESTOR"],                          funcao: "due-diligence" },
   { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["GESTOR"],                          funcao: "fundos" },
   { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["GESTOR"],                          funcao: "relatorios" },
-  { label: "Engenharia",    href: "/dashboard/engenheiro",              icon: Wrench,      roles: ["ENGENHEIRO"],    section: "geral",  funcao: "engenharia" },
-  { label: "Painel",        href: "/dashboard/comercial",               icon: Megaphone,   roles: ["COMERCIAL"],     section: "geral",  funcao: "comercial" },
-  { label: "Leads",         href: "/dashboard/comercial/leads",         icon: Star,        roles: ["COMERCIAL"],                       funcao: "comercial" },
-  { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","COMERCIAL","ADMIN","CONSTRUTOR",null], funcao: "notificacoes" },
-  { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","COMERCIAL","ADMIN","CONSTRUTOR",null] },
+  { label: "Engenharia",    href: "/dashboard/engenheiro",              icon: Wrench,      roles: ["ENGENHEIRO","GESTOR_OBRA"], section: "geral", funcao: "engenharia" },
+  { label: "Painel",        href: "/dashboard/comercial",               icon: Megaphone,   roles: ["COMERCIAL","PARCEIRO"], section: "geral", funcao: "comercial" },
+  { label: "Leads",         href: "/dashboard/comercial/leads",         icon: Star,        roles: ["COMERCIAL","PARCEIRO"],            funcao: "comercial" },
+  { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], funcao: "notificacoes" },
+  { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null] },
   { label: "Visão Geral",   href: "/dashboard/admin",                   icon: Settings,    roles: ["ADMIN"],         section: "admin" },
   { label: "Usuários",      href: "/dashboard/admin/usuarios",          icon: User,        roles: ["ADMIN"] },
   { label: "Configurações", href: "/dashboard/admin/configuracoes",     icon: Settings,    roles: ["ADMIN"] },
@@ -50,11 +50,13 @@ const NAV: NavItem[] = [
 const SECTION_LABELS: Record<string, string> = { geral: "Geral", operacional: "Operacional", admin: "Admin" };
 
 const ROLE_META: Record<string, { label: string; accent: string }> = {
-  CONSTRUTOR: { label: "Construtor", accent: "#38bdf8" },
-  TOMADOR:    { label: "Tomador",    accent: MINT },
-  GESTOR:     { label: "Gestor",     accent: "#a78bfa" },
-  ENGENHEIRO: { label: "Engenheiro", accent: "#fb923c" },
-  COMERCIAL:  { label: "Parceiro",   accent: "#fbbf24" },
+  CONSTRUTOR:  { label: "Construtor",   accent: "#38bdf8" },
+  TOMADOR:     { label: "Tomador",      accent: MINT },
+  GESTOR:      { label: "Gestor",       accent: "#a78bfa" },
+  ENGENHEIRO:  { label: "Engenheiro",   accent: "#fb923c" },
+  GESTOR_OBRA: { label: "Eng. Obra",    accent: "#fb923c" },
+  COMERCIAL:   { label: "Parceiro",     accent: "#fbbf24" },
+  PARCEIRO:    { label: "Parceiro",     accent: "#fbbf24" },
   ADMIN:      { label: "Admin",      accent: MINT },
 };
 

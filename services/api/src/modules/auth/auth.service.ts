@@ -144,7 +144,7 @@ export class AuthService {
         email: usuario?.email ?? null,
         funcoesBloqueadas: usuario?.funcoesBloqueadas ?? [],
       },
-      { expiresIn: "15m" }
+      { expiresIn: "8h" }
     );
     const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
 

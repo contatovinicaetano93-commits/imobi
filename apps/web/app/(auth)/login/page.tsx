@@ -48,8 +48,11 @@ function LoginForm() {
         ADMIN:      "/dashboard/admin",
         GESTOR:     "/dashboard/gestor",
         ENGENHEIRO: "/dashboard/engenheiro",
+        GESTOR_OBRA:"/dashboard/engenheiro",
         COMERCIAL:  "/dashboard/comercial",
-        CONSTRUTOR: "/dashboard/construtor",
+        PARCEIRO:   "/dashboard/comercial",
+        TOMADOR:    "/dashboard",
+        CONSTRUTOR: "/dashboard",
       };
       router.push(ROLE_HOME[role] ?? "/dashboard");
     } catch (e) {
