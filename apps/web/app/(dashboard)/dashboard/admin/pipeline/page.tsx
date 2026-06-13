@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Building2, TrendingUp, Clock, CheckCircle2, AlertCircle, Filter, Plus, Trash2, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { MapPin, Building2, TrendingUp, Clock, CheckCircle2, AlertCircle, Filter, Plus, Trash2, X, ArrowLeft } from "lucide-react";
 
 const NAVY = "#0C1A3D";
 const ROYAL = "#1B4FD8";
@@ -169,6 +170,7 @@ function LeadCard({
 }
 
 export default function PipelinePage() {
+  const router = useRouter();
   const [leads, setLeads] = useState<Lead[]>(LEADS_INICIAL);
   const [filtro, setFiltro] = useState<Etapa | "todos">("todos");
   const [showForm, setShowForm] = useState(false);
@@ -213,6 +215,9 @@ export default function PipelinePage() {
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 0 3rem" }}>
+      <button onClick={() => router.push("/dashboard/admin")} style={{ ...jost, display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: "0.82rem", fontWeight: 500, padding: "0.4rem 0", marginBottom: "1rem" }}>
+        <ArrowLeft size={15} /> Voltar
+      </button>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem", marginBottom: "1.5rem" }}>
         <div>

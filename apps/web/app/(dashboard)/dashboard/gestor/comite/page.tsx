@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { comiteApi, type ComiteDigital, type SolicitacaoCredito } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
-import { Eye, FileText, CheckCircle2, XCircle, AlertCircle, Users, Vote } from "lucide-react";
+import { Eye, FileText, CheckCircle2, XCircle, AlertCircle, Users, Vote, ArrowLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Acompanhamento de Comitês — Fundo" };
@@ -157,6 +158,9 @@ export default async function GestorComitePage() {
 
   return (
     <div className="max-w-3xl space-y-6">
+      <Link href="/dashboard/gestor" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition" style={{ fontFamily: "'Jost', sans-serif" }}>
+        <ArrowLeft className="w-4 h-4" /> Voltar
+      </Link>
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
           <Eye className="w-5 h-5 text-indigo-600" />
