@@ -203,24 +203,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [funcoesBloqueadas, setFuncoesBloqueadas] = useState<string[]>([]);
 
   useEffect(() => {
-    // Apply cache immediately for instant render (avoids skeleton flash)
-    let hasCache = false;
+    // Pre-fill user footer from cache (name/email) but never trust cached role for nav —
+    // always wait for /api/auth/me so we never show the wrong role's sidebar.
     try {
       const raw = sessionStorage.getItem("imobi_auth");
       if (raw) {
         const { d, ts } = JSON.parse(raw);
         if (Date.now() - ts < 15 * 60 * 1000 && d?.authenticated) {
-          setRole(d.role ?? null);
           setUserName(d.nome ?? null);
           setUserEmail(d.email ?? null);
-          setFuncoesBloqueadas(Array.isArray(d.funcoesBloqueadas) ? d.funcoesBloqueadas : []);
-          setRoleLoading(false);
-          hasCache = true;
         }
       }
     } catch { /* sessionStorage unavailable */ }
 
-    // Always validate with API (catches stale cache when role changes between sessions)
+    // Role (and therefore nav) is ONLY set from the API response.
     fetch("/api/auth/me")
       .then((r) => r.ok ? r.json() : null)
       .catch(() => null)
@@ -232,14 +228,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           setUserEmail(d.email ?? null);
           setFuncoesBloqueadas(Array.isArray(d.funcoesBloqueadas) ? d.funcoesBloqueadas : []);
         } else {
-          // Session invalid — clear stale cache
           try { sessionStorage.removeItem("imobi_auth"); } catch { /* ignore */ }
           setRole(null);
           setUserName(null);
           setUserEmail(null);
           setFuncoesBloqueadas([]);
         }
-        if (!hasCache) setRoleLoading(false);
+        setRoleLoading(false);
       });
   }, []);
 
