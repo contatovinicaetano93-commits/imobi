@@ -28,7 +28,7 @@ const NAV: NavItem[] = [
   { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "simulador" },
   { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "score" },
   { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "kyc" },
-  { label: "Painel",        href: "/dashboard/gestor",                  icon: ShieldCheck, roles: ["GESTOR"],        section: "geral",  funcao: "gestor" },
+  { label: "Painel",        href: "/dashboard/gestor",                  icon: Banknote,    roles: ["GESTOR"],        section: "geral",  funcao: "gestor" },
   { label: "Etapas",        href: "/dashboard/gestor/etapas",           icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "gestor" },
   { label: "KYC",           href: "/dashboard/gestor/kyc",              icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "kyc" },
   { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2, roles: ["GESTOR"],                          funcao: "due-diligence" },
@@ -50,14 +50,14 @@ const NAV: NavItem[] = [
 const SECTION_LABELS: Record<string, string> = { geral: "Geral", operacional: "Operacional", admin: "Admin" };
 
 const ROLE_META: Record<string, { label: string; accent: string }> = {
-  CONSTRUTOR:  { label: "Construtor",   accent: "#38bdf8" },
-  TOMADOR:     { label: "Tomador",      accent: MINT },
-  GESTOR:      { label: "Gestor",       accent: "#a78bfa" },
-  ENGENHEIRO:  { label: "Engenheiro",   accent: "#fb923c" },
-  GESTOR_OBRA: { label: "Eng. Obra",    accent: "#fb923c" },
-  COMERCIAL:   { label: "Parceiro",     accent: "#fbbf24" },
-  PARCEIRO:    { label: "Parceiro",     accent: "#fbbf24" },
-  ADMIN:      { label: "Admin",      accent: MINT },
+  CONSTRUTOR:  { label: "Cliente",     accent: MINT },
+  TOMADOR:     { label: "Cliente",     accent: MINT },
+  GESTOR:      { label: "Fundo",       accent: "#a78bfa" },
+  ENGENHEIRO:  { label: "Engenheiro",  accent: "#fb923c" },
+  GESTOR_OBRA: { label: "Engenheiro",  accent: "#fb923c" },
+  COMERCIAL:   { label: "Comercial",   accent: "#fbbf24" },
+  PARCEIRO:    { label: "Parceiro",    accent: "#fbbf24" },
+  ADMIN:       { label: "Admin",       accent: MINT },
 };
 
 function filterNav(role: UserRole, funcoesBloqueadas: string[]): NavItem[] {

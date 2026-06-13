@@ -51,7 +51,7 @@ export default function GestorPage() {
     return (
       <div className="space-y-6 sm:space-y-8">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Painel do Gestor</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Painel do Fundo</h1>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-8 sm:p-12 text-center">
           <p className="text-sm sm:text-base text-gray-500">Carregando...</p>
@@ -71,7 +71,7 @@ export default function GestorPage() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.35rem" }}>
               <ShieldCheck size={18} color="#a78bfa" />
-              <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Painel do Gestor</p>
+              <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Painel do Fundo</p>
             </div>
             <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0 0 0.4rem" }}>Fila de Aprovações</h1>
             <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.65)", margin: 0 }}>

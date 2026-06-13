@@ -122,10 +122,10 @@ const DEMO = {
   },
   credenciais: [
     { role: "ADMIN",      email: "admin@imobi.com.br",      senha: "Admin@123",      label: "Administrador" },
-    { role: "GESTOR",     email: "gestor@imobi.com.br",     senha: "Gestor@123",     label: "Gestor de Fundo" },
+    { role: "GESTOR",     email: "gestor@imobi.com.br",     senha: "Gestor@123",     label: "Fundo" },
     { role: "ENGENHEIRO", email: "eng@imobi.com.br",         senha: "Eng@123",        label: "Engenheiro" },
     { role: "COMERCIAL",  email: "comercial@imobi.com.br",  senha: "Comercial@123",  label: "Comercial" },
-    { role: "CONSTRUTOR", email: "construtor@imobi.com.br", senha: "Construtor@123", label: "Construtor" },
+    { role: "CONSTRUTOR", email: "construtor@imobi.com.br", senha: "Construtor@123", label: "Cliente" },
   ],
 };
 
@@ -899,11 +899,10 @@ export default function AdminPage() {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "0.85rem 1.25rem" }}>
           {[
             { label: "Admin",      role: "ADMIN",      href: "/dashboard/admin",      color: NAVY,      bg: "rgba(12,26,61,0.06)"  },
-            { label: "Gestor",     role: "GESTOR",     href: "/dashboard/gestor",     color: ROYAL,     bg: "rgba(27,79,216,0.07)" },
+            { label: "Fundo",      role: "GESTOR",     href: "/dashboard/gestor",     color: ROYAL,     bg: "rgba(27,79,216,0.07)" },
             { label: "Engenheiro", role: "ENGENHEIRO", href: "/dashboard/engenheiro", color: "#ea580c", bg: "rgba(234,88,12,0.07)"  },
             { label: "Comercial",  role: "COMERCIAL",  href: "/dashboard/comercial",  color: "#7c3aed", bg: "rgba(124,58,237,0.07)" },
-            { label: "Construtor", role: "CONSTRUTOR", href: "/dashboard/construtor", color: "#0f766e", bg: "rgba(15,118,110,0.07)" },
-            { label: "Tomador",    role: "TOMADOR",    href: "/dashboard",            color: "#16a34a", bg: "rgba(22,163,74,0.07)"  },
+            { label: "Cliente",    role: "TOMADOR",    href: "/dashboard",            color: "#16a34a", bg: "rgba(22,163,74,0.07)"  },
           ].map(({ label, role, href, color, bg }) => (
             <a
               key={role}
