@@ -6,6 +6,7 @@ import { CacheModule } from "@nestjs/cache-manager";
 import { APP_GUARD, APP_INTERCEPTOR, Reflector } from "@nestjs/core";
 import { CacheInterceptor } from "@nestjs/cache-manager";
 import { ThrottlerStorage } from "@nestjs/throttler";
+import KeyvRedis from "@keyv/redis";
 import { PrismaModule } from "./modules/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsuariosModule } from "./modules/usuarios/usuarios.module";
@@ -46,15 +47,17 @@ const redisConfig = getRedisConfig();
       { ttl: 60000, limit: 5, name: "upload" },
       { ttl: 60000, limit: 20, name: "manager" },
     ]),
-    CacheModule.register({
+    CacheModule.registerAsync({
       isGlobal: true,
-      store: "redis",
-      host: redisConfig.host,
-      port: redisConfig.port,
-      ...(redisConfig.password && { password: redisConfig.password }),
-      ttl: 300,
-      lazyConnect: true,
-      retryStrategy: (times: number) => Math.min(times * 50, 2000),
+      useFactory: () => {
+        const redisUrl = redisConfig.password
+          ? `redis://:${redisConfig.password}@${redisConfig.host}:${redisConfig.port}`
+          : `redis://${redisConfig.host}:${redisConfig.port}`;
+        return {
+          stores: [new KeyvRedis(redisUrl)],
+          ttl: 300_000,
+        };
+      },
     }),
     BullModule.forRoot({
       redis: {
