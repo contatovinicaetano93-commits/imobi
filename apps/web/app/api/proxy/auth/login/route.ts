@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     cache: 'no-store',
   }).catch(() => null);
 
-  if (!res) return NextResponse.json({ message: 'Erro de conexão' }, { status: 503 });
+  if (!res) return NextResponse.json({ message: `API inacessível — verifique NEXT_PUBLIC_API_URL (tentou: ${API}/auth/login)` }, { status: 503 });
 
   const data = await res.json().catch(() => ({}));
 

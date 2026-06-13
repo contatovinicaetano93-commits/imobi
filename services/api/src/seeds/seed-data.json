@@ -9,6 +9,46 @@
       "kycStatus": "APROVADO"
     },
     {
+      "nome": "Gestor Fundo",
+      "cpf": "99345678901",
+      "email": "fundo@test.com",
+      "telefone": "11987654399",
+      "tipo": "GESTOR",
+      "kycStatus": "APROVADO"
+    },
+    {
+      "nome": "Engenheiro Teste",
+      "cpf": "98345678901",
+      "email": "engenheiro@test.com",
+      "telefone": "11987654398",
+      "tipo": "ENGENHEIRO",
+      "kycStatus": "APROVADO"
+    },
+    {
+      "nome": "Comercial Teste",
+      "cpf": "97345678901",
+      "email": "comercial@test.com",
+      "telefone": "11987654397",
+      "tipo": "COMERCIAL",
+      "kycStatus": "APROVADO"
+    },
+    {
+      "nome": "Construtor Teste",
+      "cpf": "96345678901",
+      "email": "construtor@test.com",
+      "telefone": "11987654396",
+      "tipo": "CONSTRUTOR",
+      "kycStatus": "APROVADO"
+    },
+    {
+      "nome": "Tomador Teste",
+      "cpf": "95345678901",
+      "email": "tomador@test.com",
+      "telefone": "11987654395",
+      "tipo": "TOMADOR",
+      "kycStatus": "APROVADO"
+    },
+    {
       "nome": "Admin Two",
       "cpf": "12345678902",
       "email": "admin2@test.com",

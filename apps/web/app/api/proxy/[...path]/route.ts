@@ -24,7 +24,7 @@ async function proxy(req: NextRequest, pathParts: string[], method: string) {
   }
 
   const res = await fetch(url, init).catch(() => null);
-  if (!res) return NextResponse.json({ message: 'Service unavailable' }, { status: 503 });
+  if (!res) return NextResponse.json({ message: `API inacessível (${url})` }, { status: 503 });
 
   const text = await res.text();
   return new NextResponse(text || null, {
