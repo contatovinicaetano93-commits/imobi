@@ -2346,29 +2346,25 @@ export default function ObraDetailPage({
 
   const fetchRole = useCallback(async () => {
     try {
+      // Read from layout's sessionStorage cache first — avoids a duplicate /api/auth/me call
+      const raw = sessionStorage.getItem("imobi_auth");
+      if (raw) {
+        const { d, ts } = JSON.parse(raw);
+        if (Date.now() - ts < 5 * 60 * 1000 && d?.authenticated) { setRole(d.role); return; }
+      }
       const res = await fetch("/api/auth/me");
       if (res.ok) {
-        const data = (await res.json()) as {
-          authenticated: boolean;
-          role: string;
-        };
+        const data = (await res.json()) as { authenticated: boolean; role: string };
         if (data.authenticated) setRole(data.role);
       }
-    } catch {
-      // silently fail
-    }
+    } catch { /* silently fail */ }
   }, []);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([fetchObra(), fetchRole()]).finally(() => setLoading(false));
-  }, [fetchObra, fetchRole]);
-
-  useEffect(() => {
-    if (tab === "documentos") {
-      fetchDocumentos();
-    }
-  }, [tab, fetchDocumentos]);
+    // Fetch obra, role AND documentos in parallel on mount — no waiting for tab change
+    Promise.all([fetchObra(), fetchRole(), fetchDocumentos()]).finally(() => setLoading(false));
+  }, [fetchObra, fetchRole, fetchDocumentos]);
 
   const tabs = [
     { key: "geral" as const, label: "Visão Geral" },

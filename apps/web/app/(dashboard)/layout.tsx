@@ -174,11 +174,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [funcoesBloqueadas, setFuncoesBloqueadas] = useState<string[]>([]);
 
   useEffect(() => {
+    // Try sessionStorage first (5-min TTL) to skip the network call on tab switches / reloads
+    try {
+      const raw = sessionStorage.getItem("imobi_auth");
+      if (raw) {
+        const { d, ts } = JSON.parse(raw);
+        if (Date.now() - ts < 5 * 60 * 1000 && d?.authenticated) {
+          setRole(d.role ?? null);
+          setUserName(d.nome ?? null);
+          setUserEmail(d.email ?? null);
+          setFuncoesBloqueadas(Array.isArray(d.funcoesBloqueadas) ? d.funcoesBloqueadas : []);
+          setRoleLoading(false);
+          return;
+        }
+      }
+    } catch { /* sessionStorage unavailable */ }
+
     fetch("/api/auth/me")
       .then((r) => r.ok ? r.json() : null)
       .catch(() => null)
       .then((d) => {
         if (d?.authenticated) {
+          try { sessionStorage.setItem("imobi_auth", JSON.stringify({ d, ts: Date.now() })); } catch { /* ignore */ }
           setRole(d.role ?? null);
           setUserName(d.nome ?? null);
           setUserEmail(d.email ?? null);
