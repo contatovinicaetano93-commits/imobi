@@ -22,9 +22,26 @@ export class KycService {
     });
     if (!usuario) throw new NotFoundException("Usuário não encontrado");
 
-    return this.prisma.kycDocumento.create({
+    const doc = await this.prisma.kycDocumento.create({
       data: { usuarioId, tipo, url, status: "PENDENTE" },
     });
+
+    // Notify all GESTORs that a new document is pending review
+    const gestores = await this.prisma.usuario.findMany({
+      where: { tipo: "GESTOR", bloqueadoEm: null },
+      select: { usuarioId: true },
+    });
+    await Promise.all(gestores.map((g) =>
+      this.notificacoes.criar(
+        g.usuarioId,
+        "KYC_ENVIADO",
+        "Novo documento KYC para análise",
+        `${usuario.nome} enviou o documento "${tipo}" para análise.`,
+        "/dashboard/gestor/kyc"
+      ).catch(() => {})
+    ));
+
+    return doc;
   }
 
   async listarDocumentos(usuarioId: string) {

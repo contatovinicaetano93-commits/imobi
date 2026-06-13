@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import type { CriarObraInput } from "@imbobi/schemas";
 import { ETAPAS_PADRAO } from "./etapas-padrao";
 
 @Injectable()
 export class ObrasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificacoes: NotificacoesService,
+  ) {}
 
   async criar(usuarioId: string, input: CriarObraInput) {
     return this.prisma.$transaction(async (tx) => {
@@ -42,10 +46,27 @@ export class ObrasService {
         })),
       });
 
-      return tx.obra.findUnique({
+      const obraCompleta = await tx.obra.findUnique({
         where: { obraId: obra.obraId },
         include: { etapas: { orderBy: { ordem: "asc" } } },
       });
+
+      // Notify ADMINs and GESTORs about the new obra
+      const gestoresAdmins = await this.prisma.usuario.findMany({
+        where: { tipo: { in: ["ADMIN", "GESTOR"] }, bloqueadoEm: null },
+        select: { usuarioId: true },
+      });
+      await Promise.all(gestoresAdmins.map((u) =>
+        this.notificacoes.criar(
+          u.usuarioId,
+          "OBRA_CRIADA",
+          "Nova obra registrada",
+          `Nova obra "${input.nome}" foi cadastrada e aguarda análise.`,
+          `/dashboard/obras`
+        ).catch(() => {})
+      ));
+
+      return obraCompleta;
     });
   }
 

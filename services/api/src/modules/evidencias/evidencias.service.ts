@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
+import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { calcularDistanciaMetros } from "@imbobi/core";
 import type { UploadEvidenciaInput } from "@imbobi/schemas";
 
@@ -15,7 +16,8 @@ const MAX_ACCURACY_METROS = 15;
 export class EvidenciasService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly storage: StorageService
+    private readonly storage: StorageService,
+    private readonly notificacoes: NotificacoesService,
   ) {}
 
   async upload(
@@ -69,7 +71,7 @@ export class EvidenciasService {
     // Salva a key S3, não a URL pré-assinada — URLs expiram em 1h, keys são permanentes
     const { key } = await this.storage.upload(fileBuffer, mimeType, input.etapaId);
 
-    return this.prisma.evidenciaEtapa.create({
+    const evidencia = await this.prisma.evidenciaEtapa.create({
       data: {
         etapaId: input.etapaId,
         obraId: etapa.obra.obraId,
@@ -81,6 +83,23 @@ export class EvidenciasService {
         observacao: input.descricao,
       },
     });
+
+    // Notify GESTORs that evidence needs validation
+    const gestores = await this.prisma.usuario.findMany({
+      where: { tipo: "GESTOR", bloqueadoEm: null },
+      select: { usuarioId: true },
+    });
+    await Promise.all(gestores.map((g) =>
+      this.notificacoes.criar(
+        g.usuarioId,
+        "VISTORIA_PENDENTE",
+        "Nova evidência para validar",
+        `Evidência enviada para a etapa "${etapa.nome}" da obra "${etapa.obra.nome}".`,
+        `/dashboard/gestor/etapas`
+      ).catch(() => {})
+    ));
+
+    return evidencia;
   }
 
   async listarPorEtapa(usuario: { id: string; tipo: string }, etapaId: string) {
@@ -114,15 +133,26 @@ export class EvidenciasService {
 
     const evidencia = await this.prisma.evidenciaEtapa.findUnique({
       where: { evidenciaId },
+      include: { etapa: { include: { obra: true } } },
     });
     if (!evidencia) throw new NotFoundException("Evidência não encontrada.");
 
-    return this.prisma.evidenciaEtapa.update({
+    const updated = await this.prisma.evidenciaEtapa.update({
       where: { evidenciaId },
-      data: {
-        validada: aprovado,
-        observacao,
-      },
+      data: { validada: aprovado, observacao },
     });
+
+    // Notify CONSTRUTOR of the validation result
+    await this.notificacoes.criar(
+      evidencia.etapa.obra.usuarioId,
+      "EVIDENCIA_VALIDADA",
+      `Evidência ${aprovado ? "aprovada" : "rejeitada"}`,
+      aprovado
+        ? `Sua evidência para "${evidencia.etapa.nome}" foi validada.`
+        : `Sua evidência para "${evidencia.etapa.nome}" foi rejeitada.${observacao ? ` Motivo: ${observacao}` : ""}`,
+      `/dashboard/obras/${evidencia.etapa.obra.obraId}`
+    ).catch(() => {});
+
+    return updated;
   }
 }

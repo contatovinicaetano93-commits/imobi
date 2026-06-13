@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import type { VotoDecisao, SolicitacaoStatus } from "@prisma/client";
 
 @Injectable()
 export class ComiteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificacoes: NotificacoesService,
+  ) {}
 
   // ── Construtor: submeter solicitação ──────────────────────────────
 
@@ -42,7 +46,7 @@ export class ComiteService {
     });
 
     // Auto-open committee
-    await this.prisma.comiteDigital.create({
+    const comite = await this.prisma.comiteDigital.create({
       data: { solicitacaoId: solicitacao.solicitacaoId, status: "ABERTO" },
     });
 
@@ -50,6 +54,21 @@ export class ComiteService {
       where: { solicitacaoId: solicitacao.solicitacaoId },
       data: { status: "EM_COMITE" },
     });
+
+    // Notify all ENGENHEIROs that a technical opinion is needed
+    const engenheiros = await this.prisma.usuario.findMany({
+      where: { tipo: "ENGENHEIRO", bloqueadoEm: null },
+      select: { usuarioId: true },
+    });
+    await Promise.all(engenheiros.map((e) =>
+      this.notificacoes.criar(
+        e.usuarioId,
+        "COMITE_ABERTO",
+        "Nova solicitação aguarda parecer técnico",
+        `Solicitação de ${solicitacao.usuario.nome} (R$ ${solicitacao.valorSolicitado.toLocaleString("pt-BR")}) aguarda seu parecer.`,
+        `/dashboard/engenheiro/comite`
+      ).catch(() => {})
+    ));
 
     return solicitacao;
   }
@@ -74,7 +93,7 @@ export class ComiteService {
     if (comite.status === "ENCERRADO") throw new BadRequestException("Comitê já encerrado");
     if (comite.parecerTecnico) throw new BadRequestException("Parecer já registrado");
 
-    return this.prisma.comiteDigital.update({
+    const updated = await this.prisma.comiteDigital.update({
       where: { comiteId },
       data: {
         parecerTecnico,
@@ -83,6 +102,23 @@ export class ComiteService {
         status: "EM_VOTACAO",
       },
     });
+
+    // Notify all ADMINs that voting can begin
+    const admins = await this.prisma.usuario.findMany({
+      where: { tipo: "ADMIN", bloqueadoEm: null },
+      select: { usuarioId: true },
+    });
+    await Promise.all(admins.map((a) =>
+      this.notificacoes.criar(
+        a.usuarioId,
+        "PARECER_SOLICITADO",
+        "Comitê aguarda votação",
+        "Parecer técnico registrado. A votação do comitê pode ser iniciada.",
+        `/dashboard/admin/comite`
+      ).catch(() => {})
+    ));
+
+    return updated;
   }
 
   // ── Admin: votar ─────────────────────────────────────────────────
@@ -149,6 +185,16 @@ export class ComiteService {
         },
       });
     }
+
+    // Notify CONSTRUTOR of the committee decision
+    const decisaoLabel = decisao === "APROVADO" ? "aprovado" : decisao === "AJUSTADO" ? "aprovado com ajustes" : "reprovado";
+    await this.notificacoes.criar(
+      comite.solicitacao.usuarioId,
+      "COMITE_DECISAO",
+      `Crédito ${decisaoLabel}`,
+      `Sua solicitação de crédito foi ${decisaoLabel} pelo comitê.`,
+      "/dashboard/comite/minhas"
+    ).catch(() => {});
   }
 
   // ── Leitura: dossiê completo ─────────────────────────────────────

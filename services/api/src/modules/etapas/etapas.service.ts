@@ -131,10 +131,29 @@ export class EtapasService {
   }
 
   async atualizarStatus(etapaId: string, status: string) {
-    return this.prisma.etapaObra.update({
+    const etapa = await this.prisma.etapaObra.update({
       where: { etapaId },
       data: { status: status as never },
+      include: { obra: true },
     });
+
+    if (status === "AGUARDANDO_VISTORIA") {
+      const gestores = await this.prisma.usuario.findMany({
+        where: { tipo: "GESTOR", bloqueadoEm: null },
+        select: { usuarioId: true },
+      });
+      await Promise.all(gestores.map((g) =>
+        this.notificacoes.criar(
+          g.usuarioId,
+          "ETAPA_SUBMETIDA",
+          "Etapa aguarda vistoria",
+          `A etapa "${etapa.nome}" da obra "${etapa.obra.nome}" foi submetida e aguarda aprovação.`,
+          "/dashboard/gestor/etapas"
+        ).catch(() => {})
+      ));
+    }
+
+    return etapa;
   }
 
   async listarPorObra(obraId: string) {
