@@ -8,7 +8,7 @@ export async function GET(_: NextRequest, { params }: { params: { etapaId: strin
   const token = (await cookies()).get('access_token')?.value;
   const res = await fetch(`${API}/evidencias/etapa/${params.etapaId}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
-    cache: 'no-store',
+    next: { revalidate: 30 },
   }).catch(() => null);
   if (!res) return NextResponse.json([]);
   const body = await res.json().catch(() => []);

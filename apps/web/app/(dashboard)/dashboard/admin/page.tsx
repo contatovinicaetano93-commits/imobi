@@ -162,9 +162,11 @@ function TabPortfolio({ overview }: { overview: ApiOverview | null }) {
   const ebitdaPct = p.ebitdaMargem;
 
   // Overlay real API data on top of DEMO KPIs when available
-  const obrasAtivas = overview?.obrasAtivas ?? p.operacoesAtivas;
-  const creditoAprovado = overview?.creditoAprovado ?? p.carteiraAtiva;
-  const metaPct = Math.round((creditoAprovado / p.meta) * 100);
+  const rawObras = overview?.obrasAtivas;
+  const obrasAtivas = (typeof rawObras === "number" && isFinite(rawObras)) ? rawObras : p.operacoesAtivas;
+  const rawCredito = overview?.creditoAprovado;
+  const creditoAprovado = (typeof rawCredito === "number" && isFinite(rawCredito)) ? rawCredito : p.carteiraAtiva;
+  const metaPct = p.meta > 0 ? Math.round((creditoAprovado / p.meta) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -829,7 +831,7 @@ export default function AdminPage() {
           <a href="/dashboard/admin/usuarios" style={{ ...j, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8rem", fontWeight: 600, color: NAVY, border: "1px solid rgba(12,26,61,0.18)", background: "white", padding: "0.45rem 1rem", borderRadius: 10, textDecoration: "none" }}>
             <Users size={13} /> Usuários
           </a>
-          <a href="/dashboard/admin/configuracoes" style={{ ...j, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8rem", fontWeight: 700, color: "white", background: NAVY, padding: "0.45rem 1rem", borderRadius: 10, textDecoration: "none" }}>
+          <a href="/dashboard/admin/configuracoes" style={{ ...j, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8rem", fontWeight: 600, color: NAVY, border: "1px solid rgba(12,26,61,0.18)", background: "white", padding: "0.45rem 1rem", borderRadius: 10, textDecoration: "none" }}>
             <Settings size={13} /> Configurações
           </a>
         </div>

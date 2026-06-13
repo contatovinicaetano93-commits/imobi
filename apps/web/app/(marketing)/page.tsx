@@ -7,12 +7,23 @@ import "./landing.css";
 const WA = "5511993455589";
 
 const OPERACOES = [
-  { valor: "R$18M",  tipo: "Luxo",        uf: "SC" },
-  { valor: "R$8,5M", tipo: "Obra",        uf: "PR" },
-  { valor: "R$12M",  tipo: "Aquisição",   uf: "SC" },
-  { valor: "R$6,2M", tipo: "MCMV",        uf: "SP" },
-  { valor: "R$9,4M", tipo: "Finalização", uf: "SC" },
+  { valor: "R$18M",   tipo: "Luxo",        uf: "SC" },
+  { valor: "R$8,5M",  tipo: "Obra",        uf: "PR" },
+  { valor: "R$12M",   tipo: "Aquisição",   uf: "SC" },
+  { valor: "R$6,2M",  tipo: "MCMV",        uf: "SP" },
+  { valor: "R$9,4M",  tipo: "Finalização", uf: "SC" },
+  { valor: "R$24M",   tipo: "Residencial", uf: "RJ" },
+  { valor: "R$16M",   tipo: "Comercial",   uf: "SP" },
+  { valor: "R$18M",   tipo: "MCMV",        uf: "MG" },
+  { valor: "R$14M",   tipo: "Loteamento",  uf: "GO" },
+  { valor: "R$12M",   tipo: "Luxo",        uf: "SC" },
+  { valor: "R$9M",    tipo: "Retrofit",    uf: "PR" },
+  { valor: "R$7,5M",  tipo: "Industrial",  uf: "RS" },
+  { valor: "R$6M",    tipo: "Studio",      uf: "SP" },
+  { valor: "R$5,4M",  tipo: "Resort",      uf: "BA" },
+  { valor: "R$4M",    tipo: "Misto",       uf: "PE" },
 ];
+// Sum: 18+8.5+12+6.2+9.4+24+16+18+14+12+9+7.5+6+5.4+4 = 170M
 
 export default function LandingPage() {
   const router = useRouter();
@@ -25,6 +36,8 @@ export default function LandingPage() {
   const [loginSenha,   setLoginSenha]   = useState("");
   const [loginErro,    setLoginErro]    = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [showLoginPass, setShowLoginPass] = useState(false);
+  const [showCadPass,   setShowCadPass]   = useState(false);
 
   const [cadNome,     setCadNome]     = useState("");
   const [cadCpf,      setCadCpf]      = useState("");
@@ -40,6 +53,7 @@ export default function LandingPage() {
   const railRef        = useRef<HTMLDivElement>(null);
   const [counterVal,      setCounterVal]      = useState(0);
   const [counterStarted,  setCounterStarted]  = useState(false);
+  const [marqueeStarted,  setMarqueeStarted]  = useState(false);
 
   useEffect(() => { setIsMobile(window.innerWidth <= 768); }, []);
 
@@ -60,7 +74,8 @@ export default function LandingPage() {
     const obs = new IntersectionObserver(([e]) => {
       if (e.isIntersecting && !counterStarted) {
         setCounterStarted(true);
-        const dur = 1400, t0 = Date.now();
+        setMarqueeStarted(true);
+        const dur = 2200, t0 = Date.now();
         const tick = () => {
           const p = Math.min((Date.now() - t0) / dur, 1);
           const e2 = 1 - (1 - p) * (1 - p);
@@ -69,7 +84,7 @@ export default function LandingPage() {
         };
         requestAnimationFrame(tick);
       }
-    }, { threshold: 0.4 });
+    }, { threshold: 0.3 });
     obs.observe(el);
     return () => obs.disconnect();
   }, [counterStarted]);
@@ -147,12 +162,24 @@ export default function LandingPage() {
             {activeTab === "login" && (
               <form className="modal-form active" onSubmit={handleLogin}>
                 <div className="form-group"><label className="form-label">E-mail</label><input type="email" className="form-input" placeholder="seu@email.com.br" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required /></div>
-                <div className="form-group"><label className="form-label">Senha</label><input type="password" className="form-input" placeholder="••••••••" value={loginSenha} onChange={e => setLoginSenha(e.target.value)} required /></div>
+                <div className="form-group" style={{ position: "relative" }}>
+                  <label className="form-label">Senha</label>
+                  <input type={showLoginPass ? "text" : "password"} className="form-input" placeholder="••••••••" value={loginSenha} onChange={e => setLoginSenha(e.target.value)} required style={{ paddingRight: "2.5rem" }} />
+                  <button type="button" onClick={() => setShowLoginPass(v => !v)} tabIndex={-1} style={{ position: "absolute", right: 10, bottom: 10, background: "none", border: "none", cursor: "pointer", color: "rgba(12,26,61,0.45)", lineHeight: 1, padding: 4 }} aria-label={showLoginPass ? "Ocultar senha" : "Mostrar senha"}>
+                    {showLoginPass
+                      ? <svg xmlns="http://www.w3.org/2000/svg" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      : <svg xmlns="http://www.w3.org/2000/svg" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
+                  </button>
+                </div>
                 {loginErro && <p className="form-error">{loginErro}</p>}
                 <div className="modal-forgot"><a href="/esqueceu-senha">Esqueci minha senha</a></div>
                 <button type="submit" className="form-submit" disabled={loginLoading}>{loginLoading ? "Entrando…" : "Entrar na plataforma"}</button>
                 <div className="modal-or"><span>ou</span></div>
                 <button type="button" className="modal-wa" onClick={() => window.open(`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20para%20acessar%20minha%20conta%20IMOBI.`,"_blank")}><WaIcon size={16} color="#128C7E" /> Falar com a equipe IMOBI</button>
+                <p style={{ textAlign: "center", fontSize: "0.78rem", color: "rgba(12,26,61,0.5)", marginTop: 12 }}>
+                  Não tem conta?{" "}
+                  <button type="button" onClick={() => setActiveTab("criar")} style={{ background: "none", border: "none", cursor: "pointer", color: "#1B4FD8", fontWeight: 600, fontSize: "inherit", padding: 0 }}>Criar conta →</button>
+                </p>
               </form>
             )}
 
@@ -164,7 +191,15 @@ export default function LandingPage() {
                   <div className="form-group"><label className="form-label">E-mail</label><input type="email" className="form-input" placeholder="seu@email.com.br" value={cadEmail} onChange={e => setCadEmail(e.target.value)} required /></div>
                   <div className="form-group"><label className="form-label">WhatsApp</label><input type="tel" className="form-input" placeholder="(11) 99999-9999" value={cadTelefone} onChange={e => setCadTelefone(e.target.value)} required /></div>
                 </div>
-                <div className="form-group"><label className="form-label">Senha</label><input type="password" className="form-input" placeholder="Mín. 8 chars, 1 maiúscula, 1 número" value={cadSenha} onChange={e => setCadSenha(e.target.value)} required /></div>
+                <div className="form-group" style={{ position: "relative" }}>
+                  <label className="form-label">Senha</label>
+                  <input type={showCadPass ? "text" : "password"} className="form-input" placeholder="Mín. 8 chars, 1 maiúscula, 1 número" value={cadSenha} onChange={e => setCadSenha(e.target.value)} required style={{ paddingRight: "2.5rem" }} />
+                  <button type="button" onClick={() => setShowCadPass(v => !v)} tabIndex={-1} style={{ position: "absolute", right: 10, bottom: 10, background: "none", border: "none", cursor: "pointer", color: "rgba(12,26,61,0.45)", lineHeight: 1, padding: 4 }} aria-label={showCadPass ? "Ocultar senha" : "Mostrar senha"}>
+                    {showCadPass
+                      ? <svg xmlns="http://www.w3.org/2000/svg" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      : <svg xmlns="http://www.w3.org/2000/svg" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
+                  </button>
+                </div>
                 <div className="modal-consents">
                   <label className="consent-row"><input type="checkbox" checked={cadTermos}  onChange={e => setCadTermos(e.target.checked)} /><span>Aceito os <a href="/termos" target="_blank">Termos de Uso</a></span></label>
                   <label className="consent-row"><input type="checkbox" checked={cadPrivacy} onChange={e => setCadPrivacy(e.target.checked)} /><span>Aceito a <a href="/privacy-policy" target="_blank">Política de Privacidade</a></span></label>
@@ -172,6 +207,10 @@ export default function LandingPage() {
                 </div>
                 {cadErro && <p className="form-error">{cadErro}</p>}
                 <button type="submit" className="form-submit" disabled={cadLoading}>{cadLoading ? "Criando conta…" : "Criar minha conta"}</button>
+                <p style={{ textAlign: "center", fontSize: "0.78rem", color: "rgba(12,26,61,0.5)", marginTop: 12 }}>
+                  Já tem conta?{" "}
+                  <button type="button" onClick={() => setActiveTab("login")} style={{ background: "none", border: "none", cursor: "pointer", color: "#1B4FD8", fontWeight: 600, fontSize: "inherit", padding: 0 }}>← Entrar</button>
+                </p>
               </form>
             )}
           </div>
@@ -198,17 +237,22 @@ export default function LandingPage() {
 
           {/* TRACK RECORD RAIL */}
           <div className="rail-wrap" ref={railRef}>
-            <p className="rail-label">Track record — SC · PR · SP · Luxo · MCMV</p>
-            <div className="rail-track">
-              <div className="rail-line-bg"   aria-hidden />
-              <div className="rail-line-fill" aria-hidden />
-              {OPERACOES.map((op, i) => (
-                <div className="rail-node" key={i} style={{ "--d": `${0.85 + i * 0.18}s` } as React.CSSProperties}>
-                  <span className="rail-val">{op.valor}</span>
-                  <span className="rail-dot" />
-                  <span className="rail-tag">{op.tipo} · {op.uf}</span>
-                </div>
-              ))}
+            <p className="rail-label">Track record — SC · PR · SP · RJ · MG · GO · RS · BA · PE</p>
+            <div className="rail-scroll-wrap">
+              <div className="rail-line-bg" aria-hidden />
+              <div className={`rail-track-marquee${marqueeStarted ? " is-running" : ""}`}>
+                {[...OPERACOES, ...OPERACOES].map((op, i) => (
+                  <div
+                    className="rail-node"
+                    key={i}
+                    style={{ "--i": String(i % OPERACOES.length) } as React.CSSProperties}
+                  >
+                    <span className="rail-val">{op.valor}</span>
+                    <span className="rail-dot" />
+                    <span className="rail-tag">{op.tipo} · {op.uf}</span>
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="rail-totals">
               <div className="rail-realized">

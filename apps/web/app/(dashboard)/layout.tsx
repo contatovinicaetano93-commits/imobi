@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import {
   Home, HardHat, CreditCard, Calculator, Star, FileCheck2, Bell, User,
   Wrench, ShieldCheck, BarChart3, Banknote, Megaphone, Settings, LogOut,
-  ChevronRight, Building2, ArrowLeft, type LucideIcon,
+  ChevronRight, Building2, ArrowLeft, Vote, LayoutDashboard, type LucideIcon,
 } from "lucide-react";
 
 type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "GESTOR_OBRA" | "TOMADOR" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | null;
@@ -25,22 +25,26 @@ const NAV: NavItem[] = [
   { label: "Início",        href: "/dashboard",                         icon: Home,        roles: ["TOMADOR", "CONSTRUTOR", null], section: "geral" },
   { label: "Minhas Obras",  href: "/dashboard/obras",                   icon: HardHat,     roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "obras" },
   { label: "Crédito",       href: "/dashboard/credito",                 icon: CreditCard,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "credito" },
+  { label: "Comitê",        href: "/dashboard/comite",                  icon: Vote,        roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "credito" },
   { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "simulador" },
   { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "score" },
   { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "kyc" },
   { label: "Painel",        href: "/dashboard/gestor",                  icon: Banknote,    roles: ["GESTOR"],        section: "geral",  funcao: "gestor" },
+  { label: "Comitês",       href: "/dashboard/gestor/comite",           icon: Vote,        roles: ["GESTOR"],                          funcao: "gestor" },
   { label: "Etapas",        href: "/dashboard/gestor/etapas",           icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "gestor" },
   { label: "KYC",           href: "/dashboard/gestor/kyc",              icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "kyc" },
   { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2, roles: ["GESTOR"],                          funcao: "due-diligence" },
   { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["GESTOR"],                          funcao: "fundos" },
   { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["GESTOR"],                          funcao: "relatorios" },
   { label: "Engenharia",    href: "/dashboard/engenheiro",              icon: Wrench,      roles: ["ENGENHEIRO","GESTOR_OBRA"], section: "geral", funcao: "engenharia" },
+  { label: "Pareceres",     href: "/dashboard/engenheiro/comite",       icon: Vote,        roles: ["ENGENHEIRO","GESTOR_OBRA"],        funcao: "engenharia" },
   { label: "Painel",        href: "/dashboard/comercial",               icon: Megaphone,   roles: ["COMERCIAL","PARCEIRO"], section: "geral", funcao: "comercial" },
   { label: "Leads",         href: "/dashboard/comercial/leads",         icon: Star,        roles: ["COMERCIAL","PARCEIRO"],            funcao: "comercial" },
   { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], funcao: "notificacoes" },
   { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null] },
-  { label: "Visão Geral",   href: "/dashboard/admin",                   icon: Settings,    roles: ["ADMIN"],         section: "admin" },
+  { label: "Visão Geral",   href: "/dashboard/admin",                   icon: LayoutDashboard, roles: ["ADMIN"],     section: "admin" },
   { label: "Pipeline",      href: "/dashboard/admin/pipeline",          icon: Banknote,    roles: ["ADMIN"] },
+  { label: "Comitê",        href: "/dashboard/admin/comite",            icon: Vote,        roles: ["ADMIN"] },
   { label: "Usuários",      href: "/dashboard/admin/usuarios",          icon: User,        roles: ["ADMIN"] },
   { label: "Configurações", href: "/dashboard/admin/configuracoes",     icon: Settings,    roles: ["ADMIN"] },
   { label: "Obras",         href: "/dashboard/obras",                   icon: HardHat,     roles: ["ADMIN"],                           funcao: "obras" },
@@ -180,7 +184,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       const raw = sessionStorage.getItem("imobi_auth");
       if (raw) {
         const { d, ts } = JSON.parse(raw);
-        if (Date.now() - ts < 5 * 60 * 1000 && d?.authenticated) {
+        if (Date.now() - ts < 15 * 60 * 1000 && d?.authenticated) {
           setRole(d.role ?? null);
           setUserName(d.nome ?? null);
           setUserEmail(d.email ?? null);
