@@ -97,11 +97,11 @@ function Bar({ pct, color, bg = "rgba(12,26,61,0.07)" }: { pct: number; color: s
   );
 }
 
-function KpiCard({ label, value, sub, accent = NAVY, delta, children }: {
-  label: string; value: string; sub?: string; accent?: string; delta?: number; children?: ReactNode;
+function KpiCard({ label, value, sub, accent = NAVY, delta, children, style: styleProp }: {
+  label: string; value: string; sub?: string; accent?: string; delta?: number; children?: ReactNode; style?: React.CSSProperties;
 }) {
   return (
-    <div style={{ ...card, borderLeft: `3px solid ${accent}`, padding: "1.1rem 1.25rem" }}>
+    <div style={{ ...card, borderLeft: `3px solid ${accent}`, padding: "1.1rem 1.25rem", ...styleProp }}>
       <p style={{ ...j, fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(12,26,61,0.38)", marginBottom: 6 }}>{label}</p>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
         <p style={{ ...bc, fontWeight: 800, fontSize: "clamp(1.3rem,2.5vw,1.75rem)", color: NAVY, lineHeight: 1 }}>{value}</p>
@@ -445,10 +445,10 @@ function TabObras() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-3">
-        <KpiCard label="No Prazo"   value={String(noPrazo)}   sub="obras" accent={MINT} />
-        <KpiCard label="Atrasadas"  value={String(atrasadas)} sub="obras" accent="#dc2626" />
-        <KpiCard label="Adiantadas" value={String(adiantadas)}sub="obras" accent={ROYAL} />
+      <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
+        <KpiCard label="No Prazo"   value={String(noPrazo)}   sub="obras" accent={MINT}     style={{ padding: "0.6rem 0.75rem" }} />
+        <KpiCard label="Atrasadas"  value={String(atrasadas)} sub="obras" accent="#dc2626"  style={{ padding: "0.6rem 0.75rem" }} />
+        <KpiCard label="Adiantadas" value={String(adiantadas)}sub="obras" accent={ROYAL}    style={{ padding: "0.6rem 0.75rem" }} />
       </div>
 
       {/* Tabela obras */}
