@@ -50,13 +50,13 @@ const NAV: NavItem[] = [
 const SECTION_LABELS: Record<string, string> = { geral: "Geral", operacional: "Operacional", admin: "Admin" };
 
 const ROLE_META: Record<string, { label: string; accent: string }> = {
-  CONSTRUTOR:  { label: "Cliente",     accent: MINT },
-  TOMADOR:     { label: "Cliente",     accent: MINT },
+  CONSTRUTOR:  { label: "Construtor",  accent: MINT },
+  TOMADOR:     { label: "Construtor",  accent: MINT },
   GESTOR:      { label: "Fundo",       accent: "#a78bfa" },
   ENGENHEIRO:  { label: "Engenheiro",  accent: "#fb923c" },
   GESTOR_OBRA: { label: "Engenheiro",  accent: "#fb923c" },
   COMERCIAL:   { label: "Comercial",   accent: "#fbbf24" },
-  PARCEIRO:    { label: "Parceiro",    accent: "#fbbf24" },
+  PARCEIRO:    { label: "Comercial",   accent: "#fbbf24" },
   ADMIN:       { label: "Admin",       accent: MINT },
 };
 
