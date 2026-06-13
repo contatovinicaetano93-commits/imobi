@@ -17,38 +17,21 @@ services:
         fromDatabase:
           name: imobi-postgres
           property: connectionString
-      # Redis: copiar do imobi-staging-cache após deploy
-      - key: REDIS_URL
-        sync: false
+      # Redis — copiar conexão do imobi-staging-cache no painel Render
       - key: REDIS_HOST
         sync: false
       - key: REDIS_PORT
         sync: false
       - key: REDIS_PASSWORD
         sync: false
-      # Setar manualmente no painel Render:
+      # Obrigatório — setar manualmente:
       - key: JWT_SECRET
         sync: false
       - key: CORS_ORIGIN
         sync: false
       - key: APP_URL
         sync: false
-      - key: AWS_S3_BUCKET
-        sync: false
-      - key: AWS_S3_REGION
-        sync: false
-      - key: AWS_ACCESS_KEY_ID
-        sync: false
-      - key: AWS_SECRET_ACCESS_KEY
-        sync: false
-      - key: FIREBASE_PROJECT_ID
-        sync: false
-      - key: FIREBASE_PRIVATE_KEY
-        sync: false
-      - key: FIREBASE_CLIENT_EMAIL
-        sync: false
-      - key: SENTRY_DSN
-        sync: false
+      # Opcional — habilita email (esqueci senha):
       - key: EMAIL_PROVIDER
         sync: false
       - key: SENDGRID_API_KEY

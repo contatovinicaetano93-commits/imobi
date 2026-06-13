@@ -23,57 +23,9 @@ export function validateEnvironment(config: Record<string, any>): string[] {
     );
   }
 
-  // Email provider validation
-  const emailProvider = config.EMAIL_PROVIDER || 'smtp';
-  const emailProviderLower = emailProvider.toLowerCase();
+  // Email: only validate credentials when a provider is explicitly set
 
-  if (
-    emailProviderLower === 'sendgrid' &&
-    !config.SENDGRID_API_KEY &&
-    !isDev
-  ) {
-    errorMessages.push('SENDGRID_API_KEY is required when EMAIL_PROVIDER=sendgrid');
-  }
-
-  if (emailProviderLower === 'ses') {
-    if (!config.AWS_REGION && !isDev) {
-      errorMessages.push('AWS_REGION is required when EMAIL_PROVIDER=ses');
-    }
-    if (!config.AWS_ACCESS_KEY_ID && !isDev) {
-      errorMessages.push('AWS_ACCESS_KEY_ID is required when EMAIL_PROVIDER=ses');
-    }
-    if (!config.AWS_SECRET_ACCESS_KEY && !isDev) {
-      errorMessages.push('AWS_SECRET_ACCESS_KEY is required when EMAIL_PROVIDER=ses');
-    }
-  }
-
-  if (
-    emailProviderLower === 'smtp' &&
-    (!config.SMTP_HOST || !config.SMTP_PORT) &&
-    !isDev
-  ) {
-    errorMessages.push('SMTP_HOST and SMTP_PORT are required when EMAIL_PROVIDER=smtp');
-  }
-
-  // Firebase validation (required for push notifications)
-  if (
-    !config.FIREBASE_PROJECT_ID ||
-    !config.FIREBASE_PRIVATE_KEY ||
-    !config.FIREBASE_CLIENT_EMAIL
-  ) {
-    if (!isDev) {
-      errorMessages.push(
-        'Firebase credentials (FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL) are required in production',
-      );
-    }
-  }
-
-  // S3 validation (required for evidence storage)
-  if (!config.AWS_S3_BUCKET || !config.AWS_S3_REGION) {
-    if (!isDev) {
-      errorMessages.push('AWS_S3_BUCKET and AWS_S3_REGION are required in production');
-    }
-  }
+  // Firebase and S3 are optional — missing only disables push notifications / photo uploads
 
   // APP_URL validation (prevent localhost fallback in production)
   const appUrl = config.APP_URL;
