@@ -303,8 +303,13 @@ export default function UsuariosAdminPage() {
             placeholder="Buscar por nome ou e-mail..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            style={{ ...jost, width: "100%", paddingLeft: 36, paddingRight: 14, paddingTop: 10, paddingBottom: 10, border: "1px solid rgba(12,26,61,0.12)", borderRadius: 10, fontSize: "0.82rem", outline: "none", color: NAVY }}
+            style={{ ...jost, width: "100%", paddingLeft: 36, paddingRight: busca ? 36 : 14, paddingTop: 10, paddingBottom: 10, border: "1px solid rgba(12,26,61,0.12)", borderRadius: 10, fontSize: "0.82rem", outline: "none", color: NAVY }}
           />
+          {busca && (
+            <button onClick={() => setBusca("")} aria-label="Limpar busca" style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "rgba(12,26,61,0.35)", display: "flex", padding: 4 }}>
+              <X size={13} />
+            </button>
+          )}
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {["TODOS", "ADMIN", "GESTOR", "ENGENHEIRO", "TOMADOR", "COMERCIAL", "CONSTRUTOR"].map((t) => (
@@ -325,6 +330,12 @@ export default function UsuariosAdminPage() {
         </div>
       </div>
 
+      {(busca || filtroTipo !== "TODOS") && !loading && (
+        <p style={{ ...jost, fontSize: "0.75rem", color: "rgba(12,26,61,0.4)" }}>
+          Mostrando <strong style={{ color: NAVY }}>{filtrado.length}</strong> de {usuarios.length} usuário{usuarios.length !== 1 ? "s" : ""}
+          {busca && <> · "<em>{busca}</em>"</>}
+        </p>
+      )}
       {erroAcao && (
         <p style={{ ...jost, fontSize: "0.8rem", color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "0.75rem 1rem" }}>{erroAcao}</p>
       )}

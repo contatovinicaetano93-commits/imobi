@@ -16,6 +16,9 @@ const FINALIDADES = [
   "Outro",
 ];
 
+type FieldErrors = { valorSolicitado?: string; prazoMeses?: string; taxaMensal?: string };
+type Touched     = { valorSolicitado?: boolean; prazoMeses?: boolean; taxaMensal?: boolean };
+
 export default function SolicitarComitePage() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -23,6 +26,8 @@ export default function SolicitarComitePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [obras, setObras] = useState<ObraResumo[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<Touched>({});
 
   const [form, setForm] = useState({
     valorSolicitado: "",
@@ -56,9 +61,53 @@ export default function SolicitarComitePage() {
     A: "#16a34a", B: "#2563eb", C: "#d97706", D: "#dc2626",
   };
 
+  const ratingMsg: Record<string, string> = {
+    A: "Excelente — LTV baixo favorece aprovação rápida.",
+    B: "Bom — dentro do limite recomendado de 65%.",
+    C: "Atenção — LTV alto pode exigir garantias adicionais.",
+    D: "Alto risco — LTV acima de 75% dificulta a aprovação.",
+  };
+
+  const ratingBg: Record<string, string> = {
+    A: "bg-green-50 text-green-700",
+    B: "bg-blue-50 text-blue-700",
+    C: "bg-amber-50 text-amber-700",
+    D: "bg-red-50 text-red-700",
+  };
+
   function set(k: keyof typeof form, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
   }
+
+  function validate(f: typeof form): FieldErrors {
+    const errs: FieldErrors = {};
+    const val = parseFloat(f.valorSolicitado);
+    if (!f.valorSolicitado || isNaN(val)) errs.valorSolicitado = "Informe o valor solicitado";
+    else if (val < 100000) errs.valorSolicitado = "Mínimo: R$ 100.000";
+    const prazo = parseInt(f.prazoMeses);
+    if (!f.prazoMeses || isNaN(prazo)) errs.prazoMeses = "Informe o prazo";
+    else if (prazo < 1 || prazo > 360) errs.prazoMeses = "Entre 1 e 360 meses";
+    const taxa = parseFloat(f.taxaMensal);
+    if (!f.taxaMensal || isNaN(taxa)) errs.taxaMensal = "Informe a taxa mensal";
+    else if (taxa <= 0 || taxa > 10) errs.taxaMensal = "Entre 0,01% e 10% a.m.";
+    return errs;
+  }
+
+  function blurField(k: keyof Touched, currentVal: string) {
+    const merged = { ...form, [k]: currentVal };
+    setTouched(t => ({ ...t, [k]: true }));
+    setFieldErrors(validate(merged));
+  }
+
+  function changeField(k: "valorSolicitado" | "prazoMeses" | "taxaMensal", v: string) {
+    set(k, v);
+    if (touched[k]) setFieldErrors(validate({ ...form, [k]: v }));
+  }
+
+  const errCls = (k: keyof FieldErrors) =>
+    touched[k] && fieldErrors[k]
+      ? "border-red-300 bg-red-50/40"
+      : "border-gray-200";
 
   async function handleSubmit() {
     setError(null);
@@ -102,7 +151,7 @@ export default function SolicitarComitePage() {
             Ver minhas solicitações
           </button>
           <button
-            onClick={() => { setSuccess(false); setStep(1); setForm({ valorSolicitado: "", prazoMeses: "12", taxaMensal: "1.2", finalidade: FINALIDADES[0], garantias: "", observacoes: "", vgv: "", custoObra: "", obraId: "" }); }}
+            onClick={() => { setSuccess(false); setStep(1); setForm({ valorSolicitado: "", prazoMeses: "12", taxaMensal: "1.2", finalidade: FINALIDADES[0], garantias: "", observacoes: "", vgv: "", custoObra: "", obraId: "" }); setFieldErrors({}); setTouched({}); }}
             className="border border-gray-200 text-gray-600 px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition"
           >
             Nova solicitação
@@ -160,25 +209,56 @@ export default function SolicitarComitePage() {
           <>
             <h2 className="text-sm font-semibold text-gray-900">Dados financeiros</h2>
             <div className="grid grid-cols-2 gap-4">
+
               <label className="space-y-1.5 col-span-2">
                 <span className="text-xs font-medium text-gray-600">Valor solicitado (R$) *</span>
-                <input type="number" min={0} value={form.valorSolicitado}
-                  onChange={(e) => set("valorSolicitado", e.target.value)}
-                  placeholder="Ex: 500000"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+                <input
+                  type="number" min={0}
+                  value={form.valorSolicitado}
+                  onChange={(e) => changeField("valorSolicitado", e.target.value)}
+                  onBlur={(e) => blurField("valorSolicitado", e.target.value)}
+                  placeholder="Ex: 1000000"
+                  className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errCls("valorSolicitado")}`}
+                />
+                {touched.valorSolicitado && fieldErrors.valorSolicitado && (
+                  <p className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />{fieldErrors.valorSolicitado}
+                  </p>
+                )}
               </label>
+
               <label className="space-y-1.5">
                 <span className="text-xs font-medium text-gray-600">Prazo (meses) *</span>
-                <input type="number" min={1} max={360} value={form.prazoMeses}
-                  onChange={(e) => set("prazoMeses", e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+                <input
+                  type="number" min={1} max={360}
+                  value={form.prazoMeses}
+                  onChange={(e) => changeField("prazoMeses", e.target.value)}
+                  onBlur={(e) => blurField("prazoMeses", e.target.value)}
+                  className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errCls("prazoMeses")}`}
+                />
+                {touched.prazoMeses && fieldErrors.prazoMeses && (
+                  <p className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />{fieldErrors.prazoMeses}
+                  </p>
+                )}
               </label>
+
               <label className="space-y-1.5">
                 <span className="text-xs font-medium text-gray-600">Taxa mensal (% a.m.) *</span>
-                <input type="number" min={0} step={0.01} value={form.taxaMensal}
-                  onChange={(e) => set("taxaMensal", e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+                <input
+                  type="number" min={0} step={0.01}
+                  value={form.taxaMensal}
+                  onChange={(e) => changeField("taxaMensal", e.target.value)}
+                  onBlur={(e) => blurField("taxaMensal", e.target.value)}
+                  className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errCls("taxaMensal")}`}
+                />
+                {touched.taxaMensal && fieldErrors.taxaMensal && (
+                  <p className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />{fieldErrors.taxaMensal}
+                  </p>
+                )}
               </label>
+
               <label className="space-y-1.5">
                 <span className="text-xs font-medium text-gray-600">VGV estimado (R$)</span>
                 <input type="number" min={0} value={form.vgv}
@@ -186,6 +266,7 @@ export default function SolicitarComitePage() {
                   placeholder="Valor geral de vendas"
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
               </label>
+
               <label className="space-y-1.5">
                 <span className="text-xs font-medium text-gray-600">Custo de obra (R$)</span>
                 <input type="number" min={0} value={form.custoObra}
@@ -193,6 +274,7 @@ export default function SolicitarComitePage() {
                   placeholder="Custo total estimado"
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
               </label>
+
               <label className="space-y-1.5 col-span-2">
                 <span className="text-xs font-medium text-gray-600">Finalidade *</span>
                 <select value={form.finalidade} onChange={(e) => set("finalidade", e.target.value)}
@@ -200,6 +282,7 @@ export default function SolicitarComitePage() {
                   {FINALIDADES.map((f) => <option key={f}>{f}</option>)}
                 </select>
               </label>
+
               {obras.length > 0 && (
                 <label className="space-y-1.5 col-span-2">
                   <span className="text-xs font-medium text-gray-600">Obra associada (opcional)</span>
@@ -213,24 +296,32 @@ export default function SolicitarComitePage() {
             </div>
 
             {ltv && (
-              <div className="bg-gray-50 rounded-xl p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500">LTV calculado</p>
-                  <p className="text-lg font-bold text-gray-900">{ltv}%</p>
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500">LTV calculado</p>
+                    <p className="text-lg font-bold text-gray-900">{ltv}%</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">Rating estimado</p>
+                    <p className="text-2xl font-black" style={{ color: ratingColor[rating] ?? "#6b7280" }}>{rating}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500">Rating estimado</p>
-                  <p className="text-2xl font-black" style={{ color: ratingColor[rating] ?? "#6b7280" }}>{rating}</p>
-                </div>
+                {ratingMsg[rating] && (
+                  <p className={`text-xs rounded-lg px-3 py-2 font-medium ${ratingBg[rating]}`}>
+                    {ratingMsg[rating]}
+                  </p>
+                )}
               </div>
             )}
 
             <button
               onClick={() => {
-                if (!form.valorSolicitado || !form.prazoMeses || !form.taxaMensal) {
-                  setError("Preencha valor, prazo e taxa.");
-                  return;
-                }
+                const allTouched: Touched = { valorSolicitado: true, prazoMeses: true, taxaMensal: true };
+                setTouched(allTouched);
+                const errs = validate(form);
+                setFieldErrors(errs);
+                if (Object.keys(errs).length > 0) return;
                 setError(null);
                 setStep(2);
               }}
