@@ -447,7 +447,7 @@ export default async function ConstrutorPage() {
               <div className="grid grid-cols-3 border-t border-gray-50 bg-gray-50 rounded-b-2xl">
                 {[
                   { label: "Total desembolsado", value: formatarBRL(valorLiberado), color: "#16a34a" },
-                  { label: "Juros estimados", value: formatarBRL(valorLiberado * (taxaMensal / 100) * prazoMeses), color: "#d97706" },
+                  { label: "Juros estimados", value: formatarBRL(Math.max(0, parcela * prazoMeses - valorLiberado)), color: "#d97706" },
                   { label: "Disponível para liberar", value: formatarBRL(saldoDisponivel), color: ROYAL },
                 ].map(({ label, value, color }) => (
                   <div key={label} className="flex flex-col items-center py-3 px-2 gap-0.5 text-center">
