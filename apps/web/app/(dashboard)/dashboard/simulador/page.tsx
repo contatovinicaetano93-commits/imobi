@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   ChevronRight, ChevronLeft, AlertTriangle, CheckCircle2,
@@ -308,17 +308,45 @@ function CurrencyInput({
 function PctInput({
   label, value, onChange, hint, min = 0, max = 100,
 }: { label: string; value: number; onChange: (v: number) => void; hint?: string; min?: number; max?: number }) {
+  const [raw, setRaw] = useState(String(value).replace(".", ","));
+  const [focused, setFocused] = useState(false);
+
+  // Keep display in sync when parent changes value externally (but not while user is typing)
+  useEffect(() => {
+    if (!focused) setRaw(String(value).replace(".", ","));
+  }, [value, focused]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value.replace(/[^0-9,\.]/g, "");
+    setRaw(input);
+    // Normalise comma to dot for parsing
+    const parsed = parseFloat(input.replace(",", "."));
+    if (!isNaN(parsed)) onChange(Math.min(Math.max(parsed, min), max));
+  };
+
+  const handleBlur = () => {
+    setFocused(false);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (isNaN(parsed)) {
+      setRaw(String(value).replace(".", ","));
+    } else {
+      const clamped = Math.min(Math.max(parsed, min), max);
+      onChange(clamped);
+      setRaw(String(clamped).replace(".", ","));
+    }
+  };
+
   return (
     <div>
       <label className="block text-sm font-semibold text-gray-700 mb-1.5">{label}</label>
       <div className="relative">
         <input
-          type="number"
-          min={min}
-          max={max}
-          step={0.1}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
+          type="text"
+          inputMode="decimal"
+          value={raw}
+          onChange={handleChange}
+          onFocus={() => setFocused(true)}
+          onBlur={handleBlur}
           className="w-full pr-9 pl-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1B4FD8] focus:border-transparent outline-none transition-all"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">%</span>
