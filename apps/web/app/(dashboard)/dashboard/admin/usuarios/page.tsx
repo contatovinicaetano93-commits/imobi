@@ -6,7 +6,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Users, Search, Plus, Shield, Wrench, Building2, User, ChevronLeft, X,
   Lock, Unlock, Ban, CheckCircle2, SlidersHorizontal, ChevronDown, ChevronUp,
-  HardHat, CreditCard, Phone,
+  HardHat, CreditCard, Phone, Trash2,
 } from "lucide-react";
 
 const NAVY  = "#0C1A3D";
@@ -95,6 +95,8 @@ export default function UsuariosAdminPage() {
   const [gerenciando, setGerenciando] = useState<string | null>(null);
   const [salvando, setSalvando] = useState<string | null>(null);
   const [erroAcao, setErroAcao] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   useEffect(() => {
     fetch("/api/proxy/admin/usuarios")
@@ -179,6 +181,26 @@ export default function UsuariosAdminPage() {
       setErroForm("Erro de conexão ao criar usuário.");
     } finally {
       setCriando(false);
+    }
+  }
+
+  async function handleExcluir(id: string) {
+    setExcluindo(true);
+    setErroAcao("");
+    try {
+      const res = await fetch(`/api/proxy/admin/usuarios/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        setErroAcao((json as { message?: string })?.message ?? "Erro ao excluir usuário.");
+        return;
+      }
+      setUsuarios((prev) => prev.filter((u) => u.id !== id));
+      setGerenciando(null);
+      setConfirmDeleteId(null);
+    } catch {
+      setErroAcao("Erro de conexão ao excluir usuário.");
+    } finally {
+      setExcluindo(false);
     }
   }
 
@@ -523,6 +545,40 @@ export default function UsuariosAdminPage() {
                                   Funções bloqueadas somem do menu do usuário no próximo login (até 15 min para sessões ativas).
                                 </p>
                               </div>
+                            </div>
+
+                            {/* Danger zone */}
+                            <div style={{ borderTop: "1px solid rgba(220,38,38,0.15)", paddingTop: "1rem" }}>
+                              <p style={{ ...jost, fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#dc2626", marginBottom: "0.75rem" }}>Zona de risco</p>
+                              {confirmDeleteId === u.id ? (
+                                <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "0.85rem 1rem" }}>
+                                  <p style={{ ...jost, fontSize: "0.8rem", fontWeight: 600, color: "#dc2626", margin: "0 0 4px" }}>Excluir conta de {u.nome}?</p>
+                                  <p style={{ ...jost, fontSize: "0.72rem", color: "#9ca3af", margin: "0 0 0.75rem" }}>Esta ação é permanente e não pode ser desfeita.</p>
+                                  <div style={{ display: "flex", gap: 8 }}>
+                                    <button
+                                      onClick={() => handleExcluir(u.id)}
+                                      disabled={excluindo}
+                                      style={{ ...jost, fontSize: "0.78rem", fontWeight: 700, background: "#dc2626", color: "white", border: "none", borderRadius: 8, padding: "0.45rem 1rem", cursor: "pointer", opacity: excluindo ? 0.6 : 1 }}
+                                    >
+                                      {excluindo ? "Excluindo..." : "Sim, excluir conta"}
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmDeleteId(null)}
+                                      style={{ ...jost, fontSize: "0.78rem", fontWeight: 600, background: "white", color: "#6b7280", border: "1px solid #e5e7eb", borderRadius: 8, padding: "0.45rem 1rem", cursor: "pointer" }}
+                                    >
+                                      Cancelar
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setConfirmDeleteId(u.id)}
+                                  disabled={salvando === u.id}
+                                  style={{ ...jost, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", padding: "0.45rem 1rem", borderRadius: 10, border: "1px solid #fecaca", background: "#fef2f2", color: "#dc2626", opacity: salvando === u.id ? 0.5 : 1, transition: "all 0.12s" }}
+                                >
+                                  <Trash2 size={13} /> Excluir conta
+                                </button>
+                              )}
                             </div>
                           </div>
                         </td>

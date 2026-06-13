@@ -577,25 +577,38 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
 
 /* ── ANIMATIONS ── */
 @media (prefers-reduced-motion: no-preference) {
-  .hero-content {
-    animation: heroIn 0.65s ease-out 0.25s both;
-  }
-  @keyframes heroIn {
-    from { opacity: 0; transform: translateY(28px); }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(22px); }
     to   { opacity: 1; transform: none; }
   }
 
-  .rail-wrap {
-    animation: railWrapIn 0.6s ease-out 0.5s both;
-  }
-  @keyframes railWrapIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: none; }
-  }
+  /* Hero — staggered cascade on load */
+  .hero-badge                    { animation: slideUp 0.5s  cubic-bezier(0.22,1,0.36,1) 0.10s both; }
+  .hero-h1 .h1-line:nth-child(1) { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.22s both; }
+  .hero-h1 .h1-line:nth-child(2) { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.32s both; }
+  .hero-h1 .h1-line:nth-child(3) { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.42s both; }
+  .hero-sub                      { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.52s both; }
+  .hero-actions                  { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.62s both; }
+  .rail-wrap                     { animation: slideUp 0.60s cubic-bezier(0.22,1,0.36,1) 0.45s both; }
 
+  /* Scroll reveal — JS adds .in class on IntersectionObserver trigger */
+  .reveal {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1),
+                transform 0.65s cubic-bezier(0.22,1,0.36,1);
+  }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* Stagger delay helpers */
+  .d1 { transition-delay: 0.10s; }
+  .d2 { transition-delay: 0.20s; }
+  .d3 { transition-delay: 0.30s; }
+  .d4 { transition-delay: 0.40s; }
+  .d5 { transition-delay: 0.50s; }
 }
 
-/* Reduced motion fallback — show nodes immediately, no scroll */
+/* Reduced motion — show everything immediately, no scroll */
 @media (prefers-reduced-motion: reduce) {
   .rail-node { opacity: 1 !important; transform: none !important; }
   .rail-track-marquee, .rail-track-marquee.is-running { animation: none; transform: translateX(-50%); }

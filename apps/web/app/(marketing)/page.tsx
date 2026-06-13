@@ -69,6 +69,15 @@ export default function LandingPage() {
   }, [modalOpen]);
 
   useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } }),
+      { threshold: 0.12, rootMargin: '0px 0px -32px 0px' },
+    );
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
     const el = railRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(([e]) => {
@@ -274,8 +283,8 @@ export default function LandingPage() {
           { val: "15–30 dias", label: "Aprovação",         sub: "Bancos levam 90+ dias"       },
           { val: "100%",       label: "Taxa de entrega",   sub: "Histórico de operações"      },
           { val: "R$1M+",      label: "Operação mínima",   sub: "Sem teto máximo definido"    },
-        ].map(n => (
-          <div className="num-item" key={n.label}>
+        ].map((n, i) => (
+          <div className={`num-item reveal${i ? ` d${i}` : ""}`} key={n.label}>
             <div className="num-val">{n.val}</div>
             <div className="num-label">{n.label}</div>
             <div className="num-sub">{n.sub}</div>
@@ -286,16 +295,16 @@ export default function LandingPage() {
       {/* ── VANTAGENS ── */}
       <section className="vantagens" id="vantagens">
         <div className="vantagens-inner">
-          <p className="eyebrow">Comparativo</p>
-          <h2 className="sec-h2">O mercado mudou.<br /><em>O crédito ainda não.</em></h2>
+          <p className="eyebrow reveal">Comparativo</p>
+          <h2 className="sec-h2 reveal d1">O mercado mudou.<br /><em>O crédito ainda não.</em></h2>
           <div className="vs-grid">
-            <div className="vs-col vs-them">
+            <div className="vs-col vs-them reveal d2">
               <div className="vs-head"><span className="vs-tag-them">Bancos tradicionais</span></div>
               {["90+ dias para aprovação", "Taxa entre 3,0% e 4,5% ao mês", "Burocracia documental extensa", "80% das construtoras sem acesso", "Obra parada por falta de capital"].map(t => (
                 <div className="vs-item" key={t}><span className="vs-x">✕</span><span>{t}</span></div>
               ))}
             </div>
-            <div className="vs-col vs-us">
+            <div className="vs-col vs-us reveal d3">
               <div className="vs-head"><span className="vs-tag-us">IMOBI</span></div>
               {["Aprovação em 15 a 30 dias úteis", "Taxa competitiva, documentada na proposta", "Garantias RI ou receita de vendas", "Atendemos incorporadoras de todos os portes", "Capital liberado no ritmo do cronograma"].map(t => (
                 <div className="vs-item" key={t}><span className="vs-ck">✓</span><span>{t}</span></div>
@@ -308,7 +317,7 @@ export default function LandingPage() {
       {/* ── COMO FUNCIONA ── */}
       <section className="como" id="como">
         <div className="como-inner">
-          <div className="como-head">
+          <div className="como-head reveal">
             <p className="eyebrow como-ey">Processo</p>
             <h2 className="como-h2">Do pedido ao capital<br /><em>em dias, não meses.</em></h2>
           </div>
@@ -318,8 +327,8 @@ export default function LandingPage() {
               { n:"02", t:"Análise e proposta em dias",  d:"Avaliamos viabilidade técnica e financeira. Você recebe proposta com taxa, prazo e condições — sem enrolação." },
               { n:"03", t:"Estruturação sob medida",     d:"Volume, cronograma de liberações e garantias definidas — RI ou receita de vendas. Tudo documentado e transparente." },
               { n:"04", t:"Capital no ritmo da obra",    d:"Liberações conforme avanço físico validado por vistoria técnica. Você recebe quando a obra avança." },
-            ].map(s => (
-              <div className="step" key={s.n}>
+            ].map((s, i) => (
+              <div className={`step reveal d${i + 1}`} key={s.n}>
                 <span className="step-n">{s.n}</span>
                 <div><p className="step-t">{s.t}</p><p className="step-d">{s.d}</p></div>
               </div>
@@ -331,15 +340,15 @@ export default function LandingPage() {
       {/* ── MODALIDADES ── */}
       <section className="modalidades" id="modalidades">
         <div className="mod-inner">
-          <p className="eyebrow">Modalidades</p>
-          <h2 className="sec-h2 mod-h2">Crédito para cada fase<br />da construção.</h2>
+          <p className="eyebrow reveal">Modalidades</p>
+          <h2 className="sec-h2 mod-h2 reveal d1">Crédito para cada fase<br />da construção.</h2>
           <div className="mod-list">
             {[
               { n:"01", t:"Crédito de Aquisição",    phase:"Fase de aquisição", d:"Capital para comprar o terreno e iniciar o projeto com segurança patrimonial. Estruturado para incorporadoras em expansão de portfólio — sem comprometer o caixa operacional." },
               { n:"02", t:"Crédito de Obra",         phase:"Fase de execução",  d:"Financiamento do ciclo de construção com liberações vinculadas ao avanço físico. Sem descasamento de caixa, sem obra parada por falta de recurso no momento certo." },
               { n:"03", t:"Crédito de Finalização",  phase:"Fase de entrega",   d:"Para empreendimentos na reta final. Solução ágil quando o projeto está quase pronto — evita paralisia da última etapa e garante entrega dentro do prazo contratado." },
-            ].map(m => (
-              <div className="mod-item" key={m.n}>
+            ].map((m, i) => (
+              <div className={`mod-item reveal${i ? ` d${i}` : ""}`} key={m.n}>
                 <span className="mod-n">{m.n}</span>
                 <div className="mod-body">
                   <h3>{m.t}</h3>
@@ -355,7 +364,7 @@ export default function LandingPage() {
       {/* ── FORMULÁRIO ── */}
       <div className="form-wrap" id="analise">
         <section className="form-section">
-          <div className="form-left">
+          <div className="form-left reveal">
             <p className="eyebrow form-ey">Análise gratuita</p>
             <h2 className="form-h2">Vamos estruturar<br /><em>seu projeto.</em></h2>
             <p className="form-desc">Preencha o formulário. A equipe IMOBI entra em contato em até 24 horas com uma análise preliminar sem compromisso.</p>
@@ -365,7 +374,7 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
-          <div className="form-box">
+          <div className="form-box reveal d2">
             <p className="form-box-title">Solicitar análise de crédito</p>
             <div className="form-row">
               <div className="form-group"><label className="form-label">Nome</label><input type="text" className="form-input" placeholder="Seu nome" id="f-nome" /></div>
@@ -406,15 +415,15 @@ export default function LandingPage() {
       {/* ── DEPOIMENTOS ── */}
       <section className="depoimentos">
         <div className="dep-inner">
-          <p className="eyebrow dep-ey">Depoimentos</p>
-          <h2 className="sec-h2 dep-h2">Quem já estruturou<br />com a IMOBI.</h2>
+          <p className="eyebrow dep-ey reveal">Depoimentos</p>
+          <h2 className="sec-h2 dep-h2 reveal d1">Quem já estruturou<br />com a IMOBI.</h2>
           <div className="dep-grid">
             {[
               { nome:"Rafael Moura",   cargo:"Diretor · MR Incorporações", texto:"Em 12 dias tínhamos o capital disponível. Com o banco, havíamos tentado 4 meses antes. A IMOBI entendeu o projeto desde o primeiro contato." },
               { nome:"Fernanda Lima",  cargo:"Sócia · FL Construções",      texto:"O processo é 100% digital e rastreável. Sabemos exatamente em que etapa está cada aprovação. Transparência que o mercado não estava acostumado." },
               { nome:"Bruno Salles",   cargo:"CEO · Salles Projetos",        texto:"Estruturamos nossa segunda operação com a IMOBI. Primeiro projeto foi tão preciso que não fazia sentido ir a outro lugar." },
-            ].map(d => (
-              <div className="dep-card" key={d.nome}>
+            ].map((d, i) => (
+              <div className={`dep-card reveal d${i + 1}`} key={d.nome}>
                 <p className="dep-texto">"{d.texto}"</p>
                 <div className="dep-autor">
                   <div className="dep-av">{d.nome.split(" ").map(n=>n[0]).join("").slice(0,2)}</div>
@@ -429,9 +438,9 @@ export default function LandingPage() {
       {/* ── FAQ ── */}
       <section className="faq-section" id="faq">
         <div className="faq-inner">
-          <p className="eyebrow faq-ey">Dúvidas</p>
-          <h2 className="sec-h2 faq-h2">Perguntas frequentes.</h2>
-          <div className="faq-list">
+          <p className="eyebrow faq-ey reveal">Dúvidas</p>
+          <h2 className="sec-h2 faq-h2 reveal d1">Perguntas frequentes.</h2>
+          <div className="faq-list reveal d2">
             {[
               { q:"Quais são os pré-requisitos para solicitar crédito?",   a:"CNPJ ativo, projeto de construção documentado e matrícula do imóvel. Utilizamos como garantia RI (Registro de Imóveis) ou receita de vendas do empreendimento — sem exigir garantias bancárias tradicionais." },
               { q:"Em quanto tempo recebo a aprovação?",                    a:"Nosso prazo é de 15 a 30 dias úteis após entrega completa da documentação. Projetos com documentação em ordem costumam ser aprovados na faixa de 15 dias." },
@@ -446,11 +455,11 @@ export default function LandingPage() {
       {/* ── CTA STRIP ── */}
       <section className="cta-strip">
         <div className="cta-inner">
-          <div>
+          <div className="reveal">
             <h2 className="cta-h2">Pronto para estruturar<br /><em>seu projeto?</em></h2>
             <p className="cta-sub">Aprovação em 15 a 30 dias. Análise preliminar gratuita, sem compromisso.</p>
           </div>
-          <div className="cta-actions">
+          <div className="cta-actions reveal d3">
             <button className="btn-hero-primary" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
             <a className="cta-wa" href={`https://wa.me/${WA}?text=Olá!%20Gostaria%20de%20estruturar%20um%20projeto%20com%20a%20IMOBI.`} target="_blank" rel="noopener noreferrer">
               <WaIcon size={18} color="rgba(255,255,255,0.75)" /> Falar no WhatsApp
