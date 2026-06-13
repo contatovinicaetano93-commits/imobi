@@ -5,11 +5,11 @@ import type { ManagerStats } from "@/lib/api";
 import Link from "next/link";
 import { ShieldCheck, FileCheck2, Building2, CreditCard, Clock, AlertTriangle } from "lucide-react";
 
-const DEMO_STATS: ManagerStats = {
-  filaAprovacoes: 7,
-  filaKyc: 4,
-  creditosAtivos: 18,
-  obrasAtivas: 12,
+const ZERO_STATS: ManagerStats = {
+  filaAprovacoes: 0,
+  filaKyc: 0,
+  creditosAtivos: 0,
+  obrasAtivas: 0,
 };
 
 function brl(v: number) {
@@ -60,8 +60,7 @@ export default function GestorPage() {
     );
   }
 
-  const isDemo = error || !stats;
-  const s = stats ?? DEMO_STATS;
+  const s = stats ?? ZERO_STATS;
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -78,11 +77,6 @@ export default function GestorPage() {
               {s.filaAprovacoes + s.filaKyc} {s.filaAprovacoes + s.filaKyc === 1 ? "item pendente" : "itens pendentes"} de análise
             </p>
           </div>
-          {isDemo && (
-            <span style={{ fontSize: "0.65rem", background: "rgba(251,191,36,0.2)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 6, padding: "0.3rem 0.6rem", whiteSpace: "nowrap", flexShrink: 0 }}>
-              Demo
-            </span>
-          )}
         </div>
         {(s.filaAprovacoes > 10 || s.filaKyc > 10) && (
           <div style={{ marginTop: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "0.5rem 0.75rem" }}>

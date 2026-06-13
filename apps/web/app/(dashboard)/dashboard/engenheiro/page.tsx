@@ -29,50 +29,6 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Portal do Engenheiro — IMOBI" };
 
-// ── Dados de demonstração (exibidos enquanto a API não fornece os endpoints) ──
-
-const DEMO_FINANCEIRO: ObraFinanceiro[] = [
-  {
-    obraId: "demo-1",
-    nome: "Residencial Vila Nova — Casa 12",
-    valorTotal: 480_000,
-    valorMaterial: 268_800,
-    valorMaoDeObra: 211_200,
-    valorExecutado: 312_000,
-    progresso: 65,
-    etapaAtual: "Estrutura",
-  },
-  {
-    obraId: "demo-2",
-    nome: "Sobrado Jardim das Acácias",
-    valorTotal: 320_000,
-    valorMaterial: 176_000,
-    valorMaoDeObra: 144_000,
-    valorExecutado: 96_000,
-    progresso: 30,
-    etapaAtual: "Fundação",
-  },
-];
-
-const DEMO_ETAPAS: EtapaProjeto[] = [
-  { id: "e1", nome: "Projeto & Aprovações", ordem: 1, status: "CONCLUIDA", valorLiberacao: 48_000, percentualObra: 10, dataConclusao: "2026-02-10" },
-  { id: "e2", nome: "Fundação", ordem: 2, status: "CONCLUIDA", valorLiberacao: 96_000, percentualObra: 20, dataConclusao: "2026-04-02" },
-  { id: "e3", nome: "Estrutura", ordem: 3, status: "EM_ANDAMENTO", valorLiberacao: 120_000, percentualObra: 25 },
-  { id: "e4", nome: "Alvenaria & Vedações", ordem: 4, status: "PENDENTE", valorLiberacao: 72_000, percentualObra: 15 },
-  { id: "e5", nome: "Instalações", ordem: 5, status: "PENDENTE", valorLiberacao: 72_000, percentualObra: 15 },
-  { id: "e6", nome: "Acabamento", ordem: 6, status: "PENDENTE", valorLiberacao: 48_000, percentualObra: 10 },
-  { id: "e7", nome: "Vistoria Final & Habite-se", ordem: 7, status: "PENDENTE", valorLiberacao: 24_000, percentualObra: 5 },
-];
-
-const DEMO_LICENCAS: Licenca[] = [
-  { id: "l1", nome: "Alvará de Construção", categoria: "CONSTRUCAO", orgao: "Prefeitura Municipal", numero: "ALV-2026/04821", status: "VALIDA", validade: "2027-03-15", obraNome: "Residencial Vila Nova" },
-  { id: "l2", nome: "ART de Execução", categoria: "CONSTRUCAO", orgao: "CREA-SP", numero: "ART-28194470", status: "VALIDA", validade: "2027-01-20", obraNome: "Residencial Vila Nova" },
-  { id: "l3", nome: "Projeto Aprovado", categoria: "CONSTRUCAO", orgao: "Prefeitura Municipal", numero: "PROC-11.402/26", status: "VALIDA", obraNome: "Residencial Vila Nova" },
-  { id: "l4", nome: "Habite-se", categoria: "CONSTRUCAO", orgao: "Prefeitura Municipal", status: "PENDENTE", obraNome: "Residencial Vila Nova" },
-  { id: "l5", nome: "Licença Ambiental", categoria: "OPERACIONAL", orgao: "CETESB", numero: "LA-09.221/25", status: "VENCENDO", validade: "2026-07-15", obraNome: "Sobrado Jd. das Acácias" },
-  { id: "l6", nome: "AVCB", categoria: "OPERACIONAL", orgao: "Corpo de Bombeiros", status: "PENDENTE", obraNome: "Sobrado Jd. das Acácias" },
-  { id: "l7", nome: "Ligação Definitiva de Energia", categoria: "OPERACIONAL", orgao: "Concessionária", status: "PENDENTE", obraNome: "Residencial Vila Nova" },
-];
 
 const LICENCA_STATUS: Record<Licenca["status"], { label: string; cls: string }> = {
   VALIDA:   { label: "Válida",   cls: "bg-green-100 text-green-700" },
@@ -88,10 +44,8 @@ export default async function EngenheiroPortalPage() {
     engenheiroObraApi.licencas().catch(() => null),
   ]);
 
-  const isDemo = !financeiroApi || financeiroApi.length === 0;
-  const financeiro = isDemo ? DEMO_FINANCEIRO : financeiroApi;
-  const licencas = licencasApi && licencasApi.length > 0 ? licencasApi : DEMO_LICENCAS;
-  const etapas = DEMO_ETAPAS;
+  const financeiro = financeiroApi ?? [];
+  const licencas = licencasApi ?? [];
 
   const totalObras = financeiro.reduce((s, o) => s + o.valorTotal, 0);
   const totalMaterial = financeiro.reduce((s, o) => s + o.valorMaterial, 0);
@@ -122,12 +76,6 @@ export default async function EngenheiroPortalPage() {
           <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.65)", margin: 0 }}>
             Gerencie suas inspeções de campo e valide etapas de construção.
           </p>
-          {isDemo && (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.375rem", fontSize: "0.7rem", fontWeight: 600, color: "#fbbf24", background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.25)", borderRadius: 999, padding: "0.25rem 0.75rem" }}>
-              <AlertTriangle size={12} />
-              Dados de demonstração
-            </span>
-          )}
         </div>
       </div>
 
@@ -135,7 +83,7 @@ export default async function EngenheiroPortalPage() {
       <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-2">
         {[
           { label: "Obras ativas",            value: String(financeiro.length),           color: "#ea580c" },
-          { label: "Etapas aguardando",        value: String(etapas.filter(e => e.status === "PENDENTE").length), color: "#d97706" },
+          { label: "Vistorias agendadas",       value: String(visitas.filter((v: Visita) => v.status === "AGENDADA").length), color: "#d97706" },
           { label: "Visitas agendadas",        value: String(agendadas.length),            color: "#b45309" },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
@@ -206,45 +154,23 @@ export default async function EngenheiroPortalPage() {
         </div>
       </section>
 
-      {/* Pipeline de etapas */}
+      {/* Etapas por obra — acessar via obras */}
       <section aria-labelledby="etapas-title">
         <h2 id="etapas-title" className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <CalendarClock className="w-4 h-4 text-[#ea580c]" />
           Etapas do projeto
         </h2>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="divide-y divide-gray-50">
-            {etapas.map((etapa, idx) => {
-              const done = etapa.status === "CONCLUIDA";
-              const current = etapa.status === "EM_ANDAMENTO";
-              return (
-                <div key={etapa.id} className={`flex items-center gap-4 px-5 py-3.5 ${current ? "bg-orange-50/50" : ""}`}>
-                  <div className="relative flex flex-col items-center shrink-0">
-                    {done ? (
-                      <CheckCircle2 className="w-5 h-5 text-[#16a34a]" />
-                    ) : current ? (
-                      <Clock className="w-5 h-5 text-[#ea580c]" />
-                    ) : (
-                      <Circle className="w-5 h-5 text-gray-200" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${done ? "text-gray-400" : current ? "text-[#ea580c] font-semibold" : "text-gray-700"}`}>
-                      {idx + 1}. {etapa.nome}
-                    </p>
-                    {etapa.dataConclusao && (
-                      <p className="text-xs text-gray-400">Concluída em {new Date(etapa.dataConclusao).toLocaleDateString("pt-BR")}</p>
-                    )}
-                  </div>
-                  <span className="hidden sm:block text-xs text-gray-400 tabular-nums shrink-0">{etapa.percentualObra}% da obra</span>
-                  <span className={`text-xs font-semibold tabular-nums shrink-0 ${done ? "text-[#16a34a]" : "text-gray-500"}`}>
-                    {formatarBRL(etapa.valorLiberacao)}
-                  </span>
-                </div>
-              );
-            })}
+        {financeiro.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
+            <HardHat className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+            <p className="text-sm font-medium text-gray-500">Nenhuma obra atribuída</p>
+            <p className="text-xs text-gray-400 mt-1">As etapas aparecem quando uma obra for vinculada ao seu perfil.</p>
           </div>
-        </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
+            <p className="text-sm text-gray-500">Selecione uma obra para ver o cronograma de etapas.</p>
+          </div>
+        )}
       </section>
 
       {/* Licenças */}

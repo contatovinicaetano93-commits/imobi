@@ -19,29 +19,14 @@ import {
 import { formatarBRL } from "@imbobi/core";
 import type { ParceiroResumo, OperacaoIndicada, ContatoMailing } from "@/lib/api";
 
-const DEMO_RESUMO: ParceiroResumo = {
-  comissoesAReceber: 14_800,
-  comissoesPagasMes: 6_200,
-  comissoesPagasTotal: 38_450,
-  operacoesAtivas: 5,
-  taxaAprovacao: 72,
-  codigoIndicacao: "PARC-7K2M",
+const ZERO_RESUMO: ParceiroResumo = {
+  comissoesAReceber: 0,
+  comissoesPagasMes: 0,
+  comissoesPagasTotal: 0,
+  operacoesAtivas: 0,
+  taxaAprovacao: 0,
+  codigoIndicacao: "",
 };
-
-const DEMO_OPERACOES: OperacaoIndicada[] = [
-  { id: "o1", codigo: "OP-2026-0341", clienteRef: "Carlos M.",   status: "EM_OBRA",    valorBase: 480_000, percentualComissao: 1.5, valorComissao: 7_200, comissaoStatus: "LIBERADA", validadeIndicacao: "2026-12-10", criadoEm: "2026-02-14" },
-  { id: "o2", codigo: "OP-2026-0387", clienteRef: "Fernanda S.", status: "APROVADA",   valorBase: 320_000, percentualComissao: 1.5, valorComissao: 4_800, comissaoStatus: "PENDENTE", validadeIndicacao: "2026-11-02", criadoEm: "2026-03-08" },
-  { id: "o3", codigo: "OP-2026-0402", clienteRef: "Roberto A.",  status: "EM_ANALISE", valorBase: 190_000, percentualComissao: 1.5, valorComissao: 2_850, comissaoStatus: "PENDENTE", validadeIndicacao: "2026-10-20", criadoEm: "2026-04-19" },
-  { id: "o4", codigo: "OP-2026-0298", clienteRef: "Juliana P.",  status: "CONCLUIDA",  valorBase: 410_000, percentualComissao: 1.5, valorComissao: 6_150, comissaoStatus: "PAGA",     validadeIndicacao: "2026-08-15", criadoEm: "2026-01-22" },
-  { id: "o5", codigo: "OP-2026-0415", clienteRef: "Marcos T.",   status: "INDICADA",   valorBase: 0,       percentualComissao: 1.5, valorComissao: 0,     comissaoStatus: "PENDENTE", validadeIndicacao: "2026-09-30", criadoEm: "2026-05-28" },
-];
-
-const DEMO_MAILING: ContatoMailing[] = [
-  { id: "m1", nome: "Carlos Mendes",    email: "c.mendes@exemplo.com",   telefone: "(11) 98888-0001", status: "CONVERTIDO", criadoEm: "2026-01-10" },
-  { id: "m2", nome: "Fernanda Souza",   email: "f.souza@exemplo.com",    telefone: "(11) 98888-0002", status: "CONVERTIDO", criadoEm: "2026-02-20" },
-  { id: "m3", nome: "Roberto Andrade",  email: "r.andrade@exemplo.com",  telefone: "(11) 98888-0003", status: "CONTATADO",  criadoEm: "2026-04-02" },
-  { id: "m4", nome: "Patrícia Lima",    email: "p.lima@exemplo.com",     telefone: "(11) 98888-0004", status: "NOVO",       criadoEm: "2026-05-30" },
-];
 
 const OPERACAO_STATUS: Record<OperacaoIndicada["status"], { label: string; cls: string }> = {
   INDICADA:   { label: "Indicada",    cls: "bg-gray-100 text-gray-600" },
@@ -68,7 +53,7 @@ export default function ParceiroComercialPage() {
   const [resumo, setResumo] = useState<ParceiroResumo | null>(null);
   const [operacoes, setOperacoes] = useState<OperacaoIndicada[] | null>(null);
   const [mailing, setMailing] = useState<ContatoMailing[] | null>(null);
-  const [isDemo, setIsDemo] = useState(false);
+
   const [copied, setCopied] = useState(false);
   const [novoContato, setNovoContato] = useState({ nome: "", email: "", telefone: "" });
   const [adicionando, setAdicionando] = useState(false);
@@ -83,19 +68,19 @@ export default function ParceiroComercialPage() {
           .catch(() => null)
       )
       .then((d: ParceiroResumo | null) => {
-        if (d) { setResumo(d); } else { setResumo(DEMO_RESUMO); setIsDemo(true); }
+        setResumo(d ?? ZERO_RESUMO);
       });
     fetch("/api/proxy/parceiros/operacoes")
       .then((r) => (r.ok ? r.json() : null))
       .catch(() => null)
-      .then((d: OperacaoIndicada[] | null) => setOperacoes(d && d.length > 0 ? d : DEMO_OPERACOES));
+      .then((d: OperacaoIndicada[] | null) => setOperacoes(d ?? []));
     fetch("/api/proxy/parceiros/mailing")
       .then((r) => (r.ok ? r.json() : null))
       .catch(() => null)
-      .then((d: ContatoMailing[] | null) => setMailing(d && d.length > 0 ? d : DEMO_MAILING));
+      .then((d: ContatoMailing[] | null) => setMailing(d ?? []));
   }, []);
 
-  const rs = resumo ?? DEMO_RESUMO;
+  const rs = resumo ?? ZERO_RESUMO;
   const linkIndicacao = typeof window !== "undefined"
     ? `${window.location.origin}/cadastro?ref=${rs.codigoIndicacao}`
     : `/cadastro?ref=${rs.codigoIndicacao}`;
@@ -170,12 +155,6 @@ export default function ParceiroComercialPage() {
           <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.65)", margin: 0 }}>
             Acompanhe suas indicações, comissões e pipeline de leads em tempo real.
           </p>
-          {isDemo && (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.375rem", fontSize: "0.7rem", fontWeight: 600, color: "#fde68a", background: "rgba(253,230,138,0.12)", border: "1px solid rgba(253,230,138,0.25)", borderRadius: 999, padding: "0.25rem 0.75rem" }}>
-              <AlertTriangle size={12} />
-              Dados de demonstração
-            </span>
-          )}
         </div>
       </div>
 
