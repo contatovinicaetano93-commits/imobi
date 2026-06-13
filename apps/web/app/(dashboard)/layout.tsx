@@ -66,10 +66,23 @@ const ROLE_META: Record<string, { label: string; accent: string }> = {
   ADMIN:       { label: "Admin",       accent: MINT },
 };
 
-function filterNav(role: UserRole, funcoesBloqueadas: string[]): NavItem[] {
+// When admin is in another role's area, show that area's nav instead.
+function getNavRole(role: UserRole, path: string): UserRole {
+  if (role !== "ADMIN") return role;
+  const seg = path.split("/")[2] ?? "";
+  if (["construtor", "credito", "kyc", "score", "simulador"].includes(seg)) return "CONSTRUTOR";
+  if (seg === "comite" && !path.startsWith("/dashboard/admin")) return "CONSTRUTOR";
+  if (seg === "gestor") return "GESTOR";
+  if (seg === "engenheiro") return "ENGENHEIRO";
+  if (seg === "comercial") return "COMERCIAL";
+  return "ADMIN";
+}
+
+function filterNav(role: UserRole, path: string, funcoesBloqueadas: string[]): NavItem[] {
+  const navRole = getNavRole(role, path);
   return NAV.filter((item) => {
-    if (!item.roles.includes(role)) return false;
-    if (role !== "ADMIN" && item.funcao && funcoesBloqueadas.includes(item.funcao)) return false;
+    if (!item.roles.includes(navRole)) return false;
+    if (navRole !== "ADMIN" && item.funcao && funcoesBloqueadas.includes(item.funcao)) return false;
     return true;
   });
 }
@@ -214,12 +227,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // Close drawer on route change
   useEffect(() => { setMobileOpen(false); }, [path]);
 
-  const visibleNav = filterNav(role, funcoesBloqueadas);
+  const visibleNav = filterNav(role, path, funcoesBloqueadas);
   const isActive = (href: string) =>
     href === "/dashboard" ? path === href : path.startsWith(href);
 
   const meta = role ? ROLE_META[role] : null;
-  const accent = meta?.accent ?? MINT;
+  const navMeta = navRole ? ROLE_META[navRole] : meta;
+  const accent = navMeta?.accent ?? MINT;
 
   const initials = userName
     ? userName.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()
@@ -290,6 +304,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     </div>
   );
 
+  const navRole = getNavRole(role, path);
+  const isPreviewingOtherPanel = role === "ADMIN" && navRole !== "ADMIN";
+
   const sidebarContent = (onNavigate?: () => void) => (
     <>
       <div style={{ padding: "1.4rem 1rem 0.6rem" }}>
@@ -301,6 +318,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           }}>IMOBI</span>
         </Link>
       </div>
+      {isPreviewingOtherPanel && (
+        <div style={{ margin: "0 0.75rem 0.25rem", padding: "0.4rem 0.65rem", borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <p style={{ fontSize: "0.58rem", fontWeight: 700, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 4px", fontFamily: "'Jost', sans-serif" }}>Visualizando como</p>
+          <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "white", margin: "0 0 6px", fontFamily: "'Jost', sans-serif" }}>{ROLE_META[navRole ?? ""]?.label ?? navRole}</p>
+          <Link href="/dashboard/admin" onClick={onNavigate} style={{ fontSize: "0.65rem", fontWeight: 600, color: MINT, textDecoration: "none", display: "flex", alignItems: "center", gap: 4, fontFamily: "'Jost', sans-serif" }}>
+            <ArrowLeft size={10} /> Voltar ao Admin
+          </Link>
+        </div>
+      )}
       <nav style={{ flex: 1, padding: "0 0.4rem", overflowY: "auto" }}>
         {roleLoading ? <NavSkeleton /> : renderNav(visibleNav, isActive, accent, onNavigate)}
       </nav>
