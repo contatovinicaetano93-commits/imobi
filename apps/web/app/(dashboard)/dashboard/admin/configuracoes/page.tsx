@@ -284,14 +284,42 @@ function Row({ label, hint, children }: { label: string; hint: string; children:
 function NumberInput({ value, onChange, step, min, max, suffix, prefix }: {
   value: number; onChange: (v: number) => void; step: number; min: number; max: number; suffix?: string; prefix?: boolean;
 }) {
+  const [raw, setRaw] = useState(String(value));
+  const [focused, setFocused] = useState(false);
+
+  useEffect(() => {
+    if (!focused) setRaw(String(value));
+  }, [value, focused]);
+
+  function commit(s: string) {
+    const n = parseFloat(s.replace(",", "."));
+    if (!isNaN(n)) {
+      const clamped = Math.max(min, Math.min(max, n));
+      onChange(clamped);
+      setRaw(String(clamped));
+    } else {
+      setRaw(String(value));
+    }
+  }
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
       {prefix && <span style={{ fontFamily: "'Jost', sans-serif", fontSize: "0.8rem", color: "rgba(12,26,61,0.5)" }}>{suffix}</span>}
       <input
-        type="number"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        step={step} min={min} max={max}
+        type="text"
+        inputMode="decimal"
+        value={raw}
+        onChange={(e) => {
+          const v = e.target.value.replace(/[^0-9.,]/g, "");
+          setRaw(v);
+        }}
+        onFocus={() => setFocused(true)}
+        onBlur={() => { setFocused(false); commit(raw); }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(raw); }
+          if (e.key === "ArrowUp")   { e.preventDefault(); commit(String(Math.min(max, value + step))); }
+          if (e.key === "ArrowDown") { e.preventDefault(); commit(String(Math.max(min, value - step))); }
+        }}
         style={{
           fontFamily: "'Jost', sans-serif", width: 112, textAlign: "right",
           padding: "0.4rem 0.75rem", border: "1px solid rgba(12,26,61,0.12)",

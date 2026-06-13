@@ -91,6 +91,7 @@ export default function UsuariosAdminPage() {
   const [form, setForm] = useState<NovoUsuarioForm>(FORM_VAZIO);
   const [criando, setCriando] = useState(false);
   const [erroForm, setErroForm] = useState("");
+  const [showSenha, setShowSenha] = useState(false);
   const [gerenciando, setGerenciando] = useState<string | null>(null);
   const [salvando, setSalvando] = useState<string | null>(null);
   const [erroAcao, setErroAcao] = useState("");
@@ -229,23 +230,25 @@ export default function UsuariosAdminPage() {
           <form onSubmit={handleCriar} style={{ padding: "1.25rem" }} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { key: "nome",  label: "Nome",   type: "text",     placeholder: "Nome completo" },
-                { key: "email", label: "E-mail", type: "email",    placeholder: "usuario@imobi.com.br" },
-                { key: "senha", label: "Senha",  type: "password", placeholder: "Senha inicial" },
+                { key: "nome",  label: "Nome",   type: "text",  placeholder: "Nome completo" },
+                { key: "email", label: "E-mail", type: "email", placeholder: "usuario@imobi.com.br" },
               ].map(({ key, label, type, placeholder }) => (
                 <div key={key}>
                   <label style={{ ...jost, display: "block", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(12,26,61,0.45)", marginBottom: 6 }}>{label}</label>
-                  <input
-                    className={inp}
-                    style={{ fontFamily: "'Jost', sans-serif" }}
-                    type={type}
-                    placeholder={placeholder}
-                    value={(form as Record<string, string>)[key]}
-                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                    required
-                  />
+                  <input className={inp} style={{ fontFamily: "'Jost', sans-serif" }} type={type} placeholder={placeholder} value={(form as Record<string, string>)[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} required />
                 </div>
               ))}
+              <div>
+                <label style={{ ...jost, display: "block", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(12,26,61,0.45)", marginBottom: 6 }}>Senha</label>
+                <div style={{ position: "relative" }}>
+                  <input className={inp} style={{ fontFamily: "'Jost', sans-serif", paddingRight: "2.5rem" }} type={showSenha ? "text" : "password"} placeholder="Senha inicial" value={form.senha} onChange={(e) => setForm((f) => ({ ...f, senha: e.target.value }))} required />
+                  <button type="button" onClick={() => setShowSenha(v => !v)} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "rgba(12,26,61,0.4)", lineHeight: 1, padding: 4 }} aria-label={showSenha ? "Ocultar senha" : "Mostrar senha"}>
+                    {showSenha
+                      ? <svg xmlns="http://www.w3.org/2000/svg" width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      : <svg xmlns="http://www.w3.org/2000/svg" width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
+                  </button>
+                </div>
+              </div>
               <div>
                 <label style={{ ...jost, display: "block", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(12,26,61,0.45)", marginBottom: 6 }}>Perfil</label>
                 <select className={inp} style={{ fontFamily: "'Jost', sans-serif" }} value={form.tipo} onChange={(e) => setForm((f) => ({ ...f, tipo: e.target.value }))}>
