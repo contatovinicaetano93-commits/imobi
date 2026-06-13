@@ -382,7 +382,7 @@ function TabPipeline() {
         <div style={{ padding: "1.25rem" }} className="space-y-2">
           {pl.funil.map(({ etapa, qtde, valor }, i) => {
             const widthPct = Math.round((qtde / maxQtde) * 100);
-            const convPct = i > 0 ? Math.round((qtde / pl.funil[i-1].qtde) * 100) : 100;
+            const convPct = i > 0 && pl.funil[i-1].qtde > 0 ? Math.round((qtde / pl.funil[i-1].qtde) * 100) : 0;
             return (
               <div key={etapa}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 5, flexWrap: "wrap" }}>

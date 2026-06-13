@@ -86,7 +86,7 @@ export default function SolicitarComitePage() {
     else if (val < 100000) errs.valorSolicitado = "Mínimo: R$ 100.000";
     const prazo = parseInt(f.prazoMeses);
     if (!f.prazoMeses || isNaN(prazo)) errs.prazoMeses = "Informe o prazo";
-    else if (prazo < 1 || prazo > 360) errs.prazoMeses = "Entre 1 e 360 meses";
+    else if (prazo < 12 || prazo > 180) errs.prazoMeses = "Entre 12 e 180 meses";
     const taxa = parseFloat(f.taxaMensal);
     if (!f.taxaMensal || isNaN(taxa)) errs.taxaMensal = "Informe a taxa mensal";
     else if (taxa <= 0 || taxa > 10) errs.taxaMensal = "Entre 0,01% e 10% a.m.";
@@ -110,6 +110,13 @@ export default function SolicitarComitePage() {
       : "border-gray-200";
 
   async function handleSubmit() {
+    const errs = validate(form);
+    if (Object.keys(errs).length > 0) {
+      setTouched({ valorSolicitado: true, prazoMeses: true, taxaMensal: true });
+      setFieldErrors(errs);
+      setStep(1);
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -230,7 +237,7 @@ export default function SolicitarComitePage() {
               <label className="space-y-1.5">
                 <span className="text-xs font-medium text-gray-600">Prazo (meses) *</span>
                 <input
-                  type="number" min={1} max={360}
+                  type="number" min={12} max={180}
                   value={form.prazoMeses}
                   onChange={(e) => changeField("prazoMeses", e.target.value)}
                   onBlur={(e) => blurField("prazoMeses", e.target.value)}

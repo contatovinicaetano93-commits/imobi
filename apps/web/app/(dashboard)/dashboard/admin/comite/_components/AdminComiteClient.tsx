@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { comiteApi, type ComiteDigital, type SolicitacaoCredito, type VotoDecisao } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
-import { Vote, Users, FileText, CheckCircle2, XCircle, AlertCircle, Clock, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
+import { Vote, Users, FileText, CheckCircle2, XCircle, AlertCircle, Clock, ChevronDown, ChevronUp, ArrowLeft, X } from "lucide-react";
 import { useToast } from "@/hooks/toast-context";
 
 type ComiteItem = ComiteDigital & { solicitacao: SolicitacaoCredito };
@@ -267,6 +267,7 @@ export function AdminComiteClient({ comites: initial }: { comites: ComiteItem[] 
   const [refreshError, setRefreshError] = useState<string | null>(null);
 
   async function refresh() {
+    if (refreshing) return;
     setRefreshing(true);
     setRefreshError(null);
     try {
@@ -314,7 +315,10 @@ export function AdminComiteClient({ comites: initial }: { comites: ComiteItem[] 
       {refreshError && (
         <div className="flex items-center gap-2 text-red-600 text-xs bg-red-50 rounded-xl p-3">
           <AlertCircle className="w-4 h-4 shrink-0" />
-          {refreshError}
+          <span className="flex-1">{refreshError}</span>
+          <button onClick={() => setRefreshError(null)} aria-label="Fechar" style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", display: "flex", padding: 2 }}>
+            <X size={13} />
+          </button>
         </div>
       )}
 
