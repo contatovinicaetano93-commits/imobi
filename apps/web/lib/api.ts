@@ -7,6 +7,17 @@ export class ApiError extends Error {
   }
 }
 
+/** Coerce an unknown API value to a finite number, returning fallback if invalid */
+export function safeNum(v: unknown, fallback = 0): number {
+  const n = Number(v);
+  return isFinite(n) ? n : fallback;
+}
+
+/** Ensure an unknown API value is an array, returning [] if not */
+export function safeArr<T>(v: unknown): T[] {
+  return Array.isArray(v) ? v : [];
+}
+
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const isClient = typeof window !== "undefined";
   const headers = new Headers(init.headers);
@@ -40,7 +51,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
 
   if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
+  return res.json().then((data: unknown) => (data ?? {}) as T);
 }
 
 // ── Obras ─────────────────────────────────────────────────────────────

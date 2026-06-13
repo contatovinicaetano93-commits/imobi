@@ -8,7 +8,7 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
   const token = (await cookies()).get('access_token')?.value;
   const res = await fetch(`${API}/obras/${params.id}/progresso`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
-    cache: 'no-store',
+    next: { revalidate: 30 },
   }).catch(() => null);
   if (!res) return NextResponse.json(0);
   const body = await res.json().catch(() => 0);
