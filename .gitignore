@@ -46,3 +46,4 @@ coverage/
 .idea/
 SESSION_SUMMARY.md
 .env.production
+.claude/worktrees/
