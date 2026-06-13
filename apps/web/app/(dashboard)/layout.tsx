@@ -40,6 +40,7 @@ const NAV: NavItem[] = [
   { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], funcao: "notificacoes" },
   { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null] },
   { label: "Visão Geral",   href: "/dashboard/admin",                   icon: Settings,    roles: ["ADMIN"],         section: "admin" },
+  { label: "Pipeline",      href: "/dashboard/admin/pipeline",          icon: Banknote,    roles: ["ADMIN"] },
   { label: "Usuários",      href: "/dashboard/admin/usuarios",          icon: User,        roles: ["ADMIN"] },
   { label: "Configurações", href: "/dashboard/admin/configuracoes",     icon: Settings,    roles: ["ADMIN"] },
   { label: "Obras",         href: "/dashboard/obras",                   icon: HardHat,     roles: ["ADMIN"],                           funcao: "obras" },
