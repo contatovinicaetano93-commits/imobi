@@ -134,7 +134,7 @@ export class AuthService {
   private async gerarTokens(usuarioId: string) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId },
-      select: { tipo: true, nome: true, email: true, funcoesBloqueadas: true },
+      select: { tipo: true, nome: true, email: true, funcoesBloqueadas: true, bloqueadoEm: true },
     });
     const accessToken = this.jwt.sign(
       {
@@ -143,6 +143,7 @@ export class AuthService {
         nome: usuario?.nome ?? null,
         email: usuario?.email ?? null,
         funcoesBloqueadas: usuario?.funcoesBloqueadas ?? [],
+        bloqueado: !!usuario?.bloqueadoEm,
       },
       { expiresIn: "8h" }
     );

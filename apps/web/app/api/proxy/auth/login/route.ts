@@ -19,8 +19,7 @@ export async function POST(req: NextRequest) {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    const msg = data.message ?? data.error ?? `Erro ${res.status}`;
-    return NextResponse.json({ message: msg }, { status: res.status });
+    return NextResponse.json({ message: data.message ?? data.error ?? `Erro ${res.status}` }, { status: res.status });
   }
 
   const jar = await cookies();
@@ -41,5 +40,11 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ ok: true });
+  // Decode JWT payload inline — client uses role to redirect without a second /api/auth/me call
+  try {
+    const payload = JSON.parse(Buffer.from(data.accessToken.split('.')[1], 'base64url').toString());
+    return NextResponse.json({ ok: true, role: payload.role ?? null, nome: payload.nome ?? null, email: payload.email ?? null });
+  } catch {
+    return NextResponse.json({ ok: true });
+  }
 }

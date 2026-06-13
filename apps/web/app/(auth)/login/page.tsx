@@ -41,9 +41,8 @@ function LoginForm() {
         return;
       }
 
-      // Redireciona por role
-      const me = await fetch("/api/auth/me").then((r) => r.ok ? r.json() : null).catch(() => null);
-      const role: string = me?.role ?? "";
+      // Role already decoded in the login response — no second /api/auth/me call needed
+      const role: string = json.role ?? "";
       const ROLE_HOME: Record<string, Route> = {
         ADMIN:      "/dashboard/admin",
         GESTOR:     "/dashboard/gestor",
