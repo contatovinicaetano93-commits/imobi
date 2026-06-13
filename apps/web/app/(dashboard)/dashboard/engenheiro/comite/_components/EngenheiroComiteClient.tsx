@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { comiteApi, type ComiteDigital, type SolicitacaoCredito } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
-import { HardHat, FileText, CheckCircle2, AlertCircle, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { HardHat, FileText, CheckCircle2, AlertCircle, Clock, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
 
 type ComiteItem = ComiteDigital & { solicitacao: SolicitacaoCredito };
 
@@ -180,6 +181,7 @@ function ComiteCard({ c, onParecerSuccess }: { c: ComiteItem; onParecerSuccess: 
 }
 
 export function EngenheiroComiteClient({ comites: initial }: { comites: ComiteItem[] }) {
+  const router = useRouter();
   const [comites, setComites] = useState(initial);
   const [filter, setFilter] = useState("pendentes");
   const [refreshing, setRefreshing] = useState(false);
@@ -199,6 +201,9 @@ export function EngenheiroComiteClient({ comites: initial }: { comites: ComiteIt
 
   return (
     <div className="max-w-3xl space-y-5">
+      <button onClick={() => router.push("/dashboard/engenheiro")} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition mb-1" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Jost', sans-serif" }}>
+        <ArrowLeft className="w-4 h-4" /> Voltar
+      </button>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center">

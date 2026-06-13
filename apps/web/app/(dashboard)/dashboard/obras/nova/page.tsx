@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { obrasApi } from "@/lib/api";
 
 type FormState = {
@@ -120,14 +121,15 @@ export default function NovaObraPage() {
 
   return (
     <div className="max-w-2xl space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Nova Obra</h1>
-        <a
-          href="/dashboard/obras"
-          className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+      <div>
+        <button
+          onClick={() => router.push("/dashboard/obras")}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition"
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Jost', sans-serif" }}
         >
-          Cancelar
-        </a>
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </button>
+        <h1 className="text-2xl font-bold text-gray-900">Nova Obra</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
