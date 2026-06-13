@@ -67,7 +67,7 @@ export default function SolicitarComitePage() {
       await comiteApi.solicitar({
         valorSolicitado: parseFloat(form.valorSolicitado),
         prazoMeses: parseInt(form.prazoMeses),
-        taxaMensal: parseFloat(form.taxaMensal) / 100,
+        taxaMensal: parseFloat(form.taxaMensal),
         finalidade: form.finalidade,
         garantias: form.garantias || undefined,
         observacoes: form.observacoes || undefined,

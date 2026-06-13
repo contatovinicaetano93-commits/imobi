@@ -259,14 +259,19 @@ export function AdminComiteClient({ comites: initial }: { comites: ComiteItem[] 
   const [comites, setComites] = useState(initial);
   const [filter, setFilter] = useState("todos");
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
 
   async function refresh() {
     setRefreshing(true);
+    setRefreshError(null);
     try {
       const updated = await comiteApi.listar();
       setComites(updated as ComiteItem[]);
-    } catch {}
-    setRefreshing(false);
+    } catch (e: any) {
+      setRefreshError(e?.message ?? "Falha ao atualizar");
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   const filtered = filter === "todos" ? comites : comites.filter((c) => c.status === filter);
@@ -298,6 +303,13 @@ export function AdminComiteClient({ comites: initial }: { comites: ComiteItem[] 
           {refreshing ? "Atualizando..." : "Atualizar"}
         </button>
       </div>
+
+      {refreshError && (
+        <div className="flex items-center gap-2 text-red-600 text-xs bg-red-50 rounded-xl p-3">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          {refreshError}
+        </div>
+      )}
 
       {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">
