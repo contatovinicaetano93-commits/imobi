@@ -22,7 +22,8 @@ const NAVY = "#0C1A3D";
 const MINT = "#4ADE80";
 
 const NAV: NavItem[] = [
-  { label: "Início",        href: "/dashboard",                         icon: Home,        roles: ["TOMADOR", "CONSTRUTOR", null], section: "geral" },
+  { label: "Início",        href: "/dashboard",                         icon: Home,        roles: ["TOMADOR", null],                  section: "geral" },
+  { label: "Painel",        href: "/dashboard/construtor",              icon: Home,        roles: ["CONSTRUTOR"],                     section: "geral" },
   { label: "Minhas Obras",  href: "/dashboard/obras",                   icon: HardHat,     roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "obras" },
   { label: "Crédito",       href: "/dashboard/credito",                 icon: CreditCard,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "credito" },
   { label: "Comitê",        href: "/dashboard/comite",                  icon: Vote,        roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "credito" },

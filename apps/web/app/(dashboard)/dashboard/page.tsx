@@ -57,6 +57,7 @@ export default async function DashboardPage() {
   if (role === "ENGENHEIRO")                    redirect("/dashboard/engenheiro");
   if (role === "COMERCIAL" || role === "PARCEIRO") redirect("/dashboard/comercial");
   if (role === "GESTOR_OBRA")                   redirect("/dashboard/engenheiro");
+  if (role === "CONSTRUTOR")                    redirect("/dashboard/construtor");
 
   const [obras, creditos] = await Promise.all([
     obrasApi.listar().catch(() => [] as ObraResumo[]),
