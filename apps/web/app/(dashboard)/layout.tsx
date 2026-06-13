@@ -144,6 +144,7 @@ function renderNav(
   items: NavItem[],
   activeFn: (href: string) => boolean,
   accent: string,
+  notifCount: number,
   onNavigate?: () => void,
 ) {
   let lastSection = "";
@@ -152,7 +153,7 @@ function renderNav(
     const showSection = item.section && item.section !== lastSection;
     if (item.section) lastSection = item.section;
     const Icon = item.icon;
-    // Use index + href as key to avoid collisions when multiple roles share same href
+    const badge = item.href === "/dashboard/notificacoes" && notifCount > 0 ? notifCount : 0;
     return (
       <div key={`${idx}-${item.href}`}>
         {showSection && (
@@ -185,7 +186,16 @@ function renderNav(
         >
           <Icon size={13} strokeWidth={active ? 2.2 : 1.8} style={{ flexShrink: 0 }} />
           <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</span>
-          {active && <ChevronRight size={10} style={{ opacity: 0.5 }} />}
+          {badge > 0 && (
+            <span style={{
+              background: "#ef4444", color: "white", borderRadius: 9999,
+              fontSize: "0.6rem", fontWeight: 700, lineHeight: 1,
+              padding: "2px 5px", flexShrink: 0,
+            }}>
+              {badge > 99 ? "99+" : badge}
+            </span>
+          )}
+          {active && !badge && <ChevronRight size={10} style={{ opacity: 0.5 }} />}
         </Link>
       </div>
     );
@@ -201,6 +211,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [funcoesBloqueadas, setFuncoesBloqueadas] = useState<string[]>([]);
+  const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
     // Pre-fill user footer from cache (name/email) but never trust cached role for nav —
@@ -236,6 +247,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         }
         setRoleLoading(false);
       });
+  }, []);
+
+  // Poll unread notification count every 60s
+  useEffect(() => {
+    function fetchCount() {
+      fetch("/api/proxy/notificacoes/contar-nao-lidas")
+        .then((r) => r.ok ? r.json() : null)
+        .catch(() => null)
+        .then((d) => { if (typeof d?.total === "number") setNotifCount(d.total); });
+    }
+    fetchCount();
+    const id = setInterval(fetchCount, 60_000);
+    return () => clearInterval(id);
   }, []);
 
   // Close drawer on route change
@@ -343,7 +367,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
       )}
       <nav style={{ flex: 1, padding: "0 0.4rem", overflowY: "auto" }}>
-        {roleLoading ? <NavSkeleton /> : renderNav(visibleNav, isActive, accent, onNavigate)}
+        {roleLoading ? <NavSkeleton /> : renderNav(visibleNav, isActive, accent, notifCount, onNavigate)}
       </nav>
       {userFooter(!!onNavigate)}
     </>
