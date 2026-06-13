@@ -10,7 +10,7 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     next: { revalidate: 30 },
   }).catch(() => null);
-  if (!res) return NextResponse.json(0);
+  if (!res) return NextResponse.json(null, { status: 503 });
   const body = await res.json().catch(() => 0);
   return NextResponse.json(body, { status: res.status });
 }

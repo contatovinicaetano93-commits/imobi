@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { comiteApi, type ComiteDigital, type SolicitacaoCredito } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
-import { HardHat, FileText, CheckCircle2, AlertCircle, Clock, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
+import { HardHat, FileText, CheckCircle2, AlertCircle, Clock, ChevronDown, ChevronUp, ArrowLeft, X } from "lucide-react";
 
 type ComiteItem = ComiteDigital & { solicitacao: SolicitacaoCredito };
 
@@ -185,14 +185,20 @@ export function EngenheiroComiteClient({ comites: initial }: { comites: ComiteIt
   const [comites, setComites] = useState(initial);
   const [filter, setFilter] = useState("pendentes");
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
 
   async function refresh() {
+    if (refreshing) return;
     setRefreshing(true);
+    setRefreshError(null);
     try {
       const updated = await comiteApi.listar();
       setComites(updated as ComiteItem[]);
-    } catch {}
-    setRefreshing(false);
+    } catch (e: any) {
+      setRefreshError(e?.message ?? "Falha ao atualizar");
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   const pendentes = comites.filter((c) => !c.parecerTecnico && c.status !== "ENCERRADO");
@@ -219,6 +225,16 @@ export function EngenheiroComiteClient({ comites: initial }: { comites: ComiteIt
           {refreshing ? "Atualizando..." : "Atualizar"}
         </button>
       </div>
+
+      {refreshError && (
+        <div className="flex items-center gap-2 text-red-600 text-xs bg-red-50 rounded-xl p-3">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span className="flex-1">{refreshError}</span>
+          <button onClick={() => setRefreshError(null)} aria-label="Fechar" style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", display: "flex", padding: 2 }}>
+            <X size={13} />
+          </button>
+        </div>
+      )}
 
       {pendentes.length > 0 && (
         <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex items-center gap-2">

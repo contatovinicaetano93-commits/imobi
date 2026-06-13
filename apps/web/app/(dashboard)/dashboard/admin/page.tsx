@@ -381,7 +381,7 @@ function TabPipeline() {
         <SectionHeader title="Funil de Originação" icon={<Target size={14} color={ROYAL} />} />
         <div style={{ padding: "1.25rem" }} className="space-y-2">
           {pl.funil.map(({ etapa, qtde, valor }, i) => {
-            const widthPct = Math.round((qtde / maxQtde) * 100);
+            const widthPct = maxQtde > 0 ? Math.round((qtde / maxQtde) * 100) : 0;
             const convPct = i > 0 && pl.funil[i-1].qtde > 0 ? Math.round((qtde / pl.funil[i-1].qtde) * 100) : 0;
             return (
               <div key={etapa}>
@@ -415,7 +415,7 @@ function TabPipeline() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {["Construtora Alpha", "Incorporadora Beta", "Grupo Gama", "Delta Empreend.", "Constru-Tech", "INCO Ltda.", "Projetur", "Sólida Eng."].map((nome, i) => {
               const val = [8_500_000, 7_200_000, 5_100_000, 3_800_000, 2_400_000, 1_900_000, 900_000, 450_000][i];
-              const pct = Math.round((val / DEMO.portfolio.carteiraAtiva) * 100);
+              const pct = DEMO.portfolio.carteiraAtiva > 0 ? Math.round((val / DEMO.portfolio.carteiraAtiva) * 100) : 0;
               return (
                 <div key={nome} style={{ padding: "0.75rem 0.9rem", borderRadius: 10, border: "1px solid rgba(12,26,61,0.07)" }}>
                   <p style={{ ...j, fontSize: "0.72rem", fontWeight: 600, color: NAVY, marginBottom: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nome}</p>
