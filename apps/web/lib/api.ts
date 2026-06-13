@@ -539,3 +539,97 @@ export const notificacoesApi = {
   deletar: (id: string) =>
     apiFetch(`/notificacoes/${id}`, { method: "DELETE" }),
 };
+
+// ── Comitê Digital ────────────────────────────────────────────────────
+
+export type SolicitacaoStatus = "PENDENTE" | "EM_COMITE" | "APROVADA" | "AJUSTADA" | "REPROVADA" | "CANCELADA";
+export type ComiteStatus = "ABERTO" | "EM_VOTACAO" | "ENCERRADO";
+export type ComiteDecisao = "APROVADO" | "AJUSTADO" | "REPROVADO";
+export type VotoDecisao = "APROVAR" | "AJUSTAR" | "REPROVAR";
+
+export type VotoComite = {
+  votoId: string;
+  comiteId: string;
+  votanteId: string;
+  votante: { nome: string; tipo: string };
+  voto: VotoDecisao;
+  justificativa?: string;
+  condicoes?: string;
+  criadoEm: string;
+};
+
+export type ComiteDigital = {
+  comiteId: string;
+  solicitacaoId: string;
+  parecerTecnico?: string;
+  parecerEngId?: string;
+  parecerEm?: string;
+  status: ComiteStatus;
+  decisao?: ComiteDecisao;
+  decisaoMotivo?: string;
+  decisaoEm?: string;
+  votos: VotoComite[];
+  criadoEm: string;
+  atualizadoEm: string;
+};
+
+export type SolicitacaoCredito = {
+  solicitacaoId: string;
+  usuarioId: string;
+  obraId?: string;
+  valorSolicitado: number;
+  prazoMeses: number;
+  taxaMensal: number;
+  finalidade: string;
+  garantias?: string;
+  observacoes?: string;
+  vgv?: number;
+  ltv?: number;
+  custoObra?: number;
+  ratingCalculado?: string;
+  status: SolicitacaoStatus;
+  comite?: ComiteDigital;
+  criadoEm: string;
+  atualizadoEm: string;
+  usuario?: { nome: string; email: string };
+};
+
+export type SubmeterSolicitacaoPayload = {
+  valorSolicitado: number;
+  prazoMeses: number;
+  taxaMensal: number;
+  finalidade: string;
+  garantias?: string;
+  observacoes?: string;
+  obraId?: string;
+  vgv?: number;
+  custoObra?: number;
+  ltv?: number;
+};
+
+export const comiteApi = {
+  solicitar: (data: SubmeterSolicitacaoPayload) =>
+    apiFetch<SolicitacaoCredito>("/comite/solicitar", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  minhas: () => apiFetch<SolicitacaoCredito[]>("/comite/minhas"),
+  parecer: (comiteId: string, parecerTecnico: string) =>
+    apiFetch<ComiteDigital>(`/comite/${comiteId}/parecer`, {
+      method: "POST",
+      body: JSON.stringify({ parecerTecnico }),
+    }),
+  votar: (comiteId: string, data: { voto: VotoDecisao; justificativa?: string; condicoes?: string }) =>
+    apiFetch<{ ok: boolean; totalVotos: number; quorum: number }>(`/comite/${comiteId}/votar`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  listar: (status?: string) =>
+    apiFetch<(ComiteDigital & { solicitacao: SolicitacaoCredito })[]>(
+      `/comite${status ? `?status=${status}` : ""}`
+    ),
+  dossie: (comiteId: string) =>
+    apiFetch<ComiteDigital & { solicitacao: SolicitacaoCredito & { usuario: { usuarioId: string; nome: string; email: string; telefone: string; kycStatus: string; tipo: string; criadoEm: string } } }>(
+      `/comite/${comiteId}`
+    ),
+};

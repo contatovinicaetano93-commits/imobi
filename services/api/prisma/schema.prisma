@@ -48,6 +48,8 @@ model Usuario {
   mailingContatos MailingContato[]
   dueDiligences   DueDiligence[]
   documentos      Documento[]
+  solicitacoes    SolicitacaoCredito[]
+  votosComite     VotoComite[]
 
   @@index([email])
   @@index([cpf])
@@ -579,4 +581,102 @@ model Documento {
   usuario Usuario @relation(fields: [usuarioId], references: [usuarioId])
 
   @@map("documentos")
+}
+
+// ── Comitê Digital ────────────────────────────────────────────────────────────
+
+model SolicitacaoCredito {
+  solicitacaoId   String             @id @default(uuid())
+  usuarioId       String
+  usuario         Usuario            @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  obraId          String?
+
+  valorSolicitado Float
+  prazoMeses      Int
+  taxaMensal      Float
+  finalidade      String
+  garantias       String?
+  observacoes     String?
+
+  // Snapshot da simulação para o dossiê
+  vgv             Float?
+  ltv             Float?
+  custoObra       Float?
+  ratingCalculado String?            // A/B/C/D
+
+  status          SolicitacaoStatus  @default(PENDENTE)
+  comite          ComiteDigital?
+
+  criadoEm        DateTime           @default(now())
+  atualizadoEm    DateTime           @updatedAt
+
+  @@index([usuarioId])
+  @@index([status])
+  @@map("solicitacoes_credito")
+}
+
+enum SolicitacaoStatus {
+  PENDENTE
+  EM_COMITE
+  APROVADA
+  AJUSTADA
+  REPROVADA
+  CANCELADA
+}
+
+model ComiteDigital {
+  comiteId        String         @id @default(uuid())
+  solicitacaoId   String         @unique
+  solicitacao     SolicitacaoCredito @relation(fields: [solicitacaoId], references: [solicitacaoId], onDelete: Cascade)
+
+  parecerTecnico  String?
+  parecerEngId    String?
+  parecerEm       DateTime?
+
+  status          ComiteStatus   @default(ABERTO)
+  decisao         ComiteDecisao?
+  decisaoMotivo   String?
+  decisaoEm       DateTime?
+
+  votos           VotoComite[]
+
+  criadoEm        DateTime       @default(now())
+  atualizadoEm    DateTime       @updatedAt
+
+  @@index([status])
+  @@map("comites_digitais")
+}
+
+enum ComiteStatus {
+  ABERTO
+  EM_VOTACAO
+  ENCERRADO
+}
+
+enum ComiteDecisao {
+  APROVADO
+  AJUSTADO
+  REPROVADO
+}
+
+model VotoComite {
+  votoId        String        @id @default(uuid())
+  comiteId      String
+  comite        ComiteDigital @relation(fields: [comiteId], references: [comiteId], onDelete: Cascade)
+  votanteId     String
+  votante       Usuario       @relation(fields: [votanteId], references: [usuarioId], onDelete: Cascade)
+  voto          VotoDecisao
+  justificativa String?
+  condicoes     String?
+  criadoEm      DateTime      @default(now())
+
+  @@unique([comiteId, votanteId])
+  @@index([comiteId])
+  @@map("votos_comite")
+}
+
+enum VotoDecisao {
+  APROVAR
+  AJUSTAR
+  REPROVAR
 }
