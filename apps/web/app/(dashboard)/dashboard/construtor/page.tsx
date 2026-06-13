@@ -241,6 +241,9 @@ export default async function ConstrutorPage() {
         ) : (
           <Card className="p-6 text-center">
             <p className="text-xs text-gray-400">Nenhuma parcela calculada. Solicite crédito para visualizar o cronograma.</p>
+            <Link href="/dashboard/simulador" style={{ display: "inline-block", marginTop: 10, background: ROYAL, color: "white", borderRadius: 10, padding: "0.45rem 1rem", fontSize: "0.75rem", fontWeight: 600, textDecoration: "none" }}>
+              Simular crédito
+            </Link>
           </Card>
         )}
       </Section>
@@ -408,6 +411,9 @@ export default async function ConstrutorPage() {
           ) : (
             <div className="px-4 py-5 text-center">
               <p className="text-xs text-gray-400">Nenhum documento enviado ainda.</p>
+              <Link href="/dashboard/kyc" style={{ display: "inline-block", marginTop: 10, background: ROYAL, color: "white", borderRadius: 10, padding: "0.45rem 1rem", fontSize: "0.75rem", fontWeight: 600, textDecoration: "none" }}>
+                Enviar documentos
+              </Link>
             </div>
           )}
           <div className="px-4 py-3 bg-gray-50 rounded-b-2xl">

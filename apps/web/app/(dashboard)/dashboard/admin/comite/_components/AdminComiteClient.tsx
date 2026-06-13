@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { comiteApi, type ComiteDigital, type SolicitacaoCredito, type VotoDecisao } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { Vote, Users, FileText, CheckCircle2, XCircle, AlertCircle, Clock, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/toast-context";
 
 type ComiteItem = ComiteDigital & { solicitacao: SolicitacaoCredito };
 
@@ -30,6 +31,7 @@ function VotarModal({ comiteId, onClose, onSuccess }: { comiteId: string; onClos
   const [condicoes, setCondicoes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   async function submit() {
     if (!voto) return;
@@ -37,9 +39,11 @@ function VotarModal({ comiteId, onClose, onSuccess }: { comiteId: string; onClos
     setError(null);
     try {
       await comiteApi.votar(comiteId, { voto, justificativa: justificativa || undefined, condicoes: condicoes || undefined });
+      addToast("Voto registrado com sucesso!");
       onSuccess();
     } catch (e: any) {
       setError(e?.message ?? "Erro ao registrar voto");
+      addToast(e?.message ?? "Erro ao registrar voto", "error");
     } finally {
       setLoading(false);
     }
@@ -256,6 +260,7 @@ function ComiteCard({ c, onVotoSuccess }: { c: ComiteItem; onVotoSuccess: () => 
 
 export function AdminComiteClient({ comites: initial }: { comites: ComiteItem[] }) {
   const router = useRouter();
+  const { addToast } = useToast();
   const [comites, setComites] = useState(initial);
   const [filter, setFilter] = useState("todos");
   const [refreshing, setRefreshing] = useState(false);
@@ -267,8 +272,10 @@ export function AdminComiteClient({ comites: initial }: { comites: ComiteItem[] 
     try {
       const updated = await comiteApi.listar();
       setComites(updated as ComiteItem[]);
+      addToast("Lista atualizada com sucesso");
     } catch (e: any) {
       setRefreshError(e?.message ?? "Falha ao atualizar");
+      addToast(e?.message ?? "Falha ao atualizar", "error");
     } finally {
       setRefreshing(false);
     }

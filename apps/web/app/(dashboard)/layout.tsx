@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import "./layout.css";
 import { useEffect, useState } from "react";
+import { ToastProvider } from "@/hooks/toast-context";
+import { Toaster } from "@/components/ui/toaster";
 import {
   Home, HardHat, CreditCard, Calculator, Star, FileCheck2, Bell, User,
   Wrench, ShieldCheck, BarChart3, Banknote, Megaphone, Settings, LogOut,
@@ -335,6 +337,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   );
 
   return (
+    <ToastProvider>
     <div className="dash-root" style={{ display: "flex", minHeight: "100vh", background: "#EEF3FF", fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
 
       {/* Sidebar desktop */}
@@ -461,6 +464,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </svg>
       </a>
 
+      <Toaster />
     </div>
+    </ToastProvider>
   );
 }
