@@ -382,7 +382,7 @@ export default function UsuariosAdminPage() {
                           </div>
                           <div>
                             <p style={{ ...jost, fontSize: "0.82rem", fontWeight: 600, color: bloqueado ? "rgba(12,26,61,0.35)" : NAVY, textDecoration: bloqueado ? "line-through" : "none" }}>{u.nome}</p>
-                            <p style={{ ...jost, fontSize: "0.7rem", color: "rgba(12,26,61,0.4)" }}>{u.email}</p>
+                            <p style={{ ...jost, fontSize: "0.7rem", color: "rgba(12,26,61,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "180px" }}>{u.email}</p>
                           </div>
                         </div>
                       </td>
@@ -520,7 +520,7 @@ export default function UsuariosAdminPage() {
                                           style={{
                                             ...jost, width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
                                             fontSize: "0.8rem", cursor: "pointer",
-                                            padding: "0.45rem 0.85rem", borderRadius: 8,
+                                            padding: "0.65rem 0.85rem", borderRadius: 8,
                                             border: fBloqueada ? "1px solid #fecaca" : "1px solid rgba(12,26,61,0.08)",
                                             background: fBloqueada ? "#fef2f2" : "rgba(12,26,61,0.02)",
                                             color: fBloqueada ? "#dc2626" : NAVY,

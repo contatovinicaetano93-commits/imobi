@@ -385,7 +385,7 @@ function TabPipeline() {
             const convPct = i > 0 ? Math.round((qtde / pl.funil[i-1].qtde) * 100) : 100;
             return (
               <div key={etapa}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 5 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 5, flexWrap: "wrap" }}>
                   <div style={{ width: 80, flexShrink: 0 }}>
                     <p style={{ ...j, fontSize: "0.78rem", fontWeight: 600, color: NAVY }}>{etapa}</p>
                     {i > 0 && <p style={{ ...j, fontSize: "0.65rem", color: "rgba(12,26,61,0.35)" }}>{convPct}% conv.</p>}
@@ -398,7 +398,7 @@ function TabPipeline() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ textAlign: "right", minWidth: 110 }}>
+                  <div style={{ textAlign: "right", minWidth: 80 }}>
                     <p style={{ ...j, fontSize: "0.78rem", fontWeight: 700, color: NAVY }}>{formatarBRL(valor)}</p>
                   </div>
                 </div>
@@ -730,7 +730,7 @@ function CredenciaisTable() {
   return (
     <div>
       {DEMO.credenciais.map((u) => (
-        <div key={u.email} style={{ display: "flex", alignItems: "center", gap: 12, padding: "0.8rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)" }}>
+        <div key={u.email} style={{ display: "flex", alignItems: "center", gap: 8, padding: "0.8rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)", flexWrap: "wrap" }}>
           <div style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, background: "rgba(12,26,61,0.07)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ ...bc, fontWeight: 800, fontSize: "0.72rem", color: NAVY }}>{u.role.slice(0, 2)}</span>
           </div>
@@ -879,7 +879,7 @@ export default function AdminPage() {
             onClick={() => setTab(id)}
             style={{
               ...j, display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "0.6rem 1rem", fontSize: "0.8rem", fontWeight: tab === id ? 700 : 500,
+              padding: "0.75rem 1rem", fontSize: "0.8rem", fontWeight: tab === id ? 700 : 500,
               color: tab === id ? NAVY : "rgba(12,26,61,0.42)",
               background: "none", border: "none", cursor: "pointer",
               borderBottom: `2px solid ${tab === id ? MINT : "transparent"}`,
