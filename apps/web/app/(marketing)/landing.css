@@ -219,9 +219,8 @@ nav.scrolled .btn-login:hover { background: var(--surface); border-color: #CBD5E
   background-size: 48px 48px;
 }
 .hero-inner {
-  max-width: 1200px; margin: 0 auto; width: 100%;
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 5rem; align-items: center;
+  max-width: 860px; margin: 0 auto; width: 100%;
+  display: flex; flex-direction: column; align-items: flex-start;
   position: relative; z-index: 1;
 }
 .hero-content { display: flex; flex-direction: column; }
@@ -246,8 +245,8 @@ nav.scrolled .btn-login:hover { background: var(--surface); border-color: #CBD5E
 .h1-line { display: block; }
 .h1-accent { color: var(--mint); }
 .hero-sub {
-  font-size: 1rem; color: rgba(255,255,255,0.6); line-height: 1.8;
-  font-weight: 300; margin-bottom: 2.5rem; max-width: 400px;
+  font-size: 1.05rem; color: rgba(255,255,255,0.6); line-height: 1.8;
+  font-weight: 300; margin-bottom: 2.5rem; max-width: 560px;
 }
 .hero-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .btn-hero-primary {

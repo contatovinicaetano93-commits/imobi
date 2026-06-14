@@ -202,53 +202,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* HERO CARD */}
-          <div className="hero-card">
-            <div className="hc-top">
-              <div className="hc-live-wrap">
-                <span className="hc-live-dot" />
-                <span className="hc-live-label">Operação ativa</span>
-              </div>
-              <span className="hc-op-id">OP-2026-047</span>
-            </div>
-
-            <div className="hc-project">
-              <p className="hc-proj-name">Residencial Jardins</p>
-              <p className="hc-proj-sub">São Paulo, SP · Crédito de Obra</p>
-            </div>
-
-            <p className="hc-amount">R$6,4M</p>
-
-            <div className="hc-milestones">
-              {([
-                { label: "Análise recebida", date: "18 mai", done: true,  active: false },
-                { label: "Proposta enviada", date: "22 mai", done: true,  active: false },
-                { label: "Aprovação",        date: "30 mai", done: true,  active: false },
-                { label: "Capital liberado", date: "03 jun", done: false, active: true  },
-              ] as { label: string; date: string; done: boolean; active: boolean }[]).map((m) => (
-                <div className={`hc-ms${m.done ? " done" : ""}${m.active ? " active" : ""}`} key={m.label}>
-                  <span className="hc-ms-dot" />
-                  <span className="hc-ms-label">{m.label}</span>
-                  <span className="hc-ms-date">{m.date}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="hc-prog">
-              <div className="hc-prog-header">
-                <span className="hc-prog-label">Avanço físico da obra</span>
-                <span className="hc-prog-pct">68%</span>
-              </div>
-              <div className="hc-prog-track">
-                <div className="hc-prog-fill" />
-              </div>
-            </div>
-
-            <div className="hc-footer">
-              <span className="hc-footer-note">Próxima vistoria · 20 jun 2026</span>
-              <span className="hc-on-track">✓ No prazo</span>
-            </div>
-          </div>
         </div>
       </section>
 
