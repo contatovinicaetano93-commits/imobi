@@ -14,7 +14,7 @@ export class NotificacoesController {
     @Query("limit") limit: string = "20",
     @Query("offset") offset: string = "0"
   ) {
-    return this.notificacoes.listar(u.id, Number(limit), Number(offset));
+    return this.notificacoes.listar(u.id, Math.max(1, parseInt(limit, 10) || 20), Math.max(0, parseInt(offset, 10) || 0));
   }
 
   @Get("nao-lidas")
@@ -28,15 +28,15 @@ export class NotificacoesController {
     return { count };
   }
 
-  @Patch(":id/lida")
-  async marcarComoLida(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
-    return this.notificacoes.marcarComoLida(u.id, id);
-  }
-
   @Patch("marcar-todas-lidas")
   async marcarTudasComoLidas(@UsuarioAtual() u: IUsuario) {
     await this.notificacoes.marcarTudasComoLidas(u.id);
     return { ok: true };
+  }
+
+  @Patch(":id/lida")
+  async marcarComoLida(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
+    return this.notificacoes.marcarComoLida(u.id, id);
   }
 
   @Delete(":id")

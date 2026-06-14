@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { Prisma } from "@prisma/client";
 import type { CriarObraInput } from "@imbobi/schemas";
 import { ETAPAS_PADRAO } from "./etapas-padrao";
 
@@ -9,13 +10,12 @@ export class ObrasService {
 
   async criar(usuarioId: string, input: CriarObraInput) {
     return this.prisma.$transaction(async (tx) => {
-      // BUG-002: Server-side GPS validation using PostGIS
-      if (input.geo?.latitude && input.geo?.longitude) {
-        const gpsValidation = await tx.$queryRaw<Array<{ valid: boolean }>>`
-          SELECT ST_IsValid(ST_GeomFromText('POINT(${input.geo.longitude} ${input.geo.latitude})', 4326)) AS valid
-        `;
+      if (input.geo != null) {
+        const gpsValidation = await tx.$queryRaw<Array<{ valid: boolean }>>(
+          Prisma.sql`SELECT ST_IsValid(ST_SetSRID(ST_MakePoint(${input.geo.longitude}, ${input.geo.latitude}), 4326)) AS valid`
+        );
         if (!gpsValidation[0]?.valid) {
-          throw new BadRequestException('GPS inválido (fora dos limites do Brasil)');
+          throw new BadRequestException('GPS inválido');
         }
       }
 
