@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useRouter, useSegments } from "expo-router";
 import { setOnUnauthorized, usuariosApi } from "../lib/api";
+
+// Called by login/cadastro after tokens are saved — triggers re-auth in root layout
+let _reloadAuth: (() => Promise<void>) | null = null;
+export function reloadAuth(): Promise<void> {
+  return _reloadAuth?.() ?? Promise.resolve();
+}
 
 export default function RootLayout() {
   const router = useRouter();
@@ -12,6 +18,33 @@ export default function RootLayout() {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [userTipo, setUserTipo] = useState<string | null>(null);
 
+  const bootstrap = useCallback(async () => {
+    try {
+      const token = await SecureStore.getItemAsync("accessToken");
+      if (token) {
+        const perfil = await usuariosApi.obterPerfil();
+        setUserTipo(perfil.tipo);
+        setIsSignedIn(true);
+      } else {
+        setIsSignedIn(false);
+        setUserTipo(null);
+      }
+    } catch {
+      // 401 handled by setOnUnauthorized; other errors = treat as signed out
+      setIsSignedIn(false);
+      setUserTipo(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Register bootstrap as the module-level reload trigger
+  useEffect(() => {
+    _reloadAuth = bootstrap;
+    return () => { _reloadAuth = null; };
+  }, [bootstrap]);
+
+  // Register 401 handler
   useEffect(() => {
     setOnUnauthorized(() => {
       setIsSignedIn(false);
@@ -20,32 +53,20 @@ export default function RootLayout() {
     });
   }, []);
 
-  useEffect(() => {
-    const bootstrap = async () => {
-      try {
-        const token = await SecureStore.getItemAsync("accessToken");
-        if (token) {
-          const perfil = await usuariosApi.obterPerfil();
-          setUserTipo(perfil.tipo);
-          setIsSignedIn(true);
-        }
-      } catch {
-        // 401 handled by setOnUnauthorized above; other errors = not signed in
-        setIsSignedIn(false);
-        setUserTipo(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    bootstrap();
-  }, []);
+  // Initial auth check on mount
+  useEffect(() => { bootstrap(); }, []);
 
+  // Route guard: runs whenever auth state or navigation changes
   useEffect(() => {
     if (isLoading) return;
     const inAuthGroup = segments[0] === "(auth)";
+
     if (!isSignedIn && !inAuthGroup) {
       router.replace("/(auth)/login");
-    } else if (isSignedIn && inAuthGroup) {
+      return;
+    }
+
+    if (isSignedIn && inAuthGroup) {
       const tipo = userTipo ?? "TOMADOR";
       if (tipo === "ENGENHEIRO") {
         router.replace("/(engenheiro)/vistorias");

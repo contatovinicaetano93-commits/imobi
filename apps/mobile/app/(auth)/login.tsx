@@ -11,6 +11,7 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { LoginSchema, type LoginInput } from "@imbobi/schemas";
 import { apiClient } from "@imbobi/core";
+import { reloadAuth } from "../_layout";
 import { Ionicons } from "@expo/vector-icons";
 
 const C = {
@@ -40,7 +41,7 @@ export default function LoginScreen() {
       );
       await SecureStore.setItemAsync("accessToken",  res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
-      router.replace("/(tabs)/obras");
+      await reloadAuth(); // updates root layout state → routes to correct panel based on role
     } catch (e: any) {
       Alert.alert("Acesso negado", e.message ?? "E-mail ou senha inválidos.");
     }

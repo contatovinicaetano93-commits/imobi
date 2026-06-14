@@ -10,6 +10,7 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
 import { apiClient } from "@imbobi/core";
+import { reloadAuth } from "../_layout";
 import { Ionicons } from "@expo/vector-icons";
 
 const C = {
@@ -59,7 +60,7 @@ export default function CadastroScreen() {
       );
       await SecureStore.setItemAsync("accessToken",  res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
-      router.replace("/(tabs)/obras");
+      await reloadAuth(); // updates root layout state → routes to correct panel based on role
     } catch (e: any) {
       Alert.alert("Erro no cadastro", e.message ?? "Tente novamente.");
     }
