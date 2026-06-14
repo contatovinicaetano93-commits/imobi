@@ -80,6 +80,14 @@ export const authApi = {
     }),
 };
 
+export const engenheiroApi = {
+  obras: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<ObraEngenheiro[]>("/api/v1/engenheiros/financeiro", token ?? undefined);
+    }),
+};
+
 export const adminApi = {
   listarUsuarios: () =>
     callApi(async () => {
@@ -216,6 +224,17 @@ export type ScoreData = {
   nivel: string;
   cor: string;
   descricao: string;
+};
+
+export type ObraEngenheiro = {
+  obraId: string;
+  nome: string;
+  valorTotal: number;
+  valorMaterial: number;
+  valorMaoDeObra: number;
+  valorExecutado: number;
+  progresso: number;
+  etapaAtual: string;
 };
 
 export type AdminUsuario = {

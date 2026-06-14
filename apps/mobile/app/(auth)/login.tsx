@@ -8,6 +8,7 @@ import { apiClient } from "@imbobi/core";
 
 function rotaPorPapel(tipo: string): string {
   if (tipo === "ADMIN") return "/(admin)/kyc";
+  if (tipo === "GESTOR_OBRA") return "/(engenheiro)/obras";
   return "/(construtor)/obras";
 }
 
