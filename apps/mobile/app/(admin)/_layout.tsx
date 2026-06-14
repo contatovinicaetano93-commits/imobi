@@ -9,14 +9,12 @@ export default function AdminLayout() {
 
   useEffect(() => {
     const check = async () => {
-      try {
-        const [val, ov] = await Promise.all([
-          adminApi.listarEtapasAguardandoValidacao(1, 0),
-          adminApi.overview(),
-        ]);
-        setPendingValidacao(val.total);
-        setPendingKyc(ov.kycPendentes);
-      } catch {}
+      const [valResult, ovResult] = await Promise.allSettled([
+        adminApi.listarEtapasAguardandoValidacao(1, 0),
+        adminApi.overview(),
+      ]);
+      if (valResult.status === "fulfilled") setPendingValidacao(valResult.value.total);
+      if (ovResult.status === "fulfilled") setPendingKyc(ovResult.value.kycPendentes);
     };
     check();
     const interval = setInterval(check, 60_000);

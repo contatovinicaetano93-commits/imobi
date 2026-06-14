@@ -140,6 +140,35 @@ export const kycApi = {
   },
 };
 
+// ── Admin KYC API ──
+export type KycPendente = {
+  kycDocumentoId: string;
+  tipo: string;
+  url: string;
+  status: "PENDENTE" | "APROVADO" | "REJEITADO";
+  criadoEm: string;
+  motivoRejeicao?: string | null;
+  usuario: { nome: string; email: string; cpf: string };
+};
+
+export const adminKycApi = {
+  listarPendentes: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<KycPendente[]>("/api/v1/kyc/pendentes", token ?? undefined);
+    }),
+  aprovar: (id: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.patch<{ ok: boolean }>(`/api/v1/kyc/${id}/aprovar`, {}, token ?? undefined);
+    }),
+  rejeitar: (id: string, motivo: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.patch<{ ok: boolean }>(`/api/v1/kyc/${id}/rejeitar`, { motivo }, token ?? undefined);
+    }),
+};
+
 // ── Comercial API ──
 export const comercialApi = {
   overview: () =>
