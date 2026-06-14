@@ -75,6 +75,39 @@ export const authApi = {
     }),
 };
 
+export const fundoApi = {
+  overview: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<FundoOverview>("/api/v1/fundo/overview", token ?? undefined);
+    }),
+  carteira: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<OperacaoFundo[]>("/api/v1/fundo/carteira", token ?? undefined);
+    }),
+  fluxoCaixa: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<LiberacaoFundo[]>("/api/v1/fundo/fluxo-caixa", token ?? undefined);
+    }),
+};
+
+export type FundoOverview = {
+  aum: number; liberado: number; pctLiberado: number;
+  npl: number; taxaMediaMensal: number; tirEstimadaAnual: number;
+  totalOperacoes: number; operacoesAtivas: number; operacoesQuitadas: number; operacoesInadimplentes: number;
+  obrasAtivas: number; filaLiberacaoValor: number; filaLiberacaoCount: number; totalHistoricoLiberado: number;
+};
+export type OperacaoFundo = {
+  creditoId: string; construtor: string; obraNome: string;
+  valorAprovado: number; valorLiberado: number; pctLiberado: number;
+  taxaMensal: number; prazoMeses: number; status: string; progressoFisico: number; criadoEm: string;
+};
+export type LiberacaoFundo = {
+  liberacaoId: string; valor: number; status: string; obraNome: string; criadoEm: string;
+};
+
 export const comercialApi = {
   stats: () =>
     callApi(async () => {

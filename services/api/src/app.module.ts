@@ -30,6 +30,7 @@ import { SetupModule } from "./modules/setup/setup.module";
 import { DueDiligenceModule } from "./modules/due-diligence/due-diligence.module";
 import { DocumentosModule } from "./modules/documentos/documentos.module";
 import { ComiteModule } from "./modules/comite/comite.module";
+import { FundoModule } from "./modules/fundo/fundo.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker } from "./workers/excluir-usuario.worker";
 import { HealthController } from "./common/health.controller";
@@ -93,6 +94,7 @@ const redisConfig = getRedisConfig();
     DueDiligenceModule,
     DocumentosModule,
     ComiteModule,
+    FundoModule,
   ],
   controllers: [HealthController],
   providers: [
