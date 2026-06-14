@@ -8,6 +8,7 @@ import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
 import * as bcrypt from "bcryptjs";
 import { UsuarioTipo } from "@prisma/client";
+import type { SolicitacaoStatus } from "@prisma/client";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
 
 export interface CriarUsuarioAdminDto {
@@ -498,7 +499,7 @@ export class AdminService {
   async listarSolicitacoes(status?: string, semComite?: boolean) {
     const solicitacoes = await this.prisma.solicitacaoCredito.findMany({
       where: {
-        ...(status ? { status: status as any } : {}),
+        ...(status ? { status: status as SolicitacaoStatus } : {}),
         ...(semComite ? { comite: null } : {}),
       },
       include: {

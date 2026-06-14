@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import { ChevronLeft, Save, AlertTriangle, Percent, DollarSign, Clock, MapPin, Settings, RefreshCw } from "lucide-react";
+import { ChevronLeft, Save, AlertTriangle, Percent, DollarSign, Clock, MapPin, Settings } from "lucide-react";
 import { useToast } from "@/hooks/toast-context";
 
 const NAVY  = "#0C1A3D";
@@ -46,9 +46,6 @@ export default function ConfiguracoesPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveErro, setSaveErro] = useState("");
-  const [regenerando, setRegenerando] = useState(false);
-  const [regenerado, setRegenerado] = useState(false);
-
   useEffect(() => {
     fetch("/api/proxy/admin/configuracoes")
       .then((r) => (r.ok ? r.json() : null))
@@ -85,21 +82,6 @@ export default function ConfiguracoesPage() {
       addToast(msg, "error");
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleRegenerarPrisma() {
-    setRegenerando(true);
-    try {
-      const res = await fetch("/api/proxy/admin/prisma/regenerate", { method: "POST" });
-      if (res.ok) {
-        setRegenerado(true);
-        setTimeout(() => setRegenerado(false), 3000);
-      }
-    } catch {
-      // silently fail — operação administrativa
-    } finally {
-      setRegenerando(false);
     }
   }
 
@@ -227,35 +209,7 @@ export default function ConfiguracoesPage() {
           </button>
         </div>
 
-        {/* Regenerar Prisma */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, padding: "1rem 1.25rem", borderTop: "1px solid rgba(12,26,61,0.06)" }}>
-          <div>
-            <p style={{ ...jost, fontSize: "0.84rem", fontWeight: 600, color: NAVY }}>Regenerar Prisma Client</p>
-            <p style={{ ...jost, fontSize: "0.72rem", color: "rgba(12,26,61,0.4)", marginTop: 2 }}>
-              Executa <code style={{ fontFamily: "monospace", background: "rgba(12,26,61,0.06)", padding: "0 4px", borderRadius: 4 }}>prisma generate</code> no servidor
-            </p>
-          </div>
-          <button
-            onClick={handleRegenerarPrisma}
-            disabled={regenerando}
-            style={{
-              ...jost, display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0,
-              fontSize: "0.8rem", fontWeight: 600, cursor: "pointer",
-              padding: "0.45rem 1rem", borderRadius: 10,
-              border: regenerado ? "1px solid #bbf7d0" : "1px solid rgba(12,26,61,0.12)",
-              color: regenerado ? "#16a34a" : NAVY,
-              background: regenerado ? "#f0fdf4" : "white",
-              opacity: regenerando ? 0.6 : 1,
-              transition: "all 0.15s",
-            }}
-          >
-            <RefreshCw size={13} style={{ animation: regenerando ? "spin 1s linear infinite" : "none" }} />
-            {regenerando ? "Executando..." : regenerado ? "Concluído" : "Regenerar"}
-          </button>
-        </div>
       </Section>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

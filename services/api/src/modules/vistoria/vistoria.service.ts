@@ -10,8 +10,9 @@ import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
+import type { EtapaStatus } from "@prisma/client";
 
-const STATUSES_VISTORIAVEL = ["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA", "APROVADA_ENGENHEIRO"];
+const STATUSES_VISTORIAVEL: EtapaStatus[] = ["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA", "APROVADA_ENGENHEIRO"];
 
 @Injectable()
 export class VistoriaService {
@@ -44,14 +45,14 @@ export class VistoriaService {
 
     // Notify all admins/gestores
     const admins = await this.prisma.usuario.findMany({
-      where: { tipo: { in: ["ADMIN", "GESTOR"] as any }, deletadoEm: null },
+      where: { tipo: { in: ["ADMIN", "GESTOR"] }, deletadoEm: null },
       select: { usuarioId: true },
     });
     await Promise.all(
       admins.map((a) =>
         this.notificacoes.criar(
           a.usuarioId,
-          "ETAPA_AGUARDANDO_ADMIN" as any,
+          "ETAPA_AGUARDANDO_ADMIN",
           `Vistoria aprovada: ${etapa.nome}`,
           `O engenheiro aprovou a etapa "${etapa.nome}" da obra "${etapa.obra.nome}". Aguardando sua validação para liberar a parcela.`,
           `/admin/obras/${etapa.obra.obraId}`,
@@ -70,7 +71,7 @@ export class VistoriaService {
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
     const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: { in: STATUSES_VISTORIAVEL as any } },
+      where: { etapaId, status: { in: STATUSES_VISTORIAVEL } },
       data: { status: "REPROVADA" },
     });
     if (updated.count === 0) {

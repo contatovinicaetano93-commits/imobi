@@ -1,8 +1,9 @@
 import { Controller, Get, Query, ForbiddenException, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { hash } from "bcryptjs";
+import type { UsuarioTipo } from "@prisma/client";
 
-const STAFF_USERS = [
+const STAFF_USERS: { nome: string; email: string; cpf: string; telefone: string; senha: string; tipo: UsuarioTipo }[] = [
   { nome: "Vinicius Caetano",      email: "contato.vinicaetano93@gmail.com", cpf: "00000000000", telefone: "11999999999", senha: "Paularenata1@",  tipo: "ADMIN"      },
   { nome: "Administrador IMOBI",   email: "admin@imobi.com.br",              cpf: "00000000001", telefone: "11900000001", senha: "Admin@123",      tipo: "ADMIN"      },
   { nome: "Gestor de Fundo",       email: "gestor@imobi.com.br",             cpf: "00000000002", telefone: "11900000002", senha: "Gestor@123",     tipo: "GESTOR"     },
@@ -29,10 +30,10 @@ export class SetupController {
       const passwordHash = await hash(u.senha, 12);
       await this.prisma.usuario.upsert({
         where: { email: u.email },
-        update: { passwordHash, tipo: u.tipo as any, kycStatus: "APROVADO", nome: u.nome },
+        update: { passwordHash, tipo: u.tipo, kycStatus: "APROVADO", nome: u.nome },
         create: {
           nome: u.nome, email: u.email, cpf: u.cpf, telefone: u.telefone,
-          passwordHash, tipo: u.tipo as any, kycStatus: "APROVADO",
+          passwordHash, tipo: u.tipo, kycStatus: "APROVADO",
           consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
         },
       });

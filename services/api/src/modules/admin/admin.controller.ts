@@ -86,8 +86,8 @@ export class AdminController {
   }
 
   @Patch("configuracoes")
-  updateConfiguracoes(@Body() body: Record<string, unknown>) {
-    return this.adminService.updateConfiguracoes(body as any);
+  updateConfiguracoes(@Body() body: Parameters<AdminService["updateConfiguracoes"]>[0]) {
+    return this.adminService.updateConfiguracoes(body);
   }
 
   @Get("fundos/capital")
