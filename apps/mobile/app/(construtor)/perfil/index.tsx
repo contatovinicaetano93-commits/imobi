@@ -46,6 +46,7 @@ export default function PerfilScreen() {
           } finally {
             await SecureStore.deleteItemAsync("accessToken");
             await SecureStore.deleteItemAsync("refreshToken");
+            await SecureStore.deleteItemAsync("userRole");
             router.replace("/(auth)/login");
           }
         },

@@ -6,6 +6,11 @@ import * as SecureStore from "expo-secure-store";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
 import { apiClient } from "@imbobi/core";
 
+function rotaPorPapel(tipo: string): string {
+  if (tipo === "ADMIN") return "/(admin)/kyc";
+  return "/(construtor)/obras";
+}
+
 export default function CadastroScreen() {
   const router = useRouter();
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<CadastroUsuarioInput>({
@@ -14,13 +19,14 @@ export default function CadastroScreen() {
 
   const onSubmit = async (data: CadastroUsuarioInput) => {
     try {
-      const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
+      const res = await apiClient.post<{ accessToken: string; refreshToken: string; usuario: { tipo: string } }>(
         "/auth/registrar",
         data
       );
       await SecureStore.setItemAsync("accessToken", res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
-      router.replace("/(construtor)/obras");
+      await SecureStore.setItemAsync("userRole", res.usuario.tipo);
+      router.replace(rotaPorPapel(res.usuario.tipo));
     } catch (e: any) {
       Alert.alert("Erro", e.message ?? "Falha no cadastro. Tente novamente.");
     }

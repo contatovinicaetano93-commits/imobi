@@ -9,11 +9,17 @@ type RootLayoutProps = {
   children?: React.ReactNode;
 };
 
+function rotaPorPapel(tipo: string | null): string {
+  if (tipo === "ADMIN") return "/(admin)/kyc";
+  return "/(construtor)/obras";
+}
+
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [isLoading, setIsLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     setOnUnauthorized(() => {
@@ -25,7 +31,9 @@ export default function RootLayout() {
     const bootstrapAsync = async () => {
       try {
         const token = await SecureStore.getItemAsync("accessToken");
+        const role = await SecureStore.getItemAsync("userRole");
         setIsSignedIn(!!token);
+        setUserRole(role);
       } catch (e) {
         console.error("Failed to restore token", e);
       } finally {
@@ -44,9 +52,9 @@ export default function RootLayout() {
     if (!isSignedIn && !inAuthGroup) {
       router.replace("/(auth)/login");
     } else if (isSignedIn && inAuthGroup) {
-      router.replace("/(construtor)/obras");
+      router.replace(rotaPorPapel(userRole));
     }
-  }, [isSignedIn, isLoading, segments]);
+  }, [isSignedIn, isLoading, segments, userRole]);
 
   if (isLoading) {
     return (
