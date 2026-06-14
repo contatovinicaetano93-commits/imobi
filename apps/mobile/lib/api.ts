@@ -163,6 +163,7 @@ export type Etapa = {
   percentualObra: number;
   valorLiberacao: number;
   status: string;
+  evidencias?: Evidencia[];
 };
 
 export type Evidencia = {
