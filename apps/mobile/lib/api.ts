@@ -75,6 +75,32 @@ export const authApi = {
     }),
 };
 
+export const notificacoesApi = {
+  listar: (limit = 20, offset = 0) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<{ notificacoes: Notificacao[]; total: number }>(
+        `/api/v1/notificacoes?limit=${limit}&offset=${offset}`,
+        token ?? undefined
+      );
+    }),
+  marcarLida: (id: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.patch(`/api/v1/notificacoes/${id}/lida`, {}, token ?? undefined);
+    }),
+  marcarTodasLidas: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.patch("/api/v1/notificacoes/marcar-todas-lidas", {}, token ?? undefined);
+    }),
+  deletar: (id: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.delete(`/api/v1/notificacoes/${id}`, token ?? undefined);
+    }),
+};
+
 export const pushApi = {
   registrarToken: (fcmToken: string) =>
     callApi(async () => {
@@ -130,6 +156,17 @@ export type ScoreData = {
   nivel: string;
   cor: string;
   descricao: string;
+};
+
+export type Notificacao = {
+  notificacaoId: string;
+  tipo: string;
+  titulo: string;
+  mensagem: string;
+  link?: string | null;
+  lida: boolean;
+  lidoEm?: string | null;
+  criadoEm: string;
 };
 
 export type UsuarioPerfil = {

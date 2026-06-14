@@ -47,7 +47,7 @@ export default function ObrasScreen() {
           const concluidas = etapas.filter((e) => e.status === "CONCLUIDA").length;
           const progresso = etapas.length ? Math.round((concluidas / etapas.length) * 100) : 0;
           return (
-            <TouchableOpacity style={styles.card} onPress={() => router.push(`/(tabs)/obras/${item.obraId}`)}>
+            <TouchableOpacity style={styles.card} onPress={() => router.push(`/(construtor)/obras/${item.obraId}`)}>
               <View style={styles.cardHeader}>
                 <Text style={styles.obraNome} numberOfLines={1}>{item.nome}</Text>
                 <Text style={styles.progresso}>{progresso}%</Text>
