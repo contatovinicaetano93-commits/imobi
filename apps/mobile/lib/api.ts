@@ -83,6 +83,62 @@ export const pushApi = {
     }),
 };
 
+export const notificacoesApi = {
+  listar: (limit = 20, offset = 0) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<{ notificacoes: Notificacao[]; total: number }>(
+        `/api/v1/notificacoes?limit=${limit}&offset=${offset}`,
+        token ?? undefined
+      );
+    }),
+  contarNaoLidas: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<{ count: number }>("/api/v1/notificacoes/contar-nao-lidas", token ?? undefined);
+    }),
+  marcarComoLida: (id: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.patch<void>(`/api/v1/notificacoes/${id}/lida`, {}, token ?? undefined);
+    }),
+  marcarTodasComoLidas: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.patch<{ ok: boolean }>("/api/v1/notificacoes/marcar-todas-lidas", {}, token ?? undefined);
+    }),
+};
+
+export const kycApi = {
+  listarDocumentos: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<KycDocumento[]>("/api/v1/kyc/documentos", token ?? undefined);
+    }),
+  obterStatus: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<KycStatus>("/api/v1/kyc/status", token ?? undefined);
+    }),
+  uploadArquivo: async (tipo: string, uri: string, mimeType: string): Promise<KycDocumento> => {
+    const token = await getToken();
+    const apiUrl = process.env["EXPO_PUBLIC_API_URL"] ?? "";
+    const form = new FormData();
+    form.append("file", { uri, name: `kyc-${tipo}.jpg`, type: mimeType } as never);
+    form.append("tipo", tipo);
+    const res = await fetch(`${apiUrl}/api/v1/kyc/upload-arquivo`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token ?? ""}` },
+      body: form,
+    });
+    if (!res.ok) {
+      const err = await res.json() as { message?: string };
+      throw new Error(err.message ?? "Erro no upload");
+    }
+    return res.json() as Promise<KycDocumento>;
+  },
+};
+
 // Types
 export type Obra = {
   obraId: string;
@@ -141,4 +197,31 @@ export type UsuarioPerfil = {
   tipo: string;
   kycStatus: string;
   criadoEm: string;
+};
+
+export type Notificacao = {
+  notificacaoId: string;
+  tipo: string;
+  titulo: string;
+  mensagem: string;
+  link?: string | null;
+  lida: boolean;
+  lidoEm?: string | null;
+  criadoEm: string;
+};
+
+export type KycDocumento = {
+  kycDocumentoId: string;
+  tipo: string;
+  url: string;
+  status: "PENDENTE" | "APROVADO" | "REJEITADO";
+  motivo_rejeicao?: string | null;
+  criadoEm: string;
+};
+
+export type KycStatus = {
+  usuarioId: string;
+  status: string;
+  documentos: KycDocumento[];
+  resumo: { pendentes: number; aprovados: number; rejeitados: number };
 };

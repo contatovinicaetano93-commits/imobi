@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Patch, Body, Param, UseGuards } from "@nestjs/common";
+import { Controller, Post, Get, Patch, Body, Param, UseGuards, UseInterceptors, UploadedFile } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { KycService } from "./kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -16,6 +17,16 @@ export class KycController {
     @Body() body: { tipo: string; url: string }
   ) {
     return this.kyc.uploadDocumento(u.id, body.tipo, body.url);
+  }
+
+  @Post("upload-arquivo")
+  @UseInterceptors(FileInterceptor("file"))
+  async uploadArquivo(
+    @UsuarioAtual() u: IUsuario,
+    @UploadedFile() file: Express.Multer.File,
+    @Body("tipo") tipo: string,
+  ) {
+    return this.kyc.uploadDocumentoArquivo(u.id, tipo, file.buffer, file.mimetype);
   }
 
   @Get("documentos")

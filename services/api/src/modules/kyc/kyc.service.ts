@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
+import { StorageService } from "../storage/storage.service";
 import { KycDocumentoStatus } from "@prisma/client";
 
 @Injectable()
@@ -13,7 +14,8 @@ export class KycService {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
+    private readonly storage: StorageService,
   ) {}
 
   async uploadDocumento(usuarioId: string, tipo: string, url: string) {
@@ -42,6 +44,11 @@ export class KycService {
     ));
 
     return doc;
+  }
+
+  async uploadDocumentoArquivo(usuarioId: string, tipo: string, buffer: Buffer, mimeType: string) {
+    const { key } = await this.storage.upload(buffer, mimeType, `kyc-${usuarioId}`);
+    return this.uploadDocumento(usuarioId, tipo, key);
   }
 
   async listarDocumentos(usuarioId: string) {
