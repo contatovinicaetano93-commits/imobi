@@ -85,7 +85,7 @@ function getNavRole(role: UserRole, path: string): UserRole {
   if (seg === "comercial")  return "COMERCIAL";
   if (seg === "gestor")     return "GESTOR";
   if (seg === "engenheiro") return "ENGENHEIRO";
-  if (["construtor", "credito", "kyc", "score", "simulador", "obras", "comite", "construtor"].includes(seg))
+  if (["construtor", "credito", "kyc", "score", "simulador", "obras", "comite"].includes(seg))
     return role === "ENGENHEIRO" || role === "GESTOR_OBRA" ? role : "CONSTRUTOR";
   if (seg === "admin")      return "ADMIN";
   if (seg === "fundos" || seg === "relatorios") return role === "ADMIN" ? "ADMIN" : "GESTOR";

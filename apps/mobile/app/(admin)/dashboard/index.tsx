@@ -59,12 +59,12 @@ export default function AdminDashboard() {
             <KpiCard label="Usuários"          value={String(overview?.totalUsuarios ?? 0)}       icon="people"             color={C.mint} />
           </View>
           <View style={{ flexDirection: "row", gap: 12 }}>
-            <KpiCard label="Vistorias eng."    value={String(overview?.etapasPendentes ?? 0)}     icon="eye"                color={C.amber} alert={overview?.etapasPendentes ?? 0 > 0} />
-            <KpiCard label="KYC pendentes"     value={String(overview?.kycPendentes ?? 0)}        icon="id-card"            color={C.red}   alert={overview?.kycPendentes ?? 0 > 0} />
+            <KpiCard label="Vistorias eng."    value={String(overview?.etapasPendentes ?? 0)}     icon="eye"                color={C.amber} alert={(overview?.etapasPendentes ?? 0) > 0} />
+            <KpiCard label="KYC pendentes"     value={String(overview?.kycPendentes ?? 0)}        icon="id-card"            color={C.red}   alert={(overview?.kycPendentes ?? 0) > 0} />
           </View>
           <View style={{ flexDirection: "row", gap: 12 }}>
             <KpiCard label="Fila liberação"    value={String(overview?.filaLiberacao ?? 0)}       icon="cash"               color={C.mint} />
-            <KpiCard label="Ag. validação"     value={String(overview?.visitasAgendadas ?? 0)}    icon="shield-checkmark"   color={C.blue} alert={overview?.visitasAgendadas ?? 0 > 0} />
+            <KpiCard label="Ag. validação"     value={String(overview?.visitasAgendadas ?? 0)}    icon="shield-checkmark"   color={C.blue} alert={(overview?.visitasAgendadas ?? 0) > 0} />
           </View>
         </ScrollView>
       )}
