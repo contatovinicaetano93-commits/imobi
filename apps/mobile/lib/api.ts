@@ -75,6 +75,46 @@ export const authApi = {
     }),
 };
 
+export const adminApi = {
+  overview: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<AdminOverview>("/api/v1/admin/overview", token ?? undefined);
+    }),
+  etapasParaValidar: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<AdminEtapaValidar[]>("/api/v1/admin/etapas/validar", token ?? undefined);
+    }),
+  validarEtapa: (etapaId: string, aprovado: boolean, motivo?: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post(`/api/v1/admin/etapas/${etapaId}/validar`, { aprovado, motivo }, token ?? undefined);
+    }),
+};
+
+export type AdminOverview = {
+  totalUsuarios: number;
+  obrasAtivas: number;
+  obrasTotal: number;
+  creditoAprovado: number;
+  creditoLiberado: number;
+  kycPendentes: number;
+  etapasPendentes: number;
+  filaLiberacao: number;
+};
+
+export type AdminEtapaValidar = {
+  etapaId: string;
+  nome: string;
+  percentualObra: number;
+  obraId: string;
+  obraNome: string;
+  construtor: string;
+  valorParcela: number;
+  aguardandoDesde: string;
+};
+
 export const vistoriaApi = {
   listar: () =>
     callApi(async () => {
