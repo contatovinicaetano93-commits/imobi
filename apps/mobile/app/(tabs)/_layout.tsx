@@ -40,7 +40,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="obras/index"
+        name="obras"
         options={{
           title: "Início",
           tabBarIcon: ({ color, size }) => (
@@ -49,7 +49,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="credito/index"
+        name="credito"
         options={{
           title: "Crédito",
           tabBarIcon: ({ color, size }) => (
@@ -58,7 +58,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="notificacoes/index"
+        name="notificacoes"
         options={{
           title: "Avisos",
           tabBarBadge:      unreadCount > 0 ? unreadCount : undefined,
@@ -69,7 +69,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="perfil/index"
+        name="perfil"
         options={{
           title: "Perfil",
           tabBarIcon: ({ color, size }) => (
