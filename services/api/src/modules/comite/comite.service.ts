@@ -203,7 +203,10 @@ export class ComiteService {
         solicitacao: {
           include: { usuario: { select: { nome: true, email: true } } },
         },
-        votos: true,
+        votos: {
+          include: { votante: { select: { nome: true, tipo: true } } },
+          orderBy: { criadoEm: "asc" },
+        },
       },
     });
   }

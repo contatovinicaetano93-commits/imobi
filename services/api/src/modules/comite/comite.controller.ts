@@ -65,10 +65,10 @@ export class ComiteController {
     return this.comiteService.votar(comiteId, user.id, body.voto, body.justificativa, body.condicoes);
   }
 
-  // ── Leitura: listar comitês (Admin + Fundo) ───────────────────────
+  // ── Leitura: listar comitês ───────────────────────────────────────
 
   @Get()
-  @Roles("ADMIN", "GESTOR")
+  @Roles("ADMIN", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA")
   listar(@Query("status") status?: string) {
     return this.comiteService.listarComites(status);
   }
