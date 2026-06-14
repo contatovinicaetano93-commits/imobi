@@ -20,7 +20,7 @@ export default function LoginScreen() {
       );
       await SecureStore.setItemAsync("accessToken", res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
-      router.replace("/(tabs)/obras");
+      router.replace("/(construtor)/obras");
     } catch (e: any) {
       Alert.alert("Erro de autenticação", e.message ?? "E-mail ou senha inválidos.");
     }

@@ -20,7 +20,7 @@ export default function CadastroScreen() {
       );
       await SecureStore.setItemAsync("accessToken", res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
-      router.replace("/(tabs)/obras");
+      router.replace("/(construtor)/obras");
     } catch (e: any) {
       Alert.alert("Erro", e.message ?? "Falha no cadastro. Tente novamente.");
     }

@@ -44,7 +44,7 @@ export default function RootLayout() {
     if (!isSignedIn && !inAuthGroup) {
       router.replace("/(auth)/login");
     } else if (isSignedIn && inAuthGroup) {
-      router.replace("/(tabs)/obras");
+      router.replace("/(construtor)/obras");
     }
   }, [isSignedIn, isLoading, segments]);
 
@@ -69,7 +69,7 @@ export default function RootLayout() {
         }}
       />
       <Stack.Screen
-        name="(tabs)"
+        name="(construtor)"
         options={{
           gestureEnabled: false,
         }}
