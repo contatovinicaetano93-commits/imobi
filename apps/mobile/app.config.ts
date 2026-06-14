@@ -3,13 +3,17 @@ import type { ExpoConfig } from "expo/config";
 const EAS_PROJECT_ID = "6bf955c5-863a-4344-ac39-6a55c89658d4";
 
 const config: ExpoConfig = {
-  name: "imbobi",
-  slug: "imbobi",
-  version: "1.0.0",
+  name:        "IMOBI",
+  slug:        "imbobi",
+  version:     "1.0.0",
   orientation: "portrait",
-  icon: "./assets/icon.png",
-  userInterfaceStyle: "automatic",
-  splash: { image: "./assets/splash.png", resizeMode: "contain", backgroundColor: "#15803d" },
+  icon:        "./assets/icon.png",
+  userInterfaceStyle: "light",
+  splash: {
+    image:           "./assets/splash.png",
+    resizeMode:      "contain",
+    backgroundColor: "#0C1A3D",
+  },
   runtimeVersion: { policy: "appVersion" },
   updates: {
     url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
@@ -19,18 +23,21 @@ const config: ExpoConfig = {
     bundleIdentifier: "com.imbobi.app",
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
-        "O imbobi precisa da sua localização para validar que você está na obra antes de enviar a foto.",
+        "O IMOBI precisa da sua localização para validar que você está na obra antes de enviar a foto.",
       NSLocationAlwaysAndWhenInUseUsageDescription:
-        "O imbobi precisa da sua localização para validar o registro de obra.",
+        "O IMOBI precisa da sua localização para validar o registro de obra.",
       NSCameraUsageDescription:
-        "O imbobi precisa da câmera para registrar o progresso da sua obra.",
+        "O IMOBI precisa da câmera para registrar o progresso da sua obra.",
       NSPhotoLibraryUsageDescription:
-        "O imbobi precisa acessar suas fotos para enviar evidências da obra.",
+        "O IMOBI precisa acessar suas fotos para enviar evidências da obra.",
     },
   },
   android: {
     package: "com.imbobi.app",
-    adaptiveIcon: { foregroundImage: "./assets/adaptive-icon.png", backgroundColor: "#15803d" },
+    adaptiveIcon: {
+      foregroundImage:  "./assets/adaptive-icon.png",
+      backgroundColor:  "#0C1A3D",
+    },
     permissions: [
       "ACCESS_FINE_LOCATION",
       "ACCESS_COARSE_LOCATION",
