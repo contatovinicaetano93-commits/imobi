@@ -86,9 +86,14 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity onPress={() => router.push("/(auth)/cadastro")} disabled={isSubmitting}>
-        <Text style={styles.link}>Não tem conta? Cadastre-se</Text>
-      </TouchableOpacity>
+      <View style={{ gap: 12, alignItems: "center" }}>
+        <TouchableOpacity onPress={() => router.push("/(auth)/esqueci-senha" as any)} disabled={isSubmitting}>
+          <Text style={styles.link}>Esqueci minha senha</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/(auth)/cadastro")} disabled={isSubmitting}>
+          <Text style={styles.link}>Não tem conta? Cadastre-se</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

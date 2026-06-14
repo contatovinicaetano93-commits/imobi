@@ -73,6 +73,10 @@ export const authApi = {
       const token = await getToken();
       return apiClient.post("/api/v1/auth/logout", { refreshToken }, token ?? undefined);
     }),
+  esqueceuSenha: (email: string) =>
+    apiClient.post("/api/v1/auth/esqueceu-senha", { email }),
+  redefinirSenha: (token: string, novaSenha: string) =>
+    apiClient.post("/api/v1/auth/redefinir-senha", { token, novaSenha }),
 };
 
 export const fundoApi = {
