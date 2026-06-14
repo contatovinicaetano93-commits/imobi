@@ -56,6 +56,13 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="obras/[id]" options={{ href: null }} />
+      <Tabs.Screen name="obras/[id]/index" options={{ href: null }} />
+      <Tabs.Screen name="obras/[id]/_layout" options={{ href: null }} />
+      <Tabs.Screen name="obras/[id]/registrar" options={{ href: null }} />
+      <Tabs.Screen name="credito/[id]" options={{ href: null }} />
+      <Tabs.Screen name="credito/[id]/index" options={{ href: null }} />
+      <Tabs.Screen name="credito/simulador" options={{ href: null }} />
     </Tabs>
   );
 }
