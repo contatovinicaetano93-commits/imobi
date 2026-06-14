@@ -52,6 +52,10 @@ export default function RootLayout() {
         router.replace("/(engenheiro)/vistorias");
       } else if (tipo === "ADMIN" || tipo === "GESTOR") {
         router.replace("/(admin)/dashboard");
+      } else if (tipo === "PARCEIRO" || tipo === "COMERCIAL") {
+        router.replace("/(comercial)/dashboard");
+      } else if (tipo === "GESTOR_FUNDO") {
+        router.replace("/(fundo)/carteira");
       } else {
         router.replace("/(construtor)/obras");
       }
@@ -72,6 +76,8 @@ export default function RootLayout() {
       <Stack.Screen name="(construtor)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="(engenheiro)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="(admin)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(comercial)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(fundo)" options={{ gestureEnabled: false }} />
     </Stack>
   );
 }

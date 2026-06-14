@@ -139,6 +139,34 @@ export const kycApi = {
   },
 };
 
+// ── Comercial API ──
+export const comercialApi = {
+  overview: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<ComercialOverview>("/api/v1/comercial/overview", token ?? undefined);
+    }),
+  pipeline: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<PipelineLead[]>("/api/v1/comercial/pipeline", token ?? undefined);
+    }),
+};
+
+// ── Fundo API ──
+export const fundoApi = {
+  overview: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<FundoOverview>("/api/v1/fundo/overview", token ?? undefined);
+    }),
+  riscos: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<FundoRiscos>("/api/v1/fundo/riscos", token ?? undefined);
+    }),
+};
+
 // ── Vistoria API (Engenheiro) ──
 export const vistoriaApi = {
   listarPendentes: (limit = 20, offset = 0) =>
@@ -317,6 +345,76 @@ export type KycDocumento = {
   status: "PENDENTE" | "APROVADO" | "REJEITADO";
   motivo_rejeicao?: string | null;
   criadoEm: string;
+};
+
+export type ComercialOverview = {
+  leadsAtivos:       number;
+  propostasMes:      number;
+  taxaConversao:     number;
+  creditosAprovados: number;
+  volumeCredito:     number;
+  ticketMedio:       number;
+  comissaoAno:       number;
+  negociosAno:       number;
+  volumeAno:         number;
+  mesAtual: {
+    comissaoMes:       number;
+    negociosFechados:  number;
+    variacaoComissao:  number;
+  };
+};
+
+export type PipelineLead = {
+  leadId:         string;
+  nomeCliente:    string;
+  tipoProjeto:    string;
+  valorEstimado:  number;
+  etapa:          string;
+  proximaAcao?:   string | null;
+  atualizadoEm:   string;
+};
+
+export type FundoOverview = {
+  patrimonioLiquido: number;
+  patrimonioInicial: number;
+  retornoAno:        number;
+  retornoMes:        number;
+  tirFundo:          number;
+  inadimplencia:     number;
+  ltvMedio:          number;
+  totalOperacoes:    number;
+  prazoMedioMeses:   number;
+  totalCredito:      number;
+  pctCredito:        number;
+  totalCri:          number;
+  pctCri:            number;
+  totalCaixa:        number;
+  pctCaixa:          number;
+  distribuicaoUF:    { uf: string; pct: number }[];
+};
+
+export type FundoRiscos = {
+  nivelRisco:     "BAIXO" | "MEDIO" | "ALTO";
+  descricaoRisco: string;
+  inadimplencia: {
+    taxaAtual:    number;
+    emAtraso:     number;
+    acima90dias:  number;
+    pdd:          number;
+  };
+  concentracao: {
+    maiorDevedor: number;
+    top5:         number;
+    maiorUF:      string;
+    pctMaiorUF:   number;
+  };
+  duration:              number;
+  liquidezDisponivel:    number;
+  caixaLivre:            number;
+  vencimentos30dias:     number;
+  var95Diario:           number;
+  var99Mensal:           number;
+  perdaMaximaHistorica:  number;
 };
 
 export type KycStatus = {

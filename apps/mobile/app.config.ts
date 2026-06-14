@@ -5,6 +5,7 @@ const EAS_PROJECT_ID = "6bf955c5-863a-4344-ac39-6a55c89658d4";
 const config: ExpoConfig = {
   name:        "IMOBI",
   slug:        "imbobi",
+  scheme:      "imobi",
   version:     "1.0.0",
   orientation: "portrait",
   icon:        "./assets/icon.png",
