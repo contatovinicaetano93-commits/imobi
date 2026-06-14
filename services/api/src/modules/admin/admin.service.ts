@@ -399,4 +399,115 @@ export class AdminService {
 
     return { ok: true, etapaId, status: "REPROVADA" };
   }
+
+  // ── Configurações do Sistema ──────────────────────────────────────
+
+  async getConfiguracoes() {
+    const cfg = await this.prisma.configuracaoSistema.upsert({
+      where: { id: "singleton" },
+      create: { id: "singleton" },
+      update: {},
+    });
+    return cfg;
+  }
+
+  async updateConfiguracoes(body: {
+    taxaMensalMin?: number;
+    taxaMensalMax?: number;
+    taxaPadrao?: number;
+    valorMinCredito?: number;
+    valorMaxCredito?: number;
+    prazoMaxMeses?: number;
+    raioValidacaoMetrosPadrao?: number;
+    toleranciaPrecisaoGps?: number;
+    diasAprovacao?: number;
+    limiteEvidenciasMB?: number;
+    modoManutencao?: boolean;
+  }) {
+    const cfg = await this.prisma.configuracaoSistema.upsert({
+      where: { id: "singleton" },
+      create: { id: "singleton", ...body },
+      update: body,
+    });
+    return cfg;
+  }
+
+  // ── Capital do Fundo ──────────────────────────────────────────────
+
+  async getCapitalFundo() {
+    const cap = await this.prisma.capitalFundo.upsert({
+      where: { id: "singleton" },
+      create: { id: "singleton" },
+      update: {},
+    });
+    return cap;
+  }
+
+  async updateCapitalFundo(capitalDisponivel: number) {
+    const cap = await this.prisma.capitalFundo.upsert({
+      where: { id: "singleton" },
+      create: { id: "singleton", capitalDisponivel },
+      update: { capitalDisponivel },
+    });
+    return cap;
+  }
+
+  // ── Iniciar Comitê (Admin) ─────────────────────────────────────────
+
+  async iniciarComite(solicitacaoId: string, adminId: string) {
+    const solicitacao = await this.prisma.solicitacaoCredito.findUnique({
+      where: { solicitacaoId },
+      include: { comite: true, usuario: true },
+    });
+
+    if (!solicitacao) throw new NotFoundException("Solicitação não encontrada.");
+    if (solicitacao.comite) throw new BadRequestException("Esta solicitação já possui um comitê aberto.");
+
+    const comite = await this.prisma.comiteDigital.create({
+      data: { solicitacaoId },
+    });
+
+    await this.prisma.solicitacaoCredito.update({
+      where: { solicitacaoId },
+      data: { status: "EM_ANALISE" as any },
+    });
+
+    // Notificar gestores e admins
+    const admins = await this.prisma.usuario.findMany({
+      where: { tipo: { in: ["ADMIN", "GESTOR"] }, deletadoEm: null },
+      select: { usuarioId: true },
+    });
+
+    await Promise.allSettled(
+      admins
+        .filter(u => u.usuarioId !== adminId)
+        .map(u => this.notificacoes.criar(
+          u.usuarioId,
+          "COMITE_CRIADO" as any,
+          "Novo comitê iniciado",
+          `Um comitê foi aberto para solicitação #${solicitacaoId.slice(0, 8)}. Aguardando votação.`,
+          `/dashboard/admin/comite`,
+        ))
+    );
+
+    return { ok: true, comiteId: comite.comiteId };
+  }
+
+  // ── Listar Solicitações (Admin) ────────────────────────────────────
+
+  async listarSolicitacoes(status?: string, semComite?: boolean) {
+    const solicitacoes = await this.prisma.solicitacaoCredito.findMany({
+      where: {
+        ...(status ? { status: status as any } : {}),
+        ...(semComite ? { comite: null } : {}),
+      },
+      include: {
+        usuario: { select: { nome: true, email: true } },
+        comite: { select: { comiteId: true, status: true } },
+      },
+      orderBy: { criadoEm: "desc" },
+      take: 50,
+    });
+    return solicitacoes;
+  }
 }

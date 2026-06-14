@@ -689,3 +689,27 @@ enum VotoDecisao {
   AJUSTAR
   REPROVAR
 }
+
+model ConfiguracaoSistema {
+  id                          String   @id @default("singleton")
+  taxaMensalMin               Float    @default(0.89)
+  taxaMensalMax               Float    @default(2.5)
+  taxaPadrao                  Float    @default(1.89)
+  valorMinCredito             Float    @default(50000)
+  valorMaxCredito             Float    @default(5000000)
+  prazoMaxMeses               Int      @default(60)
+  raioValidacaoMetrosPadrao   Int      @default(100)
+  toleranciaPrecisaoGps       Int      @default(20)
+  diasAprovacao               Int      @default(15)
+  limiteEvidenciasMB          Int      @default(10)
+  modoManutencao              Boolean  @default(false)
+  atualizadoEm                DateTime @updatedAt
+  @@map("configuracoes_sistema")
+}
+
+model CapitalFundo {
+  id                String   @id @default("singleton")
+  capitalDisponivel Float    @default(0)
+  atualizadoEm      DateTime @updatedAt
+  @@map("capital_fundo")
+}

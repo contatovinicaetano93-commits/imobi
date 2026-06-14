@@ -79,4 +79,42 @@ export class AdminController {
   ) {
     return this.adminService.rejeitarEtapaAdmin(admin.id, etapaId, body.motivo);
   }
+
+  @Get("configuracoes")
+  getConfiguracoes() {
+    return this.adminService.getConfiguracoes();
+  }
+
+  @Patch("configuracoes")
+  updateConfiguracoes(@Body() body: Record<string, unknown>) {
+    return this.adminService.updateConfiguracoes(body as any);
+  }
+
+  @Get("fundos/capital")
+  getCapitalFundo() {
+    return this.adminService.getCapitalFundo();
+  }
+
+  @Patch("fundos/capital")
+  updateCapitalFundo(@Body() body: { capitalDisponivel: number }) {
+    return this.adminService.updateCapitalFundo(body.capitalDisponivel);
+  }
+
+  @Post("comite/iniciar")
+  @HttpCode(201)
+  iniciarComite(
+    @Body() body: { solicitacaoId: string },
+    @UsuarioAtual() admin: UsuarioAtual,
+  ) {
+    return this.adminService.iniciarComite(body.solicitacaoId, admin.id);
+  }
+
+  @Get("solicitacoes")
+  listarSolicitacoes(
+    @Query("status") status?: string,
+    @Query("semComite") semComiteRaw?: string,
+  ) {
+    const semComite = semComiteRaw === "true";
+    return this.adminService.listarSolicitacoes(status, semComite);
+  }
 }
