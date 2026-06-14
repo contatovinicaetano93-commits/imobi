@@ -111,7 +111,7 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
         {/* Buscar solicitações pendentes */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-gray-700 flex-1">Solicitações em análise (sem comitê)</span>
+            <span className="text-xs font-semibold text-gray-700 flex-1">Solicitações pendentes (sem comitê)</span>
             <button onClick={buscarSolicitacoes} disabled={buscando}
               className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-xl hover:bg-blue-50 transition disabled:opacity-60">
               <Search className="w-3.5 h-3.5" />
