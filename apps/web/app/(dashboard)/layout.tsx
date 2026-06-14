@@ -76,16 +76,22 @@ const ROLE_META: Record<string, { label: string; accent: string }> = {
   ADMIN:       { label: "Admin",       accent: MINT },
 };
 
-// When admin is in another role's area, show that area's nav instead.
+// Resolve the nav panel to display based on current path.
+// Works for all roles: sidebar always mirrors the panel the user is navigating.
 function getNavRole(role: UserRole, path: string): UserRole {
-  if (role !== "ADMIN") return role;
   const seg = path.split("/")[2] ?? "";
-  if (["construtor", "credito", "kyc", "score", "simulador"].includes(seg)) return "CONSTRUTOR";
-  if (seg === "comite" && !path.startsWith("/dashboard/admin")) return "CONSTRUTOR";
-  if (seg === "gestor") return "GESTOR";
+
+  // Panel-root segments always determine sidebar context
+  if (seg === "comercial")  return "COMERCIAL";
+  if (seg === "gestor")     return "GESTOR";
   if (seg === "engenheiro") return "ENGENHEIRO";
-  if (seg === "comercial") return "COMERCIAL";
-  return "ADMIN";
+  if (["construtor", "credito", "kyc", "score", "simulador", "obras", "comite", "construtor"].includes(seg))
+    return role === "ENGENHEIRO" || role === "GESTOR_OBRA" ? role : "CONSTRUTOR";
+  if (seg === "admin")      return "ADMIN";
+  if (seg === "fundos" || seg === "relatorios") return role === "ADMIN" ? "ADMIN" : "GESTOR";
+
+  // Shared / unknown segment — fall back to actual role
+  return role;
 }
 
 function filterNav(role: UserRole, path: string, funcoesBloqueadas: string[]): NavItem[] {

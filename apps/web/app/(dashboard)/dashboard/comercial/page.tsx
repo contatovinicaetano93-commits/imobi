@@ -68,7 +68,18 @@ export default function ParceiroComercialPage() {
           .catch(() => null)
       )
       .then((d: ParceiroResumo | null) => {
-        setResumo(d ?? ZERO_RESUMO);
+        if (!d) { setResumo(ZERO_RESUMO); return; }
+        // Coerce null/undefined numbers from API to 0
+        setResumo({
+          ...ZERO_RESUMO,
+          ...d,
+          comissoesAReceber:   Number(d.comissoesAReceber   ?? 0),
+          comissoesPagasMes:   Number(d.comissoesPagasMes   ?? 0),
+          comissoesPagasTotal: Number(d.comissoesPagasTotal ?? 0),
+          operacoesAtivas:     Number(d.operacoesAtivas     ?? 0),
+          taxaAprovacao:       Number(d.taxaAprovacao       ?? 0),
+          codigoIndicacao:     d.codigoIndicacao ?? "",
+        });
       });
     fetch("/api/proxy/parceiros/operacoes")
       .then((r) => (r.ok ? r.json() : null))
@@ -81,11 +92,13 @@ export default function ParceiroComercialPage() {
   }, []);
 
   const rs = resumo ?? ZERO_RESUMO;
-  const linkIndicacao = typeof window !== "undefined"
-    ? `${window.location.origin}/cadastro?ref=${rs.codigoIndicacao}`
-    : `/cadastro?ref=${rs.codigoIndicacao}`;
+  const origem = typeof window !== "undefined" ? window.location.origin : "";
+  const linkIndicacao = rs.codigoIndicacao
+    ? `${origem}/cadastro?ref=${rs.codigoIndicacao}`
+    : null;
 
   function copiarLink() {
+    if (!linkIndicacao) return;
     navigator.clipboard.writeText(linkIndicacao).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
@@ -191,14 +204,21 @@ export default function ParceiroComercialPage() {
           <p className="text-xs font-semibold uppercase tracking-wider text-blue-200 mb-1 flex items-center gap-1.5">
             <Link2 className="w-3.5 h-3.5" /> Seu link de indicação
           </p>
-          <p className="font-mono text-sm sm:text-base truncate opacity-95">{linkIndicacao}</p>
+          {linkIndicacao
+            ? <p className="font-mono text-sm sm:text-base truncate opacity-95">{linkIndicacao}</p>
+            : <p className="font-mono text-sm opacity-60 italic">Aguardando geração do código de indicação…</p>
+          }
           <p className="text-xs text-blue-200 mt-1.5">
-            Código <span className="font-bold text-white">{rs.codigoIndicacao}</span> — toda operação originada por este link é vinculada automaticamente à sua comissão.
+            {rs.codigoIndicacao
+              ? <>Código <span className="font-bold text-white">{rs.codigoIndicacao}</span> — toda operação originada por este link é vinculada automaticamente à sua comissão.</>
+              : "Seu código de indicação será gerado pelo time IMOBI após validação do cadastro."
+            }
           </p>
         </div>
         <button
           onClick={copiarLink}
-          className="shrink-0 flex items-center gap-2 bg-white text-[#1B4FD8] font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-blue-50 transition-colors"
+          disabled={!linkIndicacao}
+          className="shrink-0 flex items-center gap-2 bg-white text-[#1B4FD8] font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-blue-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {copied ? <CheckCircle2 className="w-4 h-4 text-[#16a34a]" /> : <Copy className="w-4 h-4" />}
           {copied ? "Copiado!" : "Copiar link"}
