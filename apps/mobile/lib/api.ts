@@ -75,6 +75,24 @@ export const authApi = {
     }),
 };
 
+export const kycApi = {
+  listarPendentes: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<KycDocumento[]>("/api/v1/kyc/pendentes", token ?? undefined);
+    }),
+  aprovar: (id: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.patch(`/api/v1/kyc/${id}/aprovar`, {}, token ?? undefined);
+    }),
+  rejeitar: (id: string, motivo: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.patch(`/api/v1/kyc/${id}/rejeitar`, { motivo }, token ?? undefined);
+    }),
+};
+
 export const notificacoesApi = {
   listar: (limit = 20, offset = 0) =>
     callApi(async () => {
@@ -156,6 +174,17 @@ export type ScoreData = {
   nivel: string;
   cor: string;
   descricao: string;
+};
+
+export type KycDocumento = {
+  kycDocumentoId: string;
+  usuarioId: string;
+  tipo: string;
+  url: string;
+  status: string;
+  motivo_rejeicao?: string | null;
+  criadoEm: string;
+  usuario: { nome: string; email: string; cpf: string };
 };
 
 export type Notificacao = {
