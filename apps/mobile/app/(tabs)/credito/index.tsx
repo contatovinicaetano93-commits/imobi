@@ -1,179 +1,257 @@
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
-import { useEffect, useState } from "react";
-import { useSimuladorCredito } from "@imbobi/core/hooks";
-import { formatarBRL, formatarPercentual } from "@imbobi/core";
+import {
+  View, Text, ScrollView, StyleSheet,
+  ActivityIndicator, StatusBar, Platform,
+} from "react-native";
+import { useEffect, useMemo, useState } from "react";
 import Slider from "@react-native-community/slider";
 import { creditoApi, type Credito } from "../../../lib/api";
 
-const STATUS_LABEL: Record<string, { label: string; bg: string; color: string }> = {
-  ATIVO:    { label: "Ativo",    bg: "#dcfce7", color: "#166534" },
-  QUITADO:  { label: "Quitado",  bg: "#f3f4f6", color: "#6b7280" },
-  INADIMPLENTE: { label: "Inadimplente", bg: "#fee2e2", color: "#991b1b" },
+const C = {
+  blue:    "#1B4FD8",
+  navy:    "#0C1A3D",
+  mint:    "#22C55E",
+  mintPale:"#DCFCE7",
+  ink:     "#0F172A",
+  gray:    "#64748B",
+  grayL:   "#94A3B8",
+  surface: "#F8FAFC",
+  border:  "#E2E8F0",
+  white:   "#FFFFFF",
+  red:     "#EF4444",
 };
 
-export default function CreditoScreen() {
-  const [creditos, setCreditos] = useState<Credito[]>([]);
-  const [loading, setLoading] = useState(true);
+function formatarBRL(v: number) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+function formatarPercentual(v: number) {
+  return `${(v * 100).toFixed(2).replace(".", ",")}%`;
+}
+function simularCredito(valor: number, taxa: number, prazo: number) {
+  if (prazo === 0 || taxa === 0) return { parcelaMensal: 0, totalPago: 0, totalJuros: 0, cet: 0 };
+  const parcela = (valor * taxa * Math.pow(1 + taxa, prazo)) / (Math.pow(1 + taxa, prazo) - 1);
+  const totalPago  = parcela * prazo;
+  const totalJuros = totalPago - valor;
+  const cet = Math.pow(1 + taxa, 12) - 1;
+  return { parcelaMensal: parcela, totalPago, totalJuros, cet };
+}
 
-  const { valorSolicitado, setValorSolicitado, prazoMeses, setPrazoMeses, resultado } =
-    useSimuladorCredito();
+const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
+  ATIVO:        { label: "Ativo",        bg: C.mintPale, color: "#166534" },
+  QUITADO:      { label: "Quitado",      bg: "#F3F4F6",  color: "#6B7280" },
+  INADIMPLENTE: { label: "Inadimplente", bg: "#FEE2E2",  color: "#991B1B" },
+};
+
+const TAXA_MENSAL = 0.0099;
+
+export default function CreditoScreen() {
+  const [creditos, setCreditos]             = useState<Credito[]>([]);
+  const [loading, setLoading]               = useState(true);
+  const [valorSolicitado, setValorSolicitado] = useState(150_000);
+  const [prazoMeses, setPrazoMeses]         = useState(60);
+
+  const resultado = useMemo(
+    () => simularCredito(valorSolicitado, TAXA_MENSAL, prazoMeses),
+    [valorSolicitado, prazoMeses],
+  );
 
   useEffect(() => {
     creditoApi.meus()
       .then(setCreditos)
-      .catch(() => { /* ignore if no credits yet */ })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Crédito</Text>
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor={C.navy} />
 
-      {/* Créditos ativos */}
-      {loading ? (
-        <ActivityIndicator color="#16a34a" style={{ marginVertical: 12 }} />
-      ) : creditos.length > 0 ? (
-        <>
-          <Text style={styles.sectionTitle}>Meus Créditos</Text>
-          {creditos.map((c) => {
-            const meta = STATUS_LABEL[c.status] ?? { label: c.status, bg: "#f3f4f6", color: "#374151" };
-            const pctLiberado = c.valorAprovado > 0
-              ? Math.round((c.valorLiberado / c.valorAprovado) * 100)
+      {/* ── HEADER ── */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Crédito</Text>
+        <Text style={styles.headerSub}>Acompanhe e simule seu financiamento</Text>
+      </View>
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── MEUS CRÉDITOS ── */}
+        <Text style={styles.sectionTitle}>Meus Créditos</Text>
+
+        {loading ? (
+          <ActivityIndicator color={C.blue} style={{ marginVertical: 16 }} />
+        ) : creditos.length > 0 ? (
+          creditos.map((c) => {
+            const meta = STATUS_MAP[c.status] ?? { label: c.status, bg: C.surface, color: C.gray };
+            const pct = c.valorAprovado > 0
+              ? Math.min(100, Math.round((c.valorLiberado / c.valorAprovado) * 100))
               : 0;
             return (
               <View key={c.creditoId} style={styles.creditCard}>
-                <View style={styles.creditHeader}>
-                  <Text style={styles.creditLabel}>Crédito aprovado</Text>
+                <View style={styles.creditCardTop}>
+                  <View>
+                    <Text style={styles.creditCardLabel}>Crédito aprovado</Text>
+                    <Text style={styles.creditCardValor}>{formatarBRL(c.valorAprovado)}</Text>
+                  </View>
                   <View style={[styles.badge, { backgroundColor: meta.bg }]}>
                     <Text style={[styles.badgeText, { color: meta.color }]}>{meta.label}</Text>
                   </View>
                 </View>
 
-                <Text style={styles.creditValor}>{formatarBRL(c.valorAprovado)}</Text>
-
-                <View style={styles.progressRow}>
-                  <View style={styles.progressBar}>
-                    <View style={[styles.progressFill, { width: `${pctLiberado}%` }]} />
-                  </View>
-                  <Text style={styles.progressText}>{pctLiberado}% liberado</Text>
+                <View style={styles.barTrack}>
+                  <View style={[styles.barFill, { width: `${pct}%` as any }]} />
                 </View>
+                <Text style={styles.barLabel}>{pct}% liberado · {formatarBRL(c.valorLiberado)}</Text>
 
                 <View style={styles.creditMeta}>
-                  <CreditMetaItem label="Liberado" value={formatarBRL(c.valorLiberado)} />
-                  <CreditMetaItem label="Taxa mensal" value={formatarPercentual(c.taxaMensal)} />
-                  <CreditMetaItem label="Prazo" value={`${c.prazoMeses}m`} />
+                  <MetaItem label="Taxa mensal" value={formatarPercentual(c.taxaMensal)} />
+                  <MetaItem label="Prazo"        value={`${c.prazoMeses} meses`} />
+                  <MetaItem label="A liberar"    value={formatarBRL(c.valorAprovado - c.valorLiberado)} />
                 </View>
               </View>
             );
-          })}
-        </>
-      ) : (
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyEmoji}>💳</Text>
-          <Text style={styles.emptyText}>Nenhum crédito ativo</Text>
-          <Text style={styles.emptySubtext}>Solicite seu crédito pelo painel web para aprovação do comitê</Text>
+          })
+        ) : (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyEmoji}>💳</Text>
+            <Text style={styles.emptyTitle}>Nenhum crédito ativo</Text>
+            <Text style={styles.emptySub}>
+              Solicite seu crédito pelo painel web para aprovação do comitê
+            </Text>
+          </View>
+        )}
+
+        {/* ── SIMULADOR ── */}
+        <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Simulador</Text>
+
+        <View style={styles.sliderCard}>
+          <View style={styles.sliderRow}>
+            <Text style={styles.sliderLabel}>Valor desejado</Text>
+            <Text style={styles.sliderValue}>{formatarBRL(valorSolicitado)}</Text>
+          </View>
+          <Slider
+            minimumValue={10_000}
+            maximumValue={1_000_000}
+            step={5_000}
+            value={valorSolicitado}
+            onValueChange={setValorSolicitado}
+            minimumTrackTintColor={C.blue}
+            maximumTrackTintColor={C.border}
+            thumbTintColor={C.blue}
+          />
         </View>
-      )}
 
-      {/* Simulador */}
-      <Text style={styles.sectionTitle}>Simulador</Text>
-
-      <View style={styles.sliderBlock}>
-        <View style={styles.sliderLabel}>
-          <Text style={styles.label}>Valor desejado</Text>
-          <Text style={styles.sliderValue}>{formatarBRL(valorSolicitado)}</Text>
+        <View style={styles.sliderCard}>
+          <View style={styles.sliderRow}>
+            <Text style={styles.sliderLabel}>Prazo</Text>
+            <Text style={styles.sliderValue}>{prazoMeses} meses</Text>
+          </View>
+          <Slider
+            minimumValue={12}
+            maximumValue={180}
+            step={12}
+            value={prazoMeses}
+            onValueChange={setPrazoMeses}
+            minimumTrackTintColor={C.blue}
+            maximumTrackTintColor={C.border}
+            thumbTintColor={C.blue}
+          />
         </View>
-        <Slider
-          minimumValue={10000}
-          maximumValue={1000000}
-          step={5000}
-          value={valorSolicitado}
-          onValueChange={setValorSolicitado}
-          minimumTrackTintColor="#16a34a"
-          thumbTintColor="#16a34a"
-        />
-      </View>
 
-      <View style={styles.sliderBlock}>
-        <View style={styles.sliderLabel}>
-          <Text style={styles.label}>Prazo</Text>
-          <Text style={styles.sliderValue}>{prazoMeses} meses</Text>
+        {/* Resultado */}
+        <View style={styles.resultCard}>
+          <View style={styles.resultTop}>
+            <Text style={styles.resultTopLabel}>Parcela mensal estimada</Text>
+            <Text style={styles.resultTopValue}>{formatarBRL(resultado.parcelaMensal)}</Text>
+          </View>
+          <View style={styles.divider} />
+          <ResultRow label="Total pago"    value={formatarBRL(resultado.totalPago)} />
+          <ResultRow label="Total de juros" value={formatarBRL(resultado.totalJuros)} />
+          <ResultRow label="CET ao ano"    value={formatarPercentual(resultado.cet)} />
+          <Text style={styles.disclaimer}>
+            * Simulação aproximada. Taxa de {formatarPercentual(TAXA_MENSAL)}/mês. Sujeita a análise de crédito.
+          </Text>
         </View>
-        <Slider
-          minimumValue={12}
-          maximumValue={180}
-          step={12}
-          value={prazoMeses}
-          onValueChange={setPrazoMeses}
-          minimumTrackTintColor="#16a34a"
-          thumbTintColor="#16a34a"
-        />
-      </View>
-
-      <View style={styles.resultCard}>
-        <ResultRow label="Parcela mensal" value={formatarBRL(resultado.parcelaMensal)} big />
-        <View style={styles.divider} />
-        <ResultRow label="Total pago" value={formatarBRL(resultado.totalPago)} />
-        <ResultRow label="Total de juros" value={formatarBRL(resultado.totalJuros)} />
-        <ResultRow label="CET ao ano" value={formatarPercentual(resultado.cet)} />
-      </View>
-    </ScrollView>
-  );
-}
-
-function CreditMetaItem({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={{ alignItems: "center" }}>
-      <Text style={{ fontSize: 11, color: "#6b7280" }}>{label}</Text>
-      <Text style={{ fontSize: 14, fontWeight: "700", color: "#111827" }}>{value}</Text>
+      </ScrollView>
     </View>
   );
 }
 
-function ResultRow({ label, value, big }: { label: string; value: string; big?: boolean }) {
+function MetaItem({ label, value }: { label: string; value: string }) {
   return (
-    <View style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 6 }}>
-      <Text style={{ color: "#dcfce7", fontSize: 14 }}>{label}</Text>
-      <Text style={{ color: "#fff", fontSize: big ? 22 : 15, fontWeight: big ? "800" : "600" }}>
-        {value}
-      </Text>
+    <View style={{ alignItems: "center", flex: 1 }}>
+      <Text style={{ fontSize: 11, color: C.gray }}>{label}</Text>
+      <Text style={{ fontSize: 13, fontWeight: "700", color: C.ink, marginTop: 2 }}>{value}</Text>
+    </View>
+  );
+}
+
+function ResultRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 5 }}>
+      <Text style={{ color: "#93C5FD", fontSize: 13 }}>{label}</Text>
+      <Text style={{ color: C.white, fontSize: 14, fontWeight: "600" }}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: "#f9fafb" },
-  container: { padding: 20, paddingTop: 56, gap: 16, paddingBottom: 40 },
-  title: { fontSize: 24, fontWeight: "700", color: "#111827" },
-  sectionTitle: { fontSize: 16, fontWeight: "600", color: "#374151" },
-  creditCard: {
-    backgroundColor: "#fff", borderRadius: 16, padding: 18,
-    shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8, elevation: 2, gap: 12,
+  root:   { flex: 1, backgroundColor: C.navy },
+  scroll: { flex: 1, backgroundColor: C.surface },
+
+  header: {
+    paddingTop:        Platform.OS === "ios" ? 60 : 40,
+    paddingBottom:     24,
+    paddingHorizontal: 20,
+    backgroundColor:   C.navy,
   },
-  creditHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  creditLabel: { fontSize: 13, color: "#6b7280" },
+  headerTitle: { fontSize: 26, fontWeight: "800", color: C.white, letterSpacing: 0.2 },
+  headerSub:   { fontSize: 13, color: "#94A3B8", marginTop: 4 },
+
+  content: { padding: 16, gap: 12, paddingBottom: 48 },
+
+  sectionTitle: { fontSize: 15, fontWeight: "700", color: C.ink },
+
+  creditCard: {
+    backgroundColor: C.white, borderRadius: 18, padding: 18,
+    gap: 10,
+    shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+  },
+  creditCardTop:  { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  creditCardLabel: { fontSize: 12, color: C.gray },
+  creditCardValor: { fontSize: 26, fontWeight: "800", color: C.ink, marginTop: 2 },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   badgeText: { fontSize: 12, fontWeight: "600" },
-  creditValor: { fontSize: 28, fontWeight: "800", color: "#111827" },
-  progressRow: { gap: 6 },
-  progressBar: { height: 6, backgroundColor: "#f3f4f6", borderRadius: 3, overflow: "hidden" },
-  progressFill: { height: 6, backgroundColor: "#16a34a", borderRadius: 3 },
-  progressText: { fontSize: 12, color: "#6b7280" },
-  creditMeta: { flexDirection: "row", justifyContent: "space-between", paddingTop: 4 },
+  barTrack: { height: 6, backgroundColor: C.border, borderRadius: 3, overflow: "hidden" },
+  barFill:  { height: 6, backgroundColor: C.mint, borderRadius: 3 },
+  barLabel: { fontSize: 12, color: C.gray },
+  creditMeta: { flexDirection: "row", borderTopWidth: 1, borderTopColor: C.border, paddingTop: 12 },
+
   emptyCard: {
-    backgroundColor: "#fff", borderRadius: 16, padding: 24,
+    backgroundColor: C.white, borderRadius: 18, padding: 28,
     alignItems: "center", gap: 8,
   },
-  emptyEmoji: { fontSize: 36 },
-  emptyText: { fontSize: 16, fontWeight: "600", color: "#374151" },
-  emptySubtext: { fontSize: 13, color: "#9ca3af", textAlign: "center" },
-  sliderBlock: {
-    backgroundColor: "#fff", borderRadius: 16, padding: 16,
-    shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8,
+  emptyEmoji: { fontSize: 40 },
+  emptyTitle: { fontSize: 16, fontWeight: "700", color: C.ink },
+  emptySub:   { fontSize: 13, color: C.grayL, textAlign: "center", lineHeight: 20 },
+
+  sliderCard: {
+    backgroundColor: C.white, borderRadius: 16, padding: 16,
+    shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 6,
   },
-  sliderLabel: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
-  label: { fontSize: 14, color: "#6b7280", fontWeight: "500" },
-  sliderValue: { fontSize: 15, color: "#16a34a", fontWeight: "700" },
-  resultCard: { backgroundColor: "#16a34a", borderRadius: 20, padding: 20, gap: 4 },
-  divider: { height: 1, backgroundColor: "#15803d", marginVertical: 8 },
+  sliderRow:   { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
+  sliderLabel: { fontSize: 13, color: C.gray, fontWeight: "500" },
+  sliderValue: { fontSize: 14, color: C.blue, fontWeight: "700" },
+
+  resultCard: {
+    backgroundColor: C.navy, borderRadius: 20, padding: 20, gap: 2,
+  },
+  resultTop: {
+    alignItems: "center", paddingBottom: 16,
+  },
+  resultTopLabel: { fontSize: 13, color: "#94A3B8" },
+  resultTopValue: { fontSize: 32, fontWeight: "800", color: C.white, marginTop: 4 },
+  divider: { height: 1, backgroundColor: "#1E3A8A", marginVertical: 8 },
+  disclaimer: { fontSize: 10, color: "#475569", marginTop: 8, lineHeight: 15 },
 });
