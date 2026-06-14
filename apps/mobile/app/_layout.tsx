@@ -59,14 +59,17 @@ export default function RootLayout() {
   // Route guard: runs whenever auth state or navigation changes
   useEffect(() => {
     if (isLoading) return;
-    const inAuthGroup = segments[0] === "(auth)";
+    const group = segments[0] as string | undefined;
+    const inAuthGroup = group === "(auth)";
+    // (tabs) is a legacy group — always redirect signed-in users away from it
+    const inLegacyGroup = group === "(tabs)";
 
     if (!isSignedIn && !inAuthGroup) {
       router.replace("/(auth)/login");
       return;
     }
 
-    if (isSignedIn && inAuthGroup) {
+    if (isSignedIn && (inAuthGroup || inLegacyGroup)) {
       const tipo = userTipo ?? "TOMADOR";
       if (tipo === "ENGENHEIRO") {
         router.replace("/(engenheiro)/vistorias");
@@ -93,6 +96,7 @@ export default function RootLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="(construtor)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="(engenheiro)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="(admin)" options={{ gestureEnabled: false }} />
