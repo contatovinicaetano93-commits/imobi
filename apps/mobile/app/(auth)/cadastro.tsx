@@ -1,158 +1,263 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, ActivityIndicator } from "react-native";
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, Alert, ScrollView, ActivityIndicator,
+  StatusBar, Platform,
+} from "react-native";
+import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
 import { apiClient } from "@imbobi/core";
+import { Ionicons } from "@expo/vector-icons";
+
+const C = {
+  blue:    "#1B4FD8",
+  navy:    "#0C1A3D",
+  mint:    "#22C55E",
+  ink:     "#0F172A",
+  gray:    "#64748B",
+  grayL:   "#94A3B8",
+  border:  "#E2E8F0",
+  surface: "#F8FAFC",
+  white:   "#FFFFFF",
+  red:     "#EF4444",
+};
+
+type FieldDef = {
+  name: keyof CadastroUsuarioInput;
+  label: string;
+  placeholder: string;
+  keyboard?: "default" | "email-address" | "numeric" | "phone-pad";
+  secure?: boolean;
+  capitalize?: "none" | "words" | "sentences";
+  maxLength?: number;
+  autoComplete?: "off" | "email" | "name" | "password" | "tel";
+};
+
+const FIELDS: FieldDef[] = [
+  { name: "nome",     label: "NOME COMPLETO", placeholder: "Seu nome",             capitalize: "words",  autoComplete: "name"     },
+  { name: "cpf",      label: "CPF",           placeholder: "00000000000",           keyboard: "numeric",  maxLength: 11             },
+  { name: "email",    label: "E-MAIL",        placeholder: "seu@email.com.br",      keyboard: "email-address", capitalize: "none", autoComplete: "email"    },
+  { name: "telefone", label: "WHATSAPP",      placeholder: "11999999999",           keyboard: "phone-pad", maxLength: 11            },
+  { name: "senha",    label: "SENHA",         placeholder: "Mín. 8 caracteres",     secure: true,         autoComplete: "password" },
+];
 
 export default function CadastroScreen() {
   const router = useRouter();
-  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<CadastroUsuarioInput>({
-    resolver: zodResolver(CadastroUsuarioSchema),
-  });
+  const [showPass, setShowPass] = useState(false);
+
+  const { control, handleSubmit, formState: { errors, isSubmitting } } =
+    useForm<CadastroUsuarioInput>({ resolver: zodResolver(CadastroUsuarioSchema) });
 
   const onSubmit = async (data: CadastroUsuarioInput) => {
     try {
       const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
         "/auth/registrar",
-        data
+        { ...data, tipo: "TOMADOR", consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true, consentidoMarketing: false }
       );
-      await SecureStore.setItemAsync("accessToken", res.accessToken);
+      await SecureStore.setItemAsync("accessToken",  res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
       router.replace("/(tabs)/obras");
     } catch (e: any) {
-      Alert.alert("Erro", e.message ?? "Falha no cadastro. Tente novamente.");
+      Alert.alert("Erro no cadastro", e.message ?? "Tente novamente.");
     }
   };
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-      <Text style={styles.logo}>imbobi</Text>
-      <Text style={styles.subtitle}>Crie sua conta</Text>
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor={C.navy} />
 
-      <Controller
-        control={control}
-        name="nome"
-        render={({ field: { onChange, value } }) => (
-          <>
-            <TextInput
-              style={[styles.input, errors.nome && styles.inputError]}
-              placeholder="Nome completo"
-              autoCapitalize="words"
-              onChangeText={onChange}
-              value={value}
-              editable={!isSubmitting}
-            />
-            {errors.nome && <Text style={styles.errorText}>{errors.nome.message}</Text>}
-          </>
-        )}
-      />
+      {/* ── HEADER AZUL ── */}
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => router.replace("/(auth)/login")}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="chevron-back" size={22} color={C.white} />
+        </TouchableOpacity>
+        <View style={{ flex: 1, alignItems: "center" }}>
+          <Text style={styles.topBarTitle}>IMOBI</Text>
+        </View>
+        <View style={{ width: 38 }} />
+      </View>
 
-      <Controller
-        control={control}
-        name="email"
-        render={({ field: { onChange, value } }) => (
-          <>
-            <TextInput
-              style={[styles.input, errors.email && styles.inputError]}
-              placeholder="E-mail"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              onChangeText={onChange}
-              value={value}
-              editable={!isSubmitting}
-            />
-            {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
-          </>
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="cpf"
-        render={({ field: { onChange, value } }) => (
-          <>
-            <TextInput
-              style={[styles.input, errors.cpf && styles.inputError]}
-              placeholder="CPF (11 dígitos)"
-              keyboardType="numeric"
-              maxLength={11}
-              onChangeText={onChange}
-              value={value}
-              editable={!isSubmitting}
-            />
-            {errors.cpf && <Text style={styles.errorText}>{errors.cpf.message}</Text>}
-          </>
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="telefone"
-        render={({ field: { onChange, value } }) => (
-          <>
-            <TextInput
-              style={[styles.input, errors.telefone && styles.inputError]}
-              placeholder="Telefone (10-11 dígitos)"
-              keyboardType="phone-pad"
-              maxLength={11}
-              onChangeText={onChange}
-              value={value}
-              editable={!isSubmitting}
-            />
-            {errors.telefone && <Text style={styles.errorText}>{errors.telefone.message}</Text>}
-          </>
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="senha"
-        render={({ field: { onChange, value } }) => (
-          <>
-            <TextInput
-              style={[styles.input, errors.senha && styles.inputError]}
-              placeholder="Senha (mín. 8 caracteres)"
-              secureTextEntry
-              onChangeText={onChange}
-              value={value}
-              editable={!isSubmitting}
-            />
-            {errors.senha && <Text style={styles.errorText}>{errors.senha.message}</Text>}
-          </>
-        )}
-      />
-
-      <TouchableOpacity
-        style={[styles.button, isSubmitting && styles.buttonLoading]}
-        onPress={handleSubmit(onSubmit)}
-        disabled={isSubmitting}
+      {/* ── FORM ── */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.formSheet}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Criar conta</Text>
-        )}
-      </TouchableOpacity>
+        <View style={styles.formHead}>
+          <Text style={styles.formTitle}>Criar conta</Text>
+          <Text style={styles.formSub}>
+            Preencha os dados para acessar a plataforma
+          </Text>
+        </View>
 
-      <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
-        <Text style={styles.link}>Já tem conta? Faça login</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {FIELDS.map((f) => (
+          <Controller
+            key={f.name}
+            control={control}
+            name={f.name}
+            render={({ field: { onChange, value } }) => {
+              const isPass    = f.name === "senha";
+              const hasError  = !!errors[f.name];
+              return (
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>{f.label}</Text>
+                  <View style={isPass ? styles.passWrap : undefined}>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        isPass && styles.passInput,
+                        hasError && styles.inputErr,
+                      ]}
+                      placeholder={f.placeholder}
+                      placeholderTextColor={C.grayL}
+                      keyboardType={f.keyboard ?? "default"}
+                      autoCapitalize={f.capitalize ?? "none"}
+                      secureTextEntry={isPass && !showPass}
+                      maxLength={f.maxLength}
+                      autoComplete={f.autoComplete ?? "off"}
+                      onChangeText={onChange}
+                      value={value as string}
+                      editable={!isSubmitting}
+                    />
+                    {isPass && (
+                      <TouchableOpacity
+                        style={styles.eyeBtn}
+                        onPress={() => setShowPass((v) => !v)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Ionicons
+                          name={showPass ? "eye-off-outline" : "eye-outline"}
+                          size={20}
+                          color={C.grayL}
+                        />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  {hasError && (
+                    <Text style={styles.errText}>
+                      {errors[f.name]?.message as string}
+                    </Text>
+                  )}
+                </View>
+              );
+            }}
+          />
+        ))}
+
+        <Text style={styles.consentNote}>
+          Ao criar sua conta você aceita os Termos de Uso, Política de Privacidade e autoriza a coleta de dados para KYC.
+        </Text>
+
+        <TouchableOpacity
+          style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
+          onPress={handleSubmit(onSubmit)}
+          disabled={isSubmitting}
+          activeOpacity={0.85}
+        >
+          {isSubmitting
+            ? <ActivityIndicator color={C.white} />
+            : <Text style={styles.submitBtnText}>Criar minha conta</Text>
+          }
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.loginLink}
+          onPress={() => router.replace("/(auth)/login")}
+          disabled={isSubmitting}
+        >
+          <Text style={styles.loginLinkText}>Já tenho conta · Entrar →</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: "#fff" },
-  container: { padding: 28, paddingTop: 56, gap: 12, paddingBottom: 40 },
-  logo: { fontSize: 36, fontWeight: "800", color: "#16a34a", textAlign: "center", marginBottom: 4 },
-  subtitle: { fontSize: 16, color: "#6b7280", textAlign: "center", marginBottom: 20 },
-  input: { borderWidth: 1.5, borderColor: "#e5e7eb", borderRadius: 14, padding: 14, fontSize: 15, color: "#111827" },
-  inputError: { borderColor: "#ef4444" },
-  errorText: { color: "#ef4444", fontSize: 12, marginTop: 4, marginBottom: 8 },
-  button: { backgroundColor: "#16a34a", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 8 },
-  buttonLoading: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  link: { textAlign: "center", color: "#16a34a", fontSize: 14, fontWeight: "500", marginTop: 12 },
+  root:  { flex: 1, backgroundColor: C.navy },
+  scroll: { flex: 1 },
+
+  topBar: {
+    flexDirection:  "row",
+    alignItems:     "center",
+    paddingTop:     Platform.OS === "ios" ? 56 : 36,
+    paddingBottom:  16,
+    paddingHorizontal: 16,
+  },
+  backBtn: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    justifyContent: "center", alignItems: "center",
+  },
+  topBarTitle: {
+    fontSize: 18, fontWeight: "800", color: C.white, letterSpacing: 4,
+  },
+
+  formSheet: {
+    backgroundColor:     C.white,
+    borderTopLeftRadius:  28,
+    borderTopRightRadius: 28,
+    padding:    28,
+    paddingBottom: 48,
+    gap:        16,
+    flexGrow:   1,
+  },
+  formHead: { marginBottom: 4 },
+  formTitle: { fontSize: 22, fontWeight: "700", color: C.ink },
+  formSub:   { fontSize: 13, color: C.gray, marginTop: 4 },
+
+  fieldGroup: { gap: 6 },
+  fieldLabel: {
+    fontSize:     10,
+    fontWeight:   "700",
+    letterSpacing: 0.8,
+    color:        C.gray,
+  },
+  input: {
+    backgroundColor: C.surface,
+    borderWidth:   1,
+    borderColor:   C.border,
+    borderRadius:  12,
+    paddingHorizontal: 14,
+    paddingVertical:   13,
+    fontSize:      15,
+    color:         C.ink,
+  },
+  inputErr:  { borderColor: C.red },
+  errText:   { fontSize: 12, color: C.red, marginTop: 2 },
+
+  passWrap:  { position: "relative" },
+  passInput: { paddingRight: 46 },
+  eyeBtn:    { position: "absolute", right: 14, top: 14 },
+
+  consentNote: {
+    fontSize:   11,
+    color:      C.grayL,
+    lineHeight: 16,
+    textAlign:  "center",
+  },
+
+  submitBtn: {
+    backgroundColor: C.blue,
+    borderRadius:    14,
+    paddingVertical: 16,
+    alignItems:      "center",
+    marginTop:       4,
+    shadowColor:     C.blue,
+    shadowOpacity:   0.28,
+    shadowRadius:    12,
+    elevation:       4,
+  },
+  submitBtnDisabled: { opacity: 0.55 },
+  submitBtnText: { color: C.white, fontSize: 16, fontWeight: "700" },
+
+  loginLink:     { alignItems: "center", paddingVertical: 4 },
+  loginLinkText: { color: C.blue, fontSize: 14, fontWeight: "600" },
 });
