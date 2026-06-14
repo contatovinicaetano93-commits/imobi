@@ -49,7 +49,7 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
     setError(null);
     setBuscaFeita(false);
     try {
-      const res = await fetch("/api/proxy/admin/solicitacoes?status=EM_ANALISE&semComite=true");
+      const res = await fetch("/api/proxy/admin/solicitacoes?status=PENDENTE&semComite=true");
       if (res.ok) {
         const data = await res.json();
         setSolicitacoes(Array.isArray(data) ? data : data.items ?? []);

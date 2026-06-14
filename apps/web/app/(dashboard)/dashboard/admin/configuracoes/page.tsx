@@ -91,9 +91,11 @@ export default function ConfiguracoesPage() {
   async function handleRegenerarPrisma() {
     setRegenerando(true);
     try {
-      await fetch("/api/proxy/admin/prisma/regenerate", { method: "POST" });
-      setRegenerado(true);
-      setTimeout(() => setRegenerado(false), 3000);
+      const res = await fetch("/api/proxy/admin/prisma/regenerate", { method: "POST" });
+      if (res.ok) {
+        setRegenerado(true);
+        setTimeout(() => setRegenerado(false), 3000);
+      }
     } catch {
       // silently fail — operação administrativa
     } finally {

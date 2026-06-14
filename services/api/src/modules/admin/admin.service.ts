@@ -469,7 +469,7 @@ export class AdminService {
 
     await this.prisma.solicitacaoCredito.update({
       where: { solicitacaoId },
-      data: { status: "EM_ANALISE" as any },
+      data: { status: "EM_COMITE" },
     });
 
     // Notificar gestores e admins
@@ -483,7 +483,7 @@ export class AdminService {
         .filter(u => u.usuarioId !== adminId)
         .map(u => this.notificacoes.criar(
           u.usuarioId,
-          "COMITE_CRIADO" as any,
+          "COMITE_ABERTO",
           "Novo comitê iniciado",
           `Um comitê foi aberto para solicitação #${solicitacaoId.slice(0, 8)}. Aguardando votação.`,
           `/dashboard/admin/comite`,
