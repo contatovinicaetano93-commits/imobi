@@ -177,6 +177,14 @@ export class ComercialService {
     return { activity, updatedScore: score };
   }
 
+  async moverStage(leadId: string, stageId: string) {
+    return this.prisma.lead.update({
+      where: { leadId },
+      data: { stageId },
+      include: { stage: true, scoreHistorico: { take: 1, orderBy: { criadoEm: 'desc' } } },
+    });
+  }
+
   async obterDashboardStats() {
     const totalLeads = await this.prisma.lead.count();
 

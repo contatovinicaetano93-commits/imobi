@@ -16,7 +16,7 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from '../../common/decora
 
 @Controller('comercial')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('COMERCIAL', 'ADMIN')
+@Roles('COMERCIAL', 'PARCEIRO', 'ADMIN')
 export class ComercialController {
   constructor(private readonly comercialService: ComercialService) {}
 
@@ -70,6 +70,14 @@ export class ComercialController {
   @Get('leads/:leadId/score')
   async getLeadScore(@Param('leadId') leadId: string) {
     return this.comercialService.calcularScoreConversao(leadId);
+  }
+
+  @Post('leads/:leadId/stage')
+  async moverStage(
+    @Param('leadId') leadId: string,
+    @Body() body: { stageId: string },
+  ) {
+    return this.comercialService.moverStage(leadId, body.stageId);
   }
 
   @Post('leads/:leadId/atividades')

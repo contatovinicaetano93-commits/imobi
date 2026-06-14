@@ -75,6 +75,65 @@ export const authApi = {
     }),
 };
 
+export const comercialApi = {
+  stats: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<ComercialStats>("/api/v1/comercial/dashboard/stats", token ?? undefined);
+    }),
+  stages: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<Stage[]>("/api/v1/comercial/pipeline/stages", token ?? undefined);
+    }),
+  leads: (params?: Record<string, string>) =>
+    callApi(async () => {
+      const token = await getToken();
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return apiClient.get<{ leads: Lead[]; total: number }>(`/api/v1/comercial/leads${qs}`, token ?? undefined);
+    }),
+  criarLead: (data: CriarLeadInput) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post("/api/v1/comercial/leads", data, token ?? undefined);
+    }),
+  detalhe: (leadId: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<LeadDetalhe>(`/api/v1/comercial/leads/${leadId}`, token ?? undefined);
+    }),
+  moverStage: (leadId: string, stageId: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post(`/api/v1/comercial/leads/${leadId}/stage`, { stageId }, token ?? undefined);
+    }),
+  adicionarAtividade: (leadId: string, tipo: string, descricao: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post(`/api/v1/comercial/leads/${leadId}/atividades`, { tipo, descricao }, token ?? undefined);
+    }),
+};
+
+export type ComercialStats = { totalLeads: number; leadsThisWeek: number; avgScore: number; conversionRate: number };
+export type Stage = { stageId: string; nome: string; ordem: number; cor: string };
+export type Lead = {
+  leadId: string;
+  clienteNome: string;
+  clienteEmail: string;
+  clienteTelefone: string;
+  fonte: string;
+  stageId: string;
+  stage: Stage;
+  scoreHistorico: { scoreFinal: number }[];
+  criadoEm: string;
+};
+export type CriarLeadInput = { clienteNome: string; clienteEmail: string; clienteTelefone: string; fonte: string; segmentoCliente?: string };
+export type LeadDetalhe = Lead & {
+  segmentoCliente?: string;
+  atividades: { atividadeId: string; tipo: string; descricao: string; criadoEm: string }[];
+  scoreHistorico: { scoreFinal: number; probabilidadeClosing: number; criadoEm: string }[];
+};
+
 export const adminApi = {
   overview: () =>
     callApi(async () => {
