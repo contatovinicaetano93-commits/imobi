@@ -6,7 +6,6 @@ import {
   Param,
   Query,
   UseGuards,
-  Req,
 } from '@nestjs/common';
 import { ComercialService } from './comercial.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -76,9 +75,8 @@ export class ComercialController {
   async addActivity(
     @Param('leadId') leadId: string,
     @Body() data: any,
-    @Req() req: any
+    @UsuarioAtual() u: IUsuario
   ) {
-    const usuarioId = req.user.id;
-    return this.comercialService.adicionarAtividade(leadId, usuarioId, data);
+    return this.comercialService.adicionarAtividade(leadId, u.id, data);
   }
 }

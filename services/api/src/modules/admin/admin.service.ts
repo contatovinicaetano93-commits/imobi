@@ -213,7 +213,7 @@ export class AdminService {
 
   async criarUsuario(dto: CriarUsuarioAdminDto) {
     const existe = await this.prisma.usuario.findUnique({ where: { email: dto.email } });
-    if (existe) throw new ConflictException("E-mail já cadastrado");
+    if (existe && !existe.deletadoEm) throw new ConflictException("E-mail já cadastrado");
     const passwordHash = await bcrypt.hash(dto.senha, 10);
     const { usuarioId, ...rest } = await this.prisma.usuario.create({
       data: {
