@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Query, Body, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Param, Query, Body, UseGuards, HttpCode } from "@nestjs/common";
 import { AdminService, CriarUsuarioAdminDto } from "./admin.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -50,5 +50,33 @@ export class AdminController {
     @UsuarioAtual() admin: UsuarioAtual,
   ) {
     return this.adminService.atualizarUsuario(id, body, admin.id);
+  }
+
+  @Get("etapas/aguardando-validacao")
+  listarEtapasAguardandoValidacao(
+    @Query("limit") limit: string = "20",
+    @Query("offset") offset: string = "0",
+  ) {
+    return this.adminService.listarEtapasAguardandoValidacao(Number(limit), Number(offset));
+  }
+
+  @Post("etapas/:etapaId/validar")
+  @HttpCode(200)
+  validarEtapa(
+    @Param("etapaId") etapaId: string,
+    @UsuarioAtual() admin: UsuarioAtual,
+    @Body() body: { observacoes?: string },
+  ) {
+    return this.adminService.validarEtapa(admin.id, etapaId, body.observacoes);
+  }
+
+  @Post("etapas/:etapaId/rejeitar")
+  @HttpCode(200)
+  rejeitarEtapa(
+    @Param("etapaId") etapaId: string,
+    @UsuarioAtual() admin: UsuarioAtual,
+    @Body() body: { motivo: string },
+  ) {
+    return this.adminService.rejeitarEtapaAdmin(admin.id, etapaId, body.motivo);
   }
 }

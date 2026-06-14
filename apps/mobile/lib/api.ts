@@ -139,6 +139,105 @@ export const kycApi = {
   },
 };
 
+// ── Vistoria API (Engenheiro) ──
+export const vistoriaApi = {
+  listarPendentes: (limit = 20, offset = 0) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<{ etapas: EtapaVistoria[]; total: number }>(
+        `/api/v1/manager/etapas-pendentes?limit=${limit}&offset=${offset}`,
+        token ?? undefined
+      );
+    }),
+  aprovar: (etapaId: string, observacoes?: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post<{ ok: boolean; status: string }>(
+        `/api/v1/vistoria/${etapaId}/aprovar`,
+        { observacoes },
+        token ?? undefined
+      );
+    }),
+  rejeitar: (etapaId: string, motivo: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post<{ ok: boolean; status: string }>(
+        `/api/v1/vistoria/${etapaId}/rejeitar`,
+        { motivo },
+        token ?? undefined
+      );
+    }),
+};
+
+// ── Admin API ──
+export const adminApi = {
+  overview: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<AdminOverview>("/api/v1/admin/overview", token ?? undefined);
+    }),
+  listarEtapasAguardandoValidacao: (limit = 20, offset = 0) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<{ etapas: EtapaValidacao[]; total: number }>(
+        `/api/v1/admin/etapas/aguardando-validacao?limit=${limit}&offset=${offset}`,
+        token ?? undefined
+      );
+    }),
+  validarEtapa: (etapaId: string, observacoes?: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post<{ ok: boolean; status: string }>(
+        `/api/v1/admin/etapas/${etapaId}/validar`,
+        { observacoes },
+        token ?? undefined
+      );
+    }),
+  rejeitarEtapa: (etapaId: string, motivo: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post<{ ok: boolean; status: string }>(
+        `/api/v1/admin/etapas/${etapaId}/rejeitar`,
+        { motivo },
+        token ?? undefined
+      );
+    }),
+};
+
+// ── New Types ──
+export type EtapaVistoria = {
+  etapaId: string;
+  nome: string;
+  percentualObra: number;
+  valorLiberacao: number;
+  status: string;
+  obraId: string;
+  obraNome: string;
+  construtor: string;
+  totalEvidencias: number;
+  evidencias: { evidenciaId: string; fotoUrl: string; latCaptura: number; lngCaptura: number; criadoEm: string }[];
+  diasAguardando?: number;
+};
+
+export type EtapaValidacao = EtapaVistoria & {
+  aprovadoPorEngenheiro: string;
+  aprovadoEm: string;
+  creditoStatus: string;
+  valorAprovado: number;
+};
+
+export type AdminOverview = {
+  totalUsuarios: number;
+  obrasAtivas: number;
+  obrasTotal: number;
+  creditoAprovado: number;
+  creditoLiberado: number;
+  kycPendentes: number;
+  etapasPendentes: number;
+  visitasAgendadas: number;
+  filaLiberacao: number;
+};
+
 // Types
 export type Obra = {
   obraId: string;

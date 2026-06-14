@@ -68,9 +68,13 @@ export class ManagerService {
 
     // Status filter
     if (filters?.status && filters.status !== "todas") {
-      where.status = ETAPA_STATUS_MAP[filters.status] || "AGUARDANDO_VISTORIA";
+      if (filters.status === "pendente") {
+        where.status = { in: ["AGUARDANDO_VISTORIA", "APROVADA_ENGENHEIRO"] as any };
+      } else {
+        where.status = ETAPA_STATUS_MAP[filters.status] || "AGUARDANDO_VISTORIA";
+      }
     } else {
-      where.status = "AGUARDANDO_VISTORIA";
+      where.status = { in: ["AGUARDANDO_VISTORIA", "APROVADA_ENGENHEIRO"] as any };
     }
 
     // Date range filter

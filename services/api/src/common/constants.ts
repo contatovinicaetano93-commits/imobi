@@ -9,6 +9,7 @@ export interface LiberacaoJob {
 
 export const ETAPA_STATUS_MAP = {
   pendente: "AGUARDANDO_VISTORIA",
-  aprovada: "APROVADA",
-  rejeitada: "REJEITADA",
+  aprovada_engenheiro: "APROVADA_ENGENHEIRO",
+  aprovada: "CONCLUIDA",
+  rejeitada: "REPROVADA",
 } as const;

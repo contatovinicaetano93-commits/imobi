@@ -11,7 +11,7 @@ import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
 
-const STATUSES_VISTORIAVEL = ["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA"];
+const STATUSES_VISTORIAVEL = ["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA", "APROVADA_ENGENHEIRO"];
 
 @Injectable()
 export class VistoriaService {
@@ -31,63 +31,35 @@ export class VistoriaService {
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
     const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: { in: STATUSES_VISTORIAVEL as any } },
-      data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
+      where: { etapaId, status: { in: ["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA"] as any } },
+      data: { status: "APROVADA_ENGENHEIRO" },
     });
     if (updated.count === 0) {
       throw new BadRequestException("Etapa não pode ser aprovada no status atual.");
     }
 
     await this.prisma.etapaAuditLog.create({
-      data: { etapaId, acaoTipo: "APROVADA", usuarioId: gestorId, observacoes: observacoes ?? null },
+      data: { etapaId, acaoTipo: "APROVADA_ENGENHEIRO", usuarioId: gestorId, observacoes: observacoes ?? null },
     });
 
-    await this.notificacoes.criar(
-      etapa.obra.usuarioId,
-      "ETAPA_APROVADA",
-      `Etapa aprovada: ${etapa.nome}`,
-      `A etapa "${etapa.nome}" da obra "${etapa.obra.nome}" foi aprovada. A liberação da parcela foi agendada.`,
-      `/dashboard/obras/${etapa.obra.obraId}`,
+    // Notify all admins/gestores
+    const admins = await this.prisma.usuario.findMany({
+      where: { tipo: { in: ["ADMIN", "GESTOR"] as any }, deletadoEm: null },
+      select: { usuarioId: true },
+    });
+    await Promise.all(
+      admins.map((a) =>
+        this.notificacoes.criar(
+          a.usuarioId,
+          "ETAPA_AGUARDANDO_ADMIN" as any,
+          `Vistoria aprovada: ${etapa.nome}`,
+          `O engenheiro aprovou a etapa "${etapa.nome}" da obra "${etapa.obra.nome}". Aguardando sua validação para liberar a parcela.`,
+          `/admin/obras/${etapa.obra.obraId}`,
+        )
+      )
     );
 
-    this.pushNotificacoes
-      .enviarPush({
-        usuarioId: etapa.obra.usuarioId,
-        titulo: `Etapa Aprovada: ${etapa.nome}`,
-        mensagem: "Sua etapa foi aprovada e a parcela será liberada em breve.",
-        tipo: "ETAPA_APROVADA",
-        dados: { obraId: etapa.obra.obraId, etapaId },
-      })
-      .catch(() => {});
-
-    const credito = etapa.obra.credito;
-    if (credito) {
-      const valorLiberacao = Number(credito.valorAprovado ?? 0) * (Number(etapa.percentualObra) / 100);
-
-      this.email
-        .etapaAprovadaEmail(
-          etapa.obra.usuario?.nome ?? "usuário",
-          etapa.obra.usuario?.email ?? "",
-          etapa.nome,
-          etapa.obra.nome,
-          valorLiberacao,
-        )
-        .catch(() => {});
-
-      if (credito.status === "ATIVO" && valorLiberacao > 0) {
-        const liberacao = await this.prisma.liberacaoParcela.create({
-          data: { creditoId: credito.creditoId, valor: valorLiberacao, status: "PENDENTE" },
-        });
-        await this.liberacaoQueue.add({
-          creditoId: credito.creditoId,
-          etapaId,
-          liberacaoId: liberacao.liberacaoId,
-          valor: valorLiberacao,
-        });
-      }
-    }
-
-    return { ok: true, etapaId, status: "CONCLUIDA" };
+    return { ok: true, etapaId, status: "APROVADA_ENGENHEIRO" };
   }
 
   async rejeitar(gestorId: string, etapaId: string, motivo: string) {

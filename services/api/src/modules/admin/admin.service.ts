@@ -1,5 +1,11 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bull";
+import { Queue } from "bull";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificacoesService } from "../notificacoes/notificacoes.service";
+import { EmailService } from "../email/email.service";
+import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
+import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
 import * as bcrypt from "bcryptjs";
 import { UsuarioTipo } from "@prisma/client";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
@@ -32,7 +38,13 @@ export interface Atividade {
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificacoes: NotificacoesService,
+    private readonly email: EmailService,
+    private readonly pushNotificacoes: PushNotificacoesService,
+    @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue<LiberacaoJob>,
+  ) {}
 
   async overview(): Promise<AdminOverview> {
     const [
@@ -240,5 +252,151 @@ export class AdminService {
       },
     });
     return { id: usuarioId, ...rest };
+  }
+
+  async listarEtapasAguardandoValidacao(limit = 20, offset = 0) {
+    const [etapas, total] = await Promise.all([
+      this.prisma.etapaObra.findMany({
+        where: { status: "APROVADA_ENGENHEIRO" as any },
+        take: limit,
+        skip: offset,
+        orderBy: { atualizadoEm: "asc" }, // oldest first = most urgent
+        include: {
+          obra: {
+            include: {
+              usuario: { select: { nome: true, email: true } },
+              credito: { select: { creditoId: true, valorAprovado: true, status: true } },
+            },
+          },
+          auditLogs: {
+            orderBy: { criadoEm: "desc" },
+            take: 1,
+            include: { usuario: { select: { nome: true } } },
+          },
+          evidencias: {
+            select: { evidenciaId: true, fotoUrl: true, latCaptura: true, lngCaptura: true, criadoEm: true },
+          },
+        },
+      }),
+      this.prisma.etapaObra.count({ where: { status: "APROVADA_ENGENHEIRO" as any } }),
+    ]);
+
+    return {
+      etapas: etapas.map((e) => ({
+        etapaId: e.etapaId,
+        nome: e.nome,
+        percentualObra: e.percentualObra,
+        valorLiberacao: Number(e.valorLiberacao ?? 0),
+        obraId: e.obra.obraId,
+        obraNome: e.obra.nome,
+        construtor: e.obra.usuario?.nome ?? "—",
+        creditoStatus: e.obra.credito?.status ?? "—",
+        valorAprovado: Number(e.obra.credito?.valorAprovado ?? 0),
+        aprovadoPorEngenheiro: e.auditLogs[0]?.usuario?.nome ?? "—",
+        aprovadoEm: e.auditLogs[0]?.criadoEm ?? e.atualizadoEm,
+        totalEvidencias: e.evidencias.length,
+        evidencias: e.evidencias,
+      })),
+      total,
+    };
+  }
+
+  async validarEtapa(adminId: string, etapaId: string, observacoes?: string) {
+    const etapa = await this.prisma.etapaObra.findUnique({
+      where: { etapaId },
+      include: { obra: { include: { credito: true, usuario: true } } },
+    });
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+
+    const updated = await this.prisma.etapaObra.updateMany({
+      where: { etapaId, status: "APROVADA_ENGENHEIRO" as any },
+      data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
+    });
+    if (updated.count === 0) {
+      throw new BadRequestException("Etapa não está aguardando validação do admin.");
+    }
+
+    await this.prisma.etapaAuditLog.create({
+      data: { etapaId, acaoTipo: "VALIDADA_ADMIN", usuarioId: adminId, observacoes: observacoes ?? null },
+    });
+
+    // Notify construtor
+    await this.notificacoes.criar(
+      etapa.obra.usuarioId,
+      "ETAPA_APROVADA" as any,
+      `Etapa aprovada: ${etapa.nome}`,
+      `A etapa "${etapa.nome}" da obra "${etapa.obra.nome}" foi validada e a parcela será liberada em breve.`,
+      `/dashboard/obras/${etapa.obra.obraId}`,
+    );
+
+    this.pushNotificacoes
+      .enviarPush({
+        usuarioId: etapa.obra.usuarioId,
+        titulo: `Etapa Aprovada: ${etapa.nome}`,
+        mensagem: "Sua etapa foi validada e a parcela será liberada em breve.",
+        tipo: "ETAPA_APROVADA",
+        dados: { obraId: etapa.obra.obraId, etapaId },
+      })
+      .catch(() => {});
+
+    const credito = etapa.obra.credito;
+    if (credito) {
+      const valorLiberacao =
+        Number(credito.valorAprovado ?? 0) * (Number(etapa.percentualObra) / 100);
+
+      this.email
+        .etapaAprovadaEmail(
+          etapa.obra.usuario?.nome ?? "usuário",
+          etapa.obra.usuario?.email ?? "",
+          etapa.nome,
+          etapa.obra.nome,
+          valorLiberacao,
+        )
+        .catch(() => {});
+
+      if (credito.status === "ATIVO" && valorLiberacao > 0) {
+        const liberacao = await this.prisma.liberacaoParcela.create({
+          data: { creditoId: credito.creditoId, valor: valorLiberacao, status: "PENDENTE" },
+        });
+        await this.liberacaoQueue.add({
+          creditoId: credito.creditoId,
+          etapaId,
+          liberacaoId: liberacao.liberacaoId,
+          valor: valorLiberacao,
+        });
+      }
+    }
+
+    return { ok: true, etapaId, status: "CONCLUIDA" };
+  }
+
+  async rejeitarEtapaAdmin(adminId: string, etapaId: string, motivo: string) {
+    const etapa = await this.prisma.etapaObra.findUnique({
+      where: { etapaId },
+      include: { obra: { include: { usuario: true } } },
+    });
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+
+    const updated = await this.prisma.etapaObra.updateMany({
+      where: { etapaId, status: "APROVADA_ENGENHEIRO" as any },
+      data: { status: "REPROVADA" },
+    });
+    if (updated.count === 0) {
+      throw new BadRequestException("Etapa não está aguardando validação do admin.");
+    }
+
+    await this.prisma.etapaAuditLog.create({
+      data: { etapaId, acaoTipo: "REJEITADA_ADMIN", usuarioId: adminId, observacoes: motivo },
+    });
+
+    await this.notificacoes.criar(
+      etapa.obra.usuarioId,
+      "ETAPA_REPROVADA" as any,
+      `Etapa reprovada: ${etapa.nome}`,
+      `A etapa "${etapa.nome}" foi reprovada pelo comitê. Motivo: ${motivo}`,
+      `/dashboard/obras/${etapa.obra.obraId}`,
+    );
+
+    return { ok: true, etapaId, status: "REPROVADA" };
   }
 }

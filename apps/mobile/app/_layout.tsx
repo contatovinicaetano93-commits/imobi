@@ -3,50 +3,60 @@ import { View, ActivityIndicator } from "react-native";
 import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useRouter, useSegments } from "expo-router";
-import { setOnUnauthorized } from "../lib/api";
-
-type RootLayoutProps = {
-  children?: React.ReactNode;
-};
+import { setOnUnauthorized, usuariosApi } from "../lib/api";
 
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [isLoading, setIsLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [userTipo, setUserTipo] = useState<string | null>(null);
 
   useEffect(() => {
     setOnUnauthorized(() => {
       setIsSignedIn(false);
+      setUserTipo(null);
     });
   }, []);
 
   useEffect(() => {
-    const bootstrapAsync = async () => {
+    const bootstrap = async () => {
       try {
         const token = await SecureStore.getItemAsync("accessToken");
-        setIsSignedIn(!!token);
+        if (token) {
+          try {
+            const perfil = await usuariosApi.obterPerfil();
+            setUserTipo(perfil.tipo);
+          } catch {
+            setUserTipo("TOMADOR");
+          }
+          setIsSignedIn(true);
+        }
       } catch (e) {
         console.error("Failed to restore token", e);
       } finally {
         setIsLoading(false);
       }
     };
-
-    bootstrapAsync();
+    bootstrap();
   }, []);
 
   useEffect(() => {
     if (isLoading) return;
-
     const inAuthGroup = segments[0] === "(auth)";
-
     if (!isSignedIn && !inAuthGroup) {
       router.replace("/(auth)/login");
     } else if (isSignedIn && inAuthGroup) {
-      router.replace("/(tabs)/obras");
+      const tipo = userTipo ?? "TOMADOR";
+      if (tipo === "ENGENHEIRO") {
+        router.replace("/(engenheiro)/vistorias");
+      } else if (tipo === "ADMIN" || tipo === "GESTOR") {
+        router.replace("/(admin)/dashboard");
+      } else {
+        router.replace("/(construtor)/obras");
+      }
     }
-  }, [isSignedIn, isLoading, segments]);
+  }, [isSignedIn, isLoading, segments, userTipo]);
 
   if (isLoading) {
     return (
@@ -57,23 +67,11 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen
-        name="(auth)"
-        options={{
-          gestureEnabled: false,
-        }}
-      />
-      <Stack.Screen
-        name="(tabs)"
-        options={{
-          gestureEnabled: false,
-        }}
-      />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(construtor)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(engenheiro)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(admin)" options={{ gestureEnabled: false }} />
     </Stack>
   );
 }
