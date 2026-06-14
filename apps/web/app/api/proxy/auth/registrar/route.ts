@@ -1,0 +1,49 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+
+const _base = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
+const API = _base.endsWith('/api/v1') ? _base : `${_base}/api/v1`;
+
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => null);
+
+  const res = await fetch(`${API}/auth/registrar`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  }).catch(() => null);
+
+  if (!res) return NextResponse.json({ message: `API inacessível — verifique NEXT_PUBLIC_API_URL` }, { status: 503 });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    return NextResponse.json({ message: data.message ?? data.error ?? `Erro ${res.status}` }, { status: res.status });
+  }
+
+  const jar = await cookies();
+  jar.set('access_token', data.accessToken, {
+    httpOnly: true,
+    secure: process.env['NODE_ENV'] === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 8,
+  });
+  if (data.refreshToken) {
+    jar.set('refresh_token', data.refreshToken, {
+      httpOnly: true,
+      secure: process.env['NODE_ENV'] === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+  }
+
+  try {
+    const payload = JSON.parse(Buffer.from(data.accessToken.split('.')[1], 'base64url').toString());
+    return NextResponse.json({ ok: true, role: payload.role ?? null, nome: payload.nome ?? null });
+  } catch {
+    return NextResponse.json({ ok: true });
+  }
+}
