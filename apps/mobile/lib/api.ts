@@ -57,6 +57,11 @@ export const creditoApi = {
       const token = await getToken();
       return apiClient.get<Credito[]>("/api/v1/credito/meus", token ?? undefined);
     }),
+  extrato: (id: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<CreditoExtrato>(`/api/v1/credito/${id}/extrato`, token ?? undefined);
+    }),
 };
 
 export const scoreApi = {
@@ -179,12 +184,31 @@ export type Evidencia = {
 };
 
 export type Credito = {
+  id: string;
+  valorAprovado: number;
+  valorLiberado: number;
+  taxaMensal: number;
+  prazoMeses: number;
+  status: string;
+  dataAprovacao?: string;
+  obras: { id: string; nome: string; status: string }[];
+  liberacoes: { id: string; valor: number; status: string; processadoEm?: string }[];
+};
+
+export type CreditoExtrato = {
   creditoId: string;
   valorAprovado: number;
   valorLiberado: number;
   taxaMensal: number;
   prazoMeses: number;
   status: string;
+  liberacoes: {
+    liberacaoId: string;
+    valor: number;
+    status: string;
+    criadoEm: string;
+    motivo?: string;
+  }[];
 };
 
 export type ScoreData = {
