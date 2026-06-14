@@ -4,6 +4,8 @@ import {
 import { Throttle } from "@nestjs/throttler";
 import { EvidenciasService } from "./evidencias.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { RolesGuard } from "../../common/guards/roles.guard";
+import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
 @UseGuards(JwtAuthGuard)
@@ -25,6 +27,8 @@ export class EvidenciasController {
     return this.evidencias.listarPorEtapa(u, etapaId);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles("GESTOR", "ADMIN", "ENGENHEIRO")
   @Patch(":id/validar")
   validar(
     @UsuarioAtual() u: IUsuario,
