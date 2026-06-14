@@ -13,7 +13,7 @@ import {
   ChevronRight, Building2, ArrowLeft, Vote, LayoutDashboard, MapPin, TrendingUp, FileText, type LucideIcon,
 } from "lucide-react";
 
-type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "GESTOR_OBRA" | "TOMADOR" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | null;
+type UserRole = "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "GESTOR_OBRA" | "TOMADOR" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | null;
 type NavItem = {
   label: string; href: string; icon: LucideIcon;
   roles: UserRole[]; section?: string; funcao?: string;
@@ -32,13 +32,13 @@ const NAV: NavItem[] = [
   { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "simulador" },
   { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "score" },
   { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "kyc" },
-  { label: "Painel",        href: "/dashboard/gestor",                   icon: Home,        roles: ["GESTOR"],        section: "geral" },
-  { label: "Comitê",        href: "/dashboard/gestor/comite",            icon: Vote,        roles: ["GESTOR"] },
-  { label: "Etapas",        href: "/dashboard/gestor/etapas",            icon: FileCheck2,  roles: ["GESTOR"] },
-  { label: "KYC",           href: "/dashboard/gestor/kyc",               icon: ShieldCheck, roles: ["GESTOR"] },
-  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2,  roles: ["GESTOR"] },
-  { label: "Carteira",      href: "/dashboard/fundos",                   icon: Banknote,    roles: ["GESTOR"] },
-  { label: "Relatórios",    href: "/dashboard/relatorios",               icon: BarChart3,   roles: ["GESTOR"] },
+  { label: "Painel",        href: "/dashboard/gestor",                   icon: Home,        roles: ["GESTOR", "GESTOR_FUNDO"],        section: "geral" },
+  { label: "Comitê",        href: "/dashboard/gestor/comite",            icon: Vote,        roles: ["GESTOR", "GESTOR_FUNDO"] },
+  { label: "Etapas",        href: "/dashboard/gestor/etapas",            icon: FileCheck2,  roles: ["GESTOR", "GESTOR_FUNDO"] },
+  { label: "KYC",           href: "/dashboard/gestor/kyc",               icon: ShieldCheck, roles: ["GESTOR", "GESTOR_FUNDO"] },
+  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2,  roles: ["GESTOR", "GESTOR_FUNDO"] },
+  { label: "Carteira",      href: "/dashboard/fundos",                   icon: Banknote,    roles: ["GESTOR", "GESTOR_FUNDO"] },
+  { label: "Relatórios",    href: "/dashboard/relatorios",               icon: BarChart3,   roles: ["GESTOR", "GESTOR_FUNDO"] },
   { label: "Painel",        href: "/dashboard/engenheiro",               icon: Home,        roles: ["ENGENHEIRO","GESTOR_OBRA"], section: "geral" },
   { label: "Minhas Obras",  href: "/dashboard/obras",                    icon: HardHat,     roles: ["ENGENHEIRO","GESTOR_OBRA"] },
   { label: "Vistoria",      href: "/dashboard/engenheiro/vistoria",      icon: MapPin,      roles: ["ENGENHEIRO","GESTOR_OBRA"] },
@@ -51,8 +51,8 @@ const NAV: NavItem[] = [
   { label: "Simulador",     href: "/dashboard/comercial/simulador",      icon: Calculator,  roles: ["COMERCIAL","PARCEIRO"] },
   { label: "Materiais",     href: "/dashboard/comercial/materiais",      icon: FileText,    roles: ["COMERCIAL","PARCEIRO"] },
   { label: "Ranking",       href: "/dashboard/comercial/ranking",        icon: TrendingUp,  roles: ["COMERCIAL","PARCEIRO"] },
-  { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], funcao: "notificacoes" },
-  { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null] },
+  { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","GESTOR_FUNDO","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], funcao: "notificacoes" },
+  { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","GESTOR_FUNDO","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null] },
   { label: "Visão Geral",   href: "/dashboard/admin",                   icon: LayoutDashboard, roles: ["ADMIN"],     section: "admin" },
   { label: "Pipeline",      href: "/dashboard/admin/pipeline",          icon: Banknote,    roles: ["ADMIN"] },
   { label: "Comitê",        href: "/dashboard/admin/comite",            icon: Vote,        roles: ["ADMIN"] },
@@ -69,6 +69,7 @@ const ROLE_META: Record<string, { label: string; accent: string }> = {
   CONSTRUTOR:  { label: "Construtor",  accent: MINT },
   TOMADOR:     { label: "Construtor",  accent: MINT },
   GESTOR:      { label: "Fundo",       accent: "#a78bfa" },
+  GESTOR_FUNDO: { label: "Fundo",      accent: "#a78bfa" },
   ENGENHEIRO:  { label: "Engenheiro",  accent: "#fb923c" },
   GESTOR_OBRA: { label: "Engenheiro",  accent: "#fb923c" },
   COMERCIAL:   { label: "Comercial",   accent: "#fbbf24" },
@@ -83,12 +84,12 @@ function getNavRole(role: UserRole, path: string): UserRole {
 
   // Panel-root segments always determine sidebar context
   if (seg === "comercial")  return "COMERCIAL";
-  if (seg === "gestor")     return "GESTOR";
+  if (seg === "gestor")     return role === "GESTOR_FUNDO" ? "GESTOR_FUNDO" : "GESTOR";
   if (seg === "engenheiro") return "ENGENHEIRO";
   if (["construtor", "credito", "kyc", "score", "simulador", "obras", "comite"].includes(seg))
     return role === "ENGENHEIRO" || role === "GESTOR_OBRA" ? role : "CONSTRUTOR";
   if (seg === "admin")      return "ADMIN";
-  if (seg === "fundos" || seg === "relatorios") return role === "ADMIN" ? "ADMIN" : "GESTOR";
+  if (seg === "fundos" || seg === "relatorios") return role === "ADMIN" ? "ADMIN" : (role === "GESTOR_FUNDO" ? "GESTOR_FUNDO" : "GESTOR");
 
   // Shared / unknown segment — fall back to actual role
   return role;
