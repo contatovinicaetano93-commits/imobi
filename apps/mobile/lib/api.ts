@@ -75,6 +75,24 @@ export const authApi = {
     }),
 };
 
+export const adminApi = {
+  listarUsuarios: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<AdminUsuario[]>("/api/v1/admin/usuarios", token ?? undefined);
+    }),
+  criarUsuario: (body: { nome: string; email: string; senha: string; tipo: string }) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post<AdminUsuario>("/api/v1/admin/usuarios", body, token ?? undefined);
+    }),
+  atualizarUsuario: (id: string, body: { bloqueado?: boolean; tipo?: string }) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.patch<AdminUsuario>(`/api/v1/admin/usuarios/${id}`, body, token ?? undefined);
+    }),
+};
+
 export const kycApi = {
   listarPendentes: () =>
     callApi(async () => {
@@ -174,6 +192,19 @@ export type ScoreData = {
   nivel: string;
   cor: string;
   descricao: string;
+};
+
+export type AdminUsuario = {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string;
+  tipo: string;
+  kycStatus: string;
+  bloqueadoEm: string | null;
+  criadoEm: string;
+  totalObras: number;
+  totalCreditos: number;
 };
 
 export type KycDocumento = {

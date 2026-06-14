@@ -26,6 +26,15 @@ export default function AdminLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="usuarios/index"
+        options={{
+          title: "Usuários",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="people-outline" size={size} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
