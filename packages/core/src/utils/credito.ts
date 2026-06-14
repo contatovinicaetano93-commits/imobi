@@ -7,6 +7,7 @@ export function calcularParcelaPrice(
   taxaMensalDecimal: number,
   prazoMeses: number
 ): number {
+  if (!prazoMeses) return 0;
   if (taxaMensalDecimal === 0) return valorPrincipal / prazoMeses;
   const fator =
     Math.pow(1 + taxaMensalDecimal, prazoMeses) /
