@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import "./landing.css";
 
@@ -32,10 +32,6 @@ export default function LandingPage() {
   const [cadErro,     setCadErro]     = useState<string | null>(null);
   const [cadLoading,  setCadLoading]  = useState(false);
 
-  const railRef        = useRef<HTMLDivElement>(null);
-  const [counterVal,      setCounterVal]      = useState(0);
-  const [counterStarted,  setCounterStarted]  = useState(false);
-
   useEffect(() => { setIsMobile(window.innerWidth <= 768); }, []);
 
   useEffect(() => {
@@ -57,26 +53,6 @@ export default function LandingPage() {
     document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
     return () => obs.disconnect();
   }, []);
-
-  useEffect(() => {
-    const el = railRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting && !counterStarted) {
-        setCounterStarted(true);
-        const dur = 2200, t0 = Date.now();
-        const tick = () => {
-          const p = Math.min((Date.now() - t0) / dur, 1);
-          const e2 = 1 - (1 - p) * (1 - p);
-          setCounterVal(Math.floor(e2 * 170));
-          if (p < 1) requestAnimationFrame(tick); else setCounterVal(170);
-        };
-        requestAnimationFrame(tick);
-      }
-    }, { threshold: 0.3 });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [counterStarted]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault(); setLoginErro(null); setLoginLoading(true);
@@ -224,20 +200,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* KPI CARDS */}
-          <div className="kpi-grid" ref={railRef}>
-            {([
-              { val: `R$${counterVal}M+`, lbl: "capital estruturado",  accent: "#4ADE80" },
-              { val: "15–30 dias",         lbl: "da análise ao capital", accent: "#60a5fa" },
-              { val: "100%",               lbl: "taxa de entrega",       accent: "#34d399" },
-              { val: "R$1M+",              lbl: "operação mínima",       accent: "#a78bfa" },
-            ] as { val: string; lbl: string; accent: string }[]).map(({ val, lbl, accent }) => (
-              <div className="kpi-card" key={lbl}>
-                <span className="kpi-val" style={{ color: accent }}>{val}</span>
-                <span className="kpi-lbl">{lbl}</span>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

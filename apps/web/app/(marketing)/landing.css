@@ -219,9 +219,7 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
   background-size: 48px 48px;
 }
 .hero-inner {
-  max-width: 1200px; margin: 0 auto; width: 100%;
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 5rem; align-items: center;
+  max-width: 800px; margin: 0 auto; width: 100%;
   position: relative; z-index: 1;
 }
 .hero-content { display: flex; flex-direction: column; }
@@ -263,28 +261,6 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
   border: none; cursor: pointer; transition: color 0.15s;
 }
 .btn-hero-ghost:hover { color: var(--white); }
-
-/* KPI CARDS */
-.kpi-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
-  animation: slideUp 0.60s cubic-bezier(0.22,1,0.36,1) 0.45s both;
-}
-.kpi-card {
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.11);
-  border-radius: 16px; padding: 1.4rem 1.5rem;
-  display: flex; flex-direction: column; gap: 0.3rem;
-  transition: background 0.2s;
-}
-.kpi-card:hover { background: rgba(255,255,255,0.11); }
-.kpi-val {
-  font-family: 'Barlow Condensed', sans-serif; font-weight: 800;
-  font-size: 2.1rem; line-height: 1; letter-spacing: -0.01em;
-}
-.kpi-lbl {
-  font-size: 0.75rem; font-weight: 500;
-  color: rgba(255,255,255,0.45); letter-spacing: 0.01em;
-}
 
 /* ── SHARED TYPOGRAPHY ── */
 .eyebrow {
@@ -497,7 +473,6 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .hero-h1 .h1-line:nth-child(3) { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.42s both; }
   .hero-sub                      { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.52s both; }
   .hero-actions                  { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.62s both; }
-  .kpi-grid                      { animation: slideUp 0.60s cubic-bezier(0.22,1,0.36,1) 0.45s both; }
 
   /* Scroll reveal — JS adds .in class on IntersectionObserver trigger */
   .reveal {
@@ -516,10 +491,6 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .d5 { transition-delay: 0.50s; }
 }
 
-/* Reduced motion — show everything immediately, no scroll */
-@media (prefers-reduced-motion: reduce) {
-  .kpi-grid { animation: none; }
-}
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
@@ -530,15 +501,11 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .nav-mobile-auth .btn-login { padding: 0.4rem 0.7rem; font-size: 0.75rem; }
 
   .hero { padding: 6rem 1.25rem 3rem; min-height: auto; }
-  .hero-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+  .hero-inner { max-width: 100%; }
   .hero-sub { max-width: 100%; }
   .hero-actions { flex-direction: column; align-items: stretch; gap: 0.75rem; }
   .btn-hero-primary { text-align: center; padding: 1rem; }
   .btn-hero-ghost { text-align: center; }
-
-  .kpi-grid { gap: 0.5rem; }
-  .kpi-card { padding: 1.1rem 1.15rem; }
-  .kpi-val { font-size: 1.65rem; }
 
   .vantagens { padding: 4rem 1.25rem; }
   .vs-grid { grid-template-columns: 1fr; }
