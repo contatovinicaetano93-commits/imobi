@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { FileText, Download, ExternalLink, Package, BookOpen, PieChart, Presentation } from "lucide-react";
+import { FileText, ExternalLink, Package, BookOpen, PieChart, Presentation } from "lucide-react";
+import { BaixarButton } from "./baixar-button";
 
 export const metadata: Metadata = { title: "Materiais Comerciais — IMOBI" };
 
@@ -80,14 +81,7 @@ export default function MateriaisPage() {
                   </div>
                   <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
                 </div>
-                <button
-                  className="flex items-center justify-center gap-1.5 text-xs font-semibold w-full py-2 rounded-xl border transition hover:opacity-80"
-                  style={{ borderColor: cor + "40", color: cor, background: cor + "08" }}
-                  onClick={() => alert("Material disponível em breve. Entre em contato com o suporte para acesso antecipado.")}
-                >
-                  <Download size={12} />
-                  Baixar
-                </button>
+                <BaixarButton cor={cor} />
               </div>
             ))}
           </div>
