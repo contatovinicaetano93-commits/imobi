@@ -45,31 +45,6 @@ export class ComiteService {
       include: { usuario: { select: { nome: true, email: true } } },
     });
 
-    // Auto-open committee
-    const comite = await this.prisma.comiteDigital.create({
-      data: { solicitacaoId: solicitacao.solicitacaoId, status: "ABERTO" },
-    });
-
-    await this.prisma.solicitacaoCredito.update({
-      where: { solicitacaoId: solicitacao.solicitacaoId },
-      data: { status: "EM_COMITE" },
-    });
-
-    // Notify all ENGENHEIROs that a technical opinion is needed
-    const engenheiros = await this.prisma.usuario.findMany({
-      where: { tipo: "ENGENHEIRO", bloqueadoEm: null },
-      select: { usuarioId: true },
-    });
-    await Promise.all(engenheiros.map((e) =>
-      this.notificacoes.criar(
-        e.usuarioId,
-        "COMITE_ABERTO",
-        "Nova solicitação aguarda parecer técnico",
-        `Solicitação de ${solicitacao.usuario.nome} (R$ ${solicitacao.valorSolicitado.toLocaleString("pt-BR")}) aguarda seu parecer.`,
-        `/dashboard/engenheiro/comite`
-      ).catch(() => {})
-    ));
-
     return solicitacao;
   }
 
