@@ -1,5 +1,40 @@
 import * as SecureStore from "expo-secure-store";
-import { apiClient, ApiError } from "@imbobi/core";
+
+// ── Inline apiClient (avoids @imbobi/core duplicate-React issue) ──
+const _apiBase = (process.env["EXPO_PUBLIC_API_URL"] ?? "http://localhost:4000").replace(/\/api\/v1$/, "");
+const BASE_URL = `${_apiBase}/api/v1`;
+
+export class ApiError extends Error {
+  constructor(public status: number, message: string, public code?: string) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function _request<T>(path: string, options: RequestInit & { token?: string } = {}): Promise<T> {
+  const { token, ...init } = options;
+  const headers = new Headers(init.headers);
+  headers.set("Content-Type", "application/json");
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { message?: string; code?: string };
+    throw new ApiError(res.status, body.message ?? res.statusText, body.code);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+export const apiClient = {
+  get:    <T>(path: string, token?: string) => _request<T>(path, { method: "GET", token }),
+  post:   <T>(path: string, body: unknown, token?: string) => _request<T>(path, { method: "POST",  body: JSON.stringify(body), token }),
+  patch:  <T>(path: string, body: unknown, token?: string) => _request<T>(path, { method: "PATCH", body: JSON.stringify(body), token }),
+  delete: <T>(path: string, token?: string) => _request<T>(path, { method: "DELETE", token }),
+};
+
+export function formatarBRL(valor: number): string {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
 let _onUnauthorized: (() => void) | null = null;
 
@@ -23,8 +58,6 @@ async function callApi<T>(fn: () => Promise<T>): Promise<T> {
     throw e;
   }
 }
-
-export { ApiError };
 
 export const usuariosApi = {
   obterPerfil: () =>

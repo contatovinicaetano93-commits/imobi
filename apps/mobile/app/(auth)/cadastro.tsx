@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
-import { apiClient } from "@imbobi/core";
+import { apiClient } from "../../lib/api";
 import { reloadAuth } from "../_layout";
 import { Ionicons } from "@expo/vector-icons";
 

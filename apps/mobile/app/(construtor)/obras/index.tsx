@@ -6,7 +6,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "../../../lib/api";
 import {
   obrasApi, creditoApi, usuariosApi, notificacoesApi,
   type Obra, type Credito, type UsuarioPerfil,
