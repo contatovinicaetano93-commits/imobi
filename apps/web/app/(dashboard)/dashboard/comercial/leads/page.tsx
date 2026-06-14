@@ -26,11 +26,12 @@ export default function LeadsList() {
       try {
         setLoading(true);
         const offset = (page - 1) * pageSize;
-        const query = new URLSearchParams({
+        const params: Record<string, string> = {
           limit: pageSize.toString(),
           offset: offset.toString(),
-          filters: JSON.stringify({ searchTerm }),
-        });
+        };
+        if (searchTerm) params.searchTerm = searchTerm;
+        const query = new URLSearchParams(params);
 
         const response = await fetch(`/api/comercial/leads?${query}`);
         if (response.ok) {
