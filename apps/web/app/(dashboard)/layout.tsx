@@ -231,6 +231,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const isActive = (href: string) =>
     href === "/dashboard" ? path === href : path.startsWith(href);
 
+  const navRole = getNavRole(role, path);
   const meta = role ? ROLE_META[role] : null;
   const navMeta = navRole ? ROLE_META[navRole] : meta;
   const accent = navMeta?.accent ?? MINT;
@@ -304,7 +305,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     </div>
   );
 
-  const navRole = getNavRole(role, path);
   const isPreviewingOtherPanel = role === "ADMIN" && navRole !== "ADMIN";
 
   const sidebarContent = (onNavigate?: () => void) => (
