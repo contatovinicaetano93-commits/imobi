@@ -1,8 +1,14 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bull";
+import { Queue } from "bull";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificacoesService } from "../notificacoes/notificacoes.service";
+import { EmailService } from "../email/email.service";
+import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import * as bcrypt from "bcryptjs";
 import { UsuarioTipo } from "@prisma/client";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
+import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
 
 export interface CriarUsuarioAdminDto {
   nome: string;
@@ -32,7 +38,13 @@ export interface Atividade {
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificacoes: NotificacoesService,
+    private readonly email: EmailService,
+    private readonly pushNotificacoes: PushNotificacoesService,
+    @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue<LiberacaoJob>,
+  ) {}
 
   async overview(): Promise<AdminOverview> {
     const [
@@ -53,8 +65,8 @@ export class AdminService {
         _sum: { valorAprovado: true, valorLiberado: true },
       }),
       this.prisma.kycDocumento.count({ where: { status: { in: ["PENDENTE"] } } }),
-      // etapas aguardando aprovação de vistoria
-      this.prisma.etapaObra.count({ where: { status: "AGUARDANDO_VISTORIA" } }),
+      // etapas aguardando validação: eng pendente ou aguardando confirmação admin
+      this.prisma.etapaObra.count({ where: { status: { in: ["AGUARDANDO_VISTORIA", "APROVADA_ENGENHEIRO"] as any } } }),
       // etapas concluídas aguardando liberação financeira
       this.prisma.etapaObra.count({ where: { status: "CONCLUIDA" } }),
       // obras distintas com pelo menos uma etapa aguardando vistoria (site visits pending)
@@ -208,6 +220,113 @@ export class AdminService {
       nome: o.nome,
       status: o.status,
       tomador: o.usuario?.nome,
+    }));
+  }
+
+  async validarEtapa(adminId: string, etapaId: string, aprovado: boolean, motivo?: string) {
+    const etapa = await this.prisma.etapaObra.findUnique({
+      where: { etapaId },
+      include: { obra: { include: { credito: true, usuario: true } } },
+    });
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+    if (etapa.status !== "APROVADA_ENGENHEIRO") {
+      throw new BadRequestException("Etapa não está aguardando validação do admin.");
+    }
+
+    if (!aprovado) {
+      await this.prisma.etapaObra.update({ where: { etapaId }, data: { status: "REPROVADA" } });
+      await this.prisma.etapaAuditLog.create({
+        data: { etapaId, acaoTipo: "REJEITADA_ADMIN", usuarioId: adminId, observacoes: motivo ?? null },
+      });
+      await this.notificacoes.criar(
+        etapa.obra.usuarioId,
+        "ETAPA_REPROVADA",
+        `Etapa reprovada pelo gestor: ${etapa.nome}`,
+        `A etapa "${etapa.nome}" foi reprovada pelo gestor. ${motivo ? `Motivo: ${motivo}` : ""}`,
+        `/obras/${etapa.obra.obraId}`,
+      );
+      return { ok: true, etapaId, status: "REPROVADA" };
+    }
+
+    await this.prisma.etapaObra.update({
+      where: { etapaId },
+      data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
+    });
+    await this.prisma.etapaAuditLog.create({
+      data: { etapaId, acaoTipo: "CONCLUIDA_ADMIN", usuarioId: adminId, observacoes: motivo ?? null },
+    });
+
+    await this.notificacoes.criar(
+      etapa.obra.usuarioId,
+      "ETAPA_APROVADA",
+      `Etapa concluída: ${etapa.nome}`,
+      `A etapa "${etapa.nome}" foi validada pelo gestor. A liberação da parcela foi agendada.`,
+      `/obras/${etapa.obra.obraId}`,
+    );
+
+    const credito = etapa.obra.credito;
+    if (credito?.status === "ATIVO") {
+      const valorLiberacao = Number(credito.valorAprovado ?? 0) * (Number(etapa.percentualObra) / 100);
+      if (valorLiberacao > 0) {
+        const liberacao = await this.prisma.liberacaoParcela.create({
+          data: { creditoId: credito.creditoId, valor: valorLiberacao, status: "PENDENTE" },
+        });
+        await this.liberacaoQueue.add({
+          creditoId: credito.creditoId,
+          etapaId,
+          liberacaoId: liberacao.liberacaoId,
+          valor: valorLiberacao,
+        });
+
+        this.email
+          .etapaAprovadaEmail(
+            etapa.obra.usuario?.nome ?? "usuário",
+            etapa.obra.usuario?.email ?? "",
+            etapa.nome,
+            etapa.obra.nome,
+            valorLiberacao,
+          )
+          .catch(() => {});
+
+        this.pushNotificacoes
+          .enviarPush({
+            usuarioId: etapa.obra.usuarioId,
+            titulo: `Parcela liberada: ${etapa.nome}`,
+            mensagem: `R$ ${valorLiberacao.toFixed(2)} será liberado em breve.`,
+            tipo: "PARCELA_LIBERADA",
+            dados: { obraId: etapa.obra.obraId, etapaId },
+          })
+          .catch(() => {});
+      }
+    }
+
+    return { ok: true, etapaId, status: "CONCLUIDA" };
+  }
+
+  async listarEtapasParaValidar() {
+    const etapas = await this.prisma.etapaObra.findMany({
+      where: { status: "APROVADA_ENGENHEIRO" as any },
+      orderBy: { atualizadoEm: "asc" },
+      include: {
+        obra: {
+          include: {
+            usuario: { select: { nome: true } },
+            credito: { select: { valorAprovado: true } },
+          },
+        },
+      },
+    });
+    return etapas.map((e) => ({
+      etapaId: e.etapaId,
+      nome: e.nome,
+      percentualObra: e.percentualObra,
+      obraId: e.obra.obraId,
+      obraNome: e.obra.nome,
+      construtor: e.obra.usuario?.nome,
+      valorParcela: e.obra.credito
+        ? Number(e.obra.credito.valorAprovado) * (Number(e.percentualObra) / 100)
+        : 0,
+      aguardandoDesde: e.atualizadoEm,
     }));
   }
 

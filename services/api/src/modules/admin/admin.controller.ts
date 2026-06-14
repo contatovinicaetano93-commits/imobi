@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Query, Body, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Param, Query, Body, UseGuards, HttpCode } from "@nestjs/common";
 import { AdminService, CriarUsuarioAdminDto } from "./admin.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -41,6 +41,21 @@ export class AdminController {
     @Query("offset") offset: string = "0",
   ) {
     return this.adminService.listarObras(Number(limit), Number(offset));
+  }
+
+  @Get("etapas/validar")
+  listarEtapasParaValidar() {
+    return this.adminService.listarEtapasParaValidar();
+  }
+
+  @Post("etapas/:id/validar")
+  @HttpCode(200)
+  validarEtapa(
+    @Param("id") id: string,
+    @Body() body: { aprovado: boolean; motivo?: string },
+    @UsuarioAtual() admin: UsuarioAtual,
+  ) {
+    return this.adminService.validarEtapa(admin.id, id, body.aprovado, body.motivo);
   }
 
   @Patch("usuarios/:id")
