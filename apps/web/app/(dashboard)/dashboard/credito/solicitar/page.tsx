@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import {
   creditoApi,
+  comiteApi,
   obrasApi,
   type ObraResumo,
   type CreditoSimulacao,
@@ -86,13 +87,14 @@ function SolicitarForm() {
     setSubmitLoading(true);
     setError(null);
     try {
-      const result = await creditoApi.solicitar({
+      const result = await comiteApi.solicitar({
         valorSolicitado: valor,
         prazoMeses: prazo,
+        taxaMensal: simulacao?.taxaMensal ?? 0.0099,
         finalidade,
         obraId: obraId || undefined,
       });
-      setCreditoId(result.creditoId);
+      setCreditoId(result.solicitacaoId);
       setSuccess(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro ao enviar solicitação.");

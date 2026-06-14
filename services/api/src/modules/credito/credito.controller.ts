@@ -5,23 +5,24 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { SimulacaoCreditoSchema, SolicitacaoCreditoSchema } from "@imbobi/schemas";
+import type { SimulacaoCreditoInput, SolicitacaoCreditoInput } from "@imbobi/schemas";
 
 @Controller("credito")
 export class CreditoController {
   constructor(private readonly credito: CreditoService) {}
 
   @Post("simular")
-  simular(@Body(new ZodPipe(SimulacaoCreditoSchema)) body: unknown) {
-    return this.credito.simular(body as never);
+  simular(@Body(new ZodPipe(SimulacaoCreditoSchema)) body: SimulacaoCreditoInput) {
+    return this.credito.simular(body);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post("solicitar")
   solicitar(
     @UsuarioAtual() u: IUsuario,
-    @Body(new ZodPipe(SolicitacaoCreditoSchema)) body: unknown
+    @Body(new ZodPipe(SolicitacaoCreditoSchema)) body: SolicitacaoCreditoInput
   ) {
-    return this.credito.solicitar(u.id, body as never);
+    return this.credito.solicitar(u.id, body);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -4,6 +4,7 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { CriarObraSchema } from "@imbobi/schemas";
+import type { CriarObraInput } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
 @Controller("obras")
@@ -13,9 +14,9 @@ export class ObrasController {
   @Post()
   criar(
     @UsuarioAtual() u: IUsuario,
-    @Body(new ZodPipe(CriarObraSchema)) body: unknown
+    @Body(new ZodPipe(CriarObraSchema)) body: CriarObraInput
   ) {
-    return this.obras.criar(u.id, body as never);
+    return this.obras.criar(u.id, body);
   }
 
   @Get()

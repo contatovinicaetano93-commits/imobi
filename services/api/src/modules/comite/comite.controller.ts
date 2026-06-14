@@ -68,7 +68,7 @@ export class ComiteController {
   // ── Leitura: listar comitês (Admin + Fundo) ───────────────────────
 
   @Get()
-  @Roles("ADMIN", "GESTOR")
+  @Roles("ADMIN", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA")
   listar(@Query("status") status?: string) {
     return this.comiteService.listarComites(status);
   }

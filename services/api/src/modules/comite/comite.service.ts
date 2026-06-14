@@ -176,13 +176,16 @@ export class ComiteService {
 
   async listarComites(filtroStatus?: string) {
     return this.prisma.comiteDigital.findMany({
-      where: filtroStatus ? { status: filtroStatus as any } : undefined,
+      where: filtroStatus ? { status: filtroStatus as ComiteStatus } : undefined,
       orderBy: { criadoEm: "desc" },
       include: {
         solicitacao: {
           include: { usuario: { select: { nome: true, email: true } } },
         },
-        votos: true,
+        votos: {
+          include: { votante: { select: { nome: true, tipo: true } } },
+          orderBy: { criadoEm: "asc" },
+        },
       },
     });
   }

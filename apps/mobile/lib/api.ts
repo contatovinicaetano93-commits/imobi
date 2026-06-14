@@ -29,7 +29,7 @@ export const usuariosApi = {
   obterPerfil: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<UsuarioPerfil>("/api/v1/usuarios/me", token ?? undefined);
+      return apiClient.get<UsuarioPerfil>("/api/v1/usuarios/meu-perfil", token ?? undefined);
     }),
 };
 
@@ -63,7 +63,7 @@ export const scoreApi = {
   obter: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<ScoreData>("/api/v1/score", token ?? undefined);
+      return apiClient.get<ScoreData>("/api/v1/score/atual", token ?? undefined);
     }),
 };
 

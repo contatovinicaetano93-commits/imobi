@@ -4,7 +4,7 @@ import { AuthService } from "./auth.service";
 import { CadastroUsuarioSchema, LoginSchema, EsqueceuSenhaSchema, RedefinirSenhaSchema } from "@imbobi/schemas";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-import type { EsqueceuSenhaInput, RedefinirSenhaInput } from "@imbobi/schemas";
+import type { CadastroUsuarioInput, LoginInput, EsqueceuSenhaInput, RedefinirSenhaInput } from "@imbobi/schemas";
 
 @Controller("auth")
 export class AuthController {
@@ -12,15 +12,15 @@ export class AuthController {
 
   @Post("registrar")
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  registrar(@Body(new ZodPipe(CadastroUsuarioSchema)) body: unknown) {
-    return this.auth.registrar(body as never);
+  registrar(@Body(new ZodPipe(CadastroUsuarioSchema)) body: CadastroUsuarioInput) {
+    return this.auth.registrar(body);
   }
 
   @Post("login")
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  login(@Body(new ZodPipe(LoginSchema)) body: unknown) {
-    return this.auth.login(body as never);
+  login(@Body(new ZodPipe(LoginSchema)) body: LoginInput) {
+    return this.auth.login(body);
   }
 
   @Post("renovar")
