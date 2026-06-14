@@ -117,7 +117,7 @@ export type Evidencia = {
 };
 
 export type Credito = {
-  creditoId: string;
+  id: string;
   valorAprovado: number;
   valorLiberado: number;
   taxaMensal: number;

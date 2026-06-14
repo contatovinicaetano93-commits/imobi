@@ -1,5 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, UseInterceptors } from "@nestjs/common";
-import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
+import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
 import { CreditoService } from "./credito.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -33,8 +32,6 @@ export class CreditoController {
 
   @UseGuards(JwtAuthGuard)
   @Get(":id/extrato")
-  @UseInterceptors(CacheInterceptor)
-  @CacheTTL(300) // 5 min
   extrato(@Param("id") id: string, @UsuarioAtual() u: IUsuario) {
     return this.credito.extrato(id, u.id);
   }
