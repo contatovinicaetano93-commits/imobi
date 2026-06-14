@@ -112,6 +112,11 @@ export const adminApi = {
       const token = await getToken();
       return apiClient.post<AdminUsuario>("/api/v1/admin/usuarios", body, token ?? undefined);
     }),
+  risco: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<RiscoData>("/api/v1/admin/risco", token ?? undefined);
+    }),
   atualizarUsuario: (id: string, body: { bloqueado?: boolean; tipo?: string }) =>
     callApi(async () => {
       const token = await getToken();
@@ -270,6 +275,22 @@ export type ObraEngenheiro = {
   valorExecutado: number;
   progresso: number;
   etapaAtual: string;
+};
+
+export type RiscoData = {
+  carteira: {
+    totalCreditos: number;
+    valorTotal: number;
+    valorLiberado: number;
+    porStatus: { status: string; count: number; valor: number }[];
+  };
+  npl: {
+    count: number;
+    valor: number;
+    percentualCarteira: number;
+    porAging: { faixa: string; count: number; valor: number }[];
+  };
+  liberacoes: { totalFalha: number; valorFalha: number; taxaFalha: number };
 };
 
 export type AdminUsuario = {

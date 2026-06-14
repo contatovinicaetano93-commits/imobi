@@ -129,6 +129,69 @@ export class AdminService {
     return eventos.slice(0, limit);
   }
 
+  async risco() {
+    const agora = new Date();
+
+    const [creditos, liberacoesFalha, liberacoesConcluidas] = await Promise.all([
+      this.prisma.credito.findMany({
+        select: { status: true, valorAprovado: true, valorLiberado: true, dataVencimento: true },
+      }),
+      this.prisma.liberacaoParcela.aggregate({
+        where: { status: "FALHA" },
+        _count: true,
+        _sum: { valor: true },
+      }),
+      this.prisma.liberacaoParcela.count({ where: { status: "CONCLUIDA" } }),
+    ]);
+
+    const totalCreditos = creditos.length;
+    const valorTotal = creditos.reduce((s, c) => s + Number(c.valorAprovado), 0);
+    const valorLiberado = creditos.reduce((s, c) => s + Number(c.valorLiberado), 0);
+
+    const statusMap: Record<string, { count: number; valor: number }> = {};
+    for (const c of creditos) {
+      if (!statusMap[c.status]) statusMap[c.status] = { count: 0, valor: 0 };
+      statusMap[c.status].count++;
+      statusMap[c.status].valor += Number(c.valorAprovado);
+    }
+    const porStatus = Object.entries(statusMap).map(([status, v]) => ({ status, ...v }));
+
+    const vencidos = creditos.filter((c) => c.status === "VENCIDO");
+    const nplValor = vencidos.reduce((s, c) => s + Number(c.valorAprovado), 0);
+
+    const aging = [
+      { faixa: "0-30d", min: 0, max: 30 },
+      { faixa: "31-60d", min: 31, max: 60 },
+      { faixa: "61-90d", min: 61, max: 90 },
+      { faixa: "90d+", min: 91, max: Infinity },
+    ];
+    const porAging = aging.map(({ faixa, min, max }) => {
+      const items = vencidos.filter((c) => {
+        const ref = c.dataVencimento ?? agora;
+        const dias = Math.floor((agora.getTime() - ref.getTime()) / 86400000);
+        return dias >= min && dias <= max;
+      });
+      return { faixa, count: items.length, valor: items.reduce((s, c) => s + Number(c.valorAprovado), 0) };
+    });
+
+    const totalFalha = liberacoesFalha._count;
+    const valorFalha = Number(liberacoesFalha._sum.valor ?? 0);
+    const taxaFalha = totalFalha + liberacoesConcluidas > 0
+      ? Math.round((totalFalha / (totalFalha + liberacoesConcluidas)) * 100)
+      : 0;
+
+    return {
+      carteira: { totalCreditos, valorTotal, valorLiberado, porStatus },
+      npl: {
+        count: vencidos.length,
+        valor: nplValor,
+        percentualCarteira: valorTotal > 0 ? Math.round((nplValor / valorTotal) * 10000) / 100 : 0,
+        porAging,
+      },
+      liberacoes: { totalFalha, valorFalha, taxaFalha },
+    };
+  }
+
   async listarUsuarios() {
     const rows = await this.prisma.usuario.findMany({
       where: { deletadoEm: null },

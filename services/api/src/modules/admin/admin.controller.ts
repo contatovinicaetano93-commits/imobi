@@ -25,6 +25,11 @@ export class AdminController {
     return this.adminService.atividades(parsedLimit);
   }
 
+  @Get("risco")
+  risco() {
+    return this.adminService.risco();
+  }
+
   @Get("usuarios")
   listarUsuarios() {
     return this.adminService.listarUsuarios();
