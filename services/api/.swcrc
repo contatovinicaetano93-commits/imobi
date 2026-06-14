@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json.schemastore.org/swcrc",
+  "sourceMaps": true,
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "decorators": true,
+      "dynamicImport": true
+    },
+    "transform": {
+      "legacyDecorator": true,
+      "decoratorMetadata": true
+    },
+    "baseUrl": ".",
+    "paths": {
+      "@imbobi/schemas": ["../../packages/schemas/src"],
+      "@imbobi/schemas/*": ["../../packages/schemas/src/*"],
+      "@imbobi/core": ["../../packages/core/src"],
+      "@imbobi/core/*": ["../../packages/core/src/*"],
+      "@/*": ["src/*"]
+    },
+    "target": "es2021"
+  },
+  "module": {
+    "type": "commonjs"
+  }
+}

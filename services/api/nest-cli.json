@@ -4,6 +4,12 @@
   "entryFile": "main",
   "compilerOptions": {
     "outDir": "./dist",
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "builder": {
+      "type": "swc",
+      "options": {
+        "swcrcPath": ".swcrc"
+      }
+    }
   }
 }
