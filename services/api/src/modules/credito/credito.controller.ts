@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
 import { CreditoService } from "./credito.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { RolesGuard } from "../../common/guards/roles.guard";
+import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { SimulacaoCreditoSchema, SolicitacaoCreditoSchema } from "@imbobi/schemas";
@@ -15,7 +17,8 @@ export class CreditoController {
     return this.credito.simular(body);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("ADMIN")
   @Post("solicitar")
   solicitar(
     @UsuarioAtual() u: IUsuario,
