@@ -47,9 +47,15 @@ export function middleware(request: NextRequest) {
   if (isPublic) return NextResponse.next();
 
   const token = request.cookies.get("access_token")?.value;
+  const refreshToken = request.cookies.get("refresh_token")?.value;
 
-  // No token or expired → send to login
+  // No token → attempt silent refresh if refresh_token exists, else login
   if (!token) {
+    if (refreshToken) {
+      const refreshUrl = new URL("/api/proxy/auth/refresh-redirect", request.url);
+      refreshUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(refreshUrl);
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
@@ -57,6 +63,11 @@ export function middleware(request: NextRequest) {
 
   const jwt = decodeJwt(token);
   if (!jwt || (jwt.exp && jwt.exp < Math.floor(Date.now() / 1000))) {
+    if (refreshToken) {
+      const refreshUrl = new URL("/api/proxy/auth/refresh-redirect", request.url);
+      refreshUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(refreshUrl);
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
