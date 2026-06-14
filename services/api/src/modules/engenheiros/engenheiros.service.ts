@@ -21,31 +21,34 @@ export class EngenheirosService {
     // O engenheiro vê etapas que precisam de vistoria presencial
     const etapas = await this.prisma.etapaObra.findMany({
       where: {
-        status: { in: ["AGUARDANDO_VISTORIA", "CONCLUIDA", "REPROVADA"] },
+        status: { in: ["AGUARDANDO_VISTORIA", "APROVADA_ENGENHEIRO", "CONCLUIDA", "REPROVADA"] as any },
       },
       include: {
-        obra: { select: { obraId: true, nome: true, endereco: true } },
-        evidencias: { where: { validada: false }, select: { evidenciaId: true } },
+        obra: { select: { obraId: true, nome: true, endereco: true, geoLatitude: true, geoLongitude: true, raioValidacaoMetros: true } },
+        evidencias: {
+          select: { evidenciaId: true, fotoUrl: true, latCaptura: true, lngCaptura: true, accuracyMetros: true, distanciaObra: true, criadoEm: true },
+          orderBy: { criadoEm: "desc" },
+        },
       },
-      orderBy: { atualizadoEm: "desc" },
+      orderBy: { atualizadoEm: "asc" },
       take: 50,
     });
 
     return etapas.map((e) => ({
       visitaId: e.etapaId,
-      status:
-        e.status === "AGUARDANDO_VISTORIA"
-          ? "AGENDADA"
-          : e.status === "CONCLUIDA"
-          ? "CONCLUIDA"
-          : "REPROVADA",
+      status: e.status,
       etapaId: e.etapaId,
       etapaNome: e.nome,
+      percentualObra: Number(e.percentualObra),
+      valorLiberacao: Number(e.valorLiberacao),
       obraId: e.obra.obraId,
       obraNome: e.obra.nome,
-      dataAgendada: e.atualizadoEm.toISOString(),
-      observacoes: null,
-      obra: { nome: e.obra.nome, endereco: e.obra.endereco },
+      obraEndereco: e.obra.endereco,
+      obraLat: e.obra.geoLatitude,
+      obraLng: e.obra.geoLongitude,
+      raioMetros: e.obra.raioValidacaoMetros,
+      totalEvidencias: e.evidencias.length,
+      aguardandoDesde: e.atualizadoEm.toISOString(),
       criadoEm: e.criadoEm.toISOString(),
     }));
   }
@@ -54,24 +57,37 @@ export class EngenheirosService {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId: visitaId },
       include: {
-        obra: { select: { obraId: true, nome: true, endereco: true } },
+        obra: { select: { obraId: true, nome: true, endereco: true, geoLatitude: true, geoLongitude: true, raioValidacaoMetros: true } },
         evidencias: {
-          select: { evidenciaId: true, fotoUrl: true, validada: true, criadoEm: true },
+          select: { evidenciaId: true, fotoUrl: true, latCaptura: true, lngCaptura: true, accuracyMetros: true, distanciaObra: true, validada: true, criadoEm: true },
+          orderBy: { criadoEm: "desc" },
         },
       },
     });
     if (!etapa) throw new NotFoundException("Visita não encontrada.");
     return {
-      visitaId: etapa.etapaId,
-      status: etapa.status === "AGUARDANDO_VISTORIA" ? "AGENDADA" : etapa.status === "REPROVADA" ? "REPROVADA" : "CONCLUIDA",
       etapaId: etapa.etapaId,
       etapaNome: etapa.nome,
+      status: etapa.status,
+      percentualObra: Number(etapa.percentualObra),
+      valorLiberacao: Number(etapa.valorLiberacao),
       obraId: etapa.obra.obraId,
       obraNome: etapa.obra.nome,
-      dataAgendada: etapa.atualizadoEm.toISOString(),
-      obra: { nome: etapa.obra.nome, endereco: etapa.obra.endereco },
-      criadoEm: etapa.criadoEm.toISOString(),
-      evidencias: etapa.evidencias,
+      obraEndereco: etapa.obra.endereco,
+      obraLat: etapa.obra.geoLatitude,
+      obraLng: etapa.obra.geoLongitude,
+      raioMetros: etapa.obra.raioValidacaoMetros,
+      aguardandoDesde: etapa.atualizadoEm.toISOString(),
+      evidencias: etapa.evidencias.map((ev) => ({
+        evidenciaId: ev.evidenciaId,
+        fotoUrl: ev.fotoUrl,
+        latCaptura: ev.latCaptura,
+        lngCaptura: ev.lngCaptura,
+        accuracyMetros: ev.accuracyMetros,
+        distanciaObra: ev.distanciaObra,
+        validada: ev.validada,
+        criadoEm: ev.criadoEm.toISOString(),
+      })),
     };
   }
 

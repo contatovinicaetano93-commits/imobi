@@ -75,6 +75,29 @@ export const authApi = {
     }),
 };
 
+export const vistoriaApi = {
+  listar: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<VistoriaItem[]>("/api/v1/engenheiros/visitas", token ?? undefined);
+    }),
+  obter: (etapaId: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<VistoriaDetalhe>(`/api/v1/engenheiros/visitas/${etapaId}`, token ?? undefined);
+    }),
+  aprovar: (etapaId: string, observacoes?: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post(`/api/v1/vistoria/${etapaId}/aprovar`, { observacoes }, token ?? undefined);
+    }),
+  rejeitar: (etapaId: string, motivo: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post(`/api/v1/vistoria/${etapaId}/rejeitar`, { motivo }, token ?? undefined);
+    }),
+};
+
 export const pushApi = {
   registrarToken: (fcmToken: string) =>
     callApi(async () => {
@@ -130,6 +153,44 @@ export type ScoreData = {
   nivel: string;
   cor: string;
   descricao: string;
+};
+
+export type VistoriaItem = {
+  etapaId: string;
+  etapaNome: string;
+  status: string;
+  percentualObra: number;
+  valorLiberacao: number;
+  obraId: string;
+  obraNome: string;
+  obraEndereco: string;
+  totalEvidencias: number;
+  aguardandoDesde: string;
+};
+
+export type VistoriaDetalhe = {
+  etapaId: string;
+  etapaNome: string;
+  status: string;
+  percentualObra: number;
+  valorLiberacao: number;
+  obraId: string;
+  obraNome: string;
+  obraEndereco: string;
+  obraLat: number;
+  obraLng: number;
+  raioMetros: number;
+  aguardandoDesde: string;
+  evidencias: {
+    evidenciaId: string;
+    fotoUrl: string;
+    latCaptura: number;
+    lngCaptura: number;
+    accuracyMetros: number | null;
+    distanciaObra: number | null;
+    validada: boolean;
+    criadoEm: string;
+  }[];
 };
 
 export type UsuarioPerfil = {
