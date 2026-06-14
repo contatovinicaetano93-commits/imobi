@@ -80,6 +80,19 @@ export const authApi = {
     }),
 };
 
+export const parceiroApi = {
+  resumo: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<ParceiroResumo>("/api/v1/parceiros/resumo", token ?? undefined);
+    }),
+  operacoes: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<OperacaoIndicada[]>("/api/v1/parceiros/operacoes", token ?? undefined);
+    }),
+};
+
 export const engenheiroApi = {
   obras: () =>
     callApi(async () => {
@@ -224,6 +237,28 @@ export type ScoreData = {
   nivel: string;
   cor: string;
   descricao: string;
+};
+
+export type ParceiroResumo = {
+  comissoesAReceber: number;
+  comissoesPagasMes: number;
+  comissoesPagasTotal: number;
+  operacoesAtivas: number;
+  taxaAprovacao: number;
+  codigoIndicacao: string;
+};
+
+export type OperacaoIndicada = {
+  id: string;
+  codigo: string;
+  clienteRef: string;
+  status: string;
+  valorBase: number;
+  percentualComissao: number;
+  valorComissao: number;
+  comissaoStatus: string;
+  validadeIndicacao: string;
+  criadoEm: string;
 };
 
 export type ObraEngenheiro = {

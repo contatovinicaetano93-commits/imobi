@@ -12,6 +12,7 @@ type RootLayoutProps = {
 function rotaPorPapel(tipo: string | null): string {
   if (tipo === "ADMIN") return "/(admin)/kyc";
   if (tipo === "GESTOR_OBRA") return "/(engenheiro)/obras";
+  if (tipo === "PARCEIRO") return "/(comercial)/comissoes";
   return "/(construtor)/obras";
 }
 
@@ -91,6 +92,12 @@ export default function RootLayout() {
       />
       <Stack.Screen
         name="(engenheiro)"
+        options={{
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="(comercial)"
         options={{
           gestureEnabled: false,
         }}
