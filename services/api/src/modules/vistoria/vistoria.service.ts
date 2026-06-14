@@ -12,7 +12,7 @@ import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
 import type { EtapaStatus } from "@prisma/client";
 
-const STATUSES_VISTORIAVEL: EtapaStatus[] = ["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA", "APROVADA_ENGENHEIRO"];
+const STATUSES_REJEITAVEL_ENGENHEIRO: EtapaStatus[] = ["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA"];
 
 @Injectable()
 export class VistoriaService {
@@ -71,7 +71,7 @@ export class VistoriaService {
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
     const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: { in: STATUSES_VISTORIAVEL } },
+      where: { etapaId, status: { in: STATUSES_REJEITAVEL_ENGENHEIRO } },
       data: { status: "REPROVADA" },
     });
     if (updated.count === 0) {

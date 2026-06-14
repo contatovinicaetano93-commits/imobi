@@ -58,7 +58,8 @@ function useGeoValidation(
     setState((s) => ({ ...s, status: "checking", mensagem: MSGS.checking }));
     try {
       const pos = await getPosition();
-      if (pos.accuracy > 15) {
+      const MAX_ACCURACY = 30;
+      if (pos.accuracy > MAX_ACCURACY) {
         setState({ status: "poor_accuracy", distanciaMetros: null,
           accuracyMetros: pos.accuracy, coordenadasAtuais: pos, mensagem: MSGS.poor_accuracy });
         return false;
@@ -118,15 +119,15 @@ export default function RegistrarEtapaScreen() {
     };
   }, []);
 
+  const geoAlvo   = { latitude: Number(params.geoLat ?? "0"), longitude: Number(params.geoLng ?? "0") };
+  const geoRaio   = Number(params.raio ?? "50");
+  const geoValido = !Number.isNaN(geoAlvo.latitude) && !Number.isNaN(geoAlvo.longitude) && geoRaio > 0;
+
   const { status, distanciaMetros, accuracyMetros, coordenadasAtuais, mensagem, validar } =
-    useGeoValidation(
-      { latitude: Number(params.geoLat), longitude: Number(params.geoLng) },
-      Number(params.raio),
-      getPosition
-    );
+    useGeoValidation(geoAlvo, geoRaio, getPosition);
 
   const meta         = STATUS_META[status] ?? STATUS_META.idle;
-  const podeCapturar = status === "inside_radius";
+  const podeCapturar = status === "inside_radius" && geoValido;
 
   const handleCapturar = async () => {
     const dentro = await validar();

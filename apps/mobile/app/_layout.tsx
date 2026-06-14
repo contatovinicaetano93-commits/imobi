@@ -16,6 +16,7 @@ export default function RootLayout() {
     setOnUnauthorized(() => {
       setIsSignedIn(false);
       setUserTipo(null);
+      setIsLoading(false);
     });
   }, []);
 
@@ -24,16 +25,14 @@ export default function RootLayout() {
       try {
         const token = await SecureStore.getItemAsync("accessToken");
         if (token) {
-          try {
-            const perfil = await usuariosApi.obterPerfil();
-            setUserTipo(perfil.tipo);
-          } catch {
-            setUserTipo("TOMADOR");
-          }
+          const perfil = await usuariosApi.obterPerfil();
+          setUserTipo(perfil.tipo);
           setIsSignedIn(true);
         }
-      } catch (e) {
-        console.error("Failed to restore token", e);
+      } catch {
+        // 401 handled by setOnUnauthorized above; other errors = not signed in
+        setIsSignedIn(false);
+        setUserTipo(null);
       } finally {
         setIsLoading(false);
       }

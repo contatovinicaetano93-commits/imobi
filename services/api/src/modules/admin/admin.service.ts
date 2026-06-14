@@ -386,6 +386,15 @@ export class AdminService {
           liberacaoId: liberacao.liberacaoId,
           valor: valorLiberacao,
         });
+      } else {
+        await this.prisma.etapaAuditLog.create({
+          data: {
+            etapaId,
+            acaoTipo: "LIBERACAO_BLOQUEADA",
+            usuarioId: adminId,
+            observacoes: `Parcela não enfileirada: crédito status=${credito.status}, valorLiberacao=${valorLiberacao}`,
+          },
+        });
       }
     }
 

@@ -10,7 +10,7 @@ import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
 
 @Controller("admin")
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("ADMIN")
+@Roles("ADMIN", "GESTOR")
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 

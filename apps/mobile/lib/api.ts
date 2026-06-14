@@ -17,6 +17,7 @@ async function callApi<T>(fn: () => Promise<T>): Promise<T> {
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) {
       await SecureStore.deleteItemAsync("accessToken");
+      await SecureStore.deleteItemAsync("refreshToken");
       _onUnauthorized?.();
     }
     throw e;
