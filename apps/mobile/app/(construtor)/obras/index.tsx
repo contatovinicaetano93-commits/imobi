@@ -40,9 +40,9 @@ const STATUS_LABEL: Record<string, string> = {
 
 const QUICK_ACTIONS = [
   { icon: "camera-outline"        as const, label: "Registrar",  route: null        },
-  { icon: "calculator-outline"    as const, label: "Simular",    route: "/(tabs)/credito/index"      },
-  { icon: "document-text-outline" as const, label: "Documentos", route: "/(tabs)/perfil/index"       },
-  { icon: "notifications-outline" as const, label: "Avisos",     route: "/(tabs)/notificacoes/index" },
+  { icon: "calculator-outline"    as const, label: "Simular",    route: "/(construtor)/credito/index"      },
+  { icon: "document-text-outline" as const, label: "Documentos", route: "/(construtor)/perfil/index"       },
+  { icon: "notifications-outline" as const, label: "Avisos",     route: "/(construtor)/notificacoes/index" },
 ];
 
 export default function HomeScreen() {
@@ -93,7 +93,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerLeft}
-          onPress={() => router.push("/(tabs)/perfil/index")}
+          onPress={() => router.push("/(construtor)/perfil/index")}
           activeOpacity={0.75}
         >
           <View style={styles.avatar}>
@@ -109,7 +109,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           style={styles.bellBtn}
-          onPress={() => router.push("/(tabs)/notificacoes/index")}
+          onPress={() => router.push("/(construtor)/notificacoes/index")}
           activeOpacity={0.75}
         >
           <Ionicons name="notifications-outline" size={22} color={C.white} />
@@ -173,7 +173,7 @@ export default function HomeScreen() {
               </Text>
               <TouchableOpacity
                 style={styles.cardCta}
-                onPress={() => router.push("/(tabs)/credito/index")}
+                onPress={() => router.push("/(construtor)/credito/index")}
               >
                 <Text style={styles.cardCtaText}>Simular crédito →</Text>
               </TouchableOpacity>
@@ -192,7 +192,7 @@ export default function HomeScreen() {
                 activeOpacity={0.7}
                 onPress={() => {
                   if (label === "Registrar" && obraDestaque) {
-                    router.push(`/(tabs)/obras/${obraDestaque.obraId}`);
+                    router.push(`/(construtor)/obras/${obraDestaque.obraId}`);
                   } else if (route) {
                     router.push(route as any);
                   }
@@ -229,7 +229,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   key={obra.obraId}
                   style={styles.obraCard}
-                  onPress={() => router.push(`/(tabs)/obras/${obra.obraId}`)}
+                  onPress={() => router.push(`/(construtor)/obras/${obra.obraId}`)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.obraCardTop}>

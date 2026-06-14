@@ -171,7 +171,7 @@ export default function ObraDetailScreen() {
                 <TouchableOpacity
                   style={styles.enviarBtn}
                   onPress={() => router.push({
-                    pathname: `/(tabs)/obras/${obra.obraId}/registrar`,
+                    pathname: `/(construtor)/obras/${obra.obraId}/registrar`,
                     params: {
                       etapaId:   etapa.etapaId,
                       etapaNome: etapa.nome,
