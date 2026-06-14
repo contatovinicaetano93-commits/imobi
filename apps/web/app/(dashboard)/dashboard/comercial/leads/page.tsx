@@ -33,7 +33,7 @@ export default function LeadsList() {
         if (searchTerm) params.searchTerm = searchTerm;
         const query = new URLSearchParams(params);
 
-        const response = await fetch(`/api/comercial/leads?${query}`);
+        const response = await fetch(`/api/proxy/comercial/leads?${query}`);
         if (response.ok) {
           const data: LeadsListResponse = await response.json();
           setLeads(data.leads);
