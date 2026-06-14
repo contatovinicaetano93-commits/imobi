@@ -13,7 +13,7 @@
       "cpf": "99345678901",
       "email": "fundo@test.com",
       "telefone": "11987654399",
-      "tipo": "GESTOR",
+      "tipo": "ADMIN",
       "kycStatus": "APROVADO"
     },
     {
@@ -21,7 +21,7 @@
       "cpf": "98345678901",
       "email": "engenheiro@test.com",
       "telefone": "11987654398",
-      "tipo": "ENGENHEIRO",
+      "tipo": "GESTOR_OBRA",
       "kycStatus": "APROVADO"
     },
     {
@@ -29,7 +29,7 @@
       "cpf": "97345678901",
       "email": "comercial@test.com",
       "telefone": "11987654397",
-      "tipo": "COMERCIAL",
+      "tipo": "PARCEIRO",
       "kycStatus": "APROVADO"
     },
     {
@@ -37,7 +37,7 @@
       "cpf": "96345678901",
       "email": "construtor@test.com",
       "telefone": "11987654396",
-      "tipo": "CONSTRUTOR",
+      "tipo": "TOMADOR",
       "kycStatus": "APROVADO"
     },
     {
@@ -148,80 +148,80 @@
   "creditos": [
     {
       "usuarioId": 1,
-      "valorAprovado": 250000.00,
-      "valorLiberado": 100000.00,
+      "valorAprovado": 250000.0,
+      "valorLiberado": 100000.0,
       "taxaMensal": 0.0099,
       "prazoMeses": 60,
       "status": "ATIVO"
     },
     {
       "usuarioId": 2,
-      "valorAprovado": 500000.00,
-      "valorLiberado": 250000.00,
+      "valorAprovado": 500000.0,
+      "valorLiberado": 250000.0,
       "taxaMensal": 0.0099,
       "prazoMeses": 84,
       "status": "ATIVO"
     },
     {
       "usuarioId": 3,
-      "valorAprovado": 350000.00,
-      "valorLiberado": 175000.00,
+      "valorAprovado": 350000.0,
+      "valorLiberado": 175000.0,
       "taxaMensal": 0.0099,
       "prazoMeses": 60,
       "status": "SUSPENSO"
     },
     {
       "usuarioId": 4,
-      "valorAprovado": 150000.00,
-      "valorLiberado": 75000.00,
+      "valorAprovado": 150000.0,
+      "valorLiberado": 75000.0,
       "taxaMensal": 0.0099,
       "prazoMeses": 48,
       "status": "ATIVO"
     },
     {
       "usuarioId": 5,
-      "valorAprovado": 300000.00,
-      "valorLiberado": 150000.00,
+      "valorAprovado": 300000.0,
+      "valorLiberado": 150000.0,
       "taxaMensal": 0.0099,
       "prazoMeses": 72,
       "status": "ATIVO"
     },
     {
       "usuarioId": 6,
-      "valorAprovado": 200000.00,
-      "valorLiberado": 100000.00,
+      "valorAprovado": 200000.0,
+      "valorLiberado": 100000.0,
       "taxaMensal": 0.0099,
       "prazoMeses": 60,
       "status": "VENCIDO"
     },
     {
       "usuarioId": 7,
-      "valorAprovado": 450000.00,
-      "valorLiberado": 225000.00,
+      "valorAprovado": 450000.0,
+      "valorLiberado": 225000.0,
       "taxaMensal": 0.0099,
       "prazoMeses": 80,
       "status": "ATIVO"
     },
     {
       "usuarioId": 8,
-      "valorAprovado": 280000.00,
-      "valorLiberado": 140000.00,
+      "valorAprovado": 280000.0,
+      "valorLiberado": 140000.0,
       "taxaMensal": 0.0099,
       "prazoMeses": 66,
       "status": "QUITADO"
     },
     {
       "usuarioId": 9,
-      "valorAprovado": 180000.00,
-      "valorLiberado": 90000.00,
+      "valorAprovado": 180000.0,
+      "valorLiberado": 90000.0,
       "taxaMensal": 0.0099,
       "prazoMeses": 54,
       "status": "ATIVO"
     },
     {
       "usuarioId": 10,
-      "valorAprovado": 320000.00,
-      "valorLiberado": 160000.00,
+      "valorAprovado": 320000.0,
+      "valorLiberado": 160000.0,
       "taxaMensal": 0.0099,
       "prazoMeses": 72,
       "status": "ATIVO"
@@ -236,7 +236,7 @@
       "geoLatitude": -23.5592,
       "geoLongitude": -46.6613,
       "raioValidacaoMetros": 50,
-      "areaM2": 2500.00,
+      "areaM2": 2500.0,
       "tipo": "RESIDENCIAL",
       "status": "PLANEJAMENTO"
     },
@@ -248,7 +248,7 @@
       "geoLatitude": -23.5628,
       "geoLongitude": -46.6819,
       "raioValidacaoMetros": 60,
-      "areaM2": 5000.00,
+      "areaM2": 5000.0,
       "tipo": "RESIDENCIAL",
       "status": "EM_EXECUCAO"
     },
@@ -260,7 +260,7 @@
       "geoLatitude": -23.5904,
       "geoLongitude": -46.6284,
       "raioValidacaoMetros": 80,
-      "areaM2": 8000.00,
+      "areaM2": 8000.0,
       "tipo": "COMERCIAL",
       "status": "EM_EXECUCAO"
     },
@@ -270,9 +270,9 @@
       "nome": "Condomínio Brooklin",
       "endereco": "Rua Bandeira, 800",
       "geoLatitude": -23.5817,
-      "geoLongitude": -46.6680,
+      "geoLongitude": -46.668,
       "raioValidacaoMetros": 70,
-      "areaM2": 6000.00,
+      "areaM2": 6000.0,
       "tipo": "RESIDENCIAL",
       "status": "PAUSADA"
     },
@@ -284,7 +284,7 @@
       "geoLatitude": -23.5742,
       "geoLongitude": -46.6995,
       "raioValidacaoMetros": 50,
-      "areaM2": 1200.00,
+      "areaM2": 1200.0,
       "tipo": "RESIDENCIAL",
       "status": "EM_EXECUCAO"
     },
@@ -294,9 +294,9 @@
       "nome": "Prédio Comercial Consolação",
       "endereco": "Avenida Paulista, 2000",
       "geoLatitude": -23.5615,
-      "geoLongitude": -46.6560,
+      "geoLongitude": -46.656,
       "raioValidacaoMetros": 50,
-      "areaM2": 4500.00,
+      "areaM2": 4500.0,
       "tipo": "COMERCIAL",
       "status": "EM_EXECUCAO"
     },
@@ -308,7 +308,7 @@
       "geoLatitude": -23.6292,
       "geoLongitude": -46.7092,
       "raioValidacaoMetros": 80,
-      "areaM2": 7500.00,
+      "areaM2": 7500.0,
       "tipo": "RESIDENCIAL",
       "status": "CONCLUIDA"
     },
@@ -318,9 +318,9 @@
       "nome": "Centro de Saúde Tatuapé",
       "endereco": "Rua Matarazzo, 1500",
       "geoLatitude": -23.5375,
-      "geoLongitude": -46.5640,
+      "geoLongitude": -46.564,
       "raioValidacaoMetros": 60,
-      "areaM2": 3000.00,
+      "areaM2": 3000.0,
       "tipo": "COMERCIAL",
       "status": "EM_EXECUCAO"
     },
@@ -332,7 +332,7 @@
       "geoLatitude": -23.5461,
       "geoLongitude": -46.5485,
       "raioValidacaoMetros": 50,
-      "areaM2": 2200.00,
+      "areaM2": 2200.0,
       "tipo": "RESIDENCIAL",
       "status": "CANCELADA"
     },
@@ -344,7 +344,7 @@
       "geoLatitude": -23.5936,
       "geoLongitude": -46.7315,
       "raioValidacaoMetros": 50,
-      "areaM2": 1500.00,
+      "areaM2": 1500.0,
       "tipo": "COMERCIAL",
       "status": "EM_EXECUCAO"
     }
@@ -411,7 +411,7 @@
       "etapaId": 5,
       "fotoUrl": "https://s3.amazonaws.com/imbobi-staging/evidencia-005.jpg",
       "latCaptura": -23.5817,
-      "lngCaptura": -46.6680,
+      "lngCaptura": -46.668,
       "accuracyMetros": 9,
       "validada": true,
       "observacao": "Encanamento principal concluído"
