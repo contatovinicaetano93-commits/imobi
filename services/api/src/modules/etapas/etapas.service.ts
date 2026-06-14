@@ -6,6 +6,7 @@ import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
+import type { EtapaStatus } from "@prisma/client";
 
 @Injectable()
 export class EtapasService {
@@ -133,7 +134,7 @@ export class EtapasService {
   async atualizarStatus(etapaId: string, status: string) {
     const etapa = await this.prisma.etapaObra.update({
       where: { etapaId },
-      data: { status: status as never },
+      data: { status: status as EtapaStatus },
       include: { obra: true },
     });
 
