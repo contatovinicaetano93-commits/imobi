@@ -264,27 +264,66 @@ nav.scrolled .btn-login:hover { background: var(--surface); border-color: #CBD5E
 }
 .btn-hero-ghost:hover { color: var(--white); }
 
-/* KPI CARDS */
-.kpi-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
-  animation: slideUp 0.60s cubic-bezier(0.22,1,0.36,1) 0.45s both;
-}
-.kpi-card {
-  background: rgba(255,255,255,0.07);
+/* ── HERO CARD ── */
+.hero-card {
+  background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.11);
-  border-radius: 16px; padding: 1.4rem 1.5rem;
-  display: flex; flex-direction: column; gap: 0.3rem;
-  transition: background 0.2s;
+  border-radius: 20px;
+  padding: 1.75rem 2rem;
+  display: flex; flex-direction: column; gap: 1.4rem;
 }
-.kpi-card:hover { background: rgba(255,255,255,0.11); }
-.kpi-val {
-  font-family: 'Barlow Condensed', sans-serif; font-weight: 800;
-  font-size: 2.1rem; line-height: 1; letter-spacing: -0.01em;
+.hc-top { display: flex; align-items: center; justify-content: space-between; }
+.hc-live-wrap { display: flex; align-items: center; gap: 0.45rem; }
+.hc-live-dot {
+  width: 7px; height: 7px;
+  background: var(--mint); border-radius: 50%; flex-shrink: 0;
 }
-.kpi-lbl {
-  font-size: 0.75rem; font-weight: 500;
-  color: rgba(255,255,255,0.45); letter-spacing: 0.01em;
+.hc-live-label {
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--mint);
 }
+.hc-op-id { font-size: 0.62rem; color: rgba(255,255,255,0.22); letter-spacing: 0.06em; }
+.hc-project { padding-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.hc-proj-name {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 700;
+  color: white; letter-spacing: 0.01em; margin-bottom: 0.2rem;
+}
+.hc-proj-sub { font-size: 0.72rem; color: rgba(255,255,255,0.38); }
+.hc-amount {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 3.2rem; font-weight: 800;
+  color: var(--mint); line-height: 1; letter-spacing: -0.01em;
+}
+.hc-milestones { display: flex; flex-direction: column; gap: 0.55rem; }
+.hc-ms { display: flex; align-items: center; gap: 0.7rem; }
+.hc-ms-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.14); flex-shrink: 0;
+}
+.hc-ms.done .hc-ms-dot { background: var(--mint); }
+.hc-ms.active .hc-ms-dot { background: var(--mint); width: 8px; height: 8px; }
+.hc-ms-label { flex: 1; font-size: 0.78rem; font-weight: 400; color: rgba(255,255,255,0.3); }
+.hc-ms.done .hc-ms-label  { color: rgba(255,255,255,0.58); }
+.hc-ms.active .hc-ms-label { color: white; font-weight: 600; }
+.hc-ms-date { font-size: 0.65rem; color: rgba(255,255,255,0.22); font-variant-numeric: tabular-nums; }
+.hc-ms.done .hc-ms-date  { color: rgba(74,222,128,0.55); }
+.hc-ms.active .hc-ms-date { color: var(--mint); font-weight: 600; }
+.hc-prog { display: flex; flex-direction: column; gap: 0.55rem; }
+.hc-prog-header { display: flex; justify-content: space-between; align-items: center; }
+.hc-prog-label { font-size: 0.68rem; color: rgba(255,255,255,0.32); }
+.hc-prog-pct { font-size: 0.68rem; color: var(--mint); font-weight: 700; }
+.hc-prog-track {
+  height: 4px; background: rgba(255,255,255,0.07); border-radius: 99px; overflow: hidden;
+}
+.hc-prog-fill {
+  height: 100%; width: 68%;
+  background: linear-gradient(90deg, var(--mint-s), var(--mint)); border-radius: 99px;
+}
+.hc-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06);
+}
+.hc-footer-note { font-size: 0.65rem; color: rgba(255,255,255,0.22); }
+.hc-on-track { font-size: 0.62rem; font-weight: 700; color: var(--mint); letter-spacing: 0.04em; }
 
 /* ── SHARED TYPOGRAPHY ── */
 .eyebrow {
@@ -497,7 +536,31 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .hero-h1 .h1-line:nth-child(3) { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.42s both; }
   .hero-sub                      { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.52s both; }
   .hero-actions                  { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.62s both; }
-  .kpi-grid                      { animation: slideUp 0.60s cubic-bezier(0.22,1,0.36,1) 0.45s both; }
+  .hero-card                     { animation: slideUp 0.60s cubic-bezier(0.22,1,0.36,1) 0.45s both; }
+
+  @keyframes hcPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.55); }
+    50%       { box-shadow: 0 0 0 5px rgba(74,222,128,0); }
+  }
+  @keyframes hcFadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes hcProgFill {
+    from { width: 0; }
+    to   { width: 68%; }
+  }
+
+  .hc-live-dot { animation: hcPulse 2.2s ease-in-out infinite; }
+  .hc-ms.active .hc-ms-dot { animation: hcPulse 1.8s ease-in-out infinite; }
+
+  .hc-ms { opacity: 0; animation: hcFadeUp 0.4s ease forwards; }
+  .hc-ms:nth-child(1) { animation-delay: 0.65s; }
+  .hc-ms:nth-child(2) { animation-delay: 0.80s; }
+  .hc-ms:nth-child(3) { animation-delay: 0.95s; }
+  .hc-ms:nth-child(4) { animation-delay: 1.10s; }
+
+  .hc-prog-fill { width: 0; animation: hcProgFill 1.6s cubic-bezier(0.22,1,0.36,1) 1.2s forwards; }
 
   /* Scroll reveal — JS adds .in class on IntersectionObserver trigger */
   .reveal {
@@ -518,7 +581,10 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
 
 /* Reduced motion — show everything immediately, no scroll */
 @media (prefers-reduced-motion: reduce) {
-  .kpi-grid { animation: none; }
+  .hero-card { animation: none; }
+  .hc-ms { opacity: 1; animation: none; }
+  .hc-live-dot, .hc-ms.active .hc-ms-dot { animation: none; }
+  .hc-prog-fill { width: 68%; animation: none; }
 }
 
 /* ── RESPONSIVE ── */
@@ -536,9 +602,8 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .btn-hero-primary { text-align: center; padding: 1rem; }
   .btn-hero-ghost { text-align: center; }
 
-  .kpi-grid { gap: 0.5rem; }
-  .kpi-card { padding: 1.1rem 1.15rem; }
-  .kpi-val { font-size: 1.65rem; }
+  .hero-card { padding: 1.25rem 1.5rem; gap: 1.1rem; }
+  .hc-amount { font-size: 2.5rem; }
 
   .vantagens { padding: 4rem 1.25rem; }
   .vs-grid { grid-template-columns: 1fr; }
