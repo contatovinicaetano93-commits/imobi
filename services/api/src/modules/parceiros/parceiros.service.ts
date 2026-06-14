@@ -82,17 +82,33 @@ export class ParceirosService {
       .catch(() => [] as typeof leads);
 
     return leads.map((lead) => {
-      // valorBase: 0 pois não há tabela de valor de contrato vinculada ao lead
       const valorBase = 0;
       const percentualComissao = PERCENTUAL_COMISSAO_PADRAO;
       const valorComissao = (valorBase * percentualComissao) / 100;
-      const comissaoStatus = lead.convertidoEm ? 'PENDENTE_PAGAMENTO' : 'AGUARDANDO_CONVERSAO';
+
+      // Map comissaoStatus to the three values the frontend expects
+      const comissaoStatus: 'PENDENTE' | 'LIBERADA' | 'PAGA' = 'PENDENTE';
+
+      // Map lead pipeline stage name to the frontend-expected OperacaoIndicada status enum
+      const stageNome = lead.stage?.nome ?? lead.statusUltimo ?? '';
+      let status: 'INDICADA' | 'EM_ANALISE' | 'APROVADA' | 'EM_OBRA' | 'CONCLUIDA' | 'RECUSADA';
+      if (lead.convertidoEm) {
+        status = 'CONCLUIDA';
+      } else if (['CANCELADO', 'PERDIDO'].includes(stageNome)) {
+        status = 'RECUSADA';
+      } else if (stageNome === 'FECHAMENTO') {
+        status = 'APROVADA';
+      } else if (['PROPOSTA', 'NEGOCIAÇÃO'].includes(stageNome)) {
+        status = 'EM_ANALISE';
+      } else {
+        status = 'INDICADA';
+      }
 
       return {
         id: lead.leadId,
         codigo: `OP-${lead.leadId.slice(0, 8).toUpperCase()}`,
         clienteRef: obfuscarNomeCliente(lead.clienteNome),
-        status: lead.stage?.nome ?? lead.statusUltimo ?? 'DESCONHECIDO',
+        status,
         valorBase,
         percentualComissao,
         valorComissao,

@@ -131,7 +131,23 @@ export class EtapasService {
     return { ok: true, motivo };
   }
 
-  async atualizarStatus(etapaId: string, status: string) {
+  async atualizarStatus(etapaId: string, status: string, usuarioId: string, userTipo: string) {
+    const etapaExistente = await this.prisma.etapaObra.findUnique({
+      where: { etapaId },
+      include: { obra: true },
+    });
+    if (!etapaExistente) throw new NotFoundException("Etapa não encontrada.");
+
+    const isPrivileged = ["GESTOR", "ADMIN", "ENGENHEIRO"].includes(userTipo);
+    if (!isPrivileged) {
+      if (etapaExistente.obra.usuarioId !== usuarioId) {
+        throw new ForbiddenException("Acesso negado.");
+      }
+      if (status !== "AGUARDANDO_VISTORIA") {
+        throw new ForbiddenException("Você só pode submeter a etapa para vistoria.");
+      }
+    }
+
     const etapa = await this.prisma.etapaObra.update({
       where: { etapaId },
       data: { status: status as EtapaStatus },
