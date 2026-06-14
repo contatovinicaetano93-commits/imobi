@@ -5,48 +5,77 @@ import * as SecureStore from "expo-secure-store";
 import { useRouter, useSegments } from "expo-router";
 import { setOnUnauthorized } from "../lib/api";
 
-type RootLayoutProps = {
-  children?: React.ReactNode;
-};
+type UsuarioTipo =
+  | "TOMADOR" | "CONSTRUTOR" | "GESTOR_OBRA"
+  | "ENGENHEIRO"
+  | "ADMIN" | "GESTOR"
+  | "COMERCIAL" | "PARCEIRO"
+  | "GESTOR_FUNDO";
+
+function decodeJwtRole(token: string): UsuarioTipo | null {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.role ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function grupoParaTipo(tipo: UsuarioTipo | null): string {
+  if (!tipo) return "/(auth)/login";
+  if (tipo === "ENGENHEIRO") return "/(engenheiro)/vistorias";
+  if (tipo === "ADMIN" || tipo === "GESTOR") return "/(admin)/dashboard";
+  if (tipo === "COMERCIAL" || tipo === "PARCEIRO") return "/(comercial)/dashboard";
+  if (tipo === "GESTOR_FUNDO") return "/(fundo)/dashboard";
+  return "/(construtor)/obras";
+}
+
+function grupoAtual(segments: string[]): string | null {
+  const g = segments[0];
+  if (!g) return null;
+  return g;
+}
 
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [isLoading, setIsLoading] = useState(true);
-  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [destino, setDestino] = useState<string | null>(null);
 
   useEffect(() => {
     setOnUnauthorized(() => {
-      setIsSignedIn(false);
+      setDestino(null);
+      router.replace("/(auth)/login");
     });
   }, []);
 
   useEffect(() => {
-    const bootstrapAsync = async () => {
+    (async () => {
       try {
         const token = await SecureStore.getItemAsync("accessToken");
-        setIsSignedIn(!!token);
-      } catch (e) {
-        console.error("Failed to restore token", e);
+        if (token) {
+          const tipo = decodeJwtRole(token);
+          setDestino(grupoParaTipo(tipo));
+        } else {
+          setDestino(null);
+        }
+      } catch {
+        setDestino(null);
       } finally {
         setIsLoading(false);
       }
-    };
-
-    bootstrapAsync();
+    })();
   }, []);
 
   useEffect(() => {
     if (isLoading) return;
-
-    const inAuthGroup = segments[0] === "(auth)";
-
-    if (!isSignedIn && !inAuthGroup) {
-      router.replace("/(auth)/login");
-    } else if (isSignedIn && inAuthGroup) {
-      router.replace("/(tabs)/obras");
+    const atual = grupoAtual(segments);
+    if (!destino) {
+      if (atual !== "(auth)") router.replace("/(auth)/login");
+    } else {
+      if (atual === "(auth)" || atual === null) router.replace(destino as any);
     }
-  }, [isSignedIn, isLoading, segments]);
+  }, [isLoading, destino, segments]);
 
   if (isLoading) {
     return (
@@ -57,23 +86,13 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen
-        name="(auth)"
-        options={{
-          gestureEnabled: false,
-        }}
-      />
-      <Stack.Screen
-        name="(tabs)"
-        options={{
-          gestureEnabled: false,
-        }}
-      />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(construtor)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(engenheiro)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(admin)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(comercial)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(fundo)" options={{ gestureEnabled: false }} />
     </Stack>
   );
 }
