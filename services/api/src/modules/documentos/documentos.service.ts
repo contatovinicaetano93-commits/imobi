@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
+import type { DocumentoTipo } from "@prisma/client";
 
 @Injectable()
 export class DocumentosService {
@@ -30,7 +31,7 @@ export class DocumentosService {
       data: {
         usuarioId,
         obraId: obraId ?? undefined,
-        tipo: tipo as any,
+        tipo: tipo as DocumentoTipo,
         nome,
         url: key,
         mimeType,
