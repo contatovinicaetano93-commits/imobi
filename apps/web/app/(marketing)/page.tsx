@@ -115,7 +115,7 @@ export default function LandingPage() {
   return (
     <>
       {/* ── NAV ── */}
-      <nav className={scrolled ? "scrolled" : ""}>
+      <nav className={`landing-nav${scrolled ? " scrolled" : ""}`}>
         <a className="logo" href="#"><LogoIcon /><span className="logo-name">IMOBI</span></a>
         <ul className="nav-links">
           <li><a href="#vantagens">Vantagens</a></li>

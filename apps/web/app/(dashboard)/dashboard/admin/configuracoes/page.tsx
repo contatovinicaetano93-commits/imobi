@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { ChevronLeft, Save, AlertTriangle, Percent, DollarSign, Clock, MapPin, Settings, RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/toast-context";
 
 const NAVY  = "#0C1A3D";
 const ROYAL = "#1B4FD8";
@@ -40,6 +41,7 @@ const DEFAULTS: Config = {
 };
 
 export default function ConfiguracoesPage() {
+  const { addToast } = useToast();
   const [config, setConfig] = useState<Config>(DEFAULTS);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -69,12 +71,18 @@ export default function ConfiguracoesPage() {
       });
       if (res.ok) {
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        addToast("Configurações salvas com sucesso! As novas regras já valem para próximas solicitações.", "success");
+        setTimeout(() => setSaved(false), 4000);
       } else {
-        setSaveErro("Erro ao salvar configurações. Tente novamente.");
+        const d = await res.json().catch(() => ({})) as { message?: string };
+        const msg = d.message ?? "Erro ao salvar configurações. Tente novamente.";
+        setSaveErro(msg);
+        addToast(msg, "error");
       }
     } catch {
-      setSaveErro("Erro de conexão ao salvar.");
+      const msg = "Erro de conexão ao salvar.";
+      setSaveErro(msg);
+      addToast(msg, "error");
     } finally {
       setSaving(false);
     }
@@ -291,8 +299,15 @@ function NumberInput({ value, onChange, step, min, max, suffix, prefix }: {
     if (!focused) setRaw(String(value));
   }, [value, focused]);
 
+  function formatDisplay(n: number): string {
+    if (suffix === "R$" || prefix) {
+      return n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    return n.toLocaleString("pt-BR", { minimumFractionDigits: step < 1 ? 2 : 0, maximumFractionDigits: step < 1 ? 2 : 0 });
+  }
+
   function commit(s: string) {
-    const n = parseFloat(s.replace(",", "."));
+    const n = parseFloat(s.replace(/\./g, "").replace(",", "."));
     if (!isNaN(n)) {
       const clamped = Math.max(min, Math.min(max, n));
       onChange(clamped);
@@ -308,12 +323,12 @@ function NumberInput({ value, onChange, step, min, max, suffix, prefix }: {
       <input
         type="text"
         inputMode="decimal"
-        value={raw}
+        value={focused ? raw : formatDisplay(value)}
         onChange={(e) => {
           const v = e.target.value.replace(/[^0-9.,]/g, "");
           setRaw(v);
         }}
-        onFocus={() => setFocused(true)}
+        onFocus={() => { setFocused(true); setRaw(String(value)); }}
         onBlur={() => { setFocused(false); commit(raw); }}
         onKeyDown={(e) => {
           if (e.key === "Enter") { e.preventDefault(); commit(raw); }

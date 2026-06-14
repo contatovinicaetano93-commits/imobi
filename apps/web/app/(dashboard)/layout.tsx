@@ -366,7 +366,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </Link>
         </div>
       )}
-      <nav style={{ flex: 1, padding: "0 0.4rem", overflowY: "auto" }}>
+      <nav style={{ flex: 1, padding: "0 0.4rem", overflowY: "auto", display: "flex", flexDirection: "column" }}>
         {roleLoading ? <NavSkeleton /> : renderNav(visibleNav, isActive, accent, notifCount, onNavigate)}
       </nav>
       {userFooter(!!onNavigate)}

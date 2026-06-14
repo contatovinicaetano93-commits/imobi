@@ -23,7 +23,7 @@ html { scroll-behavior: smooth; }
 body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--ink); overflow-x: hidden; }
 
 /* ── NAV ── */
-nav {
+.landing-nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 3rem; height: 68px;
@@ -31,7 +31,7 @@ nav {
   transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
   border-bottom: 1px solid transparent;
 }
-nav.scrolled {
+.landing-nav.scrolled {
   background: rgba(255,255,255,0.96);
   backdrop-filter: blur(20px);
   border-bottom-color: var(--border);
@@ -54,9 +54,9 @@ nav.scrolled {
   font-size: 1.3rem; font-weight: 800;
   color: var(--white); letter-spacing: 0.04em;
 }
-nav.scrolled .logo-name { color: var(--ink); }
-nav.scrolled .logo-icon { border-color: var(--royal); }
-nav.scrolled .logo-icon b { background: var(--royal); }
+.landing-nav.scrolled .logo-name { color: var(--ink); }
+.landing-nav.scrolled .logo-icon { border-color: var(--royal); }
+.landing-nav.scrolled .logo-icon b { background: var(--royal); }
 
 .nav-links { display: flex; gap: 0.25rem; list-style: none; }
 .nav-links a {
@@ -65,8 +65,8 @@ nav.scrolled .logo-icon b { background: var(--royal); }
   border-radius: 6px; transition: color 0.15s;
 }
 .nav-links a:hover { color: var(--white); }
-nav.scrolled .nav-links a { color: var(--gray); }
-nav.scrolled .nav-links a:hover { color: var(--ink); background: var(--surface); }
+.landing-nav.scrolled .nav-links a { color: var(--gray); }
+.landing-nav.scrolled .nav-links a:hover { color: var(--ink); background: var(--surface); }
 
 .nav-actions { display: flex; align-items: center; gap: 0.6rem; }
 
@@ -76,10 +76,10 @@ nav.scrolled .nav-links a:hover { color: var(--ink); background: var(--surface);
   padding: 0.45rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.15s;
 }
 .btn-login:hover { background: rgba(255,255,255,0.18); }
-nav.scrolled .btn-login {
+.landing-nav.scrolled .btn-login {
   background: none; border-color: var(--border); color: var(--ink);
 }
-nav.scrolled .btn-login:hover { background: var(--surface); border-color: #CBD5E1; }
+.landing-nav.scrolled .btn-login:hover { background: var(--surface); border-color: #CBD5E1; }
 
 .btn-cta {
   background: var(--mint); color: var(--ink);
@@ -523,7 +523,7 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
-  nav { padding: 0 1.25rem; height: 60px; }
+  .landing-nav { padding: 0 1.25rem; height: 60px; }
   .nav-links { display: none; }
   .nav-actions { display: none; }
   .nav-mobile-auth { display: flex !important; align-items: center; gap: 0.4rem; }
