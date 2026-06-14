@@ -221,4 +221,97 @@ export class ComercialService {
       conversionRate,
     };
   }
+
+  async obterOverview() {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+    const [leadsAtivos, totalLeads, convertidos, propostasMes, creditosAgg, creditosAno, creditosMes, creditosUltimoMes] =
+      await Promise.all([
+        this.prisma.lead.count({ where: { convertidoEm: null } }),
+        this.prisma.lead.count(),
+        this.prisma.lead.count({ where: { convertidoEm: { not: null } } }),
+        this.prisma.lead.count({
+          where: {
+            criadoEm: { gte: startOfMonth },
+            stage: { nome: { in: ['PROPOSTA', 'NEGOCIAÇÃO', 'FECHAMENTO'] } },
+          },
+        }),
+        this.prisma.credito.aggregate({
+          where: { status: 'ATIVO' },
+          _sum: { valorAprovado: true },
+          _count: { creditoId: true },
+        }),
+        this.prisma.credito.aggregate({
+          where: { dataAprovacao: { gte: startOfYear } },
+          _sum: { valorAprovado: true },
+          _count: { creditoId: true },
+        }),
+        this.prisma.credito.aggregate({
+          where: { dataAprovacao: { gte: startOfMonth } },
+          _sum: { valorAprovado: true },
+          _count: { creditoId: true },
+        }),
+        this.prisma.credito.aggregate({
+          where: { dataAprovacao: { gte: startOfLastMonth, lte: endOfLastMonth } },
+          _sum: { valorAprovado: true },
+        }),
+      ]);
+
+    const taxaConversao = totalLeads > 0 ? Math.round((convertidos / totalLeads) * 100) : 0;
+    const volumeCredito = creditosAgg._sum.valorAprovado ?? 0;
+    const creditosAprovados = creditosAgg._count.creditoId;
+    const ticketMedio = creditosAprovados > 0 ? volumeCredito / creditosAprovados : 0;
+
+    const volumeAno = creditosAno._sum.valorAprovado ?? 0;
+    const negociosAno = creditosAno._count.creditoId;
+
+    const volumeMes = creditosMes._sum.valorAprovado ?? 0;
+    const negociosFechados = creditosMes._count.creditoId;
+    const volumeUltimoMes = creditosUltimoMes._sum.valorAprovado ?? 0;
+
+    const TAXA_COMISSAO = 0.02;
+    const comissaoAno = volumeAno * TAXA_COMISSAO;
+    const comissaoMes = volumeMes * TAXA_COMISSAO;
+    const variacaoComissao =
+      volumeUltimoMes > 0 ? (volumeMes - volumeUltimoMes) / volumeUltimoMes : 0;
+
+    return {
+      leadsAtivos,
+      propostasMes,
+      taxaConversao,
+      creditosAprovados,
+      volumeCredito,
+      ticketMedio,
+      comissaoAno,
+      negociosAno,
+      volumeAno,
+      mesAtual: { comissaoMes, negociosFechados, variacaoComissao },
+    };
+  }
+
+  async listarPipeline(limit = 50) {
+    const leads = await this.prisma.lead.findMany({
+      where: { convertidoEm: null },
+      take: limit,
+      include: {
+        stage: true,
+        atividades: { take: 1, orderBy: { criadoEm: 'desc' } },
+      },
+      orderBy: { atualizadoEm: 'desc' },
+    });
+
+    return leads.map((lead) => ({
+      leadId: lead.leadId,
+      nomeCliente: lead.clienteNome,
+      tipoProjeto: lead.tipoObra ?? 'Residencial',
+      valorEstimado: 0,
+      etapa: lead.stage?.nome ?? 'PROSPECÇÃO',
+      proximaAcao: lead.atividades[0]?.descricao ?? null,
+      atualizadoEm: lead.atualizadoEm.toISOString(),
+    }));
+  }
 }

@@ -20,6 +20,16 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from '../../common/decora
 export class ComercialController {
   constructor(private readonly comercialService: ComercialService) {}
 
+  @Get('overview')
+  async getOverview() {
+    return this.comercialService.obterOverview();
+  }
+
+  @Get('pipeline')
+  async getPipeline(@Query('limit') limit = '50') {
+    return this.comercialService.listarPipeline(parseInt(limit, 10));
+  }
+
   @Get('pipeline/stages')
   async getPipelineStages() {
     return this.comercialService.listarStages();
