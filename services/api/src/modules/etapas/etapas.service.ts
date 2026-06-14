@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, UnauthorizedException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
 import type { EtapaStatus } from "@prisma/client";
 import { InjectQueue } from "@nestjs/bull";
 import { Queue } from "bull";

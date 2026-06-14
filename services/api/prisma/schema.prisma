@@ -332,6 +332,8 @@ enum TipoNotificacao {
   OBRA_CRIADA
   SCORE_ATUALIZADO
   VISTORIA_PENDENTE
+  PARECER_SOLICITADO
+  COMITE_DECISAO
 }
 
 // ── Auditoria de Etapas ───────────────────────────────────────────────
