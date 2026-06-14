@@ -257,7 +257,7 @@ export class AdminService {
   async listarEtapasAguardandoValidacao(limit = 20, offset = 0) {
     const [etapas, total] = await Promise.all([
       this.prisma.etapaObra.findMany({
-        where: { status: "APROVADA_ENGENHEIRO" as any },
+        where: { status: "APROVADA_ENGENHEIRO" },
         take: limit,
         skip: offset,
         orderBy: { atualizadoEm: "asc" }, // oldest first = most urgent
@@ -278,7 +278,7 @@ export class AdminService {
           },
         },
       }),
-      this.prisma.etapaObra.count({ where: { status: "APROVADA_ENGENHEIRO" as any } }),
+      this.prisma.etapaObra.count({ where: { status: "APROVADA_ENGENHEIRO" } }),
     ]);
 
     return {
@@ -309,7 +309,7 @@ export class AdminService {
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
     const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: "APROVADA_ENGENHEIRO" as any },
+      where: { etapaId, status: "APROVADA_ENGENHEIRO" },
       data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
     });
     if (updated.count === 0) {
@@ -323,7 +323,7 @@ export class AdminService {
     // Notify construtor
     await this.notificacoes.criar(
       etapa.obra.usuarioId,
-      "ETAPA_APROVADA" as any,
+      "ETAPA_APROVADA",
       `Etapa aprovada: ${etapa.nome}`,
       `A etapa "${etapa.nome}" da obra "${etapa.obra.nome}" foi validada e a parcela será liberada em breve.`,
       `/dashboard/obras/${etapa.obra.obraId}`,
@@ -378,7 +378,7 @@ export class AdminService {
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
     const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: "APROVADA_ENGENHEIRO" as any },
+      where: { etapaId, status: "APROVADA_ENGENHEIRO" },
       data: { status: "REPROVADA" },
     });
     if (updated.count === 0) {
@@ -391,7 +391,7 @@ export class AdminService {
 
     await this.notificacoes.criar(
       etapa.obra.usuarioId,
-      "ETAPA_REPROVADA" as any,
+      "ETAPA_REPROVADA",
       `Etapa reprovada: ${etapa.nome}`,
       `A etapa "${etapa.nome}" foi reprovada pelo comitê. Motivo: ${motivo}`,
       `/dashboard/obras/${etapa.obra.obraId}`,
