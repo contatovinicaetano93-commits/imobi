@@ -220,20 +220,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
-    // Pre-fill user footer from cache (name/email) but never trust cached role for nav —
-    // always wait for /api/auth/me so we never show the wrong role's sidebar.
-    try {
-      const raw = sessionStorage.getItem("imobi_auth");
-      if (raw) {
-        const { d, ts } = JSON.parse(raw);
-        if (Date.now() - ts < 15 * 60 * 1000 && d?.authenticated) {
-          setUserName(d.nome ?? null);
-          setUserEmail(d.email ?? null);
-        }
-      }
-    } catch { /* sessionStorage unavailable */ }
-
-    // Role (and therefore nav) is ONLY set from the API response.
+    // Role (and therefore nav + footer) come exclusively from the live API —
+    // no pre-fill from cache so we never flash the previous user's identity.
     fetch("/api/auth/me")
       .then((r) => r.ok ? r.json() : null)
       .catch(() => null)
@@ -290,7 +278,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const userFooter = (compact = false) => (
     <div>
-      {meta && (
+      {navMeta && (
         <div style={{
           margin: "0 0.75rem 0.5rem",
           padding: "0.3rem 0.65rem",
@@ -301,7 +289,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         }}>
           <span style={{ width: 5, height: 5, borderRadius: "50%", background: accent, flexShrink: 0 }} />
           <span style={{ fontSize: "0.72rem", fontWeight: 700, color: accent, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "'Jost', sans-serif" }}>
-            {meta.label}
+            {navMeta.label}
           </span>
         </div>
       )}
