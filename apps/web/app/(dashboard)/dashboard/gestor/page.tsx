@@ -60,6 +60,18 @@ export default function GestorPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="space-y-6 sm:space-y-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Painel do Fundo</h1>
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+          <p className="text-sm text-red-600 font-medium">{error}</p>
+          <button onClick={() => window.location.reload()} className="mt-3 text-xs text-red-500 underline">Tentar novamente</button>
+        </div>
+      </div>
+    );
+  }
+
   const s = stats ?? ZERO_STATS;
 
   return (
