@@ -568,11 +568,7 @@ export default function KycPage() {
     );
     setSelectedDocs((prev) => prev.filter((id) => id !== docId));
     try {
-      await fetch(`/api/proxy/manager/kyc/${docId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "APROVADO" }),
-      });
+      await fetch(`/api/proxy/manager/kyc/${docId}/aprovar`, { method: "PATCH" });
       showSuccess("Documento aprovado com sucesso.");
     } catch {
       // Rollback on real API failure (demo mode: always succeeds)
@@ -600,10 +596,10 @@ export default function KycPage() {
       );
       setSelectedDocs((prev) => prev.filter((id) => id !== docId));
       try {
-        await fetch(`/api/proxy/manager/kyc/${docId}`, {
+        await fetch(`/api/proxy/manager/kyc/${docId}/rejeitar`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "REJEITADO", motivoRejeicao: motivo }),
+          body: JSON.stringify({ motivo }),
         });
         showSuccess("Documento rejeitado.");
       } catch {
