@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import type { EtapaStatus } from "@prisma/client";
 
 export interface ObraFinanceiro {
   obraId: string;
@@ -88,7 +89,7 @@ export class EngenheirosService {
     const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
     if (!usuario) throw new ForbiddenException("Usuário não encontrado.");
 
-    const statusMap: Record<string, string> = {
+    const statusMap: Record<string, EtapaStatus> = {
       INICIADA: "EM_EXECUCAO",
       CONCLUIDA: "CONCLUIDA",
     };
@@ -97,7 +98,7 @@ export class EngenheirosService {
 
     await this.prisma.etapaObra.update({
       where: { etapaId: visitaId },
-      data: { ...(newStatus ? { status: newStatus as any } : {}) },
+      data: { ...(newStatus ? { status: newStatus } : {}) },
     });
 
     return this.obterVisita(visitaId);

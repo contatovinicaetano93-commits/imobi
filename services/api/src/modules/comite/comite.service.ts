@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
-import type { VotoDecisao, SolicitacaoStatus } from "@prisma/client";
+import type { VotoDecisao, SolicitacaoStatus, ComiteStatus } from "@prisma/client";
 
 @Injectable()
 export class ComiteService {
@@ -197,7 +197,7 @@ export class ComiteService {
 
   async listarComites(filtroStatus?: string) {
     return this.prisma.comiteDigital.findMany({
-      where: filtroStatus ? { status: filtroStatus as any } : undefined,
+      where: filtroStatus ? { status: filtroStatus as ComiteStatus } : undefined,
       orderBy: { criadoEm: "desc" },
       include: {
         solicitacao: {

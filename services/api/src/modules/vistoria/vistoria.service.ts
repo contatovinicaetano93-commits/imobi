@@ -31,7 +31,7 @@ export class VistoriaService {
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
     const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: { in: ["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA"] as any } },
+      where: { etapaId, status: { in: ["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA"] } },
       data: { status: "APROVADA_ENGENHEIRO" },
     });
     if (updated.count === 0) {
