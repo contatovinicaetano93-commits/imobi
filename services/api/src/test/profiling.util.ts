@@ -91,7 +91,7 @@ export class PerformanceProfiler {
       suggestions.push(
         "CONSIDER: INDEX on EtapaObra(status, criadoEm) for manager/etapas-pendentes filtering"
       );
-    } catch (e) {}
+    } catch { /* no-op */ }
 
     try {
       // Check LiberacaoParcela queries
@@ -103,7 +103,7 @@ export class PerformanceProfiler {
       suggestions.push(
         "CONSIDER: INDEX on LiberacaoParcela(creditoId, status) for payment queue queries"
       );
-    } catch (e) {}
+    } catch { /* no-op */ }
 
     try {
       // Check Notificacao queries
@@ -116,7 +116,7 @@ export class PerformanceProfiler {
       suggestions.push(
         "CONSIDER: INDEX on Notificacao(usuarioId, lida, criadoEm) for unread notification queries"
       );
-    } catch (e) {}
+    } catch { /* no-op */ }
 
     return suggestions;
   }
@@ -193,7 +193,7 @@ export class PerformanceProfiler {
           `⚠ FOUND: ${unusedIndexes.length} unused indexes - consider dropping to save storage`
         );
       }
-    } catch (e) {}
+    } catch { /* no-op */ }
 
     // Check connection pool
     recommendations.push("ℹ Cache TTL: 5min default (consider 2-5min for high-traffic endpoints)");
