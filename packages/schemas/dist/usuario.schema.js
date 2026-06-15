@@ -7,6 +7,11 @@ exports.TipoUsuarioEnum = zod_1.z.enum([
     "GESTOR_OBRA",
     "ADMIN",
     "PARCEIRO",
+    "GESTOR",
+    "GESTOR_FUNDO",
+    "ENGENHEIRO",
+    "COMERCIAL",
+    "CONSTRUTOR",
 ]);
 exports.KycStatusEnum = zod_1.z.enum([
     "PENDENTE",
@@ -28,7 +33,6 @@ exports.CadastroUsuarioSchema = zod_1.z.object({
         .min(8, "Mínimo 8 caracteres")
         .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
         .regex(/[0-9]/, "Deve conter ao menos um número"),
-    tipo: exports.TipoUsuarioEnum.default("TOMADOR"),
     consentidoTermos: zod_1.z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
     consentidoPrivacy: zod_1.z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
     consentidoKyc: zod_1.z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
@@ -72,9 +76,7 @@ exports.FUNCOES_PAINEL = [
 ];
 exports.FuncaoPainelEnum = zod_1.z.enum(exports.FUNCOES_PAINEL);
 exports.AtualizarUsuarioAdminSchema = zod_1.z.object({
-    tipo: zod_1.z
-        .enum(["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"])
-        .optional(),
+    tipo: exports.TipoUsuarioEnum.optional(),
     bloqueado: zod_1.z.boolean().optional(),
     funcoesBloqueadas: zod_1.z.array(exports.FuncaoPainelEnum).optional(),
 });

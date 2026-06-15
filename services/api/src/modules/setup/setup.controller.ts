@@ -53,7 +53,8 @@ export class SetupController {
   private rotaParaTipo(tipo: string): string {
     const mapa: Record<string, string> = {
       ADMIN:      "/dashboard/admin",
-      GESTOR:     "/dashboard/gestor",
+      GESTOR:       "/dashboard/gestor",
+      GESTOR_FUNDO: "/dashboard/fundos",
       ENGENHEIRO: "/dashboard/engenheiro",
       COMERCIAL:  "/dashboard/comercial",
       CONSTRUTOR: "/dashboard/construtor",

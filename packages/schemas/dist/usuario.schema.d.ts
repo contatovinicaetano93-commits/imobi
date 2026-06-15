@@ -1,5 +1,5 @@
 import { z } from "zod";
-export declare const TipoUsuarioEnum: z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO"]>;
+export declare const TipoUsuarioEnum: z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"]>;
 export declare const KycStatusEnum: z.ZodEnum<["PENDENTE", "EM_VERIFICACAO", "APROVADO", "REJEITADO"]>;
 export declare const CadastroUsuarioSchema: z.ZodObject<{
     nome: z.ZodString;
@@ -7,13 +7,11 @@ export declare const CadastroUsuarioSchema: z.ZodObject<{
     email: z.ZodString;
     telefone: z.ZodString;
     senha: z.ZodString;
-    tipo: z.ZodDefault<z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO"]>>;
     consentidoTermos: z.ZodEffects<z.ZodBoolean, boolean, boolean>;
     consentidoPrivacy: z.ZodEffects<z.ZodBoolean, boolean, boolean>;
     consentidoKyc: z.ZodEffects<z.ZodBoolean, boolean, boolean>;
     consentidoMarketing: z.ZodDefault<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
-    tipo: "PARCEIRO" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN";
     nome: string;
     email: string;
     cpf: string;
@@ -32,7 +30,6 @@ export declare const CadastroUsuarioSchema: z.ZodObject<{
     consentidoTermos: boolean;
     consentidoPrivacy: boolean;
     consentidoKyc: boolean;
-    tipo?: "PARCEIRO" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | undefined;
     consentidoMarketing?: boolean | undefined;
 }>;
 export declare const LoginSchema: z.ZodObject<{
@@ -63,7 +60,6 @@ export declare const RedefinirSenhaSchema: z.ZodObject<{
     novaSenha: string;
 }>;
 export declare const UpdateUsuarioSchema: z.ZodObject<{
-    tipo: z.ZodOptional<z.ZodDefault<z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO"]>>>;
     nome: z.ZodOptional<z.ZodString>;
     email: z.ZodOptional<z.ZodString>;
     telefone: z.ZodOptional<z.ZodString>;
@@ -72,7 +68,6 @@ export declare const UpdateUsuarioSchema: z.ZodObject<{
     consentidoKyc: z.ZodOptional<z.ZodEffects<z.ZodBoolean, boolean, boolean>>;
     consentidoMarketing: z.ZodOptional<z.ZodDefault<z.ZodBoolean>>;
 }, "strip", z.ZodTypeAny, {
-    tipo?: "PARCEIRO" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | undefined;
     nome?: string | undefined;
     email?: string | undefined;
     telefone?: string | undefined;
@@ -81,7 +76,6 @@ export declare const UpdateUsuarioSchema: z.ZodObject<{
     consentidoKyc?: boolean | undefined;
     consentidoMarketing?: boolean | undefined;
 }, {
-    tipo?: "PARCEIRO" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | undefined;
     nome?: string | undefined;
     email?: string | undefined;
     telefone?: string | undefined;
@@ -93,15 +87,15 @@ export declare const UpdateUsuarioSchema: z.ZodObject<{
 export declare const FUNCOES_PAINEL: readonly ["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"];
 export declare const FuncaoPainelEnum: z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>;
 export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
-    tipo: z.ZodOptional<z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"]>>;
+    tipo: z.ZodOptional<z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"]>>;
     bloqueado: z.ZodOptional<z.ZodBoolean>;
     funcoesBloqueadas: z.ZodOptional<z.ZodArray<z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>, "many">>;
 }, "strip", z.ZodTypeAny, {
-    tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
+    tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
     bloqueado?: boolean | undefined;
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }, {
-    tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
+    tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
     bloqueado?: boolean | undefined;
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }>;
