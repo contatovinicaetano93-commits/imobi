@@ -45,6 +45,46 @@ export class ComercialService {
     }));
   }
 
+  async capturaPublica(data: {
+    clienteNome: string;
+    clienteEmail: string;
+    clienteTelefone: string;
+    empresa?: string;
+    cargo?: string;
+    modalidade?: string;
+    volume?: string;
+    observacoes?: string;
+  }) {
+    const stage = await this.prisma.pipelineStage.findFirst({
+      orderBy: { ordem: 'asc' },
+    }) ?? await this.prisma.pipelineStage.create({
+      data: { nome: 'PROSPECÇÃO', ordem: 1, corHex: '#6366f1' },
+    });
+
+    const extras = [
+      data.empresa    && `Empresa: ${data.empresa}`,
+      data.cargo      && `Cargo: ${data.cargo}`,
+      data.volume     && `Volume: ${data.volume}`,
+      data.observacoes && `Obs: ${data.observacoes}`,
+    ].filter(Boolean).join('\n') || null;
+
+    const lead = await this.prisma.lead.create({
+      data: {
+        clienteNome:     data.clienteNome,
+        clienteEmail:    data.clienteEmail,
+        clienteTelefone: data.clienteTelefone,
+        stageId:         stage.stageId,
+        fonte:           'WEBSITE',
+        tipoObra:        data.modalidade ?? null,
+        segmentoCliente: 'NOVO',
+        condicoes:       extras,
+      },
+      select: { leadId: true },
+    });
+
+    return lead;
+  }
+
   async criarLead(usuarioId: string, data: any) {
     const defaultStage = await this.prisma.pipelineStage.findFirst({
       orderBy: { ordem: 'asc' },

@@ -75,17 +75,34 @@ export default function LandingPage() {
       const res  = await fetch("/api/proxy/auth/registrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: cadNome, cpf: cadCpf.replace(/\D/g,""), email: cadEmail, telefone: cadTelefone.replace(/\D/g,""), senha: cadSenha, tipo: "TOMADOR", consentidoTermos: cadTermos, consentidoPrivacy: cadPrivacy, consentidoKyc: cadKyc, consentidoMarketing: false }) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.message ?? "Erro ao criar conta.");
-      router.push("/dashboard");
+      router.push("/dashboard/kyc?bem-vindo=1");
     } catch (err) { setCadErro(err instanceof Error ? err.message : "Erro inesperado."); }
     finally { setCadLoading(false); }
   }
 
   function scrollTo(id: string) { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); }
 
-  function submitToWhatsApp() {
+  async function submitToWhatsApp() {
     const g = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)?.value?.trim() ?? "";
     const nome = g("f-nome"), cargo = g("f-cargo"), empresa = g("f-empresa"), tel = g("f-tel"), email = g("f-email"), modalidade = g("f-modalidade"), volume = g("f-volume"), obs = g("f-obs");
-    if (!nome || !empresa || !tel) { alert("Por favor, preencha nome, empresa e WhatsApp."); return; }
+    if (!nome || !tel) { alert("Por favor, preencha nome e WhatsApp."); return; }
+
+    // Salva no CRM silenciosamente — não bloqueia a abertura do WhatsApp
+    fetch("/api/proxy/leads/captura", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clienteNome: nome,
+        clienteEmail: email || `sem-email-${Date.now()}@captura.imobi`,
+        clienteTelefone: tel,
+        empresa,
+        cargo,
+        modalidade,
+        volume,
+        observacoes: obs,
+      }),
+    }).catch(() => { /* falha silenciosa — WA ainda abre */ });
+
     const msg = `Olá! Vim pelo site da IMOBI e gostaria de solicitar uma análise de crédito.\n\n*Nome:* ${nome}${cargo ? " · "+cargo : ""}\n*Empresa:* ${empresa}\n*WhatsApp:* ${tel}${email ? "\n*E-mail:* "+email : ""}\n*Modalidade:* ${modalidade||"Não informada"}\n*Volume estimado:* ${volume||"Não informado"}${obs ? "\n*Projeto:* "+obs : ""}`;
     window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, "_blank");
   }
