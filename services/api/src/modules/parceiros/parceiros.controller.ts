@@ -7,6 +7,8 @@ import {
 } from '@nestjs/common';
 import { ParceirosService } from './parceiros.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import {
   UsuarioAtual,
   type UsuarioAtual as IUsuario,
@@ -18,7 +20,8 @@ interface AdicionarMailingDto {
   telefone?: string;
 }
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('COMERCIAL', 'ADMIN')
 @Controller('parceiros')
 export class ParceirosController {
   constructor(private readonly parceirosService: ParceirosService) {}

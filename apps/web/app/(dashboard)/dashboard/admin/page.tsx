@@ -704,17 +704,19 @@ function TabOperacional({
         </div>
       )}
 
-      {/* Credenciais de teste */}
-      <div style={{ ...card, border: "1px solid rgba(251,191,36,0.35)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0.85rem 1.25rem", background: "rgba(254,243,199,0.6)", borderBottom: "1px solid rgba(251,191,36,0.25)" }}>
-          <AlertTriangle size={14} color="#92400e" />
-          <div>
-            <p style={{ ...j, fontSize: "0.8rem", fontWeight: 700, color: "#92400e" }}>Credenciais de Teste — ambiente DEV</p>
-            <p style={{ ...j, fontSize: "0.68rem", color: "#b45309" }}>Não usar em produção.</p>
+      {/* Credenciais de teste — apenas em desenvolvimento */}
+      {process.env.NODE_ENV !== "production" && (
+        <div style={{ ...card, border: "1px solid rgba(251,191,36,0.35)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0.85rem 1.25rem", background: "rgba(254,243,199,0.6)", borderBottom: "1px solid rgba(251,191,36,0.25)" }}>
+            <AlertTriangle size={14} color="#92400e" />
+            <div>
+              <p style={{ ...j, fontSize: "0.8rem", fontWeight: 700, color: "#92400e" }}>Credenciais de Teste — ambiente DEV</p>
+              <p style={{ ...j, fontSize: "0.68rem", color: "#b45309" }}>Não usar em produção.</p>
+            </div>
           </div>
+          <CredenciaisTable />
         </div>
-        <CredenciaisTable />
-      </div>
+      )}
     </div>
   );
 }

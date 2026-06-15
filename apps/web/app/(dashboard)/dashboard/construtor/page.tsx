@@ -106,9 +106,9 @@ export default async function ConstrutorPage() {
   const todasEtapas = obras.flatMap((o) =>
     (o.etapas ?? []).map((e) => ({ ...e, obraNome: o.nome, obraId: o.id }))
   );
-  const etapasLiberadas  = todasEtapas.filter((e) => ["CONCLUIDA", "APROVADA"].includes(e.status));
+  const etapasLiberadas  = todasEtapas.filter((e) => e.status === "CONCLUIDA");
   const etapasPendentes  = todasEtapas.filter((e) => e.status === "AGUARDANDO_VISTORIA");
-  const etapasFuturas    = todasEtapas.filter((e) => !["CONCLUIDA", "APROVADA", "AGUARDANDO_VISTORIA"].includes(e.status));
+  const etapasFuturas    = todasEtapas.filter((e) => !["CONCLUIDA", "AGUARDANDO_VISTORIA"].includes(e.status));
   const pctObra          = todasEtapas.length ? Math.round(etapasLiberadas.length / todasEtapas.length * 100) : 0;
 
   // Docs
@@ -265,7 +265,7 @@ export default async function ConstrutorPage() {
             {/* lista */}
             <div className="divide-y divide-gray-50">
               {todasEtapas.slice(0, 6).map((e) => {
-                const isLib  = ["CONCLUIDA", "APROVADA"].includes(e.status);
+                const isLib  = e.status === "CONCLUIDA";
                 const isPend = e.status === "AGUARDANDO_VISTORIA";
                 return (
                   <div key={e.id} className="flex items-center gap-3 px-4 py-3">
@@ -345,9 +345,9 @@ export default async function ConstrutorPage() {
           </Card>
         </div>
         {/* obras em andamento */}
-        {obras.filter((o) => ["EM_EXECUCAO", "EM_ANDAMENTO"].includes(o.status)).length > 0 && (
+        {obras.filter((o) => o.status === "EM_EXECUCAO").length > 0 && (
           <Card className="mt-3 overflow-hidden">
-            {obras.filter((o) => ["EM_EXECUCAO", "EM_ANDAMENTO"].includes(o.status)).map((o, i, arr) => (
+            {obras.filter((o) => o.status === "EM_EXECUCAO").map((o, i, arr) => (
               <Link key={o.id} href={`/dashboard/obras/${o.id}`} className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition ${i < arr.length - 1 ? "border-b border-gray-50" : ""}`} style={{ textDecoration: "none" }}>
                 <Building2 className="w-4 h-4 text-gray-300 shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -425,8 +425,8 @@ export default async function ConstrutorPage() {
             <div className="divide-y divide-gray-50">
               {liberacoes.slice(0, 5).map((lib, i) => (
                 <div key={lib.id ?? i} className="flex items-center gap-3 px-4 py-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${lib.status === "PROCESSADO" ? "bg-green-50" : "bg-gray-50"}`}>
-                    <Banknote className={`w-3.5 h-3.5 ${lib.status === "PROCESSADO" ? "text-green-600" : "text-gray-300"}`} />
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${lib.status === "CONCLUIDA" ? "bg-green-50" : "bg-gray-50"}`}>
+                    <Banknote className={`w-3.5 h-3.5 ${lib.status === "CONCLUIDA" ? "text-green-600" : "text-gray-300"}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-gray-800">Desembolso</p>
@@ -436,8 +436,8 @@ export default async function ConstrutorPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-bold text-green-700">+{formatarBRL(Number(lib.valor))}</p>
-                    <p className={`text-[11px] font-medium ${lib.status === "PROCESSADO" ? "text-green-600" : "text-amber-500"}`}>
-                      {lib.status === "PROCESSADO" ? "Processado" : "Pendente"}
+                    <p className={`text-[11px] font-medium ${lib.status === "CONCLUIDA" ? "text-green-600" : "text-amber-500"}`}>
+                      {lib.status === "CONCLUIDA" ? "Processado" : "Pendente"}
                     </p>
                   </div>
                 </div>

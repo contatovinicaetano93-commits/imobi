@@ -38,4 +38,9 @@ export class EngenheirosController {
   licencas() {
     return this.engenheirosService.licencas();
   }
+
+  @Get("obras/:obraId/etapas")
+  etapasDaObra(@Param("obraId") obraId: string) {
+    return this.engenheirosService.etapasDaObra(obraId);
+  }
 }
