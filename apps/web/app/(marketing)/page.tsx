@@ -200,8 +200,23 @@ export default function LandingPage() {
               <button className="btn-hero-primary" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
               <button className="btn-hero-ghost"   onClick={() => scrollTo("como")}>Ver o processo →</button>
             </div>
+            <div className="hero-strip">
+              <div className="hero-strip-item">
+                <span className="hero-strip-val">15–30</span>
+                <span className="hero-strip-lbl">dias p/ aprovação</span>
+              </div>
+              <span className="hero-strip-div" aria-hidden="true" />
+              <div className="hero-strip-item">
+                <span className="hero-strip-val">R$1M+</span>
+                <span className="hero-strip-lbl">volume mínimo</span>
+              </div>
+              <span className="hero-strip-div" aria-hidden="true" />
+              <div className="hero-strip-item">
+                <span className="hero-strip-val">100%</span>
+                <span className="hero-strip-lbl">digital</span>
+              </div>
+            </div>
           </div>
-
         </div>
       </section>
 
