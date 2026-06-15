@@ -161,7 +161,7 @@ export default async function DashboardPage() {
         {allEtapas.length > 0 ? (
           <div style={{ background: "white", borderRadius: 14, border: "1px solid #f3f4f6", overflow: "hidden" }}>
             {allEtapas.slice(0, 5).map((etapa: EtapaResumo, i: number) => {
-              const isAprov = ["CONCLUIDA","APROVADA"].includes(etapa.status);
+              const isAprov = etapa.status === "CONCLUIDA";
               const isPend  = etapa.status === "AGUARDANDO_VISTORIA";
               return (
                 <div key={etapa.id ?? i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "0.75rem 1rem", borderTop: i > 0 ? "1px solid #f9fafb" : "none" }}>

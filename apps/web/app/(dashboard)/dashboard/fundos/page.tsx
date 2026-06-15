@@ -28,9 +28,7 @@ export default async function FundosPage() {
   );
 
   // Obras em progresso
-  const obrasProgresso = obras.filter(
-    (o) => o.status === "EM_EXECUCAO" || o.status === "PLANEJAMENTO"
-  );
+  const obrasProgresso = obras.filter((o) => o.status === "EM_EXECUCAO");
 
   // Cálculos básicos
   const creditoTotalAprovado = creditos.reduce(
