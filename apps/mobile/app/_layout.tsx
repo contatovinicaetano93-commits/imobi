@@ -26,6 +26,7 @@ export default function RootLayout() {
   useEffect(() => {
     setOnUnauthorized(() => {
       setIsSignedIn(false);
+      setUserRole(null);
     });
   }, []);
 

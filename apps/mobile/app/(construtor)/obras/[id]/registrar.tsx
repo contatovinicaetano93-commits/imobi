@@ -31,6 +31,7 @@ function useGeoValidation(alvo: { latitude: number; longitude: number }, raio: n
       const pos = await getPosition();
       if (pos.accuracy > 15) {
         setStatus("poor_accuracy"); setAccuracy(pos.accuracy); setCoordenadas(pos);
+        setDistancia(null);
         setMensagem("Sinal GPS fraco. Aguarde um momento e tente novamente.");
         return false;
       }
@@ -108,12 +109,12 @@ export default function RegistrarEtapaScreen() {
   };
 
   const handleEnviar = async () => {
-    if (!fotoUri || !coordenadasAtuais) return;
+    if (!fotoUri || !coordenadasAtuais || status !== "inside_radius") return;
 
     setUploading(true);
     try {
       const token = await SecureStore.getItemAsync("accessToken");
-      const apiUrl = process.env["EXPO_PUBLIC_API_URL"] ?? "";
+      const apiUrl = (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "");
 
       const form = new FormData();
       form.append("file", { uri: fotoUri, name: "evidencia.jpg", type: "image/jpeg" } as never);

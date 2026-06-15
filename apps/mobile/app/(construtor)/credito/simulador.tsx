@@ -19,7 +19,7 @@ function simular(valor: number, taxa: number, prazo: number) {
   const parcelaMensal = valor * (taxa === 0 ? 1 / prazo : taxa * fator);
   const totalPago = parcelaMensal * prazo;
   const totalJuros = totalPago - valor;
-  const cet = (Math.pow(totalPago / valor, 12 / prazo) - 1) * 100;
+  const cet = taxa === 0 ? 0 : (Math.pow(1 + taxa, 12) - 1) * 100;
   return { parcelaMensal, totalPago, totalJuros, cet };
 }
 

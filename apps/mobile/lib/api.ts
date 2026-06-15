@@ -27,7 +27,8 @@ async function request<T>(
     throw new ApiError(res.status, body.message ?? res.statusText, body.code);
   }
   if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 let _onUnauthorized: (() => void) | null = null;
@@ -61,15 +62,14 @@ export const authApi = {
   registrar: (body: Record<string, unknown>) =>
     request<AuthResponse>("/api/v1/auth/registrar", { method: "POST", body: JSON.stringify(body) }),
 
-  logout: (refreshToken: string) =>
-    callApi(async () => {
-      const token = await getToken();
-      return request<void>("/api/v1/auth/logout", {
-        method: "POST",
-        body: JSON.stringify({ refreshToken }),
-        token: token ?? undefined,
-      });
-    }),
+  logout: async (refreshToken: string) => {
+    const token = await getToken();
+    return request<void>("/api/v1/auth/logout", {
+      method: "POST",
+      body: JSON.stringify({ refreshToken }),
+      token: token ?? undefined,
+    });
+  },
 };
 
 export const usuariosApi = {

@@ -206,7 +206,7 @@ export default function UsuariosScreen() {
             </View>
 
             <View style={styles.modalAcoes}>
-              <TouchableOpacity style={styles.modalCancelar} onPress={() => setModalCriar(false)} disabled={salvando}>
+              <TouchableOpacity style={styles.modalCancelar} onPress={() => { setModalCriar(false); setNovo({ nome: "", email: "", senha: "", tipo: "TOMADOR" }); }} disabled={salvando}>
                 <Text style={styles.modalCancelarText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.modalConfirmar, salvando && { opacity: 0.5 }]} onPress={criarUsuario} disabled={salvando}>
