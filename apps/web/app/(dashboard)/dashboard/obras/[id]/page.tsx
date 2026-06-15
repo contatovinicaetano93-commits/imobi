@@ -276,9 +276,7 @@ function TabGeralContent({
   role: string | null;
 }) {
   const etapas = obra.etapas ?? [];
-  const concluidas = etapas.filter(
-    (e) => e.status === "CONCLUIDA" || e.status === "APROVADA"
-  ).length;
+  const concluidas = etapas.filter((e) => e.status === "CONCLUIDA").length;
   const obraId = obra.obraId ?? obra.id ?? "";
 
   const openMaps = () => {
@@ -1701,7 +1699,7 @@ function TabFinanceiroContent({
     0
   );
   const totalLiberado = etapas
-    .filter((e) => e.status === "CONCLUIDA" || e.status === "APROVADA")
+    .filter((e) => e.status === "CONCLUIDA")
     .reduce((s, e) => s + Number(e.valorLiberacao), 0);
   const ltv = credito
     ? (Number(credito.valorLiberado) / Number(credito.valorAprovado)) * 100
@@ -1767,7 +1765,7 @@ function TabFinanceiroContent({
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {etapas.map((e) => {
-                const done = e.status === "CONCLUIDA" || e.status === "APROVADA";
+                const done = e.status === "CONCLUIDA";
                 return (
                   <div
                     key={e.etapaId ?? e.id}
@@ -2004,7 +2002,7 @@ function TabFinanceiroContent({
                         style={{
                           borderTop: i > 0 ? "1px solid #F3F4F6" : "none",
                           background:
-                            e.status === "CONCLUIDA" || e.status === "APROVADA"
+                            e.status === "CONCLUIDA"
                               ? "#F0FDF4"
                               : "white",
                         }}
@@ -2047,7 +2045,7 @@ function TabFinanceiroContent({
                             fontSize: 13,
                             fontWeight: 700,
                             color:
-                              e.status === "CONCLUIDA" || e.status === "APROVADA"
+                              e.status === "CONCLUIDA"
                                 ? "#16a34a"
                                 : NAVY,
                             ...j,

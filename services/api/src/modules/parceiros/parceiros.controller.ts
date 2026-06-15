@@ -21,7 +21,7 @@ interface AdicionarMailingDto {
 }
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('COMERCIAL', 'ADMIN')
+@Roles('COMERCIAL', 'PARCEIRO', 'ADMIN')
 @Controller('parceiros')
 export class ParceirosController {
   constructor(private readonly parceirosService: ParceirosService) {}

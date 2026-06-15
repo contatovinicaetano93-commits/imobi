@@ -161,6 +161,8 @@ export class EngenheirosService {
       include: {
         evidencias: {
           select: { evidenciaId: true, fotoUrl: true, validada: true, criadoEm: true },
+          orderBy: { criadoEm: "desc" as const },
+          take: 10,
         },
       },
     });
