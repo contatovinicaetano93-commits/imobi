@@ -39,12 +39,14 @@ export default function RootLayout() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === "(auth)";
+    const inAuthGroup  = segments[0] === "(auth)";
+    const inTabsGroup  = segments[0] === "(tabs)";
+    const onWelcome    = segments.length === 0;
 
-    if (!isSignedIn && !inAuthGroup) {
-      router.replace("/(auth)/login");
-    } else if (isSignedIn && inAuthGroup) {
+    if (isSignedIn && (inAuthGroup || onWelcome)) {
       router.replace("/(tabs)/obras");
+    } else if (!isSignedIn && inTabsGroup) {
+      router.replace("/");
     }
   }, [isSignedIn, isLoading, segments]);
 
@@ -62,6 +64,13 @@ export default function RootLayout() {
         headerShown: false,
       }}
     >
+      <Stack.Screen
+        name="index"
+        options={{
+          gestureEnabled: false,
+          animation: "none",
+        }}
+      />
       <Stack.Screen
         name="(auth)"
         options={{
