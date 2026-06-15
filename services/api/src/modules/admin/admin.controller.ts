@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Query, Body, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, HttpCode } from "@nestjs/common";
 import { AdminService, CriarUsuarioAdminDto } from "./admin.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -50,5 +50,14 @@ export class AdminController {
     @UsuarioAtual() admin: UsuarioAtual,
   ) {
     return this.adminService.atualizarUsuario(id, body, admin.id);
+  }
+
+  @Delete("usuarios/:id")
+  @HttpCode(200)
+  excluirUsuario(
+    @Param("id") id: string,
+    @UsuarioAtual() admin: UsuarioAtual,
+  ) {
+    return this.adminService.excluirUsuario(id, admin.id);
   }
 }

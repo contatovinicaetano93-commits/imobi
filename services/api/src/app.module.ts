@@ -31,7 +31,8 @@ import { DueDiligenceModule } from "./modules/due-diligence/due-diligence.module
 import { DocumentosModule } from "./modules/documentos/documentos.module";
 import { ComiteModule } from "./modules/comite/comite.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
-import { ExcluirUsuarioWorker } from "./workers/excluir-usuario.worker";
+import { ExcluirUsuarioWorker, QUEUE_EXCLUIR_USUARIO } from "./workers/excluir-usuario.worker";
+import { QUEUE_LIBERACAO } from "./common/constants";
 import { HealthController } from "./common/health.controller";
 import { getRedisConfig } from "./common/config";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
@@ -60,6 +61,8 @@ const redisConfig = getRedisConfig();
         };
       },
     }),
+    BullModule.registerQueue({ name: QUEUE_LIBERACAO }),
+    BullModule.registerQueue({ name: QUEUE_EXCLUIR_USUARIO }),
     BullModule.forRoot({
       redis: {
         host: redisConfig.host,

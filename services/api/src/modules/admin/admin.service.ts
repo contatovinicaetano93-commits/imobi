@@ -213,7 +213,7 @@ export class AdminService {
 
   async criarUsuario(dto: CriarUsuarioAdminDto) {
     const existe = await this.prisma.usuario.findUnique({ where: { email: dto.email } });
-    if (existe) throw new ConflictException("E-mail já cadastrado");
+    if (existe && !existe.deletadoEm) throw new ConflictException("E-mail já cadastrado");
     const passwordHash = await bcrypt.hash(dto.senha, 10);
     const { usuarioId, ...rest } = await this.prisma.usuario.create({
       data: {
@@ -240,5 +240,24 @@ export class AdminService {
       },
     });
     return { id: usuarioId, ...rest };
+  }
+
+  async excluirUsuario(id: string, adminId: string) {
+    if (id === adminId) throw new BadRequestException("Não é possível excluir a própria conta.");
+    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId: id } });
+    if (!usuario || usuario.deletadoEm) throw new NotFoundException("Usuário não encontrado.");
+
+    await this.prisma.$transaction([
+      this.prisma.sessaoToken.updateMany({
+        where: { usuarioId: id, revogadoEm: null },
+        data: { revogadoEm: new Date() },
+      }),
+      this.prisma.usuario.update({
+        where: { usuarioId: id },
+        data: { deletadoEm: new Date() },
+      }),
+    ]);
+
+    return { ok: true };
   }
 }

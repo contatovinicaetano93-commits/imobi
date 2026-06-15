@@ -75,6 +75,7 @@ enum UsuarioTipo {
   ADMIN
   PARCEIRO
   GESTOR
+  GESTOR_FUNDO
   ENGENHEIRO
   COMERCIAL
   CONSTRUTOR
@@ -332,6 +333,8 @@ enum TipoNotificacao {
   OBRA_CRIADA
   SCORE_ATUALIZADO
   VISTORIA_PENDENTE
+  PARECER_SOLICITADO
+  COMITE_DECISAO
 }
 
 // ── Auditoria de Etapas ───────────────────────────────────────────────

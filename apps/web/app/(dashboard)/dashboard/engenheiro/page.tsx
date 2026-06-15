@@ -83,8 +83,8 @@ export default async function EngenheiroPortalPage() {
       <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-2">
         {[
           { label: "Obras ativas",            value: String(financeiro.length),           color: "#ea580c" },
-          { label: "Vistorias agendadas",       value: String(visitas.filter((v: Visita) => v.status === "AGENDADA").length), color: "#d97706" },
-          { label: "Visitas agendadas",        value: String(agendadas.length),            color: "#b45309" },
+          { label: "Vistorias agendadas",       value: String(agendadas.length), color: "#d97706" },
+          { label: "Licenças em atenção",      value: String(licencasAtencao),  color: "#b45309" },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
             <p className="text-2xl font-bold tabular-nums" style={{ color }}>{value}</p>

@@ -10,8 +10,9 @@ import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
+import type { EtapaStatus } from "@prisma/client";
 
-const STATUSES_VISTORIAVEL = ["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA"];
+const STATUSES_VISTORIAVEL: EtapaStatus[] = ["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA"];
 
 @Injectable()
 export class VistoriaService {
@@ -31,8 +32,8 @@ export class VistoriaService {
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
     const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: { in: STATUSES_VISTORIAVEL as any } },
-      data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
+      where: { etapaId, status: { in: STATUSES_VISTORIAVEL } },
+      data: { status: "CONCLUIDA" as EtapaStatus, dataConclusaoReal: new Date() },
     });
     if (updated.count === 0) {
       throw new BadRequestException("Etapa não pode ser aprovada no status atual.");
@@ -98,8 +99,8 @@ export class VistoriaService {
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
     const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: { in: STATUSES_VISTORIAVEL as any } },
-      data: { status: "REPROVADA" },
+      where: { etapaId, status: { in: STATUSES_VISTORIAVEL } },
+      data: { status: "REPROVADA" as EtapaStatus },
     });
     if (updated.count === 0) {
       throw new BadRequestException("Etapa não pode ser rejeitada no status atual.");

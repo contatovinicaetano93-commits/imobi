@@ -80,7 +80,7 @@ export const FuncaoPainelEnum = z.enum(FUNCOES_PAINEL);
 
 export const AtualizarUsuarioAdminSchema = z.object({
   tipo: z
-    .enum(["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"])
+    .enum(["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"])
     .optional(),
   bloqueado: z.boolean().optional(),
   funcoesBloqueadas: z.array(FuncaoPainelEnum).optional(),

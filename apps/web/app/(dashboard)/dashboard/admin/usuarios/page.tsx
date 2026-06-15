@@ -28,12 +28,13 @@ type UsuarioAdmin = {
 };
 
 const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; icon: LucideIcon }> = {
-  ADMIN:      { label: "Admin",      color: NAVY,    bg: "rgba(12,26,61,0.07)",  icon: Shield },
-  GESTOR:     { label: "Gestor",     color: ROYAL,   bg: "rgba(27,79,216,0.08)", icon: Shield },
-  ENGENHEIRO: { label: "Engenheiro", color: "#0369a1", bg: "#f0f9ff", icon: Wrench },
-  TOMADOR:    { label: "Tomador",    color: "#16a34a", bg: "#f0fdf4", icon: Building2 },
-  COMERCIAL:  { label: "Comercial",  color: "#d97706", bg: "#fffbeb", icon: User },
-  CONSTRUTOR: { label: "Construtor", color: "#0891b2", bg: "#ecfeff", icon: Building2 },
+  ADMIN:        { label: "Admin",         color: NAVY,      bg: "rgba(12,26,61,0.07)",  icon: Shield },
+  GESTOR:       { label: "Gestor",        color: ROYAL,     bg: "rgba(27,79,216,0.08)", icon: Shield },
+  GESTOR_FUNDO: { label: "Gestor Fundo",  color: "#7c3aed", bg: "#f5f3ff",              icon: Shield },
+  ENGENHEIRO:   { label: "Engenheiro",    color: "#0369a1", bg: "#f0f9ff",              icon: Wrench },
+  TOMADOR:      { label: "Tomador",       color: "#16a34a", bg: "#f0fdf4",              icon: Building2 },
+  COMERCIAL:    { label: "Comercial",     color: "#d97706", bg: "#fffbeb",              icon: User },
+  CONSTRUTOR:   { label: "Construtor",    color: "#0891b2", bg: "#ecfeff",              icon: Building2 },
 };
 
 const KYC_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -274,7 +275,7 @@ export default function UsuariosAdminPage() {
               <div>
                 <label style={{ ...jost, display: "block", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(12,26,61,0.45)", marginBottom: 6 }}>Perfil</label>
                 <select className={inp} style={{ fontFamily: "'Jost', sans-serif" }} value={form.tipo} onChange={(e) => setForm((f) => ({ ...f, tipo: e.target.value }))}>
-                  {["ADMIN", "GESTOR", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR", "TOMADOR"].map((t) => (
+                  {["ADMIN", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR", "TOMADOR"].map((t) => (
                     <option key={t} value={t}>{TIPO_CONFIG[t]?.label ?? t}</option>
                   ))}
                 </select>
@@ -307,7 +308,7 @@ export default function UsuariosAdminPage() {
           />
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {["TODOS", "ADMIN", "GESTOR", "ENGENHEIRO", "TOMADOR", "COMERCIAL", "CONSTRUTOR"].map((t) => (
+          {["TODOS", "ADMIN", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "TOMADOR", "COMERCIAL", "CONSTRUTOR"].map((t) => (
             <button
               key={t}
               onClick={() => setFiltroTipo(t)}

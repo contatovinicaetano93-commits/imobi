@@ -39,12 +39,8 @@ export default function CadastroPage() {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error((json as { message?: string }).message ?? "Erro ao criar conta.");
-      await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(json),
-      });
-      router.push("/dashboard");
+      // Cookies are already set by the registrar proxy route
+      router.push("/dashboard/kyc?bem-vindo=1");
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro inesperado.");
     }

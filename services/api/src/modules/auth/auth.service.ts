@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Logger } from "@nestjs/common";
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import * as crypto from "crypto";
@@ -8,8 +8,6 @@ import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
@@ -57,6 +55,7 @@ export class AuthService {
   }
 
   async renovarToken(refreshToken: string) {
+    if (!refreshToken) throw new UnauthorizedException("Token de atualização não fornecido.");
     const sessao = await this.prisma.sessaoToken.findUnique({
       where: { refreshToken },
     });
@@ -149,17 +148,13 @@ export class AuthService {
     );
     const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
 
-    try {
-      await this.prisma.sessaoToken.create({
-        data: {
-          usuarioId,
-          refreshToken,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        },
-      });
-    } catch (e) {
-      this.logger.error(`Failed to persist session token for user ${usuarioId}: ${e}`);
-    }
+    await this.prisma.sessaoToken.create({
+      data: {
+        usuarioId,
+        refreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
 
     return { accessToken, refreshToken };
   }

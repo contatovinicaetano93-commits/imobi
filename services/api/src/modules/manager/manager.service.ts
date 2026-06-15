@@ -69,9 +69,10 @@ export class ManagerService {
     // Status filter
     if (filters?.status && filters.status !== "todas") {
       where.status = ETAPA_STATUS_MAP[filters.status] || "AGUARDANDO_VISTORIA";
-    } else {
+    } else if (!filters?.status) {
       where.status = "AGUARDANDO_VISTORIA";
     }
+    // filters.status === "todas" → no status filter (return all statuses)
 
     // Date range filter
     if (filters?.dataInicio || filters?.dataFim) {

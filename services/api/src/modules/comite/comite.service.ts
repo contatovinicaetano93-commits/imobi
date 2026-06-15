@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import type { VotoDecisao, SolicitacaoStatus } from "@prisma/client";
+import type { VotoDecisao, SolicitacaoStatus, ComiteStatus } from "@prisma/client";
 
 @Injectable()
 export class ComiteService {
@@ -176,13 +176,16 @@ export class ComiteService {
 
   async listarComites(filtroStatus?: string) {
     return this.prisma.comiteDigital.findMany({
-      where: filtroStatus ? { status: filtroStatus as any } : undefined,
+      where: filtroStatus ? { status: filtroStatus as ComiteStatus } : undefined,
       orderBy: { criadoEm: "desc" },
       include: {
         solicitacao: {
           include: { usuario: { select: { nome: true, email: true } } },
         },
-        votos: true,
+        votos: {
+          include: { votante: { select: { nome: true, tipo: true } } },
+          orderBy: { criadoEm: "asc" },
+        },
       },
     });
   }

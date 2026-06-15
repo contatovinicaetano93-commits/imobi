@@ -15,7 +15,7 @@ export class ObrasService {
           Prisma.sql`SELECT ST_IsValid(ST_SetSRID(ST_MakePoint(${input.geo.longitude}, ${input.geo.latitude}), 4326)) AS valid`
         );
         if (!gpsValidation[0]?.valid) {
-          throw new BadRequestException("GPS inválido");
+          throw new BadRequestException('GPS inválido');
         }
       }
 

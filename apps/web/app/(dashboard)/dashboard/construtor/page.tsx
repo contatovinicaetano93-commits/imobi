@@ -23,7 +23,7 @@ const MINT  = "#4ADE80";
 
 function calcParcela(principal: number, taxaMensal: number, prazoMeses: number): number {
   if (!principal || !taxaMensal || !prazoMeses) return 0;
-  const r = taxaMensal / 100;
+  const r = taxaMensal; // already a decimal fraction (e.g. 0.0099 = 0.99% a.m.)
   return principal * (r * Math.pow(1 + r, prazoMeses)) / (Math.pow(1 + r, prazoMeses) - 1);
 }
 

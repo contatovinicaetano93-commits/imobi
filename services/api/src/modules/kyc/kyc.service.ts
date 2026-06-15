@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
@@ -68,6 +68,7 @@ export class KycService {
       include: { usuario: true },
     });
     if (!documento) throw new NotFoundException("Documento não encontrado");
+    if (documento.usuarioId === gestorId) throw new ForbiddenException("Não é permitido aprovar o próprio documento.");
 
     const atualizado = await this.prisma.kycDocumento.update({
       where: { kycDocumentoId },
@@ -124,6 +125,7 @@ export class KycService {
       include: { usuario: true },
     });
     if (!documento) throw new NotFoundException("Documento não encontrado");
+    if (documento.usuarioId === gestorId) throw new ForbiddenException("Não é permitido rejeitar o próprio documento.");
 
     if (!motivo || motivo.trim().length === 0) {
       throw new BadRequestException("Motivo da rejeição é obrigatório");

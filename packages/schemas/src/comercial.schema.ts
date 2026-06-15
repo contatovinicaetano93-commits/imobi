@@ -59,15 +59,15 @@ export const LeadActivitySchema = z.object({
 export const ConversionScoreSchema = z.object({
   scoreId: z.string().uuid(),
   leadId: z.string().uuid(),
-  scoreFinal: z.number().int().min(0).max(100),
+  scoreFinal: z.number().min(0).max(100),
   probabilidadeClosing: z.number().min(0).max(1),
-  dataEstimadaClosing: z.date(),
-  fonteScore: z.number().int().min(0).max(100),
-  tipoObraScore: z.number().int().min(0).max(100),
-  segmentoScore: z.number().int().min(0).max(100),
-  engajamentoScore: z.number().int().min(0).max(100),
-  historicoScore: z.number().int().min(0).max(100),
-  criadoEm: z.date(),
+  dataEstimadaClosing: z.string(),
+  fonteScore: z.number().min(0).max(100),
+  tipoObraScore: z.number().min(0).max(100),
+  segmentoScore: z.number().min(0).max(100),
+  engajamentoScore: z.number().min(0).max(100),
+  historicoScore: z.number().min(0).max(100),
+  criadoEm: z.string(),
 });
 
 export const LeadSchema = z.object({

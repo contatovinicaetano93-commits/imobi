@@ -75,17 +75,34 @@ export default function LandingPage() {
       const res  = await fetch("/api/proxy/auth/registrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: cadNome, cpf: cadCpf.replace(/\D/g,""), email: cadEmail, telefone: cadTelefone.replace(/\D/g,""), senha: cadSenha, tipo: "TOMADOR", consentidoTermos: cadTermos, consentidoPrivacy: cadPrivacy, consentidoKyc: cadKyc, consentidoMarketing: false }) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.message ?? "Erro ao criar conta.");
-      router.push("/dashboard");
+      router.push("/dashboard/kyc?bem-vindo=1");
     } catch (err) { setCadErro(err instanceof Error ? err.message : "Erro inesperado."); }
     finally { setCadLoading(false); }
   }
 
   function scrollTo(id: string) { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); }
 
-  function submitToWhatsApp() {
+  async function submitToWhatsApp() {
     const g = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)?.value?.trim() ?? "";
     const nome = g("f-nome"), cargo = g("f-cargo"), empresa = g("f-empresa"), tel = g("f-tel"), email = g("f-email"), modalidade = g("f-modalidade"), volume = g("f-volume"), obs = g("f-obs");
-    if (!nome || !empresa || !tel) { alert("Por favor, preencha nome, empresa e WhatsApp."); return; }
+    if (!nome || !tel) { alert("Por favor, preencha nome e WhatsApp."); return; }
+
+    // Salva no CRM silenciosamente — não bloqueia a abertura do WhatsApp
+    fetch("/api/proxy/leads/captura", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clienteNome: nome,
+        clienteEmail: email || `sem-email-${Date.now()}@captura.imobi`,
+        clienteTelefone: tel,
+        empresa,
+        cargo,
+        modalidade,
+        volume,
+        observacoes: obs,
+      }),
+    }).catch(() => { /* falha silenciosa — WA ainda abre */ });
+
     const msg = `Olá! Vim pelo site da IMOBI e gostaria de solicitar uma análise de crédito.\n\n*Nome:* ${nome}${cargo ? " · "+cargo : ""}\n*Empresa:* ${empresa}\n*WhatsApp:* ${tel}${email ? "\n*E-mail:* "+email : ""}\n*Modalidade:* ${modalidade||"Não informada"}\n*Volume estimado:* ${volume||"Não informado"}${obs ? "\n*Projeto:* "+obs : ""}`;
     window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, "_blank");
   }
@@ -200,53 +217,21 @@ export default function LandingPage() {
               <button className="btn-hero-primary" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
               <button className="btn-hero-ghost"   onClick={() => scrollTo("como")}>Ver o processo →</button>
             </div>
-          </div>
-
-          {/* HERO CARD */}
-          <div className="hero-card">
-            <div className="hc-top">
-              <div className="hc-live-wrap">
-                <span className="hc-live-dot" />
-                <span className="hc-live-label">Operação ativa</span>
+            <div className="hero-strip">
+              <div className="hero-strip-item">
+                <span className="hero-strip-val">15–30</span>
+                <span className="hero-strip-lbl">dias p/ aprovação</span>
               </div>
-              <span className="hc-op-id">OP-2026-047</span>
-            </div>
-
-            <div className="hc-project">
-              <p className="hc-proj-name">Residencial Jardins</p>
-              <p className="hc-proj-sub">São Paulo, SP · Crédito de Obra</p>
-            </div>
-
-            <p className="hc-amount">R$6,4M</p>
-
-            <div className="hc-milestones">
-              {([
-                { label: "Análise recebida", date: "18 mai", done: true,  active: false },
-                { label: "Proposta enviada", date: "22 mai", done: true,  active: false },
-                { label: "Aprovação",        date: "30 mai", done: true,  active: false },
-                { label: "Capital liberado", date: "03 jun", done: false, active: true  },
-              ] as { label: string; date: string; done: boolean; active: boolean }[]).map((m) => (
-                <div className={`hc-ms${m.done ? " done" : ""}${m.active ? " active" : ""}`} key={m.label}>
-                  <span className="hc-ms-dot" />
-                  <span className="hc-ms-label">{m.label}</span>
-                  <span className="hc-ms-date">{m.date}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="hc-prog">
-              <div className="hc-prog-header">
-                <span className="hc-prog-label">Avanço físico da obra</span>
-                <span className="hc-prog-pct">68%</span>
+              <span className="hero-strip-div" aria-hidden="true" />
+              <div className="hero-strip-item">
+                <span className="hero-strip-val">R$1M+</span>
+                <span className="hero-strip-lbl">volume mínimo</span>
               </div>
-              <div className="hc-prog-track">
-                <div className="hc-prog-fill" />
+              <span className="hero-strip-div" aria-hidden="true" />
+              <div className="hero-strip-item">
+                <span className="hero-strip-val">100%</span>
+                <span className="hero-strip-lbl">digital</span>
               </div>
-            </div>
-
-            <div className="hc-footer">
-              <span className="hc-footer-note">Próxima vistoria · 20 jun 2026</span>
-              <span className="hc-on-track">✓ No prazo</span>
             </div>
           </div>
         </div>

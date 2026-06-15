@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import type { EtapaStatus } from "@prisma/client";
 
 export interface ObraFinanceiro {
   obraId: string;
@@ -97,7 +98,7 @@ export class EngenheirosService {
 
     await this.prisma.etapaObra.update({
       where: { etapaId: visitaId },
-      data: { ...(newStatus ? { status: newStatus as any } : {}) },
+      data: { ...(newStatus ? { status: newStatus as EtapaStatus } : {}) },
     });
 
     return this.obterVisita(visitaId);
