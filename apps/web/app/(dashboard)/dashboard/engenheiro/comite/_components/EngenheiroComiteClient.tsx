@@ -191,7 +191,7 @@ export function EngenheiroComiteClient({ comites: initial }: { comites: ComiteIt
     try {
       const updated = await comiteApi.listar();
       setComites(updated as ComiteItem[]);
-    } catch {}
+    } catch { /* no-op */ }
     setRefreshing(false);
   }
 

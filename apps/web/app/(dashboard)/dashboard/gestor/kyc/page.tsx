@@ -292,7 +292,6 @@ function PreviewModal({
           </button>
         </div>
         <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-gray-50">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={doc.url}
             alt={`Documento ${getTipoLabel(doc.tipo)} de ${doc.usuario.nome}`}

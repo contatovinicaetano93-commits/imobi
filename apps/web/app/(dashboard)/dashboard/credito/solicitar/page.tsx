@@ -55,7 +55,6 @@ function SolicitarForm() {
   useEffect(() => {
     const t = setTimeout(() => runSimulacao(), 500);
     return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [valor, prazo]);
 
   async function runSimulacao() {

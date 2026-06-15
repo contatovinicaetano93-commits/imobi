@@ -30,5 +30,10 @@
     "apps/*",
     "packages/*",
     "services/*"
-  ]
+  ],
+  "pnpm": {
+    "overrides": {
+      "fastify": "4.29.1"
+    }
+  }
 }

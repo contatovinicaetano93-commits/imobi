@@ -215,7 +215,6 @@ export function DocumentTabViewer({ documentos, onUpload, altura = 500 }: Props)
           />
         ) : activeDoc.mimeType.startsWith("image/") ? (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", height: altura, background: "rgba(12,26,61,0.02)" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={activeDoc.url}
               alt={activeDoc.nome}
