@@ -271,7 +271,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
 
   describe("Token Refresh", () => {
     let testEmail: string;
-    let testPassword = "Senha@123";
+    const testPassword = "Senha@123";
     let refreshToken: string;
 
     beforeAll(async () => {
@@ -332,7 +332,7 @@ describe("Auth E2E - Comprehensive Suite", () => {
 
   describe("Logout", () => {
     let testEmail: string;
-    let testPassword = "Senha@123";
+    const testPassword = "Senha@123";
     let refreshToken: string;
 
     beforeAll(async () => {
