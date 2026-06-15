@@ -62,6 +62,13 @@ export class AuthService {
     if (!sessao || sessao.revogadoEm || sessao.expiresAt < new Date()) {
       throw new UnauthorizedException("Sessão inválida ou expirada.");
     }
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { usuarioId: sessao.usuarioId },
+      select: { bloqueadoEm: true },
+    });
+    if (!usuario || usuario.bloqueadoEm) {
+      throw new UnauthorizedException("Conta bloqueada pelo administrador. Entre em contato com o suporte.");
+    }
     await this.prisma.sessaoToken.update({
       where: { sessionId: sessao.sessionId },
       data: { revogadoEm: new Date() },

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 
 const PUBLIC_PATHS = [
   "/",
@@ -29,18 +30,20 @@ const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: "/dashboard/comite",     roles: ["CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
 ];
 
-function decodeJwt(token: string): { role?: string; exp?: number } | null {
+async function verifyJwt(
+  token: string,
+  secret: string,
+): Promise<{ role?: string; exp?: number } | null> {
   try {
-    const payload = token.split(".")[1];
-    if (!payload) return null;
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(atob(base64));
+    const key = new TextEncoder().encode(secret);
+    const { payload } = await jwtVerify(token, key);
+    return payload as { role?: string; exp?: number };
   } catch {
     return null;
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
@@ -61,7 +64,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const jwt = decodeJwt(token);
+  const secret = process.env["JWT_SECRET"] ?? "";
+  const jwt = await verifyJwt(token, secret);
+
   if (!jwt || (jwt.exp && jwt.exp < Math.floor(Date.now() / 1000))) {
     if (refreshToken) {
       const refreshUrl = new URL("/api/proxy/auth/refresh-redirect", request.url);
@@ -73,7 +78,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const role = jwt.role ?? null;
+  const role = (jwt as Record<string, unknown>).role as string ?? null;
 
   // Role-gated routes: wrong role → back to their own dashboard root
   const rule = ROLE_RULES.find((r) => pathname === r.prefix || pathname.startsWith(r.prefix + "/"));
