@@ -7,9 +7,48 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
-import { useGeoValidation } from "@imbobi/core/hooks";
 
 type GeoStatus = "idle" | "checking" | "inside_radius" | "outside_radius" | "poor_accuracy" | "permission_denied" | "unavailable";
+
+function calcDistancia(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function useGeoValidation(alvo: { latitude: number; longitude: number }, raio: number, getPosition: () => Promise<{ latitude: number; longitude: number; accuracy: number }>) {
+  const [status, setStatus] = useState<GeoStatus>("idle");
+  const [distanciaMetros, setDistancia] = useState<number | null>(null);
+  const [accuracyMetros, setAccuracy] = useState<number | null>(null);
+  const [coordenadasAtuais, setCoordenadas] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [mensagem, setMensagem] = useState("Aguardando verificação de localização.");
+
+  const validar = useCallback(async () => {
+    setStatus("checking"); setMensagem("Verificando sua localização...");
+    try {
+      const pos = await getPosition();
+      if (pos.accuracy > 15) {
+        setStatus("poor_accuracy"); setAccuracy(pos.accuracy); setCoordenadas(pos);
+        setMensagem("Sinal GPS fraco. Aguarde um momento e tente novamente.");
+        return false;
+      }
+      const dist = calcDistancia(pos.latitude, pos.longitude, alvo.latitude, alvo.longitude);
+      const dentro = dist <= raio;
+      setDistancia(dist); setAccuracy(pos.accuracy); setCoordenadas(pos);
+      setStatus(dentro ? "inside_radius" : "outside_radius");
+      setMensagem(dentro ? "Localização confirmada. Você está na obra!" : `Você está fora da área da obra. Distância: ${Math.round(dist)}m`);
+      return dentro;
+    } catch (err) {
+      const s = err instanceof Error && err.message.includes("denied") ? "permission_denied" : "unavailable";
+      setStatus(s); setMensagem(s === "permission_denied" ? "Permissão de localização negada." : "GPS indisponível neste dispositivo.");
+      return false;
+    }
+  }, [alvo.latitude, alvo.longitude, raio, getPosition]);
+
+  return { status, distanciaMetros, accuracyMetros, coordenadasAtuais, mensagem, validar };
+}
 
 const STATUS_META: Record<GeoStatus, { emoji: string; bg: string; text: string }> = {
   idle:             { emoji: "📍", bg: "#f3f4f6", text: "#374151" },

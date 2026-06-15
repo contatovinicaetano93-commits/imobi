@@ -1,14 +1,37 @@
+import { useState, useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useSimuladorCredito } from "@imbobi/core/hooks";
-import { formatarBRL, formatarPercentual } from "@imbobi/core";
 import Slider from "@react-native-community/slider";
+
+const TAXA_MENSAL = 0.0099;
+
+function formatarBRL(valor: number): string {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor);
+}
+
+function formatarPercentual(valor: number, casas = 1): string {
+  return `${valor.toFixed(casas)}%`;
+}
+
+function simular(valor: number, taxa: number, prazo: number) {
+  const fator = taxa === 0 ? 1 / prazo : (Math.pow(1 + taxa, prazo) / (Math.pow(1 + taxa, prazo) - 1));
+  const parcelaMensal = valor * (taxa === 0 ? 1 / prazo : taxa * fator);
+  const totalPago = parcelaMensal * prazo;
+  const totalJuros = totalPago - valor;
+  const cet = (Math.pow(totalPago / valor, 12 / prazo) - 1) * 100;
+  return { parcelaMensal, totalPago, totalJuros, cet };
+}
 
 export default function SimuladorScreen() {
   const router = useRouter();
-  const { valorSolicitado, setValorSolicitado, prazoMeses, setPrazoMeses, resultado } =
-    useSimuladorCredito();
+  const [valorSolicitado, setValorSolicitado] = useState(150_000);
+  const [prazoMeses, setPrazoMeses] = useState(60);
+
+  const resultado = useMemo(
+    () => simular(valorSolicitado, TAXA_MENSAL, prazoMeses),
+    [valorSolicitado, prazoMeses]
+  );
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
