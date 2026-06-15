@@ -3,7 +3,7 @@ import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity }
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { creditoApi, type CreditoExtrato } from "../../../../lib/api";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "../../../../lib/api";
 
 const STATUS_CONFIG: Record<string, { label: string; cor: string; icon: keyof typeof Ionicons.glyphMap }> = {
   LIBERADO:     { label: "Liberado",  cor: "#16a34a", icon: "checkmark-circle" },

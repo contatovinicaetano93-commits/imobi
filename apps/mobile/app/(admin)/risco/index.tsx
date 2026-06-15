@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
 import { adminApi, type RiscoData } from "../../../lib/api";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "../../../lib/api";
 
 const STATUS_COR: Record<string, string> = {
   ATIVO: "#2563eb",

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
 import { engenheiroApi, type ObraEngenheiro } from "../../../lib/api";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "../../../lib/api";
 
 function MetricCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (

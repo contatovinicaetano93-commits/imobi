@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "../../../../lib/api";
 import { obrasApi, type ObraDetalhe } from "../../../../lib/api";
 
 const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
@@ -89,7 +89,7 @@ export default function ObraDetailScreen() {
                 <TouchableOpacity
                   style={styles.enviarBtn}
                   onPress={() => router.push({
-                    pathname: `/(tabs)/obras/${obra.obraId}/registrar`,
+                    pathname: `/(construtor)/obras/${obra.obraId}/registrar`,
                     params: {
                       etapaId: etapa.etapaId,
                       etapaNome: etapa.nome,

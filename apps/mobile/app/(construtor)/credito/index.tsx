@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { creditoApi, type Credito } from "../../../lib/api";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "../../../lib/api";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDENTE: "Pendente",

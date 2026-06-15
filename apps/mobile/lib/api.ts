@@ -1,5 +1,34 @@
 import * as SecureStore from "expo-secure-store";
-import { apiClient, ApiError } from "@imbobi/core";
+
+const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "");
+
+export function formatarBRL(valor: number): string {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor);
+}
+
+export class ApiError extends Error {
+  constructor(public status: number, message: string, public code?: string) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit & { token?: string } = {}
+): Promise<T> {
+  const { token, ...init } = options;
+  const headers = new Headers(init.headers);
+  headers.set("Content-Type", "application/json");
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { message?: string; code?: string };
+    throw new ApiError(res.status, body.message ?? res.statusText, body.code);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
 
 let _onUnauthorized: (() => void) | null = null;
 
@@ -23,13 +52,31 @@ async function callApi<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
-export { ApiError };
+type AuthResponse = { accessToken: string; refreshToken: string; usuario: { tipo: string } };
+
+export const authApi = {
+  login: (body: { email: string; senha: string }) =>
+    request<AuthResponse>("/api/v1/auth/login", { method: "POST", body: JSON.stringify(body) }),
+
+  registrar: (body: Record<string, unknown>) =>
+    request<AuthResponse>("/api/v1/auth/registrar", { method: "POST", body: JSON.stringify(body) }),
+
+  logout: (refreshToken: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return request<void>("/api/v1/auth/logout", {
+        method: "POST",
+        body: JSON.stringify({ refreshToken }),
+        token: token ?? undefined,
+      });
+    }),
+};
 
 export const usuariosApi = {
   obterPerfil: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<UsuarioPerfil>("/api/v1/usuarios/me", token ?? undefined);
+      return request<UsuarioPerfil>("/api/v1/usuarios/me", { method: "GET", token: token ?? undefined });
     }),
 };
 
@@ -37,17 +84,17 @@ export const obrasApi = {
   listar: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<Obra[]>("/api/v1/obras", token ?? undefined);
+      return request<Obra[]>("/api/v1/obras", { method: "GET", token: token ?? undefined });
     }),
   buscar: (obraId: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<ObraDetalhe>(`/api/v1/obras/${obraId}`, token ?? undefined);
+      return request<ObraDetalhe>(`/api/v1/obras/${obraId}`, { method: "GET", token: token ?? undefined });
     }),
   progresso: (obraId: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<number>(`/api/v1/obras/${obraId}/progresso`, token ?? undefined);
+      return request<number>(`/api/v1/obras/${obraId}/progresso`, { method: "GET", token: token ?? undefined });
     }),
 };
 
@@ -55,12 +102,12 @@ export const creditoApi = {
   meus: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<Credito[]>("/api/v1/credito/meus", token ?? undefined);
+      return request<Credito[]>("/api/v1/credito/meus", { method: "GET", token: token ?? undefined });
     }),
   extrato: (id: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<CreditoExtrato>(`/api/v1/credito/${id}/extrato`, token ?? undefined);
+      return request<CreditoExtrato>(`/api/v1/credito/${id}/extrato`, { method: "GET", token: token ?? undefined });
     }),
 };
 
@@ -68,15 +115,7 @@ export const scoreApi = {
   obter: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<ScoreData>("/api/v1/score", token ?? undefined);
-    }),
-};
-
-export const authApi = {
-  logout: (refreshToken: string) =>
-    callApi(async () => {
-      const token = await getToken();
-      return apiClient.post("/api/v1/auth/logout", { refreshToken }, token ?? undefined);
+      return request<ScoreData>("/api/v1/score", { method: "GET", token: token ?? undefined });
     }),
 };
 
@@ -84,12 +123,12 @@ export const parceiroApi = {
   resumo: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<ParceiroResumo>("/api/v1/parceiros/resumo", token ?? undefined);
+      return request<ParceiroResumo>("/api/v1/parceiros/resumo", { method: "GET", token: token ?? undefined });
     }),
   operacoes: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<OperacaoIndicada[]>("/api/v1/parceiros/operacoes", token ?? undefined);
+      return request<OperacaoIndicada[]>("/api/v1/parceiros/operacoes", { method: "GET", token: token ?? undefined });
     }),
 };
 
@@ -97,7 +136,7 @@ export const engenheiroApi = {
   obras: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<ObraEngenheiro[]>("/api/v1/engenheiros/financeiro", token ?? undefined);
+      return request<ObraEngenheiro[]>("/api/v1/engenheiros/financeiro", { method: "GET", token: token ?? undefined });
     }),
 };
 
@@ -105,22 +144,30 @@ export const adminApi = {
   listarUsuarios: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<AdminUsuario[]>("/api/v1/admin/usuarios", token ?? undefined);
+      return request<AdminUsuario[]>("/api/v1/admin/usuarios", { method: "GET", token: token ?? undefined });
     }),
   criarUsuario: (body: { nome: string; email: string; senha: string; tipo: string }) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.post<AdminUsuario>("/api/v1/admin/usuarios", body, token ?? undefined);
+      return request<AdminUsuario>("/api/v1/admin/usuarios", {
+        method: "POST",
+        body: JSON.stringify(body),
+        token: token ?? undefined,
+      });
     }),
   risco: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<RiscoData>("/api/v1/admin/risco", token ?? undefined);
+      return request<RiscoData>("/api/v1/admin/risco", { method: "GET", token: token ?? undefined });
     }),
   atualizarUsuario: (id: string, body: { bloqueado?: boolean; tipo?: string }) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.patch<AdminUsuario>(`/api/v1/admin/usuarios/${id}`, body, token ?? undefined);
+      return request<AdminUsuario>(`/api/v1/admin/usuarios/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+        token: token ?? undefined,
+      });
     }),
 };
 
@@ -128,17 +175,25 @@ export const kycApi = {
   listarPendentes: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<KycDocumento[]>("/api/v1/kyc/pendentes", token ?? undefined);
+      return request<KycDocumento[]>("/api/v1/kyc/pendentes", { method: "GET", token: token ?? undefined });
     }),
   aprovar: (id: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.patch(`/api/v1/kyc/${id}/aprovar`, {}, token ?? undefined);
+      return request<void>(`/api/v1/kyc/${id}/aprovar`, {
+        method: "PATCH",
+        body: JSON.stringify({}),
+        token: token ?? undefined,
+      });
     }),
   rejeitar: (id: string, motivo: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.patch(`/api/v1/kyc/${id}/rejeitar`, { motivo }, token ?? undefined);
+      return request<void>(`/api/v1/kyc/${id}/rejeitar`, {
+        method: "PATCH",
+        body: JSON.stringify({ motivo }),
+        token: token ?? undefined,
+      });
     }),
 };
 
@@ -146,25 +201,33 @@ export const notificacoesApi = {
   listar: (limit = 20, offset = 0) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<{ notificacoes: Notificacao[]; total: number }>(
+      return request<{ notificacoes: Notificacao[]; total: number }>(
         `/api/v1/notificacoes?limit=${limit}&offset=${offset}`,
-        token ?? undefined
+        { method: "GET", token: token ?? undefined }
       );
     }),
   marcarLida: (id: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.patch(`/api/v1/notificacoes/${id}/lida`, {}, token ?? undefined);
+      return request<void>(`/api/v1/notificacoes/${id}/lida`, {
+        method: "PATCH",
+        body: JSON.stringify({}),
+        token: token ?? undefined,
+      });
     }),
   marcarTodasLidas: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.patch("/api/v1/notificacoes/marcar-todas-lidas", {}, token ?? undefined);
+      return request<void>("/api/v1/notificacoes/marcar-todas-lidas", {
+        method: "PATCH",
+        body: JSON.stringify({}),
+        token: token ?? undefined,
+      });
     }),
   deletar: (id: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.delete(`/api/v1/notificacoes/${id}`, token ?? undefined);
+      return request<void>(`/api/v1/notificacoes/${id}`, { method: "DELETE", token: token ?? undefined });
     }),
 };
 
@@ -172,7 +235,11 @@ export const pushApi = {
   registrarToken: (fcmToken: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.post("/api/v1/push-notificacoes/registrar-token", { token: fcmToken }, token ?? undefined);
+      return request<void>("/api/v1/push-notificacoes/registrar-token", {
+        method: "POST",
+        body: JSON.stringify({ token: fcmToken }),
+        token: token ?? undefined,
+      });
     }),
 };
 

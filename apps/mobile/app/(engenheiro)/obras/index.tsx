@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { engenheiroApi, type ObraEngenheiro } from "../../../lib/api";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "../../../lib/api";
 
 export default function ObrasEngenheiroScreen() {
   const [obras, setObras] = useState<ObraEngenheiro[]>([]);

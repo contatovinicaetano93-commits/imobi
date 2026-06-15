@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { parceiroApi, type ParceiroResumo, type OperacaoIndicada } from "../../../lib/api";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL } from "../../../lib/api";
 
 const COMISSAO_CONFIG: Record<string, { label: string; cor: string }> = {
   AGUARDANDO_CONVERSAO: { label: "Aguardando", cor: "#d97706" },
