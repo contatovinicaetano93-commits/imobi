@@ -164,7 +164,7 @@ function ConsentController({ control, name, error, children }: {
   children: React.ReactNode;
 }) {
   return (
-    // @ts-ignore react-hook-form/react-18 JSX type compat
+    // @ts-expect-error react-hook-form/react-18 JSX type compat
     <Controller
       control={control}
       name={name as keyof CadastroUsuarioInput}
