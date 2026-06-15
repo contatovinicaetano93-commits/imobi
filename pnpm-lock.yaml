@@ -379,7 +379,7 @@ importers:
         specifier: ^17.4.2
         version: 17.4.2
       fastify:
-        specifier: ^4.0.0
+        specifier: ^4.28.1
         version: 4.28.1
       jest:
         specifier: ^29.7.0
