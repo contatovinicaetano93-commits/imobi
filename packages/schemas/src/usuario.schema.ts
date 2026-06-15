@@ -5,6 +5,11 @@ export const TipoUsuarioEnum = z.enum([
   "GESTOR_OBRA",
   "ADMIN",
   "PARCEIRO",
+  "GESTOR",
+  "GESTOR_FUNDO",
+  "ENGENHEIRO",
+  "COMERCIAL",
+  "CONSTRUTOR",
 ]);
 
 export const KycStatusEnum = z.enum([
@@ -79,9 +84,7 @@ export const FUNCOES_PAINEL = [
 export const FuncaoPainelEnum = z.enum(FUNCOES_PAINEL);
 
 export const AtualizarUsuarioAdminSchema = z.object({
-  tipo: z
-    .enum(["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"])
-    .optional(),
+  tipo: TipoUsuarioEnum.optional(),
   bloqueado: z.boolean().optional(),
   funcoesBloqueadas: z.array(FuncaoPainelEnum).optional(),
 });
