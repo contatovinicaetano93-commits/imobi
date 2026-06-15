@@ -45,7 +45,6 @@ export class SetupController {
       usuarios: STAFF_USERS.map((u) => ({
         perfil: u.tipo,
         email:  u.email,
-        senha:  u.senha,
         acesso: this.rotaParaTipo(u.tipo),
       })),
     };

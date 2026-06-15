@@ -143,10 +143,24 @@ export class ComercialService {
     if (filters?.fonte) where.fonte = filters.fonte;
     if (filters?.segmentoCliente) where.segmentoCliente = filters.segmentoCliente;
     if (filters?.scoreMin !== undefined || filters?.scoreMax !== undefined) {
-      const scoreFilter: any = {};
-      if (filters.scoreMin !== undefined) scoreFilter.gte = filters.scoreMin;
-      if (filters.scoreMax !== undefined) scoreFilter.lte = filters.scoreMax;
-      where.scoreHistorico = { some: { scoreFinal: scoreFilter } };
+      const minScore: number = filters.scoreMin ?? 0;
+      const maxScore: number = filters.scoreMax ?? Infinity;
+      // Fetch all scores newest-first, deduplicate by leadId to get only the latest
+      const allScores = await this.prisma.conversionScore.findMany({
+        select: { leadId: true, scoreFinal: true },
+        orderBy: { criadoEm: 'desc' },
+      });
+      const seen = new Set<string>();
+      const inRange: string[] = [];
+      for (const s of allScores) {
+        if (!seen.has(s.leadId)) {
+          seen.add(s.leadId);
+          if (s.scoreFinal >= minScore && s.scoreFinal <= maxScore) {
+            inRange.push(s.leadId);
+          }
+        }
+      }
+      where.leadId = { in: inRange };
     }
     if (filters?.searchTerm) {
       where.OR = [

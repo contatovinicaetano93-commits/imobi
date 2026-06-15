@@ -16,14 +16,23 @@ export class ScoreService {
    */
   async calcularScore(usuarioId: string): Promise<number> {
     const [obras, creditos] = await Promise.all([
-      this.prisma.obra.findMany({ where: { usuarioId } }),
+      this.prisma.obra.findMany({ where: { usuarioId }, include: { etapas: true } }),
       this.prisma.credito.findMany({ where: { usuarioId } }),
     ]);
 
     let score = 600; // Base mínima para usuário novo
 
-    // 1. Obras concluídas (+200)
-    const obrasConcluidasNoPrazo = obras.filter((o) => o.status === "CONCLUIDA").length;
+    // 1. Obras concluídas no prazo (+200) — etapas com data real <= prevista
+    const obrasConcluidasNoPrazo = obras.filter((o) => {
+      if (o.status !== "CONCLUIDA") return false;
+      const etapasComData = o.etapas.filter(
+        (e) => e.dataConclusaoReal != null && e.dataConclusaoPrevista != null,
+      );
+      return (
+        etapasComData.length > 0 &&
+        etapasComData.every((e) => e.dataConclusaoReal! <= e.dataConclusaoPrevista!)
+      );
+    }).length;
     if (obrasConcluidasNoPrazo > 0) score += Math.min(200, obrasConcluidasNoPrazo * 50);
 
     // 2. Taxa média de conclusão (+300)
