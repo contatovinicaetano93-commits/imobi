@@ -23,6 +23,6 @@ export class LeadPublicoController {
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.issues[0]?.message ?? 'Dados inválidos.');
     }
-    return this.comercial.capturaPublica(parsed.data);
+    return this.comercial.capturaPublica(parsed.data as Parameters<typeof this.comercial.capturaPublica>[0]);
   }
 }

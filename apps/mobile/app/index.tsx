@@ -102,7 +102,7 @@ const s = StyleSheet.create({
     flex: 1, backgroundColor: NAVY,
   },
   grid: {
-    position: "absolute", inset: 0,
+    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
   },
   gridLine: {
     position: "absolute", opacity: 0.04, backgroundColor: WHITE,
