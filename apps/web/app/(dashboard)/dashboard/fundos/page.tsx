@@ -29,7 +29,7 @@ export default async function FundosPage() {
 
   // Obras em progresso
   const obrasProgresso = obras.filter(
-    (o) => o.status === "EM_ANDAMENTO" || o.status === "PLANEJADA"
+    (o) => o.status === "EM_EXECUCAO" || o.status === "PLANEJAMENTO"
   );
 
   // Cálculos básicos
@@ -42,7 +42,7 @@ export default async function FundosPage() {
     0
   );
   const totalEtapas = obras.flatMap((o) => o.etapas ?? []);
-  const etapasAprovadas = totalEtapas.filter((e) => e.status === "APROVADA");
+  const etapasAprovadas = totalEtapas.filter((e) => e.status === "CONCLUIDA");
   const etapasAguardandoVistoria = totalEtapas.filter(
     (e) => e.status === "AGUARDANDO_VISTORIA"
   );

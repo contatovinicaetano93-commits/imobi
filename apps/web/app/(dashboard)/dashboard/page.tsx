@@ -69,9 +69,9 @@ export default async function DashboardPage() {
   const valorLiberado   = creditoAtivo ? Number(creditoAtivo.valorLiberado)  : 0;
   const saldoDisponivel = valorAprovado - valorLiberado;
 
-  const ativas = obras.filter((o: ObraResumo) => ["EM_EXECUCAO","EM_ANDAMENTO"].includes(o.status));
+  const ativas = obras.filter((o: ObraResumo) => o.status === "EM_EXECUCAO");
   const allEtapas    = obras.flatMap((o: ObraResumo) => o.etapas ?? []);
-  const aprovadas    = allEtapas.filter((e: EtapaResumo) => ["CONCLUIDA","APROVADA"].includes(e.status));
+  const aprovadas    = allEtapas.filter((e: EtapaResumo) => e.status === "CONCLUIDA");
   const pendentes    = allEtapas.filter((e: EtapaResumo) => e.status === "AGUARDANDO_VISTORIA");
   const pctEtapas    = allEtapas.length ? Math.round(aprovadas.length / allEtapas.length * 100) : 0;
 
