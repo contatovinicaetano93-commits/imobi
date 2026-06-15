@@ -297,6 +297,7 @@ export class AdminService {
         usuarioId: true,
         nome: true,
         email: true,
+        telefone: true,
         tipo: true,
         kycStatus: true,
         criadoEm: true,

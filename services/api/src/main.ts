@@ -25,6 +25,10 @@ async function bootstrap() {
     new FastifyAdapter(fastifyOptions)
   );
 
+  await app.register(require("@fastify/multipart"), {
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  });
+
   // ThrottlerGuard is registered via AppModule providers
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");

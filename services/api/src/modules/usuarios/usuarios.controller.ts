@@ -10,6 +10,7 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decora
 export class UsuariosController {
   constructor(private readonly usuarios: UsuariosService) {}
 
+  @Get("me")
   @Get("meu-perfil")
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(600) // 10 min

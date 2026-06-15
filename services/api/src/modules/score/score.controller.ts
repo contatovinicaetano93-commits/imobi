@@ -9,6 +9,7 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decora
 export class ScoreController {
   constructor(private readonly score: ScoreService) {}
 
+  @Get()
   @Get("atual")
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(300) // 5 min
