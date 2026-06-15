@@ -7,8 +7,6 @@ import { LeadCard } from '@/components/dashboard/comercial/LeadCard';
 interface LeadsListResponse {
   leads: Lead[];
   total: number;
-  page: number;
-  pageSize: number;
 }
 
 export default function LeadsList() {

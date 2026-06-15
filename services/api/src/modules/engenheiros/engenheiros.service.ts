@@ -154,6 +154,29 @@ export class EngenheirosService {
     });
   }
 
+  async etapasDaObra(obraId: string) {
+    const etapas = await this.prisma.etapaObra.findMany({
+      where: { obraId },
+      orderBy: { ordem: "asc" },
+      include: {
+        evidencias: {
+          select: { evidenciaId: true, fotoUrl: true, validada: true, criadoEm: true },
+        },
+      },
+    });
+    return etapas.map((e) => ({
+      etapaId: e.etapaId,
+      nome: e.nome,
+      ordem: e.ordem,
+      status: e.status,
+      percentualObra: e.percentualObra,
+      valorLiberacao: e.valorLiberacao,
+      dataConclusaoPrevista: e.dataConclusaoPrevista,
+      dataConclusaoReal: e.dataConclusaoReal,
+      evidencias: e.evidencias,
+    }));
+  }
+
   async licencas(): Promise<unknown[]> {
     // Tabela Licenca não existe no schema atual — retorna array vazio com segurança
     return (this.prisma as any).licenca

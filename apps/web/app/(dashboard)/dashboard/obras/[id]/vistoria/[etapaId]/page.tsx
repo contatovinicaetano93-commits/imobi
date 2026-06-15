@@ -15,7 +15,7 @@ export default function VistoriaPage({ params }: { params: { id: string; etapaId
   useEffect(() => {
     Promise.all([
       fetch(`/api/proxy/obras/${params.id}`).then((r) => (r.ok ? r.json() : null)),
-      fetch(`/api/proxy/evidencias/${params.etapaId}`).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+      fetch(`/api/proxy/evidencias/etapa/${params.etapaId}`).then((r) => (r.ok ? r.json() : [])).catch(() => []),
     ])
       .then(([obraData, evidenciasData]) => {
         if (!obraData) { router.replace('/dashboard/obras'); return; }
