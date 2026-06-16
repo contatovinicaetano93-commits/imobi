@@ -9,9 +9,11 @@ import { EmailModule } from "../email/email.module";
 @Module({
   imports: [
     PassportModule,
-    JwtModule.register({
-      secret: process.env["JWT_SECRET"],
-      signOptions: { expiresIn: "15m" },
+    JwtModule.registerAsync({
+      useFactory: () => ({
+        secret: process.env["JWT_SECRET"],
+        signOptions: { expiresIn: "8h" },
+      }),
     }),
     EmailModule,
   ],

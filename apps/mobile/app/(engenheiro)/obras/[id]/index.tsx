@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { obrasApi, evidenciasApi, type ObraDetalhe, type EvidenciaDetalhada } from "../../../../lib/api";
+import { obrasApi, evidenciasApi, type ObraDetalhe, type Etapa, type Evidencia, type EvidenciaDetalhada } from "../../../../lib/api";
 
 const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
   PLANEJADA:           { bg: "#f3f4f6", text: "#6b7280" },
@@ -146,11 +146,11 @@ export default function ObraEngenheiroDetailScreen() {
 
       <Text style={s.sectionLabel}>Etapas ({obra.etapas.length})</Text>
 
-      {obra.etapas.map((etapa) => {
+      {(obra.etapas as (Etapa & { evidencias: Evidencia[] })[]).map((etapa) => {
         const colors = STATUS_COLOR[etapa.status] ?? { bg: "#f3f4f6", text: "#6b7280" };
         const isExpanded = expanded === etapa.etapaId;
         const evs = evidencias[etapa.etapaId];
-        const pendentes = etapa.evidencias?.filter((e) => !e.validada).length ?? 0;
+        const pendentes = etapa.evidencias?.filter((e: Evidencia) => !e.validada).length ?? 0;
 
         return (
           <View key={etapa.etapaId} style={s.etapaCard}>
