@@ -21,7 +21,6 @@ export default function CadastroPage() {
   } = useForm<CadastroUsuarioInput>({
     resolver: zodResolver(CadastroUsuarioSchema),
     defaultValues: {
-      tipo: "TOMADOR",
       consentidoTermos: false,
       consentidoPrivacy: false,
       consentidoKyc: false,

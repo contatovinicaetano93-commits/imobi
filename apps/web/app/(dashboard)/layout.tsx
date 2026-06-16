@@ -11,7 +11,7 @@ import {
   ChevronRight, Building2, ArrowLeft, Vote, LayoutDashboard, type LucideIcon,
 } from "lucide-react";
 
-type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "GESTOR_OBRA" | "TOMADOR" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | null;
+type UserRole = "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "GESTOR_OBRA" | "TOMADOR" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | null;
 type NavItem = {
   label: string; href: string; icon: LucideIcon;
   roles: UserRole[]; section?: string; funcao?: string;
