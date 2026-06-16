@@ -41,7 +41,7 @@ export default function RootLayout() {
 
     const inAuthGroup  = segments[0] === "(auth)";
     const inTabsGroup  = segments[0] === "(tabs)";
-    const onWelcome    = segments.length === 0;
+    const onWelcome    = !segments[0];
 
     if (isSignedIn && (inAuthGroup || onWelcome)) {
       router.replace("/(tabs)/obras");
