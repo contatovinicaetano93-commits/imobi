@@ -13,7 +13,6 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@imbobi/schemas": "workspace:*",
     "expo": "~54.0.0",
     "expo-router": "~6.0.24",
     "expo-location": "~19.0.8",

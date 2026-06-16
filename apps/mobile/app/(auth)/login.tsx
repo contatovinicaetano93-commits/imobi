@@ -3,7 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { LoginSchema, type LoginInput } from "@imbobi/schemas";
+import { LoginSchema, type LoginInput } from "../../lib/schemas";
 import { authApi } from "../../lib/api";
 
 function rotaPorPapel(tipo: string): string {
