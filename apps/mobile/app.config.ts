@@ -10,7 +10,6 @@ const config: ExpoConfig = {
   icon: "./assets/icon.png",
   userInterfaceStyle: "automatic",
   splash: { image: "./assets/splash.png", resizeMode: "contain", backgroundColor: "#15803d" },
-  runtimeVersion: { policy: "appVersion" },
   updates: {
     url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
   },
