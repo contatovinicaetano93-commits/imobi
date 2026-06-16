@@ -13,6 +13,8 @@
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
+    "mobile:start": "pnpm --filter @imbobi/mobile start",
+    "mobile:start:tunnel": "pnpm --filter @imbobi/mobile start:tunnel",
     "validate:schemas": "tsx scripts/validate-schema-sync.ts",
     "db:generate": "pnpm --filter @imbobi/api run prisma:generate",
     "db:migrate": "pnpm --filter @imbobi/api prisma migrate dev",

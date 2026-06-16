@@ -165,9 +165,15 @@ pnpm install
 
 # Start development server
 cd apps/mobile
-pnpm dev
+pnpm start
 
-# Or run specific platform
+# If Expo Go cannot reach the LAN server, use the tunnel URL
+pnpm start:tunnel
+
+# If Expo Go shows a stale bundle URL or cache error
+pnpm start:clear
+
+# Or run a native development build on a simulator/device
 pnpm android
 pnpm ios
 
@@ -202,6 +208,13 @@ pnpm build:production
 - Check `EXPO_PUBLIC_API_URL` is set correctly
 - For local development, use machine IP instead of localhost
 - Verify API server is running: `curl $EXPO_PUBLIC_API_URL/health`
+
+### Expo Go "Could not connect to development server"
+- From the monorepo root, run `pnpm mobile:start:tunnel`; from `apps/mobile`, run `pnpm start:tunnel`
+- Keep the terminal running while Expo Go loads the app; a QR code from an old/stopped server will keep failing
+- If the phone and computer are on the same Wi-Fi, `pnpm start:lan` is faster than the tunnel
+- If the error URL contains a different Expo package version than `apps/mobile/package.json`, stop Metro, delete `node_modules`, run `pnpm install --frozen-lockfile`, then restart with `pnpm start:clear`
+- If you are using a current Expo Go app that no longer supports this project's SDK, install a compatible Expo Go version or use a development build from `pnpm ios`/`pnpm android`
 
 ### GPS Issues
 - Request fine location permissions on Android
