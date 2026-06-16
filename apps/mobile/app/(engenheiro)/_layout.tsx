@@ -27,6 +27,8 @@ export default function EngenheiroLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="bar-chart-outline" size={size} color={color} />,
         }}
       />
+      <Tabs.Screen name="obras/[id]" options={{ href: null }} />
+      <Tabs.Screen name="obras/[id]/index" options={{ href: null }} />
     </Tabs>
   );
 }

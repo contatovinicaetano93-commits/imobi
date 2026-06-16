@@ -171,6 +171,23 @@ export const adminApi = {
     }),
 };
 
+export const evidenciasApi = {
+  listarPorEtapa: (etapaId: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return request<EvidenciaDetalhada[]>(`/api/v1/evidencias/etapa/${etapaId}`, { method: "GET", token: token ?? undefined });
+    }),
+  validar: (id: string, aprovado: boolean, observacao?: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return request<void>(`/api/v1/evidencias/${id}/validar`, {
+        method: "PATCH",
+        body: JSON.stringify({ aprovado, observacao }),
+        token: token ?? undefined,
+      });
+    }),
+};
+
 export const kycApi = {
   listarPendentes: () =>
     callApi(async () => {
@@ -274,6 +291,20 @@ export type Evidencia = {
   fotoUrl: string;
   validada: boolean;
   criadoEm: string;
+};
+
+export type EvidenciaDetalhada = {
+  evidenciaId: string;
+  fotoUrl: string;
+  validada: boolean;
+  observacao?: string | null;
+  criadoEm: string;
+  etapaId: string;
+  obraId: string;
+  latCaptura: number;
+  lngCaptura: number;
+  accuracyMetros: number;
+  distanciaObra: number;
 };
 
 export type Credito = {

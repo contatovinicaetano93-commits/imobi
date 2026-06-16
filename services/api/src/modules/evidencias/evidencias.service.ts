@@ -108,7 +108,7 @@ export class EvidenciasService {
   }
 
   async validar(usuario: { id: string; tipo: string }, evidenciaId: string, aprovado: boolean, observacao?: string) {
-    if (usuario.tipo !== "GESTOR" && usuario.tipo !== "ADMIN") {
+    if (!["GESTOR_OBRA", "GESTOR", "ADMIN"].includes(usuario.tipo)) {
       throw new ForbiddenException("Apenas gestores e administradores podem validar evidências.");
     }
 

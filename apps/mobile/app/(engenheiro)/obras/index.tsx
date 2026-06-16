@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { engenheiroApi, type ObraEngenheiro } from "../../../lib/api";
 import { formatarBRL } from "../../../lib/api";
 
 export default function ObrasEngenheiroScreen() {
+  const router = useRouter();
   const [obras, setObras] = useState<ObraEngenheiro[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,7 +44,7 @@ export default function ObrasEngenheiroScreen() {
           </View>
         }
         renderItem={({ item: o }) => (
-          <View style={s.card}>
+          <TouchableOpacity style={s.card} activeOpacity={0.75} onPress={() => router.push(`/(engenheiro)/obras/${o.obraId}`)}>
             <View style={s.cardHeader}>
               <Text style={s.nome} numberOfLines={1}>{o.nome}</Text>
               <Text style={s.pct}>{o.progresso}%</Text>
@@ -54,7 +56,7 @@ export default function ObrasEngenheiroScreen() {
               <Text style={s.etapa}>Etapa atual: {o.etapaAtual}</Text>
             ) : null}
             <Text style={s.valor}>{formatarBRL(o.valorExecutado)} executado de {formatarBRL(o.valorTotal)}</Text>
-          </View>
+          </TouchableOpacity>
         )}
       />
     </View>
