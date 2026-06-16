@@ -55,20 +55,20 @@ export declare const ConversionScoreSchema: z.ZodObject<{
     leadId: z.ZodString;
     scoreFinal: z.ZodNumber;
     probabilidadeClosing: z.ZodNumber;
-    dataEstimadaClosing: z.ZodDate;
+    dataEstimadaClosing: z.ZodString;
     fonteScore: z.ZodNumber;
     tipoObraScore: z.ZodNumber;
     segmentoScore: z.ZodNumber;
     engajamentoScore: z.ZodNumber;
     historicoScore: z.ZodNumber;
-    criadoEm: z.ZodDate;
+    criadoEm: z.ZodString;
 }, "strip", z.ZodTypeAny, {
     leadId: string;
-    criadoEm: Date;
+    criadoEm: string;
     scoreId: string;
     scoreFinal: number;
     probabilidadeClosing: number;
-    dataEstimadaClosing: Date;
+    dataEstimadaClosing: string;
     fonteScore: number;
     tipoObraScore: number;
     segmentoScore: number;
@@ -76,11 +76,11 @@ export declare const ConversionScoreSchema: z.ZodObject<{
     historicoScore: number;
 }, {
     leadId: string;
-    criadoEm: Date;
+    criadoEm: string;
     scoreId: string;
     scoreFinal: number;
     probabilidadeClosing: number;
-    dataEstimadaClosing: Date;
+    dataEstimadaClosing: string;
     fonteScore: number;
     tipoObraScore: number;
     segmentoScore: number;
@@ -104,20 +104,20 @@ export declare const LeadSchema: z.ZodObject<{
         leadId: z.ZodString;
         scoreFinal: z.ZodNumber;
         probabilidadeClosing: z.ZodNumber;
-        dataEstimadaClosing: z.ZodDate;
+        dataEstimadaClosing: z.ZodString;
         fonteScore: z.ZodNumber;
         tipoObraScore: z.ZodNumber;
         segmentoScore: z.ZodNumber;
         engajamentoScore: z.ZodNumber;
         historicoScore: z.ZodNumber;
-        criadoEm: z.ZodDate;
+        criadoEm: z.ZodString;
     }, "strip", z.ZodTypeAny, {
         leadId: string;
-        criadoEm: Date;
+        criadoEm: string;
         scoreId: string;
         scoreFinal: number;
         probabilidadeClosing: number;
-        dataEstimadaClosing: Date;
+        dataEstimadaClosing: string;
         fonteScore: number;
         tipoObraScore: number;
         segmentoScore: number;
@@ -125,11 +125,11 @@ export declare const LeadSchema: z.ZodObject<{
         historicoScore: number;
     }, {
         leadId: string;
-        criadoEm: Date;
+        criadoEm: string;
         scoreId: string;
         scoreFinal: number;
         probabilidadeClosing: number;
-        dataEstimadaClosing: Date;
+        dataEstimadaClosing: string;
         fonteScore: number;
         tipoObraScore: number;
         segmentoScore: number;
@@ -150,11 +150,11 @@ export declare const LeadSchema: z.ZodObject<{
     clienteCpf?: string | undefined;
     scoreHistorico?: {
         leadId: string;
-        criadoEm: Date;
+        criadoEm: string;
         scoreId: string;
         scoreFinal: number;
         probabilidadeClosing: number;
-        dataEstimadaClosing: Date;
+        dataEstimadaClosing: string;
         fonteScore: number;
         tipoObraScore: number;
         segmentoScore: number;
@@ -175,11 +175,11 @@ export declare const LeadSchema: z.ZodObject<{
     clienteCpf?: string | undefined;
     scoreHistorico?: {
         leadId: string;
-        criadoEm: Date;
+        criadoEm: string;
         scoreId: string;
         scoreFinal: number;
         probabilidadeClosing: number;
-        dataEstimadaClosing: Date;
+        dataEstimadaClosing: string;
         fonteScore: number;
         tipoObraScore: number;
         segmentoScore: number;
@@ -204,20 +204,20 @@ export declare const LeadDetailSchema: z.ZodObject<{
         leadId: z.ZodString;
         scoreFinal: z.ZodNumber;
         probabilidadeClosing: z.ZodNumber;
-        dataEstimadaClosing: z.ZodDate;
+        dataEstimadaClosing: z.ZodString;
         fonteScore: z.ZodNumber;
         tipoObraScore: z.ZodNumber;
         segmentoScore: z.ZodNumber;
         engajamentoScore: z.ZodNumber;
         historicoScore: z.ZodNumber;
-        criadoEm: z.ZodDate;
+        criadoEm: z.ZodString;
     }, "strip", z.ZodTypeAny, {
         leadId: string;
-        criadoEm: Date;
+        criadoEm: string;
         scoreId: string;
         scoreFinal: number;
         probabilidadeClosing: number;
-        dataEstimadaClosing: Date;
+        dataEstimadaClosing: string;
         fonteScore: number;
         tipoObraScore: number;
         segmentoScore: number;
@@ -225,11 +225,11 @@ export declare const LeadDetailSchema: z.ZodObject<{
         historicoScore: number;
     }, {
         leadId: string;
-        criadoEm: Date;
+        criadoEm: string;
         scoreId: string;
         scoreFinal: number;
         probabilidadeClosing: number;
-        dataEstimadaClosing: Date;
+        dataEstimadaClosing: string;
         fonteScore: number;
         tipoObraScore: number;
         segmentoScore: number;
@@ -277,20 +277,20 @@ export declare const LeadDetailSchema: z.ZodObject<{
         leadId: z.ZodString;
         scoreFinal: z.ZodNumber;
         probabilidadeClosing: z.ZodNumber;
-        dataEstimadaClosing: z.ZodDate;
+        dataEstimadaClosing: z.ZodString;
         fonteScore: z.ZodNumber;
         tipoObraScore: z.ZodNumber;
         segmentoScore: z.ZodNumber;
         engajamentoScore: z.ZodNumber;
         historicoScore: z.ZodNumber;
-        criadoEm: z.ZodDate;
+        criadoEm: z.ZodString;
     }, "strip", z.ZodTypeAny, {
         leadId: string;
-        criadoEm: Date;
+        criadoEm: string;
         scoreId: string;
         scoreFinal: number;
         probabilidadeClosing: number;
-        dataEstimadaClosing: Date;
+        dataEstimadaClosing: string;
         fonteScore: number;
         tipoObraScore: number;
         segmentoScore: number;
@@ -298,11 +298,11 @@ export declare const LeadDetailSchema: z.ZodObject<{
         historicoScore: number;
     }, {
         leadId: string;
-        criadoEm: Date;
+        criadoEm: string;
         scoreId: string;
         scoreFinal: number;
         probabilidadeClosing: number;
-        dataEstimadaClosing: Date;
+        dataEstimadaClosing: string;
         fonteScore: number;
         tipoObraScore: number;
         segmentoScore: number;
@@ -347,11 +347,11 @@ export declare const LeadDetailSchema: z.ZodObject<{
     clienteCpf?: string | undefined;
     scoreHistorico?: {
         leadId: string;
-        criadoEm: Date;
+        criadoEm: string;
         scoreId: string;
         scoreFinal: number;
         probabilidadeClosing: number;
-        dataEstimadaClosing: Date;
+        dataEstimadaClosing: string;
         fonteScore: number;
         tipoObraScore: number;
         segmentoScore: number;
@@ -373,11 +373,11 @@ export declare const LeadDetailSchema: z.ZodObject<{
     }[] | undefined;
     scoreBreakdown?: {
         leadId: string;
-        criadoEm: Date;
+        criadoEm: string;
         scoreId: string;
         scoreFinal: number;
         probabilidadeClosing: number;
-        dataEstimadaClosing: Date;
+        dataEstimadaClosing: string;
         fonteScore: number;
         tipoObraScore: number;
         segmentoScore: number;
@@ -408,11 +408,11 @@ export declare const LeadDetailSchema: z.ZodObject<{
     clienteCpf?: string | undefined;
     scoreHistorico?: {
         leadId: string;
-        criadoEm: Date;
+        criadoEm: string;
         scoreId: string;
         scoreFinal: number;
         probabilidadeClosing: number;
-        dataEstimadaClosing: Date;
+        dataEstimadaClosing: string;
         fonteScore: number;
         tipoObraScore: number;
         segmentoScore: number;
@@ -434,11 +434,11 @@ export declare const LeadDetailSchema: z.ZodObject<{
     }[] | undefined;
     scoreBreakdown?: {
         leadId: string;
-        criadoEm: Date;
+        criadoEm: string;
         scoreId: string;
         scoreFinal: number;
         probabilidadeClosing: number;
-        dataEstimadaClosing: Date;
+        dataEstimadaClosing: string;
         fonteScore: number;
         tipoObraScore: number;
         segmentoScore: number;
@@ -500,20 +500,20 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
             leadId: z.ZodString;
             scoreFinal: z.ZodNumber;
             probabilidadeClosing: z.ZodNumber;
-            dataEstimadaClosing: z.ZodDate;
+            dataEstimadaClosing: z.ZodString;
             fonteScore: z.ZodNumber;
             tipoObraScore: z.ZodNumber;
             segmentoScore: z.ZodNumber;
             engajamentoScore: z.ZodNumber;
             historicoScore: z.ZodNumber;
-            criadoEm: z.ZodDate;
+            criadoEm: z.ZodString;
         }, "strip", z.ZodTypeAny, {
             leadId: string;
-            criadoEm: Date;
+            criadoEm: string;
             scoreId: string;
             scoreFinal: number;
             probabilidadeClosing: number;
-            dataEstimadaClosing: Date;
+            dataEstimadaClosing: string;
             fonteScore: number;
             tipoObraScore: number;
             segmentoScore: number;
@@ -521,11 +521,11 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
             historicoScore: number;
         }, {
             leadId: string;
-            criadoEm: Date;
+            criadoEm: string;
             scoreId: string;
             scoreFinal: number;
             probabilidadeClosing: number;
-            dataEstimadaClosing: Date;
+            dataEstimadaClosing: string;
             fonteScore: number;
             tipoObraScore: number;
             segmentoScore: number;
@@ -546,11 +546,11 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteCpf?: string | undefined;
         scoreHistorico?: {
             leadId: string;
-            criadoEm: Date;
+            criadoEm: string;
             scoreId: string;
             scoreFinal: number;
             probabilidadeClosing: number;
-            dataEstimadaClosing: Date;
+            dataEstimadaClosing: string;
             fonteScore: number;
             tipoObraScore: number;
             segmentoScore: number;
@@ -571,11 +571,11 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteCpf?: string | undefined;
         scoreHistorico?: {
             leadId: string;
-            criadoEm: Date;
+            criadoEm: string;
             scoreId: string;
             scoreFinal: number;
             probabilidadeClosing: number;
-            dataEstimadaClosing: Date;
+            dataEstimadaClosing: string;
             fonteScore: number;
             tipoObraScore: number;
             segmentoScore: number;
@@ -601,11 +601,11 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteCpf?: string | undefined;
         scoreHistorico?: {
             leadId: string;
-            criadoEm: Date;
+            criadoEm: string;
             scoreId: string;
             scoreFinal: number;
             probabilidadeClosing: number;
-            dataEstimadaClosing: Date;
+            dataEstimadaClosing: string;
             fonteScore: number;
             tipoObraScore: number;
             segmentoScore: number;
@@ -631,11 +631,11 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteCpf?: string | undefined;
         scoreHistorico?: {
             leadId: string;
-            criadoEm: Date;
+            criadoEm: string;
             scoreId: string;
             scoreFinal: number;
             probabilidadeClosing: number;
-            dataEstimadaClosing: Date;
+            dataEstimadaClosing: string;
             fonteScore: number;
             tipoObraScore: number;
             segmentoScore: number;

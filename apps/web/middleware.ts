@@ -17,8 +17,8 @@ const PUBLIC_PATHS = [
 const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: "/dashboard/admin",      roles: ["ADMIN"] },
   { prefix: "/dashboard/gestor",     roles: ["GESTOR", "ADMIN"] },
-  { prefix: "/dashboard/fundos",     roles: ["GESTOR", "ADMIN"] },
-  { prefix: "/dashboard/relatorios", roles: ["GESTOR", "ADMIN"] },
+  { prefix: "/dashboard/fundos",     roles: ["GESTOR", "GESTOR_FUNDO", "ADMIN"] },
+  { prefix: "/dashboard/relatorios", roles: ["GESTOR", "GESTOR_FUNDO", "ADMIN"] },
   { prefix: "/dashboard/engenheiro", roles: ["ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
   { prefix: "/dashboard/comercial",  roles: ["COMERCIAL", "PARCEIRO", "ADMIN"] },
   { prefix: "/dashboard/construtor", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },

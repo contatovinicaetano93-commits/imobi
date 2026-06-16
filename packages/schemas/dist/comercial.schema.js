@@ -55,15 +55,15 @@ exports.LeadActivitySchema = zod_1.z.object({
 exports.ConversionScoreSchema = zod_1.z.object({
     scoreId: zod_1.z.string().uuid(),
     leadId: zod_1.z.string().uuid(),
-    scoreFinal: zod_1.z.number().int().min(0).max(100),
+    scoreFinal: zod_1.z.number().min(0).max(100),
     probabilidadeClosing: zod_1.z.number().min(0).max(1),
-    dataEstimadaClosing: zod_1.z.date(),
-    fonteScore: zod_1.z.number().int().min(0).max(100),
-    tipoObraScore: zod_1.z.number().int().min(0).max(100),
-    segmentoScore: zod_1.z.number().int().min(0).max(100),
-    engajamentoScore: zod_1.z.number().int().min(0).max(100),
-    historicoScore: zod_1.z.number().int().min(0).max(100),
-    criadoEm: zod_1.z.date(),
+    dataEstimadaClosing: zod_1.z.string(),
+    fonteScore: zod_1.z.number().min(0).max(100),
+    tipoObraScore: zod_1.z.number().min(0).max(100),
+    segmentoScore: zod_1.z.number().min(0).max(100),
+    engajamentoScore: zod_1.z.number().min(0).max(100),
+    historicoScore: zod_1.z.number().min(0).max(100),
+    criadoEm: zod_1.z.string(),
 });
 exports.LeadSchema = zod_1.z.object({
     leadId: zod_1.z.string().uuid(),

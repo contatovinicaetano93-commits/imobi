@@ -33,7 +33,6 @@ export const CadastroUsuarioSchema = z.object({
     .min(8, "Mínimo 8 caracteres")
     .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
     .regex(/[0-9]/, "Deve conter ao menos um número"),
-  tipo: TipoUsuarioEnum.default("TOMADOR"),
   consentidoTermos: z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
   consentidoPrivacy: z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
   consentidoKyc: z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
