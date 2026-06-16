@@ -238,7 +238,7 @@ describe("Load Testing & Performance Validation", () => {
       };
 
       let firstRequestTime = 0;
-      let subsequentTimes: number[] = [];
+      const subsequentTimes: number[] = [];
 
       await loadTester.simulateConcurrentUsers(
         config,
