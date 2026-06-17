@@ -317,7 +317,7 @@ function PctInput({
   }, [value, focused]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value.replace(/[^0-9,\.]/g, "");
+    const input = e.target.value.replace(/[^0-9,.]/g, "");
     setRaw(input);
     // Normalise comma to dot for parsing
     const parsed = parseFloat(input.replace(",", "."));

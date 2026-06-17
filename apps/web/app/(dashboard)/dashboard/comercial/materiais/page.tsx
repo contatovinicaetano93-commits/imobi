@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+"use client";
+
 import { FileText, ExternalLink, Package, BookOpen, PieChart, Presentation } from "lucide-react";
 import { BaixarButton } from "./baixar-button";
 
-export const metadata: Metadata = { title: "Materiais Comerciais — IMOBI" };
 
 const MATERIAIS = [
   {
