@@ -71,8 +71,13 @@ export default function GestorPage() {
 
   if (loading && !stats) {
     return (
-      <div className="space-y-6 sm:space-y-8">
-        <div className="rounded-2xl bg-gray-100 animate-pulse h-36" />
+      <div className="space-y-6 sm:space-y-8 p-4 sm:p-6">
+        <div className="bg-violet-50 border border-violet-100 rounded-2xl p-6 text-center">
+          <p className="text-sm font-semibold text-violet-900 mb-1">Carregando painel do Gestor do Fundo…</p>
+          <p className="text-xs text-violet-700">
+            Se demorar, a API no Render está acordando (plano gratuito). Pode levar até 2 minutos na primeira visita.
+          </p>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {[1, 2, 3, 4].map((i) => (
             <StatSkeleton key={i} />

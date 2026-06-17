@@ -2,8 +2,8 @@ import type { ManagerStats } from '@/lib/api';
 import { readApiErrorMessage } from '@/lib/read-api-error';
 import { wakeStagingApi } from '@/lib/wake-staging-api';
 
-export async function fetchManagerDashboard(maxAttempts = 4): Promise<ManagerStats> {
-  await wakeStagingApi(3);
+export async function fetchManagerDashboard(maxAttempts = 8): Promise<ManagerStats> {
+  await wakeStagingApi(6);
 
   let lastMessage = 'Erro ao carregar dados do painel';
 
@@ -26,13 +26,15 @@ export async function fetchManagerDashboard(maxAttempts = 4): Promise<ManagerSta
     }
 
     if (res.status === 502 || res.status === 503 || res.status === 504) {
-      await wakeStagingApi(2);
-      await new Promise((r) => setTimeout(r, 3000 * attempt));
+      await wakeStagingApi(4);
+      await new Promise((r) => setTimeout(r, 4000 * attempt));
       continue;
     }
 
     throw new Error(lastMessage);
   }
 
-  throw new Error(`${lastMessage}. Servidor pode estar acordando — aguarde 1 minuto e tente novamente.`);
+  throw new Error(
+    `${lastMessage} A API no Render (plano gratuito) demora para acordar — aguarde 1–2 minutos e clique em Tentar novamente.`,
+  );
 }
