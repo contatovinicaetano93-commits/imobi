@@ -145,6 +145,6 @@ export async function loginWithRetry(
   }
 
   throw new Error(
-    `${lastError} Se persistir, use http://localhost:3000/login com o servidor local rodando.`,
+    `${lastError} Aguarde 1 minuto e tente novamente — o servidor pode estar acordando.`,
   );
 }

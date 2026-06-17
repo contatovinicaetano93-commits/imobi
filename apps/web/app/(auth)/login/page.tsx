@@ -1,125 +1,23 @@
-"use client";
-
 export const dynamic = "force-dynamic";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useSearchParams } from "next/navigation";
-import { useState, Suspense, useEffect } from "react";
-import { LoginSchema, type LoginInput } from "@imbobi/schemas";
-import PasswordInput from "../_components/PasswordInput";
-import { redirectAfterLogin } from "@/lib/post-login-redirect";
-import { wakeStagingApi } from "@/lib/wake-staging-api";
-import { loginWithRetry } from "@/lib/login-with-retry";
+import type { CSSProperties } from "react";
+import LoginFormClient from "./LoginFormClient";
 
 const WA = "5511993455589";
 
-function LoginForm() {
-  const searchParams = useSearchParams();
-  const [erro, setErro] = useState<string | null>(null);
-  const [statusMsg, setStatusMsg] = useState<string | null>(null);
+type PageProps = {
+  searchParams?: { next?: string | string[] };
+};
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginInput>({ resolver: zodResolver(LoginSchema) });
+export default function LoginPage({ searchParams }: PageProps) {
+  const rawNext = searchParams?.next;
+  const next = typeof rawNext === "string" ? rawNext : null;
 
-  useEffect(() => {
-    void wakeStagingApi(2);
-  }, []);
-
-  const onSubmit = async (data: LoginInput) => {
-    setErro(null);
-    setStatusMsg("Conectando ao servidor…");
-    try {
-      const result = await loginWithRetry(data, setStatusMsg);
-      redirectAfterLogin(result.role ?? "", searchParams.get("next"));
-    } catch (e) {
-      setStatusMsg(null);
-      setErro(e instanceof Error ? e.message : "Erro inesperado.");
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <label style={labelStyle}>E-mail</label>
-        <input
-          {...register("email")}
-          type="email"
-          autoComplete="email"
-          placeholder="seu@email.com.br"
-          style={errors.email ? inputErrorStyle : inputStyle}
-        />
-        {errors.email && <p style={fieldErrorStyle}>{errors.email.message}</p>}
-      </div>
-
-      <div>
-        <label style={labelStyle}>Senha</label>
-        <PasswordInput
-          {...register("senha")}
-          autoComplete="current-password"
-          placeholder="••••••••"
-          hasError={!!errors.senha}
-          style={inputStyle}
-          errorStyle={inputErrorStyle}
-        />
-        {errors.senha && <p style={fieldErrorStyle}>{errors.senha.message}</p>}
-      </div>
-
-      <div style={{ textAlign: "right" }}>
-        <a href="/esqueceu-senha" style={linkStyle}>Esqueci minha senha</a>
-      </div>
-
-      {statusMsg && (
-        <p style={{ color: "#1B4FD8", fontSize: "0.78rem", background: "#EFF6FF", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
-          {statusMsg}
-        </p>
-      )}
-
-      {erro && (
-        <p style={{ color: "#EF4444", fontSize: "0.78rem", background: "#FEF2F2", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
-          {erro}
-        </p>
-      )}
-
-      <button type="submit" disabled={isSubmitting} style={submitStyle}>
-        {isSubmitting ? "Entrando..." : "Login na plataforma"}
-      </button>
-
-      <div style={{ textAlign: "center", position: "relative", margin: "0.5rem 0" }}>
-        <span style={{ fontSize: "0.72rem", color: "var(--gray-light)", background: "white", padding: "0 0.75rem", position: "relative", zIndex: 1 }}>ou</span>
-        <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: 1, background: "var(--border)" }} />
-      </div>
-
-      <a
-        href={`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20para%20acessar%20minha%20conta%20IMOBI.`}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={waButtonStyle}
-      >
-        <WaIcon size={16} />
-        Falar com a equipe IMOBI
-      </a>
-
-      <p style={{ fontSize: "0.68rem", color: "var(--gray-light)", textAlign: "center", marginTop: "0.5rem" }}>
-        Acesso protegido com criptografia.
-      </p>
-    </form>
-  );
-}
-
-export default function LoginPage() {
   return (
     <div style={pageStyle}>
       <div style={cardStyle}>
         <LogoHeader subtitle="Acesse sua conta" />
-
-        <Suspense fallback={<div style={{ padding: "2rem", textAlign: "center", color: "var(--gray)" }}>Carregando...</div>}>
-          <LoginForm />
-        </Suspense>
-
+        <LoginFormClient next={next} />
         <p style={{ textAlign: "center", fontSize: "0.78rem", color: "var(--gray)", marginTop: "1.25rem" }}>
           Não tem conta?{" "}
           <a href="/cadastro" style={{ color: "var(--blue)", fontWeight: 600, textDecoration: "none" }}>
@@ -127,7 +25,6 @@ export default function LoginPage() {
           </a>
         </p>
       </div>
-
       <WaFloat />
     </div>
   );
@@ -154,9 +51,9 @@ function LogoIcon({ size = 28 }: { size?: number }) {
       gridTemplateRows: "1fr 1fr 1fr",
       gap: 2, padding: 4, flexShrink: 0,
     }}>
-      {[0,1,2,3,4,5,6,7,8].map((i) => (
+      {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
         <span key={i} style={{
-          background: [1,3,5,7].includes(i) ? "transparent" : "var(--blue)",
+          background: [1, 3, 5, 7].includes(i) ? "transparent" : "var(--blue)",
           borderRadius: 1, display: "block",
         }} />
       ))}
@@ -193,7 +90,7 @@ function WaFloat() {
   );
 }
 
-const pageStyle: React.CSSProperties = {
+const pageStyle: CSSProperties = {
   minHeight: "100vh",
   display: "flex",
   alignItems: "center",
@@ -202,7 +99,7 @@ const pageStyle: React.CSSProperties = {
   background: "linear-gradient(150deg, #F0F5FF 0%, #FFFFFF 55%, #F0FDF7 100%)",
 };
 
-const cardStyle: React.CSSProperties = {
+const cardStyle: CSSProperties = {
   background: "white",
   borderRadius: 20,
   width: "100%",
@@ -210,75 +107,4 @@ const cardStyle: React.CSSProperties = {
   padding: "2.25rem",
   boxShadow: "0 24px 60px rgba(15,23,42,0.1)",
   border: "1px solid var(--border)",
-};
-
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: "0.72rem",
-  fontWeight: 600,
-  color: "var(--ink-soft)",
-  marginBottom: "0.4rem",
-};
-
-const baseInputStyle: React.CSSProperties = {
-  width: "100%",
-  background: "var(--surface)",
-  border: "1px solid var(--border)",
-  color: "var(--ink)",
-  fontFamily: "Inter, sans-serif",
-  fontSize: "0.88rem",
-  padding: "0.72rem 1rem",
-  borderRadius: 10,
-  outline: "none",
-  transition: "all 0.15s",
-};
-
-const inputStyle: React.CSSProperties = { ...baseInputStyle };
-const inputErrorStyle: React.CSSProperties = { ...baseInputStyle, borderColor: "#FCA5A5", background: "#FEF2F2" };
-
-const fieldErrorStyle: React.CSSProperties = {
-  fontSize: "0.72rem",
-  color: "#EF4444",
-  marginTop: "0.25rem",
-};
-
-const linkStyle: React.CSSProperties = {
-  fontSize: "0.75rem",
-  color: "var(--blue)",
-  textDecoration: "none",
-  fontWeight: 500,
-};
-
-const submitStyle: React.CSSProperties = {
-  width: "100%",
-  background: "var(--blue)",
-  color: "white",
-  fontFamily: "Inter, sans-serif",
-  fontSize: "0.88rem",
-  fontWeight: 600,
-  padding: "0.85rem",
-  borderRadius: 10,
-  border: "none",
-  cursor: "pointer",
-  transition: "all 0.15s",
-  boxShadow: "0 4px 14px rgba(27,79,216,0.28)",
-};
-
-const waButtonStyle: React.CSSProperties = {
-  width: "100%",
-  background: "white",
-  color: "#128C7E",
-  border: "1px solid #D1FAE5",
-  fontFamily: "Inter, sans-serif",
-  fontSize: "0.82rem",
-  fontWeight: 600,
-  padding: "0.75rem",
-  borderRadius: 10,
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "0.5rem",
-  textDecoration: "none",
-  transition: "background 0.15s",
 };
