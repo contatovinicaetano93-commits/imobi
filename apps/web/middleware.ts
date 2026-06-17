@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   "/privacy-policy",
   "/api/auth",
   "/api/proxy/auth",
+  "/api/proxy/health",
 ];
 
 // Route prefix → allowed roles. Real authorization is enforced by NestJS guards.

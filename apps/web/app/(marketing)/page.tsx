@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { redirectAfterLogin } from "@/lib/post-login-redirect";
+import { wakeStagingApi } from "@/lib/wake-staging-api";
 import "./landing.css";
 
 const WA = "5511993455589";
@@ -56,6 +57,8 @@ export default function LandingPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault(); setLoginErro(null); setLoginLoading(true);
     try {
+      const awake = await wakeStagingApi();
+      if (!awake) throw new Error("API indisponível. Aguarde 1 minuto ou use /login.");
       const res = await fetch("/api/proxy/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
