@@ -16,9 +16,10 @@ export const ROLE_HOME: Record<string, string> = {
  * cheguem ao middleware (router.push soft nav falha na Vercel).
  */
 export function redirectAfterLogin(role: string, next?: string | null): void {
-  if (next && next.startsWith("/") && !next.startsWith("//")) {
-    window.location.assign(next);
-    return;
-  }
-  window.location.assign(ROLE_HOME[role] ?? "/dashboard");
+  const dest =
+    next && next.startsWith("/") && !next.startsWith("//")
+      ? next
+      : ROLE_HOME[role] ?? "/dashboard";
+  // Garante que o browser commitou Set-Cookie antes da navegação
+  setTimeout(() => window.location.assign(dest), 100);
 }

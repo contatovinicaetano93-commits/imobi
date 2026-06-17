@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { decodeJwtPayload } from "@/lib/decode-jwt-payload";
 
 const PUBLIC_PATHS = [
   "/",
@@ -15,9 +16,9 @@ const PUBLIC_PATHS = [
 // Route prefix → allowed roles. Real authorization is enforced by NestJS guards.
 const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: "/dashboard/admin",      roles: ["ADMIN"] },
-  { prefix: "/dashboard/gestor",     roles: ["GESTOR", "ADMIN"] },
-  { prefix: "/dashboard/fundos",     roles: ["GESTOR", "ADMIN"] },
-  { prefix: "/dashboard/relatorios", roles: ["GESTOR", "ADMIN"] },
+  { prefix: "/dashboard/gestor",     roles: ["GESTOR", "GESTOR_FUNDO", "ADMIN"] },
+  { prefix: "/dashboard/fundos",     roles: ["GESTOR", "GESTOR_FUNDO", "ADMIN"] },
+  { prefix: "/dashboard/relatorios", roles: ["GESTOR", "GESTOR_FUNDO", "ADMIN"] },
   { prefix: "/dashboard/engenheiro", roles: ["ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
   { prefix: "/dashboard/comercial",  roles: ["COMERCIAL", "PARCEIRO", "ADMIN"] },
   { prefix: "/dashboard/construtor", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
@@ -30,14 +31,12 @@ const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
 ];
 
 function decodeJwt(token: string): { role?: string; exp?: number } | null {
-  try {
-    const payload = token.split(".")[1];
-    if (!payload) return null;
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(atob(base64));
-  } catch {
-    return null;
-  }
+  const payload = decodeJwtPayload(token);
+  if (!payload) return null;
+  return {
+    role: typeof payload.role === "string" ? payload.role : undefined,
+    exp: typeof payload.exp === "number" ? payload.exp : undefined,
+  };
 }
 
 export function middleware(request: NextRequest) {
