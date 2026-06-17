@@ -83,6 +83,19 @@ export const FUNCOES_PAINEL = [
 export const FuncaoPainelEnum = z.enum(FUNCOES_PAINEL);
 
 export const AtualizarUsuarioAdminSchema = z.object({
+  nome: z.string().min(3).max(120).optional(),
+  email: z.string().email().optional(),
+  telefone: z
+    .string()
+    .regex(/^\d{10,11}$/, "Telefone inválido")
+    .optional(),
+  kycStatus: KycStatusEnum.optional(),
+  novaSenha: z
+    .string()
+    .min(8, "Mínimo 8 caracteres")
+    .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
+    .regex(/[0-9]/, "Deve conter ao menos um número")
+    .optional(),
   tipo: TipoUsuarioEnum.optional(),
   bloqueado: z.boolean().optional(),
   funcoesBloqueadas: z.array(FuncaoPainelEnum).optional(),

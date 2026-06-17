@@ -1,5 +1,6 @@
 import type { CadastroUsuarioInput } from '@imbobi/schemas';
 import { wakeStagingApi } from '@/lib/wake-staging-api';
+import { normalizeCadastroInput } from '@/lib/normalize-cadastro';
 
 const REGISTER_URLS = ['/web-api/auth/registrar', '/api/proxy/auth/registrar'];
 
@@ -18,7 +19,8 @@ export async function registerWithRetry(
   onStatus?.('Acordando servidor… (até 1 minuto na 1ª vez)');
   await wakeStagingApi(3);
 
-  const payload = JSON.stringify({ ...data, consentidoEm: new Date().toISOString() });
+  const normalized = normalizeCadastroInput(data);
+  const payload = JSON.stringify({ ...normalized, consentidoEm: new Date().toISOString() });
   let lastError = 'Não foi possível criar a conta.';
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {

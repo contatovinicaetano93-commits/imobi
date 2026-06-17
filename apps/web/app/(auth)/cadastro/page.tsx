@@ -50,7 +50,7 @@ export default function CadastroPage() {
           Criar conta
         </h1>
         <p style={{ fontSize: "0.83rem", color: "var(--gray)", marginBottom: "1.75rem" }}>
-          Preencha os dados para acessar a plataforma IMOBI.
+          Preencha os dados para acessar a plataforma IMOBI. Senha: mínimo 8 caracteres, 1 maiúscula e 1 número.
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
@@ -60,10 +60,10 @@ export default function CadastroPage() {
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
             <Field label="CPF" error={errors.cpf?.message}>
-              <input {...register("cpf")} placeholder="00000000000" maxLength={11} style={errors.cpf ? inputErrorStyle : inputStyle} />
+              <input {...register("cpf")} placeholder="Somente números (11 dígitos)" maxLength={14} style={errors.cpf ? inputErrorStyle : inputStyle} />
             </Field>
             <Field label="WhatsApp" error={errors.telefone?.message}>
-              <input {...register("telefone")} placeholder="11999999999" maxLength={11} style={errors.telefone ? inputErrorStyle : inputStyle} />
+              <input {...register("telefone")} placeholder="11999999999" maxLength={15} style={errors.telefone ? inputErrorStyle : inputStyle} />
             </Field>
           </div>
 

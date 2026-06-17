@@ -28,6 +28,11 @@ export class AuthService {
         cpf: input.cpf,
         telefone: input.telefone,
         passwordHash,
+        consentidoTermos: input.consentidoTermos,
+        consentidoPrivacy: input.consentidoPrivacy,
+        consentidoKyc: input.consentidoKyc,
+        consentidoMarketing: input.consentidoMarketing ?? false,
+        consentidoEm: new Date(),
       },
       select: { usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true },
     });

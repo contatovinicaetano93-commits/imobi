@@ -158,22 +158,35 @@ export class AdminService {
     const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId: id } });
     if (!usuario || usuario.deletadoEm) throw new NotFoundException("Usuário não encontrado");
 
-    // O admin não pode bloquear a própria conta nem rebaixar o próprio perfil
     if (id === adminId && (dto.bloqueado === true || (dto.tipo && dto.tipo !== "ADMIN"))) {
       throw new BadRequestException("Não é possível bloquear ou rebaixar a própria conta de administrador.");
     }
 
+    if (dto.email && dto.email !== usuario.email) {
+      const emailEmUso = await this.prisma.usuario.findFirst({
+        where: { email: dto.email, usuarioId: { not: id }, deletadoEm: null },
+      });
+      if (emailEmUso) throw new ConflictException("E-mail já cadastrado.");
+    }
+
+    const data: Record<string, unknown> = {};
+    if (dto.nome !== undefined) data.nome = dto.nome;
+    if (dto.email !== undefined) data.email = dto.email;
+    if (dto.telefone !== undefined) data.telefone = dto.telefone;
+    if (dto.kycStatus !== undefined) data.kycStatus = dto.kycStatus;
+    if (dto.tipo !== undefined) data.tipo = dto.tipo as UsuarioTipo;
+    if (dto.bloqueado !== undefined) data.bloqueadoEm = dto.bloqueado ? new Date() : null;
+    if (dto.funcoesBloqueadas !== undefined) data.funcoesBloqueadas = dto.funcoesBloqueadas;
+    if (dto.novaSenha) data.passwordHash = await bcrypt.hash(dto.novaSenha, 12);
+
     const { usuarioId, ...atualizado } = await this.prisma.usuario.update({
       where: { usuarioId: id },
-      data: {
-        ...(dto.tipo !== undefined && { tipo: dto.tipo as UsuarioTipo }),
-        ...(dto.bloqueado !== undefined && { bloqueadoEm: dto.bloqueado ? new Date() : null }),
-        ...(dto.funcoesBloqueadas !== undefined && { funcoesBloqueadas: dto.funcoesBloqueadas }),
-      },
+      data,
       select: {
         usuarioId: true,
         nome: true,
         email: true,
+        telefone: true,
         tipo: true,
         kycStatus: true,
         bloqueadoEm: true,
@@ -214,21 +227,24 @@ export class AdminService {
   async criarUsuario(dto: CriarUsuarioAdminDto) {
     const existe = await this.prisma.usuario.findUnique({ where: { email: dto.email } });
     if (existe && !existe.deletadoEm) throw new ConflictException("E-mail já cadastrado");
-    const passwordHash = await bcrypt.hash(dto.senha, 10);
+    const passwordHash = await bcrypt.hash(dto.senha, 12);
+    const cpfDigits = Buffer.from(dto.email.toLowerCase())
+      .toString("hex")
+      .replace(/[^0-9]/g, "")
+      .padStart(11, "0")
+      .slice(0, 11);
     const { usuarioId, ...rest } = await this.prisma.usuario.create({
       data: {
         nome: dto.nome,
         email: dto.email,
-        // Derive a deterministic placeholder CPF from the email (email is unique → CPF is unique)
-        cpf: (() => {
-          const h = Buffer.from(dto.email.toLowerCase()).toString("hex").replace(/[^0-9]/g, "").padStart(9, "0").slice(0, 9);
-          return `${h.slice(0, 3)}.${h.slice(3, 6)}.${h.slice(6, 9)}-00`;
-        })(),
-        telefone: "",
+        cpf: cpfDigits,
+        telefone: "11999999999",
         passwordHash,
         tipo: dto.tipo,
         consentidoTermos: true,
         consentidoPrivacy: true,
+        consentidoKyc: true,
+        consentidoEm: new Date(),
       },
       select: {
         usuarioId: true,

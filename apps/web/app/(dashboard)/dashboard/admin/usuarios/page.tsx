@@ -28,13 +28,18 @@ type UsuarioAdmin = {
 };
 
 const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; icon: LucideIcon }> = {
-  ADMIN:      { label: "Admin",      color: NAVY,    bg: "rgba(12,26,61,0.07)",  icon: Shield },
-  GESTOR:     { label: "Gestor",     color: ROYAL,   bg: "rgba(27,79,216,0.08)", icon: Shield },
-  ENGENHEIRO: { label: "Engenheiro", color: "#0369a1", bg: "#f0f9ff", icon: Wrench },
-  TOMADOR:    { label: "Tomador",    color: "#16a34a", bg: "#f0fdf4", icon: Building2 },
-  COMERCIAL:  { label: "Comercial",  color: "#d97706", bg: "#fffbeb", icon: User },
-  CONSTRUTOR: { label: "Construtor", color: "#0891b2", bg: "#ecfeff", icon: Building2 },
+  ADMIN:        { label: "Admin",        color: NAVY,    bg: "rgba(12,26,61,0.07)",  icon: Shield },
+  GESTOR:       { label: "Gestor",       color: ROYAL,   bg: "rgba(27,79,216,0.08)", icon: Shield },
+  GESTOR_FUNDO: { label: "Fundo",        color: "#7c3aed", bg: "#f5f3ff", icon: Shield },
+  GESTOR_OBRA:  { label: "Gestor Obra",  color: "#0369a1", bg: "#f0f9ff", icon: Wrench },
+  ENGENHEIRO:   { label: "Engenheiro",   color: "#0369a1", bg: "#f0f9ff", icon: Wrench },
+  TOMADOR:      { label: "Tomador",      color: "#16a34a", bg: "#f0fdf4", icon: Building2 },
+  COMERCIAL:    { label: "Comercial",    color: "#d97706", bg: "#fffbeb", icon: User },
+  PARCEIRO:     { label: "Parceiro",     color: "#d97706", bg: "#fffbeb", icon: User },
+  CONSTRUTOR:   { label: "Construtor",   color: "#0891b2", bg: "#ecfeff", icon: Building2 },
 };
+
+const TIPOS_USUARIO = ["ADMIN", "GESTOR", "GESTOR_FUNDO", "GESTOR_OBRA", "ENGENHEIRO", "COMERCIAL", "PARCEIRO", "CONSTRUTOR", "TOMADOR"] as const;
 
 const KYC_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   APROVADO:       { label: "Aprovado",   color: "#16a34a", bg: "#f0fdf4" },
@@ -60,20 +65,23 @@ const FUNCAO_LABELS: Record<string, string> = {
 };
 
 const FUNCOES_POR_TIPO: Record<string, string[]> = {
-  TOMADOR:    ["obras", "credito", "simulador", "score", "kyc", "notificacoes"],
-  GESTOR:     ["gestor", "due-diligence", "fundos", "relatorios", "notificacoes"],
-  ENGENHEIRO: ["engenharia", "notificacoes"],
-  COMERCIAL:  ["comercial", "notificacoes"],
-  CONSTRUTOR: ["obras", "construtor", "notificacoes"],
+  TOMADOR:      ["obras", "credito", "simulador", "score", "kyc", "notificacoes"],
+  GESTOR:       ["gestor", "due-diligence", "fundos", "relatorios", "notificacoes"],
+  GESTOR_FUNDO: ["gestor", "due-diligence", "fundos", "relatorios", "notificacoes"],
+  ENGENHEIRO:   ["engenharia", "notificacoes"],
+  GESTOR_OBRA:  ["engenharia", "notificacoes"],
+  COMERCIAL:    ["comercial", "notificacoes"],
+  PARCEIRO:     ["comercial", "notificacoes"],
+  CONSTRUTOR:   ["obras", "construtor", "notificacoes"],
 };
 
-const DEMO: UsuarioAdmin[] = [
-  { id: "1", nome: "Administrador IMOBI",  email: "admin@imobi.com.br",      tipo: "ADMIN",      kycStatus: "APROVADO", criadoEm: "2026-01-01", funcoesBloqueadas: [] },
-  { id: "2", nome: "Gestor de Fundo",      email: "gestor@imobi.com.br",     tipo: "GESTOR",     kycStatus: "APROVADO", criadoEm: "2026-01-01", funcoesBloqueadas: [] },
-  { id: "3", nome: "Engenheiro IMOBI",     email: "eng@imobi.com.br",        tipo: "ENGENHEIRO", kycStatus: "APROVADO", criadoEm: "2026-01-01", funcoesBloqueadas: [] },
-  { id: "4", nome: "Parceiro Comercial",   email: "comercial@imobi.com.br",  tipo: "COMERCIAL",  kycStatus: "APROVADO", criadoEm: "2026-01-01", funcoesBloqueadas: [] },
-  { id: "5", nome: "Construtor IMOBI",     email: "construtor@imobi.com.br", tipo: "CONSTRUTOR", kycStatus: "APROVADO", criadoEm: "2026-01-01", funcoesBloqueadas: [] },
-];
+type EditarUsuarioForm = {
+  nome: string;
+  email: string;
+  telefone: string;
+  kycStatus: string;
+  novaSenha: string;
+};
 
 type NovoUsuarioForm = { nome: string; email: string; senha: string; tipo: string };
 const FORM_VAZIO: NovoUsuarioForm = { nome: "", email: "", senha: "", tipo: "TOMADOR" };
@@ -97,12 +105,23 @@ export default function UsuariosAdminPage() {
   const [erroAcao, setErroAcao] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [excluindo, setExcluindo] = useState(false);
+  const [apiErro, setApiErro] = useState("");
+  const [editForm, setEditForm] = useState<EditarUsuarioForm | null>(null);
 
   useEffect(() => {
     fetch("/api/proxy/admin/usuarios")
-      .then((r) => (r.ok ? r.json() : null))
-      .catch(() => null)
-      .then((d) => setUsuarios(Array.isArray(d) ? d : DEMO))
+      .then(async (r) => {
+        if (!r.ok) {
+          const json = await r.json().catch(() => ({}));
+          throw new Error((json as { message?: string }).message ?? `Erro ${r.status} ao carregar usuários`);
+        }
+        return r.json();
+      })
+      .then((d) => setUsuarios(Array.isArray(d) ? d : []))
+      .catch((e) => {
+        setUsuarios([]);
+        setApiErro(e instanceof Error ? e.message : "Erro ao carregar usuários da API.");
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -151,6 +170,35 @@ export default function UsuariosAdminPage() {
     const atuais = u.funcoesBloqueadas ?? [];
     const novas = atuais.includes(funcao) ? atuais.filter((f) => f !== funcao) : [...atuais, funcao];
     patchUsuario(u.id, { funcoesBloqueadas: novas });
+  }
+
+  function abrirGerenciar(u: UsuarioAdmin) {
+    const aberto = gerenciando === u.id;
+    if (aberto) {
+      setGerenciando(null);
+      setEditForm(null);
+      return;
+    }
+    setGerenciando(u.id);
+    setEditForm({
+      nome: u.nome,
+      email: u.email,
+      telefone: (u.telefone ?? "").replace(/\D/g, ""),
+      kycStatus: u.kycStatus ?? "PENDENTE",
+      novaSenha: "",
+    });
+  }
+
+  async function salvarPerfil(u: UsuarioAdmin) {
+    if (!editForm) return;
+    const body: Record<string, unknown> = {
+      nome: editForm.nome.trim(),
+      email: editForm.email.trim().toLowerCase(),
+      telefone: editForm.telefone.replace(/\D/g, ""),
+      kycStatus: editForm.kycStatus,
+    };
+    if (editForm.novaSenha.trim()) body.novaSenha = editForm.novaSenha.trim();
+    await patchUsuario(u.id, body);
   }
 
   function alterarTipo(u: UsuarioAdmin, tipo: string) {
@@ -274,7 +322,7 @@ export default function UsuariosAdminPage() {
               <div>
                 <label style={{ ...jost, display: "block", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(12,26,61,0.45)", marginBottom: 6 }}>Perfil</label>
                 <select className={inp} style={{ fontFamily: "'Jost', sans-serif" }} value={form.tipo} onChange={(e) => setForm((f) => ({ ...f, tipo: e.target.value }))}>
-                  {["ADMIN", "GESTOR", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR", "TOMADOR"].map((t) => (
+                  {TIPOS_USUARIO.map((t) => (
                     <option key={t} value={t}>{TIPO_CONFIG[t]?.label ?? t}</option>
                   ))}
                 </select>
@@ -334,6 +382,11 @@ export default function UsuariosAdminPage() {
         <p style={{ ...jost, fontSize: "0.75rem", color: "rgba(12,26,61,0.4)" }}>
           Mostrando <strong style={{ color: NAVY }}>{filtrado.length}</strong> de {usuarios.length} usuário{usuarios.length !== 1 ? "s" : ""}
           {busca && <> · "<em>{busca}</em>"</>}
+        </p>
+      )}
+      {apiErro && (
+        <p style={{ ...jost, fontSize: "0.8rem", color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "0.75rem 1rem" }}>
+          {apiErro} — faça login como <strong>admin@imobi.com.br</strong> e redeploy a API no Render.
         </p>
       )}
       {erroAcao && (
@@ -433,7 +486,7 @@ export default function UsuariosAdminPage() {
                       </td>
                       <td style={{ padding: "0.85rem 1.1rem" }}>
                         <button
-                          onClick={() => setGerenciando(aberto ? null : u.id)}
+                          onClick={() => abrirGerenciar(u)}
                           style={{
                             ...jost, display: "inline-flex", alignItems: "center", gap: 5,
                             fontSize: "0.72rem", fontWeight: 600,
@@ -474,6 +527,51 @@ export default function UsuariosAdminPage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                              {/* Dados do perfil */}
+                              <div className="space-y-3 md:col-span-2">
+                                <p style={{ ...jost, fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(12,26,61,0.35)" }}>Dados do usuário</p>
+                                {editForm && (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {[
+                                      { key: "nome", label: "Nome", type: "text" },
+                                      { key: "email", label: "E-mail", type: "email" },
+                                      { key: "telefone", label: "WhatsApp (só números)", type: "text" },
+                                    ].map(({ key, label, type }) => (
+                                      <div key={key}>
+                                        <label style={{ ...jost, display: "block", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(12,26,61,0.45)", marginBottom: 6 }}>{label}</label>
+                                        <input
+                                          className={inp}
+                                          style={{ fontFamily: "'Jost', sans-serif" }}
+                                          type={type}
+                                          value={(editForm as Record<string, string>)[key]}
+                                          onChange={(e) => setEditForm((f) => f ? { ...f, [key]: e.target.value } : f)}
+                                        />
+                                      </div>
+                                    ))}
+                                    <div>
+                                      <label style={{ ...jost, display: "block", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(12,26,61,0.45)", marginBottom: 6 }}>Status KYC</label>
+                                      <select className={inp} style={{ fontFamily: "'Jost', sans-serif" }} value={editForm.kycStatus} onChange={(e) => setEditForm((f) => f ? { ...f, kycStatus: e.target.value } : f)}>
+                                        {Object.keys(KYC_CONFIG).map((k) => (
+                                          <option key={k} value={k}>{KYC_CONFIG[k].label}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label style={{ ...jost, display: "block", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(12,26,61,0.45)", marginBottom: 6 }}>Nova senha (opcional)</label>
+                                      <input className={inp} style={{ fontFamily: "'Jost', sans-serif" }} type="password" placeholder="Mín. 8 chars, 1 maiúscula, 1 número" value={editForm.novaSenha} onChange={(e) => setEditForm((f) => f ? { ...f, novaSenha: e.target.value } : f)} />
+                                    </div>
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => salvarPerfil(u)}
+                                  disabled={salvando === u.id}
+                                  style={{ ...jost, fontSize: "0.8rem", fontWeight: 700, color: "white", background: ROYAL, padding: "0.45rem 1rem", borderRadius: 10, border: "none", cursor: "pointer", opacity: salvando === u.id ? 0.6 : 1 }}
+                                >
+                                  {salvando === u.id ? "Salvando..." : "Salvar dados do usuário"}
+                                </button>
+                              </div>
+
                               {/* Conta */}
                               <div className="space-y-3">
                                 <p style={{ ...jost, fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(12,26,61,0.35)" }}>Conta</p>
@@ -485,7 +583,7 @@ export default function UsuariosAdminPage() {
                                     disabled={salvando === u.id}
                                     onChange={(e) => alterarTipo(u, e.target.value)}
                                   >
-                                    {["ADMIN", "GESTOR", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR", "TOMADOR"].map((t) => (
+                                    {TIPOS_USUARIO.map((t) => (
                                       <option key={t} value={t}>{TIPO_CONFIG[t]?.label ?? t}</option>
                                     ))}
                                   </select>
