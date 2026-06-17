@@ -96,7 +96,6 @@ function EtapasContent() {
 
   useEffect(() => {
     loadEtapas();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offset, filters]);
 
   if (loading && !data) {

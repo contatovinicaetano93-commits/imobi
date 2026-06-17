@@ -1221,7 +1221,6 @@ function TabDocumentosContent({
     }
     if (doc.mimeType?.includes("image")) {
       return (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={doc.url}
           alt={doc.nome}
