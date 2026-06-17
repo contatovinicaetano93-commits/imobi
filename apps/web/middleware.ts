@@ -62,7 +62,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const role = jwt.role ?? null;
+  const role = jwt.role ?? request.cookies.get("session_role")?.value ?? null;
 
   // Role-gated routes: wrong role → back to their own dashboard root
   const rule = ROLE_RULES.find((r) => pathname === r.prefix || pathname.startsWith(r.prefix + "/"));

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getApiV1Url } from '@/lib/api-base';
 
-const _base = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
-const API = _base.endsWith('/api/v1') ? _base : `${_base}/api/v1`;
+const API = getApiV1Url();
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -79,13 +79,19 @@ export async function POST(req: NextRequest) {
   let role: string | null = null;
   let nome: string | null = null;
   let email: string | null = null;
+
+  const usuario = data.usuario as { tipo?: string; nome?: string; email?: string } | undefined;
+  if (usuario?.tipo) role = usuario.tipo;
+  if (usuario?.nome) nome = usuario.nome;
+  if (usuario?.email) email = usuario.email;
+
   try {
     const jwtPayload = JSON.parse(
       Buffer.from(accessToken.split('.')[1], 'base64url').toString(),
     ) as { role?: string; nome?: string; email?: string };
-    role = jwtPayload.role ?? null;
-    nome = jwtPayload.nome ?? null;
-    email = jwtPayload.email ?? null;
+    role = jwtPayload.role ?? role;
+    nome = jwtPayload.nome ?? nome;
+    email = jwtPayload.email ?? email;
   } catch {
     /* decode opcional */
   }
@@ -96,6 +102,13 @@ export async function POST(req: NextRequest) {
     ...COOKIE_OPTS,
     maxAge: 60 * 60 * 8,
   });
+
+  if (role) {
+    response.cookies.set('session_role', role, {
+      ...COOKIE_OPTS,
+      maxAge: 60 * 60 * 8,
+    });
+  }
 
   const refreshToken = data.refreshToken ?? data.refresh_token;
   if (refreshToken) {

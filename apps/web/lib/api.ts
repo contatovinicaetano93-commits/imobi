@@ -1,5 +1,6 @@
-const _base = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
-const API_URL = _base.endsWith("/api/v1") ? _base : `${_base}/api/v1`;
+import { getApiV1Url } from "@/lib/api-base";
+
+const API_URL = getApiV1Url();
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
