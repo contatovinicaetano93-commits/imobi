@@ -2,5 +2,8 @@
   "buildCommand": "cd apps/web && next build",
   "installCommand": "pnpm install --frozen-lockfile",
   "outputDirectory": "apps/web/.next",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://imobi-api-staging.onrender.com"
+  }
 }

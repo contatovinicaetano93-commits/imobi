@@ -12,8 +12,13 @@ const COOKIE_OPTS = {
 
 export const maxDuration = 60;
 
+async function wakeApi(): Promise<void> {
+  await fetch(`${API}/health`, { cache: 'no-store', signal: AbortSignal.timeout(20_000) }).catch(() => null);
+}
+
 async function postLogin(body: string): Promise<Response | null> {
-  for (let attempt = 0; attempt < 3; attempt++) {
+  await wakeApi();
+  for (let attempt = 0; attempt < 5; attempt++) {
     const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
