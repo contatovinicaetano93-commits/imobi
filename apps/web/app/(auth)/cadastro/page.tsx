@@ -2,16 +2,17 @@
 
 import { useForm, Controller, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
 import PasswordInput from "../_components/PasswordInput";
+import { registerWithRetry } from "@/lib/register-with-retry";
+import { redirectAfterLogin } from "@/lib/post-login-redirect";
 
 const WA = "5511993455589";
 
 export default function CadastroPage() {
-  const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
   const {
     register,
@@ -30,21 +31,12 @@ export default function CadastroPage() {
 
   const onSubmit = async (data: CadastroUsuarioInput) => {
     setErro(null);
+    setStatusMsg("Conectando ao servidor… (a 1ª vez pode levar até 1 minuto)");
     try {
-      const res = await fetch("/api/proxy/auth/registrar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, consentidoEm: new Date().toISOString() }),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((json as { message?: string }).message ?? "Erro ao criar conta.");
-      await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(json),
-      });
-      router.push("/dashboard");
+      const result = await registerWithRetry(data, setStatusMsg);
+      redirectAfterLogin(result.role ?? "TOMADOR", "/dashboard");
     } catch (e) {
+      setStatusMsg(null);
       setErro(e instanceof Error ? e.message : "Erro inesperado.");
     }
   };
@@ -112,6 +104,12 @@ export default function CadastroPage() {
               Aceito comunicações de marketing (opcional)
             </ConsentController>
           </div>
+
+          {statusMsg && (
+            <p style={{ color: "#1B4FD8", fontSize: "0.78rem", background: "#EFF6FF", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
+              {statusMsg}
+            </p>
+          )}
 
           {erro && (
             <p style={{ color: "#EF4444", fontSize: "0.78rem", background: "#FEF2F2", borderRadius: 8, padding: "0.6rem 0.85rem" }}>

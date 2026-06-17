@@ -24,7 +24,7 @@ type ApiLoginJson = {
 async function tryServerLogin(
   data: LoginInput,
   loginUrl: string,
-): Promise<LoginResult | null> {
+): Promise<{ result: LoginResult | null; message?: string }> {
   const res = await fetch(loginUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -46,14 +46,16 @@ async function tryServerLogin(
 
   if (res.ok && json.ok !== false) {
     return {
-      ok: true,
-      role: json.role ?? null,
-      nome: json.nome ?? null,
-      email: json.email ?? null,
+      result: {
+        ok: true,
+        role: json.role ?? null,
+        nome: json.nome ?? null,
+        email: json.email ?? null,
+      },
     };
   }
 
-  return null;
+  return { result: null, message: json.message };
 }
 
 async function tryDirectApiLogin(data: LoginInput): Promise<LoginResult | null> {
@@ -125,7 +127,8 @@ export async function loginWithRetry(
 
     for (const url of SERVER_LOGIN_URLS) {
       try {
-        const result = await tryServerLogin(data, url);
+        const { result, message } = await tryServerLogin(data, url);
+        if (message) lastError = message;
         if (result) return result;
       } catch (e) {
         if (e instanceof Error) throw e;

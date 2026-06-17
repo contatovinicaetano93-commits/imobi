@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { redirectAfterLogin } from "@/lib/post-login-redirect";
 import { wakeStagingApi } from "@/lib/wake-staging-api";
 import { loginWithRetry } from "@/lib/login-with-retry";
+import { registerWithRetry } from "@/lib/register-with-retry";
 import "./landing.css";
 
 const WA = "5511993455589";
@@ -76,15 +77,18 @@ export default function LandingPage() {
     if (!cadTermos || !cadPrivacy || !cadKyc) { setCadErro("Aceite todos os termos para continuar."); return; }
     setCadLoading(true);
     try {
-      const res = await fetch("/api/proxy/auth/registrar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome: cadNome, cpf: cadCpf.replace(/\D/g,""), email: cadEmail, telefone: cadTelefone.replace(/\D/g,""), senha: cadSenha, tipo: "TOMADOR", consentidoTermos: cadTermos, consentidoPrivacy: cadPrivacy, consentidoKyc: cadKyc, consentidoMarketing: false }),
-        credentials: "same-origin",
+      const result = await registerWithRetry({
+        nome: cadNome,
+        cpf: cadCpf.replace(/\D/g, ""),
+        email: cadEmail,
+        telefone: cadTelefone.replace(/\D/g, ""),
+        senha: cadSenha,
+        consentidoTermos: cadTermos,
+        consentidoPrivacy: cadPrivacy,
+        consentidoKyc: cadKyc,
+        consentidoMarketing: false,
       });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.message ?? "Erro ao criar conta.");
-      redirectAfterLogin(json.role ?? "TOMADOR");
+      redirectAfterLogin(result.role ?? "TOMADOR");
     } catch (err) { setCadErro(err instanceof Error ? err.message : "Erro inesperado."); }
     finally { setCadLoading(false); }
   }
