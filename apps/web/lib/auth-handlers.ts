@@ -130,7 +130,11 @@ export async function handleLoginPost(req: NextRequest): Promise<NextResponse> {
     nome: parsed.nome,
     email: parsed.email,
   });
-  applyAuthCookies(response, parsed);
+  applyAuthCookies(response, {
+    accessToken: parsed.accessToken,
+    refreshToken: parsed.refreshToken,
+    role: parsed.role,
+  });
   return response;
 }
 
@@ -170,7 +174,11 @@ export async function handleRegisterPost(req: NextRequest): Promise<NextResponse
     nome: parsed.nome,
     email: parsed.email,
   });
-  applyAuthCookies(response, parsed);
+  applyAuthCookies(response, {
+    accessToken: parsed.accessToken,
+    refreshToken: parsed.refreshToken,
+    role: parsed.role ?? 'TOMADOR',
+  });
   return response;
 }
 
