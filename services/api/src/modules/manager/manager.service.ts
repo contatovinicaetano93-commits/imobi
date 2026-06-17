@@ -3,6 +3,7 @@ import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
 import { ETAPA_STATUS_MAP } from "../../common/constants";
+import { isManagerRole } from "../../common/constants/manager-roles";
 
 const CACHE_KEYS = {
   STATS: "manager:stats",
@@ -43,7 +44,7 @@ export class ManagerService {
     const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId },
     });
-    if (!usuario || (usuario.tipo !== "GESTOR" && usuario.tipo !== "ADMIN")) {
+    if (!usuario || !isManagerRole(usuario.tipo)) {
       throw new ForbiddenException("Acesso negado. Apenas gestores podem acessar.");
     }
   }

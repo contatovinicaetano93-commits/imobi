@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import type { ManagerStats } from "@/lib/api";
 import Link from "next/link";
-import { ShieldCheck, FileCheck2, Building2, CreditCard, Clock, AlertTriangle } from "lucide-react";
+import { ShieldCheck, FileCheck2, AlertTriangle } from "lucide-react";
+import { fetchManagerDashboard } from "@/lib/fetch-manager-dashboard";
 
 const ZERO_STATS: ManagerStats = {
   filaAprovacoes: 0,
@@ -48,11 +49,7 @@ export default function GestorPage() {
   const loadStats = () => {
     setLoading(true);
     setError(null);
-    fetch("/api/proxy/manager/dashboard")
-      .then((r) => {
-        if (!r.ok) throw new Error("Erro ao carregar dados do painel");
-        return r.json() as Promise<ManagerStats>;
-      })
+    fetchManagerDashboard()
       .then(setStats)
       .catch((err) => setError(err instanceof Error ? err.message : "Erro desconhecido"))
       .finally(() => setLoading(false));

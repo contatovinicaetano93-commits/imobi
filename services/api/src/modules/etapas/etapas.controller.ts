@@ -3,6 +3,7 @@ import { EtapasService } from "./etapas.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
+import { MANAGER_ROLES } from "../../common/constants/manager-roles";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
 @UseGuards(JwtAuthGuard)
@@ -16,7 +17,7 @@ export class EtapasController {
   }
 
   @UseGuards(RolesGuard)
-  @Roles("GESTOR", "ADMIN")
+  @Roles(...MANAGER_ROLES)
   @Patch(":id/aprovar")
   aprovar(
     @Param("id") id: string,
