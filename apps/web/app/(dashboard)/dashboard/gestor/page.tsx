@@ -31,51 +31,66 @@ function StatCard({ label, value, color, href }: { label: string; value: number;
   );
 }
 
+function StatSkeleton() {
+  return (
+    <div className="bg-gray-50 rounded-2xl border border-gray-100 p-4 sm:p-6 animate-pulse min-h-32">
+      <div className="h-3 bg-gray-200 rounded w-2/5 mb-4" />
+      <div className="h-8 bg-gray-200 rounded w-1/3" />
+    </div>
+  );
+}
+
 export default function GestorPage() {
   const [stats, setStats] = useState<ManagerStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch('/api/proxy/manager/dashboard')
+  const loadStats = () => {
+    setLoading(true);
+    setError(null);
+    fetch("/api/proxy/manager/dashboard")
       .then((r) => {
-        if (!r.ok) throw new Error('Erro ao carregar dados');
+        if (!r.ok) throw new Error("Erro ao carregar dados do painel");
         return r.json() as Promise<ManagerStats>;
       })
       .then(setStats)
-      .catch((err) => setError(err.message))
+      .catch((err) => setError(err instanceof Error ? err.message : "Erro desconhecido"))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadStats();
   }, []);
-
-  if (loading) {
-    return (
-      <div className="space-y-6 sm:space-y-8">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Painel do Fundo</h1>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-8 sm:p-12 text-center">
-          <p className="text-sm sm:text-base text-gray-500">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6 sm:space-y-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Painel do Fundo</h1>
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
-          <p className="text-sm text-red-600 font-medium">{error}</p>
-          <button onClick={() => window.location.reload()} className="mt-3 text-xs text-red-500 underline">Tentar novamente</button>
-        </div>
-      </div>
-    );
-  }
 
   const s = stats ?? ZERO_STATS;
 
+  if (loading && !stats) {
+    return (
+      <div className="space-y-6 sm:space-y-8">
+        <div className="rounded-2xl bg-gray-100 animate-pulse h-36" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <StatSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 sm:space-y-8">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <p className="text-sm text-red-700 font-medium">{error}</p>
+          <button
+            type="button"
+            onClick={loadStats}
+            className="text-sm font-semibold text-red-700 underline shrink-0"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
       {/* Hero gestor — roxo */}
       <div style={{ background: "linear-gradient(135deg, #3b0764 0%, #4c1d95 100%)", borderRadius: 16, padding: "1.5rem 2rem", color: "white" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
