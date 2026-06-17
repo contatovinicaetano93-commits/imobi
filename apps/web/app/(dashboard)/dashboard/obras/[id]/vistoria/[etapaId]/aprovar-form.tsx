@@ -20,16 +20,10 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
     setErro(null);
     setIsPending(true);
     try {
-      const endpoint = aprovado
-        ? `/api/proxy/vistoria/${etapaId}/aprovar`
-        : `/api/proxy/vistoria/${etapaId}/rejeitar`;
-      const body = aprovado
-        ? { observacoes: obs || undefined }
-        : { motivo: obs || "Reprovado pelo gestor." };
-      const res = await fetch(endpoint, {
-        method: "POST",
+      const res = await fetch(`/api/etapas/${etapaId}/validar`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ observacao: obs }),
       });
 
       if (!res.ok) {

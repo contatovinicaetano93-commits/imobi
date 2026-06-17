@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Eye,
   FileText,
-  RefreshCw,
   Search,
   User,
   X,
@@ -17,6 +16,8 @@ import {
 import Link from "next/link";
 import { managerApi, type KycPendente } from "@/lib/api";
 import { KycBatchActions } from "@/components/dashboard/KycBatchActions";
+import { GestorSubpageHeader } from "@/app/(dashboard)/_components/gestor/GestorSubpageHeader";
+import { ManagerListBanner } from "@/app/(dashboard)/_components/gestor/ManagerListBanner";
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -59,81 +60,6 @@ type DocWithStatus = KycPendente & {
 
 type TipoFilter = "TODOS" | "RG" | "SELFIE" | "COMPROVANTE";
 type StatusFilter = "TODOS" | "PENDENTE" | "EM_VERIFICACAO";
-
-// ── Demo data ──────────────────────────────────────────────────────────
-
-const DEMO_DOCS: DocWithStatus[] = [
-  {
-    kycDocumentoId: "demo-001",
-    tipo: "RG",
-    url: "https://placehold.co/600x400?text=RG+Frente",
-    criadoEm: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    _localStatus: "PENDENTE",
-    usuario: {
-      usuarioId: "u-001",
-      nome: "Carlos Eduardo Mendes",
-      email: "carlos.mendes@email.com",
-      cpf: "123.456.789-00",
-      kycStatus: "PARCIAL",
-    },
-  },
-  {
-    kycDocumentoId: "demo-002",
-    tipo: "SELFIE",
-    url: "https://placehold.co/400x400?text=Selfie",
-    criadoEm: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-    _localStatus: "EM_VERIFICACAO",
-    usuario: {
-      usuarioId: "u-002",
-      nome: "Fernanda Rodrigues Lima",
-      email: "fernanda.lima@email.com",
-      cpf: "987.654.321-11",
-      kycStatus: "PENDENTE",
-    },
-  },
-  {
-    kycDocumentoId: "demo-003",
-    tipo: "COMPROVANTE",
-    url: "https://placehold.co/600x800?text=Comprovante",
-    criadoEm: new Date(Date.now() - 28 * 3600 * 1000).toISOString(),
-    _localStatus: "PENDENTE",
-    usuario: {
-      usuarioId: "u-003",
-      nome: "Roberto Alves Santos",
-      email: "roberto.santos@construtora.com",
-      cpf: "456.789.123-22",
-      kycStatus: "PARCIAL",
-    },
-  },
-  {
-    kycDocumentoId: "demo-004",
-    tipo: "RG",
-    url: "https://placehold.co/600x400?text=CNH",
-    criadoEm: new Date(Date.now() - 51 * 3600 * 1000).toISOString(),
-    _localStatus: "EM_VERIFICACAO",
-    usuario: {
-      usuarioId: "u-004",
-      nome: "Mariana Costa Ferreira",
-      email: "mariana.ferreira@obra.net",
-      cpf: "321.654.987-33",
-      kycStatus: "PENDENTE",
-    },
-  },
-  {
-    kycDocumentoId: "demo-005",
-    tipo: "SELFIE",
-    url: "https://placehold.co/400x400?text=Selfie+2",
-    criadoEm: new Date(Date.now() - 72 * 3600 * 1000).toISOString(),
-    _localStatus: "PENDENTE",
-    usuario: {
-      usuarioId: "u-005",
-      nome: "João Paulo Nascimento",
-      email: "joao.nascimento@email.com.br",
-      cpf: "654.321.987-44",
-      kycStatus: "PENDENTE",
-    },
-  },
-];
 
 // ── Skeleton ───────────────────────────────────────────────────────────
 
@@ -474,7 +400,7 @@ const PAGE_SIZE = 5;
 export default function KycPage() {
   const [docs, setDocs] = useState<DocWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isDemo, setIsDemo] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [tipoFilter, setTipoFilter] = useState<TipoFilter>("TODOS");
@@ -500,6 +426,7 @@ export default function KycPage() {
 
   const loadDocs = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const result = await managerApi.listarKycPendentes(100, 0);
       setDocs(
@@ -508,10 +435,9 @@ export default function KycPage() {
           _localStatus: "PENDENTE" as DocStatus,
         }))
       );
-      setIsDemo(false);
     } catch {
-      setDocs(DEMO_DOCS);
-      setIsDemo(true);
+      setDocs([]);
+      setLoadError("Não foi possível carregar documentos KYC da API.");
     } finally {
       setLoading(false);
     }
@@ -559,7 +485,6 @@ export default function KycPage() {
   // ── Individual actions ─────────────────────────────────────────────
 
   const handleApprove = useCallback(async (docId: string) => {
-    // Optimistic update
     setDocs((prev) =>
       prev.map((d) =>
         d.kycDocumentoId === docId ? { ...d, _localStatus: "APROVADO" as DocStatus } : d
@@ -567,10 +492,9 @@ export default function KycPage() {
     );
     setSelectedDocs((prev) => prev.filter((id) => id !== docId));
     try {
-      await fetch(`/api/proxy/manager/kyc/${docId}/aprovar`, { method: "PATCH" });
+      await managerApi.aprovarKyc(docId);
       showSuccess("Documento aprovado com sucesso.");
     } catch {
-      // Rollback on real API failure (demo mode: always succeeds)
       setDocs((prev) =>
         prev.map((d) =>
           d.kycDocumentoId === docId
@@ -595,11 +519,7 @@ export default function KycPage() {
       );
       setSelectedDocs((prev) => prev.filter((id) => id !== docId));
       try {
-        await fetch(`/api/proxy/manager/kyc/${docId}/rejeitar`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ motivo }),
-        });
+        await managerApi.rejeitarKyc(docId, motivo);
         showSuccess("Documento rejeitado.");
       } catch {
         // Rollback on real API failure
@@ -704,37 +624,28 @@ export default function KycPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900">Análise de KYC</h1>
-            {!loading && (
-              <span
-                className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}`}
-              >
-                {pendingCount} pendente{pendingCount !== 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-          <p className="text-gray-500 text-sm mt-1">
-            Analise e aprove ou rejeite documentos enviados pelos usuários
-            {isDemo && (
-              <span className="ml-2 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                Modo demo
-              </span>
-            )}
-          </p>
-        </div>
+      {loadError && (
+        <ManagerListBanner
+          variant="error"
+          message={loadError}
+          onRetry={loadDocs}
+          retrying={loading}
+        />
+      )}
 
-        <button
-          onClick={loadDocs}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Atualizar
-        </button>
-      </div>
+      <GestorSubpageHeader
+        title="Análise de KYC"
+        subtitle="Analise e aprove ou rejeite documentos enviados pelos usuários"
+        onRefresh={loadDocs}
+        refreshing={loading}
+        badge={
+          !loading ? (
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}`}>
+              {pendingCount} pendente{pendingCount !== 1 ? "s" : ""}
+            </span>
+          ) : undefined
+        }
+      />
 
       {/* Filters */}
       <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-wrap gap-3">

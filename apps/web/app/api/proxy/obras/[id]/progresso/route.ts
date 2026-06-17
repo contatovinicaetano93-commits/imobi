@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const _base = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
-const API = _base.endsWith('/api/v1') ? _base : `${_base}/api/v1`;
+import { getApiV1Url } from '@/lib/api-base';
+
+const API = getApiV1Url();
 
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   const token = (await cookies()).get('access_token')?.value;
@@ -10,7 +11,7 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     next: { revalidate: 30 },
   }).catch(() => null);
-  if (!res) return NextResponse.json(0);
+  if (!res) return NextResponse.json(null, { status: 503 });
   const body = await res.json().catch(() => 0);
   return NextResponse.json(body, { status: res.status });
 }

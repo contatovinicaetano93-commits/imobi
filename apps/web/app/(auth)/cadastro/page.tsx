@@ -39,8 +39,12 @@ export default function CadastroPage() {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error((json as { message?: string }).message ?? "Erro ao criar conta.");
-      // Cookies are already set by the registrar proxy route
-      router.push("/dashboard/kyc?bem-vindo=1");
+      await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(json),
+      });
+      router.push("/dashboard");
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro inesperado.");
     }
@@ -164,6 +168,7 @@ function ConsentController({ control, name, error, children }: {
   children: React.ReactNode;
 }) {
   return (
+    // @ts-expect-error react-hook-form/react-18 JSX type compat
     <Controller
       control={control}
       name={name as keyof CadastroUsuarioInput}

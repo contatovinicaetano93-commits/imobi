@@ -23,7 +23,7 @@ html { scroll-behavior: smooth; }
 body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--ink); overflow-x: hidden; }
 
 /* ── NAV ── */
-nav {
+.landing-nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 3rem; height: 68px;
@@ -31,7 +31,7 @@ nav {
   transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
   border-bottom: 1px solid transparent;
 }
-nav.scrolled {
+.landing-nav.scrolled {
   background: rgba(255,255,255,0.96);
   backdrop-filter: blur(20px);
   border-bottom-color: var(--border);
@@ -54,9 +54,9 @@ nav.scrolled {
   font-size: 1.3rem; font-weight: 800;
   color: var(--white); letter-spacing: 0.04em;
 }
-nav.scrolled .logo-name { color: var(--ink); }
-nav.scrolled .logo-icon { border-color: var(--royal); }
-nav.scrolled .logo-icon b { background: var(--royal); }
+.landing-nav.scrolled .logo-name { color: var(--ink); }
+.landing-nav.scrolled .logo-icon { border-color: var(--royal); }
+.landing-nav.scrolled .logo-icon b { background: var(--royal); }
 
 .nav-links { display: flex; gap: 0.25rem; list-style: none; }
 .nav-links a {
@@ -65,8 +65,8 @@ nav.scrolled .logo-icon b { background: var(--royal); }
   border-radius: 6px; transition: color 0.15s;
 }
 .nav-links a:hover { color: var(--white); }
-nav.scrolled .nav-links a { color: var(--gray); }
-nav.scrolled .nav-links a:hover { color: var(--ink); background: var(--surface); }
+.landing-nav.scrolled .nav-links a { color: var(--gray); }
+.landing-nav.scrolled .nav-links a:hover { color: var(--ink); background: var(--surface); }
 
 .nav-actions { display: flex; align-items: center; gap: 0.6rem; }
 
@@ -76,10 +76,10 @@ nav.scrolled .nav-links a:hover { color: var(--ink); background: var(--surface);
   padding: 0.45rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.15s;
 }
 .btn-login:hover { background: rgba(255,255,255,0.18); }
-nav.scrolled .btn-login {
+.landing-nav.scrolled .btn-login {
   background: none; border-color: var(--border); color: var(--ink);
 }
-nav.scrolled .btn-login:hover { background: var(--surface); border-color: #CBD5E1; }
+.landing-nav.scrolled .btn-login:hover { background: var(--surface); border-color: #CBD5E1; }
 
 .btn-cta {
   background: var(--mint); color: var(--ink);
@@ -219,13 +219,12 @@ nav.scrolled .btn-login:hover { background: var(--surface); border-color: #CBD5E
   background-size: 48px 48px;
 }
 .hero-inner {
-  max-width: 860px; margin: 0 auto; width: 100%;
-  display: flex; flex-direction: column; align-items: center;
+  max-width: 800px; margin: 0 auto; width: 100%;
   position: relative; z-index: 1;
 }
-.hero-content { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.hero-content { display: flex; flex-direction: column; }
 .hero-badge {
-  display: inline-flex; align-items: center; gap: 0.5rem;
+  display: inline-flex; align-items: center; gap: 0.5rem; align-self: flex-start;
   background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.65);
   font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
   padding: 0.35rem 0.9rem; border-radius: 20px; margin-bottom: 2rem;
@@ -245,33 +244,10 @@ nav.scrolled .btn-login:hover { background: var(--surface); border-color: #CBD5E
 .h1-line { display: block; }
 .h1-accent { color: var(--mint); }
 .hero-sub {
-  font-size: 1.05rem; color: rgba(255,255,255,0.6); line-height: 1.8;
-  font-weight: 300; margin-bottom: 2.5rem; max-width: 560px; text-align: center;
+  font-size: 1rem; color: rgba(255,255,255,0.6); line-height: 1.8;
+  font-weight: 300; margin-bottom: 2.5rem; max-width: 400px;
 }
-.hero-actions { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; }
-
-/* ── HERO CREDIBILITY STRIP ── */
-.hero-strip {
-  display: flex; align-items: center;
-  width: 100%; margin-top: 3rem;
-  padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);
-}
-.hero-strip-item {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 0.25rem; flex: 1;
-}
-.hero-strip-val {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 1.6rem; font-weight: 800; color: var(--white);
-  letter-spacing: -0.01em; line-height: 1;
-}
-.hero-strip-lbl {
-  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.1em;
-  text-transform: uppercase; color: rgba(255,255,255,0.35);
-}
-.hero-strip-div {
-  width: 1px; height: 2.25rem; background: rgba(255,255,255,0.12); flex-shrink: 0;
-}
+.hero-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .btn-hero-primary {
   background: var(--mint); color: var(--ink);
   font-family: 'Jost', sans-serif; font-size: 0.9rem; font-weight: 700;
@@ -497,7 +473,6 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .hero-h1 .h1-line:nth-child(3) { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.42s both; }
   .hero-sub                      { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.52s both; }
   .hero-actions                  { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.62s both; }
-  .hero-strip                    { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.74s both; }
 
   /* Scroll reveal — JS adds .in class on IntersectionObserver trigger */
   .reveal {
@@ -516,22 +491,21 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .d5 { transition-delay: 0.50s; }
 }
 
+
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
-  nav { padding: 0 1.25rem; height: 60px; }
+  .landing-nav { padding: 0 1.25rem; height: 60px; }
   .nav-links { display: none; }
   .nav-actions { display: none; }
   .nav-mobile-auth { display: flex !important; align-items: center; gap: 0.4rem; }
   .nav-mobile-auth .btn-login { padding: 0.4rem 0.7rem; font-size: 0.75rem; }
 
-  .hero { padding: 5.5rem 1.25rem 4rem; min-height: 100svh; }
+  .hero { padding: 6rem 1.25rem 3rem; min-height: auto; }
+  .hero-inner { max-width: 100%; }
   .hero-sub { max-width: 100%; }
   .hero-actions { flex-direction: column; align-items: stretch; gap: 0.75rem; }
   .btn-hero-primary { text-align: center; padding: 1rem; }
   .btn-hero-ghost { text-align: center; }
-  .hero-strip { gap: 0; margin-top: 2.25rem; padding-top: 1.5rem; }
-  .hero-strip-val { font-size: 1.3rem; }
-  .hero-strip-lbl { font-size: 0.56rem; }
 
   .vantagens { padding: 4rem 1.25rem; }
   .vs-grid { grid-template-columns: 1fr; }

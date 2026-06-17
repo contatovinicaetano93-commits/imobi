@@ -69,9 +69,9 @@ export default async function DashboardPage() {
   const valorLiberado   = creditoAtivo ? Number(creditoAtivo.valorLiberado)  : 0;
   const saldoDisponivel = valorAprovado - valorLiberado;
 
-  const ativas = obras.filter((o: ObraResumo) => o.status === "EM_EXECUCAO");
+  const ativas = obras.filter((o: ObraResumo) => ["EM_EXECUCAO","EM_ANDAMENTO"].includes(o.status));
   const allEtapas    = obras.flatMap((o: ObraResumo) => o.etapas ?? []);
-  const aprovadas    = allEtapas.filter((e: EtapaResumo) => e.status === "CONCLUIDA");
+  const aprovadas    = allEtapas.filter((e: EtapaResumo) => ["CONCLUIDA","APROVADA"].includes(e.status));
   const pendentes    = allEtapas.filter((e: EtapaResumo) => e.status === "AGUARDANDO_VISTORIA");
   const pctEtapas    = allEtapas.length ? Math.round(aprovadas.length / allEtapas.length * 100) : 0;
 
@@ -161,7 +161,7 @@ export default async function DashboardPage() {
         {allEtapas.length > 0 ? (
           <div style={{ background: "white", borderRadius: 14, border: "1px solid #f3f4f6", overflow: "hidden" }}>
             {allEtapas.slice(0, 5).map((etapa: EtapaResumo, i: number) => {
-              const isAprov = etapa.status === "CONCLUIDA";
+              const isAprov = ["CONCLUIDA","APROVADA"].includes(etapa.status);
               const isPend  = etapa.status === "AGUARDANDO_VISTORIA";
               return (
                 <div key={etapa.id ?? i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "0.75rem 1rem", borderTop: i > 0 ? "1px solid #f9fafb" : "none" }}>

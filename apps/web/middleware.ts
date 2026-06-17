@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { jwtVerify } from "jose";
+import { decodeJwtPayload } from "@/lib/decode-jwt-payload";
 
 const PUBLIC_PATHS = [
   "/",
@@ -11,12 +11,13 @@ const PUBLIC_PATHS = [
   "/privacy-policy",
   "/api/auth",
   "/api/proxy/auth",
+  "/api/proxy/health",
 ];
 
 // Route prefix → allowed roles. Real authorization is enforced by NestJS guards.
 const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: "/dashboard/admin",      roles: ["ADMIN"] },
-  { prefix: "/dashboard/gestor",     roles: ["GESTOR", "ADMIN"] },
+  { prefix: "/dashboard/gestor",     roles: ["GESTOR", "GESTOR_FUNDO", "ADMIN"] },
   { prefix: "/dashboard/fundos",     roles: ["GESTOR", "GESTOR_FUNDO", "ADMIN"] },
   { prefix: "/dashboard/relatorios", roles: ["GESTOR", "GESTOR_FUNDO", "ADMIN"] },
   { prefix: "/dashboard/engenheiro", roles: ["ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
@@ -30,55 +31,38 @@ const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: "/dashboard/comite",     roles: ["CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
 ];
 
-async function verifyJwt(
-  token: string,
-  secret: string,
-): Promise<{ role?: string; exp?: number } | null> {
-  try {
-    const key = new TextEncoder().encode(secret);
-    const { payload } = await jwtVerify(token, key);
-    return payload as { role?: string; exp?: number };
-  } catch {
-    return null;
-  }
+function decodeJwt(token: string): { role?: string; exp?: number } | null {
+  const payload = decodeJwtPayload(token);
+  if (!payload) return null;
+  return {
+    role: typeof payload.role === "string" ? payload.role : undefined,
+    exp: typeof payload.exp === "number" ? payload.exp : undefined,
+  };
 }
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
   if (isPublic) return NextResponse.next();
 
   const token = request.cookies.get("access_token")?.value;
-  const refreshToken = request.cookies.get("refresh_token")?.value;
 
-  // No token → attempt silent refresh if refresh_token exists, else login
+  // No token or expired → send to login
   if (!token) {
-    if (refreshToken) {
-      const refreshUrl = new URL("/api/proxy/auth/refresh-redirect", request.url);
-      refreshUrl.searchParams.set("next", pathname);
-      return NextResponse.redirect(refreshUrl);
-    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  const secret = process.env["JWT_SECRET"] ?? "";
-  const jwt = await verifyJwt(token, secret);
-
+  const jwt = decodeJwt(token);
   if (!jwt || (jwt.exp && jwt.exp < Math.floor(Date.now() / 1000))) {
-    if (refreshToken) {
-      const refreshUrl = new URL("/api/proxy/auth/refresh-redirect", request.url);
-      refreshUrl.searchParams.set("next", pathname);
-      return NextResponse.redirect(refreshUrl);
-    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  const role = (jwt as Record<string, unknown>).role as string ?? null;
+  const role = jwt.role ?? request.cookies.get("session_role")?.value ?? null;
 
   // Role-gated routes: wrong role → back to their own dashboard root
   const rule = ROLE_RULES.find((r) => pathname === r.prefix || pathname.startsWith(r.prefix + "/"));

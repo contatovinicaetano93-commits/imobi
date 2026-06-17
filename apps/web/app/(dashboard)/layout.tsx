@@ -5,13 +5,15 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import "./layout.css";
 import { useEffect, useState } from "react";
+import { ToastProvider } from "@/hooks/toast-context";
+import { Toaster } from "@/components/ui/toaster";
 import {
   Home, HardHat, CreditCard, Calculator, Star, FileCheck2, Bell, User,
-  Wrench, ShieldCheck, BarChart3, Banknote, Megaphone, Settings, LogOut,
-  ChevronRight, Building2, ArrowLeft, Vote, LayoutDashboard, type LucideIcon,
+  ShieldCheck, BarChart3, Banknote, Settings, LogOut,
+  ChevronRight, Building2, ArrowLeft, Vote, LayoutDashboard, MapPin, TrendingUp, FileText, type LucideIcon,
 } from "lucide-react";
 
-type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "GESTOR_OBRA" | "TOMADOR" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | null;
+type UserRole = "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "GESTOR_OBRA" | "TOMADOR" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | null;
 type NavItem = {
   label: string; href: string; icon: LucideIcon;
   roles: UserRole[]; section?: string; funcao?: string;
@@ -30,19 +32,27 @@ const NAV: NavItem[] = [
   { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "simulador" },
   { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "score" },
   { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "kyc" },
-  { label: "Painel",        href: "/dashboard/gestor",                  icon: Banknote,    roles: ["GESTOR"],        section: "geral",  funcao: "gestor" },
-  { label: "Comitês",       href: "/dashboard/gestor/comite",           icon: Vote,        roles: ["GESTOR"],                          funcao: "gestor" },
-  { label: "Etapas",        href: "/dashboard/gestor/etapas",           icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "gestor" },
-  { label: "KYC",           href: "/dashboard/gestor/kyc",              icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "kyc" },
-  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2, roles: ["GESTOR"],                          funcao: "due-diligence" },
-  { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["GESTOR"],                          funcao: "fundos" },
-  { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["GESTOR"],                          funcao: "relatorios" },
-  { label: "Engenharia",    href: "/dashboard/engenheiro",              icon: Wrench,      roles: ["ENGENHEIRO","GESTOR_OBRA"], section: "geral", funcao: "engenharia" },
-  { label: "Pareceres",     href: "/dashboard/engenheiro/comite",       icon: Vote,        roles: ["ENGENHEIRO","GESTOR_OBRA"],        funcao: "engenharia" },
-  { label: "Painel",        href: "/dashboard/comercial",               icon: Megaphone,   roles: ["COMERCIAL","PARCEIRO"], section: "geral", funcao: "comercial" },
-  { label: "Leads",         href: "/dashboard/comercial/leads",         icon: Star,        roles: ["COMERCIAL","PARCEIRO"],            funcao: "comercial" },
-  { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], funcao: "notificacoes" },
-  { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null] },
+  { label: "Painel",        href: "/dashboard/gestor",                   icon: Home,        roles: ["GESTOR", "GESTOR_FUNDO"],        section: "geral" },
+  { label: "Comitê",        href: "/dashboard/gestor/comite",            icon: Vote,        roles: ["GESTOR", "GESTOR_FUNDO"] },
+  { label: "Etapas",        href: "/dashboard/gestor/etapas",            icon: FileCheck2,  roles: ["GESTOR", "GESTOR_FUNDO"] },
+  { label: "KYC",           href: "/dashboard/gestor/kyc",               icon: ShieldCheck, roles: ["GESTOR", "GESTOR_FUNDO"] },
+  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2,  roles: ["GESTOR", "GESTOR_FUNDO"] },
+  { label: "Carteira",      href: "/dashboard/fundos",                   icon: Banknote,    roles: ["GESTOR", "GESTOR_FUNDO"] },
+  { label: "Relatórios",    href: "/dashboard/relatorios",               icon: BarChart3,   roles: ["GESTOR", "GESTOR_FUNDO"] },
+  { label: "Painel",        href: "/dashboard/engenheiro",               icon: Home,        roles: ["ENGENHEIRO","GESTOR_OBRA"], section: "geral" },
+  { label: "Minhas Obras",  href: "/dashboard/obras",                    icon: HardHat,     roles: ["ENGENHEIRO","GESTOR_OBRA"] },
+  { label: "Vistoria",      href: "/dashboard/engenheiro/vistoria",      icon: MapPin,      roles: ["ENGENHEIRO","GESTOR_OBRA"] },
+  { label: "Checklist",     href: "/dashboard/engenheiro/checklist",     icon: FileCheck2,  roles: ["ENGENHEIRO","GESTOR_OBRA"] },
+  { label: "Alertas",       href: "/dashboard/engenheiro/alertas",       icon: Bell,        roles: ["ENGENHEIRO","GESTOR_OBRA"] },
+  { label: "Comitê",        href: "/dashboard/engenheiro/comite",        icon: Vote,        roles: ["ENGENHEIRO","GESTOR_OBRA"] },
+  { label: "Painel",        href: "/dashboard/comercial",                icon: Home,        roles: ["COMERCIAL","PARCEIRO"], section: "geral" },
+  { label: "Indicações",    href: "/dashboard/comercial/leads",          icon: Star,        roles: ["COMERCIAL","PARCEIRO"] },
+  { label: "Comissões",     href: "/dashboard/comercial/comissoes",      icon: Banknote,    roles: ["COMERCIAL","PARCEIRO"] },
+  { label: "Simulador",     href: "/dashboard/comercial/simulador",      icon: Calculator,  roles: ["COMERCIAL","PARCEIRO"] },
+  { label: "Materiais",     href: "/dashboard/comercial/materiais",      icon: FileText,    roles: ["COMERCIAL","PARCEIRO"] },
+  { label: "Ranking",       href: "/dashboard/comercial/ranking",        icon: TrendingUp,  roles: ["COMERCIAL","PARCEIRO"] },
+  { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","GESTOR_FUNDO","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], funcao: "notificacoes" },
+  { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","GESTOR_FUNDO","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null] },
   { label: "Visão Geral",   href: "/dashboard/admin",                   icon: LayoutDashboard, roles: ["ADMIN"],     section: "admin" },
   { label: "Pipeline",      href: "/dashboard/admin/pipeline",          icon: Banknote,    roles: ["ADMIN"] },
   { label: "Comitê",        href: "/dashboard/admin/comite",            icon: Vote,        roles: ["ADMIN"] },
@@ -59,6 +69,7 @@ const ROLE_META: Record<string, { label: string; accent: string }> = {
   CONSTRUTOR:  { label: "Construtor",  accent: MINT },
   TOMADOR:     { label: "Construtor",  accent: MINT },
   GESTOR:      { label: "Fundo",       accent: "#a78bfa" },
+  GESTOR_FUNDO: { label: "Fundo",      accent: "#a78bfa" },
   ENGENHEIRO:  { label: "Engenheiro",  accent: "#fb923c" },
   GESTOR_OBRA: { label: "Engenheiro",  accent: "#fb923c" },
   COMERCIAL:   { label: "Comercial",   accent: "#fbbf24" },
@@ -66,16 +77,22 @@ const ROLE_META: Record<string, { label: string; accent: string }> = {
   ADMIN:       { label: "Admin",       accent: MINT },
 };
 
-// When admin is in another role's area, show that area's nav instead.
+// Resolve the nav panel to display based on current path.
+// Works for all roles: sidebar always mirrors the panel the user is navigating.
 function getNavRole(role: UserRole, path: string): UserRole {
-  if (role !== "ADMIN") return role;
   const seg = path.split("/")[2] ?? "";
-  if (["construtor", "credito", "kyc", "score", "simulador"].includes(seg)) return "CONSTRUTOR";
-  if (seg === "comite" && !path.startsWith("/dashboard/admin")) return "CONSTRUTOR";
-  if (seg === "gestor") return "GESTOR";
+
+  // Panel-root segments always determine sidebar context
+  if (seg === "comercial")  return "COMERCIAL";
+  if (seg === "gestor")     return role === "GESTOR_FUNDO" ? "GESTOR_FUNDO" : "GESTOR";
   if (seg === "engenheiro") return "ENGENHEIRO";
-  if (seg === "comercial") return "COMERCIAL";
-  return "ADMIN";
+  if (["construtor", "credito", "kyc", "score", "simulador", "obras", "comite"].includes(seg))
+    return role === "ENGENHEIRO" || role === "GESTOR_OBRA" ? role : "CONSTRUTOR";
+  if (seg === "admin")      return "ADMIN";
+  if (seg === "fundos" || seg === "relatorios") return role === "ADMIN" ? "ADMIN" : (role === "GESTOR_FUNDO" ? "GESTOR_FUNDO" : "GESTOR");
+
+  // Shared / unknown segment — fall back to actual role
+  return role;
 }
 
 function filterNav(role: UserRole, path: string, funcoesBloqueadas: string[]): NavItem[] {
@@ -134,6 +151,7 @@ function renderNav(
   items: NavItem[],
   activeFn: (href: string) => boolean,
   accent: string,
+  notifCount: number,
   onNavigate?: () => void,
 ) {
   let lastSection = "";
@@ -142,7 +160,7 @@ function renderNav(
     const showSection = item.section && item.section !== lastSection;
     if (item.section) lastSection = item.section;
     const Icon = item.icon;
-    // Use index + href as key to avoid collisions when multiple roles share same href
+    const badge = item.href === "/dashboard/notificacoes" && notifCount > 0 ? notifCount : 0;
     return (
       <div key={`${idx}-${item.href}`}>
         {showSection && (
@@ -175,7 +193,16 @@ function renderNav(
         >
           <Icon size={13} strokeWidth={active ? 2.2 : 1.8} style={{ flexShrink: 0 }} />
           <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</span>
-          {active && <ChevronRight size={10} style={{ opacity: 0.5 }} />}
+          {badge > 0 && (
+            <span style={{
+              background: "#ef4444", color: "white", borderRadius: 9999,
+              fontSize: "0.6rem", fontWeight: 700, lineHeight: 1,
+              padding: "2px 5px", flexShrink: 0,
+            }}>
+              {badge > 99 ? "99+" : badge}
+            </span>
+          )}
+          {active && !badge && <ChevronRight size={10} style={{ opacity: 0.5 }} />}
         </Link>
       </div>
     );
@@ -191,24 +218,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [funcoesBloqueadas, setFuncoesBloqueadas] = useState<string[]>([]);
+  const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
-    // Try sessionStorage first (5-min TTL) to skip the network call on tab switches / reloads
-    try {
-      const raw = sessionStorage.getItem("imobi_auth");
-      if (raw) {
-        const { d, ts } = JSON.parse(raw);
-        if (Date.now() - ts < 15 * 60 * 1000 && d?.authenticated) {
-          setRole(d.role ?? null);
-          setUserName(d.nome ?? null);
-          setUserEmail(d.email ?? null);
-          setFuncoesBloqueadas(Array.isArray(d.funcoesBloqueadas) ? d.funcoesBloqueadas : []);
-          setRoleLoading(false);
-          return;
-        }
-      }
-    } catch { /* sessionStorage unavailable */ }
-
+    // Role (and therefore nav + footer) come exclusively from the live API —
+    // no pre-fill from cache so we never flash the previous user's identity.
     fetch("/api/auth/me")
       .then((r) => r.ok ? r.json() : null)
       .catch(() => null)
@@ -219,9 +233,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           setUserName(d.nome ?? null);
           setUserEmail(d.email ?? null);
           setFuncoesBloqueadas(Array.isArray(d.funcoesBloqueadas) ? d.funcoesBloqueadas : []);
+        } else {
+          try { sessionStorage.removeItem("imobi_auth"); } catch { /* ignore */ }
+          setRole(null);
+          setUserName(null);
+          setUserEmail(null);
+          setFuncoesBloqueadas([]);
         }
         setRoleLoading(false);
       });
+  }, []);
+
+  // Poll unread notification count every 60s
+  useEffect(() => {
+    function fetchCount() {
+      fetch("/api/proxy/notificacoes/contar-nao-lidas")
+        .then((r) => r.ok ? r.json() : null)
+        .catch(() => null)
+        .then((d) => { if (typeof d?.total === "number") setNotifCount(d.total); });
+    }
+    fetchCount();
+    const id = setInterval(fetchCount, 60_000);
+    return () => clearInterval(id);
   }, []);
 
   // Close drawer on route change
@@ -232,6 +265,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     href === "/dashboard" ? path === href : path.startsWith(href);
 
   const navRole = getNavRole(role, path);
+  const isPreviewingOtherPanel = role === "ADMIN" && navRole !== "ADMIN";
+
   const meta = role ? ROLE_META[role] : null;
   const navMeta = navRole ? ROLE_META[navRole] : meta;
   const accent = navMeta?.accent ?? MINT;
@@ -244,7 +279,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const userFooter = (compact = false) => (
     <div>
-      {meta && (
+      {navMeta && (
         <div style={{
           margin: "0 0.75rem 0.5rem",
           padding: "0.3rem 0.65rem",
@@ -255,7 +290,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         }}>
           <span style={{ width: 5, height: 5, borderRadius: "50%", background: accent, flexShrink: 0 }} />
           <span style={{ fontSize: "0.72rem", fontWeight: 700, color: accent, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "'Jost', sans-serif" }}>
-            {meta.label}
+            {navMeta.label}
           </span>
         </div>
       )}
@@ -286,6 +321,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <button
           onClick={async () => {
             await fetch("/api/auth/session", { method: "DELETE" });
+            try { sessionStorage.removeItem("imobi_auth"); } catch { /* ignore */ }
             window.location.href = "/login";
           }}
           title="Sair"
@@ -304,8 +340,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </div>
     </div>
   );
-
-  const isPreviewingOtherPanel = role === "ADMIN" && navRole !== "ADMIN";
 
   const sidebarContent = (onNavigate?: () => void) => (
     <>
@@ -327,14 +361,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </Link>
         </div>
       )}
-      <nav style={{ flex: 1, padding: "0 0.4rem", overflowY: "auto" }}>
-        {roleLoading ? <NavSkeleton /> : renderNav(visibleNav, isActive, accent, onNavigate)}
+      <nav style={{ flex: 1, padding: "0 0.4rem", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+        {roleLoading ? <NavSkeleton /> : renderNav(visibleNav, isActive, accent, notifCount, onNavigate)}
       </nav>
       {userFooter(!!onNavigate)}
     </>
   );
 
   return (
+    <ToastProvider>
     <div className="dash-root" style={{ display: "flex", minHeight: "100vh", background: "#EEF3FF", fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
 
       {/* Sidebar desktop */}
@@ -461,6 +496,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </svg>
       </a>
 
+      <Toaster />
     </div>
+    </ToastProvider>
   );
 }

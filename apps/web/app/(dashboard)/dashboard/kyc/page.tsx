@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { kycApi, type KycStatus, type KycDocumento } from "@/lib/api";
 import { FileText, CheckCircle2, XCircle, Clock, Upload, AlertCircle } from "lucide-react";
 
@@ -20,9 +19,6 @@ const DOC_TIPOS = [
 ];
 
 export default function KycPage() {
-  const searchParams = useSearchParams();
-  const bemVindo = searchParams.get("bem-vindo") === "1";
-
   const [status, setStatus] = useState<KycStatus | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,15 +71,6 @@ export default function KycPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      {bemVindo && (
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex gap-4 items-start">
-          <span className="text-2xl">👋</span>
-          <div>
-            <p className="font-semibold text-blue-900 text-sm">Conta criada com sucesso!</p>
-            <p className="text-blue-700 text-sm mt-0.5">Para solicitar crédito você precisa verificar sua identidade. Envie os documentos abaixo — leva menos de 3 minutos.</p>
-          </div>
-        </div>
-      )}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Verificação de Identidade</h1>
         <p className="text-sm text-gray-500 mt-1">Envie seus documentos para desbloquear o crédito.</p>

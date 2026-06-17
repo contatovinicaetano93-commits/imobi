@@ -8,58 +8,25 @@ import type { Route } from "next";
 import { managerApi, type EtapaPendente } from "@/lib/api";
 import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions";
 import { AdvancedFilters, type FilterState } from "@/components/dashboard/AdvancedFilters";
+import { GestorSubpageHeader } from "@/app/(dashboard)/_components/gestor/GestorSubpageHeader";
+import { ManagerListBanner } from "@/app/(dashboard)/_components/gestor/ManagerListBanner";
 import Link from "next/link";
 
-// ── Dados de demonstração (exibidos quando a API não está disponível) ──
-const DEMO_ETAPAS: EtapaPendente[] = [
-  {
-    etapaId: "demo-e1",
-    nome: "Fundação",
-    ordem: 2,
-    percentualObra: 20,
-    valorLiberacao: 96_000,
-    evidenciasCount: 8,
-    criadoEm: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
-    obra: {
-      obraId: "demo-o1",
-      nome: "Residencial Vila Nova — Casa 12",
-      endereco: "Rua das Palmeiras, 120 — Jardim América, SP",
-      usuario: { usuarioId: "demo-u1", nome: "Carlos Mendes", email: "c.mendes@exemplo.com", cpf: "***.***.***-01" },
-      credito: { creditoId: "demo-c1", valorAprovado: 480_000 },
-    },
-  },
-  {
-    etapaId: "demo-e2",
-    nome: "Estrutura",
-    ordem: 3,
-    percentualObra: 25,
-    valorLiberacao: 120_000,
-    evidenciasCount: 5,
-    criadoEm: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
-    obra: {
-      obraId: "demo-o2",
-      nome: "Sobrado Jardim das Acácias",
-      endereco: "Av. das Acácias, 450 — Jd. Acácias, SP",
-      usuario: { usuarioId: "demo-u2", nome: "Fernanda Souza", email: "f.souza@exemplo.com", cpf: "***.***.***-02" },
-      credito: { creditoId: "demo-c2", valorAprovado: 320_000 },
-    },
-  },
-  {
-    etapaId: "demo-e3",
-    nome: "Alvenaria & Vedações",
-    ordem: 4,
-    percentualObra: 15,
-    valorLiberacao: 72_000,
-    evidenciasCount: 3,
-    criadoEm: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    obra: {
-      obraId: "demo-o3",
-      nome: "Casa Térrea Condomínio Bosque Verde",
-      endereco: "Rua Bosque Verde, 88 — Campinas, SP",
-      usuario: { usuarioId: "demo-u3", nome: "Roberto Andrade", email: "r.andrade@exemplo.com", cpf: "***.***.***-03" },
-    },
-  },
-];
+function EtapaSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
+      <div className="flex gap-4">
+        <div className="w-5 h-5 bg-gray-200 rounded shrink-0" />
+        <div className="w-1.5 h-20 bg-gray-200 rounded-full shrink-0" />
+        <div className="flex-1 space-y-3">
+          <div className="h-4 bg-gray-200 rounded w-1/2" />
+          <div className="h-3 bg-gray-200 rounded w-1/3" />
+          <div className="h-3 bg-gray-200 rounded w-2/3" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -78,8 +45,8 @@ function EtapasContent() {
   const searchParams = useSearchParams();
   const [data, setData] = useState<{ etapas: EtapaPendente[]; total: number } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isDemo, setIsDemo] = useState(false);
   const [offset, setOffset] = useState(0);
   const [selectedEtapas, setSelectedEtapas] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -111,29 +78,35 @@ function EtapasContent() {
     });
   }, [searchParams]);
 
-  useEffect(() => {
+  const loadEtapas = () => {
     setLoading(true);
+    setLoadError(null);
     managerApi
       .listarEtapasPendentes(limit, offset, filters)
       .then((d) => {
         setData(d);
-        setIsDemo(false);
-        setError(null);
+        setLoadError(null);
       })
       .catch(() => {
-        setData({ etapas: DEMO_ETAPAS, total: DEMO_ETAPAS.length });
-        setIsDemo(true);
-        setError(null);
+        setData({ etapas: [], total: 0 });
+        setLoadError("Não foi possível carregar etapas pendentes da API.");
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadEtapas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offset, filters]);
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Etapas Pendentes</h1>
-          <p className="text-gray-500 text-sm mt-1">Carregando...</p>
+        <GestorSubpageHeader title="Etapas Pendentes" subtitle="Carregando fila de aprovação..." />
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <EtapaSkeleton key={i} />
+          ))}
         </div>
       </div>
     );
@@ -172,6 +145,7 @@ function EtapasContent() {
     setSuccessMessage(`${selectedEtapas.length} etapa(s) ${actionText} com sucesso!`);
     setSelectedEtapas([]);
     setOffset(0);
+    loadEtapas();
     setTimeout(() => setSuccessMessage(null), 5000);
   };
 
@@ -196,25 +170,29 @@ function EtapasContent() {
         </div>
       )}
 
-      {isDemo && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
-          <span className="text-amber-600 text-lg shrink-0">⚠️</span>
-          <p className="text-amber-800 text-sm font-medium">
-            Dados de demonstração — a API não está disponível no momento. As etapas exibidas são exemplos.
-          </p>
-        </div>
+      {loadError && (
+        <ManagerListBanner
+          variant="error"
+          message={loadError}
+          onRetry={loadEtapas}
+          retrying={loading}
+        />
       )}
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Etapas Pendentes</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            {data.total} etapa{data.total !== 1 ? "s" : ""} aguardando aprovação
-            {selectedEtapas.length > 0 && ` — ${selectedEtapas.length} selecionada(s)`}
-            {filters.priority && filters.priority !== "todas" && ` — Filtrando por: ${filters.priority}`}
-          </p>
+      <GestorSubpageHeader
+        title="Etapas Pendentes"
+        subtitle={`${data.total} etapa${data.total !== 1 ? "s" : ""} aguardando aprovação${
+          selectedEtapas.length > 0 ? ` — ${selectedEtapas.length} selecionada(s)` : ""
+        }`}
+        onRefresh={loadEtapas}
+        refreshing={loading}
+      />
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+          <p className="text-red-800 text-sm font-medium">{error}</p>
         </div>
-      </div>
+      )}
 
       <AdvancedFilters
         filters={filters}

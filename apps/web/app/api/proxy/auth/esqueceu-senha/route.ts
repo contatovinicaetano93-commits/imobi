@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const _base = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
-const API = _base.endsWith('/api/v1') ? _base : `${_base}/api/v1`;
+import { getApiV1Url } from '@/lib/api-base';
+
+const API = getApiV1Url();
 
 export async function POST(req: NextRequest) {
   const body = await req.text();

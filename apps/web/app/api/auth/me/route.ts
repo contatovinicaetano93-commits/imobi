@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { jwtVerify } from "jose";
 
 export async function GET() {
   const jar = await cookies();
@@ -8,19 +7,18 @@ export async function GET() {
   if (!token) return NextResponse.json({ authenticated: false }, { status: 401 });
 
   try {
-    const secret = process.env["JWT_SECRET"];
-    if (!secret) return NextResponse.json({ authenticated: false }, { status: 401 });
-
-    const key = new TextEncoder().encode(secret);
-    const { payload } = await jwtVerify(token, key);
-
+    const [, payload] = token.split(".");
+    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8"));
+    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
+      return NextResponse.json({ authenticated: false }, { status: 401 });
+    }
     return NextResponse.json({
       authenticated: true,
-      id: (payload.sub as string) ?? null,
-      email: (payload.email as string) ?? null,
-      nome: (payload.nome as string) ?? null,
-      role: (payload.role as string) ?? (payload.tipo as string) ?? null,
-      funcoesBloqueadas: Array.isArray(payload.funcoesBloqueadas) ? payload.funcoesBloqueadas : [],
+      id: decoded.sub ?? decoded.id ?? null,
+      email: decoded.email ?? null,
+      nome: decoded.nome ?? decoded.name ?? null,
+      role: decoded.role ?? decoded.tipo ?? null,
+      funcoesBloqueadas: Array.isArray(decoded.funcoesBloqueadas) ? decoded.funcoesBloqueadas : [],
     });
   } catch {
     return NextResponse.json({ authenticated: false }, { status: 401 });

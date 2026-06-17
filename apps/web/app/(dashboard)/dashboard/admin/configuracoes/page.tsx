@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import { ChevronLeft, Save, AlertTriangle, Percent, DollarSign, Clock, MapPin, Settings, RefreshCw } from "lucide-react";
+import { ChevronLeft, Save, AlertTriangle, Percent, DollarSign, Clock, MapPin, Settings } from "lucide-react";
+import { useToast } from "@/hooks/toast-context";
 
 const NAVY  = "#0C1A3D";
 const ROYAL = "#1B4FD8";
@@ -40,13 +41,11 @@ const DEFAULTS: Config = {
 };
 
 export default function ConfiguracoesPage() {
+  const { addToast } = useToast();
   const [config, setConfig] = useState<Config>(DEFAULTS);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveErro, setSaveErro] = useState("");
-  const [regenerando, setRegenerando] = useState(false);
-  const [regenerado, setRegenerado] = useState(false);
-
   useEffect(() => {
     fetch("/api/proxy/admin/configuracoes")
       .then((r) => (r.ok ? r.json() : null))
@@ -69,27 +68,20 @@ export default function ConfiguracoesPage() {
       });
       if (res.ok) {
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        addToast("Configurações salvas com sucesso! As novas regras já valem para próximas solicitações.", "success");
+        setTimeout(() => setSaved(false), 4000);
       } else {
-        setSaveErro("Erro ao salvar configurações. Tente novamente.");
+        const d = await res.json().catch(() => ({})) as { message?: string };
+        const msg = d.message ?? "Erro ao salvar configurações. Tente novamente.";
+        setSaveErro(msg);
+        addToast(msg, "error");
       }
     } catch {
-      setSaveErro("Erro de conexão ao salvar.");
+      const msg = "Erro de conexão ao salvar.";
+      setSaveErro(msg);
+      addToast(msg, "error");
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleRegenerarPrisma() {
-    setRegenerando(true);
-    try {
-      await fetch("/api/proxy/admin/prisma/regenerate", { method: "POST" });
-      setRegenerado(true);
-      setTimeout(() => setRegenerado(false), 3000);
-    } catch {
-      // silently fail — operação administrativa
-    } finally {
-      setRegenerando(false);
     }
   }
 
@@ -217,35 +209,7 @@ export default function ConfiguracoesPage() {
           </button>
         </div>
 
-        {/* Regenerar Prisma */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, padding: "1rem 1.25rem", borderTop: "1px solid rgba(12,26,61,0.06)" }}>
-          <div>
-            <p style={{ ...jost, fontSize: "0.84rem", fontWeight: 600, color: NAVY }}>Regenerar Prisma Client</p>
-            <p style={{ ...jost, fontSize: "0.72rem", color: "rgba(12,26,61,0.4)", marginTop: 2 }}>
-              Executa <code style={{ fontFamily: "monospace", background: "rgba(12,26,61,0.06)", padding: "0 4px", borderRadius: 4 }}>prisma generate</code> no servidor
-            </p>
-          </div>
-          <button
-            onClick={handleRegenerarPrisma}
-            disabled={regenerando}
-            style={{
-              ...jost, display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0,
-              fontSize: "0.8rem", fontWeight: 600, cursor: "pointer",
-              padding: "0.45rem 1rem", borderRadius: 10,
-              border: regenerado ? "1px solid #bbf7d0" : "1px solid rgba(12,26,61,0.12)",
-              color: regenerado ? "#16a34a" : NAVY,
-              background: regenerado ? "#f0fdf4" : "white",
-              opacity: regenerando ? 0.6 : 1,
-              transition: "all 0.15s",
-            }}
-          >
-            <RefreshCw size={13} style={{ animation: regenerando ? "spin 1s linear infinite" : "none" }} />
-            {regenerando ? "Executando..." : regenerado ? "Concluído" : "Regenerar"}
-          </button>
-        </div>
       </Section>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -291,8 +255,15 @@ function NumberInput({ value, onChange, step, min, max, suffix, prefix }: {
     if (!focused) setRaw(String(value));
   }, [value, focused]);
 
+  function formatDisplay(n: number): string {
+    if (suffix === "R$" || prefix) {
+      return n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    return n.toLocaleString("pt-BR", { minimumFractionDigits: step < 1 ? 2 : 0, maximumFractionDigits: step < 1 ? 2 : 0 });
+  }
+
   function commit(s: string) {
-    const n = parseFloat(s.replace(",", "."));
+    const n = parseFloat(s.replace(/\./g, "").replace(",", "."));
     if (!isNaN(n)) {
       const clamped = Math.max(min, Math.min(max, n));
       onChange(clamped);
@@ -308,12 +279,12 @@ function NumberInput({ value, onChange, step, min, max, suffix, prefix }: {
       <input
         type="text"
         inputMode="decimal"
-        value={raw}
+        value={focused ? raw : formatDisplay(value)}
         onChange={(e) => {
           const v = e.target.value.replace(/[^0-9.,]/g, "");
           setRaw(v);
         }}
-        onFocus={() => setFocused(true)}
+        onFocus={() => { setFocused(true); setRaw(String(value)); }}
         onBlur={() => { setFocused(false); commit(raw); }}
         onKeyDown={(e) => {
           if (e.key === "Enter") { e.preventDefault(); commit(raw); }

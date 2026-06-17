@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { obrasApi, creditoApi } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { PortfolioChart } from "./_components/PortfolioChart";
 import { RegionalDistribution } from "./_components/RegionalDistribution";
 import { InadimplenciaMetrics } from "./_components/InadimplenciaMetrics";
 import { ReportExport } from "./_components/ReportExport";
+import { CapitalFundoAdmin } from "./_components/CapitalFundoAdmin";
 import {
   aggregateByRegion,
   calculateRoiTimeline,
@@ -16,6 +18,17 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: "Fundos — imbobi" };
 
 export default async function FundosPage() {
+  const jar = await cookies();
+  const token = jar.get("access_token")?.value;
+  let isAdmin = false;
+  if (token) {
+    try {
+      const [, payload] = token.split(".");
+      const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8"));
+      isAdmin = decoded.role === "ADMIN";
+    } catch { /* ignore */ }
+  }
+
   const [obras, creditos] = await Promise.all([
     obrasApi.listar().catch(() => []),
     creditoApi.meus().catch(() => []),
@@ -28,7 +41,9 @@ export default async function FundosPage() {
   );
 
   // Obras em progresso
-  const obrasProgresso = obras.filter((o) => o.status === "EM_EXECUCAO");
+  const obrasProgresso = obras.filter(
+    (o) => o.status === "EM_ANDAMENTO" || o.status === "PLANEJADA"
+  );
 
   // Cálculos básicos
   const creditoTotalAprovado = creditos.reduce(
@@ -40,7 +55,7 @@ export default async function FundosPage() {
     0
   );
   const totalEtapas = obras.flatMap((o) => o.etapas ?? []);
-  const etapasAprovadas = totalEtapas.filter((e) => e.status === "CONCLUIDA");
+  const etapasAprovadas = totalEtapas.filter((e) => e.status === "APROVADA");
   const etapasAguardandoVistoria = totalEtapas.filter(
     (e) => e.status === "AGUARDANDO_VISTORIA"
   );
@@ -62,6 +77,9 @@ export default async function FundosPage() {
         <h1 className="text-3xl font-bold text-gray-900">Fundos</h1>
         <p className="text-sm text-gray-500">Visão geral de portfolio</p>
       </div>
+
+      {/* Capital do fundo — visível só para Admin */}
+      {isAdmin && <CapitalFundoAdmin />}
 
       {/* KPIs principais */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

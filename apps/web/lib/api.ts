@@ -1,5 +1,6 @@
-const _base = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
-const API_URL = _base.endsWith("/api/v1") ? _base : `${_base}/api/v1`;
+import { getApiV1Url } from "@/lib/api-base";
+
+const API_URL = getApiV1Url();
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -18,9 +19,7 @@ export function safeArr<T>(v: unknown): T[] {
   return Array.isArray(v) ? v : [];
 }
 
-let _refreshPromise: Promise<void> | null = null;
-
-async function apiFetch<T>(path: string, init: RequestInit = {}, _retried = false): Promise<T> {
+async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const isClient = typeof window !== "undefined";
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
@@ -48,19 +47,6 @@ async function apiFetch<T>(path: string, init: RequestInit = {}, _retried = fals
   });
 
   if (!res.ok) {
-    if (res.status === 401 && !_retried && isClient) {
-      if (!_refreshPromise) {
-        _refreshPromise = fetch("/api/proxy/auth/refresh", { method: "POST", cache: "no-store" })
-          .then((r) => { if (!r.ok) throw new Error("session_expired"); })
-          .finally(() => { _refreshPromise = null; });
-      }
-      try {
-        await _refreshPromise;
-        return apiFetch<T>(path, init, true);
-      } catch {
-        throw new ApiError(401, "Sessão expirada. Faça login novamente.");
-      }
-    }
     const body = await res.json().catch(() => ({})) as { message?: string };
     throw new ApiError(res.status, body.message ?? res.statusText);
   }

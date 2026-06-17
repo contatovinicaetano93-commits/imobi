@@ -106,12 +106,11 @@ export default function NovaObraPage() {
           raioValidacaoMetros: isNaN(raio) ? 80 : raio,
         },
         areaM2: area,
-        dataConclusaoPrevistaISO: new Date(`${form.dataConclusaoPrevistaISO}T00:00:00`).toISOString(),
+        dataConclusaoPrevistaISO: new Date(form.dataConclusaoPrevistaISO).toISOString(),
       });
       router.push(`/dashboard/obras/${nova.obraId}`);
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao criar obra.");
-    } finally {
       setLoading(false);
     }
   }

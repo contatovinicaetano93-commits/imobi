@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { redirectAfterLogin } from "@/lib/post-login-redirect";
+import { wakeStagingApi } from "@/lib/wake-staging-api";
 import "./landing.css";
 
 const WA = "5511993455589";
 
 
 export default function LandingPage() {
-  const router = useRouter();
   const [scrolled,   setScrolled]   = useState(false);
   const [isMobile,   setIsMobile]   = useState(false);
   const [activeTab,  setActiveTab]  = useState("login");
@@ -32,7 +32,6 @@ export default function LandingPage() {
   const [cadErro,     setCadErro]     = useState<string | null>(null);
   const [cadLoading,  setCadLoading]  = useState(false);
 
-
   useEffect(() => { setIsMobile(window.innerWidth <= 768); }, []);
 
   useEffect(() => {
@@ -55,14 +54,20 @@ export default function LandingPage() {
     return () => obs.disconnect();
   }, []);
 
-
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault(); setLoginErro(null); setLoginLoading(true);
     try {
-      const res  = await fetch("/api/proxy/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: loginEmail, senha: loginSenha }) });
+      const awake = await wakeStagingApi();
+      if (!awake) throw new Error("API indisponível. Aguarde 1 minuto ou use /login.");
+      const res = await fetch("/api/proxy/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, senha: loginSenha }),
+        credentials: "same-origin",
+      });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.message ?? "Credenciais inválidas.");
-      router.push("/dashboard");
+      redirectAfterLogin(json.role ?? "");
     } catch (err) { setLoginErro(err instanceof Error ? err.message : "Erro inesperado."); }
     finally { setLoginLoading(false); }
   }
@@ -72,37 +77,25 @@ export default function LandingPage() {
     if (!cadTermos || !cadPrivacy || !cadKyc) { setCadErro("Aceite todos os termos para continuar."); return; }
     setCadLoading(true);
     try {
-      const res  = await fetch("/api/proxy/auth/registrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: cadNome, cpf: cadCpf.replace(/\D/g,""), email: cadEmail, telefone: cadTelefone.replace(/\D/g,""), senha: cadSenha, tipo: "TOMADOR", consentidoTermos: cadTermos, consentidoPrivacy: cadPrivacy, consentidoKyc: cadKyc, consentidoMarketing: false }) });
+      const res = await fetch("/api/proxy/auth/registrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome: cadNome, cpf: cadCpf.replace(/\D/g,""), email: cadEmail, telefone: cadTelefone.replace(/\D/g,""), senha: cadSenha, tipo: "TOMADOR", consentidoTermos: cadTermos, consentidoPrivacy: cadPrivacy, consentidoKyc: cadKyc, consentidoMarketing: false }),
+        credentials: "same-origin",
+      });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.message ?? "Erro ao criar conta.");
-      router.push("/dashboard/kyc?bem-vindo=1");
+      redirectAfterLogin(json.role ?? "TOMADOR");
     } catch (err) { setCadErro(err instanceof Error ? err.message : "Erro inesperado."); }
     finally { setCadLoading(false); }
   }
 
   function scrollTo(id: string) { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); }
 
-  async function submitToWhatsApp() {
+  function submitToWhatsApp() {
     const g = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)?.value?.trim() ?? "";
     const nome = g("f-nome"), cargo = g("f-cargo"), empresa = g("f-empresa"), tel = g("f-tel"), email = g("f-email"), modalidade = g("f-modalidade"), volume = g("f-volume"), obs = g("f-obs");
-    if (!nome || !tel) { alert("Por favor, preencha nome e WhatsApp."); return; }
-
-    // Salva no CRM silenciosamente — não bloqueia a abertura do WhatsApp
-    fetch("/api/proxy/leads/captura", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        clienteNome: nome,
-        clienteEmail: email || `sem-email-${Date.now()}@captura.imobi`,
-        clienteTelefone: tel,
-        empresa,
-        cargo,
-        modalidade,
-        volume,
-        observacoes: obs,
-      }),
-    }).catch(() => { /* falha silenciosa — WA ainda abre */ });
-
+    if (!nome || !empresa || !tel) { alert("Por favor, preencha nome, empresa e WhatsApp."); return; }
     const msg = `Olá! Vim pelo site da IMOBI e gostaria de solicitar uma análise de crédito.\n\n*Nome:* ${nome}${cargo ? " · "+cargo : ""}\n*Empresa:* ${empresa}\n*WhatsApp:* ${tel}${email ? "\n*E-mail:* "+email : ""}\n*Modalidade:* ${modalidade||"Não informada"}\n*Volume estimado:* ${volume||"Não informado"}${obs ? "\n*Projeto:* "+obs : ""}`;
     window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, "_blank");
   }
@@ -110,7 +103,7 @@ export default function LandingPage() {
   return (
     <>
       {/* ── NAV ── */}
-      <nav className={scrolled ? "scrolled" : ""}>
+      <nav className={`landing-nav${scrolled ? " scrolled" : ""}`}>
         <a className="logo" href="#"><LogoIcon /><span className="logo-name">IMOBI</span></a>
         <ul className="nav-links">
           <li><a href="#vantagens">Vantagens</a></li>
@@ -217,23 +210,8 @@ export default function LandingPage() {
               <button className="btn-hero-primary" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
               <button className="btn-hero-ghost"   onClick={() => scrollTo("como")}>Ver o processo →</button>
             </div>
-            <div className="hero-strip">
-              <div className="hero-strip-item">
-                <span className="hero-strip-val">15–30</span>
-                <span className="hero-strip-lbl">dias p/ aprovação</span>
-              </div>
-              <span className="hero-strip-div" aria-hidden="true" />
-              <div className="hero-strip-item">
-                <span className="hero-strip-val">R$1M+</span>
-                <span className="hero-strip-lbl">volume mínimo</span>
-              </div>
-              <span className="hero-strip-div" aria-hidden="true" />
-              <div className="hero-strip-item">
-                <span className="hero-strip-val">100%</span>
-                <span className="hero-strip-lbl">digital</span>
-              </div>
-            </div>
           </div>
+
         </div>
       </section>
 
