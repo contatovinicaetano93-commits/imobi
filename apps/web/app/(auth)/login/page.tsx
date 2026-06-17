@@ -4,12 +4,13 @@ export const dynamic = "force-dynamic";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { useState, Suspense, useEffect } from "react";
 import { LoginSchema, type LoginInput } from "@imbobi/schemas";
 import PasswordInput from "../_components/PasswordInput";
 import { redirectAfterLogin } from "@/lib/post-login-redirect";
 import { wakeStagingApi } from "@/lib/wake-staging-api";
+import { loginWithRetry } from "@/lib/login-with-retry";
 
 const WA = "5511993455589";
 
@@ -24,28 +25,16 @@ function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({ resolver: zodResolver(LoginSchema) });
 
+  useEffect(() => {
+    void wakeStagingApi(2);
+  }, []);
+
   const onSubmit = async (data: LoginInput) => {
     setErro(null);
     setStatusMsg("Conectando ao servidor…");
     try {
-      const awake = await wakeStagingApi();
-      if (!awake) {
-        setStatusMsg(null);
-        throw new Error(
-          "API staging indisponível. Aguarde 1 minuto e tente novamente, ou rode a API local.",
-        );
-      }
-      setStatusMsg("Validando credenciais…");
-      const res = await fetch("/api/proxy/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "same-origin",
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.message ?? "Credenciais inválidas");
-
-      redirectAfterLogin(json.role ?? "", searchParams.get("next"));
+      const result = await loginWithRetry(data, setStatusMsg);
+      redirectAfterLogin(result.role ?? "", searchParams.get("next"));
     } catch (e) {
       setStatusMsg(null);
       setErro(e instanceof Error ? e.message : "Erro inesperado.");

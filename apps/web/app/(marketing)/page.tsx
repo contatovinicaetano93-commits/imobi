@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { redirectAfterLogin } from "@/lib/post-login-redirect";
 import { wakeStagingApi } from "@/lib/wake-staging-api";
+import { loginWithRetry } from "@/lib/login-with-retry";
 import "./landing.css";
 
 const WA = "5511993455589";
@@ -41,6 +42,10 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
+    void wakeStagingApi(2);
+  }, []);
+
+  useEffect(() => {
     document.body.style.overflow = modalOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [modalOpen]);
@@ -57,17 +62,11 @@ export default function LandingPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault(); setLoginErro(null); setLoginLoading(true);
     try {
-      const awake = await wakeStagingApi();
-      if (!awake) throw new Error("API indisponível. Aguarde 1 minuto ou use /login.");
-      const res = await fetch("/api/proxy/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginEmail, senha: loginSenha }),
-        credentials: "same-origin",
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.message ?? "Credenciais inválidas.");
-      redirectAfterLogin(json.role ?? "");
+      const result = await loginWithRetry(
+        { email: loginEmail, senha: loginSenha },
+        undefined,
+      );
+      redirectAfterLogin(result.role ?? "");
     } catch (err) { setLoginErro(err instanceof Error ? err.message : "Erro inesperado."); }
     finally { setLoginLoading(false); }
   }

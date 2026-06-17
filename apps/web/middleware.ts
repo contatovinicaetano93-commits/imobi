@@ -43,6 +43,11 @@ function decodeJwt(token: string): { role?: string; exp?: number } | null {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Rotas de auth proxy sempre públicas (login, wake, registrar…)
+  if (pathname.startsWith("/api/proxy/auth")) {
+    return NextResponse.next();
+  }
+
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
   if (isPublic) return NextResponse.next();
 
