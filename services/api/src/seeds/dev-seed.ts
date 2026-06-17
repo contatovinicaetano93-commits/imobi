@@ -19,7 +19,7 @@ const USUARIOS = [
     tipo:     "ADMIN" as const,
   },
   {
-    nome:     "Gestor de Fundo",
+    nome:     "Gestor do Fundo",
     email:    "gestor@imobi.com.br",
     cpf:      "00000000002",
     telefone: "11900000002",

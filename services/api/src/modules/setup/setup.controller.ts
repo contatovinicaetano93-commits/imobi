@@ -5,7 +5,7 @@ import { hash } from "bcryptjs";
 const STAFF_USERS = [
   { nome: "Vinicius Caetano",      email: "contato.vinicaetano93@gmail.com", cpf: "00000000000", telefone: "11999999999", senha: "Paularenata1@",  tipo: "ADMIN"      },
   { nome: "Administrador IMOBI",   email: "admin@imobi.com.br",              cpf: "00000000001", telefone: "11900000001", senha: "Admin@123",      tipo: "ADMIN"      },
-  { nome: "Gestor de Fundo",       email: "gestor@imobi.com.br",             cpf: "00000000002", telefone: "11900000002", senha: "Gestor@123",     tipo: "GESTOR"     },
+  { nome: "Gestor do Fundo",       email: "gestor@imobi.com.br",             cpf: "00000000002", telefone: "11900000002", senha: "Gestor@123",     tipo: "GESTOR"     },
   { nome: "Engenheiro IMOBI",      email: "eng@imobi.com.br",                cpf: "00000000003", telefone: "11900000003", senha: "Eng@123",        tipo: "ENGENHEIRO" },
   { nome: "Parceiro Comercial",    email: "comercial@imobi.com.br",          cpf: "00000000004", telefone: "11900000004", senha: "Comercial@123",  tipo: "COMERCIAL"  },
   { nome: "Construtor IMOBI",      email: "construtor@imobi.com.br",         cpf: "00000000005", telefone: "11900000005", senha: "Construtor@123", tipo: "CONSTRUTOR" },
@@ -53,8 +53,7 @@ export class SetupController {
   private rotaParaTipo(tipo: string): string {
     const mapa: Record<string, string> = {
       ADMIN:      "/dashboard/admin",
-      GESTOR:       "/dashboard/gestor",
-      GESTOR_FUNDO: "/dashboard/fundos",
+      GESTOR:     "/dashboard/gestor",
       ENGENHEIRO: "/dashboard/engenheiro",
       COMERCIAL:  "/dashboard/comercial",
       CONSTRUTOR: "/dashboard/construtor",

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { obrasApi, creditoApi } from "@/lib/api";
+import { managerApi, type ObraResumo, type CreditoResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
+import { normalizeRole } from "@/lib/role-permissions";
 import { PortfolioChart } from "./_components/PortfolioChart";
 import { RegionalDistribution } from "./_components/RegionalDistribution";
 import { InadimplenciaMetrics } from "./_components/InadimplenciaMetrics";
@@ -15,43 +16,49 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = { title: "Fundos — imbobi" };
+export const metadata: Metadata = { title: "Carteira — Gestor do Fundo" };
+
+function decodeRole(token: string | undefined): string | null {
+  if (!token) return null;
+  try {
+    const [, payload] = token.split(".");
+    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8"));
+    return normalizeRole(typeof decoded.role === "string" ? decoded.role : null);
+  } catch {
+    return null;
+  }
+}
+
+async function loadPortfolio(role: string | null): Promise<{ obras: ObraResumo[]; creditos: CreditoResumo[] }> {
+  if (role === "GESTOR" || role === "ADMIN") {
+    try {
+      return await managerApi.carteira();
+    } catch {
+      /* fallback vazio */
+    }
+  }
+  return { obras: [], creditos: [] };
+}
 
 export default async function FundosPage() {
   const jar = await cookies();
   const token = jar.get("access_token")?.value;
-  let isAdmin = false;
-  if (token) {
-    try {
-      const [, payload] = token.split(".");
-      const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8"));
-      isAdmin = decoded.role === "ADMIN";
-    } catch { /* ignore */ }
-  }
+  const role = decodeRole(token);
+  const isAdmin = role === "ADMIN";
 
-  const [obras, creditos] = await Promise.all([
-    obrasApi.listar().catch(() => []),
-    creditoApi.meus().catch(() => []),
-  ]);
+  const { obras, creditos } = await loadPortfolio(role);
 
-  // Total desembolsado
   const totalDesembolsado = creditos.reduce(
     (acc, c) => acc + Number(c.valorLiberado ?? 0),
     0
   );
 
-  // Obras em progresso
   const obrasProgresso = obras.filter(
-    (o) => o.status === "EM_ANDAMENTO" || o.status === "PLANEJADA"
+    (o) => ["EM_ANDAMENTO", "EM_EXECUCAO", "PLANEJADA", "PLANEJAMENTO"].includes(o.status)
   );
 
-  // Cálculos básicos
   const creditoTotalAprovado = creditos.reduce(
     (acc, c) => acc + Number(c.valorAprovado ?? 0),
-    0
-  );
-  const creditoTotalLiberado = creditos.reduce(
-    (acc, c) => acc + Number(c.valorLiberado ?? 0),
     0
   );
   const totalEtapas = obras.flatMap((o) => o.etapas ?? []);
@@ -60,28 +67,24 @@ export default async function FundosPage() {
     (e) => e.status === "AGUARDANDO_VISTORIA"
   );
 
-  // Estimativa de ROI (placeholder - seria calculado no backend)
-  const roiEsperado = creditoTotalAprovado * 0.15; // 15% de retorno esperado
+  const roiEsperado = creditoTotalAprovado * 0.15;
+  const inadimplenciaRate = 0;
 
-  // Taxa de inadimplência (placeholder)
-  const inadimplenciaRate = 0; // Seria calculado com dados de pagamentos
-
-  // Agregação de dados para componentes
   const regionalMetrics = aggregateByRegion(obras, creditos);
   const roiTimeline = calculateRoiTimeline(creditos);
   const inadimplenciaData = calculateInadimplenciaRate(creditos);
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Fundos</h1>
-        <p className="text-sm text-gray-500">Visão geral de portfolio</p>
+    <div className="space-y-8 p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Carteira do Fundo</h1>
+          <p className="text-sm text-gray-500 mt-1">Visão consolidada da operação</p>
+        </div>
       </div>
 
-      {/* Capital do fundo — visível só para Admin */}
       {isAdmin && <CapitalFundoAdmin />}
 
-      {/* KPIs principais */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <p className="text-sm text-gray-500 mb-1">Total desembolsado</p>
@@ -118,7 +121,6 @@ export default async function FundosPage() {
         </div>
       </div>
 
-      {/* Seção de ROI e Métricas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">ROI Esperado</h2>
@@ -157,38 +159,23 @@ export default async function FundosPage() {
         </div>
       </div>
 
-      {/* Timeline de ROI (Esperado vs Real) */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Evolução de ROI
-        </h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Evolução de ROI</h2>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <p className="text-sm text-gray-500 mb-6">
-            Comparação entre ROI esperado e real ao longo do tempo
-          </p>
           <PortfolioChart data={roiTimeline} />
         </div>
       </section>
 
-      {/* Inadimplência */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Taxa de Inadimplência
-        </h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Taxa de Inadimplência</h2>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <InadimplenciaMetrics data={inadimplenciaData} />
         </div>
       </section>
 
-      {/* Portfolio por região */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Distribuição por região
-        </h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Distribuição por região</h2>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <p className="text-sm text-gray-500 mb-6">
-            Agrupamento de obras por localização geográfica
-          </p>
           {regionalMetrics.length === 0 ? (
             <p className="text-gray-400 text-sm">Nenhuma obra em progresso.</p>
           ) : (
@@ -197,7 +184,6 @@ export default async function FundosPage() {
         </div>
       </section>
 
-      {/* Exportação de relatórios */}
       <section>
         <ReportExport
           regional={regionalMetrics}
@@ -207,7 +193,6 @@ export default async function FundosPage() {
         />
       </section>
 
-      {/* Resumo de créditos */}
       <section>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Linhas de crédito</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -238,18 +223,6 @@ export default async function FundosPage() {
                     <span className="text-gray-500">Liberado:</span>
                     <span className="font-medium text-gray-900">
                       {formatarBRL(Number(credito.valorLiberado))}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Taxa mensal:</span>
-                    <span className="font-medium text-gray-900">
-                      {(credito.taxaMensal * 100).toFixed(2)}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Prazo:</span>
-                    <span className="font-medium text-gray-900">
-                      {credito.prazoMeses} meses
                     </span>
                   </div>
                 </div>

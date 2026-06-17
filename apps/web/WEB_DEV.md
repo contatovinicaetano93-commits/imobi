@@ -30,10 +30,8 @@ pnpm --filter web dev
 
 ## Login teste (staging)
 
-| Perfil | Email | Senha |
-|--------|-------|-------|
-| Tomador | tomador@imobi.com.br | Tomador@123 |
-| Gestor | gestor@imobi.com.br | Gestor@123 |
-| Admin | admin@imobi.com.br | Admin@123 |
-
-Painéis: `/dashboard`, `/dashboard/gestor`, `/dashboard/admin`
+| Perfil | Email | Senha | Painel |
+|--------|-------|-------|--------|
+| Tomador | tomador@imobi.com.br | Tomador@123 | `/dashboard` |
+| Gestor do Fundo | gestor@imobi.com.br | Gestor@123 | `/dashboard/gestor` |
+| Admin | admin@imobi.com.br | Admin@123 | `/dashboard/admin` |

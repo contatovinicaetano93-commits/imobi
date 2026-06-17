@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { normalizeRole } from "@/lib/role-permissions";
 
 export async function GET() {
   const jar = await cookies();
@@ -17,7 +18,7 @@ export async function GET() {
       id: decoded.sub ?? decoded.id ?? null,
       email: decoded.email ?? null,
       nome: decoded.nome ?? decoded.name ?? null,
-      role: decoded.role ?? decoded.tipo ?? null,
+      role: normalizeRole(decoded.role ?? decoded.tipo ?? null),
       funcoesBloqueadas: Array.isArray(decoded.funcoesBloqueadas) ? decoded.funcoesBloqueadas : [],
     });
   } catch {

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { obrasApi, creditoApi, type ObraResumo, type CreditoResumo, type EtapaResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
+import { normalizeRole } from "@/lib/role-permissions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Dashboard — IMOBI" };
@@ -49,9 +50,9 @@ const STATUS_BADGE: Record<string, string> = {
 export default async function DashboardPage() {
   const jar = await cookies();
   const token = jar.get("access_token")?.value;
-  const role = token ? decodeRole(token) : null;
-
-  if (!token || role === "__expired__") redirect("/login");
+  const rawRole = token ? decodeRole(token) : null;
+  if (!token || rawRole === "__expired__") redirect("/login");
+  const role = normalizeRole(rawRole);
   if (role === "ADMIN")                         redirect("/dashboard/admin");
   if (role === "GESTOR")                        redirect("/dashboard/gestor");
   if (role === "ENGENHEIRO")                    redirect("/dashboard/engenheiro");

@@ -29,8 +29,8 @@ type UsuarioAdmin = {
 
 const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; icon: LucideIcon }> = {
   ADMIN:        { label: "Admin",        color: NAVY,    bg: "rgba(12,26,61,0.07)",  icon: Shield },
-  GESTOR:       { label: "Gestor",       color: ROYAL,   bg: "rgba(27,79,216,0.08)", icon: Shield },
-  GESTOR_FUNDO: { label: "Fundo",        color: "#7c3aed", bg: "#f5f3ff", icon: Shield },
+  GESTOR:       { label: "Gestor do Fundo", color: ROYAL,   bg: "rgba(27,79,216,0.08)", icon: Shield },
+  GESTOR_FUNDO: { label: "Gestor do Fundo", color: ROYAL,   bg: "rgba(27,79,216,0.08)", icon: Shield },
   GESTOR_OBRA:  { label: "Gestor Obra",  color: "#0369a1", bg: "#f0f9ff", icon: Wrench },
   ENGENHEIRO:   { label: "Engenheiro",   color: "#0369a1", bg: "#f0f9ff", icon: Wrench },
   TOMADOR:      { label: "Tomador",      color: "#16a34a", bg: "#f0fdf4", icon: Building2 },
@@ -39,7 +39,7 @@ const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; ic
   CONSTRUTOR:   { label: "Construtor",   color: "#0891b2", bg: "#ecfeff", icon: Building2 },
 };
 
-const TIPOS_USUARIO = ["ADMIN", "GESTOR", "GESTOR_FUNDO", "GESTOR_OBRA", "ENGENHEIRO", "COMERCIAL", "PARCEIRO", "CONSTRUTOR", "TOMADOR"] as const;
+const TIPOS_USUARIO = ["ADMIN", "GESTOR", "GESTOR_OBRA", "ENGENHEIRO", "COMERCIAL", "PARCEIRO", "CONSTRUTOR", "TOMADOR"] as const;
 
 const KYC_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   APROVADO:       { label: "Aprovado",   color: "#16a34a", bg: "#f0fdf4" },
@@ -67,7 +67,6 @@ const FUNCAO_LABELS: Record<string, string> = {
 const FUNCOES_POR_TIPO: Record<string, string[]> = {
   TOMADOR:      ["obras", "credito", "simulador", "score", "kyc", "notificacoes"],
   GESTOR:       ["gestor", "due-diligence", "fundos", "relatorios", "notificacoes"],
-  GESTOR_FUNDO: ["gestor", "due-diligence", "fundos", "relatorios", "notificacoes"],
   ENGENHEIRO:   ["engenharia", "notificacoes"],
   GESTOR_OBRA:  ["engenharia", "notificacoes"],
   COMERCIAL:    ["comercial", "notificacoes"],

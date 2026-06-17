@@ -1,4 +1,5 @@
 import type { ManagerStats } from '@/lib/api';
+import { readApiErrorMessage } from '@/lib/read-api-error';
 import { wakeStagingApi } from '@/lib/wake-staging-api';
 
 export async function fetchManagerDashboard(maxAttempts = 4): Promise<ManagerStats> {
@@ -10,17 +11,18 @@ export async function fetchManagerDashboard(maxAttempts = 4): Promise<ManagerSta
     const res = await fetch('/api/proxy/manager/dashboard', { cache: 'no-store' });
 
     if (res.ok) {
-      return res.json() as Promise<ManagerStats>;
+      const data = (await res.json().catch(() => null)) as ManagerStats | null;
+      if (data && typeof data === 'object') return data;
+      throw new Error('Resposta inválida do servidor. Tente novamente em instantes.');
     }
 
-    const body = (await res.json().catch(() => ({}))) as { message?: string };
-    lastMessage = body.message ?? lastMessage;
+    lastMessage = await readApiErrorMessage(res, lastMessage);
 
     if (res.status === 401) {
       throw new Error('Sessão expirada. Faça login novamente.');
     }
     if (res.status === 403) {
-      throw new Error('Seu perfil não tem permissão para acessar o painel do fundo.');
+      throw new Error('Acesso negado ao painel do gestor. Verifique se seu perfil é Gestor do Fundo.');
     }
 
     if (res.status === 502 || res.status === 503 || res.status === 504) {

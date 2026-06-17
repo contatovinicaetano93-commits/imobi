@@ -5,6 +5,7 @@ import * as crypto from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
 import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
+import { normalizeUserRole } from "../../common/constants/manager-roles";
 
 @Injectable()
 export class AuthService {
@@ -150,7 +151,7 @@ export class AuthService {
     const accessToken = this.jwt.sign(
       {
         sub: usuarioId,
-        role: usuario?.tipo ?? null,
+        role: normalizeUserRole(usuario?.tipo ?? null),
         nome: usuario?.nome ?? null,
         email: usuario?.email ?? null,
         funcoesBloqueadas: usuario?.funcoesBloqueadas ?? [],

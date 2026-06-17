@@ -334,6 +334,8 @@ export type KycAuditEntry = {
 
 export const managerApi = {
   dashboard: () => apiFetch<ManagerStats>("/manager/dashboard"),
+  carteira: () =>
+    apiFetch<{ obras: ObraResumo[]; creditos: CreditoResumo[] }>("/manager/carteira"),
   listarEtapasPendentes: (
     limit?: number,
     offset?: number,

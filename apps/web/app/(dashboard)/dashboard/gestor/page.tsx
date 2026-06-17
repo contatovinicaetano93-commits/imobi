@@ -51,7 +51,15 @@ export default function GestorPage() {
     setError(null);
     fetchManagerDashboard()
       .then(setStats)
-      .catch((err) => setError(err instanceof Error ? err.message : "Erro desconhecido"))
+      .catch((err: unknown) => {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : typeof err === 'string'
+              ? err
+              : 'Erro ao carregar dados do painel';
+        setError(msg);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -94,9 +102,9 @@ export default function GestorPage() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.35rem" }}>
               <ShieldCheck size={18} color="#a78bfa" />
-              <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Painel do Fundo</p>
+              <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Gestor do Fundo</p>
             </div>
-            <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0 0 0.4rem" }}>Fila de Aprovações</h1>
+            <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0 0 0.4rem" }}>Painel de Operações</h1>
             <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.65)", margin: 0 }}>
               {s.filaAprovacoes + s.filaKyc} {s.filaAprovacoes + s.filaKyc === 1 ? "item pendente" : "itens pendentes"} de análise
             </p>

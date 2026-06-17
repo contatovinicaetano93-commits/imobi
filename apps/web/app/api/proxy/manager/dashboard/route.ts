@@ -9,9 +9,21 @@ export async function GET(_: NextRequest) {
   const token = (await cookies()).get('access_token')?.value;
   const res = await fetch(`${API}/manager/dashboard`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
-    next: { revalidate: 30 },
+    cache: 'no-store',
   }).catch(() => null);
-  if (!res) return NextResponse.json(null, { status: 503 });
+
+  if (!res) {
+    return NextResponse.json(
+      { message: 'API indisponível. Aguarde ~1 minuto e tente novamente.' },
+      { status: 503 },
+    );
+  }
+
   const body = await res.json().catch(() => null);
-  return NextResponse.json(body, { status: res.status });
+  const payload =
+    body && typeof body === 'object'
+      ? body
+      : { message: res.ok ? 'Resposta vazia da API' : 'Erro ao carregar painel' };
+
+  return NextResponse.json(payload, { status: res.status });
 }

@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { PrismaService } from "../prisma/prisma.service";
+import { normalizeUserRole } from "../../common/constants/manager-roles";
 
 interface JwtPayload {
   sub: string;
@@ -27,6 +28,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!usuario || usuario.bloqueadoEm) {
       throw new UnauthorizedException("Conta bloqueada pelo administrador.");
     }
-    return { id: payload.sub, tipo: payload.role ?? null };
+    return { id: payload.sub, tipo: normalizeUserRole(payload.role ?? null) };
   }
 }

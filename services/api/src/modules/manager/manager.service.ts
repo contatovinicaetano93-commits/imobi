@@ -286,6 +286,67 @@ export class ManagerService {
     return result;
   }
 
+  /** Visão agregada da operação — somente leitura (gestor IMOBI + investidor do fundo). */
+  async obterCarteira() {
+    const [obras, creditos] = await Promise.all([
+      this.prisma.obra.findMany({
+        where: { status: { not: "CANCELADA" } },
+        include: {
+          etapas: { orderBy: { ordem: "asc" } },
+          credito: {
+            select: {
+              creditoId: true,
+              valorAprovado: true,
+              valorLiberado: true,
+              status: true,
+            },
+          },
+        },
+        orderBy: { criadoEm: "desc" },
+      }),
+      this.prisma.credito.findMany({
+        where: { status: { in: ["ATIVO", "SUSPENSO", "VENCIDO"] } },
+        orderBy: { criadoEm: "desc" },
+      }),
+    ]);
+
+    return {
+      obras: obras.map((o) => ({
+        id: o.obraId,
+        nome: o.nome,
+        status: o.status,
+        geoLatitude: o.geoLatitude,
+        geoLongitude: o.geoLongitude,
+        raioValidacaoMetros: o.raioValidacaoMetros,
+        endereco: o.endereco,
+        credito: o.credito
+          ? {
+              id: o.credito.creditoId,
+              valorAprovado: o.credito.valorAprovado,
+              valorLiberado: o.credito.valorLiberado,
+              status: o.credito.status,
+            }
+          : null,
+        etapas: o.etapas.map((e) => ({
+          id: e.etapaId,
+          nome: e.nome,
+          ordem: e.ordem,
+          percentualObra: e.percentualObra,
+          valorLiberacao: e.valorLiberacao,
+          status: e.status,
+        })),
+      })),
+      creditos: creditos.map((c) => ({
+        id: c.creditoId,
+        valorAprovado: c.valorAprovado,
+        valorLiberado: c.valorLiberado,
+        taxaMensal: c.taxaMensal,
+        prazoMeses: c.prazoMeses,
+        status: c.status,
+      })),
+    };
+  }
+
   async obterEtapaAuditLog(etapaId: string) {
     const auditLogs = await this.prisma.etapaAuditLog.findMany({
       where: { etapaId },

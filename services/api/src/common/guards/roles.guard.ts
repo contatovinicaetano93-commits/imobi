@@ -1,5 +1,6 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
+import { normalizeUserRole } from "../constants/manager-roles";
 import { ROLES_KEY } from "../decorators/roles.decorator";
 
 @Injectable()
@@ -14,7 +15,10 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles?.length) return true;
 
     const { user } = context.switchToHttp().getRequest();
-    if (!requiredRoles.includes(user?.tipo)) {
+    const userRole = normalizeUserRole(user?.tipo);
+    const allowed = requiredRoles.some((r) => normalizeUserRole(r) === userRole);
+
+    if (!userRole || !allowed) {
       throw new ForbiddenException("Acesso negado para este perfil.");
     }
     return true;
