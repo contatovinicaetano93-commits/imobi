@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   if (!res) {
     return NextResponse.json(
-      { message: `API inacessível — verifique NEXT_PUBLIC_API_URL (tentou: ${API}/auth/login)` },
+      { message: 'API temporariamente indisponível (Render). Aguarde 30–60 segundos e tente novamente.' },
       { status: 503 },
     );
   }
@@ -30,10 +30,14 @@ export async function POST(req: NextRequest) {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    return NextResponse.json(
-      { message: data.message ?? data.error ?? `Erro ${res.status}` },
-      { status: res.status },
-    );
+    const apiMsg = data.message ?? data.error;
+    const message =
+      res.status === 503 || res.status === 502
+        ? 'API em manutenção ou acordando — aguarde 30–60s e tente de novo.'
+        : res.status === 500
+          ? 'Erro interno na API. Tente novamente em instantes.'
+          : (apiMsg ?? `Erro ${res.status}`);
+    return NextResponse.json({ message }, { status: res.status });
   }
 
   const accessToken = data.accessToken ?? data.access_token;
