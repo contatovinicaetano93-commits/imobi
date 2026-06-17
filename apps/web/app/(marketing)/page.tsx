@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { redirectAfterLogin } from "@/lib/post-login-redirect";
 import "./landing.css";
 
 const WA = "5511993455589";
 
 
 export default function LandingPage() {
-  const router = useRouter();
   const [scrolled,   setScrolled]   = useState(false);
   const [isMobile,   setIsMobile]   = useState(false);
   const [activeTab,  setActiveTab]  = useState("login");
@@ -57,10 +56,15 @@ export default function LandingPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault(); setLoginErro(null); setLoginLoading(true);
     try {
-      const res  = await fetch("/api/proxy/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: loginEmail, senha: loginSenha }) });
+      const res = await fetch("/api/proxy/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, senha: loginSenha }),
+        credentials: "same-origin",
+      });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.message ?? "Credenciais inválidas.");
-      router.push("/dashboard");
+      redirectAfterLogin(json.role ?? "");
     } catch (err) { setLoginErro(err instanceof Error ? err.message : "Erro inesperado."); }
     finally { setLoginLoading(false); }
   }
@@ -70,10 +74,15 @@ export default function LandingPage() {
     if (!cadTermos || !cadPrivacy || !cadKyc) { setCadErro("Aceite todos os termos para continuar."); return; }
     setCadLoading(true);
     try {
-      const res  = await fetch("/api/proxy/auth/registrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: cadNome, cpf: cadCpf.replace(/\D/g,""), email: cadEmail, telefone: cadTelefone.replace(/\D/g,""), senha: cadSenha, tipo: "TOMADOR", consentidoTermos: cadTermos, consentidoPrivacy: cadPrivacy, consentidoKyc: cadKyc, consentidoMarketing: false }) });
+      const res = await fetch("/api/proxy/auth/registrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome: cadNome, cpf: cadCpf.replace(/\D/g,""), email: cadEmail, telefone: cadTelefone.replace(/\D/g,""), senha: cadSenha, tipo: "TOMADOR", consentidoTermos: cadTermos, consentidoPrivacy: cadPrivacy, consentidoKyc: cadKyc, consentidoMarketing: false }),
+        credentials: "same-origin",
+      });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.message ?? "Erro ao criar conta.");
-      router.push("/dashboard");
+      redirectAfterLogin(json.role ?? "TOMADOR");
     } catch (err) { setCadErro(err instanceof Error ? err.message : "Erro inesperado."); }
     finally { setCadLoading(false); }
   }

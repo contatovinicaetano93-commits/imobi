@@ -5,15 +5,14 @@ export const dynamic = "force-dynamic";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Route } from "next";
 import { useState, Suspense } from "react";
 import { LoginSchema, type LoginInput } from "@imbobi/schemas";
 import PasswordInput from "../_components/PasswordInput";
+import { redirectAfterLogin } from "@/lib/post-login-redirect";
 
 const WA = "5511993455589";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [erro, setErro] = useState<string | null>(null);
 
@@ -30,30 +29,12 @@ function LoginForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
+        credentials: "same-origin",
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.message ?? "Credenciais inválidas");
 
-      // Se há um `next` explícito na URL, honrá-lo (apenas caminhos internos)
-      const nextParam = searchParams.get("next");
-      if (nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")) {
-        router.push(nextParam as Route);
-        return;
-      }
-
-      // Role already decoded in the login response — no second /api/auth/me call needed
-      const role: string = json.role ?? "";
-      const ROLE_HOME: Record<string, Route> = {
-        ADMIN:      "/dashboard/admin",
-        GESTOR:     "/dashboard/gestor",
-        ENGENHEIRO: "/dashboard/engenheiro",
-        GESTOR_OBRA:"/dashboard/engenheiro",
-        COMERCIAL:  "/dashboard/comercial",
-        PARCEIRO:   "/dashboard/comercial",
-        TOMADOR:    "/dashboard",
-        CONSTRUTOR: "/dashboard",
-      };
-      router.push(ROLE_HOME[role] ?? "/dashboard");
+      redirectAfterLogin(json.role ?? "", searchParams.get("next"));
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro inesperado.");
     }

@@ -22,16 +22,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: data.message ?? data.error ?? `Erro ${res.status}` }, { status: res.status });
   }
 
+  const accessToken = data.accessToken ?? data.access_token;
+  if (!accessToken) {
+    return NextResponse.json({ message: "Resposta da API sem token de acesso" }, { status: 502 });
+  }
+
   const jar = await cookies();
-  jar.set('access_token', data.accessToken, {
+  jar.set('access_token', accessToken, {
     httpOnly: true,
     secure: process.env['NODE_ENV'] === 'production',
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 8,
   });
-  if (data.refreshToken) {
-    jar.set('refresh_token', data.refreshToken, {
+  if (data.refreshToken ?? data.refresh_token) {
+    jar.set('refresh_token', data.refreshToken ?? data.refresh_token, {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',
       sameSite: 'lax',
@@ -42,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   // Decode JWT payload inline — client uses role to redirect without a second /api/auth/me call
   try {
-    const payload = JSON.parse(Buffer.from(data.accessToken.split('.')[1], 'base64url').toString());
+    const payload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64url').toString());
     return NextResponse.json({ ok: true, role: payload.role ?? null, nome: payload.nome ?? null, email: payload.email ?? null });
   } catch {
     return NextResponse.json({ ok: true });
