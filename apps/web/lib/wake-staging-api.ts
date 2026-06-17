@@ -1,14 +1,18 @@
-import { STAGING_API_URL } from '@/lib/api-base';
+import { PRODUCTION_API_URL, STAGING_API_URL } from '@/lib/api-base';
 
-const WAKE_PROXY = '/api/proxy/auth/wake';
+const WAKE_URLS = ['/web-api/auth/wake', '/api/proxy/auth/wake'];
 
-/** Ping direto no Render (no-cors) — só acorda, não lê resposta. */
-async function pingRenderDirect(): Promise<void> {
-  const url = `${STAGING_API_URL.replace(/\/$/, '')}/api/v1/health`;
+async function ping(url: string): Promise<void> {
   try {
     await fetch(url, { mode: 'no-cors', cache: 'no-store' });
   } catch {
-    /* ok — objetivo é acordar o dyno */
+    /* ok */
+  }
+}
+
+async function pingRenderDirect(): Promise<void> {
+  for (const base of [PRODUCTION_API_URL, STAGING_API_URL]) {
+    await ping(`${base.replace(/\/$/, '')}/api/v1/health`);
   }
 }
 
@@ -19,20 +23,16 @@ export async function wakeStagingApi(maxAttempts = 6): Promise<boolean> {
   for (let i = 0; i < maxAttempts; i++) {
     await pingRenderDirect();
 
-    try {
-      const res = await fetch(WAKE_PROXY, { cache: 'no-store', redirect: 'manual' });
-      if (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400)) {
-        await new Promise((r) => setTimeout(r, 2000));
-        continue;
+    for (const wakePath of WAKE_URLS) {
+      try {
+        const res = await fetch(wakePath, { cache: 'no-store', redirect: 'manual' });
+        if (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400)) continue;
+        if (!res.ok) continue;
+        const data = (await res.json().catch(() => null)) as { ok?: boolean } | null;
+        if (data?.ok) return true;
+      } catch {
+        /* retry */
       }
-      if (!res.ok) {
-        await new Promise((r) => setTimeout(r, 2000 * (i + 1)));
-        continue;
-      }
-      const data = (await res.json().catch(() => null)) as { ok?: boolean } | null;
-      if (data?.ok) return true;
-    } catch {
-      /* retry */
     }
 
     await new Promise((r) => setTimeout(r, 2000 * (i + 1)));

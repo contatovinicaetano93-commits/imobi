@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { handleWakeGet } from '@/lib/auth-handlers';
 
 export const maxDuration = 30;

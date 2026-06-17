@@ -1,23 +1,22 @@
-/** URL base da API — staging fixo na Vercel/produção. */
+/** URL base da API — efgg é a produção atual na Vercel; staging como fallback. */
+export const PRODUCTION_API_URL = 'https://imobi-api-efgg.onrender.com';
 export const STAGING_API_URL = 'https://imobi-api-staging.onrender.com';
+
+const API_CANDIDATES = [PRODUCTION_API_URL, STAGING_API_URL];
 
 function isUsableApiUrl(url: string): boolean {
   const u = url.toLowerCase();
-  if (!u.startsWith('http')) return false;
-  if (u.includes('localhost') || u.includes('127.0.0.1')) return false;
-  if (u.includes('alagami-site') || u.includes('alagami-api')) return false;
-  return true;
+  return u.startsWith('http') && !u.includes('localhost') && !u.includes('127.0.0.1');
 }
 
 export function getApiBaseUrl(): string {
-  const onVercel = Boolean(process.env['VERCEL']);
-  const isProd = process.env['NODE_ENV'] === 'production';
-
-  if (onVercel || isProd) return STAGING_API_URL;
-
   const fromEnv = process.env['NEXT_PUBLIC_API_URL'] ?? process.env['IMOBI_API_URL'];
   if (fromEnv?.trim() && isUsableApiUrl(fromEnv.trim())) {
     return fromEnv.trim().replace(/\/$/, '');
+  }
+
+  if (process.env['VERCEL'] || process.env['NODE_ENV'] === 'production') {
+    return PRODUCTION_API_URL;
   }
 
   return 'http://localhost:4000';
@@ -26,4 +25,10 @@ export function getApiBaseUrl(): string {
 export function getApiV1Url(): string {
   const base = getApiBaseUrl();
   return base.endsWith('/api/v1') ? base : `${base}/api/v1`;
+}
+
+/** URLs para retry quando a primária falha. */
+export function getApiV1Fallbacks(): string[] {
+  const primary = getApiV1Url();
+  return [...new Set([primary, ...API_CANDIDATES.map((b) => `${b.replace(/\/$/, '')}/api/v1`)])];
 }

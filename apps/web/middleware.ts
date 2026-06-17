@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   "/api/auth",
   "/api/proxy/auth",
   "/api/proxy/health",
+  "/web-api/auth",
 ];
 
 // Route prefix → allowed roles. Real authorization is enforced by NestJS guards.
@@ -44,7 +45,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Rotas de auth proxy sempre públicas (login, wake, registrar…)
-  if (pathname.startsWith("/api/proxy/auth")) {
+  if (pathname.startsWith("/api/proxy/auth") || pathname.startsWith("/web-api/auth")) {
     return NextResponse.next();
   }
 
