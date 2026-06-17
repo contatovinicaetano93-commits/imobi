@@ -10,32 +10,36 @@ const COOKIE_OPTS = {
 
 export const maxDuration = 60;
 
-async function wakeApi(): Promise<void> {
-  await fetch(`${API}/health`, { cache: 'no-store', signal: AbortSignal.timeout(20_000) }).catch(() => null);
+async function wakeApi(api: string): Promise<void> {
+  await fetch(`${api}/health`, { cache: 'no-store', signal: AbortSignal.timeout(20_000) }).catch(() => null);
 }
 
 async function postLogin(body: string): Promise<Response | null> {
-  await wakeApi();
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const res = await fetch(`${API}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-      cache: 'no-store',
-      signal: AbortSignal.timeout(25_000),
-    }).catch(() => null);
+  const apis = getApiV1Fallbacks();
 
-    if (!res) {
-      await new Promise((r) => setTimeout(r, 2000));
-      continue;
+  for (const api of apis) {
+    await wakeApi(api);
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const res = await fetch(`${api}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        cache: 'no-store',
+        signal: AbortSignal.timeout(25_000),
+      }).catch(() => null);
+
+      if (!res) {
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      if (res.status === 401 || res.status === 400) return res;
+      if (res.ok) return res;
+      if (res.status >= 500 || res.status === 503) {
+        await new Promise((r) => setTimeout(r, 2500));
+        continue;
+      }
+      return res;
     }
-    if (res.status === 401 || res.status === 400) return res;
-    if (res.ok) return res;
-    if (res.status >= 500 || res.status === 503) {
-      await new Promise((r) => setTimeout(r, 2500));
-      continue;
-    }
-    return res;
   }
   return null;
 }
@@ -108,13 +112,14 @@ export async function handleLoginPost(req: NextRequest): Promise<NextResponse> {
 }
 
 export async function handleWakeGet(): Promise<NextResponse> {
-  const res = await fetch(`${API}/health`, {
-    cache: 'no-store',
-    signal: AbortSignal.timeout(25_000),
-  }).catch(() => null);
-
-  if (!res) {
-    return NextResponse.json({ ok: false }, { status: 503 });
+  for (const api of getApiV1Fallbacks()) {
+    const res = await fetch(`${api}/health`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(25_000),
+    }).catch(() => null);
+    if (res?.ok) {
+      return NextResponse.json({ ok: true, status: res.status });
+    }
   }
-  return NextResponse.json({ ok: true, status: res.status });
+  return NextResponse.json({ ok: false }, { status: 503 });
 }
