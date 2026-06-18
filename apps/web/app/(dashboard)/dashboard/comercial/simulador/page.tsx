@@ -28,7 +28,7 @@ export default function SimuladorComercialPage() {
     const v = parseMoeda(valor);
     const p = parseInt(prazo, 10);
     if (!v || v < 100000) { setErro("Valor mínimo: R$ 100.000"); return; }
-    if (!p || p < 6 || p > 180) { setErro("Prazo entre 6 e 180 meses"); return; }
+    if (!p || p < 12 || p > 48) { setErro("Prazo entre 12 e 48 meses"); return; }
     setLoading(true);
     setErro(null);
     setResultado(null);
@@ -87,7 +87,7 @@ export default function SimuladorComercialPage() {
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-gray-700">Prazo (meses)</label>
             <div className="flex gap-2 flex-wrap">
-              {[12, 24, 36, 48, 60].map((m) => (
+              {[12, 24, 36, 48].map((m) => (
                 <button
                   key={m}
                   type="button"
@@ -103,8 +103,8 @@ export default function SimuladorComercialPage() {
               ))}
               <input
                 type="number"
-                min={6}
-                max={180}
+                min={12}
+                max={48}
                 value={prazo}
                 onChange={(e) => setPrazo(e.target.value)}
                 className="w-20 px-3 py-2 border border-gray-200 rounded-xl text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#d97706]"
@@ -141,7 +141,8 @@ export default function SimuladorComercialPage() {
             {[
               { icon: Banknote, label: "Valor solicitado",  value: formatarBRL(resultado.valorSolicitado), color: "#374151" },
               { icon: Clock,    label: "Prazo",             value: `${resultado.prazoMeses} meses`,         color: "#374151" },
-              { icon: TrendingUp, label: "Taxa mensal",     value: `${resultado.taxaMensal.toFixed(2)}% a.m.`, color: "#d97706" },
+              { icon: TrendingUp, label: "Taxa anual",      value: `${resultado.taxaAnual.toFixed(1)}% a.a.`, color: "#d97706" },
+              { icon: TrendingUp, label: "Taxa mensal",     value: `${(resultado.taxaMensal * 100).toFixed(2)}% a.m.`, color: "#d97706" },
               { icon: Banknote, label: "Parcela mensal",    value: formatarBRL(resultado.parcelaMensal),    color: "#1d4ed8" },
               { icon: Banknote, label: "Total a pagar",     value: formatarBRL(resultado.totalPago),        color: "#374151" },
               { icon: Banknote, label: "Total de juros",    value: formatarBRL(resultado.totalJuros),       color: "#dc2626" },
@@ -159,7 +160,7 @@ export default function SimuladorComercialPage() {
             <p className="text-xs text-gray-400">
               CET: <span className="font-semibold text-gray-600">{resultado.cet.toFixed(2)}% a.a.</span>
               <span className="mx-2">·</span>
-              Simulação sem compromisso. Condições sujeitas a análise de crédito.
+              {resultado.observacao}
             </p>
           </div>
         </div>

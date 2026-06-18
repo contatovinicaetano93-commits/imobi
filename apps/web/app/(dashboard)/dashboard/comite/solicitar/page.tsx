@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { comiteApi, obrasApi, type ObraResumo } from "@/lib/api";
 import { FileText, ChevronRight, AlertCircle, CheckCircle2, ChevronLeft } from "lucide-react";
-import { formatarBRL } from "@imbobi/core";
+import { formatarBRL, TAXA_MENSAL_SIMULACAO_CREDITO } from "@imbobi/core";
 import Link from "next/link";
 
 const FINALIDADES = [
@@ -32,7 +32,7 @@ export default function SolicitarComitePage() {
   const [form, setForm] = useState({
     valorSolicitado: "",
     prazoMeses: "12",
-    taxaMensal: "1.2",
+    taxaMensal: (TAXA_MENSAL_SIMULACAO_CREDITO * 100).toFixed(2),
     finalidade: FINALIDADES[0],
     garantias: "",
     observacoes: "",
@@ -86,7 +86,7 @@ export default function SolicitarComitePage() {
     else if (val < 100000) errs.valorSolicitado = "Mínimo: R$ 100.000";
     const prazo = parseInt(f.prazoMeses);
     if (!f.prazoMeses || isNaN(prazo)) errs.prazoMeses = "Informe o prazo";
-    else if (prazo < 12 || prazo > 180) errs.prazoMeses = "Entre 12 e 180 meses";
+    else if (prazo < 12 || prazo > 48) errs.prazoMeses = "Entre 12 e 48 meses";
     const taxa = parseFloat(f.taxaMensal);
     if (!f.taxaMensal || isNaN(taxa)) errs.taxaMensal = "Informe a taxa mensal";
     else if (taxa <= 0 || taxa > 10) errs.taxaMensal = "Entre 0,01% e 10% a.m.";
@@ -158,7 +158,7 @@ export default function SolicitarComitePage() {
             Ver minhas solicitações
           </button>
           <button
-            onClick={() => { setSuccess(false); setStep(1); setForm({ valorSolicitado: "", prazoMeses: "12", taxaMensal: "1.2", finalidade: FINALIDADES[0], garantias: "", observacoes: "", vgv: "", custoObra: "", obraId: "" }); setFieldErrors({}); setTouched({}); }}
+            onClick={() => { setSuccess(false); setStep(1); setForm({ valorSolicitado: "", prazoMeses: "12", taxaMensal: (TAXA_MENSAL_SIMULACAO_CREDITO * 100).toFixed(2), finalidade: FINALIDADES[0], garantias: "", observacoes: "", vgv: "", custoObra: "", obraId: "" }); setFieldErrors({}); setTouched({}); }}
             className="border border-gray-200 text-gray-600 px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition"
           >
             Nova solicitação
@@ -237,7 +237,7 @@ export default function SolicitarComitePage() {
               <label className="space-y-1.5">
                 <span className="text-xs font-medium text-gray-600">Prazo (meses) *</span>
                 <input
-                  type="number" min={12} max={180}
+                  type="number" min={12} max={48}
                   value={form.prazoMeses}
                   onChange={(e) => changeField("prazoMeses", e.target.value)}
                   onBlur={(e) => blurField("prazoMeses", e.target.value)}
