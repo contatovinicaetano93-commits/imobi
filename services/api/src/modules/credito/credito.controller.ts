@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { CreditoService } from "./credito.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -12,6 +13,7 @@ import type { SimulacaoCreditoInput, SolicitacaoCreditoInput } from "@imbobi/sch
 export class CreditoController {
   constructor(private readonly credito: CreditoService) {}
 
+  @Throttle({ auth: { limit: 10, ttl: 60000 } })
   @Post("simular")
   simular(@Body(new ZodPipe(SimulacaoCreditoSchema)) body: SimulacaoCreditoInput) {
     return this.credito.simular(body);
