@@ -36,6 +36,11 @@ exports.apiClient = {
         body: JSON.stringify(body),
         token,
     }),
+    put: (path, body, token) => request(path, {
+        method: "PUT",
+        body: JSON.stringify(body),
+        token,
+    }),
     patch: (path, body, token) => request(path, {
         method: "PATCH",
         body: JSON.stringify(body),

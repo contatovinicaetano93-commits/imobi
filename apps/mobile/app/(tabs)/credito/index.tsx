@@ -52,7 +52,7 @@ export default function CreditoScreen() {
         <View style={styles.divider} />
         <ResultRow label="Total pago" value={formatarBRL(resultado.totalPago)} />
         <ResultRow label="Total de juros" value={formatarBRL(resultado.totalJuros)} />
-        <ResultRow label="CET ao ano" value={formatarPercentual(resultado.cet)} />
+        <ResultRow label="CET ao ano" value={formatarPercentual(resultado.cetAnual)} />
       </View>
     </ScrollView>
   );

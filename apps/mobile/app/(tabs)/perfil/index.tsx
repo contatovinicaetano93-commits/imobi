@@ -111,38 +111,64 @@ export default function PerfilScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Verificação</Text>
 
-            <View style={styles.kycRow}>
-              <Text style={styles.label}>Status KYC</Text>
-              <View
-                style={[
-                  styles.badge,
-                  usuario.kycStatus === "APROVADO"
-                    ? styles.badgeAprovado
-                    : usuario.kycStatus === "EM_ANALISE"
-                    ? styles.badgeAnalise
-                    : styles.badgePendente,
-                ]}
-              >
-                <Text
+            <TouchableOpacity style={styles.menuRow} onPress={() => router.push("/(tabs)/perfil/kyc")}>
+              <View style={styles.menuLeft}>
+                <Text style={styles.label}>Status KYC</Text>
+                <View
                   style={[
-                    styles.badgeText,
+                    styles.badge,
                     usuario.kycStatus === "APROVADO"
-                      ? styles.badgeTextAprovado
-                      : usuario.kycStatus === "EM_ANALISE"
-                      ? styles.badgeTextAnalise
-                      : styles.badgeTextPendente,
+                      ? styles.badgeAprovado
+                      : usuario.kycStatus === "EM_VERIFICACAO"
+                      ? styles.badgeAnalise
+                      : styles.badgePendente,
                   ]}
                 >
-                  {usuario.kycStatus === "APROVADO"
-                    ? "Aprovado"
-                    : usuario.kycStatus === "EM_ANALISE"
-                    ? "Em análise"
-                    : usuario.kycStatus === "REJEITADO"
-                    ? "Rejeitado"
-                    : "Pendente"}
-                </Text>
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      usuario.kycStatus === "APROVADO"
+                        ? styles.badgeTextAprovado
+                        : usuario.kycStatus === "EM_VERIFICACAO"
+                        ? styles.badgeTextAnalise
+                        : styles.badgeTextPendente,
+                    ]}
+                  >
+                    {usuario.kycStatus === "APROVADO"
+                      ? "Aprovado"
+                      : usuario.kycStatus === "EM_VERIFICACAO"
+                      ? "Em análise"
+                      : usuario.kycStatus === "REJEITADO"
+                      ? "Rejeitado"
+                      : "Pendente"}
+                  </Text>
+                </View>
               </View>
-            </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Financeiro</Text>
+
+            <TouchableOpacity style={styles.menuRow} onPress={() => router.push("/(tabs)/credito/historico")}>
+              <Text style={styles.label}>Meus créditos e parcelas</Text>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuRow} onPress={() => router.push("/(tabs)/perfil/dados-bancarios")}>
+              <Text style={styles.label}>Dados bancários</Text>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Segurança</Text>
+
+            <TouchableOpacity style={styles.menuRow} onPress={() => router.push("/(tabs)/perfil/2fa")}>
+              <Text style={styles.label}>Verificação em 2 etapas (2FA)</Text>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} disabled={loggingOut}>
@@ -168,7 +194,9 @@ const styles = StyleSheet.create({
   section: { marginBottom: 24 },
   sectionTitle: { fontSize: 16, fontWeight: "600", color: "#111827", marginBottom: 12 },
   infoRow: { backgroundColor: "#fff", borderRadius: 12, padding: 14, marginBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  kycRow: { backgroundColor: "#fff", borderRadius: 12, padding: 14, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  menuRow: { backgroundColor: "#fff", borderRadius: 12, padding: 14, marginBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  menuLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
+  chevron: { fontSize: 22, color: "#9ca3af", fontWeight: "300" },
   label: { fontSize: 14, color: "#6b7280" },
   value: { fontSize: 14, fontWeight: "600", color: "#111827" },
   badge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
