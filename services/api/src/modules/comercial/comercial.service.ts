@@ -145,8 +145,8 @@ export class ComercialService {
     if (filters?.scoreMin !== undefined || filters?.scoreMax !== undefined) {
       const minScore: number = filters.scoreMin ?? 0;
       const maxScore: number = filters.scoreMax ?? Infinity;
-      // Fetch all scores newest-first, deduplicate by leadId to get only the latest
       const allScores = await this.prisma.conversionScore.findMany({
+        where: scopeUserId ? { lead: { usuarioId: scopeUserId } } : undefined,
         select: { leadId: true, scoreFinal: true },
         orderBy: { criadoEm: 'desc' },
       });
@@ -192,7 +192,7 @@ export class ComercialService {
     };
   }
 
-  async obterLeadDetalhe(leadId: string) {
+  async obterLeadDetalhe(leadId: string, scopeUserId?: string) {
     const lead = await this.prisma.lead.findUnique({
       where: { leadId },
       include: {
@@ -205,6 +205,7 @@ export class ComercialService {
     });
 
     if (!lead) return null;
+    if (scopeUserId && lead.usuarioId !== scopeUserId) return null;
 
     return {
       ...lead,
@@ -212,7 +213,11 @@ export class ComercialService {
     };
   }
 
-  async calcularScoreConversao(leadId: string) {
+  async calcularScoreConversao(leadId: string, scopeUserId?: string) {
+    if (scopeUserId) {
+      const lead = await this.prisma.lead.findUnique({ where: { leadId }, select: { usuarioId: true } });
+      if (!lead || lead.usuarioId !== scopeUserId) return null;
+    }
     return this.scoringService.calcularScore(leadId);
   }
 

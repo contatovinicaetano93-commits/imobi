@@ -65,13 +65,15 @@ export class ComercialController {
   }
 
   @Get('leads/:leadId')
-  async getLeadDetail(@Param('leadId') leadId: string) {
-    return this.comercialService.obterLeadDetalhe(leadId);
+  async getLeadDetail(@UsuarioAtual() u: IUsuario, @Param('leadId') leadId: string) {
+    const scopeUserId = u.tipo === 'ADMIN' ? undefined : u.id;
+    return this.comercialService.obterLeadDetalhe(leadId, scopeUserId);
   }
 
   @Get('leads/:leadId/score')
-  async getLeadScore(@Param('leadId') leadId: string) {
-    return this.comercialService.calcularScoreConversao(leadId);
+  async getLeadScore(@UsuarioAtual() u: IUsuario, @Param('leadId') leadId: string) {
+    const scopeUserId = u.tipo === 'ADMIN' ? undefined : u.id;
+    return this.comercialService.calcularScoreConversao(leadId, scopeUserId);
   }
 
   @Post('leads/:leadId/atividades')

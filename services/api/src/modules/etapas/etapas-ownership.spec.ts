@@ -127,10 +127,16 @@ describe("EtapasService – atualizarStatus ownership", () => {
     ).resolves.toBeDefined();
   });
 
-  it("allows ENGENHEIRO to set any status", async () => {
+  it("allows GESTOR to set any status", async () => {
+    await expect(
+      service.atualizarStatus("etapa-1", "CONCLUIDA", "gestor-id", "GESTOR"),
+    ).resolves.toBeDefined();
+  });
+
+  it("throws ForbiddenException when ENGENHEIRO tries to set arbitrary status (not privileged)", async () => {
     await expect(
       service.atualizarStatus("etapa-1", "CONCLUIDA", "eng-id", "ENGENHEIRO"),
-    ).resolves.toBeDefined();
+    ).rejects.toThrow(ForbiddenException);
   });
 
   it("throws NotFoundException when etapa does not exist", async () => {

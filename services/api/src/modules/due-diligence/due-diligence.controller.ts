@@ -24,6 +24,8 @@ export class DueDiligenceController {
     return this.service.listar(u.id);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles("GESTOR", "ADMIN")
   @Get(":id")
   buscar(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     const isAdmin = u.tipo === "ADMIN";
