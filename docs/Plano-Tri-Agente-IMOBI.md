@@ -86,6 +86,7 @@ Use apenas para operacao e triagem curta:
 
 - health check API;
 - smoke test web/simulador/mobile;
+- resolver erro Expo Go `ERR_NGROK_3200` seguindo `docs/MOBILE_EXPO_TROUBLESHOOTING.md`;
 - acordar API Render em 503 transitorio;
 - hotfix de copy/CSS em 1 arquivo;
 - relatar bug com URL, horario, passos e screenshot;

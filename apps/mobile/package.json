@@ -5,6 +5,8 @@
   "main": "expo-router/entry",
   "scripts": {
     "dev": "expo start",
+    "dev:tunnel": "expo start --tunnel --clear",
+    "dev:lan": "expo start --lan --clear",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "build:preview": "eas build --profile preview",
