@@ -22,7 +22,11 @@ export async function fetchManagerDashboard(maxAttempts = 8): Promise<ManagerSta
       throw new Error('Sessão expirada. Faça login novamente.');
     }
     if (res.status === 403) {
-      throw new Error('Acesso negado ao painel do gestor. Verifique se seu perfil é Gestor do Fundo.');
+      throw new Error(
+        lastMessage !== 'Erro ao carregar dados do painel'
+          ? `${lastMessage} Faça logout/login. Se persistir, redeploy a API no Render (commit recente).`
+          : 'Acesso negado ao painel do gestor. Faça logout/login ou redeploy a API no Render.',
+      );
     }
 
     if (res.status === 502 || res.status === 503 || res.status === 504) {
