@@ -6,6 +6,12 @@ import * as SecureStore from "expo-secure-store";
 import { getMobileRoleHome, LoginSchema, normalizeUserRole, type LoginInput } from "@imbobi/schemas";
 import { apiClient } from "@imbobi/core";
 
+type MobileHomeRoute = "/(tabs)/obras" | "/(tabs)/perfil";
+
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export default function LoginScreen() {
   const router = useRouter();
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginInput>({
@@ -26,9 +32,9 @@ export default function LoginScreen() {
       await SecureStore.setItemAsync("accessToken", res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
       if (role) await SecureStore.setItemAsync("userRole", role);
-      router.replace(getMobileRoleHome(role) as any);
-    } catch (e: any) {
-      Alert.alert("Erro de autenticação", e.message ?? "E-mail ou senha inválidos.");
+      router.replace(getMobileRoleHome(role) as MobileHomeRoute);
+    } catch (e: unknown) {
+      Alert.alert("Erro de autenticação", errorMessage(e, "E-mail ou senha inválidos."));
     }
   };
 

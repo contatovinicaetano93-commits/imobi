@@ -6,6 +6,8 @@ import { useRouter, useSegments } from "expo-router";
 import { setOnUnauthorized } from "../lib/api";
 import { getMobileRoleHome, normalizeUserRole, type AppRole } from "@imbobi/schemas";
 
+type MobileHomeRoute = "/(tabs)/obras" | "/(tabs)/perfil";
+
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
@@ -46,7 +48,7 @@ export default function RootLayout() {
     const onWelcome    = segments.length === 0;
 
     if (isSignedIn && (inAuthGroup || onWelcome)) {
-      router.replace(getMobileRoleHome(role) as any);
+      router.replace(getMobileRoleHome(role) as MobileHomeRoute);
     } else if (!isSignedIn && inTabsGroup) {
       router.replace("/");
     }

@@ -10,6 +10,10 @@ function getRoleLabel(role: string): string {
   return normalizedRole ? ROLE_LABELS[normalizedRole] : role;
 }
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export default function PerfilScreen() {
   const router = useRouter();
   const [usuario, setUsuario] = useState<UsuarioPerfil | null>(null);
@@ -21,8 +25,8 @@ export default function PerfilScreen() {
       try {
         const data = await usuariosApi.obterPerfil();
         setUsuario(data);
-      } catch (e: any) {
-        console.error("Erro ao carregar perfil:", e);
+      } catch (e: unknown) {
+        console.error("Erro ao carregar perfil:", errorMessage(e));
       } finally {
         setLoading(false);
       }

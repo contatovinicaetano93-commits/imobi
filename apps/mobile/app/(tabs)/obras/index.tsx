@@ -1,8 +1,21 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  RefreshControl,
+  type DimensionValue,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { obrasApi, type Obra } from "../../../lib/api";
 import { useMobileTabAccess } from "../../../lib/rbac";
+
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
 
 const STATUS_LABEL: Record<string, string> = {
   PLANEJAMENTO: "Planejamento",
@@ -25,8 +38,8 @@ export default function ObrasScreen() {
       const data = await obrasApi.listar();
       setObras(data);
       setError(null);
-    } catch (e: any) {
-      setError(e.message ?? "Erro ao carregar obras");
+    } catch (e: unknown) {
+      setError(errorMessage(e, "Erro ao carregar obras"));
     }
   };
 
@@ -71,7 +84,7 @@ export default function ObrasScreen() {
                 <Text style={styles.progresso}>{progresso}%</Text>
               </View>
               <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${progresso}%` as any }]} />
+                <View style={[styles.progressFill, { width: `${progresso}%` as DimensionValue }]} />
               </View>
               <View style={styles.cardFooter}>
                 <Text style={styles.meta}>{STATUS_LABEL[item.status] ?? item.status}</Text>
