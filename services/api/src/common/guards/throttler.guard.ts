@@ -1,10 +1,20 @@
+import { ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { ThrottlerGuard } from "@nestjs/throttler";
 import type { ThrottlerModuleOptions, ThrottlerStorage } from "@nestjs/throttler";
 
+@Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
-  // Guard is instantiated via factory provider in app.module.ts
-  // Injects: THROTTLER_OPTIONS, ThrottlerStorage, and Reflector
+  protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
+    if (await super.shouldSkip(context)) return true;
+
+    const req = context.switchToHttp().getRequest<{ url?: string; raw?: { url?: string } }>();
+    const path = req.url ?? req.raw?.url ?? "";
+    // Render / uptime monitors batem /health a cada poucos segundos — nunca limitar
+    if (path.includes("/health")) return true;
+
+    return false;
+  }
 
   async getTracker(req: Record<string, any>): Promise<string> {
     // For authenticated requests, track by user ID from JWT

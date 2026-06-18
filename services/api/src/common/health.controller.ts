@@ -1,4 +1,5 @@
 import { Controller, Get, Logger, Inject } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { getRedisConfig, validateRedisConfig } from "./config";
 import type { Cache } from "cache-manager";
@@ -12,6 +13,7 @@ interface HealthCheck {
   database: { configured: boolean };
 }
 
+@SkipThrottle()
 @Controller("health")
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);
@@ -44,17 +46,15 @@ export class HealthController {
     const hasFirebaseConfig = this.hasFirebaseConfig();
     const hasDatabaseUrl = !!process.env["DATABASE_URL"];
 
-    const criticalConfigured =
-      hasEmailConfig &&
-      hasFirebaseConfig &&
-      hasDatabaseUrl;
-
-    const allConfigured =
-      criticalConfigured &&
-      redisStatus === "connected";
+    // Render health check: DB obrigatório; Redis/email/firebase são opcionais
+    const status: HealthCheck["status"] = !hasDatabaseUrl
+      ? "error"
+      : redisStatus === "connected"
+        ? "ok"
+        : "degraded";
 
     const health: HealthCheck = {
-      status: allConfigured ? "ok" : criticalConfigured ? "degraded" : "error",
+      status,
       timestamp: new Date().toISOString(),
       redis: {
         status: redisStatus,
