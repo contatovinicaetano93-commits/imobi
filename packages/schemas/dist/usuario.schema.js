@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AtualizarUsuarioAdminSchema = exports.FuncaoPainelEnum = exports.FUNCOES_PAINEL = exports.UpdateUsuarioSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
+exports.Totp2faDesativarSchema = exports.Totp2faVerificarLoginSchema = exports.Totp2faConfirmarSchema = exports.AtualizarUsuarioAdminSchema = exports.FuncaoPainelEnum = exports.FUNCOES_PAINEL = exports.UpdateUsuarioSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
 const zod_1 = require("zod");
 exports.TipoUsuarioEnum = zod_1.z.enum([
     "TOMADOR",
@@ -79,4 +79,15 @@ exports.AtualizarUsuarioAdminSchema = zod_1.z.object({
     tipo: exports.TipoUsuarioEnum.optional(),
     bloqueado: zod_1.z.boolean().optional(),
     funcoesBloqueadas: zod_1.z.array(exports.FuncaoPainelEnum).optional(),
+});
+exports.Totp2faConfirmarSchema = zod_1.z.object({
+    totpCode: zod_1.z.string().length(6, "Código deve ter 6 dígitos").regex(/^\d{6}$/, "Apenas números"),
+});
+exports.Totp2faVerificarLoginSchema = zod_1.z.object({
+    tempToken: zod_1.z.string().min(1),
+    totpCode: zod_1.z.string().length(6).regex(/^\d{6}$/),
+});
+exports.Totp2faDesativarSchema = zod_1.z.object({
+    totpCode: zod_1.z.string().length(6).regex(/^\d{6}$/),
+    senha: zod_1.z.string().min(8),
 });

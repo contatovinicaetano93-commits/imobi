@@ -99,6 +99,33 @@ export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
     bloqueado?: boolean | undefined;
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }>;
+export declare const Totp2faConfirmarSchema: z.ZodObject<{
+    totpCode: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    totpCode: string;
+}, {
+    totpCode: string;
+}>;
+export declare const Totp2faVerificarLoginSchema: z.ZodObject<{
+    tempToken: z.ZodString;
+    totpCode: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    totpCode: string;
+    tempToken: string;
+}, {
+    totpCode: string;
+    tempToken: string;
+}>;
+export declare const Totp2faDesativarSchema: z.ZodObject<{
+    totpCode: z.ZodString;
+    senha: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    senha: string;
+    totpCode: string;
+}, {
+    senha: string;
+    totpCode: string;
+}>;
 export type TipoUsuario = z.infer<typeof TipoUsuarioEnum>;
 export type KycStatus = z.infer<typeof KycStatusEnum>;
 export type CadastroUsuarioInput = z.infer<typeof CadastroUsuarioSchema>;
@@ -108,3 +135,6 @@ export type EsqueceuSenhaInput = z.infer<typeof EsqueceuSenhaSchema>;
 export type RedefinirSenhaInput = z.infer<typeof RedefinirSenhaSchema>;
 export type FuncaoPainel = z.infer<typeof FuncaoPainelEnum>;
 export type AtualizarUsuarioAdminInput = z.infer<typeof AtualizarUsuarioAdminSchema>;
+export type Totp2faConfirmarInput = z.infer<typeof Totp2faConfirmarSchema>;
+export type Totp2faVerificarLoginInput = z.infer<typeof Totp2faVerificarLoginSchema>;
+export type Totp2faDesativarInput = z.infer<typeof Totp2faDesativarSchema>;

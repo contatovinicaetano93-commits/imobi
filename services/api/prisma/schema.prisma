@@ -29,6 +29,9 @@ model Usuario {
   consentidoEm        DateTime?
   passwordResetToken    String?
   passwordResetExpires  DateTime?
+  totpSecret            String?
+  totpPendingSecret     String?
+  totpAtivo             Boolean   @default(false)
   bloqueadoEm         DateTime?
   funcoesBloqueadas   String[]  @default([])
   deletadoEm          DateTime?

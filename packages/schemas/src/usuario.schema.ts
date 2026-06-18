@@ -88,6 +88,20 @@ export const AtualizarUsuarioAdminSchema = z.object({
   funcoesBloqueadas: z.array(FuncaoPainelEnum).optional(),
 });
 
+export const Totp2faConfirmarSchema = z.object({
+  totpCode: z.string().length(6, "Código deve ter 6 dígitos").regex(/^\d{6}$/, "Apenas números"),
+});
+
+export const Totp2faVerificarLoginSchema = z.object({
+  tempToken: z.string().min(1),
+  totpCode: z.string().length(6).regex(/^\d{6}$/),
+});
+
+export const Totp2faDesativarSchema = z.object({
+  totpCode: z.string().length(6).regex(/^\d{6}$/),
+  senha: z.string().min(8),
+});
+
 export type TipoUsuario = z.infer<typeof TipoUsuarioEnum>;
 export type KycStatus = z.infer<typeof KycStatusEnum>;
 export type CadastroUsuarioInput = z.infer<typeof CadastroUsuarioSchema>;
@@ -97,3 +111,6 @@ export type EsqueceuSenhaInput = z.infer<typeof EsqueceuSenhaSchema>;
 export type RedefinirSenhaInput = z.infer<typeof RedefinirSenhaSchema>;
 export type FuncaoPainel = z.infer<typeof FuncaoPainelEnum>;
 export type AtualizarUsuarioAdminInput = z.infer<typeof AtualizarUsuarioAdminSchema>;
+export type Totp2faConfirmarInput = z.infer<typeof Totp2faConfirmarSchema>;
+export type Totp2faVerificarLoginInput = z.infer<typeof Totp2faVerificarLoginSchema>;
+export type Totp2faDesativarInput = z.infer<typeof Totp2faDesativarSchema>;

@@ -14,12 +14,20 @@ export default function LoginScreen() {
 
   const onSubmit = async (data: LoginInput) => {
     try {
-      const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
-        "/auth/login",
-        data
-      );
-      await SecureStore.setItemAsync("accessToken", res.accessToken);
-      await SecureStore.setItemAsync("refreshToken", res.refreshToken);
+      const res = await apiClient.post<{
+        requires2fa: boolean;
+        tempToken?: string;
+        accessToken?: string;
+        refreshToken?: string;
+      }>("/auth/login", data);
+
+      if (res.requires2fa && res.tempToken) {
+        router.push({ pathname: "/(auth)/verificar-2fa", params: { tempToken: res.tempToken } });
+        return;
+      }
+
+      await SecureStore.setItemAsync("accessToken", res.accessToken!);
+      await SecureStore.setItemAsync("refreshToken", res.refreshToken!);
       router.replace("/(tabs)/obras");
     } catch (e: any) {
       Alert.alert("Erro de autenticação", e.message ?? "E-mail ou senha inválidos.");

@@ -1,10 +1,27 @@
 import { Controller, Post, Body, HttpCode, UseGuards } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
-import { CadastroUsuarioSchema, LoginSchema, EsqueceuSenhaSchema, RedefinirSenhaSchema } from "@imbobi/schemas";
+import {
+  CadastroUsuarioSchema,
+  LoginSchema,
+  EsqueceuSenhaSchema,
+  RedefinirSenhaSchema,
+  Totp2faConfirmarSchema,
+  Totp2faVerificarLoginSchema,
+  Totp2faDesativarSchema,
+} from "@imbobi/schemas";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-import type { CadastroUsuarioInput, LoginInput, EsqueceuSenhaInput, RedefinirSenhaInput } from "@imbobi/schemas";
+import { UsuarioAtual } from "../../common/decorators/usuario-atual.decorator";
+import type {
+  CadastroUsuarioInput,
+  LoginInput,
+  EsqueceuSenhaInput,
+  RedefinirSenhaInput,
+  Totp2faConfirmarInput,
+  Totp2faVerificarLoginInput,
+  Totp2faDesativarInput,
+} from "@imbobi/schemas";
 
 @Controller("auth")
 export class AuthController {
@@ -49,5 +66,45 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   redefinirSenha(@Body(new ZodPipe(RedefinirSenhaSchema)) body: RedefinirSenhaInput) {
     return this.auth.redefinirSenha(body.token, body.novaSenha);
+  }
+
+  // ── 2FA TOTP ──────────────────────────────────────────────────────────────
+
+  @UseGuards(JwtAuthGuard)
+  @Post("2fa/ativar")
+  @HttpCode(200)
+  iniciar2fa(@UsuarioAtual() usuario: UsuarioAtual) {
+    return this.auth.iniciar2fa(usuario.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("2fa/confirmar")
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  confirmar2fa(
+    @UsuarioAtual() usuario: UsuarioAtual,
+    @Body(new ZodPipe(Totp2faConfirmarSchema)) body: Totp2faConfirmarInput,
+  ) {
+    return this.auth.confirmar2fa(usuario.id, body.totpCode);
+  }
+
+  @Post("2fa/verificar")
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  verificar2faLogin(
+    @Body(new ZodPipe(Totp2faVerificarLoginSchema)) body: Totp2faVerificarLoginInput,
+  ) {
+    return this.auth.verificar2faLogin(body.tempToken, body.totpCode);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("2fa/desativar")
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  desativar2fa(
+    @UsuarioAtual() usuario: UsuarioAtual,
+    @Body(new ZodPipe(Totp2faDesativarSchema)) body: Totp2faDesativarInput,
+  ) {
+    return this.auth.desativar2fa(usuario.id, body.totpCode, body.senha);
   }
 }
