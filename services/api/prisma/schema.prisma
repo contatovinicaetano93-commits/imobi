@@ -292,6 +292,7 @@ model ScoreHistorico {
   usuario     Usuario  @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
   score       Int
   motivo      String?
+  breakdown   Json?
   criadoEm    DateTime @default(now())
 
   @@index([usuarioId])

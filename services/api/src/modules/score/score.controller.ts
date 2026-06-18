@@ -9,10 +9,8 @@ export class ScoreController {
   constructor(private readonly score: ScoreService) {}
 
   @Get("atual")
-  async atual(@UsuarioAtual() u: IUsuario) {
-    const scoreValue = await this.score.buscarScoreAtual(u.id);
-    const nivel = this.score.obterNivel(scoreValue);
-    return { score: scoreValue, ...nivel };
+  atual(@UsuarioAtual() u: IUsuario) {
+    return this.score.buscarScoreAtual(u.id);
   }
 
   @Get("historico")

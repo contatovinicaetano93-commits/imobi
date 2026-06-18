@@ -4,9 +4,10 @@ import { KycController } from "./kyc.controller";
 import { NotificacoesModule } from "../notificacoes/notificacoes.module";
 import { EmailModule } from "../email/email.module";
 import { PushNotificacoesModule } from "../push-notificacoes/push-notificacoes.module";
+import { ScoreModule } from "../score/score.module";
 
 @Module({
-  imports: [NotificacoesModule, EmailModule, PushNotificacoesModule],
+  imports: [NotificacoesModule, EmailModule, PushNotificacoesModule, ScoreModule],
   controllers: [KycController],
   providers: [KycService],
   exports: [KycService],

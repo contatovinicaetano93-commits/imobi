@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
+import { ScoreService } from "../score/score.service";
 import { KycDocumentoStatus } from "@prisma/client";
 
 @Injectable()
@@ -13,7 +14,8 @@ export class KycService {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
+    private readonly score: ScoreService,
   ) {}
 
   async uploadDocumento(usuarioId: string, tipo: string, url: string) {
@@ -105,12 +107,13 @@ export class KycService {
       tipo: "KYC_APROVADO",
     }).catch(() => {});
 
-    // BUG-003: Ensure email is sent before returning response
     try {
       await this.email.kycAprovadoEmail(documento.usuario.nome, documento.usuario.email);
     } catch (error) {
       this.logger.warn(`Failed to send KYC approval email: ${error}`);
     }
+
+    this.score.recalcularEPersistir(documento.usuarioId, "Documento KYC aprovado").catch(() => {});
 
     return atualizado;
   }
@@ -169,12 +172,13 @@ export class KycService {
       dados: { motivo },
     }).catch(() => {});
 
-    // Envia email
     try {
       await this.email.kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo);
     } catch (error) {
       this.logger.warn(`Failed to send KYC rejection email: ${error}`);
     }
+
+    this.score.recalcularEPersistir(documento.usuarioId, "Documento KYC rejeitado").catch(() => {});
 
     return atualizado;
   }
@@ -201,6 +205,7 @@ export class KycService {
         where: { usuarioId },
         data: { kycStatus: "APROVADO" },
       });
+      this.score.recalcularEPersistir(usuarioId, "KYC aprovado").catch(() => {});
     }
 
     return { completo, documentos };

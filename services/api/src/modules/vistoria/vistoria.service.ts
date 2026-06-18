@@ -9,6 +9,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
+import { ScoreService } from "../score/score.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
 import type { EtapaStatus } from "@prisma/client";
 
@@ -21,6 +22,7 @@ export class VistoriaService {
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
     private readonly pushNotificacoes: PushNotificacoesService,
+    private readonly score: ScoreService,
     @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue<LiberacaoJob>,
   ) {}
 
@@ -88,6 +90,8 @@ export class VistoriaService {
       }
     }
 
+    this.score.recalcularEPersistir(etapa.obra.usuarioId, "Etapa aprovada").catch(() => {});
+
     return { ok: true, etapaId, status: "CONCLUIDA" };
   }
 
@@ -117,6 +121,8 @@ export class VistoriaService {
       `A etapa "${etapa.nome}" foi reprovada. Motivo: ${motivo}`,
       `/dashboard/obras/${etapa.obra.obraId}`,
     );
+
+    this.score.recalcularEPersistir(etapa.obra.usuarioId, "Etapa reprovada").catch(() => {});
 
     return { ok: true, etapaId, status: "REPROVADA" };
   }
