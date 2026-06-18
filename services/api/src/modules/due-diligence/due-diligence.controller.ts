@@ -10,11 +10,15 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decora
 export class DueDiligenceController {
   constructor(private readonly service: DueDiligenceService) {}
 
+  @UseGuards(RolesGuard)
+  @Roles("GESTOR", "ADMIN")
   @Post()
   criar(@UsuarioAtual() u: IUsuario, @Body() body: CriarDueDiligenceDto) {
     return this.service.criar(u.id, body);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles("GESTOR", "ADMIN")
   @Get()
   listar(@UsuarioAtual() u: IUsuario) {
     return this.service.listar(u.id);

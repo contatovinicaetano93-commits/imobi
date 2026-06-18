@@ -108,8 +108,8 @@ export class EvidenciasService {
   }
 
   async validar(usuario: { id: string; tipo: string }, evidenciaId: string, aprovado: boolean, observacao?: string) {
-    if (usuario.tipo !== "GESTOR" && usuario.tipo !== "ADMIN") {
-      throw new ForbiddenException("Apenas gestores e administradores podem validar evidências.");
+    if (usuario.tipo !== "GESTOR" && usuario.tipo !== "ADMIN" && usuario.tipo !== "ENGENHEIRO") {
+      throw new ForbiddenException("Apenas gestores, engenheiros e administradores podem validar evidências.");
     }
 
     const evidencia = await this.prisma.evidenciaEtapa.findUnique({
