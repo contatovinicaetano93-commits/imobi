@@ -53,6 +53,14 @@ export const obrasApi = {
     }),
 };
 
+export const engenheirosApi = {
+  visitas: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<VisitaEngenheiro[]>("/engenheiros/visitas", token ?? undefined);
+    }),
+};
+
 export const creditoApi = {
   meus: () =>
     callApi(async () => {
@@ -115,6 +123,24 @@ export type Evidencia = {
   evidenciaId: string;
   fotoUrl: string;
   validada: boolean;
+  criadoEm: string;
+};
+
+export type VisitaStatus = "AGENDADA" | "INICIADA" | "CONCLUIDA" | "REPROVADA";
+
+export type VisitaEngenheiro = {
+  visitaId: string;
+  status: VisitaStatus | string;
+  etapaId: string;
+  etapaNome: string;
+  obraId: string;
+  obraNome: string;
+  dataAgendada: string;
+  observacoes?: string | null;
+  obra: {
+    nome: string;
+    endereco: string;
+  };
   criadoEm: string;
 };
 

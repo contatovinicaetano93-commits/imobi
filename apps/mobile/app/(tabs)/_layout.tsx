@@ -14,7 +14,7 @@ export default function TabLayout() {
       .finally(() => setRoleLoaded(true));
   }, []);
 
-  const canShowTab = (tab: "obras" | "credito" | "perfil") => {
+  const canShowTab = (tab: "engenharia" | "obras" | "credito" | "perfil") => {
     if (!roleLoaded) return true;
     return roleCanAccessMobileTab(role, tab);
   };
@@ -37,6 +37,16 @@ export default function TabLayout() {
         },
       }}
     >
+      <Tabs.Screen
+        name="engenheiro/index"
+        options={{
+          title: "Vistorias",
+          href: canShowTab("engenharia") ? undefined : null,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="clipboard" size={size} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="obras/index"
         options={{

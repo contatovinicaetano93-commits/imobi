@@ -60,6 +60,7 @@ export declare const WEB_ROUTE_RULES: readonly [{
     readonly roles: readonly ["CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"];
 }];
 export declare const MOBILE_TAB_RULES: {
+    readonly engenharia: readonly ["ENGENHEIRO", "GESTOR_OBRA", "ADMIN"];
     readonly obras: readonly ["CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"];
     readonly credito: readonly ["CONSTRUTOR", "TOMADOR", "ADMIN"];
     readonly perfil: readonly ["TOMADOR", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "GESTOR_OBRA", "COMERCIAL", "PARCEIRO", "ADMIN", "CONSTRUTOR"];

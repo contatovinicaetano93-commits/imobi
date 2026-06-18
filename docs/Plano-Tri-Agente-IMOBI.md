@@ -174,11 +174,14 @@ Estado atual:
 - login salva role normalizada;
 - tabs sem permissao sao ocultadas;
 - acesso direto a Obras/Credito e bloqueado quando nao permitido;
-- ainda faltam telas especificas para Gestor, Engenheiro e Comercial.
+- Engenheiro/GESTOR_OBRA agora entram em `/(tabs)/engenheiro`;
+- primeira tela mobile do Engenheiro criada em `apps/mobile/app/(tabs)/engenheiro/index.tsx`;
+- tela consome `GET /engenheiros/visitas` via `engenheirosApi.visitas()`;
+- ainda faltam telas especificas para Gestor e Comercial.
 
 Proximo passo:
 
-- definir primeira tela mobile para Engenheiro: fila de vistorias;
+- validar a tela de Engenheiro contra dados reais/staging;
 - depois definir Comercial: resumo de leads ou perfil parceiro;
 - depois Gestor: fila resumida de aprovacoes.
 

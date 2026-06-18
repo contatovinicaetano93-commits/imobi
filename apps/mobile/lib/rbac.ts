@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import { normalizeUserRole, roleCanAccessMobileTab, type AppRole } from "@imbobi/schemas";
 
-type MobileTab = "obras" | "credito" | "perfil";
+type MobileTab = "engenharia" | "obras" | "credito" | "perfil";
 
 export function useMobileTabAccess(tab: MobileTab) {
   const [role, setRole] = useState<AppRole | null>(null);
