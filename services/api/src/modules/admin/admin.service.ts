@@ -203,6 +203,28 @@ export class AdminService {
       });
     }
 
+    // Audit log for sensitive field changes
+    const auditActions: { acaoTipo: string; detalhes: string }[] = [];
+    if (dto.tipo !== undefined && dto.tipo !== usuario.tipo) {
+      auditActions.push({ acaoTipo: "USUARIO_TIPO_ALTERADO", detalhes: `${usuario.tipo} → ${dto.tipo}` });
+    }
+    if (dto.bloqueado === true) {
+      auditActions.push({ acaoTipo: "USUARIO_BLOQUEADO", detalhes: `Sessões revogadas` });
+    } else if (dto.bloqueado === false && usuario.bloqueadoEm) {
+      auditActions.push({ acaoTipo: "USUARIO_DESBLOQUEADO", detalhes: null });
+    }
+
+    if (auditActions.length > 0) {
+      await this.prisma.adminAuditLog.createMany({
+        data: auditActions.map((a) => ({
+          adminId,
+          alvoId: id,
+          acaoTipo: a.acaoTipo,
+          detalhes: a.detalhes,
+        })),
+      });
+    }
+
     return { id: usuarioId, ...atualizado };
   }
 
@@ -224,7 +246,7 @@ export class AdminService {
     }));
   }
 
-  async criarUsuario(dto: CriarUsuarioAdminDto) {
+  async criarUsuario(dto: CriarUsuarioAdminDto, adminId: string) {
     const existe = await this.prisma.usuario.findUnique({ where: { email: dto.email } });
     if (existe && !existe.deletadoEm) throw new ConflictException("E-mail já cadastrado");
     const passwordHash = await bcrypt.hash(dto.senha, 12);
@@ -255,6 +277,16 @@ export class AdminService {
         criadoEm: true,
       },
     });
+
+    await this.prisma.adminAuditLog.create({
+      data: {
+        adminId,
+        alvoId: usuarioId,
+        acaoTipo: "USUARIO_CRIADO",
+        detalhes: `tipo=${dto.tipo} email=${dto.email}`,
+      },
+    });
+
     return { id: usuarioId, ...rest };
   }
 
@@ -274,6 +306,31 @@ export class AdminService {
       }),
     ]);
 
+    await this.prisma.adminAuditLog.create({
+      data: {
+        adminId,
+        alvoId: null,
+        acaoTipo: "USUARIO_EXCLUIDO",
+        detalhes: `email=${usuario.email} tipo=${usuario.tipo}`,
+      },
+    });
+
     return { ok: true };
+  }
+
+  async listarAuditLogs(limit: number, offset: number) {
+    const [logs, total] = await Promise.all([
+      this.prisma.adminAuditLog.findMany({
+        take: limit,
+        skip: offset,
+        orderBy: { criadoEm: "desc" },
+        include: {
+          admin: { select: { nome: true, email: true } },
+          alvo: { select: { nome: true, email: true } },
+        },
+      }),
+      this.prisma.adminAuditLog.count(),
+    ]);
+    return { logs, total, page: Math.floor(offset / limit) + 1, pageSize: limit };
   }
 }

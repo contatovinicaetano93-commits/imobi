@@ -31,8 +31,8 @@ export class AdminController {
   }
 
   @Post("usuarios")
-  criarUsuario(@Body() body: CriarUsuarioAdminDto) {
-    return this.adminService.criarUsuario(body);
+  criarUsuario(@Body() body: CriarUsuarioAdminDto, @UsuarioAtual() admin: UsuarioAtual) {
+    return this.adminService.criarUsuario(body, admin.id);
   }
 
   @Get("obras")
@@ -59,5 +59,13 @@ export class AdminController {
     @UsuarioAtual() admin: UsuarioAtual,
   ) {
     return this.adminService.excluirUsuario(id, admin.id);
+  }
+
+  @Get("audit-logs")
+  listarAuditLogs(
+    @Query("limit") limit: string = "20",
+    @Query("offset") offset: string = "0",
+  ) {
+    return this.adminService.listarAuditLogs(Number(limit), Number(offset));
   }
 }

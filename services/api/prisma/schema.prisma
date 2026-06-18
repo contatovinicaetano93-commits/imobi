@@ -44,6 +44,8 @@ model Usuario {
   fcmTokens     UsuarioFcmToken[]
   etapaAuditLogs EtapaAuditLog[] @relation("EtapaAuditLogs")
   kycAuditLogs  KycAuditLog[] @relation("KycAuditLogs")
+  adminAuditLogs AdminAuditLog[] @relation("AdminAuditLogs")
+  adminAuditAlvos AdminAuditLog[] @relation("AdminAuditAlvos")
   leadsGerenciados Lead[] @relation("LeadUsuarios")
   mailingContatos MailingContato[]
   dueDiligences   DueDiligence[]
@@ -525,6 +527,24 @@ enum MailingStatus {
   NOVO
   CONTATADO
   CONVERTIDO
+}
+
+// ── Auditoria de Ações Administrativas ───────────────────────────────────
+
+model AdminAuditLog {
+  auditId         String   @id @default(uuid())
+  adminId         String
+  admin           Usuario  @relation("AdminAuditLogs", fields: [adminId], references: [usuarioId], onDelete: Restrict)
+  alvoId          String?
+  alvo            Usuario? @relation("AdminAuditAlvos", fields: [alvoId], references: [usuarioId], onDelete: SetNull)
+  acaoTipo        String
+  detalhes        String?
+  criadoEm        DateTime @default(now())
+
+  @@index([adminId])
+  @@index([alvoId])
+  @@index([acaoTipo])
+  @@index([criadoEm])
 }
 
 // ── Due Diligence ───────────────────────────────────────────────────────
