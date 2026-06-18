@@ -185,3 +185,67 @@ describe("AdminService – excluirUsuario audit", () => {
     expect(mockPrisma.adminAuditLog.create).not.toHaveBeenCalled();
   });
 });
+
+// ─────────────────────────────────────────────
+// listarAuditLogs — pagination
+// ─────────────────────────────────────────────
+describe("AdminService – listarAuditLogs pagination", () => {
+  const fakeLogs = [
+    { auditId: "a1", acaoTipo: "USUARIO_CRIADO", criadoEm: new Date(), admin: { nome: "Admin", email: "a@a.com" }, alvo: null },
+    { auditId: "a2", acaoTipo: "USUARIO_BLOQUEADO", criadoEm: new Date(), admin: { nome: "Admin", email: "a@a.com" }, alvo: { nome: "User", email: "u@u.com" } },
+  ];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockPrisma.adminAuditLog.findMany.mockResolvedValue(fakeLogs);
+    mockPrisma.adminAuditLog.count.mockResolvedValue(42);
+  });
+
+  it("returns correct response shape with logs, total, page, pageSize", async () => {
+    const result = await makeService().listarAuditLogs(20, 0);
+    expect(result).toHaveProperty("logs");
+    expect(result).toHaveProperty("total", 42);
+    expect(result).toHaveProperty("page");
+    expect(result).toHaveProperty("pageSize", 20);
+    expect(Array.isArray(result.logs)).toBe(true);
+  });
+
+  it("calculates page 1 when offset is 0", async () => {
+    const result = await makeService().listarAuditLogs(20, 0);
+    expect(result.page).toBe(1);
+  });
+
+  it("calculates page 2 when offset equals one page size", async () => {
+    const result = await makeService().listarAuditLogs(20, 20);
+    expect(result.page).toBe(2);
+  });
+
+  it("calculates page 3 when offset equals two page sizes", async () => {
+    const result = await makeService().listarAuditLogs(10, 20);
+    expect(result.page).toBe(3);
+  });
+
+  it("passes take=limit and skip=offset to Prisma", async () => {
+    await makeService().listarAuditLogs(15, 30);
+    expect(mockPrisma.adminAuditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 15, skip: 30 })
+    );
+  });
+
+  it("queries logs ordered by criadoEm descending", async () => {
+    await makeService().listarAuditLogs(20, 0);
+    expect(mockPrisma.adminAuditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { criadoEm: "desc" } })
+    );
+  });
+
+  it("returns logs returned by Prisma as-is", async () => {
+    const result = await makeService().listarAuditLogs(20, 0);
+    expect(result.logs).toEqual(fakeLogs);
+  });
+
+  it("reflects pageSize matching the limit argument", async () => {
+    const result = await makeService().listarAuditLogs(5, 0);
+    expect(result.pageSize).toBe(5);
+  });
+});
