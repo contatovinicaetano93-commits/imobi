@@ -87,15 +87,30 @@ export declare const UpdateUsuarioSchema: z.ZodObject<{
 export declare const FUNCOES_PAINEL: readonly ["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"];
 export declare const FuncaoPainelEnum: z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>;
 export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
+    nome: z.ZodOptional<z.ZodString>;
+    email: z.ZodOptional<z.ZodString>;
+    telefone: z.ZodOptional<z.ZodString>;
+    kycStatus: z.ZodOptional<z.ZodEnum<["PENDENTE", "EM_VERIFICACAO", "APROVADO", "REJEITADO"]>>;
+    novaSenha: z.ZodOptional<z.ZodString>;
     tipo: z.ZodOptional<z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"]>>;
     bloqueado: z.ZodOptional<z.ZodBoolean>;
     funcoesBloqueadas: z.ZodOptional<z.ZodArray<z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>, "many">>;
 }, "strip", z.ZodTypeAny, {
     tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
+    nome?: string | undefined;
+    email?: string | undefined;
+    telefone?: string | undefined;
+    novaSenha?: string | undefined;
+    kycStatus?: "PENDENTE" | "EM_VERIFICACAO" | "APROVADO" | "REJEITADO" | undefined;
     bloqueado?: boolean | undefined;
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }, {
     tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
+    nome?: string | undefined;
+    email?: string | undefined;
+    telefone?: string | undefined;
+    novaSenha?: string | undefined;
+    kycStatus?: "PENDENTE" | "EM_VERIFICACAO" | "APROVADO" | "REJEITADO" | undefined;
     bloqueado?: boolean | undefined;
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }>;
