@@ -134,10 +134,12 @@ export type CreditoSimulacao = {
   valorSolicitado: number;
   prazoMeses: number;
   taxaMensal: number;
+  taxaAnual: number;
   parcelaMensal: number;
   totalPago: number;
   totalJuros: number;
   cet: number;
+  observacao: string;
 };
 
 export type CreditoSolicitacao = {

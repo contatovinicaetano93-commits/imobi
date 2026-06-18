@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { simularCredito, type SimulacaoResult } from "../utils/credito";
-
-const TAXA_MENSAL_DEFAULT = 0.0099; // ~1% a.m. (CET ~12,5% a.a.)
+import {
+  PRAZO_MAX_SIMULACAO_CREDITO_MESES,
+  simularCredito,
+  TAXA_MENSAL_SIMULACAO_CREDITO,
+  type SimulacaoResult,
+} from "../utils/credito";
 
 export interface SimuladorState {
   valorSolicitado: number;
@@ -12,9 +15,9 @@ export interface SimuladorState {
   resultado: SimulacaoResult | null;
 }
 
-export function useSimuladorCredito(taxaMensal = TAXA_MENSAL_DEFAULT) {
+export function useSimuladorCredito(taxaMensal = TAXA_MENSAL_SIMULACAO_CREDITO) {
   const [valorSolicitado, setValorSolicitado] = useState(150_000);
-  const [prazoMeses, setPrazoMeses] = useState(60);
+  const [prazoMeses, setPrazoMeses] = useState(PRAZO_MAX_SIMULACAO_CREDITO_MESES);
 
   const resultado = useMemo<SimulacaoResult>(
     () => simularCredito(valorSolicitado, taxaMensal, prazoMeses),

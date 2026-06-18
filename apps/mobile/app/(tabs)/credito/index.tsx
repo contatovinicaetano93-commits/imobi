@@ -1,6 +1,11 @@
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
 import { useSimuladorCredito } from "@imbobi/core/hooks";
-import { formatarBRL, formatarPercentual } from "@imbobi/core";
+import {
+  formatarBRL,
+  formatarPercentual,
+  PRAZO_MAX_SIMULACAO_CREDITO_MESES,
+  PRAZO_MIN_SIMULACAO_CREDITO_MESES,
+} from "@imbobi/core";
 import Slider from "@react-native-community/slider";
 import { useMobileTabAccess } from "../../../lib/rbac";
 
@@ -54,8 +59,8 @@ export default function CreditoScreen() {
           <Text style={styles.sliderValue}>{prazoMeses} meses</Text>
         </View>
         <Slider
-          minimumValue={12}
-          maximumValue={180}
+          minimumValue={PRAZO_MIN_SIMULACAO_CREDITO_MESES}
+          maximumValue={PRAZO_MAX_SIMULACAO_CREDITO_MESES}
           step={12}
           value={prazoMeses}
           onValueChange={setPrazoMeses}
@@ -68,9 +73,15 @@ export default function CreditoScreen() {
       <View style={styles.resultCard}>
         <ResultRow label="Parcela mensal" value={formatarBRL(resultado.parcelaMensal)} big />
         <View style={styles.divider} />
+        <ResultRow label="Taxa anual usada" value={formatarPercentual(resultado.taxaAnual)} />
         <ResultRow label="Total pago" value={formatarBRL(resultado.totalPago)} />
         <ResultRow label="Total de juros" value={formatarBRL(resultado.totalJuros)} />
         <ResultRow label="CET ao ano" value={formatarPercentual(resultado.cet)} />
+      </View>
+
+      <View style={styles.noteCard}>
+        <Text style={styles.noteTitle}>Condições podem melhorar</Text>
+        <Text style={styles.noteText}>{resultado.observacao}</Text>
       </View>
     </ScrollView>
   );
@@ -100,4 +111,7 @@ const styles = StyleSheet.create({
   sliderValue: { fontSize: 15, color: "#16a34a", fontWeight: "700" },
   resultCard: { backgroundColor: "#16a34a", borderRadius: 20, padding: 20, gap: 4 },
   divider: { height: 1, backgroundColor: "#15803d", marginVertical: 8 },
+  noteCard: { backgroundColor: "#fff", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#dcfce7" },
+  noteTitle: { color: "#166534", fontSize: 14, fontWeight: "800", marginBottom: 6 },
+  noteText: { color: "#4b5563", fontSize: 13, lineHeight: 19 },
 });

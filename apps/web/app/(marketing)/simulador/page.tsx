@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  OBSERVACAO_CONDICOES_SIMULACAO,
+  TAXA_ANUAL_SIMULACAO_CREDITO_PERCENTUAL,
+} from "@imbobi/core";
 import "../landing.css";
 import "./simulador.css";
 
@@ -67,7 +71,7 @@ export default function SimuladorPublicoPage() {
   const valorFinanciavelBruto = Math.round(valorObra * (faseCfg.pct / 100));
   const valorFinanciavel = Math.min(valorFinanciavelBruto, VALOR_MAX_EMPRESTIMO);
   const prazoMaximo = maxPrazoMeses(valorFinanciavel);
-  const taxaAnual = 8.5;
+  const taxaAnual = TAXA_ANUAL_SIMULACAO_CREDITO_PERCENTUAL;
   const parcelaMensal = parcelaMensalEstimada(valorFinanciavel, prazoMeses, taxaAnual);
 
   const prazoOpcoes = useMemo(() => {
@@ -105,6 +109,8 @@ export default function SimuladorPublicoPage() {
       `*Parcela mensal estimada:* ${brl(parcelaMensal)} (taxa ${taxaAnual}% a.a.)`,
       `*Local da obra:* ${cidade} — ${estado}`,
       cnpj.trim() ? `*CNPJ:* ${cnpj.trim()}` : null,
+      "",
+      OBSERVACAO_CONDICOES_SIMULACAO,
       "",
       "Aguardo retorno da equipe comercial.",
     ]
@@ -318,7 +324,10 @@ export default function SimuladorPublicoPage() {
                   <div><span>Local</span><strong>{cidade} — {estado}</strong></div>
                 </div>
 
-                <p className="sim-disclaimer">Taxa indicativa. Valor final definido em comitê após KYC e due diligence.</p>
+                <p className="sim-disclaimer">
+                  Taxa indicativa de {taxaAnual}% a.a. Valor final definido em comitê após KYC e due diligence.
+                  {" "}{OBSERVACAO_CONDICOES_SIMULACAO}
+                </p>
 
                 <div className="sim-actions sim-actions-col">
                   <button type="button" className="sim-btn-wa sim-btn-lg" onClick={openWhatsApp}>
