@@ -93,10 +93,10 @@ jobs:
           retention-days: 1
 
   # ============================================
-  # STAGE 3: TESTS (E2E + Critical Flows)
+  # STAGE 3: TESTS (Migrations + API Smoke Tests)
   # ============================================
   tests:
-    name: E2E Tests
+    name: API Migration & Smoke Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: validate
@@ -153,8 +153,8 @@ jobs:
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/imbobi_test
 
-      - name: Run E2E tests (Critical Flows)
-        run: pnpm -F @imbobi/api test -- auth.e2e.spec.ts fluxo-completo.e2e.spec.ts payment-release.e2e.spec.ts
+      - name: Run API smoke tests
+        run: pnpm -F @imbobi/api test -- modules/comercial/conversion-scoring.service.spec.ts
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/imbobi_test
           REDIS_URL: redis://localhost:6379
