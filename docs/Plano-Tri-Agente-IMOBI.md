@@ -16,8 +16,8 @@ Responsável por: `services/api/`, `apps/mobile/`, `packages/core/`, `packages/s
 | 2 | GPS anti-spoofing: mock detection, timestamp, PostGIS | ✅ Concluído |
 | 3 | 2FA TOTP (NestJS + mobile) | ✅ Concluído |
 | 4 | Scoring de construtibilidade — metodologia real | ✅ Concluído |
-| 5 | Telas mobile restantes (KYC, notificações, crédito, dados bancários, documentos) | ⏳ Pendente |
-| 6 | Rollback strategy (down migrations + health check pós-deploy) | ⏳ Pendente |
+| 5 | Telas mobile restantes (KYC, notificações, crédito, dados bancários, documentos) | ✅ Concluído |
+| 6 | Rollback strategy (down migrations + health check pós-deploy) | ✅ Concluído |
 
 ### Agente B — Frontend Web
 Responsável por: `apps/web/`
