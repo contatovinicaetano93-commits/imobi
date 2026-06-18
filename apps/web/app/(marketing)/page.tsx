@@ -223,7 +223,7 @@ export default function LandingPage() {
           <div className="hero-content">
             <div className="hero-badge"><span className="badge-dot" />Crédito com geovalidação de obra</div>
             <h1 className="hero-h1">
-              <span className="h1-line">FINANCIE</span>
+              <span className="h1-line">CRÉDITO PARA</span>
               <span className="h1-line">SUA OBRA</span>
               <span className="h1-line h1-accent">EM DIAS.</span>
             </h1>

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Simule em 2 minutos quanto sua obra pode financiar. Liberação por etapa, validação GPS e aprovação em dias.",
   openGraph: {
-    title: "IMOBI — Financie sua obra em dias",
+    title: "IMOBI — Crédito para sua obra em dias",
     description: "Crédito imobiliário estruturado para construtoras e incorporadoras.",
     type: "website",
     locale: "pt_BR",
