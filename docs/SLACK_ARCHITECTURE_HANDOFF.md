@@ -3,6 +3,10 @@
 Este documento resume o alinhamento operacional para continuar o trabalho pelo
 Cursor/Slack e pelo notebook sem reabrir os anexos externos.
 
+Plano completo de coordenacao entre agentes:
+
+- `docs/Plano-Tri-Agente-IMOBI.md`
+
 ## Perfis do plano
 
 O produto trabalha com 5 perfis de negócio:
