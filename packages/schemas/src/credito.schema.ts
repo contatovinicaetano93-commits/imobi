@@ -22,8 +22,8 @@ export const SimulacaoCreditoSchema = z.object({
 
 export const SolicitacaoCreditoSchema = SimulacaoCreditoSchema.extend({
   obraId: z.string().uuid().optional(),
-  finalidade: z.string().max(500),
-  rendaMensalDeclarada: z.number().positive(),
+  finalidade: z.string().min(10, "Descrição mínima de 10 caracteres").max(500),
+  rendaMensalDeclarada: z.number().min(500, "Renda mínima declarada R$ 500").positive(),
 });
 
 export const LiberacaoParcelaSchema = z.object({

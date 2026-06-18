@@ -51,22 +51,31 @@ function formatarData(iso: string) {
 
 const PAGE_SIZE = 20;
 
-export default function AuditLogsPage() {
-  const [data, setData]       = useState<PageData | null>(null);
-  const [page, setPage]       = useState(1);
-  const [search, setSearch]   = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState<string | null>(null);
+const ACAO_OPTIONS = [
+  { value: "", label: "Todas as ações" },
+  { value: "USUARIO_CRIADO",        label: "Usuário criado" },
+  { value: "USUARIO_EXCLUIDO",      label: "Usuário excluído" },
+  { value: "USUARIO_BLOQUEADO",     label: "Conta bloqueada" },
+  { value: "USUARIO_DESBLOQUEADO",  label: "Conta desbloqueada" },
+  { value: "USUARIO_TIPO_ALTERADO", label: "Perfil alterado" },
+];
 
-  const fetchLogs = useCallback(async (p: number) => {
+export default function AuditLogsPage() {
+  const [data, setData]         = useState<PageData | null>(null);
+  const [page, setPage]         = useState(1);
+  const [search, setSearch]     = useState("");
+  const [acaoTipo, setAcaoTipo] = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState<string | null>(null);
+
+  const fetchLogs = useCallback(async (p: number, acao: string) => {
     setLoading(true);
     setError(null);
     try {
       const offset = (p - 1) * PAGE_SIZE;
-      const res = await fetch(
-        `/api/proxy/admin/audit-logs?limit=${PAGE_SIZE}&offset=${offset}`,
-        { credentials: "include" }
-      );
+      const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(offset) });
+      if (acao) params.set("acaoTipo", acao);
+      const res = await fetch(`/api/proxy/admin/audit-logs?${params}`, { credentials: "include" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setData(await res.json());
     } catch (e) {
@@ -76,7 +85,12 @@ export default function AuditLogsPage() {
     }
   }, []);
 
-  useEffect(() => { fetchLogs(page); }, [page, fetchLogs]);
+  useEffect(() => { fetchLogs(page, acaoTipo); }, [page, acaoTipo, fetchLogs]);
+
+  const handleAcaoChange = (value: string) => {
+    setAcaoTipo(value);
+    setPage(1);
+  };
 
   const filteredLogs = (data?.logs ?? []).filter((l) => {
     if (!search.trim()) return true;
@@ -113,7 +127,7 @@ export default function AuditLogsPage() {
           </p>
         </div>
         <button
-          onClick={() => fetchLogs(page)}
+          onClick={() => fetchLogs(page, acaoTipo)}
           disabled={loading}
           style={{
             marginLeft: "auto", display: "flex", alignItems: "center", gap: 6,
@@ -126,19 +140,34 @@ export default function AuditLogsPage() {
         </button>
       </div>
 
-      {/* Search */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 10, marginBottom: 20,
-        background: "white", border: "1px solid rgba(12,26,61,0.1)", borderRadius: 10, padding: "8px 14px",
-        maxWidth: 400,
-      }}>
-        <Search size={15} color="#94a3b8" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filtrar por admin, usuário ou ação..."
-          style={{ border: "none", outline: "none", fontSize: 13, color: NAVY, width: "100%", background: "transparent" }}
-        />
+      {/* Filters */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          background: "white", border: "1px solid rgba(12,26,61,0.1)", borderRadius: 10, padding: "8px 14px",
+          flex: "1 1 280px", maxWidth: 400,
+        }}>
+          <Search size={15} color="#94a3b8" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Filtrar por admin, usuário ou detalhes..."
+            style={{ border: "none", outline: "none", fontSize: 13, color: NAVY, width: "100%", background: "transparent" }}
+          />
+        </div>
+
+        <select
+          value={acaoTipo}
+          onChange={(e) => handleAcaoChange(e.target.value)}
+          style={{
+            background: "white", border: "1px solid rgba(12,26,61,0.1)", borderRadius: 10,
+            padding: "8px 14px", fontSize: 13, color: NAVY, cursor: "pointer", outline: "none",
+          }}
+        >
+          {ACAO_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
       </div>
 
       {/* Error */}

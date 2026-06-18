@@ -28,6 +28,19 @@ async function bootstrap() {
 
   await app.register(fastifyMultipart, { limits: { fileSize: 10 * 1024 * 1024 } }); // 10 MB
 
+  // Security headers via Fastify hook (all environments)
+  app.getHttpAdapter().getInstance().addHook("onSend", (_req: any, reply: any, _payload: any, done: () => void) => {
+    reply.header("X-Content-Type-Options", "nosniff");
+    reply.header("X-Frame-Options", "DENY");
+    reply.header("X-XSS-Protection", "1; mode=block");
+    reply.header("Referrer-Policy", "strict-origin-when-cross-origin");
+    reply.header("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+    if (process.env["NODE_ENV"] === "production") {
+      reply.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+    done();
+  });
+
   // ThrottlerGuard is registered via AppModule providers
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");

@@ -318,9 +318,14 @@ export class AdminService {
     return { ok: true };
   }
 
-  async listarAuditLogs(limit: number, offset: number) {
+  async listarAuditLogs(limit: number, offset: number, alvoId?: string, acaoTipo?: string) {
+    const where: Record<string, unknown> = {};
+    if (alvoId) where.alvoId = alvoId;
+    if (acaoTipo) where.acaoTipo = acaoTipo;
+
     const [logs, total] = await Promise.all([
       this.prisma.adminAuditLog.findMany({
+        where,
         take: limit,
         skip: offset,
         orderBy: { criadoEm: "desc" },
@@ -329,7 +334,7 @@ export class AdminService {
           alvo: { select: { nome: true, email: true } },
         },
       }),
-      this.prisma.adminAuditLog.count(),
+      this.prisma.adminAuditLog.count({ where }),
     ]);
     return { logs, total, page: Math.floor(offset / limit) + 1, pageSize: limit };
   }

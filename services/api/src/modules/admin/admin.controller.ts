@@ -65,7 +65,9 @@ export class AdminController {
   listarAuditLogs(
     @Query("limit") limit: string = "20",
     @Query("offset") offset: string = "0",
+    @Query("alvoId") alvoId?: string,
+    @Query("acaoTipo") acaoTipo?: string,
   ) {
-    return this.adminService.listarAuditLogs(Number(limit), Number(offset));
+    return this.adminService.listarAuditLogs(Number(limit), Number(offset), alvoId, acaoTipo);
   }
 }
