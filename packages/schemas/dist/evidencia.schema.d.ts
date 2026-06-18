@@ -5,6 +5,10 @@ export declare const UploadEvidenciaSchema: z.ZodObject<{
     longitude: z.ZodNumber;
     accuracyMetros: z.ZodNumber;
     timestampCaptura: z.ZodString;
+    altitude: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    heading: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    speed: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    isMockLocation: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
     descricao: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     etapaId: string;
@@ -12,7 +16,11 @@ export declare const UploadEvidenciaSchema: z.ZodObject<{
     longitude: number;
     accuracyMetros: number;
     timestampCaptura: string;
+    isMockLocation: boolean;
     descricao?: string | undefined;
+    altitude?: number | null | undefined;
+    heading?: number | null | undefined;
+    speed?: number | null | undefined;
 }, {
     etapaId: string;
     latitude: number;
@@ -20,6 +28,10 @@ export declare const UploadEvidenciaSchema: z.ZodObject<{
     accuracyMetros: number;
     timestampCaptura: string;
     descricao?: string | undefined;
+    altitude?: number | null | undefined;
+    heading?: number | null | undefined;
+    speed?: number | null | undefined;
+    isMockLocation?: boolean | undefined;
 }>;
 export declare const ValidarEvidenciaSchema: z.ZodObject<{
     evidenciaId: z.ZodString;

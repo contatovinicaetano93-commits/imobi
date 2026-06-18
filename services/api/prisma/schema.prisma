@@ -238,6 +238,11 @@ model EvidenciaEtapa {
   lngCaptura        Float
   accuracyMetros    Float?
   distanciaObra     Float?
+  altitude          Float?
+  heading           Float?
+  speed             Float?
+  isMockLocation    Boolean  @default(false)
+  timestampCaptura  DateTime?
   validada          Boolean  @default(false)
   observacao        String?
   criadoEm          DateTime @default(now())

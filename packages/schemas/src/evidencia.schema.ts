@@ -6,8 +6,13 @@ export const UploadEvidenciaSchema = z.object({
   longitude: z.number().min(-180).max(180),
   accuracyMetros: z
     .number()
+    .min(1, "Precisão GPS suspeita — use o GPS real do dispositivo.")
     .max(15, "Precisão GPS insuficiente. Aguarde sinal melhor."),
   timestampCaptura: z.string().datetime(),
+  altitude: z.number().nullable().optional(),
+  heading: z.number().min(-1).max(360).nullable().optional(),
+  speed: z.number().min(-1).nullable().optional(),
+  isMockLocation: z.boolean().optional().default(false),
   descricao: z.string().max(500).optional(),
 });
 

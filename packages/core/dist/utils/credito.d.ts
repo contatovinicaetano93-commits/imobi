@@ -1,13 +1,24 @@
-/**
- * Calcula parcela Price (SAC seria outra função).
- * Retorna parcela mensal em R$.
- */
+export declare function calcularTaxaPorScoreEPrazo(score: number, prazoMeses: number): number | null;
 export declare function calcularParcelaPrice(valorPrincipal: number, taxaMensalDecimal: number, prazoMeses: number): number;
-export declare function calcularCustoTotal(parcela: number, prazoMeses: number, valorPrincipal: number): number;
 export interface SimulacaoResult {
+    taxaMensalDecimal: number;
+    taxaMensalPercent: number;
+    feeEstruturacao: number;
+    feeEstruturacaoPercent: number;
+    valorSolicitado: number;
     parcelaMensal: number;
     totalPago: number;
     totalJuros: number;
-    cet: number;
+    cetAnual: number;
+    exemploTranche: {
+        valorBruto: number;
+        feeTranche7pct: number;
+        valorLiquidoRecebido: number;
+    };
+    avisoSeguro: string;
 }
 export declare function simularCredito(valorSolicitado: number, taxaMensalDecimal: number, prazoMeses: number): SimulacaoResult;
+export declare function calcularFeesTranche(valorBruto: number): {
+    feeTranche: number;
+    valorLiquido: number;
+};

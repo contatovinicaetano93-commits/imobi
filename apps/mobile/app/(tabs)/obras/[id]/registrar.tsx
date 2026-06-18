@@ -7,9 +7,9 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
-import { useGeoValidation } from "@imbobi/core/hooks";
+import { useGeoValidation, type GeoPosition } from "@imbobi/core/hooks";
 
-type GeoStatus = "idle" | "checking" | "inside_radius" | "outside_radius" | "poor_accuracy" | "permission_denied" | "unavailable";
+type GeoStatus = "idle" | "checking" | "inside_radius" | "outside_radius" | "poor_accuracy" | "mock_detected" | "permission_denied" | "unavailable";
 
 const STATUS_META: Record<GeoStatus, { emoji: string; bg: string; text: string }> = {
   idle:             { emoji: "📍", bg: "#f3f4f6", text: "#374151" },
@@ -17,6 +17,7 @@ const STATUS_META: Record<GeoStatus, { emoji: string; bg: string; text: string }
   inside_radius:    { emoji: "✅", bg: "#dcfce7", text: "#166534" },
   outside_radius:   { emoji: "⛔", bg: "#fee2e2", text: "#991b1b" },
   poor_accuracy:    { emoji: "📡", bg: "#fef9c3", text: "#92400e" },
+  mock_detected:    { emoji: "🚫", bg: "#fee2e2", text: "#991b1b" },
   permission_denied:{ emoji: "🔒", bg: "#fee2e2", text: "#991b1b" },
   unavailable:      { emoji: "📵", bg: "#fee2e2", text: "#991b1b" },
 };
@@ -31,7 +32,7 @@ export default function RegistrarEtapaScreen() {
   const [uploading, setUploading] = useState(false);
   const [fotoUri, setFotoUri] = useState<string | null>(null);
 
-  const getPosition = useCallback(async () => {
+  const getPosition = useCallback(async (): Promise<GeoPosition> => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") throw new Error("permission_denied");
     const loc = await Location.getCurrentPositionAsync({
@@ -41,6 +42,11 @@ export default function RegistrarEtapaScreen() {
       latitude: loc.coords.latitude,
       longitude: loc.coords.longitude,
       accuracy: loc.coords.accuracy ?? 999,
+      altitude: loc.coords.altitude,
+      heading: loc.coords.heading,
+      speed: loc.coords.speed,
+      // `mocked` é disponível no Android via Expo Location
+      isMockLocation: (loc as unknown as { mocked?: boolean }).mocked === true,
     };
   }, []);
 
@@ -83,6 +89,16 @@ export default function RegistrarEtapaScreen() {
       form.append("longitude", String(coordenadasAtuais.longitude));
       form.append("accuracyMetros", String(accuracyMetros ?? 10));
       form.append("timestampCaptura", new Date().toISOString());
+      if (coordenadasAtuais.altitude != null) {
+        form.append("altitude", String(coordenadasAtuais.altitude));
+      }
+      if (coordenadasAtuais.heading != null) {
+        form.append("heading", String(coordenadasAtuais.heading));
+      }
+      if (coordenadasAtuais.speed != null) {
+        form.append("speed", String(coordenadasAtuais.speed));
+      }
+      form.append("isMockLocation", String(coordenadasAtuais.isMockLocation ?? false));
 
       const res = await fetch(`${apiUrl}/api/v1/evidencias`, {
         method: "POST",
