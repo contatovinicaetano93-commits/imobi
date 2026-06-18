@@ -56,14 +56,24 @@ Cursor Pro desktop/Claude.
   mudança de status restrita a `ADMIN`.
 - Fixtures E2E agora usam contas canônicas do seed: `tomador@test.com`,
   `fundo@test.com`, `engenheiro@test.com`, `comercial@test.com`.
+- RBAC centralizado em `@imbobi/schemas`:
+  - normalizacao de roles e alias `GESTOR_FUNDO`;
+  - labels e homes por perfil;
+  - grupos `manager`, `borrower`, `engineering`, `commercial`, `works`;
+  - regras de rotas web e tabs mobile;
+  - helpers `roleCanAccess`, `roleCanAccessFeature`, `roleCanAccessMobileTab`.
+- Web/API mantem wrappers de compatibilidade, mas delegam para `@imbobi/schemas`.
+- Mobile passa a salvar role normalizado no login, escolher home por perfil, ocultar tabs sem
+  permissao e bloquear acesso direto a Obras/Credito quando o perfil nao permite.
 
 ## Próximos ajustes recomendados
 
-1. Mover normalização de roles para `@imbobi/schemas` ou `@imbobi/core` para evitar
-   duplicação entre API e web.
+1. Adicionar matriz de testes RBAC para os 5 perfis canônicos.
 2. Decidir regra de produto para `COMERCIAL` vs `PARCEIRO`: mesma experiência ou
    painéis separados.
 3. Definir se `GESTOR_OBRA` será mantido como alias de engenharia ou migrado para
    `ENGENHEIRO`.
-4. Adicionar matriz de testes RBAC para os 5 perfis canônicos.
-5. Revisar mobile: hoje o app ainda não aplica RBAC por perfil como a web.
+4. Expandir telas mobile especificas para Gestor/Engenheiro/Comercial; hoje o RBAC protege
+   o acesso, mas a experiencia mobile completa ainda existe principalmente para Tomador/Obras.
+5. Considerar mover menus web/mobile para descritores compartilhados quando as telas estiverem
+   mais estaveis.
