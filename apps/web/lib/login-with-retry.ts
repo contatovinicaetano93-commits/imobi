@@ -93,10 +93,7 @@ async function tryDirectApiLogin(data: LoginInput): Promise<LoginResult | null> 
       }).catch(() => null);
 
       if (!sessionRes?.ok) {
-        // Fallback: cookie legível pelo middleware (sem httpOnly)
-        const maxAge = 60 * 60 * 8;
-        document.cookie = `access_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        if (role) document.cookie = `session_role=${role}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        continue;
       }
 
       return { ok: true, role, nome, email };

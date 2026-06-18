@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-
-const JWT_RE = /^[\w-]+\.[\w-]+\.[\w-]+$/;
+import { verifyHs256Jwt } from "@/lib/verify-hs256-jwt";
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -22,7 +21,10 @@ export async function POST(req: Request) {
     refreshToken: string;
   };
 
-  if (!JWT_RE.test(accessToken ?? "") || !JWT_RE.test(refreshToken ?? "")) {
+  const accessPayload = await verifyHs256Jwt(accessToken ?? "");
+  const refreshPayload = await verifyHs256Jwt(refreshToken ?? "");
+
+  if (!accessPayload || !refreshPayload || refreshPayload.type !== "refresh") {
     return NextResponse.json({ error: "Token inválido" }, { status: 400 });
   }
 
@@ -37,5 +39,6 @@ export async function DELETE() {
   const jar = await cookies();
   jar.delete("access_token");
   jar.delete("refresh_token");
+  jar.delete("session_role");
   return NextResponse.json({ ok: true });
 }

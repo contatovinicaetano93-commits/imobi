@@ -81,9 +81,6 @@ function applyAuthCookies(
   tokens: { accessToken: string; refreshToken?: string; role?: string | null },
 ) {
   response.cookies.set('access_token', tokens.accessToken, { ...COOKIE_OPTS, maxAge: 60 * 60 * 8 });
-  if (tokens.role) {
-    response.cookies.set('session_role', tokens.role, { ...COOKIE_OPTS, maxAge: 60 * 60 * 8 });
-  }
   if (tokens.refreshToken) {
     response.cookies.set('refresh_token', tokens.refreshToken, {
       ...COOKIE_OPTS,

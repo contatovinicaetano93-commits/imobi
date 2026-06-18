@@ -27,6 +27,17 @@ export class EtapasController {
     return this.etapas.aprovar(u.id, id, obs);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles(...MANAGER_ROLES)
+  @Patch(":id/rejeitar")
+  rejeitar(
+    @Param("id") id: string,
+    @UsuarioAtual() u: IUsuario,
+    @Body("motivo") motivo?: string
+  ) {
+    return this.etapas.rejeitar(u.id, id, motivo?.trim() || "Reprovado pelo gestor.");
+  }
+
   @Patch(":id/status")
   status(@Param("id") id: string, @Body("status") status: string, @UsuarioAtual() u: IUsuario) {
     return this.etapas.atualizarStatus(id, status, u.id, u.tipo);

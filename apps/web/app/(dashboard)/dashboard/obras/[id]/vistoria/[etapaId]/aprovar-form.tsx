@@ -23,7 +23,11 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
       const res = await fetch(`/api/etapas/${etapaId}/validar`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ observacao: obs }),
+        body: JSON.stringify({
+          aprovado,
+          observacao: obs,
+          motivo: aprovado ? undefined : obs,
+        }),
       });
 
       if (!res.ok) {
