@@ -18,7 +18,11 @@ import {
   type ObraResumo,
   type CreditoSimulacao,
 } from "@/lib/api";
-import { formatarBRL } from "@imbobi/core";
+import {
+  formatarBRL,
+  OBSERVACAO_CONDICOES_SIMULACAO,
+  TAXA_MENSAL_SIMULACAO_CREDITO,
+} from "@imbobi/core";
 
 const FINALIDADES = [
   { value: "CONSTRUCAO", label: "Construção" },
@@ -27,7 +31,7 @@ const FINALIDADES = [
   { value: "ACABAMENTO", label: "Acabamento" },
 ];
 
-const PRAZOS = [6, 12, 24, 36, 48, 60];
+const PRAZOS = [12, 24, 36, 48];
 
 function SolicitarForm() {
   const searchParams = useSearchParams();
@@ -64,16 +68,19 @@ function SolicitarForm() {
       setSimulacao(result);
     } catch {
       // Use local calc as fallback
-      const taxa = 0.0189;
+      const taxa = TAXA_MENSAL_SIMULACAO_CREDITO;
+      const taxaAnual = (Math.pow(1 + taxa, 12) - 1) * 100;
       const parcela = (valor * taxa * Math.pow(1 + taxa, prazo)) / (Math.pow(1 + taxa, prazo) - 1);
       setSimulacao({
         valorSolicitado: valor,
         prazoMeses: prazo,
         taxaMensal: taxa,
+        taxaAnual,
         parcelaMensal: parcela,
         totalPago: parcela * prazo,
         totalJuros: parcela * prazo - valor,
-        cet: taxa * 12,
+        cet: taxaAnual,
+        observacao: OBSERVACAO_CONDICOES_SIMULACAO,
       });
     } finally {
       setSimLoading(false);
@@ -89,7 +96,7 @@ function SolicitarForm() {
       const result = await comiteApi.solicitar({
         valorSolicitado: valor,
         prazoMeses: prazo,
-        taxaMensal: simulacao?.taxaMensal ?? 0.0099,
+        taxaMensal: simulacao?.taxaMensal ?? TAXA_MENSAL_SIMULACAO_CREDITO,
         finalidade,
         obraId: obraId || undefined,
       });
@@ -289,10 +296,13 @@ function SolicitarForm() {
                   <p className="font-bold text-lg">{(simulacao.taxaMensal * 100).toFixed(2)}%</p>
                 </div>
                 <div className="bg-white/10 rounded-xl p-3">
-                  <p className="text-blue-300 text-xs mb-1">CET ao ano</p>
-                  <p className="font-bold text-lg">{(simulacao.cet * 100).toFixed(1)}%</p>
+                  <p className="text-blue-300 text-xs mb-1">Taxa anual</p>
+                  <p className="font-bold text-lg">{simulacao.taxaAnual.toFixed(1)}%</p>
                 </div>
               </div>
+              <p className="rounded-xl bg-white/10 p-3 text-xs leading-5 text-blue-100">
+                {simulacao.observacao}
+              </p>
             </div>
           ) : null}
         </div>

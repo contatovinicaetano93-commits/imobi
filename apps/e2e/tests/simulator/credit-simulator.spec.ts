@@ -28,7 +28,7 @@ test.describe('Simulador de Crédito', () => {
     await expect(page.getByText('R$ 10.000')).toBeVisible();
     await expect(page.getByText('R$ 1.000.000')).toBeVisible();
     await expect(page.getByText('12 meses')).toBeVisible();
-    await expect(page.getByText('180 meses')).toBeVisible();
+    await expect(page.getByText('48 meses')).toBeVisible();
   });
 
   test('valor slider change updates the displayed value', async ({ page }) => {

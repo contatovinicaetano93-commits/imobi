@@ -17,7 +17,7 @@ exports.SimulacaoCreditoSchema = zod_1.z.object({
         .number()
         .int()
         .min(12, "Prazo mínimo 12 meses")
-        .max(180, "Prazo máximo 180 meses"),
+        .max(48, "Prazo máximo 48 meses"),
     tipoObra: zod_1.z.enum(["RESIDENCIAL", "COMERCIAL", "MISTO"]),
 });
 exports.SolicitacaoCreditoSchema = exports.SimulacaoCreditoSchema.extend({
