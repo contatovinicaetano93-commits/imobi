@@ -6,7 +6,7 @@ import { useRouter, useSegments } from "expo-router";
 import { setOnUnauthorized } from "../lib/api";
 import { getMobileRoleHome, normalizeUserRole, type AppRole } from "@imbobi/schemas";
 
-type MobileHomeRoute = "/(tabs)/comercial" | "/(tabs)/engenheiro" | "/(tabs)/obras" | "/(tabs)/perfil";
+type MobileHomeRoute = "/(tabs)/comercial" | "/(tabs)/engenheiro" | "/(tabs)/gestor" | "/(tabs)/obras" | "/(tabs)/perfil";
 
 export default function RootLayout() {
   const router = useRouter();
