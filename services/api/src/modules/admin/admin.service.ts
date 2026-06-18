@@ -195,8 +195,11 @@ export class AdminService {
       },
     });
 
-    // Bloqueio de conta derruba as sessões ativas do usuário
-    if (dto.bloqueado === true) {
+    // Revoke active sessions when account is blocked or role changes
+    const shouldRevokeSessions =
+      dto.bloqueado === true ||
+      (dto.tipo !== undefined && dto.tipo !== usuario.tipo);
+    if (shouldRevokeSessions) {
       await this.prisma.sessaoToken.updateMany({
         where: { usuarioId: id, revogadoEm: null },
         data: { revogadoEm: new Date() },

@@ -149,6 +149,31 @@ describe("AdminService – atualizarUsuario audit", () => {
       makeService().atualizarUsuario("nonexistent", { nome: "X" }, adminId)
     ).rejects.toThrow(NotFoundException);
   });
+
+  it("revokes active sessions when role (tipo) changes", async () => {
+    await makeService().atualizarUsuario(targetId, { tipo: "GESTOR" as any }, adminId);
+    expect(mockPrisma.sessaoToken.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ usuarioId: targetId, revogadoEm: null }),
+        data: expect.objectContaining({ revogadoEm: expect.any(Date) }),
+      }),
+    );
+  });
+
+  it("does NOT revoke sessions when only nome is updated", async () => {
+    await makeService().atualizarUsuario(targetId, { nome: "New Name" }, adminId);
+    expect(mockPrisma.sessaoToken.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("revokes sessions when account is blocked", async () => {
+    await makeService().atualizarUsuario(targetId, { bloqueado: true }, adminId);
+    expect(mockPrisma.sessaoToken.updateMany).toHaveBeenCalled();
+  });
+
+  it("does NOT revoke sessions when role is set to the same value", async () => {
+    await makeService().atualizarUsuario(targetId, { tipo: "TOMADOR" as any }, adminId);
+    expect(mockPrisma.sessaoToken.updateMany).not.toHaveBeenCalled();
+  });
 });
 
 // ─────────────────────────────────────────────
@@ -247,5 +272,42 @@ describe("AdminService – listarAuditLogs pagination", () => {
   it("reflects pageSize matching the limit argument", async () => {
     const result = await makeService().listarAuditLogs(5, 0);
     expect(result.pageSize).toBe(5);
+  });
+
+  it("passes no where filter when neither alvoId nor acaoTipo is provided", async () => {
+    await makeService().listarAuditLogs(20, 0);
+    expect(mockPrisma.adminAuditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: {} }),
+    );
+  });
+
+  it("passes acaoTipo filter to findMany when provided", async () => {
+    await makeService().listarAuditLogs(20, 0, undefined, "USUARIO_CRIADO");
+    expect(mockPrisma.adminAuditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { acaoTipo: "USUARIO_CRIADO" } }),
+    );
+  });
+
+  it("passes alvoId filter to findMany when provided", async () => {
+    await makeService().listarAuditLogs(20, 0, "user-uuid-123");
+    expect(mockPrisma.adminAuditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { alvoId: "user-uuid-123" } }),
+    );
+  });
+
+  it("passes both alvoId and acaoTipo when both provided", async () => {
+    await makeService().listarAuditLogs(20, 0, "user-abc", "USUARIO_BLOQUEADO");
+    expect(mockPrisma.adminAuditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { alvoId: "user-abc", acaoTipo: "USUARIO_BLOQUEADO" },
+      }),
+    );
+  });
+
+  it("applies the same where filter to count query", async () => {
+    await makeService().listarAuditLogs(20, 0, undefined, "USUARIO_EXCLUIDO");
+    expect(mockPrisma.adminAuditLog.count).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { acaoTipo: "USUARIO_EXCLUIDO" } }),
+    );
   });
 });
