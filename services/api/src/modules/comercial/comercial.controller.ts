@@ -82,6 +82,7 @@ export class ComercialController {
     @Body() data: any,
     @UsuarioAtual() u: IUsuario
   ) {
-    return this.comercialService.adicionarAtividade(leadId, u.id, data);
+    const scopeUserId = u.tipo === 'ADMIN' ? undefined : u.id;
+    return this.comercialService.adicionarAtividade(leadId, u.id, data, scopeUserId);
   }
 }

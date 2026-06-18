@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConversionScoringService } from './conversion-scoring.service';
 
@@ -221,7 +221,11 @@ export class ComercialService {
     return this.scoringService.calcularScore(leadId);
   }
 
-  async adicionarAtividade(leadId: string, usuarioId: string, data: any) {
+  async adicionarAtividade(leadId: string, usuarioId: string, data: any, scopeUserId?: string) {
+    const lead = await this.prisma.lead.findUnique({ where: { leadId }, select: { usuarioId: true } });
+    if (!lead) throw new NotFoundException("Lead não encontrado.");
+    if (scopeUserId && lead.usuarioId !== scopeUserId) throw new ForbiddenException("Acesso negado.");
+
     const activity = await this.prisma.leadActivity.create({
       data: {
         leadId,

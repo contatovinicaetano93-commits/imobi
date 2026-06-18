@@ -80,7 +80,7 @@ jobs:
         run: pnpm --filter @imbobi/api run prisma:generate
 
       - name: Run RBAC unit tests
-        run: pnpm --filter @imbobi/api test -- --testPathPattern="rbac\.spec|roles\.guard\.spec|ownership\.spec|rbac-spec|evidencias-rbac" --passWithNoTests --forceExit
+        run: pnpm --filter @imbobi/api test -- --testPathPattern="rbac\.spec|roles\.guard\.spec|ownership\.spec|rbac-spec|evidencias-rbac|comercial-ownership|admin-audit" --passWithNoTests --forceExit
         env:
           NODE_ENV: test
 
