@@ -1,5 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { apiClient, ApiError } from "@imbobi/core";
+import { emitAuthState } from "./auth-state";
 
 let _onUnauthorized: (() => void) | null = null;
 
@@ -17,6 +18,8 @@ async function callApi<T>(fn: () => Promise<T>): Promise<T> {
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) {
       await SecureStore.deleteItemAsync("accessToken");
+      await SecureStore.deleteItemAsync("refreshToken");
+      emitAuthState(false);
       _onUnauthorized?.();
     }
     throw e;
@@ -29,7 +32,7 @@ export const usuariosApi = {
   obterPerfil: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<UsuarioPerfil>("/api/v1/usuarios/meu-perfil", token ?? undefined);
+      return apiClient.get<UsuarioPerfil>("/usuarios/meu-perfil", token ?? undefined);
     }),
 };
 
@@ -37,17 +40,17 @@ export const obrasApi = {
   listar: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<Obra[]>("/api/v1/obras", token ?? undefined);
+      return apiClient.get<Obra[]>("/obras", token ?? undefined);
     }),
   buscar: (obraId: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<ObraDetalhe>(`/api/v1/obras/${obraId}`, token ?? undefined);
+      return apiClient.get<ObraDetalhe>(`/obras/${obraId}`, token ?? undefined);
     }),
   progresso: (obraId: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<number>(`/api/v1/obras/${obraId}/progresso`, token ?? undefined);
+      return apiClient.get<number>(`/obras/${obraId}/progresso`, token ?? undefined);
     }),
 };
 
@@ -55,7 +58,7 @@ export const creditoApi = {
   meus: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<Credito[]>("/api/v1/credito/meus", token ?? undefined);
+      return apiClient.get<Credito[]>("/credito/meus", token ?? undefined);
     }),
 };
 
@@ -63,7 +66,7 @@ export const scoreApi = {
   obter: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<ScoreData>("/api/v1/score/atual", token ?? undefined);
+      return apiClient.get<ScoreData>("/score/atual", token ?? undefined);
     }),
 };
 
@@ -71,7 +74,7 @@ export const authApi = {
   logout: (refreshToken: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.post("/api/v1/auth/logout", { refreshToken }, token ?? undefined);
+      return apiClient.post("/auth/logout", { refreshToken }, token ?? undefined);
     }),
 };
 
@@ -79,12 +82,21 @@ export const pushApi = {
   registrarToken: (fcmToken: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.post("/api/v1/push-notificacoes/registrar-token", { token: fcmToken }, token ?? undefined);
+      return apiClient.post("/push-notificacoes/registrar-token", { token: fcmToken }, token ?? undefined);
     }),
 };
 
 // Types
 export type Obra = {
+  id: string;
+  nome: string;
+  endereco: string;
+  status: string;
+  progresso: number;
+  etapas?: Etapa[];
+};
+
+export type ObraDetalhe = {
   obraId: string;
   nome: string;
   endereco: string;
@@ -92,10 +104,6 @@ export type Obra = {
   geoLatitude: number;
   geoLongitude: number;
   raioValidacaoMetros: number;
-  etapas?: Etapa[];
-};
-
-export type ObraDetalhe = Obra & {
   credito?: { creditoId: string; valorAprovado: number; valorLiberado: number; status: string } | null;
   etapas: (Etapa & { evidencias: Evidencia[] })[];
 };

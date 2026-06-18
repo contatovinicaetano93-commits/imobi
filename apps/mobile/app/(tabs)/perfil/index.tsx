@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { usuariosApi, authApi, type UsuarioPerfil } from "../../../lib/api";
+import { emitAuthState } from "../../../lib/auth-state";
 
 export default function PerfilScreen() {
   const router = useRouter();
@@ -46,6 +47,7 @@ export default function PerfilScreen() {
           } finally {
             await SecureStore.deleteItemAsync("accessToken");
             await SecureStore.deleteItemAsync("refreshToken");
+            emitAuthState(false);
             router.replace("/(auth)/login");
           }
         },

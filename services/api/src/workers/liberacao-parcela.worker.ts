@@ -41,14 +41,37 @@ export class LiberacaoParcelaWorker {
 
       // Re-check + update atomically inside the transaction
       let processed = false;
+      let failureMessage: string | null = null;
       await this.prisma.$transaction(async (tx) => {
-        const lib = await tx.liberacaoParcela.findUnique({ where: { liberacaoId } });
-        if (!lib || lib.status !== "PENDENTE") return;
-
-        await tx.credito.update({
-          where: { creditoId },
-          data: { valorLiberado: { increment: valor } },
+        const claimed = await tx.liberacaoParcela.updateMany({
+          where: { liberacaoId, status: "PENDENTE" },
+          data: { status: "PROCESSANDO" },
         });
+        if (claimed.count === 0) return;
+
+        const updatedCreditCount = await tx.$executeRaw`
+          UPDATE "Credito"
+          SET
+            "valorLiberado" = "valorLiberado" + ${valor},
+            "atualizadoEm" = ${new Date()}
+          WHERE
+            "creditoId" = ${creditoId}
+            AND "status" = 'ATIVO'::"CreditoStatus"
+            AND ("valorLiberado" + ${valor}) <= "valorAprovado"
+        `;
+
+        if (updatedCreditCount !== 1) {
+          failureMessage = `Liberação ${liberacaoId} excede o limite do crédito ${creditoId}`;
+          await tx.liberacaoParcela.update({
+            where: { liberacaoId },
+            data: {
+              status: "FALHA",
+              motivo: "Crédito inativo ou valor excede o aprovado.",
+              processadoEm: new Date(),
+            },
+          });
+          return;
+        }
 
         await tx.liberacaoParcela.update({
           where: { liberacaoId },
@@ -58,6 +81,7 @@ export class LiberacaoParcelaWorker {
         processed = true;
       });
 
+      if (failureMessage) throw new Error(failureMessage);
       if (!processed) return;
 
       // Notifica usuário sobre liberação bem-sucedida

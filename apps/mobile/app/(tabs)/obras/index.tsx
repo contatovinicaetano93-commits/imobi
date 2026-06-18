@@ -5,7 +5,7 @@ import { obrasApi, type Obra } from "../../../lib/api";
 
 const STATUS_LABEL: Record<string, string> = {
   PLANEJAMENTO: "Planejamento",
-  EM_ANDAMENTO: "Em andamento",
+  EM_EXECUCAO: "Em execução",
   PAUSADA: "Pausada",
   CONCLUIDA: "Concluída",
   CANCELADA: "Cancelada",
@@ -38,16 +38,15 @@ export default function ObrasScreen() {
       {error && <Text style={styles.error}>{error}</Text>}
       <FlatList
         data={obras}
-        keyExtractor={(o) => o.obraId}
+        keyExtractor={(o) => o.id}
         contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await carregar(); setRefreshing(false); }} />}
         ListEmptyComponent={<View style={styles.empty}><Text style={styles.emptyText}>Nenhuma obra cadastrada.</Text></View>}
         renderItem={({ item }) => {
           const etapas = item.etapas ?? [];
-          const concluidas = etapas.filter((e) => e.status === "CONCLUIDA").length;
-          const progresso = etapas.length ? Math.round((concluidas / etapas.length) * 100) : 0;
+          const progresso = item.progresso ?? 0;
           return (
-            <TouchableOpacity style={styles.card} onPress={() => router.push(`/(tabs)/obras/${item.obraId}`)}>
+            <TouchableOpacity style={styles.card} onPress={() => router.push(`/(tabs)/obras/${item.id}`)}>
               <View style={styles.cardHeader}>
                 <Text style={styles.obraNome} numberOfLines={1}>{item.nome}</Text>
                 <Text style={styles.progresso}>{progresso}%</Text>

@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { LoginSchema, type LoginInput } from "@imbobi/schemas";
 import { apiClient } from "@imbobi/core";
+import { emitAuthState } from "../../lib/auth-state";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function LoginScreen() {
       );
       await SecureStore.setItemAsync("accessToken", res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
+      emitAuthState(true);
       router.replace("/(tabs)/obras");
     } catch (e: any) {
       Alert.alert("Erro de autenticação", e.message ?? "E-mail ou senha inválidos.");

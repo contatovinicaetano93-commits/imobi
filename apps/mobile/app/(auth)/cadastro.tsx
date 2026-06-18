@@ -5,11 +5,18 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
 import { apiClient } from "@imbobi/core";
+import { emitAuthState } from "../../lib/auth-state";
 
 export default function CadastroScreen() {
   const router = useRouter();
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<CadastroUsuarioInput>({
     resolver: zodResolver(CadastroUsuarioSchema),
+    defaultValues: {
+      consentidoTermos: false,
+      consentidoPrivacy: false,
+      consentidoKyc: false,
+      consentidoMarketing: false,
+    },
   });
 
   const onSubmit = async (data: CadastroUsuarioInput) => {
@@ -20,6 +27,7 @@ export default function CadastroScreen() {
       );
       await SecureStore.setItemAsync("accessToken", res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
+      emitAuthState(true);
       router.replace("/(tabs)/obras");
     } catch (e: any) {
       Alert.alert("Erro", e.message ?? "Falha no cadastro. Tente novamente.");
@@ -124,6 +132,83 @@ export default function CadastroScreen() {
         )}
       />
 
+      <Controller
+        control={control}
+        name="consentidoTermos"
+        render={({ field: { onChange, value } }) => (
+          <>
+            <TouchableOpacity
+              style={styles.checkboxRow}
+              onPress={() => onChange(!value)}
+              disabled={isSubmitting}
+            >
+              <View style={[styles.checkbox, value && styles.checkboxChecked]}>
+                {value && <Text style={styles.checkboxMark}>✓</Text>}
+              </View>
+              <Text style={styles.checkboxText}>Aceito os termos de uso da IMOBI.</Text>
+            </TouchableOpacity>
+            {errors.consentidoTermos && <Text style={styles.errorText}>{errors.consentidoTermos.message}</Text>}
+          </>
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="consentidoPrivacy"
+        render={({ field: { onChange, value } }) => (
+          <>
+            <TouchableOpacity
+              style={styles.checkboxRow}
+              onPress={() => onChange(!value)}
+              disabled={isSubmitting}
+            >
+              <View style={[styles.checkbox, value && styles.checkboxChecked]}>
+                {value && <Text style={styles.checkboxMark}>✓</Text>}
+              </View>
+              <Text style={styles.checkboxText}>Aceito a política de privacidade.</Text>
+            </TouchableOpacity>
+            {errors.consentidoPrivacy && <Text style={styles.errorText}>{errors.consentidoPrivacy.message}</Text>}
+          </>
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="consentidoKyc"
+        render={({ field: { onChange, value } }) => (
+          <>
+            <TouchableOpacity
+              style={styles.checkboxRow}
+              onPress={() => onChange(!value)}
+              disabled={isSubmitting}
+            >
+              <View style={[styles.checkbox, value && styles.checkboxChecked]}>
+                {value && <Text style={styles.checkboxMark}>✓</Text>}
+              </View>
+              <Text style={styles.checkboxText}>Autorizo validações cadastrais e KYC para análise de crédito.</Text>
+            </TouchableOpacity>
+            {errors.consentidoKyc && <Text style={styles.errorText}>{errors.consentidoKyc.message}</Text>}
+          </>
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="consentidoMarketing"
+        render={({ field: { onChange, value } }) => (
+          <TouchableOpacity
+            style={styles.checkboxRow}
+            onPress={() => onChange(!value)}
+            disabled={isSubmitting}
+          >
+            <View style={[styles.checkbox, value && styles.checkboxChecked]}>
+              {value && <Text style={styles.checkboxMark}>✓</Text>}
+            </View>
+            <Text style={styles.checkboxText}>Quero receber comunicações comerciais da IMOBI.</Text>
+          </TouchableOpacity>
+        )}
+      />
+
       <TouchableOpacity
         style={[styles.button, isSubmitting && styles.buttonLoading]}
         onPress={handleSubmit(onSubmit)}
@@ -151,6 +236,11 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1.5, borderColor: "#e5e7eb", borderRadius: 14, padding: 14, fontSize: 15, color: "#111827" },
   inputError: { borderColor: "#ef4444" },
   errorText: { color: "#ef4444", fontSize: 12, marginTop: 4, marginBottom: 8 },
+  checkboxRow: { flexDirection: "row", gap: 10, alignItems: "center", paddingVertical: 4 },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: "#d1d5db", alignItems: "center", justifyContent: "center" },
+  checkboxChecked: { backgroundColor: "#16a34a", borderColor: "#16a34a" },
+  checkboxMark: { color: "#fff", fontSize: 14, fontWeight: "800" },
+  checkboxText: { flex: 1, color: "#374151", fontSize: 13, lineHeight: 18 },
   button: { backgroundColor: "#16a34a", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 8 },
   buttonLoading: { opacity: 0.6 },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "700" },

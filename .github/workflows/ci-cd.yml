@@ -100,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: validate
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/v')
     services:
       postgres:
         image: postgis/postgis:16-3.4
@@ -152,10 +152,9 @@ jobs:
         run: pnpm -F @imbobi/api exec prisma migrate deploy
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/imbobi_test
-        continue-on-error: true
 
       - name: Run E2E tests (Critical Flows)
-        run: pnpm -F @imbobi/api test -- critical-flows.e2e.spec.ts
+        run: pnpm -F @imbobi/api test -- auth.e2e.spec.ts fluxo-completo.e2e.spec.ts payment-release.e2e.spec.ts
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/imbobi_test
           REDIS_URL: redis://localhost:6379
@@ -168,7 +167,7 @@ jobs:
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [validate, build]
+    needs: [validate, build, tests]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
@@ -186,8 +185,7 @@ jobs:
 
       - name: Trigger Render Backend Deployment
         run: |
-          curl -X POST https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
-        continue-on-error: true
+          curl -f -X POST https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
 
       - name: Notify Slack - Staging Deployed
         uses: slackapi/slack-github-action@v1
@@ -233,6 +231,7 @@ jobs:
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
+    needs: [validate, build, tests]
     if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
     environment: production
     steps:
@@ -270,15 +269,14 @@ jobs:
 
       - name: Terraform Plan
         run: |
-          cd infrastructure/terraform
+          cd terraform
           terraform init
           terraform plan -var="version=${{ steps.version.outputs.version }}" -out=tfplan
 
       - name: Terraform Apply
         run: |
-          cd infrastructure/terraform
+          cd terraform
           terraform apply -auto-approve tfplan
-        continue-on-error: true
 
       - name: Post-Deployment Health Checks
         run: |
@@ -286,10 +284,10 @@ jobs:
           sleep 30
 
           echo "🏥 Health Check: API"
-          curl -f https://api.imobi.com/health || echo "⚠️  API health check failed"
+          curl -f https://api.imobi.com/api/v1/health
 
           echo "🏥 Health Check: Web"
-          curl -f https://imobi.com/ || echo "⚠️  Web health check failed"
+          curl -f https://imobi.com/
 
       - name: Notify Slack - Production Deployed
         uses: slackapi/slack-github-action@v1
@@ -377,7 +375,7 @@ jobs:
     steps:
       - name: Check workflow status
         run: |
-          if [ "${{ needs.validate.result }}" == "failure" ] || [ "${{ needs.build.result }}" == "failure" ]; then
+          if [ "${{ needs.validate.result }}" == "failure" ] || [ "${{ needs.build.result }}" == "failure" ] || [ "${{ needs.tests.result }}" == "failure" ]; then
             echo "❌ Workflow failed"
             exit 1
           fi

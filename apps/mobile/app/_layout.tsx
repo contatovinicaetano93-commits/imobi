@@ -4,10 +4,7 @@ import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useRouter, useSegments } from "expo-router";
 import { setOnUnauthorized } from "../lib/api";
-
-type RootLayoutProps = {
-  children?: React.ReactNode;
-};
+import { subscribeAuthState } from "../lib/auth-state";
 
 export default function RootLayout() {
   const router = useRouter();
@@ -19,6 +16,7 @@ export default function RootLayout() {
     setOnUnauthorized(() => {
       setIsSignedIn(false);
     });
+    return subscribeAuthState(setIsSignedIn);
   }, []);
 
   useEffect(() => {
