@@ -6,7 +6,7 @@ import * as SecureStore from "expo-secure-store";
 import { getMobileRoleHome, LoginSchema, normalizeUserRole, type LoginInput } from "@imbobi/schemas";
 import { apiClient } from "@imbobi/core";
 
-type MobileHomeRoute = "/(tabs)/engenheiro" | "/(tabs)/obras" | "/(tabs)/perfil";
+type MobileHomeRoute = "/(tabs)/comercial" | "/(tabs)/engenheiro" | "/(tabs)/obras" | "/(tabs)/perfil";
 
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
