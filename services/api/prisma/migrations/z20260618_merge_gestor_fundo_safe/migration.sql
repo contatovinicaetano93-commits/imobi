@@ -1,5 +1,4 @@
--- Unifica perfil legado GESTOR_FUNDO → GESTOR (Gestor do Fundo)
--- This migration may sort before the migration that adds GESTOR.
+-- Final order-safe merge for legacy GESTOR_FUNDO users after all role enum values exist.
 DO $$
 BEGIN
   IF EXISTS (
