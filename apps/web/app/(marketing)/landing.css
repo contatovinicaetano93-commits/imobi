@@ -244,10 +244,32 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
 .h1-line { display: block; }
 .h1-accent { color: var(--mint); }
 .hero-sub {
-  font-size: 1rem; color: rgba(255,255,255,0.6); line-height: 1.8;
-  font-weight: 300; margin-bottom: 2.5rem; max-width: 400px;
+  font-size: 1.05rem; color: rgba(255,255,255,0.6); line-height: 1.8;
+  font-weight: 300; margin-bottom: 2.5rem; max-width: 560px;
 }
 .hero-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+
+.hero-strip {
+  display: flex; align-items: center;
+  width: 100%; margin-top: 3rem;
+  padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);
+}
+.hero-strip-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0.25rem; flex: 1;
+}
+.hero-strip-val {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.6rem; font-weight: 800; color: var(--white);
+  letter-spacing: -0.01em; line-height: 1;
+}
+.hero-strip-lbl {
+  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: rgba(255,255,255,0.35);
+}
+.hero-strip-div {
+  width: 1px; height: 2.25rem; background: rgba(255,255,255,0.12); flex-shrink: 0;
+}
 .btn-hero-primary {
   background: var(--mint); color: var(--ink);
   font-family: 'Jost', sans-serif; font-size: 0.9rem; font-weight: 700;
@@ -435,6 +457,13 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
 .cta-h2 em { font-style: normal; color: var(--mint); }
 .cta-sub { font-size: 0.9rem; color: rgba(255,255,255,0.52); font-weight: 300; }
 .cta-actions { display: flex; align-items: center; gap: 1.25rem; flex-shrink: 0; flex-wrap: wrap; }
+.cta-ghost-light {
+  color: rgba(255,255,255,0.75) !important;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px;
+  padding: 0.9rem 1.4rem;
+}
+.cta-ghost-light:hover { color: var(--white) !important; border-color: rgba(255,255,255,0.45); }
 .cta-wa {
   display: flex; align-items: center; gap: 0.5rem;
   color: rgba(255,255,255,0.62); font-size: 0.85rem; font-weight: 500;
@@ -506,6 +535,9 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .hero-actions { flex-direction: column; align-items: stretch; gap: 0.75rem; }
   .btn-hero-primary { text-align: center; padding: 1rem; }
   .btn-hero-ghost { text-align: center; }
+  .hero-strip { gap: 0; margin-top: 2.25rem; padding-top: 1.5rem; }
+  .hero-strip-val { font-size: 1.3rem; }
+  .hero-strip-lbl { font-size: 0.56rem; }
 
   .vantagens { padding: 4rem 1.25rem; }
   .vs-grid { grid-template-columns: 1fr; }

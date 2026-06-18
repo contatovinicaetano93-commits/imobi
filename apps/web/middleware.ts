@@ -10,6 +10,7 @@ const PUBLIC_PATHS = [
   "/redefinir-senha",
   "/termos",
   "/privacy-policy",
+  "/simulador",
   "/api/auth",
   "/api/proxy/auth",
   "/api/proxy/health",

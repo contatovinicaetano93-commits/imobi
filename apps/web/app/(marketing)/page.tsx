@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { redirectAfterLogin } from "@/lib/post-login-redirect";
 import { wakeStagingApi } from "@/lib/wake-staging-api";
 import { loginWithRetry } from "@/lib/login-with-retry";
@@ -11,6 +12,7 @@ const WA = "5511993455589";
 
 
 export default function LandingPage() {
+  const router = useRouter();
   const [scrolled,   setScrolled]   = useState(false);
   const [isMobile,   setIsMobile]   = useState(false);
   const [activeTab,  setActiveTab]  = useState("login");
@@ -98,7 +100,23 @@ export default function LandingPage() {
   function submitToWhatsApp() {
     const g = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)?.value?.trim() ?? "";
     const nome = g("f-nome"), cargo = g("f-cargo"), empresa = g("f-empresa"), tel = g("f-tel"), email = g("f-email"), modalidade = g("f-modalidade"), volume = g("f-volume"), obs = g("f-obs");
-    if (!nome || !empresa || !tel) { alert("Por favor, preencha nome, empresa e WhatsApp."); return; }
+    if (!nome || !tel) { alert("Por favor, preencha nome e WhatsApp."); return; }
+
+    fetch("/api/proxy/leads/captura", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clienteNome: nome,
+        clienteEmail: email || `sem-email-${Date.now()}@captura.imobi`,
+        clienteTelefone: tel,
+        empresa,
+        cargo,
+        modalidade,
+        volume,
+        observacoes: obs,
+      }),
+    }).catch(() => {});
+
     const msg = `Olá! Vim pelo site da IMOBI e gostaria de solicitar uma análise de crédito.\n\n*Nome:* ${nome}${cargo ? " · "+cargo : ""}\n*Empresa:* ${empresa}\n*WhatsApp:* ${tel}${email ? "\n*E-mail:* "+email : ""}\n*Modalidade:* ${modalidade||"Não informada"}\n*Volume estimado:* ${volume||"Não informado"}${obs ? "\n*Projeto:* "+obs : ""}`;
     window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, "_blank");
   }
@@ -109,6 +127,7 @@ export default function LandingPage() {
       <nav className={`landing-nav${scrolled ? " scrolled" : ""}`}>
         <a className="logo" href="#"><LogoIcon /><span className="logo-name">IMOBI</span></a>
         <ul className="nav-links">
+          <li><a href="/simulador">Simular</a></li>
           <li><a href="#vantagens">Vantagens</a></li>
           <li><a href="#como">Processo</a></li>
           <li><a href="#modalidades">Modalidades</a></li>
@@ -116,7 +135,7 @@ export default function LandingPage() {
         </ul>
         <div className="nav-actions">
           <button className="btn-login" onClick={() => setModalOpen(true)}>Entrar</button>
-          <button className="btn-cta"   onClick={() => scrollTo("analise")}>Solicitar análise</button>
+          <button className="btn-cta"   onClick={() => router.push("/simulador")}>Simular crédito</button>
         </div>
         {isMobile && (
           <div className="nav-mobile-auth">
@@ -202,19 +221,34 @@ export default function LandingPage() {
         <div className="hero-bg-grid" aria-hidden />
         <div className="hero-inner">
           <div className="hero-content">
-            <div className="hero-badge"><span className="badge-dot" />Crédito Imobiliário Estruturado</div>
+            <div className="hero-badge"><span className="badge-dot" />Crédito com geovalidação de obra</div>
             <h1 className="hero-h1">
-              <span className="h1-line">CAPITAL</span>
-              <span className="h1-line">PARA SUA</span>
-              <span className="h1-line h1-accent">OBRA.</span>
+              <span className="h1-line">FINANCIE</span>
+              <span className="h1-line">SUA OBRA</span>
+              <span className="h1-line h1-accent">EM DIAS.</span>
             </h1>
-            <p className="hero-sub">Aprovação em 15 a 30 dias. Do pedido ao capital sem travar o cronograma — direto para construtoras e incorporadoras.</p>
+            <p className="hero-sub">Simule em 2 minutos quanto sua obra pode financiar. Liberação por etapa, validação por GPS e transparência total na taxa.</p>
             <div className="hero-actions">
-              <button className="btn-hero-primary" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
+              <button className="btn-hero-primary" onClick={() => router.push("/simulador")}>Simular crédito agora</button>
               <button className="btn-hero-ghost"   onClick={() => scrollTo("como")}>Ver o processo →</button>
             </div>
+            <div className="hero-strip">
+              <div className="hero-strip-item">
+                <span className="hero-strip-val">2 min</span>
+                <span className="hero-strip-lbl">simulação online</span>
+              </div>
+              <span className="hero-strip-div" aria-hidden="true" />
+              <div className="hero-strip-item">
+                <span className="hero-strip-val">48h</span>
+                <span className="hero-strip-lbl">pré-análise rápida</span>
+              </div>
+              <span className="hero-strip-div" aria-hidden="true" />
+              <div className="hero-strip-item">
+                <span className="hero-strip-val">100%</span>
+                <span className="hero-strip-lbl">digital + GPS</span>
+              </div>
+            </div>
           </div>
-
         </div>
       </section>
 
@@ -387,7 +421,8 @@ export default function LandingPage() {
             <p className="cta-sub">Aprovação em 15 a 30 dias. Análise preliminar gratuita, sem compromisso.</p>
           </div>
           <div className="cta-actions reveal d3">
-            <button className="btn-hero-primary" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
+            <button className="btn-hero-primary" onClick={() => router.push("/simulador")}>Simular crédito agora</button>
+            <button className="btn-hero-ghost cta-ghost-light" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
             <a className="cta-wa" href={`https://wa.me/${WA}?text=Olá!%20Gostaria%20de%20estruturar%20um%20projeto%20com%20a%20IMOBI.`} target="_blank" rel="noopener noreferrer">
               <WaIcon size={18} color="rgba(255,255,255,0.75)" /> Falar no WhatsApp
             </a>
@@ -401,7 +436,7 @@ export default function LandingPage() {
           <div className="footer-top">
             <a className="logo footer-logo" href="#"><LogoIcon /><span className="logo-name">IMOBI</span></a>
             <div className="footer-links">
-              <a href="#vantagens">Vantagens</a><a href="#como">Processo</a>
+              <a href="/simulador">Simular</a><a href="#vantagens">Vantagens</a><a href="#como">Processo</a>
               <a href="#modalidades">Modalidades</a><a href="#faq">Dúvidas</a>
               <a href="#analise">Contato</a><a href="/login">Login</a>
             </div>
