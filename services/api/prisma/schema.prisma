@@ -50,6 +50,7 @@ model Usuario {
   documentos      Documento[]
   solicitacoes    SolicitacaoCredito[]
   votosComite     VotoComite[]
+  dadosBancarios  DadosBancarios?
 
   @@index([email])
   @@index([cpf])
@@ -119,24 +120,32 @@ model UsuarioFcmToken {
 // ── Créditos ──────────────────────────────────────────────────────
 
 model Credito {
-  creditoId       String    @id @default(uuid())
-  usuarioId       String
-  usuario         Usuario   @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
-  valorAprovado   Float
-  valorLiberado   Float
-  taxaMensal      Float     @default(0.0099)
-  prazoMeses      Int
-  status          CreditoStatus @default(ATIVO)
-  dataAprovacao   DateTime  @default(now())
-  dataVencimento  DateTime?
-  criadoEm        DateTime  @default(now())
-  atualizadoEm    DateTime  @updatedAt
+  creditoId        String        @id @default(uuid())
+  usuarioId        String
+  usuario          Usuario       @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  valorAprovado    Float
+  valorLiberado    Float         @default(0)
+  taxaMensal       Float         @default(0.014)
+  prazoMeses       Int
+  tipoGarantia     TipoGarantia?
+  creditoPonte     Boolean       @default(false)
+  feeEstruturacao  Float?
+  status           CreditoStatus @default(ATIVO)
+  dataAprovacao    DateTime      @default(now())
+  dataVencimento   DateTime?
+  criadoEm         DateTime      @default(now())
+  atualizadoEm     DateTime      @updatedAt
 
-  obras           Obra[]
-  liberacoes      LiberacaoParcela[]
+  obras            Obra[]
+  liberacoes       LiberacaoParcela[]
 
   @@index([usuarioId])
   @@index([status])
+}
+
+enum TipoGarantia {
+  IMOVEL
+  RECEBIVEIS
 }
 
 enum CreditoStatus {
@@ -158,12 +167,13 @@ model Obra {
   endereco            String
   geoLatitude         Float
   geoLongitude        Float
-  raioValidacaoMetros Int      @default(50)
+  raioValidacaoMetros Int        @default(50)
   areaM2              Float?
   tipo                String?
+  riValidado          Boolean    @default(false)
   status              ObraStatus @default(PLANEJAMENTO)
-  criadoEm            DateTime @default(now())
-  atualizadoEm        DateTime @updatedAt
+  criadoEm            DateTime   @default(now())
+  atualizadoEm        DateTime   @updatedAt
 
   etapas              EtapaObra[]
   evidencias          EvidenciaEtapa[]
@@ -241,15 +251,19 @@ model EvidenciaEtapa {
 // ── Liberações de Parcelas ──────────────────────────────────────────
 
 model LiberacaoParcela {
-  liberacaoId     String   @id @default(uuid())
+  liberacaoId     String          @id @default(uuid())
   creditoId       String
-  credito         Credito  @relation(fields: [creditoId], references: [creditoId], onDelete: Cascade)
+  credito         Credito         @relation(fields: [creditoId], references: [creditoId], onDelete: Cascade)
   valor           Float
+  feeTranche      Float?
+  valorLiquido    Float?
   status          LiberacaoStatus @default(PENDENTE)
   motivo          String?
   processadoEm    DateTime?
-  criadoEm        DateTime @default(now())
-  atualizadoEm    DateTime @updatedAt
+  criadoEm        DateTime        @default(now())
+  atualizadoEm    DateTime        @updatedAt
+
+  acaoOperador    AcaoOperador?
 
   @@index([creditoId])
   @@index([status])
@@ -335,6 +349,9 @@ enum TipoNotificacao {
   VISTORIA_PENDENTE
   PARECER_SOLICITADO
   COMITE_DECISAO
+  DADOS_BANCARIOS_SOLICITADOS
+  TRANSFERENCIA_CONFIRMADA
+  RI_PENDENTE
 }
 
 // ── Auditoria de Etapas ───────────────────────────────────────────────
@@ -682,4 +699,73 @@ enum VotoDecisao {
   APROVAR
   AJUSTAR
   REPROVAR
+}
+
+// ── Dados Bancários ──────────────────────────────────────────────────────────
+
+model DadosBancarios {
+  dadosBancariosId String        @id @default(uuid())
+  usuarioId        String        @unique
+  usuario          Usuario       @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  banco            String
+  agencia          String?
+  conta            String?
+  tipoConta        TipoConta     @default(CORRENTE)
+  tipoChavePix     TipoChavePix?
+  chavePix         String?
+  nomeTitular      String
+  cpfCnpjTitular   String
+  criadoEm         DateTime      @default(now())
+  atualizadoEm     DateTime      @updatedAt
+
+  acoesOperador    AcaoOperador[]
+
+  @@index([usuarioId])
+  @@map("dados_bancarios")
+}
+
+enum TipoConta {
+  CORRENTE
+  POUPANCA
+}
+
+enum TipoChavePix {
+  CPF
+  CNPJ
+  EMAIL
+  TELEFONE
+  ALEATORIA
+}
+
+// ── Fila do Operador ──────────────────────────────────────────────────────────
+
+model AcaoOperador {
+  acaoId           String             @id @default(uuid())
+  liberacaoId      String             @unique
+  liberacao        LiberacaoParcela   @relation(fields: [liberacaoId], references: [liberacaoId], onDelete: Cascade)
+  usuarioId        String
+  valorBruto       Float
+  feeTranche       Float
+  valorTransferir  Float
+  numeroParcela    Int
+  dadosBancariosId String?
+  dadosBancarios   DadosBancarios?    @relation(fields: [dadosBancariosId], references: [dadosBancariosId])
+  status           AcaoOperadorStatus @default(AGUARDANDO_DADOS_BANCARIOS)
+  operadorId       String?
+  confirmadoEm     DateTime?
+  observacao       String?
+  criadoEm         DateTime           @default(now())
+  atualizadoEm     DateTime           @updatedAt
+
+  @@index([status])
+  @@index([criadoEm])
+  @@index([usuarioId])
+  @@map("acoes_operador")
+}
+
+enum AcaoOperadorStatus {
+  AGUARDANDO_DADOS_BANCARIOS
+  AGUARDANDO_TRANSFERENCIA
+  TRANSFERENCIA_CONFIRMADA
+  CANCELADA
 }

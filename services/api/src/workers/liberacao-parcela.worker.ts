@@ -5,6 +5,7 @@ import { PrismaService } from "../modules/prisma/prisma.service";
 import { NotificacoesService } from "../modules/notificacoes/notificacoes.service";
 import { EmailService } from "../modules/email/email.service";
 import { PushNotificacoesService } from "../modules/push-notificacoes/push-notificacoes.service";
+import { calcularFeesTranche } from "@imbobi/core";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../common/constants";
 
 @Injectable()
@@ -16,15 +17,14 @@ export class LiberacaoParcelaWorker {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
   ) {}
 
   @Process()
   async handle(job: Job<LiberacaoJob>) {
-    const { creditoId, liberacaoId, valor } = job.data;
+    const { creditoId, liberacaoId, etapaId, valor } = job.data;
 
     try {
-      // Idempotency guard: if a previous attempt already committed, skip silently
       const liberacao = await this.prisma.liberacaoParcela.findUnique({
         where: { liberacaoId },
       });
@@ -39,11 +39,44 @@ export class LiberacaoParcelaWorker {
       });
       if (!credito) throw new Error(`Crédito ${creditoId} não encontrado`);
 
-      // Re-check + update atomically inside the transaction
+      // Verifica RI antes da primeira liberação
+      const obraVinculada = credito.obras?.[0];
+      const ehPrimeiraTranche = Number(credito.valorLiberado) === 0;
+      if (ehPrimeiraTranche && obraVinculada && !obraVinculada.riValidado) {
+        await this.prisma.liberacaoParcela.update({
+          where: { liberacaoId },
+          data: {
+            status: "FALHA",
+            processadoEm: new Date(),
+            motivo: "RI não validado — valide o Registro de Imóveis antes da primeira liberação.",
+          },
+        });
+
+        await this.notificacoes.criar(
+          credito.usuarioId,
+          "RI_PENDENTE",
+          "Liberação bloqueada — RI pendente",
+          `A primeira tranche de ${obraVinculada?.nome || "sua obra"} está bloqueada. O Registro de Imóveis precisa ser validado pelo gestor.`,
+          `/dashboard/obras/${obraVinculada?.obraId}`,
+        );
+        this.logger.warn(`Liberação ${liberacaoId} bloqueada: RI não validado para obra ${obraVinculada?.obraId}`);
+        return;
+      }
+
+      const { feeTranche, valorLiquido } = calcularFeesTranche(valor);
+
+      let numeroParcela = 1;
       let processed = false;
+
       await this.prisma.$transaction(async (tx) => {
         const lib = await tx.liberacaoParcela.findUnique({ where: { liberacaoId } });
         if (!lib || lib.status !== "PENDENTE") return;
+
+        // Determina o número da parcela contando as concluídas até agora
+        const concluidasAnteriores = await tx.liberacaoParcela.count({
+          where: { creditoId, status: "CONCLUIDA" },
+        });
+        numeroParcela = concluidasAnteriores + 1;
 
         await tx.credito.update({
           where: { creditoId },
@@ -52,7 +85,34 @@ export class LiberacaoParcelaWorker {
 
         await tx.liberacaoParcela.update({
           where: { liberacaoId },
-          data: { status: "CONCLUIDA", processadoEm: new Date() },
+          data: {
+            status: "CONCLUIDA",
+            processadoEm: new Date(),
+            feeTranche,
+            valorLiquido,
+          },
+        });
+
+        // Busca dados bancários do usuário
+        const dadosBancarios = await tx.dadosBancarios.findUnique({
+          where: { usuarioId: credito.usuarioId },
+        });
+
+        const acaoStatus = dadosBancarios
+          ? "AGUARDANDO_TRANSFERENCIA"
+          : "AGUARDANDO_DADOS_BANCARIOS";
+
+        await tx.acaoOperador.create({
+          data: {
+            liberacaoId,
+            usuarioId: credito.usuarioId,
+            valorBruto: valor,
+            feeTranche,
+            valorTransferir: valorLiquido,
+            numeroParcela,
+            dadosBancariosId: dadosBancarios?.dadosBancariosId ?? null,
+            status: acaoStatus,
+          },
         });
 
         processed = true;
@@ -60,39 +120,51 @@ export class LiberacaoParcelaWorker {
 
       if (!processed) return;
 
-      // Notifica usuário sobre liberação bem-sucedida
       const obra = credito.obras?.[0];
-      const formattedValue = new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(valor);
+      const fmt = (v: number) =>
+        new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
-      await this.notificacoes.criar(
-        credito.usuarioId,
-        "PARCELA_LIBERADA",
-        "Parcela liberada com sucesso",
-        `Liberação de ${formattedValue} foi processada para ${obra?.nome || "sua obra"}.`,
-        obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
-      );
+      if (Number(credito.valorLiberado) === 0) {
+        // Sem dados bancários — solicitar ao usuário
+        await this.notificacoes.criar(
+          credito.usuarioId,
+          "DADOS_BANCARIOS_SOLICITADOS",
+          "Parcela aprovada! Cadastre seus dados bancários",
+          `A ${numeroParcela}ª tranche de ${fmt(valor)} foi aprovada. Cadastre seus dados bancários para receber ${fmt(valorLiquido)}.`,
+          "/perfil/dados-bancarios",
+        );
+      } else {
+        await this.notificacoes.criar(
+          credito.usuarioId,
+          "PARCELA_LIBERADA",
+          "Parcela em processamento",
+          `A ${numeroParcela}ª tranche de ${fmt(valorLiquido)} (líquido) está sendo processada para ${obra?.nome || "sua obra"}.`,
+          obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard",
+        );
+      }
 
-      this.pushNotificacoes.enviarPush({
-        usuarioId: credito.usuarioId,
-        titulo: "Parcela Liberada!",
-        mensagem: `${formattedValue} foi creditado para ${obra?.nome || "sua obra"}.`,
-        tipo: "PARCELA_LIBERADA",
-        dados: { creditoId, valor: String(valor) },
-      }).catch((e) => this.logger.error(`Erro ao enviar push: ${e}`));
+      this.pushNotificacoes
+        .enviarPush({
+          usuarioId: credito.usuarioId,
+          titulo: "Tranche Aprovada!",
+          mensagem: `${fmt(valorLiquido)} líquido será transferido para ${obra?.nome || "sua obra"}.`,
+          tipo: "PARCELA_LIBERADA",
+          dados: { creditoId, valor: String(valorLiquido) },
+        })
+        .catch((e) => this.logger.error(`Erro push: ${e}`));
 
       this.email
         .parcelaLiberadaEmail(
           credito.usuario.nome,
           credito.usuario.email,
-          valor,
-          obra?.nome || "sua obra"
+          valorLiquido,
+          obra?.nome || "sua obra",
         )
-        .catch((e) => this.logger.error(`Erro ao enviar email: ${e}`));
+        .catch((e) => this.logger.error(`Erro email: ${e}`));
 
-      this.logger.log(`Liberação processada para crédito ${creditoId}: R$ ${valor}`);
+      this.logger.log(
+        `Liberação ${liberacaoId} processada — bruto: R$${valor}, fee: R$${feeTranche.toFixed(2)}, líquido: R$${valorLiquido.toFixed(2)}`,
+      );
     } catch (error) {
       this.logger.error(`Erro ao processar liberação: ${error}`);
       throw error;
@@ -110,14 +182,10 @@ export class LiberacaoParcelaWorker {
       })
       .then(async (credito) => {
         if (!credito) return;
-
-        // Use updateMany with status filter to avoid clobbering a CONCLUIDA record
-        // (job may have succeeded but crashed before BullMQ ACK)
         await this.prisma.liberacaoParcela.updateMany({
           where: { liberacaoId: job.data.liberacaoId, status: "PENDENTE" },
           data: { status: "FALHA", processadoEm: new Date() },
         });
-
         const obra = credito.obras?.[0];
         await this.notificacoes
           .criar(
@@ -125,15 +193,15 @@ export class LiberacaoParcelaWorker {
             "PARCELA_FALHA",
             "Erro na liberação da parcela",
             `Ocorreu um erro ao processar a liberação para ${obra?.nome || "sua obra"}. Por favor, contate o suporte.`,
-            obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
+            obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard",
           )
           .catch((e) => this.logger.error(`Erro ao notificar falha: ${e}`));
       })
-      .catch((e) => this.logger.error(`Erro ao processar falha de liberação: ${e}`));
+      .catch((e) => this.logger.error(`Erro ao processar falha: ${e}`));
   }
 
   @OnQueueCompleted()
   onCompleted(job: Job) {
-    this.logger.log(`Job ${job.id} completado com sucesso`);
+    this.logger.log(`Job ${job.id} completado`);
   }
 }

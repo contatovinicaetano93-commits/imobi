@@ -5,8 +5,8 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual } from "../../common/decorators/usuario-atual.decorator";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
-import { AtualizarUsuarioAdminSchema } from "@imbobi/schemas";
-import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
+import { AtualizarUsuarioAdminSchema, ConfirmarTransferenciaSchema } from "@imbobi/schemas";
+import type { AtualizarUsuarioAdminInput, ConfirmarTransferenciaInput } from "@imbobi/schemas";
 
 @Controller("admin")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -59,5 +59,39 @@ export class AdminController {
     @UsuarioAtual() admin: UsuarioAtual,
   ) {
     return this.adminService.excluirUsuario(id, admin.id);
+  }
+
+  // ── Fila do Operador ────────────────────────────────────────────────────────
+
+  @Get("transferencias")
+  listarTransferenciasPendentes(
+    @Query("status") status?: string,
+    @Query("limit") limit: string = "20",
+    @Query("offset") offset: string = "0",
+  ) {
+    return this.adminService.listarTransferenciasPendentes(
+      status,
+      Number(limit),
+      Number(offset),
+    );
+  }
+
+  @Patch("transferencias/:id/confirmar")
+  confirmarTransferencia(
+    @Param("id") acaoId: string,
+    @UsuarioAtual() admin: UsuarioAtual,
+    @Body(new ZodPipe(ConfirmarTransferenciaSchema)) body: ConfirmarTransferenciaInput,
+  ) {
+    return this.adminService.confirmarTransferencia(acaoId, admin.id, body.observacao);
+  }
+
+  // ── Validação de RI ─────────────────────────────────────────────────────────
+
+  @Patch("obras/:id/validar-ri")
+  validarRi(
+    @Param("id") obraId: string,
+    @UsuarioAtual() admin: UsuarioAtual,
+  ) {
+    return this.adminService.validarRi(obraId, admin.id);
   }
 }

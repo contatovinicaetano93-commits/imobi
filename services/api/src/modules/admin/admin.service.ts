@@ -1,5 +1,6 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import * as bcrypt from "bcryptjs";
 import { UsuarioTipo } from "@prisma/client";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
@@ -32,7 +33,10 @@ export interface Atividade {
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificacoes: NotificacoesService,
+  ) {}
 
   async overview(): Promise<AdminOverview> {
     const [
@@ -259,5 +263,102 @@ export class AdminService {
     ]);
 
     return { ok: true };
+  }
+
+  // ── Fila do Operador ──────────────────────────────────────────────────────────
+
+  async listarTransferenciasPendentes(
+    statusFiltro: string | undefined,
+    limit: number,
+    offset: number,
+  ) {
+    const status = (statusFiltro as any) ?? "AGUARDANDO_TRANSFERENCIA";
+    const acoes = await this.prisma.acaoOperador.findMany({
+      where: { status },
+      orderBy: { criadoEm: "asc" },
+      take: limit,
+      skip: offset,
+      include: {
+        dadosBancarios: true,
+        liberacao: {
+          include: {
+            credito: {
+              include: { usuario: { select: { nome: true, email: true, telefone: true } } },
+            },
+          },
+        },
+      },
+    });
+
+    return acoes.map((a) => ({
+      acaoId: a.acaoId,
+      status: a.status,
+      numeroParcela: a.numeroParcela,
+      valorBruto: a.valorBruto,
+      feeTranche: a.feeTranche,
+      valorTransferir: a.valorTransferir,
+      criadoEm: a.criadoEm.toISOString(),
+      confirmadoEm: a.confirmadoEm?.toISOString(),
+      observacao: a.observacao,
+      dadosBancarios: a.dadosBancarios
+        ? {
+            banco: a.dadosBancarios.banco,
+            agencia: a.dadosBancarios.agencia,
+            conta: a.dadosBancarios.conta,
+            tipoConta: a.dadosBancarios.tipoConta,
+            chavePix: a.dadosBancarios.chavePix,
+            tipoChavePix: a.dadosBancarios.tipoChavePix,
+            nomeTitular: a.dadosBancarios.nomeTitular,
+            cpfCnpjTitular: a.dadosBancarios.cpfCnpjTitular,
+          }
+        : null,
+      construtor: {
+        nome: a.liberacao.credito.usuario.nome,
+        email: a.liberacao.credito.usuario.email,
+        telefone: a.liberacao.credito.usuario.telefone,
+      },
+    }));
+  }
+
+  async confirmarTransferencia(acaoId: string, operadorId: string, observacao?: string) {
+    const acao = await this.prisma.acaoOperador.findUnique({ where: { acaoId } });
+    if (!acao) throw new NotFoundException("Ação não encontrada.");
+    if (acao.status !== "AGUARDANDO_TRANSFERENCIA") {
+      throw new BadRequestException("Esta transferência não está aguardando confirmação.");
+    }
+
+    await this.prisma.acaoOperador.update({
+      where: { acaoId },
+      data: {
+        status: "TRANSFERENCIA_CONFIRMADA",
+        operadorId,
+        confirmadoEm: new Date(),
+        observacao: observacao ?? null,
+      },
+    });
+
+    await this.notificacoes.criar(
+      acao.usuarioId,
+      "TRANSFERENCIA_CONFIRMADA",
+      "Transferência confirmada!",
+      `A ${acao.numeroParcela}ª tranche foi transferida. Verifique sua conta bancária.`,
+      "/dashboard",
+    );
+
+    return { ok: true };
+  }
+
+  // ── Validação de RI ───────────────────────────────────────────────────────────
+
+  async validarRi(obraId: string, adminId: string) {
+    const obra = await this.prisma.obra.findUnique({ where: { obraId } });
+    if (!obra) throw new NotFoundException("Obra não encontrada.");
+
+    await this.prisma.obra.update({
+      where: { obraId },
+      data: { riValidado: true },
+    });
+
+    return { ok: true, obraId, riValidado: true };
   }
 }

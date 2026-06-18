@@ -1,4 +1,5 @@
 export const QUEUE_LIBERACAO = "liberacao-parcela";
+export const QUEUE_EXCLUIR_USUARIO = "excluir-usuario";
 
 export interface LiberacaoJob {
   creditoId: string;
