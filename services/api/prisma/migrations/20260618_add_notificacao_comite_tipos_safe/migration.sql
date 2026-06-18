@@ -1,7 +1,4 @@
--- AlterEnum
--- This repository has older migration names that sort `10_*` before `1_*`.
--- On a fresh database the notification enum is created by `1_add_notifications`,
--- so this early migration must be a no-op until the enum exists.
+-- Ensure comite notification enum values exist after TipoNotificacao is created.
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'TipoNotificacao') THEN
