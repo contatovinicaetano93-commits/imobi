@@ -41,8 +41,8 @@ export const MOBILE_ROLE_HOME: Record<TipoUsuario, string> = {
   GESTOR_FUNDO: "/(tabs)/obras",
   ENGENHEIRO: "/(tabs)/engenheiro",
   GESTOR_OBRA: "/(tabs)/engenheiro",
-  COMERCIAL: "/(tabs)/perfil",
-  PARCEIRO: "/(tabs)/perfil",
+  COMERCIAL: "/(tabs)/comercial",
+  PARCEIRO: "/(tabs)/comercial",
   TOMADOR: "/(tabs)/obras",
   CONSTRUTOR: "/(tabs)/obras",
 };
@@ -106,6 +106,7 @@ export const WEB_ROUTE_RULES = [
 
 export const MOBILE_TAB_RULES = {
   engenharia: RBAC_ROLE_GROUPS.engineering,
+  comercial: RBAC_ROLE_GROUPS.commercial,
   obras: RBAC_ROLE_GROUPS.works,
   credito: RBAC_ROLE_GROUPS.borrower,
   perfil: RBAC_ROLE_GROUPS.authenticated,

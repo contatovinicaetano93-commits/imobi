@@ -61,6 +61,19 @@ export const engenheirosApi = {
     }),
 };
 
+export const parceirosApi = {
+  resumo: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<ParceiroResumo>("/parceiros/resumo", token ?? undefined);
+    }),
+  operacoes: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<OperacaoIndicada[]>("/parceiros/operacoes", token ?? undefined);
+    }),
+};
+
 export const creditoApi = {
   meus: () =>
     callApi(async () => {
@@ -141,6 +154,28 @@ export type VisitaEngenheiro = {
     nome: string;
     endereco: string;
   };
+  criadoEm: string;
+};
+
+export type ParceiroResumo = {
+  comissoesAReceber: number;
+  comissoesPagasMes: number;
+  comissoesPagasTotal: number;
+  operacoesAtivas: number;
+  taxaAprovacao: number;
+  codigoIndicacao: string;
+};
+
+export type OperacaoIndicada = {
+  id: string;
+  codigo: string;
+  clienteRef: string;
+  status: string;
+  valorBase: number;
+  percentualComissao: number;
+  valorComissao: number;
+  comissaoStatus: string;
+  validadeIndicacao: string;
   criadoEm: string;
 };
 

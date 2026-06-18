@@ -47,8 +47,8 @@ exports.MOBILE_ROLE_HOME = {
     GESTOR_FUNDO: "/(tabs)/obras",
     ENGENHEIRO: "/(tabs)/engenheiro",
     GESTOR_OBRA: "/(tabs)/engenheiro",
-    COMERCIAL: "/(tabs)/perfil",
-    PARCEIRO: "/(tabs)/perfil",
+    COMERCIAL: "/(tabs)/comercial",
+    PARCEIRO: "/(tabs)/comercial",
     TOMADOR: "/(tabs)/obras",
     CONSTRUTOR: "/(tabs)/obras",
 };
@@ -107,6 +107,7 @@ exports.WEB_ROUTE_RULES = [
 ];
 exports.MOBILE_TAB_RULES = {
     engenharia: exports.RBAC_ROLE_GROUPS.engineering,
+    comercial: exports.RBAC_ROLE_GROUPS.commercial,
     obras: exports.RBAC_ROLE_GROUPS.works,
     credito: exports.RBAC_ROLE_GROUPS.borrower,
     perfil: exports.RBAC_ROLE_GROUPS.authenticated,

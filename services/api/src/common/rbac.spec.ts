@@ -75,6 +75,14 @@ describe("RBAC compartilhado", () => {
       expect(roleCanAccessMobileTab("COMERCIAL", "engenharia")).toBe(false);
     });
 
+    it("mostra Comercial somente para comercial/parceiro/admin", () => {
+      expect(roleCanAccessMobileTab("COMERCIAL", "comercial")).toBe(true);
+      expect(roleCanAccessMobileTab("PARCEIRO", "comercial")).toBe(true);
+      expect(roleCanAccessMobileTab("ADMIN", "comercial")).toBe(true);
+      expect(roleCanAccessMobileTab("TOMADOR", "comercial")).toBe(false);
+      expect(roleCanAccessMobileTab("ENGENHEIRO", "comercial")).toBe(false);
+    });
+
     it("mostra Obras para perfis operacionais", () => {
       expect(roleCanAccessMobileTab("TOMADOR", "obras")).toBe(true);
       expect(roleCanAccessMobileTab("ENGENHEIRO", "obras")).toBe(true);
@@ -111,8 +119,8 @@ describe("RBAC compartilhado", () => {
       expect(getMobileRoleHome("TOMADOR")).toBe("/(tabs)/obras");
       expect(getMobileRoleHome("ENGENHEIRO")).toBe("/(tabs)/engenheiro");
       expect(getMobileRoleHome("GESTOR_OBRA")).toBe("/(tabs)/engenheiro");
-      expect(getMobileRoleHome("COMERCIAL")).toBe("/(tabs)/perfil");
-      expect(getMobileRoleHome("PARCEIRO")).toBe("/(tabs)/perfil");
+      expect(getMobileRoleHome("COMERCIAL")).toBe("/(tabs)/comercial");
+      expect(getMobileRoleHome("PARCEIRO")).toBe("/(tabs)/comercial");
     });
 
     it("mantem labels dos 5 perfis do plano", () => {

@@ -177,12 +177,15 @@ Estado atual:
 - Engenheiro/GESTOR_OBRA agora entram em `/(tabs)/engenheiro`;
 - primeira tela mobile do Engenheiro criada em `apps/mobile/app/(tabs)/engenheiro/index.tsx`;
 - tela consome `GET /engenheiros/visitas` via `engenheirosApi.visitas()`;
-- ainda faltam telas especificas para Gestor e Comercial.
+- Comercial/PARCEIRO agora entram em `/(tabs)/comercial`;
+- primeira tela mobile Comercial/Parceiro criada em `apps/mobile/app/(tabs)/comercial/index.tsx`;
+- tela consome `GET /parceiros/resumo` e `GET /parceiros/operacoes` via `parceirosApi`;
+- ainda falta tela especifica para Gestor.
 
 Proximo passo:
 
 - validar a tela de Engenheiro contra dados reais/staging;
-- depois definir Comercial: resumo de leads ou perfil parceiro;
+- validar a tela Comercial/Parceiro contra dados reais/staging;
 - depois Gestor: fila resumida de aprovacoes.
 
 ### Trilha C - Comercial vs Parceiro
