@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import "../landing.css";
 import "./simulador.css";
+
+const WA = "5511993455589";
+const VALOR_MAX_EMPRESTIMO = 500_000_000;
+const PRAZO_MIN_MESES = 12;
+const PRAZO_MAX_MESES = 48;
+const TOTAL_STEPS = 5;
 
 type Fase = "terreno" | "construcao" | "acabamento" | "comprador";
 
@@ -29,29 +35,86 @@ function fmtInput(v: number): string {
   return v.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
 }
 
+/** Quanto maior o valor financiável, mais meses o cliente pode escolher (até 48). */
+function maxPrazoMeses(valorFinanciavel: number): number {
+  const v = Math.min(Math.max(valorFinanciavel, 0), VALOR_MAX_EMPRESTIMO);
+  if (v < 1_000_000) return 12;
+  if (v < 5_000_000) return 24;
+  if (v < 20_000_000) return 36;
+  return PRAZO_MAX_MESES;
+}
+
+function parcelaMensalEstimada(valor: number, prazoMeses: number, taxaAnual: number): number {
+  if (prazoMeses <= 0 || valor <= 0) return 0;
+  const i = taxaAnual / 100 / 12;
+  if (i === 0) return Math.round(valor / prazoMeses);
+  const fator = (i * Math.pow(1 + i, prazoMeses)) / (Math.pow(1 + i, prazoMeses) - 1);
+  return Math.round(valor * fator);
+}
+
 export default function SimuladorPublicoPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [valorObra, setValorObra] = useState(0);
   const [valorInput, setValorInput] = useState("");
   const [fase, setFase] = useState<Fase>("construcao");
+  const [prazoMeses, setPrazoMeses] = useState(PRAZO_MIN_MESES);
   const [estado, setEstado] = useState("");
   const [cidade, setCidade] = useState("");
   const [cnpj, setCnpj] = useState("");
 
   const faseCfg = FASES.find((f) => f.id === fase)!;
-  const valorFinanciavel = Math.round(valorObra * (faseCfg.pct / 100));
+  const valorFinanciavelBruto = Math.round(valorObra * (faseCfg.pct / 100));
+  const valorFinanciavel = Math.min(valorFinanciavelBruto, VALOR_MAX_EMPRESTIMO);
+  const prazoMaximo = maxPrazoMeses(valorFinanciavel);
   const taxaAnual = 8.5;
-  const prazoMeses = 36;
-  const numParcelas = 6;
-  const valorParcela = numParcelas > 0 ? Math.round(valorFinanciavel / numParcelas) : 0;
+  const parcelaMensal = parcelaMensalEstimada(valorFinanciavel, prazoMeses, taxaAnual);
+
+  const prazoOpcoes = useMemo(() => {
+    const opts: number[] = [];
+    for (let m = PRAZO_MIN_MESES; m <= prazoMaximo; m += m < 24 ? 6 : 12) {
+      opts.push(m);
+    }
+    if (!opts.includes(prazoMaximo)) opts.push(prazoMaximo);
+    return opts.sort((a, b) => a - b);
+  }, [prazoMaximo]);
+
+  useEffect(() => {
+    if (prazoMeses > prazoMaximo) setPrazoMeses(prazoMaximo);
+    else if (prazoMeses < PRAZO_MIN_MESES) setPrazoMeses(PRAZO_MIN_MESES);
+  }, [prazoMaximo, prazoMeses]);
 
   function next() {
-    if (step < 5) setStep(step + 1);
+    if (step < TOTAL_STEPS + 1) setStep(step + 1);
   }
   function back() {
     if (step > 1) setStep(step - 1);
   }
+
+  function openWhatsApp() {
+    const msg = [
+      "Olá! Fiz uma simulação de crédito no site da IMOBI e gostaria de continuar o atendimento comercial.",
+      "",
+      `*Valor total da obra:* ${brl(valorObra)}`,
+      `*Fase:* ${faseCfg.label} (${faseCfg.pct}% financiável)`,
+      `*Valor financiável estimado:* ${brl(valorFinanciavel)}`,
+      valorFinanciavelBruto > VALOR_MAX_EMPRESTIMO
+        ? `*(limitado ao teto de ${brl(VALOR_MAX_EMPRESTIMO)})*`
+        : null,
+      `*Prazo desejado:* ${prazoMeses} meses`,
+      `*Parcela mensal estimada:* ${brl(parcelaMensal)} (taxa ${taxaAnual}% a.a.)`,
+      `*Local da obra:* ${cidade} — ${estado}`,
+      cnpj.trim() ? `*CNPJ:* ${cnpj.trim()}` : null,
+      "",
+      "Aguardo retorno da equipe comercial.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, "_blank");
+  }
+
+  const progressStep = Math.min(step, TOTAL_STEPS);
 
   return (
     <>
@@ -74,17 +137,24 @@ export default function SimuladorPublicoPage() {
           <p className="sim-sub">Estimativa preliminar — proposta final após análise de crédito e documentação.</p>
 
           <div className="sim-progress">
-            {[1, 2, 3, 4].map((n) => (
-              <span key={n} className={`sim-dot${n <= Math.min(step, 4) ? " active" : ""}${n < Math.min(step, 4) ? " done" : ""}`} />
+            {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((n) => (
+              <span
+                key={n}
+                className={`sim-dot${n <= progressStep ? " active" : ""}${n < progressStep ? " done" : ""}`}
+              />
             ))}
-            <span className="sim-step-label">{step >= 5 ? "Resultado" : `Etapa ${step} de 4`}</span>
+            <span className="sim-step-label">
+              {step > TOTAL_STEPS ? "Resultado" : `Etapa ${step} de ${TOTAL_STEPS}`}
+            </span>
           </div>
 
           <div className="sim-card">
             {step === 1 && (
               <>
                 <h2>Qual é o valor total da obra?</h2>
-                <p className="sim-hint">Inclua terreno, construção e acabamento.</p>
+                <p className="sim-hint">
+                  Inclua terreno, construção e acabamento. Financiamento máximo de {brl(VALOR_MAX_EMPRESTIMO)}.
+                </p>
                 <label className="sim-field">
                   <span>Valor (R$)</span>
                   <input
@@ -100,6 +170,11 @@ export default function SimuladorPublicoPage() {
                     }}
                   />
                 </label>
+                {valorFinanciavelBruto > VALOR_MAX_EMPRESTIMO && (
+                  <p className="sim-hint sim-hint-warn">
+                    O valor financiável estimado excede o teto — será considerado {brl(VALOR_MAX_EMPRESTIMO)} na simulação.
+                  </p>
+                )}
                 <div className="sim-actions">
                   <button type="button" className="sim-btn-primary" disabled={valorObra < 100_000} onClick={next}>
                     Próximo →
@@ -124,6 +199,9 @@ export default function SimuladorPublicoPage() {
                     </button>
                   ))}
                 </div>
+                <p className="sim-hint">
+                  Financiável estimado: <strong>{brl(valorFinanciavel)}</strong>
+                </p>
                 <div className="sim-actions">
                   <button type="button" className="sim-btn-ghost" onClick={back}>← Voltar</button>
                   <button type="button" className="sim-btn-primary" onClick={next}>Próximo →</button>
@@ -132,6 +210,52 @@ export default function SimuladorPublicoPage() {
             )}
 
             {step === 3 && (
+              <>
+                <h2>Em quantas parcelas (meses)?</h2>
+                <p className="sim-hint">
+                  Para {brl(valorFinanciavel)}, você pode parcelar em até <strong>{prazoMaximo} meses</strong>.
+                  Quanto maior o valor, maior o prazo disponível (máx. {PRAZO_MAX_MESES} meses).
+                </p>
+                <div className="sim-prazo-display">
+                  <span className="sim-prazo-val">{prazoMeses}</span>
+                  <span className="sim-prazo-unit">meses</span>
+                </div>
+                <input
+                  type="range"
+                  className="sim-range"
+                  min={PRAZO_MIN_MESES}
+                  max={prazoMaximo}
+                  step={1}
+                  value={prazoMeses}
+                  onChange={(e) => setPrazoMeses(Number(e.target.value))}
+                />
+                <div className="sim-range-labels">
+                  <span>{PRAZO_MIN_MESES}m</span>
+                  <span>{prazoMaximo}m</span>
+                </div>
+                <div className="sim-prazo-chips">
+                  {prazoOpcoes.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      className={`sim-prazo-chip${prazoMeses === m ? " selected" : ""}`}
+                      onClick={() => setPrazoMeses(m)}
+                    >
+                      {m} meses
+                    </button>
+                  ))}
+                </div>
+                <p className="sim-hint">
+                  Parcela estimada: <strong>{brl(parcelaMensal)}/mês</strong> (taxa {taxaAnual}% a.a.)
+                </p>
+                <div className="sim-actions">
+                  <button type="button" className="sim-btn-ghost" onClick={back}>← Voltar</button>
+                  <button type="button" className="sim-btn-primary" onClick={next}>Próximo →</button>
+                </div>
+              </>
+            )}
+
+            {step === 4 && (
               <>
                 <h2>Onde fica a obra?</h2>
                 <div className="sim-row">
@@ -158,10 +282,10 @@ export default function SimuladorPublicoPage() {
               </>
             )}
 
-            {step === 4 && (
+            {step === 5 && (
               <>
                 <h2>CNPJ da empresa (opcional)</h2>
-                <p className="sim-hint">Validação completa na API em breve. Por ora, simulação estimada.</p>
+                <p className="sim-hint">Ajuda o comercial a agilizar a análise de crédito.</p>
                 <label className="sim-field">
                   <span>CNPJ</span>
                   <input
@@ -178,22 +302,28 @@ export default function SimuladorPublicoPage() {
               </>
             )}
 
-            {step === 5 && (
+            {step === 6 && (
               <div className="sim-result">
                 <p className="sim-result-label">Você pode financiar até</p>
                 <p className="sim-result-value">{brl(valorFinanciavel)}</p>
-                <p className="sim-result-pct">{faseCfg.pct}% de {brl(valorObra)} · {faseCfg.label}</p>
+                <p className="sim-result-pct">
+                  {faseCfg.pct}% de {brl(valorObra)} · {faseCfg.label}
+                  {valorFinanciavelBruto > VALOR_MAX_EMPRESTIMO ? " · teto aplicado" : ""}
+                </p>
 
                 <div className="sim-metrics">
                   <div><span>Taxa</span><strong>{taxaAnual}% a.a.</strong></div>
                   <div><span>Prazo</span><strong>{prazoMeses} meses</strong></div>
-                  <div><span>Liberações</span><strong>{numParcelas} etapas</strong></div>
-                  <div><span>~ por etapa</span><strong>{brl(valorParcela)}</strong></div>
+                  <div><span>Parcela/mês</span><strong>{brl(parcelaMensal)}</strong></div>
+                  <div><span>Local</span><strong>{cidade} — {estado}</strong></div>
                 </div>
 
                 <p className="sim-disclaimer">Taxa indicativa. Valor final definido em comitê após KYC e due diligence.</p>
 
                 <div className="sim-actions sim-actions-col">
+                  <button type="button" className="sim-btn-wa sim-btn-lg" onClick={openWhatsApp}>
+                    <WaIcon size={18} /> Falar com comercial no WhatsApp
+                  </button>
                   <button
                     type="button"
                     className="sim-btn-primary sim-btn-lg"
@@ -201,13 +331,14 @@ export default function SimuladorPublicoPage() {
                       const q = new URLSearchParams({
                         valor: String(valorObra),
                         fase,
+                        prazo: String(prazoMeses),
                         estado,
                         cidade,
                       });
                       router.push(`/cadastro?${q.toString()}`);
                     }}
                   >
-                    Começar processo →
+                    Criar conta e continuar →
                   </button>
                   <Link href="/login?next=/dashboard/simulador" className="sim-link">
                     Já tenho conta — ver simulador completo
@@ -231,5 +362,14 @@ function LogoIcon({ size = 30 }: { size?: number }) {
     <div className="logo-icon sim-logo-icon-dark" style={{ width: size, height: size }}>
       <b /><b /><b /><b /><b /><b /><b /><b /><b />
     </div>
+  );
+}
+
+function WaIcon({ size = 26, color = "white" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.099 1.51 5.824L.057 23.776c-.07.266.166.502.432.432l5.968-1.453A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 01-5.002-1.367l-.359-.213-3.721.905.934-3.62-.233-.372A9.82 9.82 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z" />
+    </svg>
   );
 }

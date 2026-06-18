@@ -95,6 +95,48 @@
 .sim-metrics strong { font-size: 1rem; color: var(--ink); }
 
 .sim-disclaimer { font-size: 0.75rem; color: var(--gray-light); margin-bottom: 1.25rem; }
+.sim-hint-warn { color: #b45309; margin-top: -0.5rem; }
+
+.sim-prazo-display {
+  display: flex; align-items: baseline; justify-content: center; gap: 0.35rem;
+  margin: 1rem 0 0.75rem;
+}
+.sim-prazo-val {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 2.75rem; font-weight: 800; color: var(--royal); line-height: 1;
+}
+.sim-prazo-unit { font-size: 0.9rem; color: var(--gray); font-weight: 600; }
+
+.sim-range {
+  width: 100%; height: 6px; accent-color: var(--royal);
+  margin: 0.5rem 0 0.25rem; cursor: pointer;
+}
+.sim-range-labels {
+  display: flex; justify-content: space-between;
+  font-size: 0.72rem; color: var(--gray-light); margin-bottom: 1rem;
+}
+.sim-prazo-chips {
+  display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;
+}
+.sim-prazo-chip {
+  font-family: inherit; font-size: 0.78rem; font-weight: 600;
+  padding: 0.45rem 0.75rem; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--gray); cursor: pointer; transition: all 0.15s;
+}
+.sim-prazo-chip.selected {
+  border-color: var(--royal); background: var(--royal-pale); color: var(--royal);
+}
+
+.sim-btn-wa {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-family: inherit; font-size: 0.95rem; font-weight: 600; border-radius: 10px;
+  padding: 0.9rem 1.5rem; cursor: pointer; border: none;
+  background: #128C7E; color: white; width: 100%;
+  transition: background 0.15s;
+}
+.sim-btn-wa:hover { background: #0d7268; }
+
 .sim-link { display: block; text-align: center; font-size: 0.82rem; color: var(--royal); text-decoration: none; margin-top: 0.75rem; }
 .sim-foot { text-align: center; margin-top: 1.5rem; }
 .sim-foot a { color: rgba(255,255,255,0.65); font-size: 0.85rem; text-decoration: none; }
