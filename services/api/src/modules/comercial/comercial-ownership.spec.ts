@@ -51,6 +51,24 @@ describe("ComercialService – listarLeads scoping", () => {
       expect.objectContaining({ where: expect.not.objectContaining({ usuarioId: expect.anything() }) })
     );
   });
+
+  it("pre-scopes conversionScore query by lead owner when scoreMin filter is active", async () => {
+    mockPrisma.conversionScore.findMany.mockResolvedValue([]);
+    await makeService().listarLeads(20, 0, { scoreMin: 50 }, ownerId);
+    expect(mockPrisma.conversionScore.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ lead: { usuarioId: ownerId } }),
+      })
+    );
+  });
+
+  it("does NOT scope conversionScore query for ADMIN (scopeUserId undefined)", async () => {
+    mockPrisma.conversionScore.findMany.mockResolvedValue([]);
+    await makeService().listarLeads(20, 0, { scoreMax: 80 }, undefined);
+    expect(mockPrisma.conversionScore.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: undefined })
+    );
+  });
 });
 
 // ─────────────────────────────────────────────

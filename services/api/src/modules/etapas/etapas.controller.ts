@@ -1,10 +1,13 @@
-import { Controller, Get, Patch, Param, Body, UseGuards } from "@nestjs/common";
+import { Controller, Get, Patch, Param, Body, UseGuards, BadRequestException } from "@nestjs/common";
 import { EtapasService } from "./etapas.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { MANAGER_ROLES } from "../../common/constants/manager-roles";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { z } from "zod";
+
+const EtapaStatusSchema = z.enum(["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA", "REPROVADA", "CONCLUIDA"]);
 
 @UseGuards(JwtAuthGuard)
 @Controller("etapas")
@@ -29,6 +32,8 @@ export class EtapasController {
 
   @Patch(":id/status")
   status(@Param("id") id: string, @Body("status") status: string, @UsuarioAtual() u: IUsuario) {
-    return this.etapas.atualizarStatus(id, status, u.id, u.tipo);
+    const parsed = EtapaStatusSchema.safeParse(status);
+    if (!parsed.success) throw new BadRequestException("Status inválido.");
+    return this.etapas.atualizarStatus(id, parsed.data, u.id, u.tipo);
   }
 }

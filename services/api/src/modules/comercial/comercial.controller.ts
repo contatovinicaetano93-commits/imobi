@@ -12,6 +12,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from '../../common/decorators/usuario-atual.decorator';
+import { ZodPipe } from '../../common/pipes/zod.pipe';
+import { CreateLeadSchema, AddLeadActivitySchema } from '@imbobi/schemas';
+import type { CreateLeadInput, AddLeadActivityInput } from '@imbobi/schemas';
 
 @Controller('comercial')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -60,7 +63,7 @@ export class ComercialController {
   }
 
   @Post('leads')
-  async createLead(@UsuarioAtual() u: IUsuario, @Body() data: any) {
+  async createLead(@UsuarioAtual() u: IUsuario, @Body(new ZodPipe(CreateLeadSchema)) data: CreateLeadInput) {
     return this.comercialService.criarLead(u.id, data);
   }
 
@@ -79,7 +82,7 @@ export class ComercialController {
   @Post('leads/:leadId/atividades')
   async addActivity(
     @Param('leadId') leadId: string,
-    @Body() data: any,
+    @Body(new ZodPipe(AddLeadActivitySchema)) data: AddLeadActivityInput,
     @UsuarioAtual() u: IUsuario
   ) {
     const scopeUserId = u.tipo === 'ADMIN' ? undefined : u.id;
