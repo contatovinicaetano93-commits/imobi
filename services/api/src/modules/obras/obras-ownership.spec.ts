@@ -54,13 +54,12 @@ describe("ObrasService – ownership & RBAC", () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it("throws ForbiddenException when GESTOR (not owner) accesses the obra", async () => {
-      await expect(
-        service.buscar({ id: "gestor-id", tipo: "GESTOR" }, "obra-1"),
-      ).rejects.toThrow(ForbiddenException);
+    it("allows GESTOR to retrieve any obra regardless of ownership (fund oversight)", async () => {
+      const result = await service.buscar({ id: "gestor-id", tipo: "GESTOR" }, "obra-1");
+      expect(result).toEqual(obraRecord);
     });
 
-    it("throws ForbiddenException when ENGENHEIRO (not owner) accesses the obra", async () => {
+    it("throws ForbiddenException when ENGENHEIRO (not owner) accesses the obra directly", async () => {
       await expect(
         service.buscar({ id: "eng-id", tipo: "ENGENHEIRO" }, "obra-1"),
       ).rejects.toThrow(ForbiddenException);
@@ -96,6 +95,12 @@ describe("ObrasService – ownership & RBAC", () => {
       mockPrisma.etapaObra.findMany.mockResolvedValue([]);
       const pct = await service.progressoGeral({ id: "admin-id", tipo: "ADMIN" }, "obra-1");
       expect(pct).toBe(0);
+    });
+
+    it("allows GESTOR to see progress of any obra (fund oversight)", async () => {
+      mockPrisma.etapaObra.findMany.mockResolvedValue([{ status: "CONCLUIDA", percentualObra: 100 }]);
+      const pct = await service.progressoGeral({ id: "gestor-id", tipo: "GESTOR" }, "obra-1");
+      expect(pct).toBe(100);
     });
 
     it("returns 0 when there are no etapas", async () => {

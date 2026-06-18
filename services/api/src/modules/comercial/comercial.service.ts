@@ -136,8 +136,8 @@ export class ComercialService {
     return { ...lead, score };
   }
 
-  async listarLeads(limit = 20, offset = 0, filters?: any) {
-    const where: any = {};
+  async listarLeads(limit = 20, offset = 0, filters?: any, scopeUserId?: string) {
+    const where: any = scopeUserId ? { usuarioId: scopeUserId } : {};
 
     if (filters?.stageId) where.stageId = filters.stageId;
     if (filters?.fonte) where.fonte = filters.fonte;
@@ -231,21 +231,29 @@ export class ComercialService {
     return { activity, updatedScore: score };
   }
 
-  async obterDashboardStats() {
-    const totalLeads = await this.prisma.lead.count();
+  async obterDashboardStats(scopeUserId?: string) {
+    const userFilter = scopeUserId ? { usuarioId: scopeUserId } : {};
+
+    const totalLeads = await this.prisma.lead.count({ where: userFilter });
 
     const dataHoje = new Date();
     dataHoje.setHours(0, 0, 0, 0);
 
     const leadsThisWeek = await this.prisma.lead.count({
       where: {
+        ...userFilter,
         criadoEm: {
           gte: new Date(dataHoje.getTime() - 7 * 24 * 60 * 60 * 1000),
         },
       },
     });
 
+    const leadsIds = scopeUserId
+      ? (await this.prisma.lead.findMany({ where: userFilter, select: { leadId: true } })).map((l) => l.leadId)
+      : undefined;
+
     const allScores = await this.prisma.conversionScore.findMany({
+      where: leadsIds ? { leadId: { in: leadsIds } } : undefined,
       select: { scoreFinal: true },
     });
 
@@ -259,6 +267,7 @@ export class ComercialService {
 
     const highScoreLeads = await this.prisma.lead.count({
       where: {
+        ...userFilter,
         scoreHistorico: {
           some: { scoreFinal: { gte: 70 } },
         },

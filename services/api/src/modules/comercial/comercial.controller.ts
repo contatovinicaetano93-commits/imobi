@@ -15,7 +15,7 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from '../../common/decora
 
 @Controller('comercial')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('COMERCIAL', 'ADMIN')
+@Roles('COMERCIAL', 'PARCEIRO', 'ADMIN')
 export class ComercialController {
   constructor(private readonly comercialService: ComercialService) {}
 
@@ -25,12 +25,13 @@ export class ComercialController {
   }
 
   @Get('dashboard/stats')
-  async getDashboardStats() {
-    return this.comercialService.obterDashboardStats();
+  async getDashboardStats(@UsuarioAtual() u: IUsuario) {
+    return this.comercialService.obterDashboardStats(u.tipo === 'ADMIN' ? undefined : u.id);
   }
 
   @Get('leads')
   async listLeads(
+    @UsuarioAtual() u: IUsuario,
     @Query('limit') limit = '20',
     @Query('offset') offset = '0',
     @Query('stageId') stageId?: string,
@@ -49,10 +50,12 @@ export class ComercialController {
       searchTerm,
     };
 
+    const scopeUserId = u.tipo === 'ADMIN' ? undefined : u.id;
     return this.comercialService.listarLeads(
       parseInt(limit),
       parseInt(offset),
-      filters
+      filters,
+      scopeUserId
     );
   }
 

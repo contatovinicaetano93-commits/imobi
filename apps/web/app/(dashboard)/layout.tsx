@@ -41,7 +41,6 @@ const NAV: NavItem[] = [
   { label: "Carteira",      href: "/dashboard/fundos",                   icon: Banknote,    roles: ["GESTOR"] },
   { label: "Relatórios",    href: "/dashboard/relatorios",               icon: BarChart3,   roles: ["GESTOR"] },
   { label: "Painel",        href: "/dashboard/engenheiro",               icon: Home,        roles: ["ENGENHEIRO","GESTOR_OBRA"], section: "geral" },
-  { label: "Minhas Obras",  href: "/dashboard/obras",                    icon: HardHat,     roles: ["ENGENHEIRO","GESTOR_OBRA"] },
   { label: "Vistoria",      href: "/dashboard/engenheiro/vistoria",      icon: MapPin,      roles: ["ENGENHEIRO","GESTOR_OBRA"] },
   { label: "Checklist",     href: "/dashboard/engenheiro/checklist",     icon: FileCheck2,  roles: ["ENGENHEIRO","GESTOR_OBRA"] },
   { label: "Alertas",       href: "/dashboard/engenheiro/alertas",       icon: Bell,        roles: ["ENGENHEIRO","GESTOR_OBRA"] },

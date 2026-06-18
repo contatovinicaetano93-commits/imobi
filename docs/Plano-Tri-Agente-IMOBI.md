@@ -80,19 +80,40 @@ Utilitários de normalização: `services/api/src/common/constants/manager-roles
 |---|---|
 | `.github/workflows/ci-cd.yml` | Adicionado job `unit-tests` (Stage 1b) que roda todos os testes unitários RBAC sem DB/Redis. E2E step atualizado para cobrir `rbac-cross-user.e2e` + `due-diligence.e2e` + `auth.e2e`. Job `status` aguarda `unit-tests`. |
 
+## Trabalho Concluído (Agente Backend — Rodada 2)
+
+### Correções de Segurança adicionais
+
+| Arquivo | Problema | Correção |
+|---|---|---|
+| `services/api/src/modules/obras/obras.service.ts` | `buscar` e `progressoGeral` só bypasses para ADMIN, bloqueando GESTOR que tem supervisão do fundo | Adicionado `usuario.tipo === "GESTOR"` ao check de privileged |
+| `services/api/src/modules/comercial/comercial.controller.ts` | `@Roles('COMERCIAL','ADMIN')` — PARCEIRO bloqueado mesmo tendo acesso ao painel; `listarLeads` sem escopo por usuário | Adicionado `'PARCEIRO'`; `listarLeads` e `obterDashboardStats` agora recebem `scopeUserId` (ADMIN vê tudo, outros veem apenas os próprios) |
+| `services/api/src/modules/comercial/comercial.service.ts` | `listarLeads` e `obterDashboardStats` sem filtro por usuário | Parâmetro `scopeUserId?: string` adicionado em ambos |
+
+### Decisões de Arquitetura Documentadas
+
+| Área | Decisão |
+|---|---|
+| `comercial.listarLeads` | **Scoped por usuário** para COMERCIAL/PARCEIRO (cada um vê seus leads); ADMIN vê todos. Era CRM-pool, agora é least-privilege. |
+| `engenheiros.etapasDaObra()` | **Fund-wide por design** — igual a `financeiro()` e `listarVisitas()`. Engenheiro vê qualquer obra para vistoria. |
+| `admin.atualizarUsuario()` | Já protegido: admin não pode bloquear/rebaixar a própria conta (`id === adminId`). Modificar outro ADMIN é função legítima. |
+| `obras.buscar` para ENGENHEIRO | **Bloqueado** (só ADMIN + GESTOR podem bypass). ENGENHEIRO acessa etapas via `/engenheiros/obras/:id/etapas`. |
+| `kyc` module | Bem seguro — endpoints do tomador scoped por `u.id`; aprovação/rejeição requer `MANAGER_ROLES`. |
+
+### Testes Unitários (total acumulado)
+
+**98 testes unitários passando** (obras-ownership.spec.ts atualizado: GESTOR agora permitido, +1 test para progressoGeral)
+
 ## Próximos Passos
 
 ### Agente Backend
-- [ ] Auditar se COMERCIAL/PARCEIRO precisa de endpoints próprios ou herda acesso de algum perfil
-- [ ] `comercial`: `listarLeads` retorna todos os leads sem filtrar por `usuarioId` — confirmar se é CRM compartilhado (intencional) ou gap de ownership
-- [ ] `engenheiros.service.ts` `etapasDaObra()`: sem verificação de atribuição — aceitar como fund-wide (igual a `financeiro()`) ou restringir por obra?
-- [ ] Rever se `obras.buscar` deve permitir GESTOR (além de ADMIN) para acesso cross-user
+- [ ] Verificar se admin pode criar usuário com `tipo = ADMIN` via `POST /admin/usuarios` — se sim, proteger para requerer confirmação adicional ou logar auditoria
 
 ### Agente Frontend / Mobile
-- [ ] Garantir que o cliente não exiba opções de menu para perfis sem permissão (ex: link `/manager` visível para TOMADOR)
+- [ ] Nav "Minhas Obras" aparece para ENGENHEIRO mas retorna lista vazia (obras scoped por userId); considerar remover esse item de nav para ENGENHEIRO ou redirecionar para `/engenheiro/vistoria`
 
 ### DevOps / Infra
-- [ ] Configurar `.env.test` com Postgres e Redis para CI (já há infraestrutura; falta o arquivo de segredos)
+- [ ] Configurar `.env.test` com Postgres e Redis para CI (já há infraestrutura no ci-cd.yml; falta o arquivo de segredos)
 - [ ] Verificar se `docker-compose.test.yml` existe para o job `e2e-tests.yml`
 
 ---
