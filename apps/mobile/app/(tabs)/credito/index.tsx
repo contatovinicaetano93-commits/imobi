@@ -1,12 +1,30 @@
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
 import { useSimuladorCredito } from "@imbobi/core/hooks";
 import { formatarBRL, formatarPercentual } from "@imbobi/core";
-import { useState } from "react";
 import Slider from "@react-native-community/slider";
+import { useMobileTabAccess } from "../../../lib/rbac";
 
 export default function CreditoScreen() {
+  const { loadingRole, canAccess } = useMobileTabAccess("credito");
   const { valorSolicitado, setValorSolicitado, prazoMeses, setPrazoMeses, resultado } =
     useSimuladorCredito();
+
+  if (loadingRole) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#16a34a" />
+      </View>
+    );
+  }
+
+  if (!canAccess) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.accessTitle}>Sem acesso a credito</Text>
+        <Text style={styles.accessText}>Este perfil nao possui permissao para simulacao de credito no app.</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
@@ -71,6 +89,9 @@ function ResultRow({ label, value, big }: { label: string; value: string; big?: 
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: "#f9fafb" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#f9fafb" },
+  accessTitle: { fontSize: 18, fontWeight: "700", color: "#111827", marginBottom: 8 },
+  accessText: { color: "#6b7280", fontSize: 14, textAlign: "center", paddingHorizontal: 32 },
   container: { padding: 20, paddingTop: 56, gap: 20 },
   title: { fontSize: 24, fontWeight: "700", color: "#111827" },
   sliderBlock: { backgroundColor: "#fff", borderRadius: 16, padding: 16, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8 },

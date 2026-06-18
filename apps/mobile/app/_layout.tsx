@@ -4,20 +4,20 @@ import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useRouter, useSegments } from "expo-router";
 import { setOnUnauthorized } from "../lib/api";
-
-type RootLayoutProps = {
-  children?: React.ReactNode;
-};
+import { getMobileRoleHome, normalizeUserRole, type AppRole } from "@imbobi/schemas";
 
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [isLoading, setIsLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [role, setRole] = useState<AppRole | null>(null);
 
   useEffect(() => {
     setOnUnauthorized(() => {
       setIsSignedIn(false);
+      setRole(null);
+      SecureStore.deleteItemAsync("userRole").catch(() => {});
     });
   }, []);
 
@@ -25,7 +25,9 @@ export default function RootLayout() {
     const bootstrapAsync = async () => {
       try {
         const token = await SecureStore.getItemAsync("accessToken");
+        const storedRole = normalizeUserRole(await SecureStore.getItemAsync("userRole"));
         setIsSignedIn(!!token);
+        setRole(storedRole);
       } catch (e) {
         console.error("Failed to restore token", e);
       } finally {
@@ -44,11 +46,11 @@ export default function RootLayout() {
     const onWelcome    = segments.length === 0;
 
     if (isSignedIn && (inAuthGroup || onWelcome)) {
-      router.replace("/(tabs)/obras");
+      router.replace(getMobileRoleHome(role) as any);
     } else if (!isSignedIn && inTabsGroup) {
       router.replace("/");
     }
-  }, [isSignedIn, isLoading, segments]);
+  }, [isSignedIn, isLoading, role, segments]);
 
   if (isLoading) {
     return (

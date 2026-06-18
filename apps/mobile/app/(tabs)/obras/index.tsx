@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { obrasApi, type Obra } from "../../../lib/api";
+import { useMobileTabAccess } from "../../../lib/rbac";
 
 const STATUS_LABEL: Record<string, string> = {
   PLANEJAMENTO: "Planejamento",
@@ -13,6 +14,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function ObrasScreen() {
   const router = useRouter();
+  const { loadingRole, canAccess } = useMobileTabAccess("obras");
   const [obras, setObras] = useState<Obra[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -28,9 +30,25 @@ export default function ObrasScreen() {
     }
   };
 
-  useEffect(() => { carregar().finally(() => setLoading(false)); }, []);
+  useEffect(() => {
+    if (loadingRole) return;
+    if (!canAccess) {
+      setLoading(false);
+      return;
+    }
+    carregar().finally(() => setLoading(false));
+  }, [loadingRole, canAccess]);
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
+  if (loadingRole || loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
+
+  if (!canAccess) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.accessTitle}>Sem acesso a obras</Text>
+        <Text style={styles.accessText}>Este perfil nao possui permissao para o modulo de obras no app.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -70,6 +88,8 @@ export default function ObrasScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafb", padding: 16, paddingTop: 56 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  accessTitle: { fontSize: 18, fontWeight: "700", color: "#111827", marginBottom: 8 },
+  accessText: { color: "#6b7280", fontSize: 14, textAlign: "center", paddingHorizontal: 32 },
   title: { fontSize: 22, fontWeight: "700", color: "#111827", marginBottom: 16 },
   error: { color: "#dc2626", fontSize: 14, marginBottom: 12 },
   empty: { alignItems: "center", paddingVertical: 48 },

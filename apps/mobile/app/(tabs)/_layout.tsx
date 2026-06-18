@@ -1,7 +1,24 @@
+import { useEffect, useState } from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import * as SecureStore from "expo-secure-store";
+import { normalizeUserRole, roleCanAccessMobileTab, type AppRole } from "@imbobi/schemas";
 
 export default function TabLayout() {
+  const [role, setRole] = useState<AppRole | null>(null);
+  const [roleLoaded, setRoleLoaded] = useState(false);
+
+  useEffect(() => {
+    SecureStore.getItemAsync("userRole")
+      .then((storedRole) => setRole(normalizeUserRole(storedRole)))
+      .finally(() => setRoleLoaded(true));
+  }, []);
+
+  const canShowTab = (tab: "obras" | "credito" | "perfil") => {
+    if (!roleLoaded) return true;
+    return roleCanAccessMobileTab(role, tab);
+  };
+
   return (
     <Tabs
       screenOptions={{
@@ -24,6 +41,7 @@ export default function TabLayout() {
         name="obras/index"
         options={{
           title: "Obras",
+          href: canShowTab("obras") ? undefined : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
@@ -33,6 +51,7 @@ export default function TabLayout() {
         name="credito/index"
         options={{
           title: "Crédito",
+          href: canShowTab("credito") ? undefined : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calculator" size={size} color={color} />
           ),
@@ -42,6 +61,7 @@ export default function TabLayout() {
         name="perfil/index"
         options={{
           title: "Perfil",
+          href: canShowTab("perfil") ? undefined : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),

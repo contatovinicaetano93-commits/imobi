@@ -3,7 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { LoginSchema, type LoginInput } from "@imbobi/schemas";
+import { getMobileRoleHome, LoginSchema, normalizeUserRole, type LoginInput } from "@imbobi/schemas";
 import { apiClient } from "@imbobi/core";
 
 export default function LoginScreen() {
@@ -14,13 +14,19 @@ export default function LoginScreen() {
 
   const onSubmit = async (data: LoginInput) => {
     try {
-      const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
+      const res = await apiClient.post<{
+        accessToken: string;
+        refreshToken: string;
+        usuario?: { tipo?: string | null };
+      }>(
         "/auth/login",
         data
       );
+      const role = normalizeUserRole(res.usuario?.tipo ?? null);
       await SecureStore.setItemAsync("accessToken", res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
-      router.replace("/(tabs)/obras");
+      if (role) await SecureStore.setItemAsync("userRole", role);
+      router.replace(getMobileRoleHome(role) as any);
     } catch (e: any) {
       Alert.alert("Erro de autenticação", e.message ?? "E-mail ou senha inválidos.");
     }

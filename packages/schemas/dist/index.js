@@ -15,6 +15,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./usuario.schema"), exports);
+__exportStar(require("./rbac"), exports);
 __exportStar(require("./credito.schema"), exports);
 __exportStar(require("./obra.schema"), exports);
 __exportStar(require("./evidencia.schema"), exports);

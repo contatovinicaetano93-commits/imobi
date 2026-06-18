@@ -1,4 +1,4 @@
-import { ROLE_HOME } from "@/lib/role-permissions";
+import { ROLE_HOME, getRoleHome } from "@/lib/role-permissions";
 
 export { ROLE_HOME };
 
@@ -10,6 +10,6 @@ export function redirectAfterLogin(role: string, next?: string | null): void {
   const dest =
     next && next.startsWith("/") && !next.startsWith("//")
       ? next
-      : ROLE_HOME[role] ?? "/dashboard";
+      : getRoleHome(role, "/dashboard");
   setTimeout(() => window.location.assign(dest), 100);
 }

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { decodeJwtPayload } from "@/lib/decode-jwt-payload";
-import { ROLE_HOME, normalizeRole } from "@/lib/role-permissions";
+import { WEB_ROUTE_RULES, getRoleHome, normalizeRole, roleCanAccess } from "@/lib/role-permissions";
 
 const PUBLIC_PATHS = [
   "/",
@@ -15,22 +15,6 @@ const PUBLIC_PATHS = [
   "/api/proxy/auth",
   "/api/proxy/health",
   "/web-api/auth",
-];
-
-const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
-  { prefix: "/dashboard/admin",      roles: ["ADMIN"] },
-  { prefix: "/dashboard/gestor",     roles: ["GESTOR", "ADMIN"] },
-  { prefix: "/dashboard/fundos",     roles: ["GESTOR", "ADMIN"] },
-  { prefix: "/dashboard/relatorios", roles: ["GESTOR", "ADMIN"] },
-  { prefix: "/dashboard/engenheiro", roles: ["ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
-  { prefix: "/dashboard/comercial",  roles: ["COMERCIAL", "PARCEIRO", "ADMIN"] },
-  { prefix: "/dashboard/construtor", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
-  { prefix: "/dashboard/credito",    roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
-  { prefix: "/dashboard/obras",      roles: ["CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
-  { prefix: "/dashboard/kyc",        roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
-  { prefix: "/dashboard/score",      roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
-  { prefix: "/dashboard/simulador",  roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
-  { prefix: "/dashboard/comite",     roles: ["CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
 ];
 
 function decodeJwt(token: string): { role?: string; exp?: number } | null {
@@ -70,9 +54,9 @@ export function middleware(request: NextRequest) {
 
   const role = jwt.role ?? normalizeRole(request.cookies.get("session_role")?.value) ?? null;
 
-  const rule = ROLE_RULES.find((r) => pathname === r.prefix || pathname.startsWith(r.prefix + "/"));
-  if (rule && (!role || !rule.roles.includes(role))) {
-    const home = role ? (ROLE_HOME[role] ?? "/dashboard") : "/dashboard";
+  const rule = WEB_ROUTE_RULES.find((r) => pathname === r.prefix || pathname.startsWith(r.prefix + "/"));
+  if (rule && !roleCanAccess(role, rule.roles)) {
+    const home = getRoleHome(role, "/dashboard");
     return NextResponse.redirect(new URL(home, request.url));
   }
 

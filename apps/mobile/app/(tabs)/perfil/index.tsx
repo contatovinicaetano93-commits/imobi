@@ -2,7 +2,13 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { ROLE_LABELS, normalizeUserRole } from "@imbobi/schemas";
 import { usuariosApi, authApi, type UsuarioPerfil } from "../../../lib/api";
+
+function getRoleLabel(role: string): string {
+  const normalizedRole = normalizeUserRole(role);
+  return normalizedRole ? ROLE_LABELS[normalizedRole] : role;
+}
 
 export default function PerfilScreen() {
   const router = useRouter();
@@ -46,6 +52,7 @@ export default function PerfilScreen() {
           } finally {
             await SecureStore.deleteItemAsync("accessToken");
             await SecureStore.deleteItemAsync("refreshToken");
+            await SecureStore.deleteItemAsync("userRole");
             router.replace("/(auth)/login");
           }
         },
@@ -98,13 +105,7 @@ export default function PerfilScreen() {
 
             <View style={styles.infoRow}>
               <Text style={styles.label}>Tipo de Usuário</Text>
-              <Text style={styles.value}>
-                {usuario.tipo === "TOMADOR"
-                  ? "Tomador"
-                  : usuario.tipo === "GESTOR_OBRA"
-                  ? "Gestor de Obra"
-                  : usuario.tipo}
-              </Text>
+              <Text style={styles.value}>{getRoleLabel(usuario.tipo)}</Text>
             </View>
           </View>
 
