@@ -145,7 +145,7 @@ Status atual:
     - `/dashboard/admin`.
 - validacao focada:
   - `pnpm --filter @imbobi/api test -- --runInBand src/common/rbac.spec.ts src/common/guards/roles.guard.spec.ts src/common/web-route-rbac.spec.ts`
-  - resultado: 3 suites, 32 testes passando.
+  - resultado: 3 suites, 33 testes passando.
 
 Concluido:
 
