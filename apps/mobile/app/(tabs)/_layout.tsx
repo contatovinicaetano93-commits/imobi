@@ -47,6 +47,8 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="documentos/index" options={{ href: null }} />
+      <Tabs.Screen name="notificacoes/index" options={{ href: null }} />
     </Tabs>
   );
 }

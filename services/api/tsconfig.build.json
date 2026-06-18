@@ -1,8 +1,9 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "rootDir": "./src",
+    "declaration": false,
     "paths": {
-      "@imbobi/*": ["../../packages/*/src"],
       "@/*": ["src/*"]
     }
   },

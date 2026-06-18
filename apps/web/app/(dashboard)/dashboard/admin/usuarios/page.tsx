@@ -29,8 +29,8 @@ type UsuarioAdmin = {
 
 const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; icon: LucideIcon }> = {
   ADMIN:        { label: "Admin",         color: NAVY,      bg: "rgba(12,26,61,0.07)",  icon: Shield },
-  GESTOR:       { label: "Gestor",        color: ROYAL,     bg: "rgba(27,79,216,0.08)", icon: Shield },
-  GESTOR_FUNDO: { label: "Gestor Fundo",  color: "#7c3aed", bg: "#f5f3ff",              icon: Shield },
+  GESTOR:       { label: "Gestor de Fundo", color: ROYAL,     bg: "rgba(27,79,216,0.08)", icon: Shield },
+  GESTOR_FUNDO: { label: "Gestor de Fundo", color: ROYAL,     bg: "rgba(27,79,216,0.08)", icon: Shield },
   ENGENHEIRO:   { label: "Engenheiro",    color: "#0369a1", bg: "#f0f9ff",              icon: Wrench },
   TOMADOR:      { label: "Tomador",       color: "#16a34a", bg: "#f0fdf4",              icon: Building2 },
   COMERCIAL:    { label: "Comercial",     color: "#d97706", bg: "#fffbeb",              icon: User },
@@ -52,9 +52,9 @@ const FUNCAO_LABELS: Record<string, string> = {
   "kyc":           "Documentos (KYC)",
   "notificacoes":  "Notificações",
   "engenharia":    "Painel Engenharia",
-  "gestor":        "Painel Gestor",
+  "gestor":        "Operações (Gestor)",
   "due-diligence": "Due Diligence",
-  "fundos":        "Fundos",
+  "fundos":        "Portfolio",
   "relatorios":    "Relatórios",
   "comercial":     "Painel Comercial",
   "construtor":    "Painel Construtor",
@@ -62,7 +62,8 @@ const FUNCAO_LABELS: Record<string, string> = {
 
 const FUNCOES_POR_TIPO: Record<string, string[]> = {
   TOMADOR:    ["obras", "credito", "simulador", "score", "kyc", "notificacoes"],
-  GESTOR:     ["gestor", "due-diligence", "fundos", "relatorios", "notificacoes"],
+  GESTOR:       ["gestor", "due-diligence", "fundos", "relatorios", "notificacoes"],
+  GESTOR_FUNDO: ["gestor", "due-diligence", "fundos", "relatorios", "notificacoes"],
   ENGENHEIRO: ["engenharia", "notificacoes"],
   COMERCIAL:  ["comercial", "notificacoes"],
   CONSTRUTOR: ["obras", "construtor", "notificacoes"],

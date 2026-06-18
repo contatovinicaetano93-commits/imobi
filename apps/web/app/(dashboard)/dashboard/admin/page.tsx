@@ -68,7 +68,7 @@ const DEMO = {
   },
   credenciais: [
     { role: "ADMIN",      email: "admin1@test.com",      senha: "TestPassword123", label: "Administrador" },
-    { role: "GESTOR",     email: "fundo@test.com",       senha: "TestPassword123", label: "Fundo" },
+    { role: "GESTOR",     email: "fundo@test.com",       senha: "TestPassword123", label: "Gestor de Fundo" },
     { role: "ENGENHEIRO", email: "engenheiro@test.com",  senha: "TestPassword123", label: "Engenheiro" },
     { role: "COMERCIAL",  email: "comercial@test.com",   senha: "TestPassword123", label: "Comercial" },
     { role: "CONSTRUTOR", email: "construtor@test.com",  senha: "TestPassword123", label: "Construtor" },
@@ -849,7 +849,7 @@ export default function AdminPage() {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "0.85rem 1.25rem" }}>
           {[
             { label: "Admin",      role: "ADMIN",      href: "/dashboard/admin",      color: NAVY,      bg: "rgba(12,26,61,0.06)"  },
-            { label: "Fundo",      role: "GESTOR",     href: "/dashboard/gestor",     color: ROYAL,     bg: "rgba(27,79,216,0.07)" },
+            { label: "Gestor de Fundo", role: "GESTOR",     href: "/dashboard/gestor",     color: ROYAL,     bg: "rgba(27,79,216,0.07)" },
             { label: "Engenheiro", role: "ENGENHEIRO", href: "/dashboard/engenheiro", color: "#ea580c", bg: "rgba(234,88,12,0.07)"  },
             { label: "Comercial",  role: "COMERCIAL",  href: "/dashboard/comercial",  color: "#7c3aed", bg: "rgba(124,58,237,0.07)" },
             { label: "Construtor", role: "TOMADOR",    href: "/dashboard/construtor", color: "#16a34a", bg: "rgba(22,163,74,0.07)"  },

@@ -3,6 +3,7 @@ import { jwtVerify } from "jose";
 
 const PUBLIC_PATHS = [
   "/",
+  "/simulador",
   "/login",
   "/cadastro",
   "/esqueceu-senha",
@@ -17,8 +18,7 @@ const PUBLIC_PATHS = [
 const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: "/dashboard/admin",      roles: ["ADMIN"] },
   { prefix: "/dashboard/gestor",     roles: ["GESTOR", "ADMIN"] },
-  { prefix: "/dashboard/fundos",     roles: ["GESTOR", "GESTOR_FUNDO", "ADMIN"] },
-  { prefix: "/dashboard/relatorios", roles: ["GESTOR", "GESTOR_FUNDO", "ADMIN"] },
+  { prefix: "/dashboard/relatorios", roles: ["GESTOR", "ADMIN"] },
   { prefix: "/dashboard/engenheiro", roles: ["ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
   { prefix: "/dashboard/comercial",  roles: ["COMERCIAL", "PARCEIRO", "ADMIN"] },
   { prefix: "/dashboard/construtor", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
@@ -29,6 +29,13 @@ const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: "/dashboard/simulador",  roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
   { prefix: "/dashboard/comite",     roles: ["CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
 ];
+
+/** GESTOR_FUNDO is legacy — same persona as GESTOR (Gestor de Fundo). */
+function normalizeRole(role: string | null): string | null {
+  if (!role) return null;
+  if (role === "GESTOR_FUNDO") return "GESTOR";
+  return role;
+}
 
 async function verifyJwt(
   token: string,
@@ -78,7 +85,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const role = (jwt as Record<string, unknown>).role as string ?? null;
+  const role = normalizeRole((jwt as Record<string, unknown>).role as string ?? null);
+
+  if (pathname === "/dashboard/fundos" || pathname.startsWith("/dashboard/fundos/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/dashboard\/fundos/, "/dashboard/gestor/fundos");
+    return NextResponse.redirect(url);
+  }
 
   // Role-gated routes: wrong role → back to their own dashboard root
   const rule = ROLE_RULES.find((r) => pathname === r.prefix || pathname.startsWith(r.prefix + "/"));

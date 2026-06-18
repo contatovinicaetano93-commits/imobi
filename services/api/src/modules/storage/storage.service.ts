@@ -33,7 +33,7 @@ export class StorageService {
 
   async getSignedUrl(key: string, expiresIn = 3600) {
     return getSignedUrl(
-      this.s3,
+      this.s3 as Parameters<typeof getSignedUrl>[0],
       new GetObjectCommand({ Bucket: this.bucket, Key: key }),
       { expiresIn }
     );

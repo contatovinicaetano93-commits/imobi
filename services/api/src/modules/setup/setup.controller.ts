@@ -54,7 +54,7 @@ export class SetupController {
     const mapa: Record<string, string> = {
       ADMIN:      "/dashboard/admin",
       GESTOR:       "/dashboard/gestor",
-      GESTOR_FUNDO: "/dashboard/fundos",
+      GESTOR_FUNDO: "/dashboard/gestor",
       ENGENHEIRO: "/dashboard/engenheiro",
       COMERCIAL:  "/dashboard/comercial",
       CONSTRUTOR: "/dashboard/construtor",

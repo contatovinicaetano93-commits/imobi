@@ -19,7 +19,8 @@ const USER_TYPE_MAP: Record<string, string> = {
   TOMADOR:     "Tomador de Crédito",
   GESTOR_OBRA: "Gestor de Obra",
   ADMIN:       "Administrador",
-  PARCEIRO:    "Parceiro",
+  GESTOR:       "Gestor de Fundo",
+  GESTOR_FUNDO: "Gestor de Fundo",
 };
 
 export default async function PerfilPage() {

@@ -30,12 +30,12 @@ const NAV: NavItem[] = [
   { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "simulador" },
   { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "score" },
   { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "kyc" },
-  { label: "Painel",        href: "/dashboard/gestor",                  icon: Banknote,    roles: ["GESTOR"],        section: "geral",  funcao: "gestor" },
+  { label: "Operações",     href: "/dashboard/gestor",                  icon: Banknote,    roles: ["GESTOR"],        section: "geral",  funcao: "gestor" },
   { label: "Comitês",       href: "/dashboard/gestor/comite",           icon: Vote,        roles: ["GESTOR"],                          funcao: "gestor" },
   { label: "Etapas",        href: "/dashboard/gestor/etapas",           icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "gestor" },
   { label: "KYC",           href: "/dashboard/gestor/kyc",              icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "kyc" },
   { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2, roles: ["GESTOR"],                          funcao: "due-diligence" },
-  { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["GESTOR"],                          funcao: "fundos" },
+  { label: "Portfolio",     href: "/dashboard/gestor/fundos",           icon: Banknote,    roles: ["GESTOR"],                          funcao: "fundos" },
   { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["GESTOR"],                          funcao: "relatorios" },
   { label: "Engenharia",    href: "/dashboard/engenheiro",              icon: Wrench,      roles: ["ENGENHEIRO","GESTOR_OBRA"], section: "geral", funcao: "engenharia" },
   { label: "Pareceres",     href: "/dashboard/engenheiro/comite",       icon: Vote,        roles: ["ENGENHEIRO","GESTOR_OBRA"],        funcao: "engenharia" },
@@ -49,7 +49,7 @@ const NAV: NavItem[] = [
   { label: "Usuários",      href: "/dashboard/admin/usuarios",          icon: User,        roles: ["ADMIN"] },
   { label: "Configurações", href: "/dashboard/admin/configuracoes",     icon: Settings,    roles: ["ADMIN"] },
   { label: "Obras",         href: "/dashboard/obras",                   icon: HardHat,     roles: ["ADMIN"],                           funcao: "obras" },
-  { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["ADMIN"],                           funcao: "fundos" },
+  { label: "Portfolio",     href: "/dashboard/gestor/fundos",           icon: Banknote,    roles: ["ADMIN"],                           funcao: "fundos" },
   { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["ADMIN"],                           funcao: "relatorios" },
 ];
 
@@ -58,7 +58,7 @@ const SECTION_LABELS: Record<string, string> = { geral: "Geral", operacional: "O
 const ROLE_META: Record<string, { label: string; accent: string }> = {
   CONSTRUTOR:  { label: "Construtor",  accent: MINT },
   TOMADOR:     { label: "Construtor",  accent: MINT },
-  GESTOR:      { label: "Fundo",       accent: "#a78bfa" },
+  GESTOR:      { label: "Gestor de Fundo", accent: "#a78bfa" },
   ENGENHEIRO:  { label: "Engenheiro",  accent: "#fb923c" },
   GESTOR_OBRA: { label: "Engenheiro",  accent: "#fb923c" },
   COMERCIAL:   { label: "Comercial",   accent: "#fbbf24" },
@@ -72,7 +72,7 @@ function getNavRole(role: UserRole, path: string): UserRole {
   const seg = path.split("/")[2] ?? "";
   if (["construtor", "credito", "kyc", "score", "simulador"].includes(seg)) return "CONSTRUTOR";
   if (seg === "comite" && !path.startsWith("/dashboard/admin")) return "CONSTRUTOR";
-  if (seg === "gestor") return "GESTOR";
+  if (seg === "gestor" || seg === "relatorios") return "GESTOR";
   if (seg === "engenheiro") return "ENGENHEIRO";
   if (seg === "comercial") return "COMERCIAL";
   return "ADMIN";

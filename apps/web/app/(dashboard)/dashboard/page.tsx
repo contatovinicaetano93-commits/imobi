@@ -53,7 +53,7 @@ export default async function DashboardPage() {
 
   if (!token || role === "__expired__") redirect("/login");
   if (role === "ADMIN")                         redirect("/dashboard/admin");
-  if (role === "GESTOR")                        redirect("/dashboard/gestor");
+  if (role === "GESTOR" || role === "GESTOR_FUNDO") redirect("/dashboard/gestor");
   if (role === "ENGENHEIRO")                    redirect("/dashboard/engenheiro");
   if (role === "COMERCIAL" || role === "PARCEIRO") redirect("/dashboard/comercial");
   if (role === "GESTOR_OBRA")                   redirect("/dashboard/engenheiro");

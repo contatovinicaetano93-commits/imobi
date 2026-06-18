@@ -113,6 +113,7 @@ export default function LandingPage() {
       <nav className={scrolled ? "scrolled" : ""}>
         <a className="logo" href="#"><LogoIcon /><span className="logo-name">IMOBI</span></a>
         <ul className="nav-links">
+          <li><a href="/simulador">Simular</a></li>
           <li><a href="#vantagens">Vantagens</a></li>
           <li><a href="#como">Processo</a></li>
           <li><a href="#modalidades">Modalidades</a></li>
@@ -120,7 +121,7 @@ export default function LandingPage() {
         </ul>
         <div className="nav-actions">
           <button className="btn-login" onClick={() => setModalOpen(true)}>Entrar</button>
-          <button className="btn-cta"   onClick={() => scrollTo("analise")}>Solicitar análise</button>
+          <button className="btn-cta"   onClick={() => router.push("/simulador")}>Simular crédito</button>
         </div>
         {isMobile && (
           <div className="nav-mobile-auth">
@@ -206,31 +207,31 @@ export default function LandingPage() {
         <div className="hero-bg-grid" aria-hidden />
         <div className="hero-inner">
           <div className="hero-content">
-            <div className="hero-badge"><span className="badge-dot" />Crédito Imobiliário Estruturado</div>
+            <div className="hero-badge"><span className="badge-dot" />Crédito com geovalidação de obra</div>
             <h1 className="hero-h1">
-              <span className="h1-line">CAPITAL</span>
-              <span className="h1-line">PARA SUA</span>
-              <span className="h1-line h1-accent">OBRA.</span>
+              <span className="h1-line">FINANCIE</span>
+              <span className="h1-line">SUA OBRA</span>
+              <span className="h1-line h1-accent">EM DIAS.</span>
             </h1>
-            <p className="hero-sub">Aprovação em 15 a 30 dias. Do pedido ao capital sem travar o cronograma — direto para construtoras e incorporadoras.</p>
+            <p className="hero-sub">Simule em 2 minutos quanto sua obra pode financiar. Liberação por etapa, validação por GPS e transparência total na taxa.</p>
             <div className="hero-actions">
-              <button className="btn-hero-primary" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
+              <button className="btn-hero-primary" onClick={() => router.push("/simulador")}>Simular crédito agora</button>
               <button className="btn-hero-ghost"   onClick={() => scrollTo("como")}>Ver o processo →</button>
             </div>
             <div className="hero-strip">
               <div className="hero-strip-item">
-                <span className="hero-strip-val">15–30</span>
-                <span className="hero-strip-lbl">dias p/ aprovação</span>
+                <span className="hero-strip-val">2 min</span>
+                <span className="hero-strip-lbl">simulação online</span>
               </div>
               <span className="hero-strip-div" aria-hidden="true" />
               <div className="hero-strip-item">
-                <span className="hero-strip-val">R$1M+</span>
-                <span className="hero-strip-lbl">volume mínimo</span>
+                <span className="hero-strip-val">48h</span>
+                <span className="hero-strip-lbl">pré-análise rápida</span>
               </div>
               <span className="hero-strip-div" aria-hidden="true" />
               <div className="hero-strip-item">
                 <span className="hero-strip-val">100%</span>
-                <span className="hero-strip-lbl">digital</span>
+                <span className="hero-strip-lbl">digital + GPS</span>
               </div>
             </div>
           </div>

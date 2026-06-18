@@ -45,7 +45,8 @@ function LoginForm() {
       const role: string = json.role ?? "";
       const ROLE_HOME: Record<string, Route> = {
         ADMIN:      "/dashboard/admin",
-        GESTOR:     "/dashboard/gestor",
+        GESTOR:       "/dashboard/gestor",
+        GESTOR_FUNDO: "/dashboard/gestor",
         ENGENHEIRO: "/dashboard/engenheiro",
         GESTOR_OBRA:"/dashboard/engenheiro",
         COMERCIAL:  "/dashboard/comercial",

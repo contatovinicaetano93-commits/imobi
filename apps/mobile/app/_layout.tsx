@@ -1,88 +1,95 @@
 import { useEffect, useState } from "react";
 import { View, ActivityIndicator } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useRouter, useSegments } from "expo-router";
-import { setOnUnauthorized } from "../lib/api";
+import { setOnUnauthorized, usuariosApi } from "../lib/api";
+import { getHomeRoute, isInCorrectApp } from "../lib/roles";
 
-type RootLayoutProps = {
-  children?: React.ReactNode;
-};
+const AUTH_SEGMENTS = new Set(["(auth)", "login", "cadastro", "esqueceu-senha"]);
+
+function isAuthRoute(segments: string[]) {
+  return segments.some((s) => AUTH_SEGMENTS.has(s));
+}
 
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [isLoading, setIsLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [userTipo, setUserTipo] = useState<string>("TOMADOR");
 
   useEffect(() => {
     setOnUnauthorized(() => {
       setIsSignedIn(false);
+      setUserTipo("TOMADOR");
+      SecureStore.deleteItemAsync("userTipo").catch(() => {});
     });
   }, []);
 
   useEffect(() => {
-    const bootstrapAsync = async () => {
+    const bootstrap = async () => {
       try {
         const token = await SecureStore.getItemAsync("accessToken");
-        setIsSignedIn(!!token);
+        if (!token) {
+          setIsSignedIn(false);
+          return;
+        }
+        setIsSignedIn(true);
+        const cached = await SecureStore.getItemAsync("userTipo");
+        if (cached) setUserTipo(cached);
+        try {
+          const perfil = await usuariosApi.obterPerfil();
+          setUserTipo(perfil.tipo);
+          await SecureStore.setItemAsync("userTipo", perfil.tipo);
+        } catch {
+          /* offline — usa cache */
+        }
       } catch (e) {
-        console.error("Failed to restore token", e);
+        console.error("bootstrap", e);
       } finally {
         setIsLoading(false);
       }
     };
-
-    bootstrapAsync();
+    bootstrap();
   }, []);
 
   useEffect(() => {
     if (isLoading) return;
+    const onAuth = isAuthRoute(segments);
+    const home = getHomeRoute(userTipo);
 
-    const inAuthGroup  = segments[0] === "(auth)";
-    const inTabsGroup  = segments[0] === "(tabs)";
-    const onWelcome    = segments.length === 0;
-
-    if (isSignedIn && (inAuthGroup || onWelcome)) {
-      router.replace("/(tabs)/obras");
-    } else if (!isSignedIn && inTabsGroup) {
-      router.replace("/");
+    if (!isSignedIn && !onAuth) {
+      router.replace("/login");
+      return;
     }
-  }, [isSignedIn, isLoading, segments]);
+    if (isSignedIn && onAuth) {
+      router.replace(home as never);
+      return;
+    }
+    if (isSignedIn && !onAuth && !isInCorrectApp(segments, userTipo)) {
+      router.replace(home as never);
+    }
+  }, [isSignedIn, isLoading, segments, userTipo]);
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#16a34a" />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0C1A3D" }}>
+        <ActivityIndicator size="large" color="#4ADE80" />
       </View>
     );
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen
-        name="index"
-        options={{
-          gestureEnabled: false,
-          animation: "none",
-        }}
-      />
-      <Stack.Screen
-        name="(auth)"
-        options={{
-          gestureEnabled: false,
-        }}
-      />
-      <Stack.Screen
-        name="(tabs)"
-        options={{
-          gestureEnabled: false,
-        }}
-      />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(admin)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(engenheiro)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="(gestor)" options={{ gestureEnabled: false }} />
     </Stack>
   );
+}
+
+export async function persistSession(tipo: string) {
+  await SecureStore.setItemAsync("userTipo", tipo);
 }
