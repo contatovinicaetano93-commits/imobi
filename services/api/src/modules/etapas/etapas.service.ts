@@ -149,7 +149,15 @@ export class EtapasService {
     });
   }
 
-  async listarPorObra(obraId: string) {
+  async listarPorObra(obraId: string, usuario: { id: string; tipo: string }) {
+    const obra = await this.prisma.obra.findUnique({ where: { obraId }, select: { usuarioId: true } });
+    if (!obra) throw new NotFoundException("Obra não encontrada.");
+
+    const privileged = ["ADMIN", "GESTOR", "ENGENHEIRO"].includes(usuario.tipo);
+    if (!privileged && obra.usuarioId !== usuario.id) {
+      throw new ForbiddenException("Acesso negado.");
+    }
+
     return this.prisma.etapaObra.findMany({
       where: { obraId },
       orderBy: { ordem: "asc" },

@@ -28,6 +28,8 @@ Utilitários de normalização: `services/api/src/common/constants/manager-roles
 |---|---|---|
 | `services/api/src/modules/evidencias/evidencias.service.ts` | `validar()` bloqueava ENGENHEIRO mesmo com `@Roles("ENGENHEIRO")` no controller | Adicionado `\|\| tipo !== "ENGENHEIRO"` na verificação |
 | `services/api/src/modules/due-diligence/due-diligence.controller.ts` | `criar` e `listar` abertas para qualquer usuário autenticado; `gestorId` sugere restrição | Adicionado `@UseGuards(RolesGuard) @Roles("GESTOR", "ADMIN")` em ambas |
+| `services/api/src/modules/etapas/etapas.service.ts` | `listarPorObra()` sem ownership check — qualquer usuário autenticado via GET /etapas/obra/:obraId podia ver etapas alheias | Adicionado `findUnique` da obra + check `obra.usuarioId !== usuario.id` (bypass para ADMIN/GESTOR/ENGENHEIRO) |
+| `services/api/src/modules/etapas/etapas.controller.ts` | `listar()` não passava o usuário para o service | Adicionado `@UsuarioAtual()` e passagem para `listarPorObra(obraId, u)` |
 
 ### Testes Unitários (sem DB/Redis)
 
@@ -39,8 +41,9 @@ Utilitários de normalização: `services/api/src/common/constants/manager-roles
 | `services/api/src/modules/credito/credito-ownership.spec.ts` | 7 | `extrato` ownership + scoping de `buscarPorUsuario` |
 | `services/api/src/modules/due-diligence/due-diligence-ownership.spec.ts` | 10 | `buscar`/`listar`/`atualizarStatus` |
 | `services/api/src/modules/evidencias/evidencias-rbac.spec.ts` | 22 | upload geofence, listar (bypass GESTOR/ADMIN), validar roles |
+| `services/api/src/modules/etapas/etapas-ownership.spec.ts` | 12 | `listarPorObra` ownership (dono ✓, ADMIN/GESTOR/ENGENHEIRO ✓, atacante ✗) + `atualizarStatus` |
 
-**Total: 85 testes unitários passando.**
+**Total: 97 testes unitários passando.**
 
 ### Testes E2E (requerem Postgres + Redis)
 
@@ -61,19 +64,36 @@ Utilitários de normalização: `services/api/src/common/constants/manager-roles
 
 ---
 
+## Trabalho Concluído (Agente Frontend)
+
+### 403 vs 404 na UI
+
+| Arquivo | Mudança |
+|---|---|
+| `apps/web/app/(dashboard)/error.tsx` | Error boundary diferencia 403 ("Sem permissão" + ícone cadeado) vs 404 ("Não encontrado" + ícone lupa) vs erros genéricos. Detecta via `error.status` (client-side) e fallback por `error.message` para RSC. |
+
+## Trabalho Concluído (DevOps / Infra)
+
+### CI Pipeline
+
+| Arquivo | Mudança |
+|---|---|
+| `.github/workflows/ci-cd.yml` | Adicionado job `unit-tests` (Stage 1b) que roda todos os testes unitários RBAC sem DB/Redis. E2E step atualizado para cobrir `rbac-cross-user.e2e` + `due-diligence.e2e` + `auth.e2e`. Job `status` aguarda `unit-tests`. |
+
 ## Próximos Passos
 
 ### Agente Backend
 - [ ] Auditar se COMERCIAL/PARCEIRO precisa de endpoints próprios ou herda acesso de algum perfil
+- [ ] `comercial`: `listarLeads` retorna todos os leads sem filtrar por `usuarioId` — confirmar se é CRM compartilhado (intencional) ou gap de ownership
+- [ ] `engenheiros.service.ts` `etapasDaObra()`: sem verificação de atribuição — aceitar como fund-wide (igual a `financeiro()`) ou restringir por obra?
 - [ ] Rever se `obras.buscar` deve permitir GESTOR (além de ADMIN) para acesso cross-user
 
 ### Agente Frontend / Mobile
-- [ ] Garantir que o cliente não exiba opções de menu para perfis sem permissão
-- [ ] Tratar 403 vs 404 na UI de forma diferenciada (403 = "sem permissão", 404 = "não encontrado")
+- [ ] Garantir que o cliente não exiba opções de menu para perfis sem permissão (ex: link `/manager` visível para TOMADOR)
 
 ### DevOps / Infra
-- [ ] Configurar `.env.test` com Postgres e Redis para CI
-- [ ] Adicionar os novos testes e2e ao pipeline de CI (rodar em ambiente isolado)
+- [ ] Configurar `.env.test` com Postgres e Redis para CI (já há infraestrutura; falta o arquivo de segredos)
+- [ ] Verificar se `docker-compose.test.yml` existe para o job `e2e-tests.yml`
 
 ---
 

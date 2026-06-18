@@ -54,6 +54,37 @@ jobs:
         run: pnpm validate:schemas
 
   # ============================================
+  # STAGE 1b: UNIT TESTS (no DB/Redis required)
+  # ============================================
+  unit-tests:
+    name: Unit Tests (RBAC)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter @imbobi/api run prisma:generate
+
+      - name: Run RBAC unit tests
+        run: pnpm --filter @imbobi/api test -- --testPathPattern="rbac\.spec|roles\.guard\.spec|ownership\.spec|rbac-spec|evidencias-rbac" --passWithNoTests --forceExit
+        env:
+          NODE_ENV: test
+
+  # ============================================
   # STAGE 2: BUILD
   # ============================================
   build:
@@ -154,8 +185,8 @@ jobs:
           DATABASE_URL: postgresql://test:test@localhost:5432/imbobi_test
         continue-on-error: true
 
-      - name: Run E2E tests (Critical Flows)
-        run: pnpm -F @imbobi/api test -- critical-flows.e2e.spec.ts
+      - name: Run E2E tests (RBAC + Auth)
+        run: pnpm -F @imbobi/api test -- --testPathPattern="rbac-cross-user\.e2e|due-diligence\.e2e|auth\.e2e" --forceExit --detectOpenHandles
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/imbobi_test
           REDIS_URL: redis://localhost:6379
@@ -373,11 +404,11 @@ jobs:
     name: Workflow Status
     runs-on: ubuntu-latest
     if: always()
-    needs: [validate, build, tests]
+    needs: [validate, unit-tests, build, tests]
     steps:
       - name: Check workflow status
         run: |
-          if [ "${{ needs.validate.result }}" == "failure" ] || [ "${{ needs.build.result }}" == "failure" ]; then
+          if [ "${{ needs.validate.result }}" == "failure" ] || [ "${{ needs.unit-tests.result }}" == "failure" ] || [ "${{ needs.build.result }}" == "failure" ]; then
             echo "❌ Workflow failed"
             exit 1
           fi

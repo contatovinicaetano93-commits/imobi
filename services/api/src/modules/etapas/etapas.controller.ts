@@ -12,8 +12,8 @@ export class EtapasController {
   constructor(private readonly etapas: EtapasService) {}
 
   @Get("obra/:obraId")
-  listar(@Param("obraId") obraId: string) {
-    return this.etapas.listarPorObra(obraId);
+  listar(@Param("obraId") obraId: string, @UsuarioAtual() u: IUsuario) {
+    return this.etapas.listarPorObra(obraId, u);
   }
 
   @UseGuards(RolesGuard)
