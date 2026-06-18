@@ -29,7 +29,7 @@
       "cpf": "97345678901",
       "email": "comercial@test.com",
       "telefone": "11987654397",
-      "tipo": "COMERCIAL",
+      "tipo": "PARCEIRO",
       "kycStatus": "APROVADO"
     },
     {
@@ -37,7 +37,7 @@
       "cpf": "96345678901",
       "email": "construtor@test.com",
       "telefone": "11987654396",
-      "tipo": "CONSTRUTOR",
+      "tipo": "TOMADOR",
       "kycStatus": "APROVADO"
     },
     {
@@ -69,7 +69,7 @@
       "cpf": "22345678901",
       "email": "construtora1@test.com",
       "telefone": "11987654331",
-      "tipo": "GESTOR_OBRA",
+      "tipo": "TOMADOR",
       "kycStatus": "APROVADO"
     },
     {
@@ -77,7 +77,7 @@
       "cpf": "22345678902",
       "email": "construtora2@test.com",
       "telefone": "11987654332",
-      "tipo": "GESTOR_OBRA",
+      "tipo": "TOMADOR",
       "kycStatus": "APROVADO"
     },
     {
@@ -85,7 +85,7 @@
       "cpf": "22345678903",
       "email": "construtora3@test.com",
       "telefone": "11987654333",
-      "tipo": "GESTOR_OBRA",
+      "tipo": "TOMADOR",
       "kycStatus": "PENDENTE"
     },
     {
@@ -93,7 +93,7 @@
       "cpf": "22345678904",
       "email": "construtora4@test.com",
       "telefone": "11987654334",
-      "tipo": "GESTOR_OBRA",
+      "tipo": "TOMADOR",
       "kycStatus": "REJEITADO"
     },
     {
@@ -101,7 +101,7 @@
       "cpf": "22345678905",
       "email": "construtora5@test.com",
       "telefone": "11987654335",
-      "tipo": "GESTOR_OBRA",
+      "tipo": "TOMADOR",
       "kycStatus": "EM_VERIFICACAO"
     },
     {
@@ -109,7 +109,7 @@
       "cpf": "33345678901",
       "email": "eng1@test.com",
       "telefone": "11987654341",
-      "tipo": "PARCEIRO",
+      "tipo": "ENGENHEIRO",
       "kycStatus": "APROVADO"
     },
     {
@@ -117,7 +117,7 @@
       "cpf": "33345678902",
       "email": "eng2@test.com",
       "telefone": "11987654342",
-      "tipo": "PARCEIRO",
+      "tipo": "ENGENHEIRO",
       "kycStatus": "APROVADO"
     },
     {
@@ -125,7 +125,7 @@
       "cpf": "33345678903",
       "email": "eng3@test.com",
       "telefone": "11987654343",
-      "tipo": "PARCEIRO",
+      "tipo": "ENGENHEIRO",
       "kycStatus": "PENDENTE"
     },
     {
@@ -133,7 +133,7 @@
       "cpf": "33345678904",
       "email": "eng4@test.com",
       "telefone": "11987654344",
-      "tipo": "PARCEIRO",
+      "tipo": "ENGENHEIRO",
       "kycStatus": "APROVADO"
     },
     {
@@ -141,7 +141,7 @@
       "cpf": "33345678905",
       "email": "eng5@test.com",
       "telefone": "11987654345",
-      "tipo": "PARCEIRO",
+      "tipo": "ENGENHEIRO",
       "kycStatus": "REJEITADO"
     }
   ],

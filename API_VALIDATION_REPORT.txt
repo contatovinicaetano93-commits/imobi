@@ -147,7 +147,7 @@ curl -X POST https://api.imobi.com/api/v1/auth/registrar \
     "nome": "Beta Tester",
     "cpf": "11144477735",
     "telefone": "11987654321",
-    "tipo": "CONSTRUTORA"
+    "tipo": "TOMADORA"
   }'
 ```
 
@@ -157,7 +157,7 @@ Email: beta-test-1780008403@imobi.test
 Password: TestPass123!
 CPF: 11144477735
 Telefone: 11987654321
-Tipo: CONSTRUTORA
+Tipo: TOMADORA
 
 Note: This user was created via signup endpoint test attempt and may or may not
 exist in the database depending on when the host validation occurs in the

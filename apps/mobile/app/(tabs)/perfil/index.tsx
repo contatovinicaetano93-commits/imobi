@@ -103,8 +103,14 @@ export default function PerfilScreen() {
               <Text style={styles.value}>
                 {usuario.tipo === "TOMADOR"
                   ? "Tomador"
-                  : usuario.tipo === "GESTOR_OBRA"
-                  ? "Gestor de Obra"
+                  : usuario.tipo === "ENGENHEIRO"
+                  ? "Engenheiro"
+                  : usuario.tipo === "PARCEIRO"
+                  ? "Parceiro"
+                  : usuario.tipo === "GESTOR"
+                  ? "Gestor"
+                  : usuario.tipo === "ADMIN"
+                  ? "Admin"
                   : usuario.tipo}
               </Text>
             </View>

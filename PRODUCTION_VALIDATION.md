@@ -83,7 +83,7 @@ Content-Type: application/json
   "nomeCompleto": "Test User",
   "cpf": "11144477735",
   "numeroTelefone": "+5511987654321",
-  "tipoUsuario": "CONSTRUTORA"
+  "tipoUsuario": "TOMADORA"
 }
 ```
 

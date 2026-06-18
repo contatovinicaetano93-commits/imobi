@@ -14,7 +14,7 @@ export class ComiteController {
   // ── Construtor: submeter solicitação ──────────────────────────────
 
   @Post("solicitar")
-  @Roles("CONSTRUTOR", "TOMADOR")
+  @Roles("TOMADOR")
   solicitar(
     @UsuarioAtual() user: UsuarioAtual,
     @Body() body: {
@@ -36,7 +36,7 @@ export class ComiteController {
   // ── Construtor: minhas solicitações ──────────────────────────────
 
   @Get("minhas")
-  @Roles("CONSTRUTOR", "TOMADOR")
+  @Roles("TOMADOR")
   minhas(@UsuarioAtual() user: UsuarioAtual) {
     return this.comiteService.minhasSolicitacoes(user.id);
   }
@@ -44,7 +44,7 @@ export class ComiteController {
   // ── Engenheiro: submeter parecer ─────────────────────────────────
 
   @Post(":comiteId/parecer")
-  @Roles("ENGENHEIRO", "GESTOR_OBRA")
+  @Roles("ENGENHEIRO")
   parecer(
     @Param("comiteId") comiteId: string,
     @UsuarioAtual() user: UsuarioAtual,
@@ -68,7 +68,7 @@ export class ComiteController {
   // ── Leitura: listar comitês (Admin + Fundo) ───────────────────────
 
   @Get()
-  @Roles("ADMIN", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA")
+  @Roles("ADMIN", "GESTOR", "ENGENHEIRO")
   listar(@Query("status") status?: string) {
     return this.comiteService.listarComites(status);
   }
@@ -76,7 +76,7 @@ export class ComiteController {
   // ── Leitura: dossiê completo ─────────────────────────────────────
 
   @Get(":comiteId")
-  @Roles("ADMIN", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA")
+  @Roles("ADMIN", "GESTOR", "ENGENHEIRO")
   dossie(@Param("comiteId") comiteId: string) {
     return this.comiteService.getDossie(comiteId);
   }

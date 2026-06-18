@@ -75,7 +75,7 @@ Sem correlation IDs. Fastify loga em dev (`logger: true`). Sem rastreamento pont
 
 ### ✅ Q11 — RBAC
 
-8 roles ativos em `UsuarioTipo` (+ `GESTOR_FUNDO` legado no enum, normalizado para `GESTOR`): ADMIN, **GESTOR (Gestor do Fundo — único gestor)**, CONSTRUTOR, TOMADOR, ENGENHEIRO, GESTOR_OBRA, COMERCIAL, PARCEIRO.  
+8 roles ativos em `UsuarioTipo` (+ `GESTOR` legado no enum, normalizado para `GESTOR`): ADMIN, **GESTOR (Gestor do Fundo — único gestor)**, TOMADOR, TOMADOR, ENGENHEIRO, ENGENHEIRO, PARCEIRO, PARCEIRO.  
 Verificação em 2 camadas:  
 1. `middleware.ts` (Next.js): routing de UI  
 2. `@Roles()` + `RolesGuard` (NestJS): autorização real por endpoint

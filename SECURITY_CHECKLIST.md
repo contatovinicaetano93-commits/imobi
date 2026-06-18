@@ -13,7 +13,7 @@
 
 **Implementation**:
 - JWT-based authentication required for all protected endpoints
-- Role-based access control (RBAC) with 4 roles: TOMADOR, GESTOR_OBRA, ENGENHEIRO, ADMIN
+- Role-based access control (RBAC) with 4 roles: TOMADOR, ENGENHEIRO, ENGENHEIRO, ADMIN
 - Resource ownership validation before access (OwnershipGuard)
 - Field-level authorization (user can only see own data)
 
@@ -440,7 +440,7 @@ export class AppModule {}
 
 ### Manager Operations Logged
 
-Every action by a GESTOR_OBRA or ADMIN is logged:
+Every action by a ENGENHEIRO or ADMIN is logged:
 
 ```typescript
 interface AuditLog {
@@ -600,7 +600,7 @@ TOKEN PAYLOAD (JWT decoded):
 {
   "sub": "user-123",           // User ID (subject)
   "email": "user@test.com",
-  "role": "GESTOR_OBRA",
+  "role": "ENGENHEIRO",
   "iat": 1717404000,          // Issued at
   "exp": 1717404900           // Expires in 15 minutes
 }

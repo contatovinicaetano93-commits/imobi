@@ -30,16 +30,12 @@ type UsuarioAdmin = {
 const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; icon: LucideIcon }> = {
   ADMIN:        { label: "Admin",        color: NAVY,    bg: "rgba(12,26,61,0.07)",  icon: Shield },
   GESTOR:       { label: "Gestor do Fundo", color: ROYAL,   bg: "rgba(27,79,216,0.08)", icon: Shield },
-  GESTOR_FUNDO: { label: "Gestor do Fundo", color: ROYAL,   bg: "rgba(27,79,216,0.08)", icon: Shield },
-  GESTOR_OBRA:  { label: "Gestor Obra",  color: "#0369a1", bg: "#f0f9ff", icon: Wrench },
   ENGENHEIRO:   { label: "Engenheiro",   color: "#0369a1", bg: "#f0f9ff", icon: Wrench },
   TOMADOR:      { label: "Tomador",      color: "#16a34a", bg: "#f0fdf4", icon: Building2 },
-  COMERCIAL:    { label: "Comercial",    color: "#d97706", bg: "#fffbeb", icon: User },
   PARCEIRO:     { label: "Parceiro",     color: "#d97706", bg: "#fffbeb", icon: User },
-  CONSTRUTOR:   { label: "Construtor",   color: "#0891b2", bg: "#ecfeff", icon: Building2 },
 };
 
-const TIPOS_USUARIO = ["ADMIN", "GESTOR", "GESTOR_OBRA", "ENGENHEIRO", "COMERCIAL", "PARCEIRO", "CONSTRUTOR", "TOMADOR"] as const;
+const TIPOS_USUARIO = ["ADMIN", "GESTOR", "ENGENHEIRO", "PARCEIRO", "TOMADOR"] as const;
 
 const KYC_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   APROVADO:       { label: "Aprovado",   color: "#16a34a", bg: "#f0fdf4" },
@@ -68,10 +64,7 @@ const FUNCOES_POR_TIPO: Record<string, string[]> = {
   TOMADOR:      ["obras", "credito", "simulador", "score", "kyc", "notificacoes"],
   GESTOR:       ["gestor", "due-diligence", "fundos", "relatorios", "notificacoes"],
   ENGENHEIRO:   ["engenharia", "notificacoes"],
-  GESTOR_OBRA:  ["engenharia", "notificacoes"],
-  COMERCIAL:    ["comercial", "notificacoes"],
   PARCEIRO:     ["comercial", "notificacoes"],
-  CONSTRUTOR:   ["obras", "construtor", "notificacoes"],
 };
 
 type EditarUsuarioForm = {
@@ -359,7 +352,7 @@ export default function UsuariosAdminPage() {
           )}
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {["TODOS", "ADMIN", "GESTOR", "ENGENHEIRO", "TOMADOR", "COMERCIAL", "CONSTRUTOR"].map((t) => (
+          {["TODOS", "ADMIN", "GESTOR", "ENGENHEIRO", "PARCEIRO", "TOMADOR"].map((t) => (
             <button
               key={t}
               onClick={() => setFiltroTipo(t)}

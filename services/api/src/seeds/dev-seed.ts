@@ -40,7 +40,7 @@ const USUARIOS = [
     cpf:      "00000000004",
     telefone: "11900000004",
     senha:    "Comercial@123",
-    tipo:     "COMERCIAL" as const,
+    tipo:     "PARCEIRO" as const,
   },
   {
     nome:     "Cliente Tomador",

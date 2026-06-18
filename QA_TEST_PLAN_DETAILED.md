@@ -22,7 +22,7 @@ This QA test plan validates iMobi's MVP features before production cutover. Focu
 
 #### TC-001: Dashboard Load & Stats Display
 - **Steps:**
-  1. Login as GESTOR_OBRA user
+  1. Login as ENGENHEIRO user
   2. Navigate to `/dashboard/gestor`
   3. Wait for page to fully load
   4. Verify all stat cards appear (Fila Aprovações, Fila KYC, Créditos Ativos, Obras Ativas)
@@ -61,7 +61,7 @@ This QA test plan validates iMobi's MVP features before production cutover. Focu
 
 #### TC-005: Filter by Status "Pendente"
 - **Steps:**
-  1. Login as GESTOR_OBRA
+  1. Login as ENGENHEIRO
   2. Go to `/dashboard/gestor/etapas`
   3. Click filter dropdown → select "Pendente"
   4. Observe table updates
@@ -498,7 +498,7 @@ This QA test plan validates iMobi's MVP features before production cutover. Focu
 - **Tools:** DevTools (Chrome/Safari), Fiddler or Charles Proxy (for network interception)
 - **Test Accounts:** 
   - 1x TOMADOR (obra owner)
-  - 1x GESTOR_OBRA (stage approver)
+  - 1x ENGENHEIRO (stage approver)
   - 1x ADMIN (full access)
 
 ---

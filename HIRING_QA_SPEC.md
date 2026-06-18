@@ -115,7 +115,7 @@ TOMADOR (Borrower):
   Senha: Senha123
   Access: Dashboard, create obra, upload evidence
 
-GESTOR_OBRA (Stage Approver):
+ENGENHEIRO (Stage Approver):
   Email: gestor@test.local
   Senha: Senha123
   Access: Etapa approval, reject, KYC review

@@ -71,14 +71,10 @@ enum DocumentoTipo {
 
 enum UsuarioTipo {
   TOMADOR
-  GESTOR_OBRA
-  ADMIN
   PARCEIRO
   GESTOR
-  GESTOR_FUNDO
   ENGENHEIRO
-  COMERCIAL
-  CONSTRUTOR
+  ADMIN
 }
 
 enum KycStatus {

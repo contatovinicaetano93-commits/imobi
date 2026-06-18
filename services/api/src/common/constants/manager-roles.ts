@@ -1,13 +1,19 @@
 /**
- * Perfil único de gestão: Gestor do Fundo.
- * GESTOR_FUNDO no banco é legado — sempre normalizar para GESTOR.
+ * Roles oficiais do sistema:
+ * TOMADOR, PARCEIRO, GESTOR, ENGENHEIRO, ADMIN.
+ *
+ * Aliases legados são aceitos apenas para leitura de tokens/dados antigos.
  */
-export const GESTOR_LEGACY_ALIAS = "GESTOR_FUNDO";
+const ROLE_ALIASES: Record<string, string> = {
+  CONSTRUTOR: "TOMADOR",
+  COMERCIAL: "PARCEIRO",
+  GESTOR_OBRA: "ENGENHEIRO",
+  GESTOR_FUNDO: "GESTOR",
+};
 
 export function normalizeUserRole(tipo: string | null | undefined): string | null {
   if (!tipo) return null;
-  if (tipo === GESTOR_LEGACY_ALIAS) return "GESTOR";
-  return tipo;
+  return ROLE_ALIASES[tipo] ?? tipo;
 }
 
 export function isGestorRole(tipo: string | null | undefined): boolean {

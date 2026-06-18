@@ -96,7 +96,7 @@ export default function RelatoriosPage() {
         setObras(o);
         setHistorico(h);
         setUsuario(u);
-        if (u?.tipo === "ADMIN" || u?.tipo === "GESTOR_OBRA") {
+        if (u?.tipo === "ADMIN" || u?.tipo === "GESTOR") {
           return managerApi.dashboard().catch(() => null);
         }
         return null;
@@ -120,7 +120,7 @@ export default function RelatoriosPage() {
 
   const maxScore = Math.max(...historico.map((h) => h.score), 1);
 
-  const isGestor = usuario?.tipo === "ADMIN" || usuario?.tipo === "GESTOR_OBRA";
+  const isGestor = usuario?.tipo === "ADMIN" || usuario?.tipo === "GESTOR";
 
   function handleExport(fmt: string) {
     const now = new Date().toISOString().slice(0, 10);

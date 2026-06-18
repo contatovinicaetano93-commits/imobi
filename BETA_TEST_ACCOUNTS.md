@@ -20,7 +20,7 @@ Each account should be created with a POST request containing the user data belo
 - **Nome**: Construtora Teste 1
 - **CPF**: 11144477735
 - **Telefone**: 11987654321
-- **Tipo**: CONSTRUTORA
+- **Tipo**: TOMADORA
 - **Status**: [ ] Created | [ ] Verified | [ ] Access tested
 - **Creation Endpoint**: POST https://api.imobi.com/api/v1/auth/registrar
 - **Payload**:
@@ -31,7 +31,7 @@ Each account should be created with a POST request containing the user data belo
   "nome": "Construtora Teste 1",
   "cpf": "11144477735",
   "telefone": "11987654321",
-  "tipo": "CONSTRUTORA"
+  "tipo": "TOMADORA"
 }
 ```
 
@@ -41,7 +41,7 @@ Each account should be created with a POST request containing the user data belo
 - **Nome**: Construtora Teste 2
 - **CPF**: 11144477746
 - **Telefone**: 11987654322
-- **Tipo**: CONSTRUTORA
+- **Tipo**: TOMADORA
 - **Status**: [ ] Created | [ ] Verified | [ ] Access tested
 - **Payload**:
 ```json
@@ -51,7 +51,7 @@ Each account should be created with a POST request containing the user data belo
   "nome": "Construtora Teste 2",
   "cpf": "11144477746",
   "telefone": "11987654322",
-  "tipo": "CONSTRUTORA"
+  "tipo": "TOMADORA"
 }
 ```
 
@@ -67,7 +67,7 @@ Each account should be created with a POST request containing the user data belo
 - **Nome**: Gestor de Obra Teste 1
 - **CPF**: 22255588846
 - **Telefone**: 21987654321
-- **Tipo**: GESTOR_OBRA
+- **Tipo**: ENGENHEIRO
 - **Status**: [ ] Created | [ ] Verified | [ ] Access tested
 - **Payload**:
 ```json
@@ -77,7 +77,7 @@ Each account should be created with a POST request containing the user data belo
   "nome": "Gestor de Obra Teste 1",
   "cpf": "22255588846",
   "telefone": "21987654321",
-  "tipo": "GESTOR_OBRA"
+  "tipo": "ENGENHEIRO"
 }
 ```
 
@@ -87,7 +87,7 @@ Each account should be created with a POST request containing the user data belo
 - **Nome**: Gestor de Obra Teste 2
 - **CPF**: 22255588857
 - **Telefone**: 21987654322
-- **Tipo**: GESTOR_OBRA
+- **Tipo**: ENGENHEIRO
 - **Status**: [ ] Created | [ ] Verified | [ ] Access tested
 - **Payload**:
 ```json
@@ -97,7 +97,7 @@ Each account should be created with a POST request containing the user data belo
   "nome": "Gestor de Obra Teste 2",
   "cpf": "22255588857",
   "telefone": "21987654322",
-  "tipo": "GESTOR_OBRA"
+  "tipo": "ENGENHEIRO"
 }
 ```
 
@@ -226,8 +226,8 @@ For each account created:
 
 | Tipo | Count | Email Pattern | CPF Range |
 |------|-------|---------------|-----------|
-| CONSTRUTORA | 2 | beta-construtora-{1,2}@imobi.test | 111444777{35,46} |
-| GESTOR_OBRA | 2 | beta-gestor-{1,2}@imobi.test | 222555888{46,57} |
+| TOMADORA | 2 | beta-construtora-{1,2}@imobi.test | 111444777{35,46} |
+| ENGENHEIRO | 2 | beta-gestor-{1,2}@imobi.test | 222555888{46,57} |
 | ENGENHEIRO | 2 | beta-engenheiro-{1,2}@imobi.test | 333666999{57,68} |
 | PARCEIRO | 2 | beta-parceiro-{1,2}@imobi.test | 444777000{78,89} |
 | **TOTAL** | **8** | | |

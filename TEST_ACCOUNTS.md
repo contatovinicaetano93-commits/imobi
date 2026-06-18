@@ -8,10 +8,10 @@ This document lists the test accounts required for beta testing of the imobi pla
 |---|---|---|---|---|---|---|---|
 | 1 | **Construtora Brasil 1** | construtora1@imobi.com.br | 12345678901 | Senha@123 | 11987654321 | TOMADOR | - Criar obras<br/>- Solicitar crédito<br/>- Gerenciar cronogramas<br/>- Liberar parcelas de financiamento |
 | 2 | **Construtora São Paulo** | construtora2@imobi.com.br | 12345678902 | Senha@123 | 11987654322 | TOMADOR | - Criar obras<br/>- Solicitar crédito<br/>- Gerenciar cronogramas<br/>- Liberar parcelas de financiamento |
-| 3 | **Gestor Obra 1** | gestor1@imobi.com.br | 12345678903 | Senha@123 | 11987654323 | GESTOR_OBRA | - Visualizar obra atribuída<br/>- Registrar etapas/fases<br/>- Upload de evidências (fotos)<br/>- Atualizar cronograma<br/>- Gerar relatórios de progresso |
-| 4 | **Gestor Obra 2** | gestor2@imobi.com.br | 12345678904 | Senha@123 | 11987654324 | GESTOR_OBRA | - Visualizar obra atribuída<br/>- Registrar etapas/fases<br/>- Upload de evidências (fotos)<br/>- Atualizar cronograma<br/>- Gerar relatórios de progresso |
-| 5 | **Engenheiro Supervisor 1** | engenheiro1@imobi.com.br | 12345678905 | Senha@123 | 11987654325 | GESTOR_OBRA | - Visualizar múltiplas obras<br/>- Supervisionar progresso<br/>- Validar etapas completadas<br/>- Revisar evidências<br/>- Gerar relatórios consolidados |
-| 6 | **Engenheiro Supervisor 2** | engenheiro2@imobi.com.br | 12345678906 | Senha@123 | 11987654326 | GESTOR_OBRA | - Visualizar múltiplas obras<br/>- Supervisionar progresso<br/>- Validar etapas completadas<br/>- Revisar evidências<br/>- Gerar relatórios consolidados |
+| 3 | **Gestor Obra 1** | gestor1@imobi.com.br | 12345678903 | Senha@123 | 11987654323 | ENGENHEIRO | - Visualizar obra atribuída<br/>- Registrar etapas/fases<br/>- Upload de evidências (fotos)<br/>- Atualizar cronograma<br/>- Gerar relatórios de progresso |
+| 4 | **Gestor Obra 2** | gestor2@imobi.com.br | 12345678904 | Senha@123 | 11987654324 | ENGENHEIRO | - Visualizar obra atribuída<br/>- Registrar etapas/fases<br/>- Upload de evidências (fotos)<br/>- Atualizar cronograma<br/>- Gerar relatórios de progresso |
+| 5 | **Engenheiro Supervisor 1** | engenheiro1@imobi.com.br | 12345678905 | Senha@123 | 11987654325 | ENGENHEIRO | - Visualizar múltiplas obras<br/>- Supervisionar progresso<br/>- Validar etapas completadas<br/>- Revisar evidências<br/>- Gerar relatórios consolidados |
+| 6 | **Engenheiro Supervisor 2** | engenheiro2@imobi.com.br | 12345678906 | Senha@123 | 11987654326 | ENGENHEIRO | - Visualizar múltiplas obras<br/>- Supervisionar progresso<br/>- Validar etapas completadas<br/>- Revisar evidências<br/>- Gerar relatórios consolidados |
 | 7 | **Parceiro Financeiro 1** | parceiro1@imobi.com.br | 12345678907 | Senha@123 | 11987654327 | PARCEIRO | - Visualizar solicitações de crédito<br/>- Análise KYC<br/>- Aprovação/rejeição de crédito<br/>- Monitorar liberação de parcelas |
 | 8 | **Parceiro Financeiro 2** | parceiro2@imobi.com.br | 12345678908 | Senha@123 | 11987654328 | PARCEIRO | - Visualizar solicitações de crédito<br/>- Análise KYC<br/>- Aprovação/rejeição de crédito<br/>- Monitorar liberação de parcelas |
 
@@ -26,7 +26,7 @@ This document lists the test accounts required for beta testing of the imobi pla
 - Visualizar relatórios e histórico de transações
 - Integrar com sistemas internos de gerenciamento
 
-### GESTOR_OBRA (Gestor/Engenheiro)
+### ENGENHEIRO (Gestor/Engenheiro)
 **Responsabilidade**: Acompanhamento in loco, validação de progresso
 - Visualizar obras atribuídas
 - Registrar etapas/fases da construção

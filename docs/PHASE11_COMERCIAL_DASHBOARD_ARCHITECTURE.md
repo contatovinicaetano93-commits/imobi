@@ -46,7 +46,7 @@ model Lead {
   stage               PipelineStage @relation(fields: [stageId], references: [stageId], onDelete: Restrict)
   
   fonte               LeadFonte     @default(WEBSITE)
-  tipoObra            String?       // RESIDENCIAL, COMERCIAL, etc
+  tipoObra            String?       // RESIDENCIAL, PARCEIRO, etc
   segmentoCliente     LeadSegmento  @default(NOVO)
   
   condicoes           String?       // Cliente-specific notes
@@ -1613,7 +1613,7 @@ Project type likelihood of conversion
 
 ```
 if (tipoObra == RESIDENCIAL):    score = 20  (high demand)
-else if (tipoObra == COMERCIAL): score = 18  (good demand)
+else if (tipoObra == PARCEIRO): score = 18  (good demand)
 else if (tipoObra == REFORMA):   score = 15  (moderate demand)
 else if (tipoObra == OUTRA):     score = 10  (unknown)
 else:                             score = 12  (default/not specified)

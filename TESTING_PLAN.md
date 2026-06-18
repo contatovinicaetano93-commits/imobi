@@ -498,7 +498,7 @@ test('critical path: user registration to approval', async ({ page }) => {
 Username | Email | Password | Role | Status
 ---------|-------|----------|------|--------
 smoke1 | smoke1@test.com | Test123456 | TOMADOR | ATIVO
-smoke2 | smoke2@test.com | Test123456 | GESTOR_OBRA | ATIVO
+smoke2 | smoke2@test.com | Test123456 | ENGENHEIRO | ATIVO
 smoke3 | smoke3@test.com | Test123456 | ENGENHEIRO | ATIVO
 smoke4 | smoke4@test.com | Test123456 | ADMIN | ATIVO
 ```

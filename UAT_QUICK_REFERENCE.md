@@ -144,7 +144,7 @@ curl -X POST http://localhost:4000/api/v1/auth/registrar \
   }'
 
 # Promote manager in database
-psql $DATABASE_URL -c "UPDATE usuario SET tipo='GESTOR_OBRA' WHERE email='manager.uat@imbobi.com.br';"
+psql $DATABASE_URL -c "UPDATE usuario SET tipo='ENGENHEIRO' WHERE email='manager.uat@imbobi.com.br';"
 ```
 
 ---

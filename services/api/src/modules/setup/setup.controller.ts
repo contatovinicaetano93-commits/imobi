@@ -59,8 +59,7 @@ export class SetupController {
       ADMIN:      "/dashboard/admin",
       GESTOR:     "/dashboard/gestor",
       ENGENHEIRO: "/dashboard/engenheiro",
-      COMERCIAL:  "/dashboard/comercial",
-      CONSTRUTOR: "/dashboard/construtor",
+      PARCEIRO:   "/dashboard/comercial",
       TOMADOR:    "/dashboard",
     };
     return mapa[tipo] ?? "/dashboard";

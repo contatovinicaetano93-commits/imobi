@@ -323,9 +323,9 @@ curl -X GET https://api.imobi.com.br/obras/OBRA_ID_HERE \
 ### Objective
 Verify that different user roles can only access appropriate resources.
 
-### 4.1 Test GESTOR_OBRA Access
+### 4.1 Test ENGENHEIRO Access
 
-**Create and login as GESTOR_OBRA user**
+**Create and login as ENGENHEIRO user**
 
 1. Register GESTOR user:
 ```bash
@@ -337,7 +337,7 @@ curl -X POST https://api.imobi.com.br/auth/registrar \
     "email": "gestor@imobi.com.br",
     "telefone": "11987654322",
     "senha": "SenhaSegura@123",
-    "tipo": "GESTOR_OBRA"
+    "tipo": "ENGENHEIRO"
   }'
 ```
 
@@ -350,9 +350,9 @@ curl -X POST https://api.imobi.com.br/obras \
 ```
 
 **Expected Result**:
-- ✅ GESTOR_OBRA should **NOT** be able to create obras (403 Forbidden or similar)
-- ✅ GESTOR_OBRA should be able to list obras assigned to them
-- ✅ GESTOR_OBRA should be able to upload evidence
+- ✅ ENGENHEIRO should **NOT** be able to create obras (403 Forbidden or similar)
+- ✅ ENGENHEIRO should be able to list obras assigned to them
+- ✅ ENGENHEIRO should be able to upload evidence
 
 ### Failure Scenarios
 

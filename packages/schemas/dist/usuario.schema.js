@@ -4,14 +4,10 @@ exports.AtualizarUsuarioAdminSchema = exports.FuncaoPainelEnum = exports.FUNCOES
 const zod_1 = require("zod");
 exports.TipoUsuarioEnum = zod_1.z.enum([
     "TOMADOR",
-    "GESTOR_OBRA",
-    "ADMIN",
     "PARCEIRO",
     "GESTOR",
-    "GESTOR_FUNDO",
     "ENGENHEIRO",
-    "COMERCIAL",
-    "CONSTRUTOR",
+    "ADMIN",
 ]);
 exports.KycStatusEnum = zod_1.z.enum([
     "PENDENTE",

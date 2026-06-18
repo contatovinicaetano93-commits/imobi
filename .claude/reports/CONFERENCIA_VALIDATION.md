@@ -24,7 +24,7 @@ Validar que **todas as regras de negócio** são aplicadas corretamente em:
 ```typescript
 enum UsuarioTipo {
   TOMADOR,        // Pessoa tomando crédito
-  GESTOR_OBRA,    // Gestor/engenheiro da obra
+  ENGENHEIRO,    // Gestor/engenheiro da obra
   ADMIN,          // Admin interno
   PARCEIRO        // Parceiro de crédito
 }
@@ -32,16 +32,16 @@ enum UsuarioTipo {
 
 **Validação Conferência**:
 - [ ] Signup só cria TOMADOR (não permite selecionar tipo)
-- [ ] GESTOR_OBRA criado por admin via backend
+- [ ] ENGENHEIRO criado por admin via backend
 - [ ] Login retorna JWT com `usuarioTipo` claim
-- [ ] Tentativa de acessar /dashboard/gestor sem GESTOR_OBRA role → 403
+- [ ] Tentativa de acessar /dashboard/gestor sem ENGENHEIRO role → 403
 
 **Teste**:
 ```bash
 POST /auth/signup { email, senha, nome, cpf, telefone }
 # Resposta: JWT com claims { usuarioId, usuarioTipo: "TOMADOR" }
 
-GET /dashboard/gestor/etapas (sem GESTOR_OBRA)
+GET /dashboard/gestor/etapas (sem ENGENHEIRO)
 # Resposta: 403 Unauthorized
 ```
 

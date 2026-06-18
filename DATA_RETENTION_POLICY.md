@@ -25,7 +25,7 @@ This policy defines how long imbobi retains different categories of personal and
 Data Retained:
 - usuarioId, nome, email, cpf, telefone
 - passwordHash (bcrypt)
-- tipo (TOMADOR, GESTOR_OBRA, ADMIN)
+- tipo (TOMADOR, ENGENHEIRO, ADMIN)
 - kycStatus
 - criadoEm, atualizadoEm
 

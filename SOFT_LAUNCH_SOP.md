@@ -268,8 +268,8 @@ curl https://api.imobi.com/api/v1/health
 # services/api/scripts/create-beta-testers.ts
 
 # Types needed:
-# - 3-5 CONSTRUTORA (construction company owners)
-# - 3-5 GESTOR_OBRA (job site managers)
+# - 3-5 TOMADORA (construction company owners)
+# - 3-5 ENGENHEIRO (job site managers)
 # - 2-3 ENGENHEIRO (engineers who upload evidence)
 # - 1-2 PARCEIRO (partner/manager reviewers)
 
@@ -284,7 +284,7 @@ curl https://api.imobi.com/api/v1/health
   "nome": "Beta Construtor 1",
   "cpf": "11144477735",
   "telefone": "+5511987654321",
-  "tipoUsuario": "CONSTRUTORA"
+  "tipoUsuario": "TOMADORA"
 }
 ```
 

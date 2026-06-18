@@ -216,7 +216,7 @@ describe("Load Testing & Performance Validation", () => {
           email: managerEmail,
           password: "TestPass@123",
           nome: "Manager Load Test",
-          tipo: "GESTOR_OBRA",
+          tipo: "ENGENHEIRO",
         });
 
       const loginRes = await request(app.getHttpServer())
@@ -229,7 +229,7 @@ describe("Load Testing & Performance Validation", () => {
       // Elevate user to manager
       await prisma.usuario.update({
         where: { usuarioId: managerId },
-        data: { tipo: "GESTOR_OBRA" },
+        data: { tipo: "ENGENHEIRO" },
       });
 
       const config: LoadTestConfig = {

@@ -5,7 +5,7 @@ Comprehensive seed scripts for populating the staging database with realistic te
 ## Overview
 
 The seed scripts populate the database with:
-- **13 Users**: 3 admins, 5 constructors (GESTOR_OBRA), 5 engineers (PARCEIRO)
+- **13 Users**: admins, tomadores, engenheiros and parceiros
 - **10 Credits**: Various amounts, statuses, and terms
 - **10 Construction Projects (Obras)**: Different types and stages
 - **90 Construction Stages (Etapas)**: 9 stages per obra
@@ -29,14 +29,14 @@ The seed scripts populate the database with:
 - All with APROVADO KYC status
 - Shared password: TestPassword123
 
-#### Constructor Users
+#### Tomador Users
 - Email: construtora1@test.com through construtora5@test.com
-- Type: GESTOR_OBRA
+- Type: TOMADOR
 - Mixed KYC statuses (APROVADO, PENDENTE, REJEITADO, EM_VERIFICACAO)
 
-#### Engineer/Partner Users
+#### Engenheiro/Parceiro Users
 - Email: eng1@test.com through eng5@test.com
-- Type: PARCEIRO
+- Type: ENGENHEIRO or PARCEIRO
 - Mixed KYC statuses
 
 **Default Test Password**: `TestPassword123`

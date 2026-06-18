@@ -119,7 +119,7 @@ ORDER BY "criadoEm" DESC LIMIT 1;
 ### Phase 5: Manager Inspection & Approval
 
 **Test: Manager Vistoria Flow**
-1. Switch to manager account (must have GESTOR_OBRA type)
+1. Switch to manager account (must have ENGENHEIRO type)
 2. Go to `/dashboard/gestor`
 3. See obra in pending queue
 4. Click "Vistorar"

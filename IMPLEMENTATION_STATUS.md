@@ -25,7 +25,7 @@ Complete breakdown of implemented features and pending tasks.
 - [x] Get user profile
 - [x] Update user profile (name, phone)
 - [x] KYC status tracking
-- [x] User type management (TOMADOR, GESTOR_OBRA, ADMIN, PARCEIRO)
+- [x] User type management (TOMADOR, ENGENHEIRO, ADMIN, PARCEIRO)
 
 #### Credit Module
 - [x] Credit simulation (public, no auth)

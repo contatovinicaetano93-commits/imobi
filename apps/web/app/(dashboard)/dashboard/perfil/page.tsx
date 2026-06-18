@@ -17,9 +17,10 @@ const KYC_STATUS_MAP: Record<string, { label: string; cor: string; icone: string
 
 const USER_TYPE_MAP: Record<string, string> = {
   TOMADOR:     "Tomador de Crédito",
-  GESTOR_OBRA: "Gestor de Obra",
-  ADMIN:       "Administrador",
   PARCEIRO:    "Parceiro",
+  GESTOR:      "Gestor",
+  ENGENHEIRO:  "Engenheiro",
+  ADMIN:       "Administrador",
 };
 
 export default async function PerfilPage() {

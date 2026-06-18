@@ -2,14 +2,10 @@ import { z } from "zod";
 
 export const TipoUsuarioEnum = z.enum([
   "TOMADOR",
-  "GESTOR_OBRA",
-  "ADMIN",
   "PARCEIRO",
   "GESTOR",
-  "GESTOR_FUNDO",
   "ENGENHEIRO",
-  "COMERCIAL",
-  "CONSTRUTOR",
+  "ADMIN",
 ]);
 
 export const KycStatusEnum = z.enum([

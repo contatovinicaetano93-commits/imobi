@@ -1,5 +1,5 @@
 import { z } from "zod";
-export declare const TipoUsuarioEnum: z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"]>;
+export declare const TipoUsuarioEnum: z.ZodEnum<["TOMADOR", "PARCEIRO", "GESTOR", "ENGENHEIRO", "ADMIN"]>;
 export declare const KycStatusEnum: z.ZodEnum<["PENDENTE", "EM_VERIFICACAO", "APROVADO", "REJEITADO"]>;
 export declare const CadastroUsuarioSchema: z.ZodObject<{
     nome: z.ZodString;
@@ -92,11 +92,11 @@ export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
     telefone: z.ZodOptional<z.ZodString>;
     kycStatus: z.ZodOptional<z.ZodEnum<["PENDENTE", "EM_VERIFICACAO", "APROVADO", "REJEITADO"]>>;
     novaSenha: z.ZodOptional<z.ZodString>;
-    tipo: z.ZodOptional<z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"]>>;
+    tipo: z.ZodOptional<z.ZodEnum<["TOMADOR", "PARCEIRO", "GESTOR", "ENGENHEIRO", "ADMIN"]>>;
     bloqueado: z.ZodOptional<z.ZodBoolean>;
     funcoesBloqueadas: z.ZodOptional<z.ZodArray<z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>, "many">>;
 }, "strip", z.ZodTypeAny, {
-    tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
+    tipo?: "PARCEIRO" | "TOMADOR" | "GESTOR" | "ENGENHEIRO" | "ADMIN" | undefined;
     nome?: string | undefined;
     email?: string | undefined;
     telefone?: string | undefined;
@@ -105,7 +105,7 @@ export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
     bloqueado?: boolean | undefined;
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }, {
-    tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
+    tipo?: "PARCEIRO" | "TOMADOR" | "GESTOR" | "ENGENHEIRO" | "ADMIN" | undefined;
     nome?: string | undefined;
     email?: string | undefined;
     telefone?: string | undefined;

@@ -722,7 +722,7 @@ function TabEtapasContent({
   const raio = obra.raioValidacaoMetros ?? 100;
   const canEnviarEvidencia = (status: string) =>
     role &&
-    ["TOMADOR", "CONSTRUTOR"].includes(role) &&
+    role === "TOMADOR" &&
     ["PENDENTE", "EM_EXECUCAO", "EM_PROGRESSO", "REJEITADA", "REPROVADA"].includes(status);
 
   const canAprovar = (status: string) =>
@@ -1711,7 +1711,7 @@ function TabFinanceiroContent({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Simplified view for TOMADOR/CONSTRUTOR */}
+      {/* Simplified view for TOMADOR */}
       {!isPrivileged && credito && (
         <div style={{ ...card, padding: 24 }}>
           <div

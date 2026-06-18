@@ -4,9 +4,10 @@ exports.UpdateUsuarioSchema = exports.LoginSchema = exports.CadastroUsuarioSchem
 const zod_1 = require("zod");
 exports.TipoUsuarioEnum = zod_1.z.enum([
     "TOMADOR",
-    "GESTOR_OBRA",
-    "ADMIN",
     "PARCEIRO",
+    "GESTOR",
+    "ENGENHEIRO",
+    "ADMIN",
 ]);
 exports.KycStatusEnum = zod_1.z.enum([
     "PENDENTE",
