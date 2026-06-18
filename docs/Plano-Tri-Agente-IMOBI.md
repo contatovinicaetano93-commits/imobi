@@ -125,6 +125,7 @@ Status atual:
 
 - testes unitarios adicionados em `services/api/src/common/rbac.spec.ts`;
 - testes unitarios do guard adicionados em `services/api/src/common/guards/roles.guard.spec.ts`;
+- smoke tests da matriz de rotas web adicionados em `services/api/src/common/web-route-rbac.spec.ts`;
 - cobertura incluida:
   - `normalizeUserRole`;
   - `roleCanAccess`;
@@ -135,35 +136,34 @@ Status atual:
   - `GESTOR_FUNDO` como alias de `GESTOR`;
   - `PARCEIRO` em endpoints comerciais;
   - `GESTOR_OBRA` em endpoints de engenharia;
-  - bloqueios esperados para perfis fora do grupo.
+  - bloqueios esperados para perfis fora do grupo;
+  - rotas principais dos 5 paineis:
+    - `/dashboard/construtor`;
+    - `/dashboard/gestor`;
+    - `/dashboard/engenheiro`;
+    - `/dashboard/comercial`;
+    - `/dashboard/admin`.
 - validacao focada:
-  - `pnpm --filter @imbobi/api test -- --runInBand src/common/rbac.spec.ts src/common/guards/roles.guard.spec.ts`
-  - resultado: 2 suites, 25 testes passando.
-
-Escopo sugerido:
-
-- adicionar smoke E2E ou middleware tests para rotas principais:
-  - `/dashboard/construtor`
-  - `/dashboard/gestor`
-  - `/dashboard/engenheiro`
-  - `/dashboard/comercial`
-  - `/dashboard/admin`
-- quando o ambiente local de Postgres/Redis estiver pronto, expandir para testes API/E2E
-  de endpoints reais por perfil.
+  - `pnpm --filter @imbobi/api test -- --runInBand src/common/rbac.spec.ts src/common/guards/roles.guard.spec.ts src/common/web-route-rbac.spec.ts`
+  - resultado: 3 suites, 32 testes passando.
 
 Concluido:
 
 - adicionar testes unitarios para `packages/schemas/src/rbac.ts`;
-- adicionar testes do `RolesGuard` usando roles canonicos e aliases.
+- adicionar testes do `RolesGuard` usando roles canonicos e aliases;
+- adicionar smoke tests de matriz compartilhada para rotas principais:
+  - `/dashboard/construtor`;
+  - `/dashboard/gestor`;
+  - `/dashboard/engenheiro`;
+  - `/dashboard/comercial`;
+  - `/dashboard/admin`.
 
 Ainda pendente:
 
-- adicionar smoke E2E ou middleware tests para rotas principais:
-  - `/dashboard/construtor`
-  - `/dashboard/gestor`
-  - `/dashboard/engenheiro`
-  - `/dashboard/comercial`
-  - `/dashboard/admin`
+- quando o ambiente local de Postgres/Redis estiver pronto, expandir para testes API/E2E
+  de endpoints reais por perfil.
+- se for necessario testar o middleware Next em runtime, adicionar Playwright smoke
+  com servidores locais e storageState por perfil.
 
 ### Trilha B - Mobile por perfil
 
