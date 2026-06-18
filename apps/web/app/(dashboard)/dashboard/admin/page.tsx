@@ -831,6 +831,9 @@ export default function AdminPage() {
           <a href="/dashboard/admin/usuarios" style={{ ...j, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8rem", fontWeight: 600, color: NAVY, border: "1px solid rgba(12,26,61,0.18)", background: "white", padding: "0.45rem 1rem", borderRadius: 10, textDecoration: "none" }}>
             <Users size={13} /> Usuários
           </a>
+          <a href="/dashboard/admin/audit-logs" style={{ ...j, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8rem", fontWeight: 600, color: NAVY, border: "1px solid rgba(12,26,61,0.18)", background: "white", padding: "0.45rem 1rem", borderRadius: 10, textDecoration: "none" }}>
+            <Activity size={13} /> Auditoria
+          </a>
           <a href="/dashboard/admin/configuracoes" style={{ ...j, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8rem", fontWeight: 600, color: NAVY, border: "1px solid rgba(12,26,61,0.18)", background: "white", padding: "0.45rem 1rem", borderRadius: 10, textDecoration: "none" }}>
             <Settings size={13} /> Configurações
           </a>
