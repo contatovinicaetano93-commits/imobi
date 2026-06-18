@@ -5,7 +5,8 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles("GESTOR", "ADMIN")
 @Controller("due-diligence")
 export class DueDiligenceController {
   constructor(private readonly service: DueDiligenceService) {}

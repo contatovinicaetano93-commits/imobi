@@ -7,6 +7,7 @@ import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
+import { normalizeUserRole } from "../../common/constants/manager-roles";
 
 @Injectable()
 export class EtapasService {
@@ -137,7 +138,8 @@ export class EtapasService {
     });
     if (!etapaExistente) throw new NotFoundException("Etapa não encontrada.");
 
-    const isPrivileged = ["GESTOR", "ADMIN", "ENGENHEIRO"].includes(userTipo);
+    const role = normalizeUserRole(userTipo);
+    const isPrivileged = ["GESTOR", "ADMIN", "ENGENHEIRO", "GESTOR_OBRA"].includes(role ?? "");
     if (!isPrivileged) {
       if (etapaExistente.obra.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
       if (status !== "AGUARDANDO_VISTORIA") throw new ForbiddenException("Você só pode submeter a etapa para vistoria.");

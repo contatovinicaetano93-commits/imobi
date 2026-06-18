@@ -15,7 +15,7 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from '../../common/decora
 
 @Controller('comercial')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('COMERCIAL', 'ADMIN')
+@Roles('COMERCIAL', 'PARCEIRO', 'ADMIN')
 export class ComercialController {
   constructor(private readonly comercialService: ComercialService) {}
 

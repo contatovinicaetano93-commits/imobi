@@ -5,7 +5,7 @@ Comprehensive seed scripts for populating the staging database with realistic te
 ## Overview
 
 The seed scripts populate the database with:
-- **13 Users**: 3 admins, 5 constructors (GESTOR_OBRA), 5 engineers (PARCEIRO)
+- **18 Users**: canonical IMOBI profiles plus legacy/compatibility fixtures
 - **10 Credits**: Various amounts, statuses, and terms
 - **10 Construction Projects (Obras)**: Different types and stages
 - **90 Construction Stages (Etapas)**: 9 stages per obra
@@ -23,21 +23,35 @@ The seed scripts populate the database with:
 
 ### User Accounts
 
-#### Admin Users
-- Email: admin1@test.com, admin2@test.com, admin3@test.com
+The product plan works with 5 operational profiles. These are the canonical seed
+accounts used by E2E and smoke tests:
+
+| Plan profile | Canonical `UsuarioTipo` | Email | Notes |
+|--------------|-------------------------|-------|-------|
+| Tomador | `TOMADOR` | tomador@test.com | Public borrower flow |
+| Admin | `ADMIN` | admin1@test.com | Backoffice/system admin |
+| Gestor do Fundo | `GESTOR` | fundo@test.com | Fund manager; `GESTOR_FUNDO` is a legacy alias normalized to `GESTOR` |
+| Engenheiro | `ENGENHEIRO` | engenheiro@test.com | Inspection/engineering dashboard |
+| Comercial parceiro | `COMERCIAL` | comercial@test.com | Sales/growth dashboard; `PARCEIRO` shares selected commercial APIs |
+
+All canonical accounts use password: `TestPassword123`.
+
+#### Additional Admin Users
+- Email: admin2@test.com, admin3@test.com
 - Type: ADMIN
 - All with APROVADO KYC status
-- Shared password: TestPassword123
 
-#### Constructor Users
+#### Legacy Constructor/Field Users
 - Email: construtora1@test.com through construtora5@test.com
 - Type: GESTOR_OBRA
 - Mixed KYC statuses (APROVADO, PENDENTE, REJEITADO, EM_VERIFICACAO)
+- Compatibility role currently routed with engineering screens in the web app.
 
-#### Engineer/Partner Users
+#### Partner Users
 - Email: eng1@test.com through eng5@test.com
 - Type: PARCEIRO
 - Mixed KYC statuses
+- Compatibility role used by partner/commercial flows.
 
 **Default Test Password**: `TestPassword123`
 
@@ -133,9 +147,11 @@ SELECT AVG(score) FROM "ScoreHistorico";
 
 ### Login Credentials for Testing
 
+- **Tomador**: tomador@test.com / TestPassword123
 - **Admin**: admin1@test.com / TestPassword123
-- **Constructor**: construtora1@test.com / TestPassword123
-- **Engineer**: eng1@test.com / TestPassword123
+- **Gestor do Fundo**: fundo@test.com / TestPassword123
+- **Engenheiro**: engenheiro@test.com / TestPassword123
+- **Comercial parceiro**: comercial@test.com / TestPassword123
 
 ## Extending the Seed
 

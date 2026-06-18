@@ -65,7 +65,7 @@ export class EvidenciasController {
   }
 
   @UseGuards(RolesGuard)
-  @Roles("GESTOR", "ADMIN", "ENGENHEIRO")
+  @Roles("GESTOR", "ADMIN", "ENGENHEIRO", "GESTOR_OBRA")
   @Patch(":id/validar")
   validar(
     @UsuarioAtual() u: IUsuario,

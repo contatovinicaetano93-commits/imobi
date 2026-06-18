@@ -15,7 +15,7 @@ class RejeitarDto {
 }
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("GESTOR", "ENGENHEIRO", "ADMIN")
+@Roles("GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN")
 @Controller("vistoria")
 export class VistoriaController {
   constructor(private readonly vistoria: VistoriaService) {}
