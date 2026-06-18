@@ -32,10 +32,11 @@ export class StorageService {
   }
 
   async getSignedUrl(key: string, expiresIn = 3600) {
+    // AWS SDK tipos divergem entre client-s3 e s3-request-presigner no monorepo
     return getSignedUrl(
-      this.s3,
+      this.s3 as never,
       new GetObjectCommand({ Bucket: this.bucket, Key: key }),
-      { expiresIn }
+      { expiresIn },
     );
   }
 
