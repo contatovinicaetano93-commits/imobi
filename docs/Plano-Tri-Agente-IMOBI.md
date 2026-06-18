@@ -180,13 +180,16 @@ Estado atual:
 - Comercial/PARCEIRO agora entram em `/(tabs)/comercial`;
 - primeira tela mobile Comercial/Parceiro criada em `apps/mobile/app/(tabs)/comercial/index.tsx`;
 - tela consome `GET /parceiros/resumo` e `GET /parceiros/operacoes` via `parceirosApi`;
-- ainda falta tela especifica para Gestor.
+- Gestor/GESTOR_FUNDO agora entram em `/(tabs)/gestor`;
+- primeira tela mobile do Gestor criada em `apps/mobile/app/(tabs)/gestor/index.tsx`;
+- tela consome `GET /manager/dashboard`, `GET /manager/etapas-pendentes` e `GET /manager/kyc-pendentes` via `managerApi`.
 
 Proximo passo:
 
 - validar a tela de Engenheiro contra dados reais/staging;
 - validar a tela Comercial/Parceiro contra dados reais/staging;
-- depois Gestor: fila resumida de aprovacoes.
+- validar a tela Gestor contra dados reais/staging;
+- depois evoluir acoes mobile de aprovacao/rejeicao com confirmacao e observacoes.
 
 ### Trilha C - Comercial vs Parceiro
 

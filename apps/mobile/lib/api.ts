@@ -74,6 +74,24 @@ export const parceirosApi = {
     }),
 };
 
+export const managerApi = {
+  dashboard: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<ManagerStats>("/manager/dashboard", token ?? undefined);
+    }),
+  etapasPendentes: (limit = 5) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<EtapasPendentesResponse>(`/manager/etapas-pendentes?limit=${limit}`, token ?? undefined);
+    }),
+  kycPendentes: (limit = 5) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<KycPendentesResponse>(`/manager/kyc-pendentes?limit=${limit}`, token ?? undefined);
+    }),
+};
+
 export const creditoApi = {
   meus: () =>
     callApi(async () => {
@@ -177,6 +195,62 @@ export type OperacaoIndicada = {
   comissaoStatus: string;
   validadeIndicacao: string;
   criadoEm: string;
+};
+
+export type ManagerStats = {
+  filaAprovacoes: number;
+  filaKyc: number;
+  creditosAtivos: number;
+  obrasAtivas: number;
+};
+
+export type EtapaPendenteMobile = {
+  etapaId: string;
+  nome: string;
+  ordem: number;
+  percentualObra: number;
+  valorLiberacao: number;
+  evidenciasCount: number;
+  criadoEm: string;
+  obra: {
+    obraId: string;
+    nome: string;
+    endereco: string;
+    usuario?: {
+      usuarioId: string;
+      nome: string;
+      email: string;
+      cpf?: string;
+    };
+    credito?: {
+      creditoId: string;
+      valorAprovado: number;
+    } | null;
+  };
+};
+
+export type EtapasPendentesResponse = {
+  etapas: EtapaPendenteMobile[];
+  total: number;
+};
+
+export type KycPendenteMobile = {
+  kycDocumentoId: string;
+  tipo: string;
+  status: string;
+  criadoEm: string;
+  usuario?: {
+    usuarioId: string;
+    nome: string;
+    email: string;
+    cpf?: string;
+    kycStatus?: string;
+  };
+};
+
+export type KycPendentesResponse = {
+  documentos: KycPendenteMobile[];
+  total: number;
 };
 
 export type Credito = {

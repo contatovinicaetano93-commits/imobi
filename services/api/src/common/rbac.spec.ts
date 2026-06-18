@@ -67,6 +67,14 @@ describe("RBAC compartilhado", () => {
   });
 
   describe("roleCanAccessMobileTab", () => {
+    it("mostra Gestor somente para gestor/admin", () => {
+      expect(roleCanAccessMobileTab("GESTOR", "gestor")).toBe(true);
+      expect(roleCanAccessMobileTab("GESTOR_FUNDO", "gestor")).toBe(true);
+      expect(roleCanAccessMobileTab("ADMIN", "gestor")).toBe(true);
+      expect(roleCanAccessMobileTab("TOMADOR", "gestor")).toBe(false);
+      expect(roleCanAccessMobileTab("COMERCIAL", "gestor")).toBe(false);
+    });
+
     it("mostra Vistorias somente para engenharia/admin", () => {
       expect(roleCanAccessMobileTab("ENGENHEIRO", "engenharia")).toBe(true);
       expect(roleCanAccessMobileTab("GESTOR_OBRA", "engenharia")).toBe(true);
@@ -117,6 +125,8 @@ describe("RBAC compartilhado", () => {
 
     it("resolve homes mobile por perfil", () => {
       expect(getMobileRoleHome("TOMADOR")).toBe("/(tabs)/obras");
+      expect(getMobileRoleHome("GESTOR")).toBe("/(tabs)/gestor");
+      expect(getMobileRoleHome("GESTOR_FUNDO")).toBe("/(tabs)/gestor");
       expect(getMobileRoleHome("ENGENHEIRO")).toBe("/(tabs)/engenheiro");
       expect(getMobileRoleHome("GESTOR_OBRA")).toBe("/(tabs)/engenheiro");
       expect(getMobileRoleHome("COMERCIAL")).toBe("/(tabs)/comercial");

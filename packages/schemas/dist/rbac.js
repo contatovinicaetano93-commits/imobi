@@ -43,8 +43,8 @@ exports.ROLE_HOME = {
 };
 exports.MOBILE_ROLE_HOME = {
     ADMIN: "/(tabs)/obras",
-    GESTOR: "/(tabs)/obras",
-    GESTOR_FUNDO: "/(tabs)/obras",
+    GESTOR: "/(tabs)/gestor",
+    GESTOR_FUNDO: "/(tabs)/gestor",
     ENGENHEIRO: "/(tabs)/engenheiro",
     GESTOR_OBRA: "/(tabs)/engenheiro",
     COMERCIAL: "/(tabs)/comercial",
@@ -106,6 +106,7 @@ exports.WEB_ROUTE_RULES = [
     { prefix: "/dashboard/comite", roles: exports.RBAC_ROLE_GROUPS.committee },
 ];
 exports.MOBILE_TAB_RULES = {
+    gestor: exports.RBAC_ROLE_GROUPS.manager,
     engenharia: exports.RBAC_ROLE_GROUPS.engineering,
     comercial: exports.RBAC_ROLE_GROUPS.commercial,
     obras: exports.RBAC_ROLE_GROUPS.works,
