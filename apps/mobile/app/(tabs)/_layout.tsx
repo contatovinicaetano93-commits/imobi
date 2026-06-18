@@ -1,7 +1,24 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../../contexts/AuthContext";
+
+type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
+
+const hidden = { display: "none" as const };
+const visible = {};
 
 export default function TabLayout() {
+  const { userTipo } = useAuth();
+
+  const showObras   = !userTipo || userTipo === "TOMADOR" || userTipo === "GESTOR" || userTipo === "GESTOR_FUNDO" || userTipo === "ADMIN" || userTipo === "CONSTRUTOR";
+  const showCredito = !userTipo || userTipo === "TOMADOR" || userTipo === "GESTOR" || userTipo === "GESTOR_FUNDO" || userTipo === "ADMIN";
+
+  function tabIcon(name: IoniconName) {
+    return ({ color, size }: { color: string; size: number }) => (
+      <Ionicons name={name} size={size} color={color} />
+    );
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -24,27 +41,23 @@ export default function TabLayout() {
         name="obras/index"
         options={{
           title: "Obras",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
+          tabBarIcon: tabIcon("home"),
+          tabBarItemStyle: showObras ? visible : hidden,
         }}
       />
       <Tabs.Screen
         name="credito/index"
         options={{
           title: "Crédito",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calculator" size={size} color={color} />
-          ),
+          tabBarIcon: tabIcon("calculator"),
+          tabBarItemStyle: showCredito ? visible : hidden,
         }}
       />
       <Tabs.Screen
         name="perfil/index"
         options={{
           title: "Perfil",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
+          tabBarIcon: tabIcon("person"),
         }}
       />
     </Tabs>

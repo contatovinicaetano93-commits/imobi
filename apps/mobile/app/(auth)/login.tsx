@@ -5,9 +5,12 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { LoginSchema, type LoginInput } from "@imbobi/schemas";
 import { apiClient } from "@imbobi/core";
+import { usuariosApi } from "../../lib/api";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { setUserTipo } = useAuth();
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginInput>({
     resolver: zodResolver(LoginSchema),
   });
@@ -20,6 +23,12 @@ export default function LoginScreen() {
       );
       await SecureStore.setItemAsync("accessToken", res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
+      try {
+        const profile = await usuariosApi.obterPerfil();
+        setUserTipo(profile.tipo as any);
+      } catch {
+        // Non-fatal: tabs will fall back to showing all
+      }
       router.replace("/(tabs)/obras");
     } catch (e: any) {
       Alert.alert("Erro de autenticação", e.message ?? "E-mail ou senha inválidos.");

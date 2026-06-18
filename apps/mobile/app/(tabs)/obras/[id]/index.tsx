@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { formatarBRL } from "@imbobi/core";
-import { obrasApi, type ObraDetalhe } from "../../../../lib/api";
+import { obrasApi, ApiError, type ObraDetalhe } from "../../../../lib/api";
 
 const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
   PLANEJADA:           { bg: "#f3f4f6", text: "#6b7280" },
@@ -23,7 +23,13 @@ export default function ObraDetailScreen() {
     if (!id) return;
     obrasApi.buscar(id)
       .then(setObra)
-      .catch((e) => setError(e.message))
+      .catch((e) => {
+        if (e instanceof ApiError && e.status === 403) {
+          setError("Você não tem permissão para acessar esta obra.");
+        } else {
+          setError(e.message ?? "Erro ao carregar obra");
+        }
+      })
       .finally(() => setLoading(false));
   }, [id]);
 

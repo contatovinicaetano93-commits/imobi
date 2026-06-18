@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
-import { obrasApi, type Obra } from "../../../lib/api";
+import { obrasApi, ApiError, type Obra } from "../../../lib/api";
 
 const STATUS_LABEL: Record<string, string> = {
   PLANEJAMENTO: "Planejamento",
@@ -24,7 +24,11 @@ export default function ObrasScreen() {
       setObras(data);
       setError(null);
     } catch (e: any) {
-      setError(e.message ?? "Erro ao carregar obras");
+      if (e instanceof ApiError && e.status === 403) {
+        setError("Você não tem permissão para ver estas obras.");
+      } else {
+        setError(e.message ?? "Erro ao carregar obras");
+      }
     }
   };
 

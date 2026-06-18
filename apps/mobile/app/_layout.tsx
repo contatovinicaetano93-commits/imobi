@@ -3,21 +3,28 @@ import { View, ActivityIndicator } from "react-native";
 import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useRouter, useSegments } from "expo-router";
-import { setOnUnauthorized } from "../lib/api";
-
-type RootLayoutProps = {
-  children?: React.ReactNode;
-};
+import { setOnUnauthorized, usuariosApi } from "../lib/api";
+import { AuthProvider, useAuth } from "../contexts/AuthContext";
 
 export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootLayoutInner />
+    </AuthProvider>
+  );
+}
+
+function RootLayoutInner() {
   const router = useRouter();
   const segments = useSegments();
+  const { setUserTipo } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
   useEffect(() => {
     setOnUnauthorized(() => {
       setIsSignedIn(false);
+      setUserTipo(null);
     });
   }, []);
 
@@ -25,7 +32,15 @@ export default function RootLayout() {
     const bootstrapAsync = async () => {
       try {
         const token = await SecureStore.getItemAsync("accessToken");
-        setIsSignedIn(!!token);
+        if (token) {
+          setIsSignedIn(true);
+          try {
+            const profile = await usuariosApi.obterPerfil();
+            setUserTipo(profile.tipo as any);
+          } catch {
+            // Profile fetch failed — sign in still proceeds with null tipo
+          }
+        }
       } catch (e) {
         console.error("Failed to restore token", e);
       } finally {
@@ -59,11 +74,7 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen
         name="index"
         options={{

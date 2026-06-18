@@ -15,9 +15,14 @@ async function callApi<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (e) {
-    if (e instanceof ApiError && e.status === 401) {
-      await SecureStore.deleteItemAsync("accessToken");
-      _onUnauthorized?.();
+    if (e instanceof ApiError) {
+      if (e.status === 401) {
+        await SecureStore.deleteItemAsync("accessToken");
+        _onUnauthorized?.();
+      }
+      if (e.status === 403) {
+        throw new ApiError(403, "Você não tem permissão para acessar este recurso.");
+      }
     }
     throw e;
   }
