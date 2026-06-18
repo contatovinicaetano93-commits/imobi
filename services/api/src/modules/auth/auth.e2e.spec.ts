@@ -4,14 +4,29 @@ import request from "supertest";
 import { AppModule } from "../../app.module";
 import { PrismaService } from "../prisma/prisma.service";
 
+const EMAIL_PREFIX = "auth-test-";
+
+let _seq = 0;
+function makeUser(overrides: Record<string, unknown> = {}) {
+  const seq = ++_seq;
+  const ts = Date.now();
+  return {
+    nome: "Auth Test User",
+    cpf: String(ts + seq).slice(-11).padStart(11, "0"),
+    email: `${EMAIL_PREFIX}${ts}-${seq}@imbobi.com`,
+    telefone: "11999999999",
+    senha: "Senha@123",
+    consentidoTermos: true,
+    consentidoPrivacy: true,
+    consentidoKyc: true,
+    consentidoMarketing: false,
+    ...overrides,
+  };
+}
+
 describe("Auth E2E - Comprehensive Suite", () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  const baseTestUser = {
-    email: `auth-test-${Date.now()}@imbobi.com`,
-    password: "Senha@123",
-    nome: "Test User",
-  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -28,236 +43,190 @@ describe("Auth E2E - Comprehensive Suite", () => {
 
   afterAll(async () => {
     await prisma.usuario.deleteMany({
-      where: {
-        email: {
-          startsWith: "auth-test-",
-        },
-      },
+      where: { email: { startsWith: EMAIL_PREFIX } },
     });
     await app.close();
   });
 
+  // ─── Registration ─────────────────────────────────────────────────────────
+
   describe("Registration", () => {
     it("POST /auth/registrar → 201 with valid data", async () => {
+      const user = makeUser();
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send(baseTestUser)
+        .send(user)
         .expect(201);
 
-      expect(res.body).toHaveProperty("usuarioId");
-      expect(res.body).toHaveProperty("email", baseTestUser.email);
-      expect(res.body).toHaveProperty("nome", baseTestUser.nome);
+      expect(res.body.usuario).toHaveProperty("usuarioId");
+      expect(res.body.usuario).toHaveProperty("email", user.email);
+      expect(res.body.usuario).toHaveProperty("nome", user.nome);
+      expect(res.body).toHaveProperty("accessToken");
+      expect(res.body).toHaveProperty("refreshToken");
     });
 
     it("POST /auth/registrar → 400 with missing email", async () => {
+      const { email: _e, ...noEmail } = makeUser();
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({
-          password: "Senha@123",
-          nome: "Test User",
-        })
+        .send(noEmail)
         .expect(400);
-
       expect(res.body.message).toBeDefined();
     });
 
-    it("POST /auth/registrar → 400 with missing password", async () => {
+    it("POST /auth/registrar → 400 with missing senha", async () => {
+      const { senha: _s, ...noSenha } = makeUser();
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({
-          email: `test-${Date.now()}@imbobi.com`,
-          nome: "Test User",
-        })
+        .send(noSenha)
         .expect(400);
-
       expect(res.body.message).toBeDefined();
     });
 
     it("POST /auth/registrar → 400 with missing nome", async () => {
+      const { nome: _n, ...noNome } = makeUser();
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({
-          email: `test-${Date.now()}@imbobi.com`,
-          password: "Senha@123",
-        })
+        .send(noNome)
         .expect(400);
-
       expect(res.body.message).toBeDefined();
     });
 
     it("POST /auth/registrar → 400 with invalid email format", async () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({
-          email: "invalid-email",
-          password: "Senha@123",
-          nome: "Test User",
-        })
+        .send(makeUser({ email: "not-an-email" }))
         .expect(400);
-
       expect(res.body.message).toBeDefined();
     });
 
-    it("POST /auth/registrar → 400 with weak password", async () => {
+    it("POST /auth/registrar → 400 with weak senha (too short)", async () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({
-          email: `test-${Date.now()}@imbobi.com`,
-          password: "123",
-          nome: "Test User",
-        })
+        .send(makeUser({ senha: "A1b" }))
         .expect(400);
+      expect(res.body.message).toBeDefined();
+    });
 
+    it("POST /auth/registrar → 400 with senha missing uppercase", async () => {
+      const res = await request(app.getHttpServer())
+        .post("/api/v1/auth/registrar")
+        .send(makeUser({ senha: "abcdefg1" }))
+        .expect(400);
+      expect(res.body.message).toBeDefined();
+    });
+
+    it("POST /auth/registrar → 400 with invalid CPF (too short)", async () => {
+      const res = await request(app.getHttpServer())
+        .post("/api/v1/auth/registrar")
+        .send(makeUser({ cpf: "1234" }))
+        .expect(400);
       expect(res.body.message).toBeDefined();
     });
 
     it("POST /auth/registrar → 409 with duplicate email", async () => {
-      const email = `duplicate-${Date.now()}@imbobi.com`;
-      
-      // First registration
+      const user = makeUser();
       await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({
-          email,
-          password: "Senha@123",
-          nome: "First User",
-        })
+        .send(user)
         .expect(201);
 
-      // Second registration with same email
+      const seq2 = ++_seq;
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({
-          email,
-          password: "Senha@456",
-          nome: "Second User",
-        })
+        .send({ ...user, cpf: String(Date.now() + seq2).slice(-11).padStart(11, "0") })
         .expect(409);
-
       expect(res.body.message).toBeDefined();
     });
 
     it("User created in database with hashed password", async () => {
-      const email = `db-test-${Date.now()}@imbobi.com`;
-      const password = "Senha@123";
-
+      const user = makeUser();
       await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({
-          email,
-          password,
-          nome: "DB Test User",
-        })
+        .send(user)
         .expect(201);
 
-      const user = await prisma.usuario.findUnique({ where: { email } });
-      expect(user).toBeDefined();
-      expect(user?.passwordHash).not.toEqual(password);
-      expect(user?.passwordHash).toHaveLength(60); // bcrypt hash length
+      const dbUser = await prisma.usuario.findUnique({ where: { email: user.email } });
+      expect(dbUser).toBeDefined();
+      expect(dbUser?.passwordHash).not.toEqual(user.senha);
+      expect(dbUser?.passwordHash?.length).toBeGreaterThanOrEqual(60);
     });
   });
 
+  // ─── Login ────────────────────────────────────────────────────────────────
+
   describe("Login", () => {
-    let testEmail: string;
-    const testPassword = "Senha@123";
+    let testUser: ReturnType<typeof makeUser>;
 
     beforeAll(async () => {
-      testEmail = `login-test-${Date.now()}@imbobi.com`;
+      testUser = makeUser();
       await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({
-          email: testEmail,
-          password: testPassword,
-          nome: "Login Test User",
-        });
+        .send(testUser);
     });
 
     it("POST /auth/login → 200 with valid credentials", async () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({
-          email: testEmail,
-          password: testPassword,
-        })
+        .send({ email: testUser.email, senha: testUser.senha })
         .expect(200);
 
-      expect(res.body).toHaveProperty("access_token");
+      expect(res.body).toHaveProperty("accessToken");
       expect(res.body).toHaveProperty("refreshToken");
       expect(res.body).toHaveProperty("usuario");
       expect(res.body.usuario).toHaveProperty("usuarioId");
-      expect(res.body.usuario).toHaveProperty("email", testEmail);
+      expect(res.body.usuario).toHaveProperty("email", testUser.email);
     });
 
-    it("POST /auth/login → 401 with wrong password", async () => {
+    it("POST /auth/login → 401 with wrong senha", async () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({
-          email: testEmail,
-          password: "WrongPassword@123",
-        })
+        .send({ email: testUser.email, senha: "WrongPass@999" })
         .expect(401);
-
       expect(res.body.message).toBeDefined();
     });
 
     it("POST /auth/login → 401 with non-existent email", async () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({
-          email: "nonexistent@imbobi.com",
-          password: testPassword,
-        })
+        .send({ email: "nobody@imbobi.com", senha: testUser.senha })
         .expect(401);
-
       expect(res.body.message).toBeDefined();
     });
 
     it("POST /auth/login → 400 with missing email", async () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({
-          password: testPassword,
-        })
+        .send({ senha: testUser.senha })
         .expect(400);
-
       expect(res.body.message).toBeDefined();
     });
 
-    it("POST /auth/login → 400 with missing password", async () => {
+    it("POST /auth/login → 400 with missing senha", async () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({
-          email: testEmail,
-        })
+        .send({ email: testUser.email })
         .expect(400);
-
       expect(res.body.message).toBeDefined();
     });
 
-    it("Tokens are valid JWT format", async () => {
+    it("accessToken is valid JWT with 3 parts", async () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({
-          email: testEmail,
-          password: testPassword,
-        })
+        .send({ email: testUser.email, senha: testUser.senha })
         .expect(200);
 
-      const accessToken = res.body.access_token;
-      const parts = accessToken.split(".");
+      const parts = res.body.accessToken.split(".");
       expect(parts).toHaveLength(3);
     });
 
-    it("Access token is usable for authenticated endpoints", async () => {
+    it("accessToken is usable for authenticated endpoints", async () => {
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({
-          email: testEmail,
-          password: testPassword,
-        })
+        .send({ email: testUser.email, senha: testUser.senha })
         .expect(200);
 
-      const token = loginRes.body.access_token;
+      const token = loginRes.body.accessToken;
 
       const res = await request(app.getHttpServer())
         .get("/api/v1/usuarios/meu-perfil")
@@ -265,31 +234,25 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .expect(200);
 
       expect(res.body).toHaveProperty("usuarioId");
-      expect(res.body).toHaveProperty("email", testEmail);
+      expect(res.body).toHaveProperty("email", testUser.email);
     });
   });
 
+  // ─── Token Refresh ────────────────────────────────────────────────────────
+
   describe("Token Refresh", () => {
-    let testEmail: string;
-    const testPassword = "Senha@123";
+    let testUser: ReturnType<typeof makeUser>;
     let refreshToken: string;
 
     beforeAll(async () => {
-      testEmail = `refresh-test-${Date.now()}@imbobi.com`;
+      testUser = makeUser();
       await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({
-          email: testEmail,
-          password: testPassword,
-          nome: "Refresh Test User",
-        });
+        .send(testUser);
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({
-          email: testEmail,
-          password: testPassword,
-        });
+        .send({ email: testUser.email, senha: testUser.senha });
 
       refreshToken = loginRes.body.refreshToken;
     });
@@ -300,116 +263,109 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .send({ refreshToken })
         .expect(200);
 
-      expect(res.body).toHaveProperty("access_token");
-      expect(res.body.access_token).not.toEqual("");
+      expect(res.body).toHaveProperty("accessToken");
+      expect(res.body.accessToken).not.toEqual("");
     });
 
     it("POST /auth/renovar → 401 with invalid refresh token", async () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/renovar")
-        .send({ refreshToken: "invalid-token" })
+        .send({ refreshToken: "not-a-real-token" })
         .expect(401);
-
       expect(res.body.message).toBeDefined();
     });
 
-    it("New access token is valid for authenticated endpoints", async () => {
+    it("New accessToken from renovar is valid for authenticated endpoints", async () => {
+      const loginRes = await request(app.getHttpServer())
+        .post("/api/v1/auth/login")
+        .send({ email: testUser.email, senha: testUser.senha });
+      const freshRefresh = loginRes.body.refreshToken;
+
       const refreshRes = await request(app.getHttpServer())
         .post("/api/v1/auth/renovar")
-        .send({ refreshToken })
+        .send({ refreshToken: freshRefresh })
         .expect(200);
 
-      const newToken = refreshRes.body.access_token;
-
+      const newToken = refreshRes.body.accessToken;
       const res = await request(app.getHttpServer())
         .get("/api/v1/usuarios/meu-perfil")
         .set("Authorization", `Bearer ${newToken}`)
         .expect(200);
 
-      expect(res.body).toHaveProperty("email", testEmail);
+      expect(res.body).toHaveProperty("email", testUser.email);
     });
   });
 
+  // ─── Logout ───────────────────────────────────────────────────────────────
+
   describe("Logout", () => {
-    let testEmail: string;
-    const testPassword = "Senha@123";
+    let testUser: ReturnType<typeof makeUser>;
+    let accessToken: string;
     let refreshToken: string;
 
     beforeAll(async () => {
-      testEmail = `logout-test-${Date.now()}@imbobi.com`;
+      testUser = makeUser();
       await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({
-          email: testEmail,
-          password: testPassword,
-          nome: "Logout Test User",
-        });
+        .send(testUser);
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({
-          email: testEmail,
-          password: testPassword,
-        });
+        .send({ email: testUser.email, senha: testUser.senha });
 
+      accessToken = loginRes.body.accessToken;
       refreshToken = loginRes.body.refreshToken;
     });
 
-    it("POST /auth/logout → 204 with valid refresh token", async () => {
+    it("POST /auth/logout → 204 with valid token and refreshToken in body", async () => {
       await request(app.getHttpServer())
         .post("/api/v1/auth/logout")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({ refreshToken })
         .expect(204);
     });
 
-    it("Refresh token is revoked after logout", async () => {
+    it("Refresh token is unusable after logout (renovar → 401)", async () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/renovar")
         .send({ refreshToken });
-
       expect(res.status).toBe(401);
     });
 
-    it("POST /auth/logout → 400 with missing token", async () => {
+    it("POST /auth/logout → 401 without Authorization header", async () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/logout")
-        .send({})
-        .expect(400);
-
+        .send({ refreshToken })
+        .expect(401);
       expect(res.body.message).toBeDefined();
     });
   });
 
+  // ─── Authenticated Endpoints ──────────────────────────────────────────────
+
   describe("Authenticated Endpoints", () => {
-    let token: string;
+    let accessToken: string;
     let userId: string;
 
     beforeAll(async () => {
-      const email = `auth-endpoints-${Date.now()}@imbobi.com`;
-      const loginRes = await request(app.getHttpServer())
+      const user = makeUser();
+      const regRes = await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({
-          email,
-          password: "Senha@123",
-          nome: "Auth Endpoints User",
-        });
+        .send(user);
 
-      userId = loginRes.body.usuarioId;
+      userId = regRes.body.usuario?.usuarioId;
 
-      const login = await request(app.getHttpServer())
+      const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({
-          email,
-          password: "Senha@123",
-        });
+        .send({ email: user.email, senha: user.senha });
 
-      token = login.body.access_token;
+      accessToken = loginRes.body.accessToken;
     });
 
     it("GET /usuarios/meu-perfil → 200 with valid token", async () => {
       const res = await request(app.getHttpServer())
         .get("/api/v1/usuarios/meu-perfil")
-        .set("Authorization", `Bearer ${token}`)
+        .set("Authorization", `Bearer ${accessToken}`)
         .expect(200);
 
       expect(res.body).toHaveProperty("usuarioId", userId);
@@ -421,16 +377,14 @@ describe("Auth E2E - Comprehensive Suite", () => {
       const res = await request(app.getHttpServer())
         .get("/api/v1/usuarios/meu-perfil")
         .expect(401);
-
       expect(res.body.message).toBeDefined();
     });
 
-    it("GET /usuarios/meu-perfil → 401 with invalid token", async () => {
+    it("GET /usuarios/meu-perfil → 401 with malformed token", async () => {
       const res = await request(app.getHttpServer())
         .get("/api/v1/usuarios/meu-perfil")
-        .set("Authorization", "Bearer invalid-token")
+        .set("Authorization", "Bearer not.valid.token")
         .expect(401);
-
       expect(res.body.message).toBeDefined();
     });
 
@@ -442,61 +396,55 @@ describe("Auth E2E - Comprehensive Suite", () => {
         .get("/api/v1/usuarios/meu-perfil")
         .set("Authorization", `Bearer ${expiredToken}`)
         .expect(401);
-
       expect(res.body.message).toBeDefined();
     });
   });
 
-  describe("JWT Expiry Handling", () => {
-    it("Access token should have expiry claim", async () => {
-      const email = `jwt-test-${Date.now()}@imbobi.com`;
-      await request(app.getHttpServer())
-        .post("/api/v1/auth/registrar")
-        .send({
-          email,
-          password: "Senha@123",
-          nome: "JWT Test User",
-        });
+  // ─── JWT Payload ──────────────────────────────────────────────────────────
+
+  describe("JWT Payload", () => {
+    it("accessToken has valid exp claim in the future", async () => {
+      const user = makeUser();
+      await request(app.getHttpServer()).post("/api/v1/auth/registrar").send(user);
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({
-          email,
-          password: "Senha@123",
-        });
+        .send({ email: user.email, senha: user.senha });
 
-      const token = loginRes.body.access_token;
-      const parts = token.split(".");
-      const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
+      const token = loginRes.body.accessToken;
+      const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
 
       expect(payload).toHaveProperty("exp");
       expect(payload.exp).toBeGreaterThan(Math.floor(Date.now() / 1000));
     });
 
-    it("Refresh token should have expiry claim", async () => {
-      const email = `refresh-jwt-test-${Date.now()}@imbobi.com`;
-      await request(app.getHttpServer())
-        .post("/api/v1/auth/registrar")
-        .send({
-          email,
-          password: "Senha@123",
-          nome: "Refresh JWT Test User",
-        });
+    it("accessToken payload contains sub, role and email", async () => {
+      const user = makeUser();
+      await request(app.getHttpServer()).post("/api/v1/auth/registrar").send(user);
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({
-          email,
-          password: "Senha@123",
-        });
+        .send({ email: user.email, senha: user.senha });
 
-      const refreshToken = loginRes.body.refreshToken;
-      
-      if (refreshToken.includes(".")) {
-        const parts = refreshToken.split(".");
-        const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
-        expect(payload).toHaveProperty("exp");
-      }
+      const token = loginRes.body.accessToken;
+      const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
+
+      expect(payload).toHaveProperty("sub");
+      expect(payload).toHaveProperty("role");
+      expect(payload).toHaveProperty("email", user.email);
+    });
+
+    it("refreshToken is present and non-empty", async () => {
+      const user = makeUser();
+      await request(app.getHttpServer()).post("/api/v1/auth/registrar").send(user);
+
+      const loginRes = await request(app.getHttpServer())
+        .post("/api/v1/auth/login")
+        .send({ email: user.email, senha: user.senha });
+
+      expect(loginRes.body.refreshToken).toBeDefined();
+      expect(typeof loginRes.body.refreshToken).toBe("string");
+      expect(loginRes.body.refreshToken.length).toBeGreaterThan(0);
     });
   });
 });

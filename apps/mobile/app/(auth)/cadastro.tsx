@@ -5,21 +5,24 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
 import { apiClient } from "@imbobi/core";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function CadastroScreen() {
   const router = useRouter();
+  const { setUserTipo } = useAuth();
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<CadastroUsuarioInput>({
     resolver: zodResolver(CadastroUsuarioSchema),
   });
 
   const onSubmit = async (data: CadastroUsuarioInput) => {
     try {
-      const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
+      const res = await apiClient.post<{ usuario: { tipo: string }; accessToken: string; refreshToken: string }>(
         "/auth/registrar",
         data
       );
       await SecureStore.setItemAsync("accessToken", res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
+      setUserTipo(res.usuario.tipo as any);
       router.replace("/(tabs)/obras");
     } catch (e: any) {
       Alert.alert("Erro", e.message ?? "Falha no cadastro. Tente novamente.");
