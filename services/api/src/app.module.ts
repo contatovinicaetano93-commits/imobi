@@ -5,6 +5,7 @@ import { ThrottlerModule } from "@nestjs/throttler";
 import { CacheModule } from "@nestjs/cache-manager";
 import { APP_GUARD, APP_INTERCEPTOR, Reflector } from "@nestjs/core";
 import { CacheInterceptor } from "@nestjs/cache-manager";
+import { UserAwareCacheInterceptor } from "./common/interceptors/user-aware-cache.interceptor";
 import { ThrottlerStorage } from "@nestjs/throttler";
 import KeyvRedis from "@keyv/redis";
 import { PrismaModule } from "./modules/prisma/prisma.module";
@@ -105,7 +106,7 @@ const redisConfig = getRedisConfig();
     ExcluirUsuarioWorker,
     {
       provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
+      useClass: UserAwareCacheInterceptor,
     },
     {
       provide: APP_GUARD,

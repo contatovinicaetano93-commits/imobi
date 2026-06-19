@@ -61,12 +61,16 @@ export default function EsqueceuSenhaPage() {
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <form onSubmit={handleSubmit} noValidate aria-label="Formulário de recuperação de senha" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div>
-              <label style={labelStyle}>E-mail</label>
+              <label htmlFor="esq-email" style={labelStyle}>E-mail</label>
               <input
+                id="esq-email"
                 type="email"
                 required
+                aria-required="true"
+                aria-invalid={!!error}
+                aria-describedby={error ? "esq-email-err" : undefined}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com.br"
@@ -75,12 +79,12 @@ export default function EsqueceuSenhaPage() {
             </div>
 
             {error && (
-              <p style={{ color: "#EF4444", fontSize: "0.78rem", background: "#FEF2F2", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
+              <p id="esq-email-err" role="alert" aria-live="assertive" style={{ color: "#EF4444", fontSize: "0.78rem", background: "#FEF2F2", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
                 {error}
               </p>
             )}
 
-            <button type="submit" disabled={loading} style={submitStyle}>
+            <button type="submit" disabled={loading} aria-busy={loading} style={submitStyle}>
               {loading ? "Enviando..." : "Enviar link de redefinição"}
             </button>
 
