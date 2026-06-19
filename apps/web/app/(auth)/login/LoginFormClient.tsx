@@ -40,30 +40,36 @@ export default function LoginFormClient({ next }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate aria-label="Formulário de login">
       <div>
-        <label style={labelStyle}>E-mail</label>
+        <label htmlFor="login-email" style={labelStyle}>E-mail</label>
         <input
+          id="login-email"
           {...register("email")}
           type="email"
           autoComplete="email"
           placeholder="seu@email.com.br"
+          aria-invalid={!!errors.email}
+          aria-describedby={errors.email ? "login-email-error" : undefined}
           style={errors.email ? inputErrorStyle : inputStyle}
         />
-        {errors.email && <p style={fieldErrorStyle}>{errors.email.message}</p>}
+        {errors.email && <p id="login-email-error" role="alert" style={fieldErrorStyle}>{errors.email.message}</p>}
       </div>
 
       <div>
-        <label style={labelStyle}>Senha</label>
+        <label htmlFor="login-senha" style={labelStyle}>Senha</label>
         <PasswordInput
+          id="login-senha"
           {...register("senha")}
           autoComplete="current-password"
           placeholder="••••••••"
           hasError={!!errors.senha}
+          aria-invalid={!!errors.senha}
+          aria-describedby={errors.senha ? "login-senha-error" : undefined}
           style={inputStyle}
           errorStyle={inputErrorStyle}
         />
-        {errors.senha && <p style={fieldErrorStyle}>{errors.senha.message}</p>}
+        {errors.senha && <p id="login-senha-error" role="alert" style={fieldErrorStyle}>{errors.senha.message}</p>}
       </div>
 
       <div style={{ textAlign: "right" }}>
@@ -71,18 +77,18 @@ export default function LoginFormClient({ next }: Props) {
       </div>
 
       {statusMsg && (
-        <p style={{ color: "#1B4FD8", fontSize: "0.78rem", background: "#EFF6FF", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
+        <p role="status" aria-live="polite" style={{ color: "#1B4FD8", fontSize: "0.78rem", background: "#EFF6FF", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
           {statusMsg}
         </p>
       )}
 
       {erro && (
-        <p style={{ color: "#EF4444", fontSize: "0.78rem", background: "#FEF2F2", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
+        <p role="alert" aria-live="assertive" style={{ color: "#EF4444", fontSize: "0.78rem", background: "#FEF2F2", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
           {erro}
         </p>
       )}
 
-      <button type="submit" disabled={isSubmitting} style={submitStyle}>
+      <button type="submit" disabled={isSubmitting} aria-busy={isSubmitting} style={submitStyle}>
         {isSubmitting ? "Entrando..." : "Login na plataforma"}
       </button>
 

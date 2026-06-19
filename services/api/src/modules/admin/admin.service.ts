@@ -398,6 +398,39 @@ export class AdminService {
     return { ok: true };
   }
 
+  async broadcastNotificacao(titulo: string, mensagem: string, tipo: string, link: string | undefined, adminId: string) {
+    const usuarios = await this.prisma.usuario.findMany({
+      where: { deletadoEm: null, bloqueadoEm: null },
+      select: { usuarioId: true },
+    });
+
+    const validTipo = [
+      "ETAPA_APROVADA", "ETAPA_REPROVADA", "PARCELA_LIBERADA", "PARCELA_FALHA",
+      "KYC_APROVADO", "KYC_REJEITADO", "SISTEMA",
+    ].includes(tipo) ? tipo : "SISTEMA";
+
+    await this.prisma.notificacao.createMany({
+      data: usuarios.map((u) => ({
+        usuarioId: u.usuarioId,
+        tipo: validTipo as any,
+        titulo,
+        mensagem,
+        link: link ?? null,
+      })),
+    });
+
+    await this.prisma.adminAuditLog.create({
+      data: {
+        adminId,
+        alvoId: null,
+        acaoTipo: "BROADCAST_NOTIFICACAO",
+        detalhes: `titulo=${titulo} destinatarios=${usuarios.length}`,
+      },
+    });
+
+    return { ok: true, enviadas: usuarios.length };
+  }
+
   async listarAuditLogs(limit: number, offset: number, alvoId?: string, acaoTipo?: string) {
     const where: Record<string, unknown> = {};
     if (alvoId) where.alvoId = alvoId;

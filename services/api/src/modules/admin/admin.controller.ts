@@ -100,4 +100,17 @@ export class AdminController {
   desbloquearUsuario(@Param("id") id: string, @UsuarioAtual() admin: UsuarioAtual) {
     return this.adminService.desbloquearUsuario(id, admin.id);
   }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post("notificacoes/broadcast")
+  @HttpCode(200)
+  broadcastNotificacao(
+    @Body("titulo") titulo: string,
+    @Body("mensagem") mensagem: string,
+    @Body("tipo") tipo: string,
+    @Body("link") link: string | undefined,
+    @UsuarioAtual() admin: UsuarioAtual,
+  ) {
+    return this.adminService.broadcastNotificacao(titulo, mensagem, tipo, link, admin.id);
+  }
 }

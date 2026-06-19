@@ -104,6 +104,7 @@ model SessaoToken {
   criadoEm      DateTime  @default(now())
 
   @@index([usuarioId])
+  @@index([usuarioId, revogadoEm, expiresAt])
 }
 
 model UsuarioFcmToken {
@@ -324,6 +325,7 @@ model Notificacao {
   @@index([usuarioId])
   @@index([lida])
   @@index([criadoEm])
+  @@index([usuarioId, lida, criadoEm])
 }
 
 enum TipoNotificacao {

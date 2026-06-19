@@ -207,8 +207,10 @@ export type ScoreHistorico = {
 
 export const scoreApi = {
   atual: () => apiFetch<ScoreAtual>("/score/atual"),
-  historico: (limit?: number) =>
-    apiFetch<ScoreHistorico[]>(`/score/historico${limit ? `?limit=${limit}` : ""}`),
+  historico: (limit?: number, page?: number) =>
+    apiFetch<{ data: ScoreHistorico[]; total: number; page: number; limit: number }>(
+      `/score/historico?limit=${limit ?? 12}${page ? `&page=${page}` : ""}`
+    ),
 };
 
 // ── Usuários ──────────────────────────────────────────────────────────

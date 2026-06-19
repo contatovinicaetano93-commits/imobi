@@ -43,10 +43,11 @@ const BREAKDOWN_ITEMS = [
 ];
 
 export default async function ScorePage() {
-  const [scoreAtual, historico] = await Promise.all([
+  const [scoreAtual, historicoRes] = await Promise.all([
     scoreApi.atual().catch(() => null as ScoreAtual | null),
-    scoreApi.historico(12).catch(() => [] as ScoreHistorico[]),
+    scoreApi.historico(12).catch(() => ({ data: [] as ScoreHistorico[], total: 0, page: 1, limit: 12 })),
   ]);
+  const historico = historicoRes.data;
 
   if (!scoreAtual) {
     return (
