@@ -321,6 +321,45 @@ export class AdminService {
     return { ok: true };
   }
 
+  async metricas() {
+    const trintaDiasAtras = new Date();
+    trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
+
+    const [
+      totalUsuarios,
+      novosUltimos30Dias,
+      totalObras,
+      obrasEmExecucao,
+      totalCreditos,
+      creditosAprovados,
+      creditosAguardando,
+      kycPendentes,
+      valorTotalLiberadoAgg,
+    ] = await this.prisma.$transaction([
+      this.prisma.usuario.count({ where: { deletadoEm: null } }),
+      this.prisma.usuario.count({ where: { deletadoEm: null, criadoEm: { gte: trintaDiasAtras } } }),
+      this.prisma.obra.count(),
+      this.prisma.obra.count({ where: { status: "EM_EXECUCAO" } }),
+      this.prisma.credito.count(),
+      this.prisma.credito.count({ where: { status: "ATIVO" } }),
+      this.prisma.credito.count({ where: { status: "AGUARDANDO_APROVACAO" } }),
+      this.prisma.kycDocumento.count({ where: { status: "PENDENTE" } }),
+      this.prisma.credito.aggregate({ _sum: { valorLiberado: true } }),
+    ]);
+
+    return {
+      totalUsuarios,
+      novosUltimos30Dias,
+      totalObras,
+      obrasEmExecucao,
+      totalCreditos,
+      creditosAprovados,
+      creditosAguardando,
+      kycPendentes,
+      valorTotalLiberado: Number(valorTotalLiberadoAgg._sum.valorLiberado ?? 0),
+    };
+  }
+
   async listarAuditLogs(limit: number, offset: number, alvoId?: string, acaoTipo?: string) {
     const where: Record<string, unknown> = {};
     if (alvoId) where.alvoId = alvoId;

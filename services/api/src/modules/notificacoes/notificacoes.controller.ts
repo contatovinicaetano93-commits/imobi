@@ -44,4 +44,10 @@ export class NotificacoesController {
     await this.notificacoes.deletar(u.id, id);
     return { ok: true };
   }
+
+  @Delete()
+  async deletarLidas(@UsuarioAtual() u: IUsuario) {
+    const { count } = await this.notificacoes.deletarLidas(u.id);
+    return { ok: true, deletadas: count };
+  }
 }

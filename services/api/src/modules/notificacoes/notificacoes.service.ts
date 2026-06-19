@@ -64,4 +64,10 @@ export class NotificacoesService {
       where: { usuarioId, lida: false },
     });
   }
+
+  async deletarLidas(usuarioId: string) {
+    return this.prisma.notificacao.deleteMany({
+      where: { usuarioId, lida: true },
+    });
+  }
 }

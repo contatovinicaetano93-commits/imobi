@@ -19,6 +19,11 @@ export class AdminController {
     return this.adminService.overview();
   }
 
+  @Get("metricas")
+  metricas() {
+    return this.adminService.metricas();
+  }
+
   @Get("atividades")
   atividades(@Query("limit") limit: string = "8") {
     const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 8, 1), 50);

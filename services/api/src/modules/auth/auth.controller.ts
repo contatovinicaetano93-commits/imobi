@@ -6,11 +6,14 @@ import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import type { CadastroUsuarioInput, LoginInput, EsqueceuSenhaInput, RedefinirSenhaInput } from "@imbobi/schemas";
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from "@nestjs/swagger";
 
+@ApiTags("auth")
 @Controller("auth")
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
+  @ApiOperation({ summary: "Registrar novo usuário" })
   @Post("registrar")
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   registrar(
@@ -21,6 +24,7 @@ export class AuthController {
     return this.auth.registrar(body, { userAgent, ip });
   }
 
+  @ApiOperation({ summary: "Autenticar usuário" })
   @Post("login")
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
@@ -32,6 +36,7 @@ export class AuthController {
     return this.auth.login(body, { userAgent, ip });
   }
 
+  @ApiOperation({ summary: "Renovar tokens via refresh token" })
   @Post("renovar")
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
@@ -43,6 +48,8 @@ export class AuthController {
     return this.auth.renovarToken(token, { userAgent, ip });
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Invalidar refresh token atual" })
   @UseGuards(JwtAuthGuard)
   @Post("logout")
   @HttpCode(204)
@@ -50,6 +57,7 @@ export class AuthController {
     return this.auth.revogarToken(token);
   }
 
+  @ApiOperation({ summary: "Solicitar redefinição de senha" })
   @Post("esqueceu-senha")
   @HttpCode(200)
   @Throttle({ default: { limit: 5, ttl: 60000 }, hour: { limit: 10, ttl: 3600000 } })
@@ -57,6 +65,7 @@ export class AuthController {
     return this.auth.esqueceuSenha(body.email);
   }
 
+  @ApiOperation({ summary: "Redefinir senha com token" })
   @Post("redefinir-senha")
   @HttpCode(200)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
@@ -64,6 +73,8 @@ export class AuthController {
     return this.auth.redefinirSenha(body.token, body.novaSenha);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Revogar todas as sessões ativas" })
   @UseGuards(JwtAuthGuard)
   @Delete("sessoes")
   @HttpCode(204)
@@ -71,12 +82,16 @@ export class AuthController {
     return this.auth.revogarTodasSessoes(u.id);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Listar sessões ativas do usuário" })
   @UseGuards(JwtAuthGuard)
   @Get("sessoes")
   listarSessoes(@UsuarioAtual() u: IUsuario) {
     return this.auth.listarSessoes(u.id);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Revogar uma sessão específica" })
   @UseGuards(JwtAuthGuard)
   @Delete("sessoes/:sessionId")
   @HttpCode(204)

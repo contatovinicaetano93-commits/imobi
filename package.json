@@ -16,7 +16,9 @@
     "validate:schemas": "tsx scripts/validate-schema-sync.ts",
     "db:generate": "pnpm --filter @imbobi/api run prisma:generate",
     "db:migrate": "pnpm --filter @imbobi/api prisma migrate dev",
-    "db:studio": "pnpm --filter @imbobi/api prisma studio"
+    "db:studio": "pnpm --filter @imbobi/api prisma studio",
+    "db:seed": "pnpm --filter @imbobi/api run db:seed",
+    "db:reset": "pnpm --filter @imbobi/api run db:reset"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",

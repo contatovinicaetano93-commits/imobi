@@ -64,6 +64,23 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");
 
+  // Swagger UI — dev and staging only
+  if (process.env["NODE_ENV"] !== "production") {
+    const { SwaggerModule, DocumentBuilder } = await import("@nestjs/swagger");
+    const config = new DocumentBuilder()
+      .setTitle("imbobi API")
+      .setDescription("API de crédito imobiliário para construção")
+      .setVersion("1.0")
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup("api/docs", app, document, {
+      swaggerOptions: { persistAuthorization: true },
+      customSiteTitle: "imbobi API Docs",
+    });
+    console.log("[STARTUP] Swagger docs: http://localhost:4000/api/docs");
+  }
+
   const nodeEnv = process.env["NODE_ENV"] || "development";
   const corsOrigins = process.env["CORS_ORIGIN"]?.split(",").map((o) => o.trim()).filter(Boolean);
   const isDev = nodeEnv === "development" || nodeEnv === "test";
