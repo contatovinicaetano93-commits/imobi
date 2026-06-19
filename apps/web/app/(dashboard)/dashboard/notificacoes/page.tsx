@@ -89,6 +89,11 @@ export default function NotificacoesPage() {
     setMarcandoTodas(false);
   }
 
+  async function limparLidas() {
+    await notificacoesApi.deletarLidas().catch(() => null);
+    setNotificacoes((prev) => prev.filter((n) => !n.lida));
+  }
+
   const filtradas =
     tab === "nao-lidas" ? notificacoes.filter((n) => !n.lida) : notificacoes;
 
@@ -122,16 +127,27 @@ export default function NotificacoesPage() {
             </p>
           </div>
         </div>
-        {naoLidasCount > 0 && (
-          <button
-            onClick={marcarTodasLidas}
-            disabled={marcandoTodas}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#1B4FD8] hover:text-blue-800 disabled:opacity-50 transition-colors bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-xl"
-          >
-            <CheckCheck className="w-4 h-4" />
-            {marcandoTodas ? "Marcando..." : "Marcar todas como lidas"}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {naoLidasCount > 0 && (
+            <button
+              onClick={marcarTodasLidas}
+              disabled={marcandoTodas}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#1B4FD8] hover:text-blue-800 disabled:opacity-50 transition-colors bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-xl"
+            >
+              <CheckCheck className="w-4 h-4" />
+              {marcandoTodas ? "Marcando..." : "Marcar todas como lidas"}
+            </button>
+          )}
+          {notificacoes.some((n) => n.lida) && (
+            <button
+              onClick={limparLidas}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors bg-gray-100 hover:bg-red-50 px-3 py-2 rounded-xl"
+            >
+              <X className="w-4 h-4" />
+              Limpar lidas
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}

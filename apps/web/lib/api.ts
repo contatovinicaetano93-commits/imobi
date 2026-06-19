@@ -554,6 +554,8 @@ export const notificacoesApi = {
     apiFetch("/notificacoes/marcar-todas-lidas", { method: "PATCH" }),
   deletar: (id: string) =>
     apiFetch(`/notificacoes/${id}`, { method: "DELETE" }),
+  deletarLidas: () =>
+    apiFetch<{ ok: boolean; deletadas: number }>("/notificacoes", { method: "DELETE" }),
 };
 
 // ── Comitê Digital ────────────────────────────────────────────────────
