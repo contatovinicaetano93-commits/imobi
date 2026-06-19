@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, HttpCode } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, HttpCode, BadRequestException } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { AdminService, CriarUsuarioAdminDto } from "./admin.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -74,5 +75,29 @@ export class AdminController {
     @Query("acaoTipo") acaoTipo?: string,
   ) {
     return this.adminService.listarAuditLogs(Number(limit), Number(offset), alvoId, acaoTipo);
+  }
+
+  @Get("usuarios/:id/sessoes")
+  listarSessoesUsuario(@Param("id") id: string) {
+    return this.adminService.listarSessoesUsuario(id);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post("usuarios/:id/bloquear")
+  @HttpCode(200)
+  bloquearUsuario(
+    @Param("id") id: string,
+    @UsuarioAtual() admin: UsuarioAtual,
+    @Body("motivo") motivo?: string,
+  ) {
+    if (id === admin.id) throw new BadRequestException("Não é possível bloquear a própria conta.");
+    return this.adminService.bloquearUsuario(id, admin.id, motivo);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post("usuarios/:id/desbloquear")
+  @HttpCode(200)
+  desbloquearUsuario(@Param("id") id: string, @UsuarioAtual() admin: UsuarioAtual) {
+    return this.adminService.desbloquearUsuario(id, admin.id);
   }
 }

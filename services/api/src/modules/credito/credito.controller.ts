@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, UseGuards, HttpCode } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { CreditoService } from "./credito.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -46,5 +46,21 @@ export class CreditoController {
   @Get(":id/extrato")
   extrato(@Param("id") id: string, @UsuarioAtual() u: IUsuario) {
     return this.credito.extrato(id, u.id);
+  }
+
+  @ApiOperation({ summary: "Listar liberações de parcela de um crédito" })
+  @UseGuards(JwtAuthGuard)
+  @Get(":id/liberacoes")
+  liberacoes(@Param("id") id: string, @UsuarioAtual() u: IUsuario) {
+    return this.credito.liberacoes(id, u.id);
+  }
+
+  @ApiOperation({ summary: "Cancelar crédito (somente ADMIN)" })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("ADMIN")
+  @Post(":id/cancelar")
+  @HttpCode(200)
+  cancelar(@Param("id") id: string, @Body("motivo") motivo: string) {
+    return this.credito.cancelar(id, motivo);
   }
 }

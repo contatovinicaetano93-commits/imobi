@@ -81,12 +81,17 @@ export class ScoreService {
     return score;
   }
 
-  async buscarHistorico(usuarioId: string, limit = 12) {
+  async buscarHistorico(usuarioId: string, limit = 12, offset = 0) {
     return this.prisma.scoreHistorico.findMany({
       where: { usuarioId },
       orderBy: { criadoEm: "desc" },
       take: limit,
+      skip: offset,
     });
+  }
+
+  async contarHistorico(usuarioId: string): Promise<number> {
+    return this.prisma.scoreHistorico.count({ where: { usuarioId } });
   }
 
   obterNivel(score: number): { nivel: string; cor: string; descricao: string } {

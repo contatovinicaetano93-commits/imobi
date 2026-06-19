@@ -360,6 +360,44 @@ export class AdminService {
     };
   }
 
+  async listarSessoesUsuario(usuarioId: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId }, select: { usuarioId: true } });
+    if (!usuario) throw new NotFoundException("Usuário não encontrado.");
+    const sessoes = await this.prisma.sessaoToken.findMany({
+      where: { usuarioId, revogadoEm: null, expiresAt: { gt: new Date() } },
+      select: { sessionId: true, userAgent: true, ip: true, criadoEm: true, expiresAt: true },
+      orderBy: { criadoEm: "desc" },
+    });
+    return { data: sessoes, total: sessoes.length };
+  }
+
+  async bloquearUsuario(usuarioId: string, adminId: string, motivo?: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
+    if (!usuario || usuario.deletadoEm) throw new NotFoundException("Usuário não encontrado.");
+    if (usuario.bloqueadoEm) throw new BadRequestException("Usuário já está bloqueado.");
+
+    await this.prisma.$transaction([
+      this.prisma.usuario.update({ where: { usuarioId }, data: { bloqueadoEm: new Date() } }),
+      this.prisma.sessaoToken.updateMany({ where: { usuarioId, revogadoEm: null }, data: { revogadoEm: new Date() } }),
+    ]);
+    await this.prisma.adminAuditLog.create({
+      data: { adminId, alvoId: usuarioId, acaoTipo: "USUARIO_BLOQUEADO", detalhes: motivo ?? null },
+    });
+    return { ok: true };
+  }
+
+  async desbloquearUsuario(usuarioId: string, adminId: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
+    if (!usuario || usuario.deletadoEm) throw new NotFoundException("Usuário não encontrado.");
+    if (!usuario.bloqueadoEm) throw new BadRequestException("Usuário não está bloqueado.");
+
+    await this.prisma.usuario.update({ where: { usuarioId }, data: { bloqueadoEm: null } });
+    await this.prisma.adminAuditLog.create({
+      data: { adminId, alvoId: usuarioId, acaoTipo: "USUARIO_DESBLOQUEADO", detalhes: null },
+    });
+    return { ok: true };
+  }
+
   async listarAuditLogs(limit: number, offset: number, alvoId?: string, acaoTipo?: string) {
     const where: Record<string, unknown> = {};
     if (alvoId) where.alvoId = alvoId;

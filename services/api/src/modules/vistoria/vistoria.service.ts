@@ -91,6 +91,47 @@ export class VistoriaService {
     return { ok: true, etapaId, status: "CONCLUIDA" };
   }
 
+  async listarPendentes(limit: number, offset: number) {
+    const [data, total] = await Promise.all([
+      this.prisma.etapaObra.findMany({
+        where: { status: "AGUARDANDO_VISTORIA" },
+        take: limit,
+        skip: offset,
+        orderBy: { atualizadoEm: "asc" },
+        include: {
+          obra: { select: { obraId: true, nome: true, usuario: { select: { nome: true, email: true } } } },
+        },
+      }),
+      this.prisma.etapaObra.count({ where: { status: "AGUARDANDO_VISTORIA" } }),
+    ]);
+    return { data, total, page: Math.floor(offset / limit) + 1, limit };
+  }
+
+  async agendar(gestorId: string, etapaId: string, dataAgendada: string, observacoes?: string) {
+    const etapa = await this.prisma.etapaObra.findUnique({
+      where: { etapaId },
+      include: { obra: { select: { usuarioId: true, nome: true } } },
+    });
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+
+    const dataAgendadaDate = new Date(dataAgendada);
+    if (isNaN(dataAgendadaDate.getTime())) throw new BadRequestException("Data de agendamento inválida.");
+
+    await this.prisma.etapaAuditLog.create({
+      data: { etapaId, acaoTipo: "VISTORIA_AGENDADA", usuarioId: gestorId, observacoes: observacoes ?? null },
+    });
+
+    await this.notificacoes.criar(
+      etapa.obra.usuarioId,
+      "SISTEMA",
+      `Vistoria agendada: ${etapa.nome}`,
+      `Vistoria para "${etapa.nome}" agendada para ${dataAgendadaDate.toLocaleDateString("pt-BR")}.`,
+      null,
+    );
+
+    return { ok: true, etapaId, dataAgendada: dataAgendadaDate.toISOString() };
+  }
+
   async rejeitar(gestorId: string, etapaId: string, motivo: string) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId },
