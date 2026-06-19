@@ -2,16 +2,21 @@ import {
   Controller, Get, Post, Delete, Param, Body,
   UseGuards, UseInterceptors, UploadedFile,
 } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from "@nestjs/swagger";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import { DocumentosService } from "./documentos.service";
 
+@ApiTags("documentos")
+@ApiBearerAuth()
 @Controller("documentos")
 @UseGuards(JwtAuthGuard)
 export class DocumentosController {
   constructor(private readonly svc: DocumentosService) {}
 
+  @ApiOperation({ summary: "Upload de documento (multipart/form-data)" })
+  @ApiConsumes("multipart/form-data")
   @Post()
   @UseInterceptors(FileInterceptor("file"))
   async upload(
@@ -31,6 +36,7 @@ export class DocumentosController {
     );
   }
 
+  @ApiOperation({ summary: "Listar documentos de uma obra" })
   @Get("obra/:obraId")
   async listarPorObra(
     @Param("obraId") obraId: string,
@@ -40,11 +46,13 @@ export class DocumentosController {
     return this.svc.listarPorObra(obraId, user.id, isAdmin);
   }
 
+  @ApiOperation({ summary: "Listar meus documentos" })
   @Get("meus")
   async listarMeus(@UsuarioAtual() user: IUsuario) {
     return this.svc.listarPorUsuario(user.id);
   }
 
+  @ApiOperation({ summary: "Excluir documento por ID" })
   @Delete(":id")
   async deletar(@Param("id") id: string, @UsuarioAtual() user: IUsuario) {
     const isAdmin = user.tipo === "ADMIN";
