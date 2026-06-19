@@ -21,7 +21,7 @@ describe("CustomThrottlerGuard", () => {
     it("should track by user ID when user is authenticated", async () => {
       const mockRequest = {
         user: {
-          usuarioId: "user-123",
+          id: "user-123",
           email: "test@example.com",
         },
       } as any;
@@ -67,7 +67,7 @@ describe("CustomThrottlerGuard", () => {
     it("should prioritize user ID over IP address", async () => {
       const mockRequest = {
         user: {
-          usuarioId: "user-456",
+          id: "user-456",
         },
         ip: "192.168.1.200",
         headers: {
