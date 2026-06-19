@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../contexts/AuthContext";
+import { usePushNotifications } from "../../hooks/usePushNotifications";
 
 type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
 
@@ -9,6 +10,7 @@ const visible = {};
 
 export default function TabLayout() {
   const { userTipo } = useAuth();
+  usePushNotifications();
 
   const showObras   = !userTipo || userTipo === "TOMADOR" || userTipo === "GESTOR" || userTipo === "GESTOR_FUNDO" || userTipo === "ADMIN" || userTipo === "CONSTRUTOR";
   const showCredito = !userTipo || userTipo === "TOMADOR" || userTipo === "GESTOR" || userTipo === "GESTOR_FUNDO" || userTipo === "ADMIN";

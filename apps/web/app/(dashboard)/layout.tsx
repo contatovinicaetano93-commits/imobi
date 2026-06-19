@@ -251,7 +251,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       fetch("/api/proxy/notificacoes/contar-nao-lidas")
         .then((r) => r.ok ? r.json() : null)
         .catch(() => null)
-        .then((d) => { if (typeof d?.total === "number") setNotifCount(d.total); });
+        .then((d) => { if (typeof d?.count === "number") setNotifCount(d.count); });
     }
     fetchCount();
     const id = setInterval(fetchCount, 60_000);
