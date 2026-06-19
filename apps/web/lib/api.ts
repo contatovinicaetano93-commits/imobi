@@ -234,6 +234,10 @@ export const usuariosApi = {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
+  deletarConta: () =>
+    apiFetch<{ ok: boolean; message: string }>("/usuarios/meu-perfil", {
+      method: "DELETE",
+    }),
 };
 
 // ── KYC ───────────────────────────────────────────────────────────────

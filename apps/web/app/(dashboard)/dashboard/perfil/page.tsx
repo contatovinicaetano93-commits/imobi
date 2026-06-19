@@ -3,6 +3,7 @@ import { usuariosApi } from "@/lib/api";
 import { formatarCPF, formatarTelefone } from "@imbobi/core";
 import { PerfilForm } from "./perfil-form";
 import { SessoesCard } from "./sessoes-card";
+import { DangerZoneCard } from "./danger-zone-card";
 import { AlertCircle } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
@@ -130,6 +131,9 @@ export default async function PerfilPage() {
 
       {/* Dispositivos conectados */}
       <SessoesCard />
+
+      {/* LGPD — exclusão de conta */}
+      <DangerZoneCard />
     </div>
   );
 }
