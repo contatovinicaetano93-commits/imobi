@@ -106,6 +106,17 @@ export default function UsuariosAdminPage() {
   const [excluindo, setExcluindo] = useState(false);
   const [apiErro, setApiErro] = useState("");
   const [editForm, setEditForm] = useState<EditarUsuarioForm | null>(null);
+  const [myId, setMyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const match = document.cookie.match(/(?:^|;\s*)access_token=([^;]+)/);
+      if (match?.[1]) {
+        const payload = JSON.parse(atob(match[1].split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+        if (typeof payload?.sub === "string") setMyId(payload.sub);
+      }
+    } catch { /* ignore decode errors */ }
+  }, []);
 
   useEffect(() => {
     fetch("/api/proxy/admin/usuarios")
@@ -658,7 +669,9 @@ export default function UsuariosAdminPage() {
                             {/* Danger zone */}
                             <div style={{ borderTop: "1px solid rgba(220,38,38,0.15)", paddingTop: "1rem" }}>
                               <p style={{ ...jost, fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#dc2626", marginBottom: "0.75rem" }}>Zona de risco</p>
-                              {confirmDeleteId === u.id ? (
+                              {myId === u.id ? (
+                                <p style={{ ...jost, fontSize: "0.75rem", color: "#9ca3af" }}>Não é possível excluir sua própria conta.</p>
+                              ) : confirmDeleteId === u.id ? (
                                 <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "0.85rem 1rem" }}>
                                   <p style={{ ...jost, fontSize: "0.8rem", fontWeight: 600, color: "#dc2626", margin: "0 0 4px" }}>Excluir conta de {u.nome}?</p>
                                   <p style={{ ...jost, fontSize: "0.72rem", color: "#9ca3af", margin: "0 0 0.75rem" }}>Esta ação é permanente e não pode ser desfeita.</p>
@@ -678,7 +691,8 @@ export default function UsuariosAdminPage() {
                                     </button>
                                   </div>
                                 </div>
-                              ) : (
+                              ) : null}
+                              {myId !== u.id && confirmDeleteId !== u.id && (
                                 <button
                                   onClick={() => setConfirmDeleteId(u.id)}
                                   disabled={salvando === u.id}
