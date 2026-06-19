@@ -123,7 +123,7 @@ export class VistoriaService {
 
     await this.notificacoes.criar(
       etapa.obra.usuarioId,
-      "SISTEMA",
+      "VISTORIA_PENDENTE",
       `Vistoria agendada: ${etapa.nome}`,
       `Vistoria para "${etapa.nome}" agendada para ${dataAgendadaDate.toLocaleDateString("pt-BR")}.`,
       null,

@@ -136,6 +136,24 @@ export const authApi = {
     }),
 };
 
+export const sessoesApi = {
+  listar: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<SessaoAtiva[]>("/api/v1/auth/sessoes", token ?? undefined);
+    }),
+  revogar: (sessionId: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.delete(`/api/v1/auth/sessoes/${sessionId}`, token ?? undefined);
+    }),
+  revogarTodas: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.delete("/api/v1/auth/sessoes", token ?? undefined);
+    }),
+};
+
 export const pushApi = {
   registrarToken: (fcmToken: string) =>
     callApi(async () => {

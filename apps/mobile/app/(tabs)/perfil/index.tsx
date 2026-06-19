@@ -161,6 +161,11 @@ export default function PerfilScreen() {
               <Text style={styles.menuLabel}>Verificação KYC</Text>
               <Ionicons name="chevron-forward" size={16} color="#9ca3af" style={{ marginLeft: "auto" }} />
             </TouchableOpacity>
+            <TouchableOpacity style={styles.menuRow} onPress={() => router.push("/(tabs)/perfil/sessoes" as any)}>
+              <Ionicons name="phone-portrait" size={20} color="#16a34a" />
+              <Text style={styles.menuLabel}>Sessões Ativas</Text>
+              <Ionicons name="chevron-forward" size={16} color="#9ca3af" style={{ marginLeft: "auto" }} />
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} disabled={loggingOut}>

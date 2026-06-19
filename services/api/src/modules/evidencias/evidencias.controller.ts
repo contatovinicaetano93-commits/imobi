@@ -1,6 +1,7 @@
 import {
   Controller, Post, Get, Patch, Param, Body, UseGuards, Req, BadRequestException,
 } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 import type { FastifyRequest } from "fastify";
 import { EvidenciasService } from "./evidencias.service";
@@ -10,11 +11,15 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import { UploadEvidenciaSchema } from "@imbobi/schemas";
 
+@ApiTags("evidencias")
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller("evidencias")
 export class EvidenciasController {
   constructor(private readonly evidencias: EvidenciasService) {}
 
+  @ApiOperation({ summary: "Upload de evidência fotográfica (multipart)" })
+  @ApiConsumes("multipart/form-data")
   @Post()
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async upload(
@@ -59,11 +64,13 @@ export class EvidenciasController {
     return this.evidencias.upload(u.id, parsed.data, fileBuffer, mimeType);
   }
 
+  @ApiOperation({ summary: "Listar evidências de uma etapa" })
   @Get("etapa/:etapaId")
   listar(@UsuarioAtual() u: IUsuario, @Param("etapaId") etapaId: string) {
     return this.evidencias.listarPorEtapa(u, etapaId);
   }
 
+  @ApiOperation({ summary: "Validar ou reprovar evidência (gestor/engenheiro/admin)" })
   @UseGuards(RolesGuard)
   @Roles("GESTOR", "ADMIN", "ENGENHEIRO")
   @Patch(":id/validar")

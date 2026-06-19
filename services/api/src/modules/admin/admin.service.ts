@@ -342,7 +342,7 @@ export class AdminService {
       this.prisma.obra.count({ where: { status: "EM_EXECUCAO" } }),
       this.prisma.credito.count(),
       this.prisma.credito.count({ where: { status: "ATIVO" } }),
-      this.prisma.credito.count({ where: { status: "AGUARDANDO_APROVACAO" } }),
+      this.prisma.credito.count({ where: { status: "SUSPENSO" } }),
       this.prisma.kycDocumento.count({ where: { status: "PENDENTE" } }),
       this.prisma.credito.aggregate({ _sum: { valorLiberado: true } }),
     ]);

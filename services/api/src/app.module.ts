@@ -36,6 +36,7 @@ import { QUEUE_LIBERACAO } from "./common/constants";
 import { HealthController } from "./common/health.controller";
 import { getRedisConfig } from "./common/config";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
+import { HttpLoggingMiddleware } from "./common/middleware/http-logging.middleware";
 import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
 
 const redisConfig = getRedisConfig();
@@ -120,6 +121,7 @@ const redisConfig = getRedisConfig();
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     const nodeEnv = process.env.NODE_ENV || 'development';
+    consumer.apply(HttpLoggingMiddleware).forRoutes('*');
     if (nodeEnv === 'production') {
       consumer.apply(ProductionMiddleware).forRoutes('*');
     }

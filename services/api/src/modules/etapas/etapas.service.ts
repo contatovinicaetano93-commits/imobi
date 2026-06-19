@@ -149,6 +149,49 @@ export class EtapasService {
     });
   }
 
+  async atualizar(
+    etapaId: string,
+    body: { nome?: string; ordem?: number; percentualObra?: number; dataPlanejadaConclusao?: string },
+    usuarioId: string
+  ) {
+    const etapa = await this.prisma.etapaObra.findUnique({ where: { etapaId } });
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+    if (["CONCLUIDA"].includes(etapa.status)) {
+      throw new BadRequestException("Não é possível editar uma etapa concluída.");
+    }
+
+    const data: Record<string, unknown> = {};
+    if (body.nome !== undefined) data.nome = body.nome;
+    if (body.ordem !== undefined) data.ordem = body.ordem;
+    if (body.percentualObra !== undefined) data.percentualObra = body.percentualObra;
+    if (body.dataPlanejadaConclusao !== undefined) {
+      const d = new Date(body.dataPlanejadaConclusao);
+      if (isNaN(d.getTime())) throw new BadRequestException("Data inválida.");
+      data.dataPlanejadaConclusao = d;
+    }
+
+    await this.prisma.etapaAuditLog.create({
+      data: { etapaId, acaoTipo: "ATUALIZADA", usuarioId },
+    });
+
+    return this.prisma.etapaObra.update({ where: { etapaId }, data });
+  }
+
+  async deletar(etapaId: string, usuarioId: string) {
+    const etapa = await this.prisma.etapaObra.findUnique({ where: { etapaId } });
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+    if (etapa.status !== "PLANEJADA") {
+      throw new BadRequestException("Apenas etapas no status PLANEJADA podem ser excluídas.");
+    }
+
+    await this.prisma.etapaAuditLog.create({
+      data: { etapaId, acaoTipo: "EXCLUIDA", usuarioId },
+    });
+
+    await this.prisma.etapaObra.delete({ where: { etapaId } });
+    return { ok: true };
+  }
+
   async listarPorObra(obraId: string, usuario: { id: string; tipo: string }) {
     const obra = await this.prisma.obra.findUnique({ where: { obraId }, select: { usuarioId: true } });
     if (!obra) throw new NotFoundException("Obra não encontrada.");

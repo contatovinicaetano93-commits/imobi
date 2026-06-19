@@ -88,13 +88,13 @@ export default function RelatoriosPage() {
     Promise.all([
       creditoApi.meus().catch(() => [] as CreditoResumo[]),
       obrasApi.listar().catch(() => [] as ObraResumo[]),
-      scoreApi.historico(12).catch(() => [] as ScoreHistorico[]),
+      scoreApi.historico(12).catch(() => ({ data: [] as ScoreHistorico[], total: 0, page: 1, limit: 12 })),
       usuariosApi.meuPerfil().catch(() => null),
     ])
       .then(([c, o, h, u]) => {
         setCreditos(c);
         setObras(o);
-        setHistorico(h);
+        setHistorico(Array.isArray(h) ? h : h.data);
         setUsuario(u);
         if (u?.tipo === "ADMIN" || u?.tipo === "GESTOR_OBRA") {
           return managerApi.dashboard().catch(() => null);
