@@ -53,27 +53,30 @@ export default function CadastroPage() {
           Preencha os dados para acessar a plataforma IMOBI. Senha: mínimo 8 caracteres, 1 maiúscula e 1 número.
         </p>
 
-        <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-          <Field label="Nome completo" error={errors.nome?.message}>
-            <input {...register("nome")} placeholder="João da Silva" style={errors.nome ? inputErrorStyle : inputStyle} />
+        <form onSubmit={handleSubmit(onSubmit)} noValidate aria-label="Formulário de cadastro" style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+          <Field id="cad-nome" label="Nome completo" error={errors.nome?.message}>
+            <input {...register("nome")} id="cad-nome" aria-invalid={!!errors.nome} aria-describedby={errors.nome ? "cad-nome-err" : undefined} placeholder="João da Silva" style={errors.nome ? inputErrorStyle : inputStyle} />
           </Field>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-            <Field label="CPF" error={errors.cpf?.message}>
-              <input {...register("cpf")} placeholder="Somente números (11 dígitos)" maxLength={14} style={errors.cpf ? inputErrorStyle : inputStyle} />
+            <Field id="cad-cpf" label="CPF" error={errors.cpf?.message}>
+              <input {...register("cpf")} id="cad-cpf" aria-invalid={!!errors.cpf} aria-describedby={errors.cpf ? "cad-cpf-err" : undefined} placeholder="Somente números (11 dígitos)" maxLength={14} style={errors.cpf ? inputErrorStyle : inputStyle} />
             </Field>
-            <Field label="WhatsApp" error={errors.telefone?.message}>
-              <input {...register("telefone")} placeholder="11999999999" maxLength={15} style={errors.telefone ? inputErrorStyle : inputStyle} />
+            <Field id="cad-telefone" label="WhatsApp" error={errors.telefone?.message}>
+              <input {...register("telefone")} id="cad-telefone" aria-invalid={!!errors.telefone} aria-describedby={errors.telefone ? "cad-telefone-err" : undefined} placeholder="11999999999" maxLength={15} style={errors.telefone ? inputErrorStyle : inputStyle} />
             </Field>
           </div>
 
-          <Field label="E-mail" error={errors.email?.message}>
-            <input {...register("email")} type="email" placeholder="seu@email.com.br" style={errors.email ? inputErrorStyle : inputStyle} />
+          <Field id="cad-email" label="E-mail" error={errors.email?.message}>
+            <input {...register("email")} id="cad-email" type="email" aria-invalid={!!errors.email} aria-describedby={errors.email ? "cad-email-err" : undefined} placeholder="seu@email.com.br" style={errors.email ? inputErrorStyle : inputStyle} />
           </Field>
 
-          <Field label="Senha" error={errors.senha?.message}>
+          <Field id="cad-senha" label="Senha" error={errors.senha?.message}>
             <PasswordInput
               {...register("senha")}
+              id="cad-senha"
+              aria-invalid={!!errors.senha}
+              aria-describedby={errors.senha ? "cad-senha-err" : undefined}
               placeholder="Mín. 8 caracteres, 1 maiúscula, 1 número"
               hasError={!!errors.senha}
               style={inputStyle}
@@ -106,18 +109,18 @@ export default function CadastroPage() {
           </div>
 
           {statusMsg && (
-            <p style={{ color: "#1B4FD8", fontSize: "0.78rem", background: "#EFF6FF", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
+            <p role="status" aria-live="polite" style={{ color: "#1B4FD8", fontSize: "0.78rem", background: "#EFF6FF", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
               {statusMsg}
             </p>
           )}
 
           {erro && (
-            <p style={{ color: "#EF4444", fontSize: "0.78rem", background: "#FEF2F2", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
+            <p role="alert" aria-live="assertive" style={{ color: "#EF4444", fontSize: "0.78rem", background: "#FEF2F2", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
               {erro}
             </p>
           )}
 
-          <button type="submit" disabled={isSubmitting} style={submitStyle}>
+          <button type="submit" disabled={isSubmitting} aria-busy={isSubmitting} style={submitStyle}>
             {isSubmitting ? "Criando conta..." : "Criar minha conta"}
           </button>
         </form>
@@ -186,16 +189,17 @@ function ConsentController({ control, name, error, children }: {
   );
 }
 
-function Field({ label, error, children }: {
-  label: string; error?: string; children: React.ReactNode;
+function Field({ id, label, error, children }: {
+  id?: string; label: string; error?: string; children: React.ReactNode;
 }) {
+  const errId = id ? `${id}-err` : undefined;
   return (
     <div>
-      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--ink-soft)", marginBottom: "0.4rem" }}>
+      <label htmlFor={id} style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--ink-soft)", marginBottom: "0.4rem" }}>
         {label}
       </label>
       {children}
-      {error && <p style={{ fontSize: "0.72rem", color: "#EF4444", marginTop: "0.25rem" }}>{error}</p>}
+      {error && <p id={errId} role="alert" style={{ fontSize: "0.72rem", color: "#EF4444", marginTop: "0.25rem" }}>{error}</p>}
     </div>
   );
 }

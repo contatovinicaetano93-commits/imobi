@@ -83,12 +83,12 @@ describe("AuthService — brute-force lockout", () => {
     ).rejects.toThrow(UnauthorizedException);
   });
 
-  it("throws ForbiddenException when lock key is set", async () => {
+  it("throws UnauthorizedException when lock key is set", async () => {
     cacheStore["login:lock:locked@test.com"] = "1";
 
     await expect(
       service.login({ email: "locked@test.com", senha: "anything" }, {})
-    ).rejects.toThrow(ForbiddenException);
+    ).rejects.toThrow(UnauthorizedException);
 
     expect(mockPrisma.usuario.findFirst).not.toHaveBeenCalled();
   });
@@ -119,8 +119,8 @@ describe("AuthService — brute-force lockout", () => {
     );
   });
 
-  it("throws ForbiddenException when account is blocked", async () => {
-    mockPrisma.usuario.findFirst.mockResolvedValue({
+  it("throws UnauthorizedException when account is blocked", async () => {
+    mockPrisma.usuario.findUnique.mockResolvedValue({
       usuarioId: "uid3",
       email: "blocked@test.com",
       passwordHash: "$2b$12$" + "x".repeat(53),
@@ -132,7 +132,7 @@ describe("AuthService — brute-force lockout", () => {
 
     await expect(
       service.login({ email: "blocked@test.com", senha: "anything" }, {})
-    ).rejects.toThrow(ForbiddenException);
+    ).rejects.toThrow(UnauthorizedException);
   });
 });
 
