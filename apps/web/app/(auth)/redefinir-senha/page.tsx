@@ -62,23 +62,23 @@ function RedefinirForm() {
           <p style={{ fontSize: "0.83rem", color: "var(--gray)" }}>Redirecionando para o login...</p>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <form onSubmit={handleSubmit} noValidate aria-label="Formulário de redefinição de senha" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
-            <label style={labelStyle}>Nova senha</label>
-            <PasswordInput required minLength={8} value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} placeholder="Mínimo 8 caracteres" style={inputStyle} />
+            <label htmlFor="rd-nova-senha" style={labelStyle}>Nova senha</label>
+            <PasswordInput id="rd-nova-senha" required minLength={8} value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} placeholder="Mínimo 8 caracteres" style={inputStyle} aria-required="true" />
           </div>
           <div>
-            <label style={labelStyle}>Confirmar senha</label>
-            <PasswordInput required minLength={8} value={confirmar} onChange={(e) => setConfirmar(e.target.value)} placeholder="Repita a nova senha" style={inputStyle} />
+            <label htmlFor="rd-confirmar-senha" style={labelStyle}>Confirmar senha</label>
+            <PasswordInput id="rd-confirmar-senha" required minLength={8} value={confirmar} onChange={(e) => setConfirmar(e.target.value)} placeholder="Repita a nova senha" style={inputStyle} aria-required="true" />
           </div>
 
           {error && (
-            <p style={{ color: "#EF4444", fontSize: "0.78rem", background: "#FEF2F2", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
+            <p role="alert" aria-live="assertive" style={{ color: "#EF4444", fontSize: "0.78rem", background: "#FEF2F2", borderRadius: 8, padding: "0.6rem 0.85rem" }}>
               {error}
             </p>
           )}
 
-          <button type="submit" disabled={loading || !token} style={submitStyle}>
+          <button type="submit" disabled={loading || !token} aria-busy={loading} style={submitStyle}>
             {loading ? "Salvando..." : "Redefinir senha"}
           </button>
 

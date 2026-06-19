@@ -36,6 +36,7 @@ const NAV: NavItem[] = [
   { label: "Painel",        href: "/dashboard/gestor",                   icon: Home,        roles: ["GESTOR"],                        section: "geral" },
   { label: "Comitê",        href: "/dashboard/gestor/comite",            icon: Vote,        roles: ["GESTOR"] },
   { label: "Etapas",        href: "/dashboard/gestor/etapas",            icon: FileCheck2,  roles: ["GESTOR"] },
+  { label: "Vistorias",     href: "/dashboard/gestor/vistoria",          icon: MapPin,      roles: ["GESTOR"] },
   { label: "KYC",           href: "/dashboard/gestor/kyc",               icon: ShieldCheck, roles: ["GESTOR"] },
   { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2,  roles: ["GESTOR"] },
   { label: "Carteira",      href: "/dashboard/fundos",                   icon: Banknote,    roles: ["GESTOR"] },
