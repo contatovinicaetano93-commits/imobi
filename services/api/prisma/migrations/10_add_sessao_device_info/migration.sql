@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "SessaoToken" ADD COLUMN IF NOT EXISTS "userAgent" TEXT;
+ALTER TABLE "SessaoToken" ADD COLUMN IF NOT EXISTS "ip" TEXT;

@@ -647,3 +647,19 @@ export const comiteApi = {
       `/comite/${comiteId}`
     ),
 };
+
+// ── Sessões ────────────────────────────────────────────────────────────
+
+export type SessaoAtiva = {
+  sessionId: string;
+  userAgent: string | null;
+  ip: string | null;
+  criadoEm: string;
+  expiresAt: string;
+};
+
+export const sessoesApi = {
+  listar: () => apiFetch<SessaoAtiva[]>("/auth/sessoes"),
+  revogar: (sessionId: string) => apiFetch<void>(`/auth/sessoes/${sessionId}`, { method: "DELETE" }),
+  revogarTodas: () => apiFetch<void>("/auth/sessoes", { method: "DELETE" }),
+};

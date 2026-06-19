@@ -97,6 +97,8 @@ model SessaoToken {
   usuarioId     String
   usuario       Usuario   @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
   refreshToken  String    @unique
+  userAgent     String?
+  ip            String?
   expiresAt     DateTime
   revogadoEm    DateTime?
   criadoEm      DateTime  @default(now())

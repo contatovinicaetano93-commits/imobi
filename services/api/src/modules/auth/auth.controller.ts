@@ -1,4 +1,4 @@
-import { Controller, Post, Delete, Body, HttpCode, UseGuards } from "@nestjs/common";
+import { Controller, Post, Delete, Get, Param, Body, HttpCode, UseGuards, Headers, Ip } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { CadastroUsuarioSchema, LoginSchema, EsqueceuSenhaSchema, RedefinirSenhaSchema } from "@imbobi/schemas";
@@ -13,22 +13,34 @@ export class AuthController {
 
   @Post("registrar")
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  registrar(@Body(new ZodPipe(CadastroUsuarioSchema)) body: CadastroUsuarioInput) {
-    return this.auth.registrar(body);
+  registrar(
+    @Body(new ZodPipe(CadastroUsuarioSchema)) body: CadastroUsuarioInput,
+    @Headers("user-agent") userAgent: string,
+    @Ip() ip: string,
+  ) {
+    return this.auth.registrar(body, { userAgent, ip });
   }
 
   @Post("login")
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  login(@Body(new ZodPipe(LoginSchema)) body: LoginInput) {
-    return this.auth.login(body);
+  login(
+    @Body(new ZodPipe(LoginSchema)) body: LoginInput,
+    @Headers("user-agent") userAgent: string,
+    @Ip() ip: string,
+  ) {
+    return this.auth.login(body, { userAgent, ip });
   }
 
   @Post("renovar")
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  renovar(@Body("refreshToken") token: string) {
-    return this.auth.renovarToken(token);
+  renovar(
+    @Body("refreshToken") token: string,
+    @Headers("user-agent") userAgent: string,
+    @Ip() ip: string,
+  ) {
+    return this.auth.renovarToken(token, { userAgent, ip });
   }
 
   @UseGuards(JwtAuthGuard)
@@ -57,5 +69,21 @@ export class AuthController {
   @HttpCode(204)
   revogarTodasSessoes(@UsuarioAtual() u: IUsuario) {
     return this.auth.revogarTodasSessoes(u.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("sessoes")
+  listarSessoes(@UsuarioAtual() u: IUsuario) {
+    return this.auth.listarSessoes(u.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete("sessoes/:sessionId")
+  @HttpCode(204)
+  revogarSessaoEspecifica(
+    @UsuarioAtual() u: IUsuario,
+    @Param("sessionId") sessionId: string,
+  ) {
+    return this.auth.revogarSessaoEspecifica(u.id, sessionId);
   }
 }

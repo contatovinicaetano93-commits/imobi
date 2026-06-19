@@ -15,8 +15,7 @@ export const SimulacaoCreditoSchema = z.object({
   prazoMeses: z
     .number()
     .int()
-    .min(12, "Prazo mínimo 12 meses")
-    .max(180, "Prazo máximo 180 meses"),
+    .refine((v) => [12, 24, 36, 60, 120, 180].includes(v), "Prazo inválido"),
   tipoObra: z.enum(["RESIDENCIAL", "COMERCIAL", "MISTO"]),
 });
 

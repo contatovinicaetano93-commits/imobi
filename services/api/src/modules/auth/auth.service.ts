@@ -1,4 +1,6 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, ForbiddenException, Inject } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import type { Cache } from "cache-manager";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import * as crypto from "crypto";
@@ -12,10 +14,11 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
-    private readonly email: EmailService
+    private readonly email: EmailService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
-  async registrar(input: CadastroUsuarioInput) {
+  async registrar(input: CadastroUsuarioInput, deviceInfo?: { userAgent?: string; ip?: string }) {
     const existe = await this.prisma.usuario.findFirst({
       where: { OR: [{ email: input.email }, { cpf: input.cpf }] },
     });
@@ -38,29 +41,54 @@ export class AuthService {
       select: { usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true },
     });
 
-    return { usuario, ...await this.gerarTokens(usuario.usuarioId) };
+    return { usuario, ...await this.gerarTokens(usuario.usuarioId, deviceInfo) };
   }
 
-  async login(input: LoginInput) {
+  async login(input: LoginInput, deviceInfo?: { userAgent?: string; ip?: string }) {
+    const lockKey = `login:lock:${input.email}`;
+    const attemptsKey = `login:attempts:${input.email}`;
+
+    const isLocked = await this.cache.get<boolean>(lockKey);
+    if (isLocked) {
+      throw new UnauthorizedException("Conta temporariamente bloqueada. Tente novamente em 15 minutos.");
+    }
+
     const usuario = await this.prisma.usuario.findUnique({
       where: { email: input.email },
     });
-    if (!usuario) throw new UnauthorizedException("Credenciais inválidas.");
+
+    if (!usuario) {
+      await this.incrementLoginAttempts(attemptsKey, lockKey);
+      throw new UnauthorizedException("Credenciais inválidas.");
+    }
 
     const senhaOk = await bcrypt.compare(input.senha, usuario.passwordHash);
-    if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
+    if (!senhaOk) {
+      await this.incrementLoginAttempts(attemptsKey, lockKey);
+      throw new UnauthorizedException("Credenciais inválidas.");
+    }
 
     if (usuario.bloqueadoEm) {
       throw new UnauthorizedException("Conta bloqueada pelo administrador. Entre em contato com o suporte.");
     }
 
+    await this.cache.del(attemptsKey);
+
     return {
       usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
-      ...await this.gerarTokens(usuario.usuarioId),
+      ...await this.gerarTokens(usuario.usuarioId, deviceInfo),
     };
   }
 
-  async renovarToken(refreshToken: string) {
+  private async incrementLoginAttempts(attemptsKey: string, lockKey: string): Promise<void> {
+    const attempts = (await this.cache.get<number>(attemptsKey) ?? 0) + 1;
+    await this.cache.set(attemptsKey, attempts, 900); // 15 min TTL
+    if (attempts >= 10) {
+      await this.cache.set(lockKey, true, 900); // 15 min lock
+    }
+  }
+
+  async renovarToken(refreshToken: string, deviceInfo?: { userAgent?: string; ip?: string }) {
     if (!refreshToken) throw new UnauthorizedException("Token de atualização não fornecido.");
     const sessao = await this.prisma.sessaoToken.findUnique({
       where: { refreshToken },
@@ -79,19 +107,48 @@ export class AuthService {
       where: { sessionId: sessao.sessionId },
       data: { revogadoEm: new Date() },
     });
-    return await this.gerarTokens(sessao.usuarioId);
+    return await this.gerarTokens(sessao.usuarioId, deviceInfo);
   }
 
   async revogarToken(refreshToken: string) {
+    const sessao = await this.prisma.sessaoToken.findUnique({ where: { refreshToken } });
     await this.prisma.sessaoToken.updateMany({
       where: { refreshToken },
       data: { revogadoEm: new Date() },
     });
+    if (sessao) {
+      await this.prisma.usuario.update({
+        where: { usuarioId: sessao.usuarioId },
+        data: { passwordResetToken: null, passwordResetExpires: null },
+      }).catch(() => {});
+    }
   }
 
   async revogarTodasSessoes(usuarioId: string) {
     await this.prisma.sessaoToken.updateMany({
       where: { usuarioId, revogadoEm: null },
+      data: { revogadoEm: new Date() },
+    });
+  }
+
+  async listarSessoes(usuarioId: string) {
+    const sessoes = await this.prisma.sessaoToken.findMany({
+      where: { usuarioId, revogadoEm: null, expiresAt: { gt: new Date() } },
+      select: { sessionId: true, userAgent: true, ip: true, criadoEm: true, expiresAt: true },
+      orderBy: { criadoEm: "desc" },
+    });
+    return sessoes;
+  }
+
+  async revogarSessaoEspecifica(usuarioId: string, sessionId: string) {
+    const sessao = await this.prisma.sessaoToken.findUnique({
+      where: { sessionId },
+    });
+    if (!sessao || sessao.usuarioId !== usuarioId) {
+      throw new ForbiddenException("Sessão não encontrada.");
+    }
+    await this.prisma.sessaoToken.update({
+      where: { sessionId },
       data: { revogadoEm: new Date() },
     });
   }
@@ -150,7 +207,7 @@ export class AuthService {
     return { message: "Senha redefinida com sucesso" };
   }
 
-  private async gerarTokens(usuarioId: string) {
+  private async gerarTokens(usuarioId: string, deviceInfo?: { userAgent?: string; ip?: string }) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId },
       select: { tipo: true, nome: true, email: true, funcoesBloqueadas: true, bloqueadoEm: true },
@@ -168,11 +225,25 @@ export class AuthService {
     );
     const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
 
+    // Enforce max 5 active sessions — revoke oldest if at limit
+    const activeSessions = await this.prisma.sessaoToken.findMany({
+      where: { usuarioId, revogadoEm: null, expiresAt: { gt: new Date() } },
+      orderBy: { criadoEm: "asc" },
+    });
+    if (activeSessions.length >= 5) {
+      await this.prisma.sessaoToken.update({
+        where: { sessionId: activeSessions[0].sessionId },
+        data: { revogadoEm: new Date() },
+      });
+    }
+
     await this.prisma.sessaoToken.create({
       data: {
         usuarioId,
         refreshToken,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        userAgent: deviceInfo?.userAgent ?? null,
+        ip: deviceInfo?.ip ?? null,
       },
     });
 

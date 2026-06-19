@@ -4,7 +4,7 @@ import { getApiV1Fallbacks } from '@/lib/api-base';
 const COOKIE_OPTS = {
   httpOnly: true,
   secure: process.env['NODE_ENV'] === 'production',
-  sameSite: 'lax' as const,
+  sameSite: 'strict' as const,
   path: '/',
 };
 

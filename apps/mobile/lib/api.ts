@@ -2,6 +2,7 @@ import * as SecureStore from "expo-secure-store";
 import { apiClient, ApiError } from "@imbobi/core";
 
 let _onUnauthorized: (() => void) | null = null;
+let _refreshPromise: Promise<boolean> | null = null;
 
 export function setOnUnauthorized(cb: () => void) {
   _onUnauthorized = cb;
@@ -11,14 +12,51 @@ async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync("accessToken");
 }
 
+async function tryRefresh(): Promise<boolean> {
+  if (_refreshPromise) return _refreshPromise;
+
+  _refreshPromise = (async () => {
+    try {
+      const refreshToken = await SecureStore.getItemAsync("refreshToken");
+      if (!refreshToken) return false;
+      const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
+        "/auth/renovar",
+        { refreshToken }
+      );
+      await SecureStore.setItemAsync("accessToken", res.accessToken);
+      await SecureStore.setItemAsync("refreshToken", res.refreshToken);
+      return true;
+    } catch {
+      await SecureStore.deleteItemAsync("accessToken");
+      await SecureStore.deleteItemAsync("refreshToken");
+      return false;
+    } finally {
+      _refreshPromise = null;
+    }
+  })();
+
+  return _refreshPromise;
+}
+
 async function callApi<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (e) {
     if (e instanceof ApiError) {
       if (e.status === 401) {
-        await SecureStore.deleteItemAsync("accessToken");
-        _onUnauthorized?.();
+        const refreshed = await tryRefresh();
+        if (refreshed) {
+          try {
+            return await fn();
+          } catch (retryErr) {
+            if (retryErr instanceof ApiError && retryErr.status === 401) {
+              _onUnauthorized?.();
+            }
+            throw retryErr;
+          }
+        } else {
+          _onUnauthorized?.();
+        }
       }
       if (e.status === 403) {
         throw new ApiError(403, "Você não tem permissão para acessar este recurso.");
@@ -169,4 +207,12 @@ export type Notificacao = {
   lida: boolean;
   criadoEm: string;
   link?: string;
+};
+
+export type SessaoAtiva = {
+  sessionId: string;
+  userAgent: string | null;
+  ip: string | null;
+  criadoEm: string;
+  expiresAt: string;
 };
