@@ -20,6 +20,9 @@ export class SetupController {
 
   @Get()
   async criarUsuariosTeste(@Query("secret") secret: string) {
+    if (process.env["NODE_ENV"] === "production") {
+      throw new ForbiddenException("Endpoint desabilitado em produção.");
+    }
     const expected = process.env["SETUP_SECRET"];
     if (!expected || secret !== expected) {
       throw new ForbiddenException("Secret inválido ou não configurado.");

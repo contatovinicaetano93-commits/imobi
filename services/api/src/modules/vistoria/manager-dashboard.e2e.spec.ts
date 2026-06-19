@@ -33,37 +33,40 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
     prisma = moduleFixture.get(PrismaService);
 
     // Create constructor user
-    constructorEmail = `constructor-mgr-${Date.now()}@imbobi.com`;
+    const ts = Date.now();
+    constructorEmail = `constructor-mgr-${ts}@imbobi.com`;
+    const constructorCpf = `${ts}`.padEnd(11, "0").slice(0, 11);
     await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
       .send({
-        email: constructorEmail,
-        password: "Senha@123",
-        nome: "Constructor Manager Dashboard Test",
+        nome: "Constructor Manager Dashboard Test", cpf: constructorCpf,
+        email: constructorEmail, telefone: "11999999999", senha: "Senha@123",
+        consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
       });
 
     const constructorLoginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email: constructorEmail, password: "Senha@123" });
+      .send({ email: constructorEmail, senha: "Senha@123" });
 
-    constructorToken = constructorLoginRes.body.access_token;
+    constructorToken = constructorLoginRes.body.accessToken;
     constructorId = constructorLoginRes.body.usuario?.usuarioId;
 
     // Create manager user
-    managerEmail = `manager-mgr-${Date.now()}@imbobi.com`;
+    managerEmail = `manager-mgr-${ts}@imbobi.com`;
+    const managerCpf = `${ts + 1}`.padEnd(11, "0").slice(0, 11);
     await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
       .send({
-        email: managerEmail,
-        password: "Senha@123",
-        nome: "Manager Dashboard Test",
+        nome: "Manager Dashboard Test", cpf: managerCpf,
+        email: managerEmail, telefone: "11988888888", senha: "Senha@123",
+        consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
       });
 
     const managerLoginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email: managerEmail, password: "Senha@123" });
+      .send({ email: managerEmail, senha: "Senha@123" });
 
-    managerToken = managerLoginRes.body.access_token;
+    managerToken = managerLoginRes.body.accessToken;
     managerId = managerLoginRes.body.usuario?.usuarioId;
 
     // Create credit and obra with etapas
@@ -125,10 +128,10 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
     it("Manager should be able to login", async () => {
       const res = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({ email: managerEmail, password: "Senha@123" })
+        .send({ email: managerEmail, senha: "Senha@123" })
         .expect(200);
 
-      expect(res.body.access_token).toBeDefined();
+      expect(res.body.accessToken).toBeDefined();
       expect(res.body.usuario).toBeDefined();
     });
 
@@ -440,10 +443,10 @@ describe("Manager Dashboard E2E - Comprehensive Suite", () => {
       // Check manager can login
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({ email: managerEmail, password: "Senha@123" })
+        .send({ email: managerEmail, senha: "Senha@123" })
         .expect(200);
 
-      expect(loginRes.body.access_token).toBeDefined();
+      expect(loginRes.body.accessToken).toBeDefined();
 
       // Check manager can view obra
       const obraRes = await request(app.getHttpServer())

@@ -30,6 +30,8 @@ export class EtapasController {
     return this.etapas.aprovar(u.id, id, obs);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles("TOMADOR", "ENGENHEIRO", "GESTOR", "ADMIN")
   @Patch(":id/status")
   status(@Param("id") id: string, @Body("status") status: string, @UsuarioAtual() u: IUsuario) {
     const parsed = EtapaStatusSchema.safeParse(status);

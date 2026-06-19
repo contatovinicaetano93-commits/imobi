@@ -23,18 +23,23 @@ describe("KYC E2E - Comprehensive Suite", () => {
     prisma = moduleFixture.get(PrismaService);
 
     // Setup: Register and login
-    const email = `kyc-test-${Date.now()}@imbobi.com`;
+    const ts = Date.now();
+    const email = `kyc-test-${ts}@imbobi.com`;
+    const cpf = `${ts}`.padEnd(11, "0").slice(0, 11);
     const regRes = await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
-      .send({ email, password: "Senha@123", nome: "KYC Test User" });
+      .send({
+        nome: "KYC Test User", cpf, email, telefone: "11999999999",
+        senha: "Senha@123", consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
+      });
 
-    userId = regRes.body.usuarioId;
+    userId = regRes.body.usuario?.usuarioId;
 
     const loginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email, password: "Senha@123" });
+      .send({ email, senha: "Senha@123" });
 
-    token = loginRes.body.access_token;
+    token = loginRes.body.accessToken;
   });
 
   afterAll(async () => {
@@ -201,18 +206,23 @@ describe("KYC E2E - Comprehensive Suite", () => {
     });
 
     it("GET /kyc/status → new user starts with PENDENTE status", async () => {
-      const email = `kyc-new-${Date.now()}@imbobi.com`;
+      const ts2 = Date.now();
+      const email = `kyc-new-${ts2}@imbobi.com`;
+      const cpf2 = `${ts2 + 2}`.padEnd(11, "0").slice(0, 11);
       await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({ email, password: "Senha@123", nome: "New KYC User" });
+        .send({
+          nome: "New KYC User", cpf: cpf2, email, telefone: "11977777777",
+          senha: "Senha@123", consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
+        });
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({ email, password: "Senha@123" });
+        .send({ email, senha: "Senha@123" });
 
       const res = await request(app.getHttpServer())
         .get("/api/v1/kyc/status")
-        .set("Authorization", `Bearer ${loginRes.body.access_token}`)
+        .set("Authorization", `Bearer ${loginRes.body.accessToken}`)
         .expect(200);
 
       expect(res.body.status).toBe("PENDENTE");
@@ -311,18 +321,23 @@ describe("KYC E2E - Comprehensive Suite", () => {
     let autoCompleteUserId: string;
 
     beforeAll(async () => {
-      const email = `kyc-auto-${Date.now()}@imbobi.com`;
+      const ts3 = Date.now();
+      const email = `kyc-auto-${ts3}@imbobi.com`;
+      const cpf3 = `${ts3 + 3}`.padEnd(11, "0").slice(0, 11);
       const regRes = await request(app.getHttpServer())
         .post("/api/v1/auth/registrar")
-        .send({ email, password: "Senha@123", nome: "Auto KYC User" });
+        .send({
+          nome: "Auto KYC User", cpf: cpf3, email, telefone: "11966666666",
+          senha: "Senha@123", consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
+        });
 
-      autoCompleteUserId = regRes.body.usuarioId;
+      autoCompleteUserId = regRes.body.usuario?.usuarioId;
 
       const loginRes = await request(app.getHttpServer())
         .post("/api/v1/auth/login")
-        .send({ email, password: "Senha@123" });
+        .send({ email, senha: "Senha@123" });
 
-      autoCompleteToken = loginRes.body.access_token;
+      autoCompleteToken = loginRes.body.accessToken;
     });
 
     it("KYC auto-completes when all documents approved", async () => {

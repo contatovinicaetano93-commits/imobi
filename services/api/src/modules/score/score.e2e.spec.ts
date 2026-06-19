@@ -23,15 +23,19 @@ describe("Score E2E", () => {
     prisma = moduleFixture.get(PrismaService);
 
     const email = `score-test-${Date.now()}@imbobi.com`;
+    const cpf = `${Date.now()}`.padEnd(11, "0").slice(0, 11);
     await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
-      .send({ email, password: "Senha@123", nome: "Score User" });
+      .send({
+        nome: "Score User", cpf, email, telefone: "11999999999",
+        senha: "Senha@123", consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
+      });
 
     const loginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email, password: "Senha@123" });
+      .send({ email, senha: "Senha@123" });
 
-    token = loginRes.body.access_token;
+    token = loginRes.body.accessToken;
     userId = loginRes.body.usuario?.usuarioId;
   });
 
@@ -161,15 +165,19 @@ describe("Score E2E", () => {
 
   it("Different users should have independent scores", async () => {
     const email2 = `score-test-2-${Date.now()}@imbobi.com`;
+    const cpf2 = `${Date.now() + 1}`.padEnd(11, "0").slice(0, 11);
     await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
-      .send({ email: email2, password: "Senha@123", nome: "Score User 2" });
+      .send({
+        nome: "Score User 2", cpf: cpf2, email: email2, telefone: "11988888888",
+        senha: "Senha@123", consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
+      });
 
     const loginRes2 = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email: email2, password: "Senha@123" });
+      .send({ email: email2, senha: "Senha@123" });
 
-    const token2 = loginRes2.body.access_token;
+    const token2 = loginRes2.body.accessToken;
 
     const res1 = await request(app.getHttpServer())
       .get("/api/v1/score")

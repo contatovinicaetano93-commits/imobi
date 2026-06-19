@@ -33,37 +33,40 @@ describe("Notifications E2E - Comprehensive Suite", () => {
     prisma = moduleFixture.get(PrismaService);
 
     // Create constructor user
-    constructorEmail = `constructor-notif-${Date.now()}@imbobi.com`;
+    const ts = Date.now();
+    constructorEmail = `constructor-notif-${ts}@imbobi.com`;
+    const constructorCpf = `${ts}`.padEnd(11, "0").slice(0, 11);
     await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
       .send({
-        email: constructorEmail,
-        password: "Senha@123",
-        nome: "Constructor Notifications Test",
+        nome: "Constructor Notifications Test", cpf: constructorCpf,
+        email: constructorEmail, telefone: "11999999999", senha: "Senha@123",
+        consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
       });
 
     const constructorLoginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email: constructorEmail, password: "Senha@123" });
+      .send({ email: constructorEmail, senha: "Senha@123" });
 
-    constructorToken = constructorLoginRes.body.access_token;
+    constructorToken = constructorLoginRes.body.accessToken;
     constructorId = constructorLoginRes.body.usuario?.usuarioId;
 
     // Create manager user
-    managerEmail = `manager-notif-${Date.now()}@imbobi.com`;
+    managerEmail = `manager-notif-${ts}@imbobi.com`;
+    const managerCpf = `${ts + 1}`.padEnd(11, "0").slice(0, 11);
     await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
       .send({
-        email: managerEmail,
-        password: "Senha@123",
-        nome: "Manager Notifications Test",
+        nome: "Manager Notifications Test", cpf: managerCpf,
+        email: managerEmail, telefone: "11988888888", senha: "Senha@123",
+        consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
       });
 
     const managerLoginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email: managerEmail, password: "Senha@123" });
+      .send({ email: managerEmail, senha: "Senha@123" });
 
-    managerToken = managerLoginRes.body.access_token;
+    managerToken = managerLoginRes.body.accessToken;
     managerId = managerLoginRes.body.usuario?.usuarioId;
   });
 

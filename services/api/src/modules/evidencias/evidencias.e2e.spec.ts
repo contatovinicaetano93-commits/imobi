@@ -26,17 +26,21 @@ describe("Evidencias E2E - Comprehensive Suite", () => {
 
     // Setup: Register user
     const email = `evidencia-test-${Date.now()}@imbobi.com`;
+    const cpf = `${Date.now()}`.padEnd(11, "0").slice(0, 11);
     const regRes = await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
-      .send({ email, password: "Senha@123", nome: "Evidence Test User" });
+      .send({
+        nome: "Evidence Test User", cpf, email, telefone: "11999999999",
+        senha: "Senha@123", consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
+      });
 
-    userId = regRes.body.usuarioId;
+    userId = regRes.body.usuario?.usuarioId;
 
     const loginRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email, password: "Senha@123" });
+      .send({ email, senha: "Senha@123" });
 
-    token = loginRes.body.access_token;
+    token = loginRes.body.accessToken;
 
     // Create obra and get first etapa
     const obraRes = await request(app.getHttpServer())

@@ -27,37 +27,40 @@ describe("Fluxo Completo: Obra → Evidência → Vistoria → Liberação", () 
     prisma = moduleFixture.get(PrismaService);
 
     // Create constructor user
-    const constructorEmail = `constructor-${Date.now()}@imbobi.com`;
+    const ts = Date.now();
+    const constructorEmail = `constructor-${ts}@imbobi.com`;
+    const constructorCpf = `${ts}`.padEnd(11, "0").slice(0, 11);
     await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
       .send({
-        email: constructorEmail,
-        password: "Senha@123",
-        nome: "Construtor Test",
+        nome: "Construtor Test", cpf: constructorCpf, email: constructorEmail,
+        telefone: "11999999999", senha: "Senha@123",
+        consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
       });
 
     const constructorRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email: constructorEmail, password: "Senha@123" });
+      .send({ email: constructorEmail, senha: "Senha@123" });
 
-    constructorToken = constructorRes.body.access_token;
+    constructorToken = constructorRes.body.accessToken;
     constructorId = constructorRes.body.usuario?.usuarioId;
 
     // Create manager user
-    const managerEmail = `manager-${Date.now()}@imbobi.com`;
+    const managerEmail = `manager-${ts}@imbobi.com`;
+    const managerCpf = `${ts + 1}`.padEnd(11, "0").slice(0, 11);
     await request(app.getHttpServer())
       .post("/api/v1/auth/registrar")
       .send({
-        email: managerEmail,
-        password: "Senha@123",
-        nome: "Manager Test",
+        nome: "Manager Test", cpf: managerCpf, email: managerEmail,
+        telefone: "11988888888", senha: "Senha@123",
+        consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
       });
 
     const managerRes = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email: managerEmail, password: "Senha@123" });
+      .send({ email: managerEmail, senha: "Senha@123" });
 
-    managerToken = managerRes.body.access_token;
+    managerToken = managerRes.body.accessToken;
     managerId = managerRes.body.usuario?.usuarioId;
   });
 
