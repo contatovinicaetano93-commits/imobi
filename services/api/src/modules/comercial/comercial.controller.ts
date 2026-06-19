@@ -7,6 +7,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ComercialService } from './comercial.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -16,17 +17,21 @@ import { ZodPipe } from '../../common/pipes/zod.pipe';
 import { CreateLeadSchema, AddLeadActivitySchema } from '@imbobi/schemas';
 import type { CreateLeadInput, AddLeadActivityInput } from '@imbobi/schemas';
 
+@ApiTags("comercial")
+@ApiBearerAuth()
 @Controller('comercial')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('COMERCIAL', 'PARCEIRO', 'ADMIN')
 export class ComercialController {
   constructor(private readonly comercialService: ComercialService) {}
 
+  @ApiOperation({ summary: "Listar estágios do pipeline comercial" })
   @Get('pipeline/stages')
   async getPipelineStages() {
     return this.comercialService.listarStages();
   }
 
+  @ApiOperation({ summary: "Estatísticas do dashboard comercial" })
   @Get('dashboard/stats')
   async getDashboardStats(@UsuarioAtual() u: IUsuario) {
     return this.comercialService.obterDashboardStats(u.tipo === 'ADMIN' ? undefined : u.id);

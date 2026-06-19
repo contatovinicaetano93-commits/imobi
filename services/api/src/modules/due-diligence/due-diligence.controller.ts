@@ -1,15 +1,19 @@
 import { Controller, Get, Post, Patch, Body, Param, UseGuards } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { DueDiligenceService, CriarDueDiligenceDto, AtualizarStatusDto } from "./due-diligence.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
+@ApiTags("due-diligence")
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller("due-diligence")
 export class DueDiligenceController {
   constructor(private readonly service: DueDiligenceService) {}
 
+  @ApiOperation({ summary: "Criar processo de due diligence (gestor/admin)" })
   @UseGuards(RolesGuard)
   @Roles("GESTOR", "ADMIN")
   @Post()
@@ -17,6 +21,7 @@ export class DueDiligenceController {
     return this.service.criar(u.id, body);
   }
 
+  @ApiOperation({ summary: "Listar processos de due diligence" })
   @UseGuards(RolesGuard)
   @Roles("GESTOR", "ADMIN")
   @Get()
@@ -24,6 +29,7 @@ export class DueDiligenceController {
     return this.service.listar(u.id);
   }
 
+  @ApiOperation({ summary: "Buscar processo de due diligence por ID" })
   @UseGuards(RolesGuard)
   @Roles("GESTOR", "ADMIN")
   @Get(":id")
@@ -32,6 +38,7 @@ export class DueDiligenceController {
     return this.service.buscar(id, u.id, isAdmin);
   }
 
+  @ApiOperation({ summary: "Atualizar status do processo (admin)" })
   @UseGuards(RolesGuard)
   @Roles("ADMIN")
   @Patch(":id/status")

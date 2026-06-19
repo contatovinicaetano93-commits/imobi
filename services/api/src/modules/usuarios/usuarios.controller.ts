@@ -1,14 +1,18 @@
 import { Controller, Get, Patch, Post, Delete, UseGuards, Body, Res } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { FastifyReply } from "fastify";
 import { UsuariosService } from "./usuarios.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
+@ApiTags("usuarios")
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller("usuarios")
 export class UsuariosController {
   constructor(private readonly usuarios: UsuariosService) {}
 
+  @ApiOperation({ summary: "Obter perfil do usuário autenticado" })
   @Get("meu-perfil")
   async meuPerfil(@UsuarioAtual() u: IUsuario) {
     return this.usuarios.buscarPerfil(u.id);

@@ -667,3 +667,22 @@ export const sessoesApi = {
   revogar: (sessionId: string) => apiFetch<void>(`/auth/sessoes/${sessionId}`, { method: "DELETE" }),
   revogarTodas: () => apiFetch<void>("/auth/sessoes", { method: "DELETE" }),
 };
+
+export type EtapaPendenteVistoria = {
+  etapaId: string;
+  nome: string;
+  status: string;
+  obra: { obraId: string; nome: string; usuario: { nome: string; email: string } };
+};
+
+export const vistoriaApi = {
+  pendentes: (limit = 20, offset = 0) =>
+    apiFetch<{ data: EtapaPendenteVistoria[]; total: number; page: number; limit: number }>(
+      `/vistoria/pendentes?limit=${limit}&offset=${offset}`
+    ),
+  agendar: (etapaId: string, dataAgendada: string, observacoes?: string) =>
+    apiFetch<{ ok: boolean; etapaId: string; dataAgendada: string }>("/vistoria/agendar", {
+      method: "POST",
+      body: JSON.stringify({ etapaId, dataAgendada, observacoes }),
+    }),
+};

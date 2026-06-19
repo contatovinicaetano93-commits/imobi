@@ -1,15 +1,19 @@
 import { Controller, Get, Patch, Param, Body, UseGuards, Req } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { EngenheirosService } from "./engenheiros.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 
+@ApiTags("engenheiros")
+@ApiBearerAuth()
 @Controller("engenheiros")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("ENGENHEIRO", "ADMIN")
 export class EngenheirosController {
   constructor(private readonly engenheirosService: EngenheirosService) {}
 
+  @ApiOperation({ summary: "Listar visitas do engenheiro" })
   @Get("visitas")
   listarVisitas(@Req() req: any) {
     return this.engenheirosService.listarVisitas(req.user.id);

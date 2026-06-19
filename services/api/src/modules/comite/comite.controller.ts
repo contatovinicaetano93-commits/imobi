@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, Query, UseGuards } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { ComiteService } from "./comite.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -6,13 +7,14 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual } from "../../common/decorators/usuario-atual.decorator";
 import type { VotoDecisao } from "@prisma/client";
 
+@ApiTags("comite")
+@ApiBearerAuth()
 @Controller("comite")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ComiteController {
   constructor(private readonly comiteService: ComiteService) {}
 
-  // ── Construtor: submeter solicitação ──────────────────────────────
-
+  @ApiOperation({ summary: "Submeter solicitação ao comitê de crédito" })
   @Post("solicitar")
   @Roles("CONSTRUTOR", "TOMADOR")
   solicitar(
@@ -33,16 +35,14 @@ export class ComiteController {
     return this.comiteService.submeterSolicitacao(user.id, body);
   }
 
-  // ── Construtor: minhas solicitações ──────────────────────────────
-
+  @ApiOperation({ summary: "Listar minhas solicitações ao comitê" })
   @Get("minhas")
   @Roles("CONSTRUTOR", "TOMADOR")
   minhas(@UsuarioAtual() user: UsuarioAtual) {
     return this.comiteService.minhasSolicitacoes(user.id);
   }
 
-  // ── Engenheiro: submeter parecer ─────────────────────────────────
-
+  @ApiOperation({ summary: "Submeter parecer técnico (engenheiro)" })
   @Post(":comiteId/parecer")
   @Roles("ENGENHEIRO", "GESTOR_OBRA")
   parecer(
@@ -53,8 +53,7 @@ export class ComiteController {
     return this.comiteService.submeterParecer(comiteId, user.id, body.parecerTecnico);
   }
 
-  // ── Admin: votar ─────────────────────────────────────────────────
-
+  @ApiOperation({ summary: "Votar em solicitação (admin)" })
   @Post(":comiteId/votar")
   @Roles("ADMIN")
   votar(
@@ -65,16 +64,14 @@ export class ComiteController {
     return this.comiteService.votar(comiteId, user.id, body.voto, body.justificativa, body.condicoes);
   }
 
-  // ── Leitura: listar comitês (Admin + Fundo) ───────────────────────
-
+  @ApiOperation({ summary: "Listar solicitações ao comitê (admin/gestor)" })
   @Get()
   @Roles("ADMIN", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA")
   listar(@Query("status") status?: string) {
     return this.comiteService.listarComites(status);
   }
 
-  // ── Leitura: dossiê completo ─────────────────────────────────────
-
+  @ApiOperation({ summary: "Obter dossiê completo de solicitação" })
   @Get(":comiteId")
   @Roles("ADMIN", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA")
   dossie(@Param("comiteId") comiteId: string) {
