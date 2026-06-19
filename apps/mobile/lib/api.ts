@@ -88,6 +88,19 @@ export const pushApi = {
     }),
 };
 
+export const notificacoesApi = {
+  listar: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<Notificacao[]>("/api/v1/notificacoes", token ?? undefined);
+    }),
+  marcarLida: (id: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post(`/api/v1/notificacoes/${id}/lida`, {}, token ?? undefined);
+    }),
+};
+
 // Types
 export type Obra = {
   obraId: string;
@@ -146,4 +159,14 @@ export type UsuarioPerfil = {
   tipo: string;
   kycStatus: string;
   criadoEm: string;
+};
+
+export type Notificacao = {
+  id: string;
+  titulo: string;
+  descricao: string;
+  tipo: string;
+  lida: boolean;
+  criadoEm: string;
+  link?: string;
 };

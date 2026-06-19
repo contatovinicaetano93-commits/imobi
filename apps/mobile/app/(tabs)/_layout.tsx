@@ -12,6 +12,7 @@ export default function TabLayout() {
 
   const showObras   = !userTipo || userTipo === "TOMADOR" || userTipo === "GESTOR" || userTipo === "GESTOR_FUNDO" || userTipo === "ADMIN" || userTipo === "CONSTRUTOR";
   const showCredito = !userTipo || userTipo === "TOMADOR" || userTipo === "GESTOR" || userTipo === "GESTOR_FUNDO" || userTipo === "ADMIN";
+  const showNotificacoes = !!userTipo;
 
   function tabIcon(name: IoniconName) {
     return ({ color, size }: { color: string; size: number }) => (
@@ -51,6 +52,14 @@ export default function TabLayout() {
           title: "Crédito",
           tabBarIcon: tabIcon("calculator"),
           tabBarItemStyle: showCredito ? visible : hidden,
+        }}
+      />
+      <Tabs.Screen
+        name="notificacoes/index"
+        options={{
+          title: "Avisos",
+          tabBarIcon: tabIcon("notifications"),
+          tabBarItemStyle: showNotificacoes ? visible : hidden,
         }}
       />
       <Tabs.Screen
