@@ -57,7 +57,7 @@ jobs:
   # STAGE 1b: UNIT TESTS (no DB/Redis required)
   # ============================================
   unit-tests:
-    name: Unit Tests (RBAC)
+    name: Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: validate
@@ -79,8 +79,8 @@ jobs:
       - name: Generate Prisma Client
         run: pnpm --filter @imbobi/api run prisma:generate
 
-      - name: Run RBAC unit tests
-        run: pnpm --filter @imbobi/api test -- --testPathPattern="rbac\.spec|roles\.guard\.spec|ownership\.spec|rbac-spec|evidencias-rbac|comercial-ownership|admin-audit|vistoria-rbac|kyc-ownership|etapas-rbac|score-rbac|notificacoes-rbac|obras-rbac|credito-rbac|usuarios-rbac|parceiros-rbac|push-notificacoes-rbac" --passWithNoTests --forceExit
+      - name: Run unit tests (RBAC + service logic)
+        run: pnpm --filter @imbobi/api test -- --testPathIgnorePatterns="\.e2e\.spec|load\.spec|profiling\.spec" --passWithNoTests --forceExit
         env:
           NODE_ENV: test
 

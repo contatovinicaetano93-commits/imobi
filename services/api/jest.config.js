@@ -16,7 +16,7 @@ module.exports = {
     '!**/index.ts',
   ],
   coverageDirectory: '../coverage',
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       branches: 60,
       functions: 65,
