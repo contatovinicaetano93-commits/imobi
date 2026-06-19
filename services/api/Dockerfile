@@ -34,4 +34,7 @@ RUN pnpm --filter @imbobi/api run prisma:generate
 ENV NODE_ENV=production
 EXPOSE 4000
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD wget -qO- http://localhost:4000/api/v1/health || exit 1
+
 CMD ["sh", "-c", "pnpm --filter @imbobi/api start"]

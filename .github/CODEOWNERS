@@ -1,0 +1,16 @@
+# Default owner for everything
+* @contatovinicaetano93-commits
+
+# API service — security-sensitive modules require explicit review
+services/api/src/modules/auth/ @contatovinicaetano93-commits
+services/api/src/modules/credito/ @contatovinicaetano93-commits
+services/api/src/modules/kyc/ @contatovinicaetano93-commits
+services/api/src/workers/ @contatovinicaetano93-commits
+
+# Shared schemas are source of truth — gate carefully
+packages/schemas/ @contatovinicaetano93-commits
+
+# Infrastructure and CI
+.github/ @contatovinicaetano93-commits
+infrastructure/ @contatovinicaetano93-commits
+services/api/Dockerfile @contatovinicaetano93-commits

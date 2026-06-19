@@ -32,25 +32,47 @@ export const GeolocalizacaoSchema = z.object({
   raioValidacaoMetros: z.number().int().min(20).max(500).default(80),
 });
 
-export const CriarObraSchema = z.object({
-  nome: z.string().min(3).max(120),
-  endereco: EnderecoSchema,
-  geo: GeolocalizacaoSchema,
-  areaM2: z.number().positive().max(100000),
-  datainicioISO: z.string().datetime().optional(),
-  dataConclusaoPrevistaISO: z.string().datetime(),
-  creditoId: z.string().uuid().optional(),
-});
+export const CriarObraSchema = z
+  .object({
+    nome: z.string().min(3).max(120),
+    endereco: EnderecoSchema,
+    geo: GeolocalizacaoSchema,
+    areaM2: z.number().positive().max(100000),
+    datainicioISO: z.string().datetime().optional(),
+    dataConclusaoPrevistaISO: z.string().datetime(),
+    creditoId: z.string().uuid().optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.datainicioISO) return true;
+      return new Date(data.dataConclusaoPrevistaISO) > new Date(data.datainicioISO);
+    },
+    {
+      message: "Data de conclusão deve ser posterior ao início",
+      path: ["dataConclusaoPrevistaISO"],
+    },
+  );
 
-export const CriarEtapaSchema = z.object({
-  obraId: z.string().uuid(),
-  nome: z.string().min(2).max(100),
-  descricao: z.string().max(1000).optional(),
-  ordem: z.number().int().positive(),
-  percentualObra: z.number().min(0.01).max(100),
-  dataInicio: z.string().datetime().optional(),
-  dataConclusaoPrevista: z.string().datetime().optional(),
-});
+export const CriarEtapaSchema = z
+  .object({
+    obraId: z.string().uuid(),
+    nome: z.string().min(2).max(100),
+    descricao: z.string().max(1000).optional(),
+    ordem: z.number().int().positive(),
+    percentualObra: z.number().min(0.01).max(100),
+    dataInicio: z.string().datetime().optional(),
+    dataConclusaoPrevista: z.string().datetime().optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.dataInicio || !data.dataConclusaoPrevista) return true;
+      return new Date(data.dataConclusaoPrevista) > new Date(data.dataInicio);
+    },
+    {
+      message: "Data de conclusão deve ser posterior ao início",
+      path: ["dataConclusaoPrevista"],
+    },
+  );
 
 export const EtapasPadraoEnum = z.enum([
   "FUNDACAO",

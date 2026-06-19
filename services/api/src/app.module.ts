@@ -48,6 +48,7 @@ const redisConfig = getRedisConfig();
       { ttl: 60000, limit: 10, name: "auth" },
       { ttl: 60000, limit: 5, name: "upload" },
       { ttl: 60000, limit: 20, name: "manager" },
+      { ttl: 3600000, limit: 10, name: "hour" },
     ]),
     CacheModule.registerAsync({
       isGlobal: true,

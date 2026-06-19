@@ -89,6 +89,13 @@ export class AuthService {
     });
   }
 
+  async revogarTodasSessoes(usuarioId: string) {
+    await this.prisma.sessaoToken.updateMany({
+      where: { usuarioId, revogadoEm: null },
+      data: { revogadoEm: new Date() },
+    });
+  }
+
   async esqueceuSenha(emailInput: string) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { email: emailInput },

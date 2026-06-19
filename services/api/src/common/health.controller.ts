@@ -2,15 +2,16 @@ import { Controller, Get, Logger, Inject } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { getRedisConfig, validateRedisConfig } from "./config";
+import { PrismaService } from "../modules/prisma/prisma.service";
 import type { Cache } from "cache-manager";
 
 interface HealthCheck {
   status: "ok" | "degraded" | "error";
   timestamp: string;
   redis: { status: string; host?: string; port?: number; error?: string };
+  database: { status: string; latencyMs?: number; error?: string };
   email: { provider: string; configured: boolean };
   firebase: { configured: boolean };
-  database: { configured: boolean };
 }
 
 @SkipThrottle()
@@ -18,7 +19,10 @@ interface HealthCheck {
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);
 
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Get()
   async getHealth(): Promise<HealthCheck> {
@@ -41,17 +45,30 @@ export class HealthController {
       }
     }
 
+    // Deep database ping
+    let dbStatus = "connected";
+    let dbLatencyMs: number | undefined;
+    let dbError: string | undefined;
+    try {
+      const t0 = Date.now();
+      await this.prisma.$queryRaw`SELECT 1`;
+      dbLatencyMs = Date.now() - t0;
+    } catch (err) {
+      dbStatus = "error";
+      dbError = err instanceof Error ? err.message : "Unknown error";
+      this.logger.error(`DB health check failed: ${dbError}`);
+    }
+
     const emailProvider = process.env["EMAIL_PROVIDER"] ?? "smtp";
     const hasEmailConfig = this.hasEmailConfig(emailProvider);
     const hasFirebaseConfig = this.hasFirebaseConfig();
-    const hasDatabaseUrl = !!process.env["DATABASE_URL"];
 
-    // Render health check: DB obrigatório; Redis/email/firebase são opcionais
-    const status: HealthCheck["status"] = !hasDatabaseUrl
-      ? "error"
-      : redisStatus === "connected"
-        ? "ok"
-        : "degraded";
+    const status: HealthCheck["status"] =
+      dbStatus !== "connected"
+        ? "error"
+        : redisStatus === "connected"
+          ? "ok"
+          : "degraded";
 
     const health: HealthCheck = {
       status,
@@ -62,15 +79,17 @@ export class HealthController {
         port: redisConfig.port,
         ...(redisError && { error: redisError }),
       },
+      database: {
+        status: dbStatus,
+        ...(dbLatencyMs !== undefined && { latencyMs: dbLatencyMs }),
+        ...(dbError && { error: dbError }),
+      },
       email: {
         provider: emailProvider,
         configured: hasEmailConfig,
       },
       firebase: {
         configured: hasFirebaseConfig,
-      },
-      database: {
-        configured: hasDatabaseUrl,
       },
     };
 

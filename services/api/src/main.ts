@@ -1,9 +1,11 @@
 import { NestFactory } from "@nestjs/core";
+import * as crypto from "crypto";
 import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import fastifyMultipart from "@fastify/multipart";
+import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { validateEnvironmentOrThrow, initSentry } from "./common/config";
@@ -38,6 +40,23 @@ async function bootstrap() {
     if (process.env["NODE_ENV"] === "production") {
       reply.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
     }
+    done();
+  });
+
+  // Strip unknown fields and reject extra keys globally
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  // Propagate or generate X-Request-Id on every response
+  app.getHttpAdapter().getInstance().addHook("onRequest", (req: any, reply: any, done: () => void) => {
+    const id = req.headers["x-request-id"] as string | undefined ?? crypto.randomUUID();
+    req.headers["x-request-id"] = id;
+    reply.header("X-Request-Id", id);
     done();
   });
 

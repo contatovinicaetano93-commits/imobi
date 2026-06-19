@@ -23,7 +23,17 @@ export const CadastroUsuarioSchema = z.object({
   nome: z.string().min(3).max(120),
   cpf: z
     .string()
-    .regex(/^\d{11}$/, "CPF deve conter 11 dígitos numéricos"),
+    .regex(/^\d{11}$/, "CPF deve conter 11 dígitos numéricos")
+    .refine((cpf) => {
+      const d = cpf.split("").map(Number);
+      if (d.every((x) => x === d[0])) return false;
+      const r1 = d.slice(0, 9).reduce((s, v, i) => s + v * (10 - i), 0);
+      const c1 = (r1 * 10) % 11 >= 10 ? 0 : (r1 * 10) % 11;
+      if (c1 !== d[9]) return false;
+      const r2 = d.slice(0, 10).reduce((s, v, i) => s + v * (11 - i), 0);
+      const c2 = (r2 * 10) % 11 >= 10 ? 0 : (r2 * 10) % 11;
+      return c2 === d[10];
+    }, "CPF inválido"),
   email: z.string().email(),
   telefone: z
     .string()
@@ -31,6 +41,7 @@ export const CadastroUsuarioSchema = z.object({
   senha: z
     .string()
     .min(8, "Mínimo 8 caracteres")
+    .max(72, "Máximo 72 caracteres")
     .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
     .regex(/[0-9]/, "Deve conter ao menos um número"),
   consentidoTermos: z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
@@ -49,10 +60,11 @@ export const EsqueceuSenhaSchema = z.object({
 });
 
 export const RedefinirSenhaSchema = z.object({
-  token: z.string().min(1),
+  token: z.string().min(32, "Token inválido"),
   novaSenha: z
     .string()
     .min(8, "Mínimo 8 caracteres")
+    .max(72, "Máximo 72 caracteres")
     .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
     .regex(/[0-9]/, "Deve conter ao menos um número"),
 });
@@ -93,6 +105,7 @@ export const AtualizarUsuarioAdminSchema = z.object({
   novaSenha: z
     .string()
     .min(8, "Mínimo 8 caracteres")
+    .max(72, "Máximo 72 caracteres")
     .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
     .regex(/[0-9]/, "Deve conter ao menos um número")
     .optional(),
