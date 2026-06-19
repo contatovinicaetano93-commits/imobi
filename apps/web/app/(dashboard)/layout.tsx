@@ -373,6 +373,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <ToastProvider>
     <div className="dash-root" style={{ display: "flex", minHeight: "100vh", background: "#EEF3FF", fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
 
+      {/* Skip to content — visually hidden until focused */}
+      <a
+        href="#main-content"
+        style={{
+          position: "fixed", top: -60, left: 8, zIndex: 9999,
+          background: NAVY, color: "white", padding: "0.5rem 1rem",
+          borderRadius: 8, fontSize: "0.85rem", fontWeight: 600,
+          textDecoration: "none", transition: "top 0.15s",
+        }}
+        onFocus={e => { e.currentTarget.style.top = "8px"; }}
+        onBlur={e => { e.currentTarget.style.top = "-60px"; }}
+      >
+        Ir para o conteúdo principal
+      </a>
+
       {/* Sidebar desktop */}
       <aside
         className="dash-sidebar"
@@ -472,7 +487,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Main */}
-      <main className="dash-main" style={{ flex: 1, overflowX: "hidden" }}>
+      <main id="main-content" className="dash-main" style={{ flex: 1, overflowX: "hidden" }}>
         <div style={{ height: 52 }} className="dash-spacer" />
         {children}
       </main>
