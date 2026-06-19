@@ -108,6 +108,24 @@ export const scoreApi = {
       const token = await getToken();
       return apiClient.get<ScoreData>("/api/v1/score/atual", token ?? undefined);
     }),
+  historico: (limit = 12) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<{ data: ScoreHistorico[]; total: number }>(`/api/v1/score/historico?limit=${limit}`, token ?? undefined);
+    }),
+};
+
+export const kycApi = {
+  status: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<KycStatus>("/api/v1/kyc/status", token ?? undefined);
+    }),
+  documentos: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<KycDocumento[]>("/api/v1/kyc/documentos", token ?? undefined);
+    }),
 };
 
 export const authApi = {
@@ -215,4 +233,24 @@ export type SessaoAtiva = {
   ip: string | null;
   criadoEm: string;
   expiresAt: string;
+};
+
+export type ScoreHistorico = {
+  scoreHistoricoId: string;
+  score: number;
+  motivo: string | null;
+  criadoEm: string;
+};
+
+export type KycDocumento = {
+  kycDocumentoId: string;
+  tipo: string;
+  url: string;
+  status: string;
+  criadoEm: string;
+};
+
+export type KycStatus = {
+  status: string;
+  documentos: KycDocumento[];
 };

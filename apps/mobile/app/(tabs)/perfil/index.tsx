@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { Ionicons } from "@expo/vector-icons";
 import { usuariosApi, authApi, type UsuarioPerfil } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
 
@@ -148,6 +149,20 @@ export default function PerfilScreen() {
             </View>
           </View>
 
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Acesso Rápido</Text>
+            <TouchableOpacity style={styles.menuRow} onPress={() => router.push("/(tabs)/perfil/score" as any)}>
+              <Ionicons name="stats-chart" size={20} color="#16a34a" />
+              <Text style={styles.menuLabel}>Meu Score</Text>
+              <Ionicons name="chevron-forward" size={16} color="#9ca3af" style={{ marginLeft: "auto" }} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuRow} onPress={() => router.push("/(tabs)/perfil/kyc" as any)}>
+              <Ionicons name="shield-checkmark" size={20} color="#16a34a" />
+              <Text style={styles.menuLabel}>Verificação KYC</Text>
+              <Ionicons name="chevron-forward" size={16} color="#9ca3af" style={{ marginLeft: "auto" }} />
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} disabled={loggingOut}>
             <Text style={styles.logoutBtnText}>{loggingOut ? "Saindo..." : "Sair da Conta"}</Text>
           </TouchableOpacity>
@@ -182,6 +197,8 @@ const styles = StyleSheet.create({
   badgeTextAprovado: { color: "#166534" },
   badgeTextAnalise: { color: "#1d4ed8" },
   badgeTextPendente: { color: "#6b7280" },
+  menuRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderRadius: 12, padding: 14, marginBottom: 8, gap: 12 },
+  menuLabel: { fontSize: 14, fontWeight: "600", color: "#111827" },
   logoutBtn: { backgroundColor: "#ef4444", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 16 },
   logoutBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });
