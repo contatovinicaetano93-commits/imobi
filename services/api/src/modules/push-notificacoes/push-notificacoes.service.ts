@@ -88,6 +88,7 @@ export class PushNotificacoesService {
     const tokens = await this.prisma.usuarioFcmToken.findMany({
       where: { usuarioId: payload.usuarioId, ativo: true },
       select: { token: true },
+      take: 20,
     });
 
     if (tokens.length === 0) {

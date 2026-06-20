@@ -229,6 +229,7 @@ export class EtapasService {
         evidencias: {
           select: { evidenciaId: true, fotoUrl: true, validada: true, criadoEm: true },
           orderBy: { criadoEm: "desc" },
+          take: 50,
         },
         auditLogs: {
           orderBy: { criadoEm: "desc" },

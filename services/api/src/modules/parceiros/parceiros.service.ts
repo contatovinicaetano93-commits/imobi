@@ -3,10 +3,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import type { ParceiroResumo, OperacaoIndicada, ContatoMailing } from './parceiros.types';
 import type { AdicionarMailingInput } from '@imbobi/schemas';
 
-// Taxa de comissão padrão para parceiros (5%)
-const PERCENTUAL_COMISSAO_PADRAO = 5;
-// Validade de indicação em dias
-const VALIDADE_INDICACAO_DIAS = 90;
+const PERCENTUAL_COMISSAO_PADRAO = Number(process.env.PARCEIRO_PERCENTUAL_COMISSAO ?? "5");
+const VALIDADE_INDICACAO_DIAS = Number(process.env.PARCEIRO_VALIDADE_INDICACAO_DIAS ?? "90");
 
 function obfuscarNomeCliente(nomeCompleto: string): string {
   const partes = nomeCompleto.trim().split(/\s+/);
@@ -38,9 +36,8 @@ export class ParceirosService {
     const leads = await this.prisma.lead
       .findMany({
         where: { usuarioId, fonte: 'PARCEIRO' },
-        include: {
-          stage: true,
-        },
+        include: { stage: true },
+        take: 500,
       })
       .catch(() => [] as typeof leads);
 
@@ -75,10 +72,9 @@ export class ParceirosService {
     const leads = await this.prisma.lead
       .findMany({
         where: { usuarioId, fonte: 'PARCEIRO' },
-        include: {
-          stage: true,
-        },
+        include: { stage: true },
         orderBy: { criadoEm: 'desc' },
+        take: 100,
       })
       .catch(() => [] as typeof leads);
 
@@ -122,6 +118,7 @@ export class ParceirosService {
     const contatos = await this.prisma.mailingContato.findMany({
       where: { usuarioId },
       orderBy: { criadoEm: 'desc' },
+      take: 200,
     });
 
     return contatos.map((c) => ({

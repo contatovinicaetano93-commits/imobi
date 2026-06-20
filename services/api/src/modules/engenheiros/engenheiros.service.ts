@@ -94,12 +94,11 @@ export class EngenheirosService {
     visitaId: string,
     data: { status?: string; dataAgendada?: string; observacoes?: string }
   ) {
-    const etapa = await this.prisma.etapaObra.findUnique({
-      where: { etapaId: visitaId },
-    });
+    const [etapa, usuario] = await Promise.all([
+      this.prisma.etapaObra.findUnique({ where: { etapaId: visitaId } }),
+      this.prisma.usuario.findUnique({ where: { usuarioId } }),
+    ]);
     if (!etapa) throw new NotFoundException("Visita não encontrada.");
-
-    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
     if (!usuario) throw new ForbiddenException("Usuário não encontrado.");
 
     const statusMap: Record<string, string> = {

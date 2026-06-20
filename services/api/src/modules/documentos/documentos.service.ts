@@ -51,6 +51,7 @@ export class DocumentosService {
     return this.prisma.documento.findMany({
       where: { obraId },
       orderBy: { criadoEm: "desc" },
+      take: 100,
     });
   }
 
@@ -58,6 +59,7 @@ export class DocumentosService {
     return this.prisma.documento.findMany({
       where: { usuarioId },
       orderBy: { criadoEm: "desc" },
+      take: 100,
     });
   }
 
