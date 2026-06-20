@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RevogarConsentimentoSchema = exports.PushTokenSchema = exports.KycRejeitarSchema = exports.KycUploadSchema = exports.KycDocumentoTipoEnum = exports.AdicionarMailingSchema = exports.MarketplaceCriarFornecedorSchema = exports.FornecedorTipoEnum = exports.MarketplaceAvaliarSchema = exports.ComiteEncerrarSchema = exports.ComiteDecisaoEnum = exports.ComiteVotarSchema = exports.VotoDecisaoEnum = exports.ComiteParecerSchema = exports.ComiteSolicitarSchema = exports.VistoriaRejeitarSchema = exports.VistoriaAprovarSchema = void 0;
+exports.AtualizarVisitaSchema = exports.VisitaStatusEnum = exports.AtualizarDueDiligenceStatusSchema = exports.AtualizarDueDiligenceStatusEnum = exports.CriarDueDiligenceSchema = exports.ConfirmarPagamentoSchema = exports.ReprovarHomologacaoSchema = exports.CriarUsuarioAdminSchema = exports.UsuarioTipoEnum = exports.EtapaAtualizarStatusSchema = exports.EtapaStatusEnum = exports.RevogarConsentimentoSchema = exports.PushTokenSchema = exports.KycRejeitarSchema = exports.KycUploadSchema = exports.KycDocumentoTipoEnum = exports.AdicionarMailingSchema = exports.MarketplaceCriarFornecedorSchema = exports.FornecedorTipoEnum = exports.MarketplaceAvaliarSchema = exports.ComiteEncerrarSchema = exports.ComiteDecisaoEnum = exports.ComiteVotarSchema = exports.VotoDecisaoEnum = exports.ComiteParecerSchema = exports.ComiteSolicitarSchema = exports.VistoriaRejeitarSchema = exports.VistoriaAprovarSchema = void 0;
 const zod_1 = require("zod");
 // ── Vistoria ────────────────────────────────────────────────────────────
 exports.VistoriaAprovarSchema = zod_1.z.object({
@@ -106,4 +106,76 @@ exports.RevogarConsentimentoSchema = zod_1.z.object({
     tipo: zod_1.z.enum(["MARKETING", "NOTIFICACOES", "TUDO"], {
         errorMap: () => ({ message: "Tipo deve ser MARKETING, NOTIFICACOES ou TUDO" }),
     }),
+});
+// ── Etapas ────────────────────────────────────────────────────────────
+exports.EtapaStatusEnum = zod_1.z.enum([
+    "PLANEJADA",
+    "EM_ANDAMENTO",
+    "AGUARDANDO_VISTORIA",
+    "CONCLUIDA",
+    "REPROVADA",
+]);
+exports.EtapaAtualizarStatusSchema = zod_1.z.object({
+    status: exports.EtapaStatusEnum,
+});
+// ── Admin ─────────────────────────────────────────────────────────────
+exports.UsuarioTipoEnum = zod_1.z.enum([
+    "ADMIN",
+    "GESTOR",
+    "GESTOR_FUNDO",
+    "ENGENHEIRO",
+    "GESTOR_OBRA",
+    "COMERCIAL",
+    "PARCEIRO",
+    "CONSTRUTOR",
+    "TOMADOR",
+]);
+exports.CriarUsuarioAdminSchema = zod_1.z.object({
+    nome: zod_1.z.string().min(2, "Nome obrigatório").max(200),
+    email: zod_1.z.string().email("E-mail inválido"),
+    senha: zod_1.z.string().min(8, "Senha deve ter pelo menos 8 caracteres").max(100),
+    tipo: exports.UsuarioTipoEnum,
+});
+exports.ReprovarHomologacaoSchema = zod_1.z.object({
+    motivo: zod_1.z.string().min(5, "Motivo obrigatório").max(2000),
+});
+exports.ConfirmarPagamentoSchema = zod_1.z.object({
+    referenciaPagamento: zod_1.z.string().max(200).optional(),
+});
+// ── Due Diligence ─────────────────────────────────────────────────────
+exports.CriarDueDiligenceSchema = zod_1.z.object({
+    nomeEmpreendimento: zod_1.z.string().min(2, "Nome obrigatório").max(400),
+    tipologia: zod_1.z.string().max(200).optional(),
+    endereco: zod_1.z.string().max(500).optional(),
+    cidade: zod_1.z.string().max(200).optional(),
+    uf: zod_1.z.string().length(2).optional(),
+    totalUnidades: zod_1.z.number().int().min(0).optional().nullable(),
+    nomeIncorporadora: zod_1.z.string().max(300).optional(),
+    cnpjIncorporadora: zod_1.z.string().max(18).optional(),
+    modeloAmortizacao: zod_1.z.string().max(200).optional().nullable(),
+    totalCarteira: zod_1.z.number().min(0).optional().nullable(),
+    totalAReceber: zod_1.z.number().min(0).optional().nullable(),
+    estruturaSocietaria: zod_1.z.string().max(2000).optional(),
+    payload: zod_1.z.record(zod_1.z.unknown()),
+});
+exports.AtualizarDueDiligenceStatusEnum = zod_1.z.enum([
+    "ENVIADO",
+    "EM_ANALISE",
+    "APROVADO",
+    "REPROVADO",
+    "PENDENTE_DOCUMENTOS",
+]);
+exports.AtualizarDueDiligenceStatusSchema = zod_1.z.object({
+    status: exports.AtualizarDueDiligenceStatusEnum,
+});
+// ── Engenheiros / Visitas ──────────────────────────────────────────────
+exports.VisitaStatusEnum = zod_1.z.enum([
+    "AGENDADA",
+    "REALIZADA",
+    "CANCELADA",
+]);
+exports.AtualizarVisitaSchema = zod_1.z.object({
+    status: exports.VisitaStatusEnum.optional(),
+    dataAgendada: zod_1.z.string().datetime({ offset: true }).optional(),
+    observacoes: zod_1.z.string().max(2000).optional(),
 });

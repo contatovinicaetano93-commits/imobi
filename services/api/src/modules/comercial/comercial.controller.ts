@@ -71,13 +71,13 @@ export class ComercialController {
   }
 
   @Get('leads/:leadId')
-  async getLeadDetail(@Param('leadId') leadId: string) {
-    return this.comercialService.obterLeadDetalhe(leadId);
+  async getLeadDetail(@Param('leadId') leadId: string, @UsuarioAtual() u: IUsuario) {
+    return this.comercialService.obterLeadDetalhe(leadId, u.id, u.tipo);
   }
 
   @Get('leads/:leadId/score')
-  async getLeadScore(@Param('leadId') leadId: string) {
-    return this.comercialService.calcularScoreConversao(leadId);
+  async getLeadScore(@Param('leadId') leadId: string, @UsuarioAtual() u: IUsuario) {
+    return this.comercialService.calcularScoreConversao(leadId, u.id, u.tipo);
   }
 
   @Post('leads/:leadId/atividades')

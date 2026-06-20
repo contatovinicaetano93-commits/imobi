@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { Prisma, LeadFonte, LeadSegmento } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConversionScoringService } from './conversion-scoring.service';
 import type { ApiCreateLeadInput, ApiAddLeadActivityInput } from '@imbobi/schemas';
+
+const ADMIN_ROLES = new Set(['ADMIN', 'GESTOR', 'GESTOR_FUNDO']);
 
 interface LeadFilters {
   stageId?: string;
@@ -15,6 +17,8 @@ interface LeadFilters {
 
 @Injectable()
 export class ComercialService {
+  private readonly logger = new Logger(ComercialService.name);
+
   constructor(
     private prisma: PrismaService,
     private scoringService: ConversionScoringService
@@ -34,10 +38,8 @@ export class ComercialService {
         { nome: 'FECHAMENTO', ordem: 5, corHex: '#10b981' },
       ];
 
-      const created = await Promise.all(
-        defaults.map((d) =>
-          this.prisma.pipelineStage.create({ data: d })
-        )
+      const created = await this.prisma.$transaction(
+        defaults.map((d) => this.prisma.pipelineStage.create({ data: d }))
       );
 
       return created.map((s) => ({
@@ -97,40 +99,37 @@ export class ComercialService {
   }
 
   async criarLead(usuarioId: string, data: ApiCreateLeadInput) {
-    let stageId: string;
+    const { lead, score } = await this.prisma.$transaction(async (tx) => {
+      let stageId: string;
+      const defaultStage = await tx.pipelineStage.findFirst({ orderBy: { ordem: 'asc' } });
+      if (defaultStage) {
+        stageId = defaultStage.stageId;
+      } else {
+        const seeded = await tx.pipelineStage.create({
+          data: { nome: 'PROSPECÇÃO', ordem: 1, corHex: '#6366f1' },
+        });
+        stageId = seeded.stageId;
+      }
 
-    const defaultStage = await this.prisma.pipelineStage.findFirst({
-      orderBy: { ordem: 'asc' },
-    });
-
-    if (defaultStage) {
-      stageId = defaultStage.stageId;
-    } else {
-      const seeded = await this.prisma.pipelineStage.create({
-        data: { nome: 'PROSPECÇÃO', ordem: 1, corHex: '#6366f1' },
+      const lead = await tx.lead.create({
+        data: {
+          clienteNome: data.clienteNome,
+          clienteEmail: data.clienteEmail,
+          clienteTelefone: data.clienteTelefone,
+          clienteCpf: data.clienteCpf ?? null,
+          fonte: data.fonte ?? 'WEBSITE',
+          tipoObra: data.tipoObra ?? null,
+          segmentoCliente: data.segmentoCliente ?? 'NOVO',
+          stageId,
+          usuarioId,
+          atribuidoEm: new Date(),
+        },
+        include: { scoreHistorico: { take: 1, orderBy: { criadoEm: 'desc' } } },
       });
-      stageId = seeded.stageId;
-    }
 
-    const lead = await this.prisma.lead.create({
-      data: {
-        clienteNome: data.clienteNome,
-        clienteEmail: data.clienteEmail,
-        clienteTelefone: data.clienteTelefone,
-        clienteCpf: data.clienteCpf ?? null,
-        fonte: data.fonte ?? 'WEBSITE',
-        tipoObra: data.tipoObra ?? null,
-        segmentoCliente: data.segmentoCliente ?? 'NOVO',
-        stageId,
-        usuarioId,
-        atribuidoEm: new Date(),
-      },
-      include: {
-        scoreHistorico: { take: 1, orderBy: { criadoEm: 'desc' } },
-      },
+      const score = await this.scoringService.calcularScore(lead.leadId);
+      return { lead, score };
     });
-
-    const score = await this.scoringService.calcularScore(lead.leadId);
 
     return { ...lead, score };
   }
@@ -183,27 +182,32 @@ export class ComercialService {
     };
   }
 
-  async obterLeadDetalhe(leadId: string) {
+  async obterLeadDetalhe(leadId: string, usuarioId: string, userTipo: string) {
     const lead = await this.prisma.lead.findUnique({
       where: { leadId },
       include: {
         stage: true,
-        atividades: { orderBy: { criadoEm: 'desc' } },
-        scoreHistorico: { orderBy: { criadoEm: 'desc' } },
-        obra: true,
-        usuario: true,
+        atividades: { orderBy: { criadoEm: 'desc' }, take: 20 },
+        scoreHistorico: { orderBy: { criadoEm: 'desc' }, take: 1 },
+        obra: { select: { obraId: true, nome: true, status: true } },
+        usuario: { select: { usuarioId: true, nome: true, email: true } },
       },
     });
 
-    if (!lead) return null;
+    if (!lead) throw new NotFoundException("Lead não encontrado.");
+    if (!ADMIN_ROLES.has(userTipo) && lead.usuarioId !== usuarioId) {
+      throw new ForbiddenException("Acesso negado.");
+    }
 
-    return {
-      ...lead,
-      scoreBreakdown: lead.scoreHistorico[0] || null,
-    };
+    return { ...lead, scoreBreakdown: lead.scoreHistorico[0] || null };
   }
 
-  async calcularScoreConversao(leadId: string) {
+  async calcularScoreConversao(leadId: string, usuarioId: string, userTipo: string) {
+    if (!ADMIN_ROLES.has(userTipo)) {
+      const lead = await this.prisma.lead.findUnique({ where: { leadId }, select: { usuarioId: true } });
+      if (!lead) throw new NotFoundException("Lead não encontrado.");
+      if (lead.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
+    }
     return this.scoringService.calcularScore(leadId);
   }
 
@@ -236,17 +240,8 @@ export class ComercialService {
       },
     });
 
-    const allScores = await this.prisma.conversionScore.findMany({
-      select: { scoreFinal: true },
-    });
-
-    const avgScore =
-      allScores.length > 0
-        ? Math.round(
-            allScores.reduce((sum, s) => sum + s.scoreFinal, 0) /
-              allScores.length
-          )
-        : 0;
+    const { _avg } = await this.prisma.conversionScore.aggregate({ _avg: { scoreFinal: true } });
+    const avgScore = Math.round(_avg.scoreFinal ?? 0);
 
     const highScoreLeads = await this.prisma.lead.count({
       where: {

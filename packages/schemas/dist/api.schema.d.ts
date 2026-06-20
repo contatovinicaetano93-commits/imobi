@@ -188,3 +188,114 @@ export declare const RevogarConsentimentoSchema: z.ZodObject<{
     tipo: "MARKETING" | "NOTIFICACOES" | "TUDO";
 }>;
 export type RevogarConsentimentoInput = z.infer<typeof RevogarConsentimentoSchema>;
+export declare const EtapaStatusEnum: z.ZodEnum<["PLANEJADA", "EM_ANDAMENTO", "AGUARDANDO_VISTORIA", "CONCLUIDA", "REPROVADA"]>;
+export declare const EtapaAtualizarStatusSchema: z.ZodObject<{
+    status: z.ZodEnum<["PLANEJADA", "EM_ANDAMENTO", "AGUARDANDO_VISTORIA", "CONCLUIDA", "REPROVADA"]>;
+}, "strip", z.ZodTypeAny, {
+    status: "PLANEJADA" | "EM_ANDAMENTO" | "AGUARDANDO_VISTORIA" | "CONCLUIDA" | "REPROVADA";
+}, {
+    status: "PLANEJADA" | "EM_ANDAMENTO" | "AGUARDANDO_VISTORIA" | "CONCLUIDA" | "REPROVADA";
+}>;
+export type EtapaAtualizarStatusInput = z.infer<typeof EtapaAtualizarStatusSchema>;
+export declare const UsuarioTipoEnum: z.ZodEnum<["ADMIN", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "GESTOR_OBRA", "COMERCIAL", "PARCEIRO", "CONSTRUTOR", "TOMADOR"]>;
+export declare const CriarUsuarioAdminSchema: z.ZodObject<{
+    nome: z.ZodString;
+    email: z.ZodString;
+    senha: z.ZodString;
+    tipo: z.ZodEnum<["ADMIN", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "GESTOR_OBRA", "COMERCIAL", "PARCEIRO", "CONSTRUTOR", "TOMADOR"]>;
+}, "strip", z.ZodTypeAny, {
+    nome: string;
+    tipo: "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "GESTOR_OBRA" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | "TOMADOR";
+    email: string;
+    senha: string;
+}, {
+    nome: string;
+    tipo: "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "GESTOR_OBRA" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | "TOMADOR";
+    email: string;
+    senha: string;
+}>;
+export declare const ReprovarHomologacaoSchema: z.ZodObject<{
+    motivo: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    motivo: string;
+}, {
+    motivo: string;
+}>;
+export declare const ConfirmarPagamentoSchema: z.ZodObject<{
+    referenciaPagamento: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    referenciaPagamento?: string | undefined;
+}, {
+    referenciaPagamento?: string | undefined;
+}>;
+export type CriarUsuarioAdminInput = z.infer<typeof CriarUsuarioAdminSchema>;
+export type ReprovarHomologacaoInput = z.infer<typeof ReprovarHomologacaoSchema>;
+export type ConfirmarPagamentoInput = z.infer<typeof ConfirmarPagamentoSchema>;
+export declare const CriarDueDiligenceSchema: z.ZodObject<{
+    nomeEmpreendimento: z.ZodString;
+    tipologia: z.ZodOptional<z.ZodString>;
+    endereco: z.ZodOptional<z.ZodString>;
+    cidade: z.ZodOptional<z.ZodString>;
+    uf: z.ZodOptional<z.ZodString>;
+    totalUnidades: z.ZodNullable<z.ZodOptional<z.ZodNumber>>;
+    nomeIncorporadora: z.ZodOptional<z.ZodString>;
+    cnpjIncorporadora: z.ZodOptional<z.ZodString>;
+    modeloAmortizacao: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    totalCarteira: z.ZodNullable<z.ZodOptional<z.ZodNumber>>;
+    totalAReceber: z.ZodNullable<z.ZodOptional<z.ZodNumber>>;
+    estruturaSocietaria: z.ZodOptional<z.ZodString>;
+    payload: z.ZodRecord<z.ZodString, z.ZodUnknown>;
+}, "strip", z.ZodTypeAny, {
+    nomeEmpreendimento: string;
+    payload: Record<string, unknown>;
+    endereco?: string | undefined;
+    uf?: string | undefined;
+    cidade?: string | undefined;
+    tipologia?: string | undefined;
+    totalUnidades?: number | null | undefined;
+    nomeIncorporadora?: string | undefined;
+    cnpjIncorporadora?: string | undefined;
+    modeloAmortizacao?: string | null | undefined;
+    totalCarteira?: number | null | undefined;
+    totalAReceber?: number | null | undefined;
+    estruturaSocietaria?: string | undefined;
+}, {
+    nomeEmpreendimento: string;
+    payload: Record<string, unknown>;
+    endereco?: string | undefined;
+    uf?: string | undefined;
+    cidade?: string | undefined;
+    tipologia?: string | undefined;
+    totalUnidades?: number | null | undefined;
+    nomeIncorporadora?: string | undefined;
+    cnpjIncorporadora?: string | undefined;
+    modeloAmortizacao?: string | null | undefined;
+    totalCarteira?: number | null | undefined;
+    totalAReceber?: number | null | undefined;
+    estruturaSocietaria?: string | undefined;
+}>;
+export declare const AtualizarDueDiligenceStatusEnum: z.ZodEnum<["ENVIADO", "EM_ANALISE", "APROVADO", "REPROVADO", "PENDENTE_DOCUMENTOS"]>;
+export declare const AtualizarDueDiligenceStatusSchema: z.ZodObject<{
+    status: z.ZodEnum<["ENVIADO", "EM_ANALISE", "APROVADO", "REPROVADO", "PENDENTE_DOCUMENTOS"]>;
+}, "strip", z.ZodTypeAny, {
+    status: "APROVADO" | "REPROVADO" | "ENVIADO" | "EM_ANALISE" | "PENDENTE_DOCUMENTOS";
+}, {
+    status: "APROVADO" | "REPROVADO" | "ENVIADO" | "EM_ANALISE" | "PENDENTE_DOCUMENTOS";
+}>;
+export type CriarDueDiligenceInput = z.infer<typeof CriarDueDiligenceSchema>;
+export type AtualizarDueDiligenceStatusInput = z.infer<typeof AtualizarDueDiligenceStatusSchema>;
+export declare const VisitaStatusEnum: z.ZodEnum<["AGENDADA", "REALIZADA", "CANCELADA"]>;
+export declare const AtualizarVisitaSchema: z.ZodObject<{
+    status: z.ZodOptional<z.ZodEnum<["AGENDADA", "REALIZADA", "CANCELADA"]>>;
+    dataAgendada: z.ZodOptional<z.ZodString>;
+    observacoes: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    observacoes?: string | undefined;
+    status?: "AGENDADA" | "REALIZADA" | "CANCELADA" | undefined;
+    dataAgendada?: string | undefined;
+}, {
+    observacoes?: string | undefined;
+    status?: "AGENDADA" | "REALIZADA" | "CANCELADA" | undefined;
+    dataAgendada?: string | undefined;
+}>;
+export type AtualizarVisitaInput = z.infer<typeof AtualizarVisitaSchema>;

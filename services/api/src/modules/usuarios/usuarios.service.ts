@@ -340,8 +340,9 @@ export class UsuariosService {
     }
 
     // Soft delete: mark account with deletadoEm timestamp
+    const graceDays = Number(process.env.EXCLUSAO_GRACE_PERIOD_DAYS ?? "30");
     const now = new Date();
-    const deletionScheduledFor = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const deletionScheduledFor = new Date(Date.now() + graceDays * 24 * 60 * 60 * 1000);
 
     await this.prisma.usuario.update({
       where: { usuarioId },
@@ -350,18 +351,17 @@ export class UsuariosService {
       },
     });
 
-    // Schedule hard delete job for 30 days from now
-    const delayMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+    // Schedule hard delete job
+    const delayMs = graceDays * 24 * 60 * 60 * 1000;
     await this.deleteUserQueue.add(
       "hard-delete",
       { usuarioId },
       {
         delay: delayMs,
         attempts: 3,
-        backoff: {
-          type: "exponential",
-          delay: 2000,
-        },
+        backoff: { type: "exponential", delay: 2000 },
+        removeOnComplete: { count: 1000 },
+        removeOnFail: { count: 500 },
       }
     );
 
@@ -369,7 +369,7 @@ export class UsuariosService {
       message: "Conta marcada para exclusão",
       gracePeriodDays: 30,
       deletionScheduledFor,
-      notaGraca: "Você pode fazer login novamente durante o período de 30 dias para restaurar sua conta",
+      notaGraca: `Você pode fazer login novamente durante o período de ${graceDays} dias para restaurar sua conta`,
     };
   }
 

@@ -155,8 +155,9 @@ export class AdminService {
   }
 
   async metricas(): Promise<AdminMetricas> {
+    const lookbackMonths = Number(process.env.METRICAS_LOOKBACK_MONTHS ?? "12");
     const inicio = new Date();
-    inicio.setMonth(inicio.getMonth() - 11);
+    inicio.setMonth(inicio.getMonth() - (lookbackMonths - 1));
     inicio.setDate(1);
     inicio.setHours(0, 0, 0, 0);
 
@@ -186,7 +187,7 @@ export class AdminService {
     const mesesPt = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     const buckets = new Map<string, number>();
 
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < lookbackMonths; i++) {
       const d = new Date(inicio);
       d.setMonth(inicio.getMonth() + i);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -227,29 +228,37 @@ export class AdminService {
     };
   }
 
-  async listarUsuarios() {
-    const rows = await this.prisma.usuario.findMany({
-      where: { deletadoEm: null },
-      orderBy: { criadoEm: "desc" },
-      select: {
-        usuarioId: true,
-        nome: true,
-        email: true,
-        telefone: true,
-        tipo: true,
-        kycStatus: true,
-        bloqueadoEm: true,
-        funcoesBloqueadas: true,
-        criadoEm: true,
-        _count: { select: { obras: true, creditos: true } },
-      },
-    });
-    return rows.map(({ usuarioId, _count, ...rest }) => ({
-      id: usuarioId,
-      ...rest,
-      totalObras: _count.obras,
-      totalCreditos: _count.creditos,
-    }));
+  async listarUsuarios(limit = 20, offset = 0) {
+    const [rows, total] = await Promise.all([
+      this.prisma.usuario.findMany({
+        where: { deletadoEm: null },
+        orderBy: { criadoEm: "desc" },
+        take: Math.min(limit, 100),
+        skip: offset,
+        select: {
+          usuarioId: true,
+          nome: true,
+          email: true,
+          telefone: true,
+          tipo: true,
+          kycStatus: true,
+          bloqueadoEm: true,
+          funcoesBloqueadas: true,
+          criadoEm: true,
+          _count: { select: { obras: true, creditos: true } },
+        },
+      }),
+      this.prisma.usuario.count({ where: { deletadoEm: null } }),
+    ]);
+    return {
+      items: rows.map(({ usuarioId, _count, ...rest }) => ({
+        id: usuarioId,
+        ...rest,
+        totalObras: _count.obras,
+        totalCreditos: _count.creditos,
+      })),
+      total,
+    };
   }
 
   async buscarUsuario(id: string) {

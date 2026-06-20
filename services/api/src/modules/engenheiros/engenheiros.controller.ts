@@ -5,6 +5,9 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { AtualizarVisitaSchema } from "@imbobi/schemas";
+import type { AtualizarVisitaInput } from "@imbobi/schemas";
 
 @ApiTags("Engenheiros")
 @ApiBearerAuth("JWT")
@@ -20,15 +23,15 @@ export class EngenheirosController {
   }
 
   @Get("visitas/:visitaId")
-  obterVisita(@Param("visitaId") visitaId: string) {
-    return this.engenheirosService.obterVisita(visitaId);
+  obterVisita(@Param("visitaId") visitaId: string, @UsuarioAtual() u: IUsuario) {
+    return this.engenheirosService.obterVisita(visitaId, u.id, u.tipo);
   }
 
   @Patch("visitas/:visitaId")
   atualizarVisita(
     @UsuarioAtual() u: IUsuario,
     @Param("visitaId") visitaId: string,
-    @Body() body: { status?: string; dataAgendada?: string; observacoes?: string },
+    @Body(new ZodPipe(AtualizarVisitaSchema)) body: AtualizarVisitaInput,
   ) {
     return this.engenheirosService.atualizarVisita(u.id, visitaId, body);
   }
@@ -62,7 +65,7 @@ export class EngenheirosController {
   }
 
   @Get("obras/:obraId/etapas")
-  etapasDaObra(@Param("obraId") obraId: string) {
-    return this.engenheirosService.etapasDaObra(obraId);
+  etapasDaObra(@Param("obraId") obraId: string, @UsuarioAtual() u: IUsuario) {
+    return this.engenheirosService.etapasDaObra(obraId, u.id);
   }
 }

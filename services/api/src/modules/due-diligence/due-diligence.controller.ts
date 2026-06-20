@@ -1,10 +1,13 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from "@nestjs/common";
-import { DueDiligenceService, CriarDueDiligenceDto, AtualizarStatusDto } from "./due-diligence.service";
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, HttpCode } from "@nestjs/common";
+import { DueDiligenceService } from "./due-diligence.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { CriarDueDiligenceSchema, AtualizarDueDiligenceStatusSchema } from "@imbobi/schemas";
+import type { CriarDueDiligenceInput, AtualizarDueDiligenceStatusInput } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
 @ApiTags("Due Diligence")
@@ -14,7 +17,11 @@ export class DueDiligenceController {
   constructor(private readonly service: DueDiligenceService) {}
 
   @Post()
-  criar(@UsuarioAtual() u: IUsuario, @Body() body: CriarDueDiligenceDto) {
+  @HttpCode(201)
+  criar(
+    @UsuarioAtual() u: IUsuario,
+    @Body(new ZodPipe(CriarDueDiligenceSchema)) body: CriarDueDiligenceInput,
+  ) {
     return this.service.criar(u.id, body);
   }
 
@@ -36,7 +43,10 @@ export class DueDiligenceController {
   @UseGuards(RolesGuard)
   @Roles("ADMIN")
   @Patch(":id/status")
-  atualizarStatus(@Param("id") id: string, @Body() body: AtualizarStatusDto) {
+  atualizarStatus(
+    @Param("id") id: string,
+    @Body(new ZodPipe(AtualizarDueDiligenceStatusSchema)) body: AtualizarDueDiligenceStatusInput,
+  ) {
     return this.service.atualizarStatus(id, body);
   }
 }

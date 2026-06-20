@@ -15,8 +15,8 @@ export declare const CadastroUsuarioSchema: z.ZodObject<{
     nome: string;
     telefone: string;
     email: string;
-    cpf: string;
     senha: string;
+    cpf: string;
     consentidoTermos: boolean;
     consentidoPrivacy: boolean;
     consentidoKyc: boolean;
@@ -25,8 +25,8 @@ export declare const CadastroUsuarioSchema: z.ZodObject<{
     nome: string;
     telefone: string;
     email: string;
-    cpf: string;
     senha: string;
+    cpf: string;
     consentidoTermos: boolean;
     consentidoPrivacy: boolean;
     consentidoKyc: boolean;
@@ -129,7 +129,7 @@ export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
     funcoesBloqueadas: z.ZodOptional<z.ZodArray<z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>, "many">>;
 }, "strip", z.ZodTypeAny, {
     nome?: string | undefined;
-    tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
+    tipo?: "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "GESTOR_OBRA" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | "TOMADOR" | undefined;
     telefone?: string | undefined;
     email?: string | undefined;
     novaSenha?: string | undefined;
@@ -138,7 +138,7 @@ export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }, {
     nome?: string | undefined;
-    tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
+    tipo?: "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "GESTOR_OBRA" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | "TOMADOR" | undefined;
     telefone?: string | undefined;
     email?: string | undefined;
     novaSenha?: string | undefined;

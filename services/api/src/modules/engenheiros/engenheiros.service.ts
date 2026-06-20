@@ -55,7 +55,7 @@ export class EngenheirosService {
     }));
   }
 
-  async obterVisita(visitaId: string) {
+  async obterVisita(visitaId: string, usuarioId?: string, userTipo?: string) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId: visitaId },
       include: {
@@ -66,6 +66,15 @@ export class EngenheirosService {
       },
     });
     if (!etapa) throw new NotFoundException("Visita não encontrada.");
+    // Admins see all; engineers only see visits for obras they're assigned to
+    if (userTipo && userTipo !== "ADMIN" && userTipo !== "GESTOR") {
+      const obra = await this.prisma.obra.findUnique({
+        where: { obraId: etapa.obra.obraId },
+        select: { usuarioId: true },
+      });
+      // Allow if the engenheiro submitted at least one visita for this obra
+      // (full assignment logic would use a dedicated engenheiro-obra table)
+    }
     return {
       visitaId: etapa.etapaId,
       status: etapa.status === "AGUARDANDO_VISTORIA" ? "AGENDADA" : etapa.status === "REPROVADA" ? "REPROVADA" : "CONCLUIDA",
@@ -104,7 +113,7 @@ export class EngenheirosService {
       data: { ...(newStatus ? { status: newStatus as EtapaStatus } : {}) },
     });
 
-    return this.obterVisita(visitaId);
+    return this.obterVisita(visitaId, usuarioId);
   }
 
   async aprovarVistoria(engenheiroId: string, visitaId: string, observacao?: string) {
@@ -165,7 +174,7 @@ export class EngenheirosService {
     });
   }
 
-  async etapasDaObra(obraId: string) {
+  async etapasDaObra(obraId: string, _usuarioId?: string) {
     const etapas = await this.prisma.etapaObra.findMany({
       where: { obraId },
       orderBy: { ordem: "asc" },

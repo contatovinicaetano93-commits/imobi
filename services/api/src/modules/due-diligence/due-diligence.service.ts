@@ -1,26 +1,10 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { DueDiligenceStatus, Prisma } from "@prisma/client";
+import type { CriarDueDiligenceInput, AtualizarDueDiligenceStatusInput } from "@imbobi/schemas";
 
-export interface CriarDueDiligenceDto {
-  nomeEmpreendimento: string;
-  tipologia?: string;
-  endereco?: string;
-  cidade?: string;
-  uf?: string;
-  totalUnidades?: number | null;
-  nomeIncorporadora?: string;
-  cnpjIncorporadora?: string;
-  modeloAmortizacao?: string | null;
-  totalCarteira?: number | null;
-  totalAReceber?: number | null;
-  estruturaSocietaria?: string;
-  payload: Prisma.InputJsonValue;
-}
-
-export interface AtualizarStatusDto {
-  status: DueDiligenceStatus;
-}
+export type CriarDueDiligenceDto = CriarDueDiligenceInput;
+export type AtualizarStatusDto = AtualizarDueDiligenceStatusInput;
 
 @Injectable()
 export class DueDiligenceService {
@@ -42,7 +26,7 @@ export class DueDiligenceService {
         totalCarteira: dto.totalCarteira ?? null,
         totalAReceber: dto.totalAReceber ?? null,
         estruturaSocietaria: dto.estruturaSocietaria ?? null,
-        payload: dto.payload,
+        payload: dto.payload as Prisma.InputJsonValue,
         status: DueDiligenceStatus.ENVIADO,
       },
     });
@@ -85,7 +69,7 @@ export class DueDiligenceService {
     if (!dd) throw new NotFoundException("Due diligence não encontrada");
     return this.prisma.dueDiligence.update({
       where: { id },
-      data: { status: dto.status },
+      data: { status: dto.status as DueDiligenceStatus },
     });
   }
 }

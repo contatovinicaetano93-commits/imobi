@@ -10,7 +10,7 @@ import { calcularDistanciaMetros } from "@imbobi/core";
 import type { UploadEvidenciaInput } from "@imbobi/schemas";
 import { isManagerRole } from "../../common/constants/manager-roles";
 
-const MAX_ACCURACY_METROS = 15;
+const MAX_ACCURACY_METROS = Number(process.env.GPS_MAX_ACCURACY_METROS ?? "15");
 
 @Injectable()
 export class EvidenciasService {

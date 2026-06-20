@@ -1,5 +1,6 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
-import { Controller, Post, Get, Patch, Body, Param, UseGuards } from "@nestjs/common";
+import { Controller, Post, Get, Patch, Body, Param, Query, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { KycService } from "./kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -38,13 +39,17 @@ export class KycController {
   @UseGuards(RolesGuard)
   @Roles(...MANAGER_ROLES)
   @Get("pendentes")
-  async listarPendentes() {
-    return this.kyc.listarPendentes();
+  async listarPendentes(
+    @Query("limit") limit = "50",
+    @Query("offset") offset = "0",
+  ) {
+    return this.kyc.listarPendentes(Number(limit), Number(offset));
   }
 
   @UseGuards(RolesGuard)
   @Roles(...MANAGER_ROLES)
   @Patch(":id/aprovar")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async aprovarDocumento(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     return this.kyc.aprovarDocumento(id, u.id);
   }
@@ -52,6 +57,7 @@ export class KycController {
   @UseGuards(RolesGuard)
   @Roles(...MANAGER_ROLES)
   @Patch(":id/rejeitar")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async rejeitarDocumento(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,

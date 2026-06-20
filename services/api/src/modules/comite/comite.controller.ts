@@ -1,5 +1,6 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { ComiteService } from "./comite.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -49,6 +50,7 @@ export class ComiteController {
 
   @Post(":comiteId/parecer")
   @Roles("ENGENHEIRO", "GESTOR_OBRA")
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   parecer(
     @Param("comiteId") comiteId: string,
     @UsuarioAtual() user: UsuarioAtual,
@@ -61,6 +63,7 @@ export class ComiteController {
 
   @Post(":comiteId/votar")
   @Roles("ADMIN")
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   votar(
     @Param("comiteId") comiteId: string,
     @UsuarioAtual() user: UsuarioAtual,

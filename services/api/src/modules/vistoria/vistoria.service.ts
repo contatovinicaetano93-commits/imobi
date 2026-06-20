@@ -79,12 +79,20 @@ export class VistoriaService {
         const liberacao = await this.prisma.liberacaoParcela.create({
           data: { creditoId: credito.creditoId, valor: valorLiberacao, status: "PENDENTE" },
         });
-        await this.liberacaoQueue.add({
-          creditoId: credito.creditoId,
-          etapaId,
-          liberacaoId: liberacao.liberacaoId,
-          valor: valorLiberacao,
-        });
+        await this.liberacaoQueue.add(
+          {
+            creditoId: credito.creditoId,
+            etapaId,
+            liberacaoId: liberacao.liberacaoId,
+            valor: valorLiberacao,
+          },
+          {
+            attempts: 3,
+            backoff: { type: "exponential", delay: 5000 },
+            removeOnComplete: { count: 1000 },
+            removeOnFail: { count: 500 },
+          },
+        );
       }
     }
 

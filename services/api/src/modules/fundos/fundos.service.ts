@@ -154,7 +154,6 @@ export class FundosService {
 
   async porRegiao() {
     const obras = await this.prisma.obra.findMany({
-      take: 500,
       orderBy: { criadoEm: "desc" },
       select: {
         endereco: true,

@@ -27,7 +27,7 @@ export class ObrasService {
           endereco: typeof input.endereco === "string" ? input.endereco : JSON.stringify(input.endereco),
           geoLatitude: input.geo?.latitude ?? 0,
           geoLongitude: input.geo?.longitude ?? 0,
-          raioValidacaoMetros: input.geo?.raioValidacaoMetros ?? 50,
+          raioValidacaoMetros: input.geo?.raioValidacaoMetros ?? Number(process.env.GPS_RAIO_VALIDACAO_M ?? "50"),
           areaM2: input.areaM2,
         },
       });

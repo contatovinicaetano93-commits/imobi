@@ -1,5 +1,5 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
-import { Controller, Get, Post, Param, Query, Body, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Controller, Get, Post, Param, Query, Body, UseGuards, UseInterceptors, HttpCode } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
 import { MarketplaceService } from "./marketplace.service";
@@ -69,6 +69,7 @@ export class MarketplaceController {
 
   @Post("fornecedores")
   @Roles("ADMIN")
+  @HttpCode(201)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   criar(@Body(new ZodPipe(MarketplaceCriarFornecedorSchema)) body: MarketplaceCriarFornecedorInput) {
     return this.marketplace.criarFornecedor(body);

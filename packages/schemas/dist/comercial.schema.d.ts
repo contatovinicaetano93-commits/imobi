@@ -15,7 +15,7 @@ export declare const CreateLeadSchema: z.ZodObject<{
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+    fonte: "PARCEIRO" | "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE";
     tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     clienteCpf?: string | undefined;
@@ -23,7 +23,7 @@ export declare const CreateLeadSchema: z.ZodObject<{
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+    fonte: "PARCEIRO" | "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE";
     tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     clienteCpf?: string | undefined;
@@ -41,7 +41,7 @@ export declare const ApiCreateLeadSchema: z.ZodObject<{
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+    fonte: "PARCEIRO" | "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     observacoes?: string | undefined;
     clienteCpf?: string | undefined;
@@ -52,7 +52,7 @@ export declare const ApiCreateLeadSchema: z.ZodObject<{
     clienteTelefone: string;
     observacoes?: string | undefined;
     clienteCpf?: string | undefined;
-    fonte?: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO" | undefined;
+    fonte?: "PARCEIRO" | "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | undefined;
     tipoObra?: "residencial" | "comercial" | "industrial" | "reforma" | undefined;
     segmentoCliente?: "NOVO" | "RETORNO" | "CONCORRENTE" | undefined;
 }>;
@@ -180,7 +180,7 @@ export declare const LeadSchema: z.ZodObject<{
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+    fonte: "PARCEIRO" | "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE";
     tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     leadId: string;
@@ -205,7 +205,7 @@ export declare const LeadSchema: z.ZodObject<{
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+    fonte: "PARCEIRO" | "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE";
     tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     leadId: string;
@@ -377,7 +377,7 @@ export declare const LeadDetailSchema: z.ZodObject<{
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+    fonte: "PARCEIRO" | "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE";
     tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     leadId: string;
@@ -438,7 +438,7 @@ export declare const LeadDetailSchema: z.ZodObject<{
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
-    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+    fonte: "PARCEIRO" | "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE";
     tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     leadId: string;
@@ -576,7 +576,7 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteNome: string;
         clienteEmail: string;
         clienteTelefone: string;
-        fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+        fonte: "PARCEIRO" | "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE";
         tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
         segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
         leadId: string;
@@ -601,7 +601,7 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteNome: string;
         clienteEmail: string;
         clienteTelefone: string;
-        fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+        fonte: "PARCEIRO" | "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE";
         tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
         segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
         leadId: string;
@@ -631,7 +631,7 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteNome: string;
         clienteEmail: string;
         clienteTelefone: string;
-        fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+        fonte: "PARCEIRO" | "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE";
         tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
         segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
         leadId: string;
@@ -661,7 +661,7 @@ export declare const LeadsListResponseSchema: z.ZodObject<{
         clienteNome: string;
         clienteEmail: string;
         clienteTelefone: string;
-        fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+        fonte: "PARCEIRO" | "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE";
         tipoObra: "residencial" | "comercial" | "industrial" | "reforma";
         segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
         leadId: string;

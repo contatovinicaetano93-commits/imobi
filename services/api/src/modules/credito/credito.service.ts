@@ -7,9 +7,12 @@ import type { SolicitacaoCreditoInput, SimulacaoCreditoInput } from "@imbobi/sch
 export class CreditoService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private get taxaMensalDefault(): number {
+    return Number(process.env.TAXA_MENSAL_DEFAULT ?? "0.0099");
+  }
+
   simular(input: SimulacaoCreditoInput) {
-    const TAXA_MENSAL = 0.0099;
-    return simularCredito(input.valorSolicitado, TAXA_MENSAL, input.prazoMeses);
+    return simularCredito(input.valorSolicitado, this.taxaMensalDefault, input.prazoMeses);
   }
 
   async solicitar(usuarioId: string, input: SolicitacaoCreditoInput) {
@@ -18,7 +21,7 @@ export class CreditoService {
         usuarioId,
         valorAprovado: input.valorSolicitado,
         valorLiberado: 0,
-        taxaMensal: 0.0099,
+        taxaMensal: this.taxaMensalDefault,
         prazoMeses: input.prazoMeses,
       },
     });

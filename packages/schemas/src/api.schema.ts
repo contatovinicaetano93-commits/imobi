@@ -149,3 +149,101 @@ export const RevogarConsentimentoSchema = z.object({
 
 export type RevogarConsentimentoInput = z.infer<typeof RevogarConsentimentoSchema>;
 
+// ── Etapas ────────────────────────────────────────────────────────────
+
+export const EtapaStatusEnum = z.enum([
+  "PLANEJADA",
+  "EM_ANDAMENTO",
+  "AGUARDANDO_VISTORIA",
+  "CONCLUIDA",
+  "REPROVADA",
+]);
+
+export const EtapaAtualizarStatusSchema = z.object({
+  status: EtapaStatusEnum,
+});
+
+export type EtapaAtualizarStatusInput = z.infer<typeof EtapaAtualizarStatusSchema>;
+
+// ── Admin ─────────────────────────────────────────────────────────────
+
+export const UsuarioTipoEnum = z.enum([
+  "ADMIN",
+  "GESTOR",
+  "GESTOR_FUNDO",
+  "ENGENHEIRO",
+  "GESTOR_OBRA",
+  "COMERCIAL",
+  "PARCEIRO",
+  "CONSTRUTOR",
+  "TOMADOR",
+]);
+
+export const CriarUsuarioAdminSchema = z.object({
+  nome: z.string().min(2, "Nome obrigatório").max(200),
+  email: z.string().email("E-mail inválido"),
+  senha: z.string().min(8, "Senha deve ter pelo menos 8 caracteres").max(100),
+  tipo: UsuarioTipoEnum,
+});
+
+export const ReprovarHomologacaoSchema = z.object({
+  motivo: z.string().min(5, "Motivo obrigatório").max(2000),
+});
+
+export const ConfirmarPagamentoSchema = z.object({
+  referenciaPagamento: z.string().max(200).optional(),
+});
+
+export type CriarUsuarioAdminInput = z.infer<typeof CriarUsuarioAdminSchema>;
+export type ReprovarHomologacaoInput = z.infer<typeof ReprovarHomologacaoSchema>;
+export type ConfirmarPagamentoInput = z.infer<typeof ConfirmarPagamentoSchema>;
+
+// ── Due Diligence ─────────────────────────────────────────────────────
+
+export const CriarDueDiligenceSchema = z.object({
+  nomeEmpreendimento: z.string().min(2, "Nome obrigatório").max(400),
+  tipologia: z.string().max(200).optional(),
+  endereco: z.string().max(500).optional(),
+  cidade: z.string().max(200).optional(),
+  uf: z.string().length(2).optional(),
+  totalUnidades: z.number().int().min(0).optional().nullable(),
+  nomeIncorporadora: z.string().max(300).optional(),
+  cnpjIncorporadora: z.string().max(18).optional(),
+  modeloAmortizacao: z.string().max(200).optional().nullable(),
+  totalCarteira: z.number().min(0).optional().nullable(),
+  totalAReceber: z.number().min(0).optional().nullable(),
+  estruturaSocietaria: z.string().max(2000).optional(),
+  payload: z.record(z.unknown()),
+});
+
+export const AtualizarDueDiligenceStatusEnum = z.enum([
+  "ENVIADO",
+  "EM_ANALISE",
+  "APROVADO",
+  "REPROVADO",
+  "PENDENTE_DOCUMENTOS",
+]);
+
+export const AtualizarDueDiligenceStatusSchema = z.object({
+  status: AtualizarDueDiligenceStatusEnum,
+});
+
+export type CriarDueDiligenceInput = z.infer<typeof CriarDueDiligenceSchema>;
+export type AtualizarDueDiligenceStatusInput = z.infer<typeof AtualizarDueDiligenceStatusSchema>;
+
+// ── Engenheiros / Visitas ──────────────────────────────────────────────
+
+export const VisitaStatusEnum = z.enum([
+  "AGENDADA",
+  "REALIZADA",
+  "CANCELADA",
+]);
+
+export const AtualizarVisitaSchema = z.object({
+  status: VisitaStatusEnum.optional(),
+  dataAgendada: z.string().datetime({ offset: true }).optional(),
+  observacoes: z.string().max(2000).optional(),
+});
+
+export type AtualizarVisitaInput = z.infer<typeof AtualizarVisitaSchema>;
+

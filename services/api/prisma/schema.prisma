@@ -247,6 +247,7 @@ model EvidenciaEtapa {
   @@index([etapaId])
   @@index([obraId])
   @@index([validada])
+  @@index([obraId, validada])
   @@index([deletadoEm])
 }
 

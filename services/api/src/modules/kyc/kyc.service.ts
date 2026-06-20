@@ -31,6 +31,15 @@ export class KycService {
     return this.prisma.kycDocumento.findMany({
       where: { usuarioId },
       orderBy: { criadoEm: "desc" },
+      select: {
+        kycDocumentoId: true,
+        tipo: true,
+        url: true,
+        status: true,
+        motivo_rejeicao: true,
+        criadoEm: true,
+        analisadoEm: true,
+      },
     });
   }
 
@@ -179,12 +188,18 @@ export class KycService {
     return atualizado;
   }
 
-  async listarPendentes() {
-    return this.prisma.kycDocumento.findMany({
-      where: { status: "PENDENTE" },
-      include: { usuario: { select: { nome: true, email: true, cpf: true } } },
-      orderBy: { criadoEm: "asc" },
-    });
+  async listarPendentes(limit = 50, offset = 0) {
+    const [items, total] = await Promise.all([
+      this.prisma.kycDocumento.findMany({
+        where: { status: "PENDENTE" },
+        include: { usuario: { select: { nome: true, email: true, cpf: true } } },
+        orderBy: { criadoEm: "asc" },
+        take: Math.min(limit, 100),
+        skip: offset,
+      }),
+      this.prisma.kycDocumento.count({ where: { status: "PENDENTE" } }),
+    ]);
+    return { items, total };
   }
 
   async verificarKycCompleto(usuarioId: string) {

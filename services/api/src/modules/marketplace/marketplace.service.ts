@@ -90,24 +90,26 @@ export class MarketplaceService {
     });
     if (jaAvaliou) throw new BadRequestException("Você já avaliou este fornecedor");
 
-    await this.prisma.avaliacaoFornecedor.create({
-      data: { fornecedorId, usuarioId, nota, comentario: comentario ?? null },
-    });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.avaliacaoFornecedor.create({
+        data: { fornecedorId, usuarioId, nota, comentario: comentario ?? null },
+      });
 
-    const [{ _avg }, totalAvaliacoes] = await Promise.all([
-      this.prisma.avaliacaoFornecedor.aggregate({
+      const [{ _avg }, totalAvaliacoes] = await Promise.all([
+        tx.avaliacaoFornecedor.aggregate({
+          where: { fornecedorId },
+          _avg: { nota: true },
+        }),
+        tx.avaliacaoFornecedor.count({ where: { fornecedorId } }),
+      ]);
+
+      await tx.fornecedor.update({
         where: { fornecedorId },
-        _avg: { nota: true },
-      }),
-      this.prisma.avaliacaoFornecedor.count({ where: { fornecedorId } }),
-    ]);
-
-    await this.prisma.fornecedor.update({
-      where: { fornecedorId },
-      data: {
-        avaliacaoMedia: Number((_avg.nota ?? 0).toFixed(1)),
-        totalAvaliacoes,
-      },
+        data: {
+          avaliacaoMedia: Number((_avg.nota ?? 0).toFixed(1)),
+          totalAvaliacoes,
+        },
+      });
     });
 
     return { ok: true };
