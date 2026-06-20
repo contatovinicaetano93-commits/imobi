@@ -75,7 +75,6 @@ async function clearDatabase(): Promise<void> {
   console.log("Clearing database...");
 
   try {
-    // Delete in order of foreign key dependencies
     await prisma.notificacao.deleteMany({});
     await prisma.usuarioFcmToken.deleteMany({});
     await prisma.sessaoToken.deleteMany({});
@@ -87,6 +86,8 @@ async function clearDatabase(): Promise<void> {
     await prisma.credito.deleteMany({});
     await prisma.scoreHistorico.deleteMany({});
     await prisma.usuario.deleteMany({});
+    await prisma.avaliacaoFornecedor.deleteMany({});
+    await prisma.fornecedor.deleteMany({});
 
     console.log("✓ Database cleared successfully");
   } catch (error) {
