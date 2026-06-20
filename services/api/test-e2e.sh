@@ -42,6 +42,12 @@ fi
 # Wait a bit more for Redis
 sleep 2
 
+# Match docker-compose.test.yml (portas 5433/6380 — não conflitam com serviços locais)
+export DATABASE_URL="postgresql://postgres:test@127.0.0.1:5433/imobi_test"
+export REDIS_HOST="${REDIS_HOST:-127.0.0.1}"
+export REDIS_PORT="${REDIS_PORT:-6380}"
+export JWT_SECRET="${JWT_SECRET:-test-jwt-secret-for-e2e-only}"
+
 # Run Prisma migrations
 echo "🗄️  Running database migrations..."
 NODE_ENV=test npx prisma migrate deploy --schema prisma/schema.prisma || {
