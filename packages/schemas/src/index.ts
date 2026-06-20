@@ -4,4 +4,3 @@ export * from "./obra.schema";
 export * from "./evidencia.schema";
 export * from "./comercial.schema";
 export * from "./notificacao.schema";
-export * from "./vaga.schema";
