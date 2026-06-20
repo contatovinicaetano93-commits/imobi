@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, HttpCode, BadRequestException } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, HttpCode, BadRequestException, HttpStatus } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 import { AdminService, CriarUsuarioAdminDto } from "./admin.service";
@@ -114,6 +114,20 @@ export class AdminController {
   @HttpCode(200)
   desbloquearUsuario(@Param("id") id: string, @UsuarioAtual() admin: UsuarioAtual) {
     return this.adminService.desbloquearUsuario(id, admin.id);
+  }
+
+  @ApiOperation({ summary: "Monitorar status das filas BullMQ" })
+  @Get("queues")
+  monitorarFilas() {
+    return this.adminService.monitorarFilas();
+  }
+
+  @ApiOperation({ summary: "Limpar jobs com falha de uma fila específica" })
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Delete("queues/:nomeFila/failed")
+  @HttpCode(HttpStatus.OK)
+  limparFilaFalhas(@Param("nomeFila") nomeFila: string) {
+    return this.adminService.limparFilaFalhas(nomeFila);
   }
 
   @ApiOperation({ summary: "Broadcast de notificação para todos os usuários" })

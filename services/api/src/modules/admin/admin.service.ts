@@ -1,8 +1,12 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bull";
+import { Queue } from "bull";
 import { PrismaService } from "../prisma/prisma.service";
 import * as bcrypt from "bcryptjs";
 import { UsuarioTipo } from "@prisma/client";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
+import { QUEUE_LIBERACAO, QUEUE_EMAIL } from "../../common/constants";
+import { QUEUE_EXCLUIR_USUARIO } from "../../workers/excluir-usuario.worker";
 
 export interface CriarUsuarioAdminDto {
   nome: string;
@@ -32,7 +36,12 @@ export interface Atividade {
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue,
+    @InjectQueue(QUEUE_EMAIL) private readonly emailQueue: Queue,
+    @InjectQueue(QUEUE_EXCLUIR_USUARIO) private readonly excluirUsuarioQueue: Queue,
+  ) {}
 
   async overview(): Promise<AdminOverview> {
     const [
@@ -450,5 +459,37 @@ export class AdminService {
       this.prisma.adminAuditLog.count({ where }),
     ]);
     return { logs, total, page: Math.floor(offset / limit) + 1, pageSize: limit };
+  }
+
+  async monitorarFilas() {
+    const [liberacaoCounts, emailCounts, excluirCounts] = await Promise.all([
+      this.liberacaoQueue.getJobCounts(),
+      this.emailQueue.getJobCounts(),
+      this.excluirUsuarioQueue.getJobCounts(),
+    ]);
+
+    return {
+      queues: [
+        { name: QUEUE_LIBERACAO, ...liberacaoCounts },
+        { name: QUEUE_EMAIL, ...emailCounts },
+        { name: QUEUE_EXCLUIR_USUARIO, ...excluirCounts },
+      ],
+    };
+  }
+
+  async limparFilaFalhas(nomeFila: string) {
+    const queues: Record<string, Queue> = {
+      [QUEUE_LIBERACAO]: this.liberacaoQueue,
+      [QUEUE_EMAIL]: this.emailQueue,
+      [QUEUE_EXCLUIR_USUARIO]: this.excluirUsuarioQueue,
+    };
+
+    const fila = queues[nomeFila];
+    if (!fila) throw new NotFoundException(`Fila '${nomeFila}' não encontrada`);
+
+    const failedJobs = await fila.getFailed();
+    await Promise.all(failedJobs.map((job) => job.remove()));
+
+    return { removed: failedJobs.length, queue: nomeFila };
   }
 }
