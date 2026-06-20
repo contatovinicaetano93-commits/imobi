@@ -190,19 +190,16 @@ describe("Fluxo E2E Completo — cadastro → obra → evidência → aprovaçã
 
     creditoId = res.body.creditoId;
     expect(creditoId).toBeDefined();
-    expect(res.body.status).toMatch(/PENDENTE|EM_ANALISE/i);
+    // Credito é criado diretamente como ATIVO (fluxo simplificado do tomador)
+    // O fluxo formal com comitê usa POST /comite/solicitar
+    expect(res.body.status).toMatch(/ATIVO|SUSPENSO/i);
   });
 
-  it("5b. Gestor aprova crédito", async () => {
-    // Aprovação direta via Prisma (simula decisão do comitê)
-    await prisma.credito.update({
-      where: { creditoId },
-      data: { status: "ATIVO", valorAprovado: 200000 },
-    });
-
+  it("5b. Crédito registrado no banco com valor correto", async () => {
     const credito = await prisma.credito.findUnique({ where: { creditoId } });
-    expect(credito?.status).toBe("ATIVO");
+    expect(credito).toBeDefined();
     expect(Number(credito?.valorAprovado)).toBe(200000);
+    expect(credito?.status).toBe("ATIVO");
   });
 
   // ─── Step 6: Upload de evidência GPS ──────────────────────────────────────
