@@ -61,7 +61,7 @@ export default async function CreditoPage() {
             <CreditCard className="w-6 h-6 text-[#1B4FD8]" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Crédito</h1>
+            <p className="text-2xl font-bold text-gray-900 tracking-tight">Crédito</p>
             <p className="text-sm text-gray-500">Gerencie seus créditos de obra</p>
           </div>
         </div>

@@ -22,11 +22,15 @@ model Usuario {
   tipo          UsuarioTipo @default(TOMADOR)
   comercialRole ComercialRole?
   kycStatus           KycStatus @default(PENDENTE)
-  consentidoTermos    Boolean   @default(false)
-  consentidoPrivacy   Boolean   @default(false)
-  consentidoKyc       Boolean   @default(false)
-  consentidoMarketing Boolean   @default(false)
-  consentidoEm        DateTime?
+  consentidoTermos      Boolean   @default(false)
+  consentidoTermosEm    DateTime?
+  consentidoPrivacy     Boolean   @default(false)
+  consentidoPrivacyEm   DateTime?
+  consentidoKyc         Boolean   @default(false)
+  consentidoKycEm       DateTime?
+  consentidoMarketing   Boolean   @default(false)
+  consentidoMarketingEm DateTime?
+  consentidoEm          DateTime?
   passwordResetToken    String?
   passwordResetExpires  DateTime?
   bloqueadoEm         DateTime?
