@@ -8,13 +8,18 @@ const apiOrigin = (() => {
   try { return new URL(apiUrl).origin; } catch { return apiUrl; }
 })();
 
+// Scoped to the configured bucket so Next.js won't proxy images from
+// arbitrary AWS accounts (the previous **.amazonaws.com wildcard allowed that).
+const s3Bucket = process.env.AWS_S3_BUCKET ?? "imbobi-evidencias";
+const s3Region = process.env.AWS_S3_REGION ?? "us-east-1";
+
 const csp = [
   "default-src 'self'",
   // Next.js requires unsafe-inline for its inline script hydration chunks
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' data:",
-  `img-src 'self' data: blob: https://*.amazonaws.com https://*.r2.cloudflarestorage.com`,
+  `img-src 'self' data: blob: https://${s3Bucket}.s3.${s3Region}.amazonaws.com https://${s3Bucket}.s3.amazonaws.com`,
   `connect-src 'self' ${apiOrigin} https://*.sentry.io https://*.ingest.sentry.io`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
@@ -43,8 +48,8 @@ const nextConfig = {
   transpilePackages: ["@imbobi/core", "@imbobi/schemas", "@imbobi/ui"],
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "**.amazonaws.com" },
-      { protocol: "https", hostname: "**.r2.cloudflarestorage.com" },
+      { protocol: "https", hostname: `${s3Bucket}.s3.${s3Region}.amazonaws.com` },
+      { protocol: "https", hostname: `${s3Bucket}.s3.amazonaws.com` },
     ],
   },
   experimental: {
