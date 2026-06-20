@@ -1,5 +1,6 @@
 import { ApiTags } from "@nestjs/swagger";
 import { Controller, Get, Query, ForbiddenException, Logger } from "@nestjs/common";
+import { UsuarioTipo } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { hash } from "bcryptjs";
 
@@ -31,10 +32,10 @@ export class SetupController {
       const passwordHash = await hash(u.senha, 12);
       await this.prisma.usuario.upsert({
         where: { email: u.email },
-        update: { passwordHash, tipo: u.tipo as any, kycStatus: "APROVADO", nome: u.nome },
+        update: { passwordHash, tipo: u.tipo as UsuarioTipo, kycStatus: "APROVADO", nome: u.nome },
         create: {
           nome: u.nome, email: u.email, cpf: u.cpf, telefone: u.telefone,
-          passwordHash, tipo: u.tipo as any, kycStatus: "APROVADO",
+          passwordHash, tipo: u.tipo as UsuarioTipo, kycStatus: "APROVADO",
           consentidoTermos: true, consentidoPrivacy: true, consentidoKyc: true,
         },
       });

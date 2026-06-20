@@ -1,7 +1,17 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma, LeadFonte, LeadSegmento } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConversionScoringService } from './conversion-scoring.service';
 import type { ApiCreateLeadInput, ApiAddLeadActivityInput } from '@imbobi/schemas';
+
+interface LeadFilters {
+  stageId?: string;
+  fonte?: string;
+  segmentoCliente?: string;
+  scoreMin?: number;
+  scoreMax?: number;
+  searchTerm?: string;
+}
 
 @Injectable()
 export class ComercialService {
@@ -125,12 +135,12 @@ export class ComercialService {
     return { ...lead, score };
   }
 
-  async listarLeads(limit = 20, offset = 0, filters?: any) {
-    const where: any = {};
+  async listarLeads(limit = 20, offset = 0, filters?: LeadFilters) {
+    const where: Prisma.LeadWhereInput = {};
 
     if (filters?.stageId) where.stageId = filters.stageId;
-    if (filters?.fonte) where.fonte = filters.fonte;
-    if (filters?.segmentoCliente) where.segmentoCliente = filters.segmentoCliente;
+    if (filters?.fonte) where.fonte = filters.fonte as LeadFonte;
+    if (filters?.segmentoCliente) where.segmentoCliente = filters.segmentoCliente as LeadSegmento;
     if (filters?.scoreMin !== undefined || filters?.scoreMax !== undefined) {
       const minScore: number = filters.scoreMin ?? 0;
       const maxScore: number = filters.scoreMax ?? Infinity;

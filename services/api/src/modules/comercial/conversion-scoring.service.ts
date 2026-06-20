@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { LeadActivity } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -41,7 +42,7 @@ export class ConversionScoringService {
   }
 
   private calcularEngajamentoScore(
-    atividades: any[],
+    atividades: LeadActivity[],
     ultimaAtividade?: Date
   ): number {
     const count = atividades?.length || 0;

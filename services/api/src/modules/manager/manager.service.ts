@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, Inject } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { ETAPA_STATUS_MAP } from "../../common/constants";
 import { isManagerRole } from "../../common/constants/manager-roles";
@@ -65,7 +66,8 @@ export class ManagerService {
     const cached = await this.cacheManager.get(cacheKey);
     if (cached) return cached;
 
-    const where: any = {};
+    const where: Prisma.EtapaObraWhereInput = {};
+    const dateFilter: Prisma.DateTimeFilter = {};
 
     // Status filter
     if (filters?.status && filters.status !== "todas") {
@@ -77,15 +79,13 @@ export class ManagerService {
 
     // Date range filter
     if (filters?.dataInicio || filters?.dataFim) {
-      where.criadoEm = {};
-      if (filters.dataInicio) {
-        where.criadoEm.gte = new Date(filters.dataInicio);
-      }
+      if (filters.dataInicio) dateFilter.gte = new Date(filters.dataInicio);
       if (filters.dataFim) {
         const endDate = new Date(filters.dataFim);
         endDate.setHours(23, 59, 59, 999);
-        where.criadoEm.lte = endDate;
+        dateFilter.lte = endDate;
       }
+      where.criadoEm = dateFilter;
     }
 
     // Obra type filter
@@ -95,18 +95,17 @@ export class ManagerService {
 
     // Search term filter (by obra name or usuario name)
     if (filters?.searchTerm?.trim()) {
-      const searchCondition = {
-        OR: [
-          { obra: { nome: { contains: filters.searchTerm, mode: "insensitive" } } },
-          { obra: { usuario: { nome: { contains: filters.searchTerm, mode: "insensitive" } } } },
-        ],
-      };
+      const mode = Prisma.QueryMode.insensitive;
+      const searchOr: Prisma.EtapaObraWhereInput[] = [
+        { obra: { is: { nome: { contains: filters.searchTerm, mode } } } },
+        { obra: { is: { usuario: { is: { nome: { contains: filters.searchTerm, mode } } } } } },
+      ];
       // Merge search with existing obra filters
       if (where.obra) {
-        where.AND = [{ obra: where.obra }, searchCondition];
+        where.AND = [{ obra: where.obra }, { OR: searchOr }];
         delete where.obra;
       } else {
-        where.OR = searchCondition.OR;
+        where.OR = searchOr;
       }
     }
 
@@ -117,12 +116,14 @@ export class ManagerService {
       const cutoff24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
       if (filters.priority === "urgente") {
-        where.criadoEm = { ...where.criadoEm, lte: cutoff24h };
+        dateFilter.lte = cutoff24h;
       } else if (filters.priority === "intermediaria") {
-        where.criadoEm = { ...where.criadoEm, lte: cutoff12h, gt: cutoff24h };
+        dateFilter.lte = cutoff12h;
+        dateFilter.gt = cutoff24h;
       } else if (filters.priority === "normal") {
-        where.criadoEm = { ...where.criadoEm, gt: cutoff12h };
+        dateFilter.gt = cutoff12h;
       }
+      where.criadoEm = dateFilter;
     }
 
     const [etapas, total] = await Promise.all([
