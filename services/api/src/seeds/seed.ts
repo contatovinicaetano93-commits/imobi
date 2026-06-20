@@ -1,4 +1,13 @@
-import { PrismaClient } from "@prisma/client";
+import {
+  PrismaClient,
+  UsuarioTipo,
+  KycStatus,
+  KycDocumentoStatus,
+  CreditoStatus,
+  ObraStatus,
+  EtapaStatus,
+  TipoNotificacao,
+} from "@prisma/client";
 import { hash } from "bcryptjs";
 import * as path from "path";
 import * as fs from "fs";
@@ -115,8 +124,8 @@ async function seedUsuarios(data: any): Promise<Map<number, string>> {
         email: usuarioData.email,
         telefone: usuarioData.telefone,
         passwordHash,
-        tipo: usuarioData.tipo as any,
-        kycStatus: usuarioData.kycStatus as any,
+        tipo: usuarioData.tipo as UsuarioTipo,
+        kycStatus: usuarioData.kycStatus as KycStatus,
       },
     });
 
@@ -166,7 +175,7 @@ async function seedCreditos(
         valorLiberado: creditoData.valorLiberado,
         taxaMensal: creditoData.taxaMensal,
         prazoMeses: creditoData.prazoMeses,
-        status: creditoData.status as any,
+        status: creditoData.status as CreditoStatus,
         dataVencimento,
       },
     });
@@ -222,7 +231,7 @@ async function seedObras(
         raioValidacaoMetros: obraData.raioValidacaoMetros,
         areaM2: obraData.areaM2,
         tipo: obraData.tipo,
-        status: obraData.status as any,
+        status: obraData.status as ObraStatus,
       },
     });
 
@@ -315,7 +324,7 @@ async function seedEtapas(
           ordem: stage + 1,
           percentualObra,
           valorLiberacao,
-          status: stageStatuses[stage] as any,
+          status: stageStatuses[stage] as EtapaStatus,
           dataConclusaoPrevista,
         },
       });
@@ -434,7 +443,7 @@ async function seedKycDocumentos(
         usuarioId,
         tipo: kycData.tipo,
         url: kycData.url,
-        status: kycData.status as any,
+        status: kycData.status as KycDocumentoStatus,
         motivo_rejeicao: kycData.motivo_rejeicao || null,
         analisadoPor: analisadoPorId,
         analisadoEm,
@@ -529,7 +538,7 @@ async function seedNotificacoes(
       await prisma.notificacao.create({
         data: {
           usuarioId,
-          tipo: notification.tipo as any,
+          tipo: notification.tipo as TipoNotificacao,
           titulo: notification.titulo,
           mensagem: notification.mensagem,
         },

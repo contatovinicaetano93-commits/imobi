@@ -191,11 +191,6 @@ export class EngenheirosService {
   }
 
   async licencas(): Promise<unknown[]> {
-    // Tabela Licenca não existe no schema atual — retorna array vazio com segurança
-    return (this.prisma as any).licenca
-      ? (this.prisma as any).licenca
-          .findMany({ orderBy: { criadoEm: "desc" } })
-          .catch(() => [])
-      : Promise.resolve([]);
+    return [];
   }
 }
