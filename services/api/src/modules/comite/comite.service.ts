@@ -228,6 +228,32 @@ export class ComiteService {
     });
   }
 
+  // ── Encerramento manual ───────────────────────────────────────────
+
+  async encerrarManualmente(
+    comiteId: string,
+    decisao: "APROVADO" | "AJUSTADO" | "REPROVADO",
+    motivo?: string,
+  ) {
+    const comite = await this.prisma.comiteDigital.findUnique({ where: { comiteId } });
+    if (!comite) throw new NotFoundException("Comitê não encontrado");
+    if (comite.status === "ENCERRADO") throw new BadRequestException("Comitê já encerrado");
+
+    await this.prisma.comiteDigital.update({
+      where: { comiteId },
+      data: { decisaoMotivo: motivo ?? null },
+    });
+
+    const votosSimulados: { voto: "APROVAR" | "AJUSTAR" | "REPROVAR" }[] = decisao === "APROVADO"
+      ? [{ voto: "APROVAR" }, { voto: "APROVAR" }]
+      : decisao === "AJUSTADO"
+        ? [{ voto: "AJUSTAR" }, { voto: "AJUSTAR" }]
+        : [{ voto: "REPROVAR" }, { voto: "REPROVAR" }];
+
+    await this.encerrarComite(comiteId, votosSimulados);
+    return { ok: true, decisao };
+  }
+
   // ── Rating simples A/B/C/D ────────────────────────────────────────
 
   private calcularRating(ltv: number): string {

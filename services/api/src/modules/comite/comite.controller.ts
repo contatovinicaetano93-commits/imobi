@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from "@nestjs/common";
 import { ComiteService } from "./comite.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -65,10 +65,10 @@ export class ComiteController {
     return this.comiteService.votar(comiteId, user.id, body.voto, body.justificativa, body.condicoes);
   }
 
-  // ── Leitura: listar comitês (Admin + Fundo) ───────────────────────
+  // ── Leitura: listar comitês ───────────────────────────────────────
 
   @Get()
-  @Roles("ADMIN", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA")
+  @Roles("ADMIN", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "GESTOR_OBRA")
   listar(@Query("status") status?: string) {
     return this.comiteService.listarComites(status);
   }
@@ -76,8 +76,19 @@ export class ComiteController {
   // ── Leitura: dossiê completo ─────────────────────────────────────
 
   @Get(":comiteId")
-  @Roles("ADMIN", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA")
+  @Roles("ADMIN", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "GESTOR_OBRA")
   dossie(@Param("comiteId") comiteId: string) {
     return this.comiteService.getDossie(comiteId);
+  }
+
+  // ── Admin: encerrar manualmente ───────────────────────────────────
+
+  @Patch(":comiteId/encerrar")
+  @Roles("ADMIN")
+  encerrar(
+    @Param("comiteId") comiteId: string,
+    @Body() body: { decisao: "APROVADO" | "AJUSTADO" | "REPROVADO"; motivo?: string },
+  ) {
+    return this.comiteService.encerrarManualmente(comiteId, body.decisao, body.motivo);
   }
 }
