@@ -1,5 +1,6 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, HttpCode } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { DueDiligenceService } from "./due-diligence.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -18,6 +19,7 @@ export class DueDiligenceController {
 
   @Post()
   @HttpCode(201)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   criar(
     @UsuarioAtual() u: IUsuario,
     @Body(new ZodPipe(CriarDueDiligenceSchema)) body: CriarDueDiligenceInput,
@@ -43,6 +45,7 @@ export class DueDiligenceController {
   @UseGuards(RolesGuard)
   @Roles("ADMIN")
   @Patch(":id/status")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   atualizarStatus(
     @Param("id") id: string,
     @Body(new ZodPipe(AtualizarDueDiligenceStatusSchema)) body: AtualizarDueDiligenceStatusInput,

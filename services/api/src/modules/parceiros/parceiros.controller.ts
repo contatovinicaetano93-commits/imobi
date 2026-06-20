@@ -9,6 +9,7 @@ import {
   HttpCode,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ParceirosService } from './parceiros.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -45,6 +46,8 @@ export class ParceirosController {
   }
 
   @Post('mailing')
+  @HttpCode(201)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   adicionarMailing(
     @UsuarioAtual() u: IUsuario,
     @Body(new ZodPipe(AdicionarMailingSchema)) body: AdicionarMailingInput,

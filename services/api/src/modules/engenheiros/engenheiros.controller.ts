@@ -1,5 +1,6 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Patch, Param, Body, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { EngenheirosService } from "./engenheiros.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -28,6 +29,7 @@ export class EngenheirosController {
   }
 
   @Patch("visitas/:visitaId")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   atualizarVisita(
     @UsuarioAtual() u: IUsuario,
     @Param("visitaId") visitaId: string,
@@ -37,6 +39,7 @@ export class EngenheirosController {
   }
 
   @Patch("visitas/:visitaId/aprovar")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   aprovarVistoria(
     @UsuarioAtual() u: IUsuario,
     @Param("visitaId") visitaId: string,
@@ -46,6 +49,7 @@ export class EngenheirosController {
   }
 
   @Patch("visitas/:visitaId/rejeitar")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   rejeitarVistoria(
     @UsuarioAtual() u: IUsuario,
     @Param("visitaId") visitaId: string,

@@ -140,7 +140,7 @@ export class ManagerController {
 
 
   @Patch("kyc/:id/aprovar")
-
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async aprovarKyc(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
 
     return this.kyc.aprovarDocumento(id, u.id);
@@ -150,7 +150,7 @@ export class ManagerController {
 
 
   @Patch("kyc/:id/rejeitar")
-
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async rejeitarKyc(
 
     @UsuarioAtual() u: IUsuario,

@@ -1,5 +1,6 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Patch, Delete, Param, Query, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
 import { NotificacoesService } from "./notificacoes.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -35,17 +36,20 @@ export class NotificacoesController {
   }
 
   @Patch("marcar-todas-lidas")
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async marcarTudasComoLidas(@UsuarioAtual() u: IUsuario) {
     await this.notificacoes.marcarTudasComoLidas(u.id);
     return { ok: true };
   }
 
   @Patch(":id/lida")
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   async marcarComoLida(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     return this.notificacoes.marcarComoLida(u.id, id);
   }
 
   @Delete(":id")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async deletar(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     await this.notificacoes.deletar(u.id, id);
     return { ok: true };

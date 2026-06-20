@@ -1,5 +1,6 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Post, Delete, Body, UseGuards, HttpCode } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { PushNotificacoesService } from "./push-notificacoes.service";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -15,6 +16,7 @@ export class PushNotificacoesController {
   constructor(private readonly pushNotificacoes: PushNotificacoesService) {}
 
   @Post("registrar-token")
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async registrarToken(
     @UsuarioAtual() u: IUsuario,
     @Body(new ZodPipe(PushTokenSchema)) body: PushTokenInput,

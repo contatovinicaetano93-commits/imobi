@@ -7,7 +7,9 @@ import {
   Param,
   Query,
   UseGuards,
+  HttpCode,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ComercialService } from './comercial.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -63,6 +65,8 @@ export class ComercialController {
   }
 
   @Post('leads')
+  @HttpCode(201)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async createLead(
     @UsuarioAtual() u: IUsuario,
     @Body(new ZodPipe(ApiCreateLeadSchema)) data: ApiCreateLeadInput,
@@ -81,6 +85,8 @@ export class ComercialController {
   }
 
   @Post('leads/:leadId/atividades')
+  @HttpCode(201)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async addActivity(
     @Param('leadId') leadId: string,
     @Body(new ZodPipe(ApiAddLeadActivitySchema)) data: ApiAddLeadActivityInput,
