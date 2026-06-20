@@ -78,8 +78,8 @@ export default function WelcomeScreen() {
             ["Simples", "doc. simplificada"],
             ["Versátil", "modalidades"],
             ["Próprio", "garantias caso a caso"],
-          ].map(([val, lbl], i) => (
-            <View key={lbl} style={[s.stripItem, i % 2 === 0 && s.stripItemLeft, i % 2 === 1 && s.stripItemRight]}>
+          ].map(([val, lbl]) => (
+            <View key={lbl} style={s.stripItem}>
               <Text style={s.stripVal}>{val}</Text>
               <Text style={s.stripLbl}>{lbl}</Text>
             </View>
@@ -189,8 +189,6 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
     borderRadius: 10, paddingVertical: 12, paddingHorizontal: 8,
   },
-  stripItemLeft: {},
-  stripItemRight: {},
   stripVal: {
     color: WHITE, fontSize: 22, fontWeight: "800", letterSpacing: -0.5,
   },

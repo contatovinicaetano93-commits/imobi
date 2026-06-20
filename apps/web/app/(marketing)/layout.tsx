@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://imobi-web-ten.vercel.app";
+
 export const metadata: Metadata = {
   title: "IMOBI — Crédito imobiliário para construtoras",
   description:
@@ -11,16 +13,16 @@ export const metadata: Metadata = {
     type: "website",
     locale: "pt_BR",
     siteName: "IMOBI",
-    url: "https://imobi-web-ten.vercel.app",
-    images: [{ url: "https://imobi-web-ten.vercel.app/og-image.png", width: 1200, height: 630, alt: "IMOBI" }],
+    url: siteUrl,
+    images: [{ url: `${siteUrl}/og-image.png`, width: 1200, height: 630, alt: "IMOBI" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "IMOBI — Crédito para sua obra em dias",
     description: "Crédito desburocratizado para construtoras. Aprovação em tempo recorde e documentação simplificada.",
-    images: ["https://imobi-web-ten.vercel.app/og-image.png"],
+    images: [`${siteUrl}/og-image.png`],
   },
-  alternates: { canonical: "https://imobi-web-ten.vercel.app" },
+  alternates: { canonical: siteUrl },
 };
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
