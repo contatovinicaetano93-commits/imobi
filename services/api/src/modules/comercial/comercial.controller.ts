@@ -6,6 +6,8 @@ import {
   Param,
   Query,
   UseGuards,
+  NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ComercialService } from './comercial.service';
@@ -74,14 +76,26 @@ export class ComercialController {
 
   @Get('leads/:leadId')
   async getLeadDetail(@UsuarioAtual() u: IUsuario, @Param('leadId') leadId: string) {
-    const scopeUserId = u.tipo === 'ADMIN' ? undefined : u.id;
-    return this.comercialService.obterLeadDetalhe(leadId, scopeUserId);
+    const isAdmin = u.tipo === 'ADMIN';
+    const result = await this.comercialService.obterLeadDetalhe(leadId, isAdmin ? undefined : u.id);
+    if (result === null) {
+      const exists = await this.comercialService.leadExists(leadId);
+      if (!exists) throw new NotFoundException('Lead não encontrado.');
+      throw new ForbiddenException('Acesso negado.');
+    }
+    return result;
   }
 
   @Get('leads/:leadId/score')
   async getLeadScore(@UsuarioAtual() u: IUsuario, @Param('leadId') leadId: string) {
-    const scopeUserId = u.tipo === 'ADMIN' ? undefined : u.id;
-    return this.comercialService.calcularScoreConversao(leadId, scopeUserId);
+    const isAdmin = u.tipo === 'ADMIN';
+    const result = await this.comercialService.calcularScoreConversao(leadId, isAdmin ? undefined : u.id);
+    if (result === null) {
+      const exists = await this.comercialService.leadExists(leadId);
+      if (!exists) throw new NotFoundException('Lead não encontrado.');
+      throw new ForbiddenException('Acesso negado.');
+    }
+    return result;
   }
 
   @Post('leads/:leadId/atividades')

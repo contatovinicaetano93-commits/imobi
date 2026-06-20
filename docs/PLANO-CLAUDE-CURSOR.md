@@ -17,25 +17,26 @@
 ## 🤖 CLAUDE — Backend, API, Infraestrutura
 
 ### Fase 1 — Bloqueios críticos
-- [ ] Remover `marketplace.module.ts` (módulo vazio importado no AppModule)
-- [ ] Finalizar consent tracking em `usuarios.service.ts:288` (obrigatório LGPD)
-- [ ] Criar `email.worker.ts` no BullMQ — mover envio de email para fila
-- [ ] Adicionar retry automático + alerta Slack nos workers
-- [ ] Validar fluxo E2E: cadastro → obra → evidência → aprovação → liberação
+- [x] Remover `marketplace.module.ts` (módulo vazio importado no AppModule)
+- [x] Finalizar consent tracking em `usuarios.service.ts:288` (obrigatório LGPD)
+- [x] Criar `email.worker.ts` no BullMQ — mover envio de email para fila
+- [x] Adicionar retry automático + alerta Slack nos workers
+- [x] Validar fluxo E2E: cadastro → obra → evidência → aprovação → liberação
 
 ### Fase 2 — Estabilidade
-- [ ] Integrar Sentry no backend
-- [ ] Adicionar rota `/admin/queues` com BullMQ Board
-- [ ] Auditar variáveis de ambiente de produção
-- [ ] Rodar load test contra staging
-- [ ] Validar todas as migrations em banco limpo
+- [x] Integrar Sentry no backend
+- [x] Adicionar rota `/admin/queues` com BullMQ Board
+- [x] Auditar variáveis de ambiente de produção (script `scripts/generate-production-env.sh`)
+- [x] Corrigir erros HTTP 404/403 no módulo comercial (null → NotFoundException/ForbiddenException)
+- [ ] Rodar load test contra staging (requer infra)
+- [ ] Validar todas as migrations em banco limpo (requer DB)
 
 ### Fase 3 — Deploy produção
-- [ ] Configurar `NODE_ENV=production` no Render
-- [ ] Rodar migration no banco de produção
-- [ ] Criar seed do primeiro usuário ADMIN
-- [ ] Configurar CORS_ORIGIN com domínio real
-- [ ] Monitoramento de uptime na rota `/api/v1/health`
+- [ ] Configurar `NODE_ENV=production` no Render (usuário)
+- [ ] Rodar migration no banco de produção (usuário)
+- [x] Criar seed do primeiro usuário ADMIN (POST /api/v1/setup/init)
+- [ ] Configurar CORS_ORIGIN com domínio real (usuário)
+- [x] Monitoramento de uptime na rota `/api/v1/health`
 
 ---
 

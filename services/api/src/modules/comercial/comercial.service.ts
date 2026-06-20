@@ -192,6 +192,11 @@ export class ComercialService {
     };
   }
 
+  async leadExists(leadId: string): Promise<boolean> {
+    const count = await this.prisma.lead.count({ where: { leadId } });
+    return count > 0;
+  }
+
   async obterLeadDetalhe(leadId: string, scopeUserId?: string) {
     const lead = await this.prisma.lead.findUnique({
       where: { leadId },
