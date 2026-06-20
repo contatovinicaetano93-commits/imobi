@@ -3,6 +3,7 @@ import { Job } from "bull";
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../modules/prisma/prisma.service";
 import { EmailService } from "../modules/email/email.service";
+import { alertarSlack } from "../common/slack-alert";
 
 export const QUEUE_EXCLUIR_USUARIO = "excluir-usuario";
 
@@ -108,9 +109,11 @@ export class ExcluirUsuarioWorker {
   }
 
   @OnQueueFailed()
-  onFailed(job: Job, err: Error) {
+  async onFailed(job: Job, err: Error) {
     this.logger.error(`Job de exclusão de usuário ${job.data.usuarioId} falhou: ${err.message}`);
-    // The job will be retried based on the queue configuration (3 attempts with exponential backoff)
+    await alertarSlack(
+      `🚨 *Exclusão de Usuário (LGPD) — Falha*\nJob ID: ${job.id} | Tentativas: ${job.attemptsMade}\nUsuário: \`${job.data.usuarioId}\`\nErro: ${err.message}\n⚠️ Requer atenção manual para garantir conformidade LGPD.`
+    );
   }
 
   @OnQueueCompleted()

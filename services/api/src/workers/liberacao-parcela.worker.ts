@@ -6,6 +6,7 @@ import { NotificacoesService } from "../modules/notificacoes/notificacoes.servic
 import { EmailService } from "../modules/email/email.service";
 import { PushNotificacoesService } from "../modules/push-notificacoes/push-notificacoes.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../common/constants";
+import { alertarSlack } from "../common/slack-alert";
 
 @Injectable()
 @Processor(QUEUE_LIBERACAO)
@@ -100,8 +101,12 @@ export class LiberacaoParcelaWorker {
   }
 
   @OnQueueFailed()
-  onFailed(job: Job, err: Error) {
+  async onFailed(job: Job, err: Error) {
     this.logger.error(`Job ${job.id} falhou: ${err.message}`);
+
+    await alertarSlack(
+      `🚨 *Liberação de Parcela — Falha*\nJob ID: ${job.id} | Tentativas: ${job.attemptsMade}\nCrédito: \`${job.data.creditoId}\` | Liberação: \`${job.data.liberacaoId}\`\nErro: ${err.message}`
+    );
 
     this.prisma.credito
       .findUnique({

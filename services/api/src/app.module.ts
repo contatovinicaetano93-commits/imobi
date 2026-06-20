@@ -19,7 +19,6 @@ import { ScoreModule } from "./modules/score/score.module";
 import { KycModule } from "./modules/kyc/kyc.module";
 import { ManagerModule } from "./modules/manager/manager.module";
 import { EmailModule } from "./modules/email/email.module";
-import { MarketplaceModule } from "./modules/marketplace/marketplace.module";
 import { ParceirosModule } from "./modules/parceiros/parceiros.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { ComercialModule } from "./modules/comercial/comercial.module";
@@ -33,7 +32,8 @@ import { DocumentosModule } from "./modules/documentos/documentos.module";
 import { ComiteModule } from "./modules/comite/comite.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker, QUEUE_EXCLUIR_USUARIO } from "./workers/excluir-usuario.worker";
-import { QUEUE_LIBERACAO } from "./common/constants";
+import { EmailWorker } from "./workers/email.worker";
+import { QUEUE_LIBERACAO, QUEUE_EMAIL } from "./common/constants";
 import { HealthController } from "./common/health.controller";
 import { getRedisConfig } from "./common/config";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
@@ -66,6 +66,7 @@ const redisConfig = getRedisConfig();
     }),
     BullModule.registerQueue({ name: QUEUE_LIBERACAO }),
     BullModule.registerQueue({ name: QUEUE_EXCLUIR_USUARIO }),
+    BullModule.registerQueue({ name: QUEUE_EMAIL }),
     BullModule.forRoot({
       redis: {
         host: redisConfig.host,
@@ -89,7 +90,6 @@ const redisConfig = getRedisConfig();
     EmailModule,
     NotificacoesModule,
     PushNotificacoesModule,
-    MarketplaceModule,
     ParceirosModule,
     ComercialModule,
     EngenheirosModule,
@@ -104,6 +104,7 @@ const redisConfig = getRedisConfig();
   providers: [
     LiberacaoParcelaWorker,
     ExcluirUsuarioWorker,
+    EmailWorker,
     {
       provide: APP_INTERCEPTOR,
       useClass: UserAwareCacheInterceptor,

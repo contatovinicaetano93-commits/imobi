@@ -284,11 +284,8 @@ export class UsuariosService {
       throw new BadRequestException("Usuário não encontrado");
     }
 
-    // Update consent flags (requires adding to schema)
-    // This is a placeholder for consent tracking fields that need to be added
-
     if (tipo === "NOTIFICACOES" || tipo === "TUDO") {
-      // Disable all FCM tokens
+      // Disable all FCM tokens so no push notifications are sent
       await this.prisma.usuarioFcmToken.updateMany({
         where: { usuarioId },
         data: { ativo: false },
@@ -296,7 +293,11 @@ export class UsuariosService {
     }
 
     if (tipo === "MARKETING" || tipo === "TUDO") {
-      // Mark consentimento as revoked (requires schema update)
+      // LGPD Art. 8 — record that marketing consent was revoked
+      await this.prisma.usuario.update({
+        where: { usuarioId },
+        data: { consentidoMarketing: false },
+      });
     }
 
     return {
