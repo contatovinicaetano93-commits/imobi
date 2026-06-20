@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import lazyLoad from "next/dynamic";
 import { managerApi, type ObraResumo, type CreditoResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { normalizeRole } from "@/lib/role-permissions";
-import { PortfolioChart } from "./_components/PortfolioChart";
-import { RegionalDistribution } from "./_components/RegionalDistribution";
-import { InadimplenciaMetrics } from "./_components/InadimplenciaMetrics";
 import { ReportExport } from "./_components/ReportExport";
 import { CapitalFundoAdmin } from "./_components/CapitalFundoAdmin";
 import {
@@ -13,6 +11,10 @@ import {
   calculateRoiTimeline,
   calculateInadimplenciaRate,
 } from "./_components/fundos-utils";
+
+const PortfolioChart       = lazyLoad(() => import("./_components/PortfolioChart").then((m) => ({ default: m.PortfolioChart })), { ssr: false });
+const RegionalDistribution = lazyLoad(() => import("./_components/RegionalDistribution").then((m) => ({ default: m.RegionalDistribution })), { ssr: false });
+const InadimplenciaMetrics = lazyLoad(() => import("./_components/InadimplenciaMetrics").then((m) => ({ default: m.InadimplenciaMetrics })), { ssr: false });
 
 export const dynamic = 'force-dynamic';
 
