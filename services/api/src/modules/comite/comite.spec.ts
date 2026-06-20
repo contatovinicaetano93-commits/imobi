@@ -21,8 +21,11 @@ const mockPrisma = {
   credito: { create: jest.fn() },
 };
 
+const mockNotificacoes = { criar: jest.fn().mockResolvedValue({}) };
+const mockEmailQueue = { etapaAprovada: jest.fn().mockResolvedValue({}) };
+
 function makeService() {
-  return new ComiteService(mockPrisma as any);
+  return new ComiteService(mockPrisma as any, mockNotificacoes as any, mockEmailQueue as any);
 }
 
 describe("ComiteService — calcularRating (via submeterSolicitacao)", () => {
@@ -145,7 +148,13 @@ describe("ComiteService — votar", () => {
       comiteId: "c1",
       solicitacaoId: "s1",
       decisao: "APROVADO",
-      solicitacao: { usuarioId: "u1", valorSolicitado: 100000, taxaMensal: 1.5, prazoMeses: 12 },
+      solicitacao: {
+        usuarioId: "u1",
+        valorSolicitado: 100000,
+        taxaMensal: 1.5,
+        prazoMeses: 12,
+        usuario: { usuarioId: "u1", nome: "Tomador Teste", email: "tomador@test.com" },
+      },
     });
     mockPrisma.solicitacaoCredito.update.mockResolvedValue({});
     mockPrisma.credito.create.mockResolvedValue({});

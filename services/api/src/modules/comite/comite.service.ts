@@ -1,10 +1,16 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificacoesService } from "../notificacoes/notificacoes.service";
+import { EmailQueueService } from "../email/email-queue.service";
 import type { VotoDecisao, SolicitacaoStatus, ComiteStatus } from "@prisma/client";
 
 @Injectable()
 export class ComiteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificacoes: NotificacoesService,
+    private readonly emailQueue: EmailQueueService,
+  ) {}
 
   // ── Construtor: submeter solicitação ──────────────────────────────
 
@@ -125,7 +131,11 @@ export class ComiteService {
     const comite = await this.prisma.comiteDigital.update({
       where: { comiteId },
       data: { status: "ENCERRADO", decisao, decisaoEm: new Date() },
-      include: { solicitacao: true },
+      include: {
+        solicitacao: {
+          include: { usuario: { select: { usuarioId: true, nome: true, email: true } } },
+        },
+      },
     });
 
     const novoStatus: SolicitacaoStatus = decisao === "APROVADO" ? "APROVADA" : decisao === "AJUSTADO" ? "AJUSTADA" : "REPROVADA";
@@ -134,9 +144,11 @@ export class ComiteService {
       data: { status: novoStatus },
     });
 
+    const s = comite.solicitacao;
+    const usuario = s.usuario;
+
     // If approved → create Credito
     if (decisao === "APROVADO") {
-      const s = comite.solicitacao;
       await this.prisma.credito.create({
         data: {
           usuarioId: s.usuarioId,
@@ -148,6 +160,27 @@ export class ComiteService {
           dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
         },
       });
+    }
+
+    // Notify applicant about committee decision
+    const textoDecisao =
+      decisao === "APROVADO" ? "aprovado" : decisao === "AJUSTADO" ? "aprovado com ajustes" : "reprovado";
+    await this.notificacoes.criar(
+      s.usuarioId,
+      decisao === "APROVADO" ? "CREDITO_APROVADO" : "COMITE_DECISAO",
+      `Crédito ${textoDecisao}`,
+      `Sua solicitação de crédito de R$ ${Number(s.valorSolicitado).toLocaleString("pt-BR")} foi ${textoDecisao} pelo comitê.`,
+    ).catch(() => {});
+
+    if (usuario) {
+      const valorFormatado = Number(s.valorSolicitado).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      await this.emailQueue.etapaAprovada(
+        usuario.nome,
+        usuario.email,
+        `Decisão do Comitê: ${textoDecisao.toUpperCase()}`,
+        `Solicitação de crédito ${valorFormatado}`,
+        Number(s.valorSolicitado),
+      ).catch(() => {});
     }
   }
 
