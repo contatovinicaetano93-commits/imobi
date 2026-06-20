@@ -116,10 +116,10 @@ export default function LandingPage() {
         volume,
         observacoes: obs,
       }),
-    }).catch(() => {});
+    }).catch((err) => console.error("[lead-captura]", err));
 
     const msg = `Olá! Vim pelo site da IMOBI e gostaria de solicitar uma análise de crédito.\n\n*Nome:* ${nome}${cargo ? " · "+cargo : ""}\n*Empresa:* ${empresa}\n*WhatsApp:* ${tel}${email ? "\n*E-mail:* "+email : ""}\n*Modalidade:* ${modalidade||"Não informada"}\n*Volume estimado:* ${volume||"Não informado"}${obs ? "\n*Projeto:* "+obs : ""}`;
-    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
   }
 
   return (

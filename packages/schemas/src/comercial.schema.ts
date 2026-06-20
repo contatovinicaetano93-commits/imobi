@@ -124,7 +124,19 @@ export const LeadsListResponseSchema = z.object({
   pageSize: z.number().int().positive(),
 });
 
+export const LeadCapturaPublicaSchema = z.object({
+  clienteNome:     z.string().min(2, "Nome obrigatório"),
+  clienteEmail:    z.string().email("E-mail inválido"),
+  clienteTelefone: z.string().min(10, "Telefone inválido"),
+  empresa:         z.string().optional(),
+  cargo:           z.string().optional(),
+  modalidade:      z.string().optional(),
+  volume:          z.string().optional(),
+  observacoes:     z.string().max(1000).optional(),
+});
+
 // Type exports
+export type LeadCapturaPublica = z.infer<typeof LeadCapturaPublicaSchema>;
 export type FonteType = z.infer<typeof FonteEnum>;
 export type SegmentoClienteType = z.infer<typeof SegmentoClienteEnum>;
 export type TipoObraType = z.infer<typeof TipoObraEnum>;

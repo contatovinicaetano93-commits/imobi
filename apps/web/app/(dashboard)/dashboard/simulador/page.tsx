@@ -362,7 +362,14 @@ const STEPS = ["Empreendimento", "Custos", "Financiamento", "Resultado"];
 
 export default function SimuladorPage() {
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
-  const [form, setForm] = useState<Form>(DEFAULTS);
+  const [form, setForm] = useState<Form>(() => {
+    if (typeof window === "undefined") return DEFAULTS;
+    const q = new URLSearchParams(window.location.search);
+    const valor = Number(q.get("valor")) || 0;
+    const prazo = Number(q.get("prazo")) || 0;
+    if (!valor) return DEFAULTS;
+    return { ...DEFAULTS, custoObra: valor, ...(prazo >= 12 && prazo <= 48 && { prazo }) };
+  });
   const [gerado, setGerado] = useState(false);
 
   const set = (k: keyof Form, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
