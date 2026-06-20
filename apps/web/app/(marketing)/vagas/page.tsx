@@ -1,17 +1,24 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import "./vagas.css";
 
-// ── Dados estáticos das vagas ──────────────────────────────────────
+// ── Constantes ─────────────────────────────────────────────────────
 type TipoVaga = "AC" | "BCT" | "BC" | "NMA";
+type CursoAmet = "IMAGINOLOGIA" | "ESTETICA" | "ANALISES_CLINICAS" | "HEMATOLOGIA";
 
 interface VagaInfo {
   id: TipoVaga;
   label: string;
   descricao: string;
-  slots: number;
+  limite: number;
+}
+
+interface Disponibilidade {
+  total: number;
+  preenchidas: number;
+  restantes: number;
 }
 
 const VAGAS: VagaInfo[] = [
@@ -19,118 +26,99 @@ const VAGAS: VagaInfo[] = [
     id: "AC",
     label: "Auxiliar de Construção",
     descricao: "Apoio às equipes de obra, movimentação de materiais e suporte operacional em campo.",
-    slots: 50,
+    limite: 50,
   },
   {
     id: "BCT",
     label: "Técnico de Construção",
     descricao: "Acompanhamento técnico das etapas construtivas com supervisão de engenheiro responsável.",
-    slots: 20,
+    limite: 20,
   },
   {
     id: "BC",
     label: "Bombeiro Civil",
     descricao: "Prevenção e combate a incêndios em obras e edificações com certificação ativa.",
-    slots: 20,
+    limite: 20,
   },
   {
     id: "NMA",
     label: "Nível Médio Administrativo",
     descricao: "Suporte administrativo às operações de obra, gestão documental e controle de contratos.",
-    slots: 20,
+    limite: 20,
   },
 ];
 
-const GRAUS = [
-  { value: "FUNDAMENTAL", label: "Ensino Fundamental" },
-  { value: "MEDIO", label: "Ensino Médio" },
-  { value: "TECNICO", label: "Curso Técnico" },
-  { value: "SUPERIOR", label: "Ensino Superior" },
-  { value: "POS_GRADUACAO", label: "Pós-Graduação / MBA" },
-];
-
-const AREAS = [
-  "Construção Civil",
-  "Administração",
-  "Segurança do Trabalho",
-  "Elétrica",
-  "Hidráulica",
-  "Acabamento / Revestimento",
-  "Outro",
+const CURSOS_AMET: { value: CursoAmet; label: string }[] = [
+  { value: "IMAGINOLOGIA",      label: "Imaginologia" },
+  { value: "ESTETICA",          label: "Estética" },
+  { value: "ANALISES_CLINICAS", label: "Análises Clínicas" },
+  { value: "HEMATOLOGIA",       label: "Hematologia" },
 ];
 
 // ── Tipos do formulário ────────────────────────────────────────────
-interface Step1 {
-  nome: string;
-  dataNascimento: string;
-  cpf: string;
-  email: string;
-  telefone: string;
-}
-
-interface Step2 {
-  tipoVaga: TipoVaga | "";
-}
-
-interface Step3 {
-  areaAtuacao: string;
-  experienciaAnos: string;
-  pretensaoSalarial: string;
-  grauEscolaridade: string;
-}
-
+interface Step1 { nome: string; rgm: string; cpf: string; email: string; telefone: string; }
+interface Step2 { tipoVaga: TipoVaga | ""; }
+interface Step3 { cursoAmet: CursoAmet | ""; }
 type FieldErrors = Partial<Record<string, string>>;
 
 // ── Helpers ────────────────────────────────────────────────────────
-function maskCpf(v: string) {
-  return v.replace(/\D/g, "").slice(0, 11);
-}
-function maskTel(v: string) {
-  return v.replace(/\D/g, "").slice(0, 11);
-}
+function maskCpf(v: string)  { return v.replace(/\D/g, "").slice(0, 11); }
+function maskTel(v: string)  { return v.replace(/\D/g, "").slice(0, 11); }
 
 function validateStep1(f: Step1): FieldErrors {
   const e: FieldErrors = {};
-  if (!f.nome.trim() || f.nome.trim().length < 3) e.nome = "Nome deve ter pelo menos 3 caracteres";
-  if (!f.dataNascimento) e.dataNascimento = "Data de nascimento obrigatória";
-  if (!/^\d{11}$/.test(f.cpf)) e.cpf = "CPF deve conter 11 dígitos";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "E-mail inválido";
-  if (!/^\d{10,11}$/.test(f.telefone)) e.telefone = "Telefone inválido (DDD + número)";
+  if (!f.nome.trim() || f.nome.trim().length < 3)
+    e.nome = "Nome deve ter pelo menos 3 caracteres";
+  if (!f.rgm.trim())
+    e.rgm = "RGM obrigatório";
+  if (!/^\d{11}$/.test(f.cpf))
+    e.cpf = "CPF deve conter 11 dígitos";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email))
+    e.email = "E-mail inválido";
+  if (!/^\d{10,11}$/.test(f.telefone))
+    e.telefone = "Telefone inválido (DDD + número)";
   return e;
 }
-
 function validateStep2(f: Step2): FieldErrors {
-  const e: FieldErrors = {};
-  if (!f.tipoVaga) e.tipoVaga = "Selecione uma área de interesse";
-  return e;
+  return f.tipoVaga ? {} : { tipoVaga: "Selecione uma área de interesse" };
 }
-
 function validateStep3(f: Step3): FieldErrors {
-  const e: FieldErrors = {};
-  if (!f.areaAtuacao) e.areaAtuacao = "Selecione uma área de atuação";
-  const anos = Number(f.experienciaAnos);
-  if (f.experienciaAnos === "" || isNaN(anos) || anos < 0 || anos > 50)
-    e.experienciaAnos = "Informe os anos de experiência (0–50)";
-  if (!f.grauEscolaridade) e.grauEscolaridade = "Selecione o grau de escolaridade";
-  return e;
+  return f.cursoAmet ? {} : { cursoAmet: "Selecione o curso atual na AMET" };
 }
 
-// ── Componente principal ───────────────────────────────────────────
+// ── Componente ─────────────────────────────────────────────────────
 export default function VagasPage() {
   const formRef = useRef<HTMLDivElement>(null);
-  const [etapa, setEtapa] = useState<1 | 2 | 3>(1);
-  const [step1, setStep1] = useState<Step1>({
-    nome: "", dataNascimento: "", cpf: "", email: "", telefone: "",
-  });
-  const [step2, setStep2] = useState<Step2>({ tipoVaga: "" });
-  const [step3, setStep3] = useState<Step3>({
-    areaAtuacao: "", experienciaAnos: "", pretensaoSalarial: "", grauEscolaridade: "",
-  });
-  const [errors, setErrors] = useState<FieldErrors>({});
+
+  const [etapa, setEtapa]             = useState<1 | 2 | 3>(1);
+  const [step1, setStep1]             = useState<Step1>({ nome: "", rgm: "", cpf: "", email: "", telefone: "" });
+  const [step2, setStep2]             = useState<Step2>({ tipoVaga: "" });
+  const [step3, setStep3]             = useState<Step3>({ cursoAmet: "" });
+  const [errors, setErrors]           = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [sucesso, setSucesso] = useState(false);
-  const [protocolo, setProtocolo] = useState<string>("");
+  const [loading, setLoading]         = useState(false);
+  const [sucesso, setSucesso]         = useState(false);
+  const [protocolo, setProtocolo]     = useState("");
+
+  // Disponibilidade de vagas
+  const [disp, setDisp]               = useState<Record<TipoVaga, Disponibilidade> | null>(null);
+  const [dispLoading, setDispLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchDisp() {
+      try {
+        const res = await fetch("/api/proxy/vagas/disponibilidade", { cache: "no-store" });
+        if (res.ok && !cancelled) setDisp(await res.json());
+      } finally {
+        if (!cancelled) setDispLoading(false);
+      }
+    }
+    void fetchDisp();
+    // Revalida a cada 30 s enquanto a página está aberta
+    const id = setInterval(fetchDisp, 30_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
 
   function scrollToForm() {
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -139,48 +127,78 @@ export default function VagasPage() {
   function goNext() {
     let e: FieldErrors = {};
     if (etapa === 1) e = validateStep1(step1);
-    if (etapa === 2) e = validateStep2(step2);
+    if (etapa === 2) {
+      e = validateStep2(step2);
+      // Bloqueia se a vaga selecionada estiver esgotada
+      if (!e.tipoVaga && step2.tipoVaga && disp) {
+        const info = disp[step2.tipoVaga as TipoVaga];
+        if (info && info.restantes <= 0)
+          e.tipoVaga = "Esta vaga está esgotada. Selecione outra categoria.";
+      }
+    }
     if (Object.keys(e).length) { setErrors(e); return; }
     setErrors({});
-    setEtapa((p) => (p < 3 ? ((p + 1) as 1 | 2 | 3) : p));
+    setEtapa((p) => Math.min(p + 1, 3) as 1 | 2 | 3);
     setTimeout(scrollToForm, 80);
   }
 
   function goBack() {
     setErrors({});
-    setEtapa((p) => (p > 1 ? ((p - 1) as 1 | 2 | 3) : p));
+    setEtapa((p) => Math.max(p - 1, 1) as 1 | 2 | 3);
     setTimeout(scrollToForm, 80);
   }
 
   async function handleSubmit() {
     const e = validateStep3(step3);
     if (Object.keys(e).length) { setErrors(e); return; }
+
+    // Verificação final de disponibilidade antes de enviar
+    if (disp && step2.tipoVaga) {
+      const info = disp[step2.tipoVaga as TipoVaga];
+      if (info && info.restantes <= 0) {
+        setErrors({ tipoVaga: "Vaga esgotada" });
+        setEtapa(2);
+        return;
+      }
+    }
+
     setErrors({});
     setLoading(true);
     setSubmitError(null);
-
-    const payload = {
-      ...step1,
-      tipoVaga: step2.tipoVaga,
-      areaAtuacao: step3.areaAtuacao,
-      experienciaAnos: Number(step3.experienciaAnos),
-      pretensaoSalarial: step3.pretensaoSalarial ? Number(step3.pretensaoSalarial) : undefined,
-      grauEscolaridade: step3.grauEscolaridade,
-    };
 
     try {
       const res = await fetch("/api/proxy/vagas/candidatura", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...step1,
+          tipoVaga: step2.tipoVaga,
+          cursoAmet: step3.cursoAmet,
+        }),
       });
       const data = await res.json().catch(() => ({}));
+
+      if (res.status === 409) {
+        // Backend sinalizou que a vaga esgotou entre o check e o submit
+        setSubmitError("Vagas esgotadas para esta categoria. Por favor, escolha outra.");
+        // Atualiza disponibilidade imediatamente
+        const fresh = await fetch("/api/proxy/vagas/disponibilidade", { cache: "no-store" });
+        if (fresh.ok) setDisp(await fresh.json());
+        setEtapa(2);
+        return;
+      }
+
       if (!res.ok) {
         setSubmitError(data.message ?? "Erro ao enviar candidatura. Tente novamente.");
         return;
       }
+
       setProtocolo(data.candidaturaId ?? String(Date.now()));
       setSucesso(true);
+
+      // Atualiza contagem após envio bem-sucedido
+      const fresh = await fetch("/api/proxy/vagas/disponibilidade", { cache: "no-store" });
+      if (fresh.ok) setDisp(await fresh.json());
     } catch {
       setSubmitError("Não foi possível conectar ao servidor. Tente novamente.");
     } finally {
@@ -188,8 +206,22 @@ export default function VagasPage() {
     }
   }
 
-  const stepLabels = ["Dados Pessoais", "Área de Interesse", "Experiência"];
-  const totalSlots = VAGAS.reduce((s, v) => s + v.slots, 0);
+  function resetForm() {
+    setSucesso(false);
+    setEtapa(1);
+    setStep1({ nome: "", rgm: "", cpf: "", email: "", telefone: "" });
+    setStep2({ tipoVaga: "" });
+    setStep3({ cursoAmet: "" });
+    setErrors({});
+    setSubmitError(null);
+  }
+
+  const totalSlots = VAGAS.reduce((s, v) => s + v.limite, 0);
+  const totalRestantes = disp
+    ? Object.values(disp).reduce((s, d) => s + d.restantes, 0)
+    : totalSlots;
+
+  const stepLabels = ["Dados Pessoais", "Área de Interesse", "Curso AMET"];
 
   return (
     <>
@@ -214,20 +246,26 @@ export default function VagasPage() {
           Construa sua carreira<br />com a <em>imbobi</em>
         </h1>
         <p>
-          Estamos crescendo e buscamos profissionais comprometidos para integrar
+          Estamos crescendo e buscamos estudantes da AMET comprometidos para integrar
           nossas equipes de obra, técnica e administrativa em todo o Brasil.
         </p>
-        <a href="#candidatura" className="vg-hero-cta" onClick={(e) => { e.preventDefault(); scrollToForm(); }}>
+        <a
+          href="#candidatura"
+          className="vg-hero-cta"
+          onClick={(e) => { e.preventDefault(); scrollToForm(); }}
+        >
           Candidatar-se agora →
         </a>
         <div className="vg-hero-stats">
           <div className="vg-stat">
-            <span className="vg-stat-num">{totalSlots}</span>
+            <span className="vg-stat-num">
+              {dispLoading ? "..." : totalRestantes}
+            </span>
             <span className="vg-stat-label">Vagas disponíveis</span>
           </div>
           <div className="vg-stat">
             <span className="vg-stat-num">{VAGAS.length}</span>
-            <span className="vg-stat-label">Áreas de atuação</span>
+            <span className="vg-stat-label">Categorias</span>
           </div>
           <div className="vg-stat">
             <span className="vg-stat-num">100%</span>
@@ -236,29 +274,45 @@ export default function VagasPage() {
         </div>
       </section>
 
-      {/* LISTAGEM DE VAGAS */}
+      {/* LISTAGEM */}
       <section className="vg-section">
         <p className="vg-section-label">Oportunidades</p>
         <h2 className="vg-section-title">Vagas disponíveis</h2>
         <p className="vg-section-sub">
-          Escolha a área que melhor se encaixa no seu perfil e candidate-se abaixo.
+          Escolha a categoria que melhor se encaixa no seu perfil e candidate-se abaixo.
         </p>
         <div className="vg-cards">
-          {VAGAS.map((v) => (
-            <div
-              key={v.id}
-              className={`vg-card${step2.tipoVaga === v.id ? " selected" : ""}`}
-              onClick={() => { setStep2({ tipoVaga: v.id }); scrollToForm(); }}
-            >
-              <span className="vg-card-tag">{v.id}</span>
-              <h3>{v.label}</h3>
-              <p>{v.descricao}</p>
-              <div className="vg-card-slots">
-                <span className="vg-card-slots-dot" />
-                {v.slots} vagas disponíveis
+          {VAGAS.map((v) => {
+            const info      = disp?.[v.id];
+            const esgotada  = info ? info.restantes <= 0 : false;
+            const restantes = info ? info.restantes : v.limite;
+            const selected  = step2.tipoVaga === v.id;
+            return (
+              <div
+                key={v.id}
+                className={`vg-card${selected && !esgotada ? " selected" : ""}${esgotada ? " esgotada" : ""}`}
+                onClick={() => {
+                  if (esgotada) return;
+                  setStep2({ tipoVaga: v.id });
+                  scrollToForm();
+                }}
+                title={esgotada ? "Vagas esgotadas para esta categoria" : undefined}
+              >
+                {esgotada && <div className="vg-card-esgotada-badge">Esgotada</div>}
+                <span className="vg-card-tag">{v.id}</span>
+                <h3>{v.label}</h3>
+                <p>{v.descricao}</p>
+                <div className={`vg-card-slots${esgotada ? " zero" : ""}`}>
+                  <span className="vg-card-slots-dot" />
+                  {dispLoading
+                    ? "Verificando..."
+                    : esgotada
+                      ? "Vagas esgotadas"
+                      : `${restantes} vaga${restantes !== 1 ? "s" : ""} disponíve${restantes !== 1 ? "is" : "l"}`}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -266,9 +320,7 @@ export default function VagasPage() {
       <section className="vg-section" id="candidatura" ref={formRef}>
         <p className="vg-section-label">Formulário</p>
         <h2 className="vg-section-title">Sua candidatura</h2>
-        <p className="vg-section-sub">
-          Preencha os dados abaixo. Leva menos de 3 minutos.
-        </p>
+        <p className="vg-section-sub">Preencha os dados abaixo. Leva menos de 3 minutos.</p>
 
         <div className="vg-form-wrap">
           {sucesso ? (
@@ -282,25 +334,20 @@ export default function VagasPage() {
               {protocolo && (
                 <p className="vg-success-proto">Protocolo: {protocolo}</p>
               )}
-              <button
-                className="vg-btn-next"
-                onClick={() => { setSucesso(false); setEtapa(1); setStep1({ nome:"", dataNascimento:"", cpf:"", email:"", telefone:"" }); setStep2({ tipoVaga:"" }); setStep3({ areaAtuacao:"", experienciaAnos:"", pretensaoSalarial:"", grauEscolaridade:"" }); }}
-              >
+              <button className="vg-btn-next" onClick={resetForm}>
                 Nova candidatura
               </button>
             </div>
           ) : (
             <>
-              {/* Progress */}
+              {/* Progresso */}
               <div className="vg-progress">
                 {stepLabels.map((label, i) => {
-                  const n = i + 1;
+                  const n   = i + 1;
                   const cls = n < etapa ? "done" : n === etapa ? "active" : "";
                   return (
                     <div key={n} className={`vg-step ${cls}`}>
-                      <span className="vg-step-num">
-                        {n < etapa ? "✓" : n}
-                      </span>
+                      <span className="vg-step-num">{n < etapa ? "✓" : n}</span>
                       <span className="vg-step-label">{label}</span>
                     </div>
                   );
@@ -321,17 +368,18 @@ export default function VagasPage() {
                     {errors.nome && <span className="vg-error">{errors.nome}</span>}
                   </div>
 
-                  <div className="vg-fields vg-fields-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                    <div className="vg-field">
-                      <label className="vg-label">Data de nascimento <span>*</span></label>
-                      <input
-                        type="date"
-                        className={`vg-input${errors.dataNascimento ? " error" : ""}`}
-                        value={step1.dataNascimento}
-                        onChange={(e) => setStep1((p) => ({ ...p, dataNascimento: e.target.value }))}
-                      />
-                      {errors.dataNascimento && <span className="vg-error">{errors.dataNascimento}</span>}
-                    </div>
+                  <div className="vg-field">
+                    <label className="vg-label">RGM — Registro Geral de Matrícula <span>*</span></label>
+                    <input
+                      className={`vg-input${errors.rgm ? " error" : ""}`}
+                      placeholder="Número do RGM"
+                      value={step1.rgm}
+                      onChange={(e) => setStep1((p) => ({ ...p, rgm: e.target.value }))}
+                    />
+                    {errors.rgm && <span className="vg-error">{errors.rgm}</span>}
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                     <div className="vg-field">
                       <label className="vg-label">CPF <span>*</span></label>
                       <input
@@ -342,20 +390,6 @@ export default function VagasPage() {
                         onChange={(e) => setStep1((p) => ({ ...p, cpf: maskCpf(e.target.value) }))}
                       />
                       {errors.cpf && <span className="vg-error">{errors.cpf}</span>}
-                    </div>
-                  </div>
-
-                  <div className="vg-fields vg-fields-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                    <div className="vg-field">
-                      <label className="vg-label">E-mail <span>*</span></label>
-                      <input
-                        type="email"
-                        className={`vg-input${errors.email ? " error" : ""}`}
-                        placeholder="seu@email.com"
-                        value={step1.email}
-                        onChange={(e) => setStep1((p) => ({ ...p, email: e.target.value }))}
-                      />
-                      {errors.email && <span className="vg-error">{errors.email}</span>}
                     </div>
                     <div className="vg-field">
                       <label className="vg-label">Telefone / WhatsApp <span>*</span></label>
@@ -369,6 +403,18 @@ export default function VagasPage() {
                       {errors.telefone && <span className="vg-error">{errors.telefone}</span>}
                     </div>
                   </div>
+
+                  <div className="vg-field">
+                    <label className="vg-label">E-mail <span>*</span></label>
+                    <input
+                      type="email"
+                      className={`vg-input${errors.email ? " error" : ""}`}
+                      placeholder="seu@email.com"
+                      value={step1.email}
+                      onChange={(e) => setStep1((p) => ({ ...p, email: e.target.value }))}
+                    />
+                    {errors.email && <span className="vg-error">{errors.email}</span>}
+                  </div>
                 </div>
               )}
 
@@ -378,101 +424,81 @@ export default function VagasPage() {
                   <div className="vg-field">
                     <label className="vg-label">
                       Selecione a área de interesse <span>*</span>
-                      <span style={{ fontWeight: 400, color: "var(--gray)", fontSize: "0.72rem", marginLeft: "0.35rem" }}>
+                      <span style={{ fontWeight: 400, color: "var(--gray)", fontSize: "0.72rem", marginLeft: "0.4rem" }}>
                         (1 escolha obrigatória)
                       </span>
                     </label>
                     <div className="vg-radio-grid">
-                      {VAGAS.map((v) => (
-                        <label
-                          key={v.id}
-                          className={`vg-radio-card${step2.tipoVaga === v.id ? " selected" : ""}`}
-                        >
-                          <input
-                            type="radio"
-                            name="tipoVaga"
-                            value={v.id}
-                            checked={step2.tipoVaga === v.id}
-                            onChange={() => setStep2({ tipoVaga: v.id })}
-                          />
-                          <div className="vg-radio-card-body">
-                            <div className="vg-radio-card-title">{v.label}</div>
-                            <div className="vg-radio-card-desc">{v.descricao}</div>
-                            <div className="vg-radio-card-slots">● {v.slots} vagas</div>
-                          </div>
-                        </label>
-                      ))}
+                      {VAGAS.map((v) => {
+                        const info     = disp?.[v.id];
+                        const esgotada = info ? info.restantes <= 0 : false;
+                        const restantes = info ? info.restantes : v.limite;
+                        return (
+                          <label
+                            key={v.id}
+                            className={`vg-radio-card${step2.tipoVaga === v.id ? " selected" : ""}${esgotada ? " esgotada" : ""}`}
+                          >
+                            <input
+                              type="radio"
+                              name="tipoVaga"
+                              value={v.id}
+                              disabled={esgotada}
+                              checked={step2.tipoVaga === v.id}
+                              onChange={() => !esgotada && setStep2({ tipoVaga: v.id })}
+                            />
+                            <div className="vg-radio-card-body">
+                              <div className="vg-radio-card-title">
+                                {v.label}
+                                {esgotada && (
+                                  <span className="vg-radio-esgotada-tag"> · Esgotada</span>
+                                )}
+                              </div>
+                              <div className="vg-radio-card-desc">{v.descricao}</div>
+                              <div className={`vg-radio-card-slots${esgotada ? " zero" : ""}`}>
+                                {esgotada
+                                  ? "● Vagas esgotadas"
+                                  : `● ${restantes} vaga${restantes !== 1 ? "s" : ""} disponíve${restantes !== 1 ? "is" : "l"}`}
+                              </div>
+                            </div>
+                          </label>
+                        );
+                      })}
                     </div>
                     {errors.tipoVaga && <span className="vg-error">{errors.tipoVaga}</span>}
                   </div>
                 </div>
               )}
 
-              {/* Etapa 3 — Experiência e Formação */}
+              {/* Etapa 3 — Curso AMET */}
               {etapa === 3 && (
                 <div className="vg-fields">
                   <div className="vg-field">
-                    <label className="vg-label">Área de atuação atual <span>*</span></label>
-                    <select
-                      className={`vg-input${errors.areaAtuacao ? " error" : ""}`}
-                      value={step3.areaAtuacao}
-                      onChange={(e) => setStep3((p) => ({ ...p, areaAtuacao: e.target.value }))}
-                    >
-                      <option value="">Selecione...</option>
-                      {AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
-                    </select>
-                    {errors.areaAtuacao && <span className="vg-error">{errors.areaAtuacao}</span>}
-                  </div>
-
-                  <div className="vg-fields vg-fields-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                    <div className="vg-field">
-                      <label className="vg-label">Anos de experiência <span>*</span></label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={50}
-                        className={`vg-input${errors.experienciaAnos ? " error" : ""}`}
-                        placeholder="Ex: 3"
-                        value={step3.experienciaAnos}
-                        onChange={(e) => setStep3((p) => ({ ...p, experienciaAnos: e.target.value }))}
-                      />
-                      {errors.experienciaAnos && <span className="vg-error">{errors.experienciaAnos}</span>}
-                    </div>
-                    <div className="vg-field">
-                      <label className="vg-label">Pretensão salarial (R$)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        className="vg-input"
-                        placeholder="Ex: 2000"
-                        value={step3.pretensaoSalarial}
-                        onChange={(e) => setStep3((p) => ({ ...p, pretensaoSalarial: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="vg-field">
-                    <label className="vg-label">Grau de escolaridade <span>*</span></label>
-                    <select
-                      className={`vg-input${errors.grauEscolaridade ? " error" : ""}`}
-                      value={step3.grauEscolaridade}
-                      onChange={(e) => setStep3((p) => ({ ...p, grauEscolaridade: e.target.value }))}
-                    >
-                      <option value="">Selecione...</option>
-                      {GRAUS.map((g) => (
-                        <option key={g.value} value={g.value}>{g.label}</option>
+                    <label className="vg-label">Curso atual na AMET <span>*</span></label>
+                    <div className="vg-curso-grid">
+                      {CURSOS_AMET.map((c) => (
+                        <label
+                          key={c.value}
+                          className={`vg-curso-card${step3.cursoAmet === c.value ? " selected" : ""}`}
+                        >
+                          <input
+                            type="radio"
+                            name="cursoAmet"
+                            value={c.value}
+                            checked={step3.cursoAmet === c.value}
+                            onChange={() => setStep3({ cursoAmet: c.value })}
+                          />
+                          <span>{c.label}</span>
+                        </label>
                       ))}
-                    </select>
-                    {errors.grauEscolaridade && <span className="vg-error">{errors.grauEscolaridade}</span>}
+                    </div>
+                    {errors.cursoAmet && <span className="vg-error">{errors.cursoAmet}</span>}
                   </div>
                 </div>
               )}
 
-              {submitError && (
-                <div className="vg-form-error">{submitError}</div>
-              )}
+              {submitError && <div className="vg-form-error">{submitError}</div>}
 
-              {/* Actions */}
+              {/* Ações */}
               <div className="vg-form-actions">
                 {etapa > 1 && (
                   <button className="vg-btn-back" onClick={goBack} disabled={loading}>
@@ -494,7 +520,6 @@ export default function VagasPage() {
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="vg-footer">
         © {new Date().getFullYear()} imbobi. Todos os direitos reservados. &nbsp;·&nbsp;
         <Link href="/privacy-policy" style={{ color: "inherit" }}>Privacidade</Link>

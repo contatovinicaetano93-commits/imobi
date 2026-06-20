@@ -135,11 +135,23 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
   background: linear-gradient(90deg, var(--royal), var(--royal-mid));
   opacity: 0; transition: opacity 0.2s;
 }
-.vg-card:hover { border-color: var(--royal-mid); box-shadow: 0 8px 28px rgba(27,79,216,0.12); }
-.vg-card:hover::before { opacity: 1; }
+.vg-card:hover:not(.esgotada) { border-color: var(--royal-mid); box-shadow: 0 8px 28px rgba(27,79,216,0.12); }
+.vg-card:hover:not(.esgotada)::before { opacity: 1; }
 .vg-card.selected { border-color: var(--royal-mid); box-shadow: 0 8px 28px rgba(27,79,216,0.15); }
 .vg-card.selected::before { opacity: 1; }
-
+/* Esgotada */
+.vg-card.esgotada {
+  cursor: not-allowed; opacity: 0.6;
+  background: var(--surface); border-color: var(--border);
+}
+.vg-card.esgotada::before { background: #ef4444; opacity: 1; }
+.vg-card-esgotada-badge {
+  position: absolute; top: 0.75rem; right: 0.75rem;
+  background: #FEF2F2; color: #DC2626;
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em;
+  padding: 0.2rem 0.55rem; border-radius: 999px; text-transform: uppercase;
+  border: 1px solid #FCA5A5;
+}
 .vg-card-tag {
   display: inline-block; background: var(--royal-pale); color: var(--royal-mid);
   font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
@@ -151,7 +163,9 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
   display: flex; align-items: center; gap: 0.4rem;
   font-size: 0.78rem; font-weight: 600; color: var(--mint-s);
 }
+.vg-card-slots.zero { color: #DC2626; }
 .vg-card-slots-dot { width: 7px; height: 7px; background: var(--mint); border-radius: 50%; }
+.vg-card-slots.zero .vg-card-slots-dot { background: #ef4444; }
 
 /* ── FORM SECTION ── */
 .vg-form-wrap {
@@ -217,6 +231,29 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
 .vg-radio-card-title { font-size: 0.85rem; font-weight: 700; color: var(--ink); margin-bottom: 0.2rem; }
 .vg-radio-card-desc { font-size: 0.75rem; color: var(--gray); line-height: 1.45; margin-bottom: 0.5rem; }
 .vg-radio-card-slots { font-size: 0.72rem; font-weight: 600; color: var(--mint-s); }
+.vg-radio-card-slots.zero { color: #DC2626; }
+/* Esgotada no radio */
+.vg-radio-card.esgotada {
+  opacity: 0.55; cursor: not-allowed;
+  background: var(--surface); border-color: var(--border);
+}
+.vg-radio-esgotada-tag { color: #DC2626; font-size: 0.72rem; font-weight: 600; }
+
+/* ── CURSO AMET ── */
+.vg-curso-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.35rem; }
+.vg-curso-card {
+  display: flex; align-items: center; gap: 0.75rem;
+  border: 2px solid var(--border); border-radius: 12px; padding: 1rem 1.1rem;
+  cursor: pointer; transition: all 0.15s; background: var(--white);
+  font-size: 0.88rem; font-weight: 500; color: var(--ink-soft);
+}
+.vg-curso-card:hover { border-color: var(--royal-mid); background: var(--royal-pale); }
+.vg-curso-card.selected,
+.vg-curso-card:has(input:checked) {
+  border-color: var(--royal-mid); background: var(--royal-pale);
+  color: var(--royal-mid); font-weight: 700;
+}
+.vg-curso-card input[type="radio"] { accent-color: var(--royal-mid); flex-shrink: 0; }
 
 /* Buttons */
 .vg-form-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.75rem; }
@@ -277,6 +314,7 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
   .vg-form-wrap { padding: 1.5rem; }
   .vg-fields-row { grid-template-columns: 1fr; }
   .vg-radio-grid { grid-template-columns: 1fr; }
+  .vg-curso-grid { grid-template-columns: 1fr; }
   .vg-progress { gap: 0; }
   .vg-step-label { display: none; }
 }
