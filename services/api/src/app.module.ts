@@ -64,9 +64,18 @@ const redisConfig = getRedisConfig();
         };
       },
     }),
-    BullModule.registerQueue({ name: QUEUE_LIBERACAO }),
-    BullModule.registerQueue({ name: QUEUE_EXCLUIR_USUARIO }),
-    BullModule.registerQueue({ name: QUEUE_EMAIL }),
+    BullModule.registerQueue({
+      name: QUEUE_LIBERACAO,
+      defaultJobOptions: { attempts: 5, backoff: { type: "exponential", delay: 10_000 }, removeOnComplete: 100, removeOnFail: 500 },
+    }),
+    BullModule.registerQueue({
+      name: QUEUE_EXCLUIR_USUARIO,
+      defaultJobOptions: { attempts: 3, backoff: { type: "exponential", delay: 30_000 }, removeOnComplete: 50, removeOnFail: 200 },
+    }),
+    BullModule.registerQueue({
+      name: QUEUE_EMAIL,
+      defaultJobOptions: { attempts: 3, backoff: { type: "exponential", delay: 5_000 }, removeOnComplete: 200, removeOnFail: 100 },
+    }),
     BullModule.forRoot({
       redis: {
         host: redisConfig.host,
