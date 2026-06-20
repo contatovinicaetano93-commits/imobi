@@ -5,7 +5,19 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual } from "../../common/decorators/usuario-atual.decorator";
-import type { VotoDecisao } from "@prisma/client";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import {
+  ComiteSolicitarSchema,
+  ComiteParecerSchema,
+  ComiteVotarSchema,
+  ComiteEncerrarSchema,
+} from "@imbobi/schemas";
+import type {
+  ComiteSolicitarInput,
+  ComiteParecerInput,
+  ComiteVotarInput,
+  ComiteEncerrarInput,
+} from "@imbobi/schemas";
 
 @ApiTags("Comitê")
 @ApiBearerAuth("JWT")
@@ -20,18 +32,7 @@ export class ComiteController {
   @Roles("CONSTRUTOR", "TOMADOR")
   solicitar(
     @UsuarioAtual() user: UsuarioAtual,
-    @Body() body: {
-      valorSolicitado: number;
-      prazoMeses: number;
-      taxaMensal: number;
-      finalidade: string;
-      garantias?: string;
-      observacoes?: string;
-      obraId?: string;
-      vgv?: number;
-      custoObra?: number;
-      ltv?: number;
-    },
+    @Body(new ZodPipe(ComiteSolicitarSchema)) body: ComiteSolicitarInput,
   ) {
     return this.comiteService.submeterSolicitacao(user.id, body);
   }
@@ -51,7 +52,7 @@ export class ComiteController {
   parecer(
     @Param("comiteId") comiteId: string,
     @UsuarioAtual() user: UsuarioAtual,
-    @Body() body: { parecerTecnico: string },
+    @Body(new ZodPipe(ComiteParecerSchema)) body: ComiteParecerInput,
   ) {
     return this.comiteService.submeterParecer(comiteId, user.id, body.parecerTecnico);
   }
@@ -63,7 +64,7 @@ export class ComiteController {
   votar(
     @Param("comiteId") comiteId: string,
     @UsuarioAtual() user: UsuarioAtual,
-    @Body() body: { voto: VotoDecisao; justificativa?: string; condicoes?: string },
+    @Body(new ZodPipe(ComiteVotarSchema)) body: ComiteVotarInput,
   ) {
     return this.comiteService.votar(comiteId, user.id, body.voto, body.justificativa, body.condicoes);
   }
@@ -90,7 +91,7 @@ export class ComiteController {
   @Roles("ADMIN")
   encerrar(
     @Param("comiteId") comiteId: string,
-    @Body() body: { decisao: "APROVADO" | "AJUSTADO" | "REPROVADO"; motivo?: string },
+    @Body(new ZodPipe(ComiteEncerrarSchema)) body: ComiteEncerrarInput,
   ) {
     return this.comiteService.encerrarManualmente(comiteId, body.decisao, body.motivo);
   }

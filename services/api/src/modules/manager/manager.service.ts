@@ -348,41 +348,57 @@ export class ManagerService {
     };
   }
 
-  async obterEtapaAuditLog(etapaId: string) {
-    const auditLogs = await this.prisma.etapaAuditLog.findMany({
-      where: { etapaId },
-      include: {
-        usuario: { select: { usuarioId: true, nome: true, email: true } },
-      },
-      orderBy: { criadoEm: "desc" },
-    });
+  async obterEtapaAuditLog(etapaId: string, limit = 20, offset = 0) {
+    const [auditLogs, total] = await Promise.all([
+      this.prisma.etapaAuditLog.findMany({
+        where: { etapaId },
+        include: {
+          usuario: { select: { usuarioId: true, nome: true, email: true } },
+        },
+        orderBy: { criadoEm: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      this.prisma.etapaAuditLog.count({ where: { etapaId } }),
+    ]);
 
-    return auditLogs.map((log) => ({
-      auditId: log.auditId,
-      acaoTipo: log.acaoTipo,
-      gerenciador: log.usuario.nome,
-      gerenciadorEmail: log.usuario.email,
-      observacoes: log.observacoes,
-      criadoEm: log.criadoEm,
-    }));
+    return {
+      logs: auditLogs.map((log) => ({
+        auditId: log.auditId,
+        acaoTipo: log.acaoTipo,
+        gerenciador: log.usuario.nome,
+        gerenciadorEmail: log.usuario.email,
+        observacoes: log.observacoes,
+        criadoEm: log.criadoEm,
+      })),
+      total,
+    };
   }
 
-  async obterKycAuditLog(kycDocumentoId: string) {
-    const auditLogs = await this.prisma.kycAuditLog.findMany({
-      where: { kycDocumentoId },
-      include: {
-        usuario: { select: { usuarioId: true, nome: true, email: true } },
-      },
-      orderBy: { criadoEm: "desc" },
-    });
+  async obterKycAuditLog(kycDocumentoId: string, limit = 20, offset = 0) {
+    const [auditLogs, total] = await Promise.all([
+      this.prisma.kycAuditLog.findMany({
+        where: { kycDocumentoId },
+        include: {
+          usuario: { select: { usuarioId: true, nome: true, email: true } },
+        },
+        orderBy: { criadoEm: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      this.prisma.kycAuditLog.count({ where: { kycDocumentoId } }),
+    ]);
 
-    return auditLogs.map((log) => ({
-      auditId: log.auditId,
-      acaoTipo: log.acaoTipo,
-      gerenciador: log.usuario.nome,
-      gerenciadorEmail: log.usuario.email,
-      motivo: log.motivo,
-      criadoEm: log.criadoEm,
-    }));
+    return {
+      logs: auditLogs.map((log) => ({
+        auditId: log.auditId,
+        acaoTipo: log.acaoTipo,
+        gerenciador: log.usuario.nome,
+        gerenciadorEmail: log.usuario.email,
+        motivo: log.motivo,
+        criadoEm: log.criadoEm,
+      })),
+      total,
+    };
   }
 }

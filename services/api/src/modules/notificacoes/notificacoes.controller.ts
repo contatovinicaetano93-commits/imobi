@@ -1,5 +1,6 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
-import { Controller, Get, Patch, Delete, Param, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Patch, Delete, Param, Query, UseGuards, UseInterceptors } from "@nestjs/common";
+import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
 import { NotificacoesService } from "./notificacoes.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -26,6 +27,8 @@ export class NotificacoesController {
   }
 
   @Get("contar-nao-lidas")
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(30)
   async contarNaoLidas(@UsuarioAtual() u: IUsuario) {
     const count = await this.notificacoes.contarNaoLidas(u.id);
     return { count };

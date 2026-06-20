@@ -7,6 +7,9 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { MarketplaceAvaliarSchema, MarketplaceCriarFornecedorSchema } from "@imbobi/schemas";
+import type { MarketplaceAvaliarInput, MarketplaceCriarFornecedorInput } from "@imbobi/schemas";
 import type { FornecedorTipo } from "@prisma/client";
 
 @ApiTags("Marketplace")
@@ -52,7 +55,7 @@ export class MarketplaceController {
   avaliar(
     @Param("id") id: string,
     @UsuarioAtual() u: IUsuario,
-    @Body() body: { nota: number; comentario?: string },
+    @Body(new ZodPipe(MarketplaceAvaliarSchema)) body: MarketplaceAvaliarInput,
   ) {
     return this.marketplace.avaliar(id, u.id, body.nota, body.comentario);
   }
@@ -67,19 +70,7 @@ export class MarketplaceController {
   @Post("fornecedores")
   @Roles("ADMIN")
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  criar(@Body() body: {
-    nome: string;
-    tipo: FornecedorTipo;
-    descricao?: string;
-    website?: string;
-    telefone?: string;
-    email?: string;
-    endereco?: string;
-    uf?: string;
-    cidade?: string;
-    geoLatitude?: number;
-    geoLongitude?: number;
-  }) {
+  criar(@Body(new ZodPipe(MarketplaceCriarFornecedorSchema)) body: MarketplaceCriarFornecedorInput) {
     return this.marketplace.criarFornecedor(body);
   }
 }

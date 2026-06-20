@@ -169,9 +169,14 @@ export class ManagerController {
 
   @Get("etapas/:id/audit-log")
 
-  async obterEtapaAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
+  async obterEtapaAuditLog(
+    @UsuarioAtual() u: IUsuario,
+    @Param("id") id: string,
+    @Query("limit") limit: string = "20",
+    @Query("offset") offset: string = "0",
+  ) {
 
-    return this.manager.obterEtapaAuditLog(id);
+    return this.manager.obterEtapaAuditLog(id, Number(limit), Number(offset));
 
   }
 
@@ -179,9 +184,14 @@ export class ManagerController {
 
   @Get("kyc/:id/audit-log")
 
-  async obterKycAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
+  async obterKycAuditLog(
+    @UsuarioAtual() u: IUsuario,
+    @Param("id") id: string,
+    @Query("limit") limit: string = "20",
+    @Query("offset") offset: string = "0",
+  ) {
 
-    return this.manager.obterKycAuditLog(id);
+    return this.manager.obterKycAuditLog(id, Number(limit), Number(offset));
 
   }
 

@@ -3,6 +3,7 @@ import {
   Controller, Get, Post, Delete, Param, Body,
   UseGuards, Req, BadRequestException,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import type { FastifyRequest } from "fastify";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
@@ -16,6 +17,7 @@ export class DocumentosController {
   constructor(private readonly svc: DocumentosService) {}
 
   @Post()
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async upload(
     @UsuarioAtual() user: IUsuario,
     @Req() req: FastifyRequest,

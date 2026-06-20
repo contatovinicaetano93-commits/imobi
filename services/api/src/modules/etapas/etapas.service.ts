@@ -220,4 +220,23 @@ export class EtapasService {
       },
     });
   }
+
+  async buscar(etapaId: string) {
+    const etapa = await this.prisma.etapaObra.findUnique({
+      where: { etapaId },
+      include: {
+        evidencias: {
+          select: { evidenciaId: true, fotoUrl: true, validada: true, criadoEm: true },
+          orderBy: { criadoEm: "desc" },
+        },
+        auditLogs: {
+          orderBy: { criadoEm: "desc" },
+          take: 10,
+          include: { usuario: { select: { nome: true } } },
+        },
+      },
+    });
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+    return etapa;
+  }
 }

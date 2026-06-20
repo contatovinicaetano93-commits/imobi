@@ -22,7 +22,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = exception.message;
       }
     } else if (exception instanceof Error) {
-      message = "Erro interno do servidor";
+      message = process.env["NODE_ENV"] !== "production"
+        ? exception.message
+        : "Erro interno do servidor";
     }
 
     reply.code(status).send({

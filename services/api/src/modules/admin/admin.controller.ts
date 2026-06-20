@@ -40,6 +40,11 @@ export class AdminController {
     return this.adminService.listarUsuarios();
   }
 
+  @Get("usuarios/:id")
+  buscarUsuario(@Param("id") id: string) {
+    return this.adminService.buscarUsuario(id);
+  }
+
   @Post("usuarios")
   criarUsuario(@Body() body: CriarUsuarioAdminDto) {
     return this.adminService.criarUsuario(body);
@@ -82,6 +87,11 @@ export class AdminController {
     @Body("motivo") motivo: string,
   ) {
     return this.adminService.reprovarHomologacaoObra(id, motivo ?? "Não homologada");
+  }
+
+  @Get("relatorio-financeiro")
+  relatorioFinanceiro() {
+    return this.adminService.relatorioFinanceiro();
   }
 
   @Get("liberacoes/aguardando-pagamento")

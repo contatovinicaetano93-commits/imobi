@@ -66,12 +66,6 @@ export class ComercialService {
     volume?: string;
     observacoes?: string;
   }) {
-    const stage = await this.prisma.pipelineStage.findFirst({
-      orderBy: { ordem: 'asc' },
-    }) ?? await this.prisma.pipelineStage.create({
-      data: { nome: 'PROSPECÇÃO', ordem: 1, corHex: '#6366f1' },
-    });
-
     const extras = [
       data.empresa    && `Empresa: ${data.empresa}`,
       data.cargo      && `Cargo: ${data.cargo}`,
@@ -79,21 +73,27 @@ export class ComercialService {
       data.observacoes && `Obs: ${data.observacoes}`,
     ].filter(Boolean).join('\n') || null;
 
-    const lead = await this.prisma.lead.create({
-      data: {
-        clienteNome:     data.clienteNome,
-        clienteEmail:    data.clienteEmail,
-        clienteTelefone: data.clienteTelefone,
-        stageId:         stage.stageId,
-        fonte:           'WEBSITE',
-        tipoObra:        data.modalidade ?? null,
-        segmentoCliente: 'NOVO',
-        condicoes:       extras,
-      },
-      select: { leadId: true },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const stage = await tx.pipelineStage.findFirst({
+        orderBy: { ordem: 'asc' },
+      }) ?? await tx.pipelineStage.create({
+        data: { nome: 'PROSPECÇÃO', ordem: 1, corHex: '#6366f1' },
+      });
 
-    return lead;
+      return tx.lead.create({
+        data: {
+          clienteNome:     data.clienteNome,
+          clienteEmail:    data.clienteEmail,
+          clienteTelefone: data.clienteTelefone,
+          stageId:         stage.stageId,
+          fonte:           'WEBSITE',
+          tipoObra:        data.modalidade ?? null,
+          segmentoCliente: 'NOVO',
+          condicoes:       extras,
+        },
+        select: { leadId: true },
+      });
+    });
   }
 
   async criarLead(usuarioId: string, data: ApiCreateLeadInput) {
@@ -143,23 +143,15 @@ export class ComercialService {
     if (filters?.segmentoCliente) where.segmentoCliente = filters.segmentoCliente as LeadSegmento;
     if (filters?.scoreMin !== undefined || filters?.scoreMax !== undefined) {
       const minScore: number = filters.scoreMin ?? 0;
-      const maxScore: number = filters.scoreMax ?? Infinity;
-      // Fetch all scores newest-first, deduplicate by leadId to get only the latest
-      const allScores = await this.prisma.conversionScore.findMany({
-        select: { leadId: true, scoreFinal: true },
-        orderBy: { criadoEm: 'desc' },
-      });
-      const seen = new Set<string>();
-      const inRange: string[] = [];
-      for (const s of allScores) {
-        if (!seen.has(s.leadId)) {
-          seen.add(s.leadId);
-          if (s.scoreFinal >= minScore && s.scoreFinal <= maxScore) {
-            inRange.push(s.leadId);
-          }
-        }
-      }
-      where.leadId = { in: inRange };
+      const maxScore: number = filters.scoreMax ?? 100;
+      const inRange = await this.prisma.$queryRaw<{ leadId: string }[]>`
+        SELECT DISTINCT ON (cs."leadId") cs."leadId"
+        FROM "ConversionScore" cs
+        WHERE cs."scoreFinal" >= ${minScore}
+          AND cs."scoreFinal" <= ${maxScore}
+        ORDER BY cs."leadId", cs."criadoEm" DESC
+      `;
+      where.leadId = { in: inRange.map((r) => r.leadId) };
     }
     if (filters?.searchTerm) {
       where.OR = [

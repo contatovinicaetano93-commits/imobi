@@ -52,7 +52,7 @@ describe("Documentos E2E", () => {
         raioValidacaoMetros: 200,
         areaM2: 120,
         tipo: "RESIDENCIAL",
-        status: "EM_ANDAMENTO",
+        status: "EM_EXECUCAO",
       },
     });
     obraId = obra.obraId;

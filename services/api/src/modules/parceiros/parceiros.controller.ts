@@ -3,7 +3,10 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
+  Param,
+  HttpCode,
   UseGuards,
 } from '@nestjs/common';
 import { ParceirosService } from './parceiros.service';
@@ -14,12 +17,9 @@ import {
   UsuarioAtual,
   type UsuarioAtual as IUsuario,
 } from '../../common/decorators/usuario-atual.decorator';
-
-interface AdicionarMailingDto {
-  nome: string;
-  email: string;
-  telefone?: string;
-}
+import { ZodPipe } from '../../common/pipes/zod.pipe';
+import { AdicionarMailingSchema } from '@imbobi/schemas';
+import type { AdicionarMailingInput } from '@imbobi/schemas';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('COMERCIAL', 'PARCEIRO', 'ADMIN')
@@ -47,8 +47,14 @@ export class ParceirosController {
   @Post('mailing')
   adicionarMailing(
     @UsuarioAtual() u: IUsuario,
-    @Body() body: AdicionarMailingDto,
+    @Body(new ZodPipe(AdicionarMailingSchema)) body: AdicionarMailingInput,
   ) {
     return this.parceirosService.adicionarMailing(u.id, body);
+  }
+
+  @Delete('mailing/:id')
+  @HttpCode(204)
+  removerMailing(@Param('id') id: string, @UsuarioAtual() u: IUsuario) {
+    return this.parceirosService.removerMailing(id, u.id);
   }
 }

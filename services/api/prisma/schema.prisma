@@ -43,8 +43,8 @@ model Usuario {
   atualizadoEm  DateTime  @updatedAt
 
   sessoes       SessaoToken[]
-  creditos      Credito[]
-  obras         Obra[]
+  creditos       Credito[]
+  obras          Obra[]
   scoreHistorico ScoreHistorico[]
   kycDocumentos KycDocumento[] @relation("KycDocumentos")
   notificacoes  Notificacao[]
@@ -144,6 +144,7 @@ model Credito {
 
   @@index([usuarioId])
   @@index([status])
+  @@index([usuarioId, criadoEm])
 }
 
 enum CreditoStatus {
@@ -213,6 +214,7 @@ model EtapaObra {
   @@unique([obraId, ordem])
   @@index([obraId])
   @@index([status])
+  @@index([obraId, status])
 }
 
 enum EtapaStatus {
@@ -238,12 +240,14 @@ model EvidenciaEtapa {
   distanciaObra     Float?
   validada          Boolean  @default(false)
   observacao        String?
+  deletadoEm        DateTime?
   criadoEm          DateTime @default(now())
   atualizadoEm      DateTime @updatedAt
 
   @@index([etapaId])
   @@index([obraId])
   @@index([validada])
+  @@index([deletadoEm])
 }
 
 // ── Liberações de Parcelas ──────────────────────────────────────────
@@ -332,6 +336,7 @@ model Notificacao {
   @@index([usuarioId])
   @@index([lida])
   @@index([criadoEm])
+  @@index([usuarioId, lida])
 }
 
 enum TipoNotificacao {
@@ -596,6 +601,8 @@ model Documento {
   obra    Obra?   @relation(fields: [obraId], references: [obraId])
   usuario Usuario @relation(fields: [usuarioId], references: [usuarioId])
 
+  @@index([usuarioId])
+  @@index([obraId, criadoEm])
   @@map("documentos")
 }
 

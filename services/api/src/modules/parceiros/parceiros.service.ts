@@ -1,6 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { ParceiroResumo, OperacaoIndicada, ContatoMailing } from './parceiros.types';
+import type { AdicionarMailingInput } from '@imbobi/schemas';
 
 // Taxa de comissão padrão para parceiros (5%)
 const PERCENTUAL_COMISSAO_PADRAO = 5;
@@ -135,7 +136,7 @@ export class ParceirosService {
 
   async adicionarMailing(
     usuarioId: string,
-    data: { nome: string; email: string; telefone?: string },
+    data: AdicionarMailingInput,
   ): Promise<ContatoMailing> {
     if (!data.nome?.trim()) {
       throw new BadRequestException('nome é obrigatório');
@@ -161,5 +162,12 @@ export class ParceirosService {
       status: contato.status,
       criadoEm: contato.criadoEm.toISOString(),
     };
+  }
+
+  async removerMailing(id: string, usuarioId: string): Promise<void> {
+    const contato = await this.prisma.mailingContato.findUnique({ where: { id } });
+    if (!contato) throw new NotFoundException("Contato não encontrado.");
+    if (contato.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
+    await this.prisma.mailingContato.delete({ where: { id } });
   }
 }

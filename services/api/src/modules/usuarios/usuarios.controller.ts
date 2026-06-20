@@ -10,11 +10,13 @@ import {
   UpdatePreferenciasNotificacaoSchema,
   UpdatePerfilUsuarioSchema,
   ContaBancariaEmpresaSchema,
+  RevogarConsentimentoSchema,
 } from "@imbobi/schemas";
 import type {
   UpdatePreferenciasNotificacaoInput,
   UpdatePerfilUsuarioInput,
   ContaBancariaEmpresaInput,
+  RevogarConsentimentoInput,
 } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
@@ -137,8 +139,8 @@ export class UsuariosController {
   @Patch("revogar-consentimento")
   async revogarConsentimento(
     @UsuarioAtual() u: IUsuario,
-    @Body() { tipo }: { tipo: "MARKETING" | "NOTIFICACOES" | "TUDO" }
+    @Body(new ZodPipe(RevogarConsentimentoSchema)) body: RevogarConsentimentoInput,
   ) {
-    return this.usuarios.revogarConsentimento(u.id, tipo);
+    return this.usuarios.revogarConsentimento(u.id, body.tipo);
   }
 }

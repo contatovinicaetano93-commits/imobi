@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import type { LeadActivity } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -143,7 +143,7 @@ export class ConversionScoringService {
     });
 
     if (!lead) {
-      throw new Error(`Lead ${leadId} not found`);
+      throw new NotFoundException(`Lead ${leadId} não encontrado`);
     }
 
     const ultimoScore = lead.scoreHistorico[0]?.scoreFinal;

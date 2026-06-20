@@ -48,21 +48,27 @@ export class DueDiligenceService {
     });
   }
 
-  async listar(gestorId: string) {
-    return this.prisma.dueDiligence.findMany({
-      where: { gestorId },
-      orderBy: { criadoEm: "desc" },
-      select: {
-        id: true,
-        nomeEmpreendimento: true,
-        tipologia: true,
-        cidade: true,
-        uf: true,
-        status: true,
-        criadoEm: true,
-        atualizadoEm: true,
-      },
-    });
+  async listar(gestorId: string, limit = 20, offset = 0) {
+    const [items, total] = await Promise.all([
+      this.prisma.dueDiligence.findMany({
+        where: { gestorId },
+        orderBy: { criadoEm: "desc" },
+        take: limit,
+        skip: offset,
+        select: {
+          id: true,
+          nomeEmpreendimento: true,
+          tipologia: true,
+          cidade: true,
+          uf: true,
+          status: true,
+          criadoEm: true,
+          atualizadoEm: true,
+        },
+      }),
+      this.prisma.dueDiligence.count({ where: { gestorId } }),
+    ]);
+    return { items, total };
   }
 
   async buscar(id: string, gestorId: string, isAdmin: boolean) {

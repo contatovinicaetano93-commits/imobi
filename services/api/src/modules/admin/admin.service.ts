@@ -252,6 +252,30 @@ export class AdminService {
     }));
   }
 
+  async buscarUsuario(id: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { usuarioId: id, deletadoEm: null },
+      select: {
+        usuarioId: true,
+        nome: true,
+        email: true,
+        cpf: true,
+        telefone: true,
+        tipo: true,
+        kycStatus: true,
+        bloqueadoEm: true,
+        funcoesBloqueadas: true,
+        consentidoTermos: true,
+        consentidoMarketing: true,
+        criadoEm: true,
+        _count: { select: { obras: true, creditos: true, kycDocumentos: true } },
+      },
+    });
+    if (!usuario) throw new NotFoundException("Usuário não encontrado");
+    const { usuarioId, _count, ...rest } = usuario;
+    return { id: usuarioId, ...rest, totalObras: _count.obras, totalCreditos: _count.creditos, totalDocumentosKyc: _count.kycDocumentos };
+  }
+
   async atualizarUsuario(id: string, dto: AtualizarUsuarioAdminInput, adminId: string) {
     const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId: id } });
     if (!usuario || usuario.deletadoEm) throw new NotFoundException("Usuário não encontrado");
@@ -526,6 +550,55 @@ export class AdminService {
       liberacaoId,
       valor: lib.valor,
       referenciaPagamento,
+    };
+  }
+
+  async relatorioFinanceiro() {
+    const [
+      creditosAtivos,
+      liberacoesMes,
+      liberacoesTotais,
+      obrasPorStatus,
+    ] = await Promise.all([
+      this.prisma.credito.aggregate({
+        where: { status: "ATIVO" },
+        _sum: { valorAprovado: true, valorLiberado: true },
+        _count: { creditoId: true },
+      }),
+      this.prisma.liberacaoParcela.aggregate({
+        where: {
+          status: "CONCLUIDA",
+          processadoEm: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
+        },
+        _sum: { valor: true },
+        _count: { liberacaoId: true },
+      }),
+      this.prisma.liberacaoParcela.aggregate({
+        where: { status: "CONCLUIDA" },
+        _sum: { valor: true },
+        _count: { liberacaoId: true },
+      }),
+      this.prisma.obra.groupBy({
+        by: ["status"],
+        _count: { obraId: true },
+      }),
+    ]);
+
+    return {
+      creditos: {
+        ativos: creditosAtivos._count.creditoId,
+        totalAprovado: Number(creditosAtivos._sum.valorAprovado ?? 0),
+        totalLiberado: Number(creditosAtivos._sum.valorLiberado ?? 0),
+        saldoRestante: Number((creditosAtivos._sum.valorAprovado ?? 0) - (creditosAtivos._sum.valorLiberado ?? 0)),
+      },
+      liberacoes: {
+        totalGeralValor: Number(liberacoesTotais._sum.valor ?? 0),
+        totalGeralCount: liberacoesTotais._count.liberacaoId,
+        mesAtualValor: Number(liberacoesMes._sum.valor ?? 0),
+        mesAtualCount: liberacoesMes._count.liberacaoId,
+      },
+      obrasPorStatus: obrasPorStatus.map((o) => ({ status: o.status, total: o._count.obraId })),
+      geradoEm: new Date().toISOString(),
     };
   }
 }

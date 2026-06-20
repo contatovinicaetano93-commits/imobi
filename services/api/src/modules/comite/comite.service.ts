@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import type { VotoDecisao, SolicitacaoStatus, ComiteStatus } from "@prisma/client";
+import type { ComiteSolicitarInput } from "@imbobi/schemas";
 
 @Injectable()
 export class ComiteService {
@@ -14,18 +15,7 @@ export class ComiteService {
 
   // ── Construtor: submeter solicitação ──────────────────────────────
 
-  async submeterSolicitacao(usuarioId: string, body: {
-    valorSolicitado: number;
-    prazoMeses: number;
-    taxaMensal: number;
-    finalidade: string;
-    garantias?: string;
-    observacoes?: string;
-    obraId?: string;
-    vgv?: number;
-    custoObra?: number;
-    ltv?: number;
-  }) {
+  async submeterSolicitacao(usuarioId: string, body: ComiteSolicitarInput) {
     const rating = this.calcularRating(body.ltv ?? 0);
 
     const solicitacao = await this.prisma.solicitacaoCredito.create({

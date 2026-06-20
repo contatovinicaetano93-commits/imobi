@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import type { FornecedorTipo } from "@prisma/client";
+import type { MarketplaceCriarFornecedorInput } from "@imbobi/schemas";
 
 @Injectable()
 export class MarketplaceService {
@@ -136,19 +137,7 @@ export class MarketplaceService {
     };
   }
 
-  async criarFornecedor(data: {
-    nome: string;
-    tipo: FornecedorTipo;
-    descricao?: string;
-    website?: string;
-    telefone?: string;
-    email?: string;
-    endereco?: string;
-    uf?: string;
-    cidade?: string;
-    geoLatitude?: number;
-    geoLongitude?: number;
-  }) {
-    return this.prisma.fornecedor.create({ data });
+  async criarFornecedor(data: MarketplaceCriarFornecedorInput) {
+    return this.prisma.fornecedor.create({ data: data as any });
   }
 }

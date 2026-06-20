@@ -6,6 +6,9 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { MANAGER_ROLES } from "../../common/constants/manager-roles";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { KycUploadSchema, KycRejeitarSchema } from "@imbobi/schemas";
+import type { KycUploadInput, KycRejeitarInput } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
 @ApiTags("KYC")
@@ -17,7 +20,7 @@ export class KycController {
   @Post("upload")
   async uploadDocumento(
     @UsuarioAtual() u: IUsuario,
-    @Body() body: { tipo: string; url: string }
+    @Body(new ZodPipe(KycUploadSchema)) body: KycUploadInput,
   ) {
     return this.kyc.uploadDocumento(u.id, body.tipo, body.url);
   }
@@ -52,7 +55,7 @@ export class KycController {
   async rejeitarDocumento(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
-    @Body() body: { motivo: string }
+    @Body(new ZodPipe(KycRejeitarSchema)) body: KycRejeitarInput,
   ) {
     return this.kyc.rejeitarDocumento(id, u.id, body.motivo);
   }

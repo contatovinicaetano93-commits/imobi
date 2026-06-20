@@ -18,6 +18,11 @@ export class EtapasController {
     return this.etapas.listarPorObra(obraId);
   }
 
+  @Get(":id")
+  buscar(@Param("id") id: string) {
+    return this.etapas.buscar(id);
+  }
+
   @UseGuards(RolesGuard)
   @Roles("ENGENHEIRO", "ADMIN")
   @Patch(":id/aprovar")

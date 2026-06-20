@@ -43,18 +43,18 @@ export declare const ApiCreateLeadSchema: z.ZodObject<{
     clienteTelefone: string;
     fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
+    observacoes?: string | undefined;
     clienteCpf?: string | undefined;
     tipoObra?: "residencial" | "comercial" | "industrial" | "reforma" | undefined;
-    observacoes?: string | undefined;
 }, {
     clienteNome: string;
     clienteEmail: string;
     clienteTelefone: string;
+    observacoes?: string | undefined;
     clienteCpf?: string | undefined;
     fonte?: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO" | undefined;
     tipoObra?: "residencial" | "comercial" | "industrial" | "reforma" | undefined;
     segmentoCliente?: "NOVO" | "RETORNO" | "CONCORRENTE" | undefined;
-    observacoes?: string | undefined;
 }>;
 export type ApiCreateLeadInput = z.infer<typeof ApiCreateLeadSchema>;
 export declare const ApiAddLeadActivitySchema: z.ZodObject<{
@@ -282,12 +282,12 @@ export declare const LeadDetailSchema: z.ZodObject<{
         nome: z.ZodString;
         pipelineId: z.ZodString;
     }, "strip", z.ZodTypeAny, {
-        stageId: string;
         nome: string;
+        stageId: string;
         pipelineId: string;
     }, {
-        stageId: string;
         nome: string;
+        stageId: string;
         pipelineId: string;
     }>>;
     atividades: z.ZodOptional<z.ZodArray<z.ZodObject<{
@@ -353,24 +353,24 @@ export declare const LeadDetailSchema: z.ZodObject<{
         obraId: z.ZodString;
         nome: z.ZodString;
     }, "strip", z.ZodTypeAny, {
-        nome: string;
         obraId: string;
+        nome: string;
     }, {
-        nome: string;
         obraId: string;
+        nome: string;
     }>>;
     usuario: z.ZodOptional<z.ZodObject<{
         usuarioId: z.ZodString;
         nome: z.ZodString;
         email: z.ZodString;
     }, "strip", z.ZodTypeAny, {
-        usuarioId: string;
         nome: string;
         email: string;
+        usuarioId: string;
     }, {
-        usuarioId: string;
         nome: string;
         email: string;
+        usuarioId: string;
     }>>;
     proximoAcompanhamento: z.ZodOptional<z.ZodDate>;
 }, "strip", z.ZodTypeAny, {
@@ -399,8 +399,8 @@ export declare const LeadDetailSchema: z.ZodObject<{
         historicoScore: number;
     }[] | undefined;
     stage?: {
-        stageId: string;
         nome: string;
+        stageId: string;
         pipelineId: string;
     } | undefined;
     atividades?: {
@@ -425,13 +425,13 @@ export declare const LeadDetailSchema: z.ZodObject<{
         historicoScore: number;
     } | undefined;
     obra?: {
-        nome: string;
         obraId: string;
+        nome: string;
     } | undefined;
     usuario?: {
-        usuarioId: string;
         nome: string;
         email: string;
+        usuarioId: string;
     } | undefined;
     proximoAcompanhamento?: Date | undefined;
 }, {
@@ -460,8 +460,8 @@ export declare const LeadDetailSchema: z.ZodObject<{
         historicoScore: number;
     }[] | undefined;
     stage?: {
-        stageId: string;
         nome: string;
+        stageId: string;
         pipelineId: string;
     } | undefined;
     atividades?: {
@@ -486,13 +486,13 @@ export declare const LeadDetailSchema: z.ZodObject<{
         historicoScore: number;
     } | undefined;
     obra?: {
-        nome: string;
         obraId: string;
+        nome: string;
     } | undefined;
     usuario?: {
-        usuarioId: string;
         nome: string;
         email: string;
+        usuarioId: string;
     } | undefined;
     proximoAcompanhamento?: Date | undefined;
 }>;

@@ -5,15 +5,9 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
-
-class AprovarDto {
-  obraId?: string;
-  observacoes?: string;
-}
-
-class RejeitarDto {
-  motivo!: string;
-}
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { VistoriaAprovarSchema, VistoriaRejeitarSchema } from "@imbobi/schemas";
+import type { VistoriaAprovarInput, VistoriaRejeitarInput } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("GESTOR", "ENGENHEIRO", "ADMIN")
@@ -28,7 +22,7 @@ export class VistoriaController {
   aprovar(
     @Param("etapaId") etapaId: string,
     @UsuarioAtual() u: IUsuario,
-    @Body() body: AprovarDto,
+    @Body(new ZodPipe(VistoriaAprovarSchema)) body: VistoriaAprovarInput,
   ) {
     return this.vistoria.aprovar(u.id, etapaId, body.observacoes);
   }
@@ -38,8 +32,8 @@ export class VistoriaController {
   rejeitar(
     @Param("etapaId") etapaId: string,
     @UsuarioAtual() u: IUsuario,
-    @Body() body: RejeitarDto,
+    @Body(new ZodPipe(VistoriaRejeitarSchema)) body: VistoriaRejeitarInput,
   ) {
-    return this.vistoria.rejeitar(u.id, etapaId, body.motivo ?? "Reprovado pelo gestor.");
+    return this.vistoria.rejeitar(u.id, etapaId, body.motivo);
   }
 }

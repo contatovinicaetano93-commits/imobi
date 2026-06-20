@@ -1,5 +1,5 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
-import { Controller, Get, Post, Patch, Body, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from "@nestjs/common";
 import { DueDiligenceService, CriarDueDiligenceDto, AtualizarStatusDto } from "./due-diligence.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -19,8 +19,12 @@ export class DueDiligenceController {
   }
 
   @Get()
-  listar(@UsuarioAtual() u: IUsuario) {
-    return this.service.listar(u.id);
+  listar(
+    @UsuarioAtual() u: IUsuario,
+    @Query("limit") limit = "20",
+    @Query("offset") offset = "0",
+  ) {
+    return this.service.listar(u.id, Number(limit), Number(offset));
   }
 
   @Get(":id")

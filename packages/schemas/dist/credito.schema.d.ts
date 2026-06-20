@@ -5,13 +5,13 @@ export declare const SimulacaoCreditoSchema: z.ZodObject<{
     prazoMeses: z.ZodNumber;
     tipoObra: z.ZodEnum<["RESIDENCIAL", "COMERCIAL", "MISTO"]>;
 }, "strip", z.ZodTypeAny, {
-    tipoObra: "RESIDENCIAL" | "COMERCIAL" | "MISTO";
     valorSolicitado: number;
     prazoMeses: number;
+    tipoObra: "RESIDENCIAL" | "COMERCIAL" | "MISTO";
 }, {
-    tipoObra: "RESIDENCIAL" | "COMERCIAL" | "MISTO";
     valorSolicitado: number;
     prazoMeses: number;
+    tipoObra: "RESIDENCIAL" | "COMERCIAL" | "MISTO";
 }>;
 export declare const SolicitacaoCreditoSchema: z.ZodObject<{
     valorSolicitado: z.ZodNumber;
@@ -22,17 +22,17 @@ export declare const SolicitacaoCreditoSchema: z.ZodObject<{
     finalidade: z.ZodString;
     rendaMensalDeclarada: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    tipoObra: "RESIDENCIAL" | "COMERCIAL" | "MISTO";
     valorSolicitado: number;
     prazoMeses: number;
     finalidade: string;
+    tipoObra: "RESIDENCIAL" | "COMERCIAL" | "MISTO";
     rendaMensalDeclarada: number;
     obraId?: string | undefined;
 }, {
-    tipoObra: "RESIDENCIAL" | "COMERCIAL" | "MISTO";
     valorSolicitado: number;
     prazoMeses: number;
     finalidade: string;
+    tipoObra: "RESIDENCIAL" | "COMERCIAL" | "MISTO";
     rendaMensalDeclarada: number;
     obraId?: string | undefined;
 }>;

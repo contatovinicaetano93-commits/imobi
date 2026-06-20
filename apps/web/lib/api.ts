@@ -417,6 +417,10 @@ export const managerApi = {
     ),
   obterEtapaDetalhe: (id: string) => apiFetch<EtapaDetalhe>(`/manager/etapas/${id}`),
   obterKycDetalhe: (id: string) => apiFetch<KycPendente>(`/manager/kyc/${id}`),
+  aprovarEtapa: (id: string, observacao?: string) =>
+    apiFetch(`/etapas/${id}/aprovar`, { method: "PATCH", body: JSON.stringify({ observacao }) }),
+  rejeitarEtapa: (id: string, motivo: string) =>
+    apiFetch(`/etapas/${id}/rejeitar`, { method: "PATCH", body: JSON.stringify({ motivo }) }),
   aprovarKyc: (id: string) =>
     apiFetch(`/manager/kyc/${id}/aprovar`, { method: "PATCH" }),
   rejeitarKyc: (id: string, motivo: string) =>
