@@ -288,12 +288,15 @@ export class ManagerService {
   }
 
   /** Visão agregada da operação — somente leitura (gestor IMOBI + investidor do fundo). */
-  async obterCarteira() {
+  async obterCarteira(limit = 200) {
     const [obras, creditos] = await Promise.all([
       this.prisma.obra.findMany({
         where: { status: { not: "CANCELADA" } },
         include: {
-          etapas: { orderBy: { ordem: "asc" } },
+          etapas: {
+            orderBy: { ordem: "asc" },
+            select: { etapaId: true, nome: true, ordem: true, percentualObra: true, valorLiberacao: true, status: true },
+          },
           credito: {
             select: {
               creditoId: true,
@@ -304,10 +307,20 @@ export class ManagerService {
           },
         },
         orderBy: { criadoEm: "desc" },
+        take: limit,
       }),
       this.prisma.credito.findMany({
         where: { status: { in: ["ATIVO", "SUSPENSO", "VENCIDO"] } },
         orderBy: { criadoEm: "desc" },
+        take: limit,
+        select: {
+          creditoId: true,
+          valorAprovado: true,
+          valorLiberado: true,
+          taxaMensal: true,
+          prazoMeses: true,
+          status: true,
+        },
       }),
     ]);
 

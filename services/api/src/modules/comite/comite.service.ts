@@ -18,36 +18,32 @@ export class ComiteService {
   async submeterSolicitacao(usuarioId: string, body: ComiteSolicitarInput) {
     const rating = this.calcularRating(body.ltv ?? 0);
 
-    const solicitacao = await this.prisma.solicitacaoCredito.create({
-      data: {
-        usuarioId,
-        obraId: body.obraId ?? null,
-        valorSolicitado: body.valorSolicitado,
-        prazoMeses: body.prazoMeses,
-        taxaMensal: body.taxaMensal,
-        finalidade: body.finalidade,
-        garantias: body.garantias ?? null,
-        observacoes: body.observacoes ?? null,
-        vgv: body.vgv ?? null,
-        custoObra: body.custoObra ?? null,
-        ltv: body.ltv ?? null,
-        ratingCalculado: rating,
-        status: "PENDENTE",
-      },
-      include: { usuario: { select: { nome: true, email: true } } },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const solicitacao = await tx.solicitacaoCredito.create({
+        data: {
+          usuarioId,
+          obraId: body.obraId ?? null,
+          valorSolicitado: body.valorSolicitado,
+          prazoMeses: body.prazoMeses,
+          taxaMensal: body.taxaMensal,
+          finalidade: body.finalidade,
+          garantias: body.garantias ?? null,
+          observacoes: body.observacoes ?? null,
+          vgv: body.vgv ?? null,
+          custoObra: body.custoObra ?? null,
+          ltv: body.ltv ?? null,
+          ratingCalculado: rating,
+          status: "EM_COMITE",
+        },
+        include: { usuario: { select: { nome: true, email: true } } },
+      });
 
-    // Auto-open committee
-    await this.prisma.comiteDigital.create({
-      data: { solicitacaoId: solicitacao.solicitacaoId, status: "ABERTO" },
-    });
+      await tx.comiteDigital.create({
+        data: { solicitacaoId: solicitacao.solicitacaoId, status: "ABERTO" },
+      });
 
-    await this.prisma.solicitacaoCredito.update({
-      where: { solicitacaoId: solicitacao.solicitacaoId },
-      data: { status: "EM_COMITE" },
+      return solicitacao;
     });
-
-    return solicitacao;
   }
 
   // ── Construtor: minhas solicitações ──────────────────────────────
@@ -56,6 +52,7 @@ export class ComiteService {
     return this.prisma.solicitacaoCredito.findMany({
       where: { usuarioId },
       orderBy: { criadoEm: "desc" },
+      take: 20,
       include: {
         comite: { include: { votos: { include: { votante: { select: { nome: true, tipo: true } } } } } },
       },
@@ -206,6 +203,7 @@ export class ComiteService {
     return this.prisma.comiteDigital.findMany({
       where: filtroStatus ? { status: filtroStatus as ComiteStatus } : undefined,
       orderBy: { criadoEm: "desc" },
+      take: 100,
       include: {
         solicitacao: {
           include: { usuario: { select: { nome: true, email: true } } },

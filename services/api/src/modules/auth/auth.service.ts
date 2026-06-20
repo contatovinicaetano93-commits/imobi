@@ -35,10 +35,13 @@ export class AuthService {
         consentidoMarketing: input.consentidoMarketing ?? false,
         consentidoEm: new Date(),
       },
-      select: { usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true },
+      select: {
+        usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true,
+        funcoesBloqueadas: true, bloqueadoEm: true,
+      },
     });
 
-    return { usuario, ...await this.gerarTokens(usuario.usuarioId) };
+    return { usuario, ...await this.gerarTokens(usuario.usuarioId, usuario) };
   }
 
   async login(input: LoginInput) {
@@ -61,7 +64,7 @@ export class AuthService {
         email: usuario.email,
         tipo: normalizeUserRole(usuario.tipo) ?? usuario.tipo,
       },
-      ...await this.gerarTokens(usuario.usuarioId),
+      ...await this.gerarTokens(usuario.usuarioId, usuario),
     };
   }
 
@@ -148,8 +151,11 @@ export class AuthService {
     return { message: "Senha redefinida com sucesso" };
   }
 
-  private async gerarTokens(usuarioId: string) {
-    const usuario = await this.prisma.usuario.findUnique({
+  private async gerarTokens(
+    usuarioId: string,
+    cached?: { tipo?: string; nome?: string | null; email?: string; funcoesBloqueadas?: string[]; bloqueadoEm?: Date | null },
+  ) {
+    const usuario = cached ?? await this.prisma.usuario.findUnique({
       where: { usuarioId },
       select: { tipo: true, nome: true, email: true, funcoesBloqueadas: true, bloqueadoEm: true },
     });

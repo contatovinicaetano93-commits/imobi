@@ -15,9 +15,24 @@ export class ScoreService {
    * - Documentação validada (KYC): +200
    */
   async calcularScore(usuarioId: string): Promise<number> {
-    const [obras, creditos] = await Promise.all([
-      this.prisma.obra.findMany({ where: { usuarioId }, include: { etapas: true } }),
-      this.prisma.credito.findMany({ where: { usuarioId } }),
+    const [obras, creditos, usuario] = await Promise.all([
+      this.prisma.obra.findMany({
+        where: { usuarioId },
+        select: {
+          status: true,
+          etapas: {
+            select: { dataConclusaoReal: true, dataConclusaoPrevista: true },
+          },
+        },
+      }),
+      this.prisma.credito.findMany({
+        where: { usuarioId },
+        select: { status: true },
+      }),
+      this.prisma.usuario.findUnique({
+        where: { usuarioId },
+        select: { criadoEm: true, kycStatus: true },
+      }),
     ]);
 
     let score = 600; // Base mínima para usuário novo
@@ -48,21 +63,13 @@ export class ScoreService {
     if (creditosSemAtraso > 0) score += Math.min(200, creditosSemAtraso * 100);
 
     // 4. Tempo como cliente (+100)
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { usuarioId },
-      select: { criadoEm: true },
-    });
     if (usuario) {
       const mesesComo = (Date.now() - usuario.criadoEm.getTime()) / (1000 * 60 * 60 * 24 * 30);
       score += Math.min(100, Math.round(mesesComo * 5));
     }
 
     // 5. KYC aprovado (+200)
-    const kyc = await this.prisma.usuario.findUnique({
-      where: { usuarioId },
-      select: { kycStatus: true },
-    });
-    if (kyc?.kycStatus === "APROVADO") score += 200;
+    if (usuario?.kycStatus === "APROVADO") score += 200;
 
     return Math.min(1000, Math.max(0, score));
   }
