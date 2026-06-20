@@ -4,6 +4,7 @@ import {
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import fastifyMultipart from "@fastify/multipart";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { validateEnvironmentOrThrow, initSentry } from "./common/config";
@@ -31,6 +32,21 @@ async function bootstrap() {
   // ThrottlerGuard is registered via AppModule providers
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");
+
+  // Swagger — available in dev/staging; gated in production by env flag
+  if (process.env["NODE_ENV"] !== "production" || process.env["SWAGGER_ENABLED"] === "true") {
+    const config = new DocumentBuilder()
+      .setTitle("IMOBI API")
+      .setDescription("API da plataforma imbobi — crédito para construção civil")
+      .setVersion("1.0")
+      .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" }, "JWT")
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup("api/docs", app, document, {
+      swaggerOptions: { persistAuthorization: true },
+    });
+  }
 
   const nodeEnv = process.env["NODE_ENV"] || "development";
   const corsOrigins = process.env["CORS_ORIGIN"]?.split(",").map((o) => o.trim()).filter(Boolean);
