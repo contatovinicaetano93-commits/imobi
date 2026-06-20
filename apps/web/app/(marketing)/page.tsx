@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { redirectAfterLogin } from "@/lib/post-login-redirect";
 import { wakeStagingApi } from "@/lib/wake-staging-api";
@@ -221,32 +221,31 @@ export default function LandingPage() {
         <div className="hero-bg-grid" aria-hidden />
         <div className="hero-inner">
           <div className="hero-content">
-            <div className="hero-badge"><span className="badge-dot" />Crédito com geovalidação de obra</div>
+            <div className="hero-badge"><span className="badge-dot" />Crédito desburocratizado · aprovação ágil</div>
             <h1 className="hero-h1">
               <span className="h1-line">CRÉDITO PARA</span>
               <span className="h1-line">SUA OBRA</span>
               <span className="h1-line h1-accent">EM DIAS.</span>
             </h1>
-            <p className="hero-sub">Simule em 2 minutos quanto sua obra pode financiar. Liberação por etapa, validação por GPS e transparência total na taxa.</p>
+            <p className="hero-sub">Crédito ágil e desburocratizado para sua obra. Simule em minutos, documentação simplificada e aprovação em tempo recorde — com liberação por etapa e transparência total.</p>
             <div className="hero-actions">
               <button className="btn-hero-primary" onClick={() => router.push("/simulador")}>Simular crédito agora</button>
               <button className="btn-hero-ghost"   onClick={() => scrollTo("como")}>Ver o processo →</button>
             </div>
             <div className="hero-strip">
-              <div className="hero-strip-item">
-                <span className="hero-strip-val">2 min</span>
-                <span className="hero-strip-lbl">simulação online</span>
-              </div>
-              <span className="hero-strip-div" aria-hidden="true" />
-              <div className="hero-strip-item">
-                <span className="hero-strip-val">48h</span>
-                <span className="hero-strip-lbl">pré-análise rápida</span>
-              </div>
-              <span className="hero-strip-div" aria-hidden="true" />
-              <div className="hero-strip-item">
-                <span className="hero-strip-val">100%</span>
-                <span className="hero-strip-lbl">digital + GPS</span>
-              </div>
+              {[
+                "Análise de crédito desburocratizada",
+                "Processo de documentação simplificado",
+                "Versatilidade de crédito",
+                "Aprovação em tempo recorde",
+              ].map((pillar, i) => (
+                <Fragment key={pillar}>
+                  {i > 0 && <span className="hero-strip-div" aria-hidden="true" />}
+                  <div className="hero-strip-item">
+                    <span className="hero-strip-pillar">{pillar}</span>
+                  </div>
+                </Fragment>
+              ))}
             </div>
           </div>
         </div>
@@ -267,7 +266,7 @@ export default function LandingPage() {
             </div>
             <div className="vs-col vs-us reveal d3">
               <div className="vs-head"><span className="vs-tag-us">IMOBI</span></div>
-              {["Aprovação em 15 a 30 dias úteis", "Taxa competitiva, documentada na proposta", "Garantias RI ou receita de vendas", "Atendemos incorporadoras de todos os portes", "Capital liberado no ritmo do cronograma"].map(t => (
+              {["Aprovação em tempo recorde — dias, não meses", "Taxa competitiva, documentada na proposta", "Modelo próprio de garantias — analisamos caso a caso", "Análise de crédito desburocratizada", "Documentação simplificada e processo 100% digital"].map(t => (
                 <div className="vs-item" key={t}><span className="vs-ck">✓</span><span>{t}</span></div>
               ))}
             </div>
@@ -284,10 +283,10 @@ export default function LandingPage() {
           </div>
           <div className="steps">
             {[
-              { n:"01", t:"Você nos conta o projeto",    d:"Preencha o formulário. A equipe IMOBI retorna em até 24h para alinhar os próximos passos." },
-              { n:"02", t:"Análise e proposta em dias",  d:"Avaliamos viabilidade técnica e financeira. Você recebe proposta com taxa, prazo e condições — sem enrolação." },
-              { n:"03", t:"Estruturação sob medida",     d:"Volume, cronograma de liberações e garantias definidas — RI ou receita de vendas. Tudo documentado e transparente." },
-              { n:"04", t:"Capital no ritmo da obra",    d:"Liberações conforme avanço físico validado por vistoria técnica. Você recebe quando a obra avança." },
+              { n:"01", t:"Você nos conta o projeto",           d:"Preencha o formulário. A equipe IMOBI retorna em até 24h para alinhar os próximos passos." },
+              { n:"02", t:"Análise desburocratizada em tempo recorde", d:"Avaliamos viabilidade com processo simplificado. Proposta com taxa, prazo e condições em tempo recorde — sem burocracia desnecessária." },
+              { n:"03", t:"Garantias e modalidades caso a caso", d:"Volume, cronograma e garantias definidas com nosso modelo próprio — diferente do padrão de mercado. Tudo documentado e transparente." },
+              { n:"04", t:"Capital no ritmo da obra",           d:"Liberações conforme avanço físico validado por vistoria técnica. Você recebe quando a obra avança." },
             ].map((s, i) => (
               <div className={`step reveal d${i + 1}`} key={s.n}>
                 <span className="step-n">{s.n}</span>
@@ -302,7 +301,10 @@ export default function LandingPage() {
       <section className="modalidades" id="modalidades">
         <div className="mod-inner">
           <p className="eyebrow reveal">Modalidades</p>
-          <h2 className="sec-h2 mod-h2 reveal d1">Crédito para cada fase<br />da construção.</h2>
+          <h2 className="sec-h2 mod-h2 reveal d1">Versátil</h2>
+          <p className="mod-sub reveal d1">Financiamento com várias modalidades e opções, com diferentes garantias</p>
+          <p className="mod-intro reveal d2"><strong>Analisamos CASO A CASO.</strong></p>
+          <p className="mod-intro mod-intro-last reveal d2">Temos o nosso próprio modelo de garantias, diferente do padrão do mercado.</p>
           <div className="mod-list">
             {[
               { n:"01", t:"Crédito de Aquisição",    phase:"Fase de aquisição", d:"Capital para comprar o terreno e iniciar o projeto com segurança patrimonial. Estruturado para incorporadoras em expansão de portfólio — sem comprometer o caixa operacional." },
@@ -330,7 +332,7 @@ export default function LandingPage() {
             <h2 className="form-h2">Vamos estruturar<br /><em>seu projeto.</em></h2>
             <p className="form-desc">Preencha o formulário. A equipe IMOBI entra em contato em até 24 horas com uma análise preliminar sem compromisso.</p>
             <div className="promises">
-              {["Retorno em até 24h","Análise preliminar gratuita","Aprovação em 15 a 30 dias úteis","Processo 100% digital"].map(t => (
+              {["Retorno em até 24h","Análise desburocratizada e gratuita","Aprovação em tempo recorde","Documentação simplificada · 100% digital"].map(t => (
                 <div className="promise" key={t}><span className="promise-ck">✓</span>{t}</div>
               ))}
             </div>
@@ -403,8 +405,8 @@ export default function LandingPage() {
           <h2 className="sec-h2 faq-h2 reveal d1">Perguntas frequentes.</h2>
           <div className="faq-list reveal d2">
             {[
-              { q:"Quais são os pré-requisitos para solicitar crédito?",   a:"CNPJ ativo, projeto de construção documentado e matrícula do imóvel. Utilizamos como garantia RI (Registro de Imóveis) ou receita de vendas do empreendimento — sem exigir garantias bancárias tradicionais." },
-              { q:"Em quanto tempo recebo a aprovação?",                    a:"Nosso prazo é de 15 a 30 dias úteis após entrega completa da documentação. Projetos com documentação em ordem costumam ser aprovados na faixa de 15 dias." },
+              { q:"Quais são os pré-requisitos para solicitar crédito?",   a:"CNPJ ativo, projeto de construção documentado e matrícula do imóvel. Estruturamos garantias caso a caso, com modelo próprio da IMOBI — diferente do padrão dos bancos." },
+              { q:"Em quanto tempo recebo a aprovação?",                    a:"Trabalhamos com aprovação em tempo recorde — muito mais rápido que o mercado tradicional. Com documentação simplificada e em ordem, o processo é ágil do início ao fim." },
               { q:"Como funciona a liberação das parcelas?",                a:"As liberações são feitas conforme o avanço da obra, validadas por vistorias técnicas com registro fotográfico georeferenciado. Rastreável 100% pela plataforma." },
               { q:"Qual o valor mínimo e máximo de operação?",              a:"Operações a partir de R$1 milhão, sem limite máximo definido. Projetos acima de R$50M passam por análise de comitê diferenciada." },
               { q:"Preciso assinar documentos fisicamente?",                a:"Não. Do protocolo da proposta à assinatura do contrato — tudo digital, com validade jurídica por assinatura eletrônica qualificada." },
@@ -418,7 +420,7 @@ export default function LandingPage() {
         <div className="cta-inner">
           <div className="reveal">
             <h2 className="cta-h2">Pronto para estruturar<br /><em>seu projeto?</em></h2>
-            <p className="cta-sub">Aprovação em 15 a 30 dias. Análise preliminar gratuita, sem compromisso.</p>
+            <p className="cta-sub">Aprovação em tempo recorde. Análise desburocratizada e gratuita, sem compromisso.</p>
           </div>
           <div className="cta-actions reveal d3">
             <button className="btn-hero-primary" onClick={() => router.push("/simulador")}>Simular crédito agora</button>
