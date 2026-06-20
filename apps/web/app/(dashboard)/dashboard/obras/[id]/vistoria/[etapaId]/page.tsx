@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import type { ObraResumo, EvidenciaDetalhe } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { AprovarEtapaForm } from "./aprovar-form";
@@ -64,7 +65,9 @@ export default function VistoriaPage({ params }: { params: { id: string; etapaId
           <div className="grid grid-cols-2 gap-4">
             {evidencias.map((ev: EvidenciaDetalhe) => (
               <div key={ev.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <img src={ev.fotoUrl} alt="Evidência" className="w-full aspect-video object-cover" />
+                <div className="relative w-full aspect-video">
+                  <Image src={ev.fotoUrl} alt="Evidência" fill className="object-cover" sizes="(max-width:768px) 100vw, 50vw" />
+                </div>
                 <div className="p-4 space-y-1">
                   <p className="text-xs text-gray-500">
                     {new Date(ev.criadoEm).toLocaleString("pt-BR")}
