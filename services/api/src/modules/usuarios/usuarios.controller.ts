@@ -1,4 +1,4 @@
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Patch, Post, Delete, UseGuards, Body, Res, Req, BadRequestException } from "@nestjs/common";
 import type { FastifyRequest } from "fastify";
 import { FastifyReply } from "fastify";
@@ -19,6 +19,7 @@ import type {
 
 @UseGuards(JwtAuthGuard)
 @ApiTags("Usuários")
+@ApiBearerAuth("JWT")
 @Controller("usuarios")
 export class UsuariosController {
   constructor(private readonly usuarios: UsuariosService) {}

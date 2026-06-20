@@ -1,4 +1,4 @@
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Post, Body, HttpCode, UseGuards } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
@@ -33,6 +33,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("JWT")
   @Post("logout")
   @HttpCode(204)
   logout(@Body("refreshToken") token: string) {

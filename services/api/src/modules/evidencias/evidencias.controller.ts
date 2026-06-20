@@ -1,3 +1,4 @@
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import {
   Controller, Post, Get, Patch, Param, Body, UseGuards, Req, BadRequestException,
 } from "@nestjs/common";
@@ -10,6 +11,8 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import { UploadEvidenciaSchema } from "@imbobi/schemas";
 
+@ApiTags("Evidências")
+@ApiBearerAuth("JWT")
 @UseGuards(JwtAuthGuard)
 @Controller("evidencias")
 export class EvidenciasController {

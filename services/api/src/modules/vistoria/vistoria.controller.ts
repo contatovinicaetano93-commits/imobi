@@ -1,4 +1,4 @@
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Post, Param, Body, UseGuards, HttpCode } from "@nestjs/common";
 import { VistoriaService } from "./vistoria.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -18,6 +18,7 @@ class RejeitarDto {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("GESTOR", "ENGENHEIRO", "ADMIN")
 @ApiTags("Vistoria")
+@ApiBearerAuth("JWT")
 @Controller("vistoria")
 export class VistoriaController {
   constructor(private readonly vistoria: VistoriaService) {}

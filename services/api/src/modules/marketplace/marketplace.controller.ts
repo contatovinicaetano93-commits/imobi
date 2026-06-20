@@ -1,4 +1,4 @@
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Post, Param, Query, Body, UseGuards, UseInterceptors } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
@@ -10,6 +10,7 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decora
 import type { FornecedorTipo } from "@prisma/client";
 
 @ApiTags("Marketplace")
+@ApiBearerAuth("JWT")
 @Controller("marketplace")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class MarketplaceController {

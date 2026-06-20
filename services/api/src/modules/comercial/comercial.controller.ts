@@ -1,4 +1,4 @@
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import {
   Controller,
   Get,
@@ -18,6 +18,7 @@ import { ApiCreateLeadSchema, ApiAddLeadActivitySchema } from '@imbobi/schemas';
 import type { ApiCreateLeadInput, ApiAddLeadActivityInput } from '@imbobi/schemas';
 
 @ApiTags("Comercial")
+@ApiBearerAuth("JWT")
 @Controller('comercial')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('COMERCIAL', 'ADMIN')

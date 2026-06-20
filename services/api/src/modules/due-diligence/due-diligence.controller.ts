@@ -1,4 +1,4 @@
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Post, Patch, Body, Param, UseGuards } from "@nestjs/common";
 import { DueDiligenceService, CriarDueDiligenceDto, AtualizarStatusDto } from "./due-diligence.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -8,6 +8,7 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decora
 
 @UseGuards(JwtAuthGuard)
 @ApiTags("Due Diligence")
+@ApiBearerAuth("JWT")
 @Controller("due-diligence")
 export class DueDiligenceController {
   constructor(private readonly service: DueDiligenceService) {}

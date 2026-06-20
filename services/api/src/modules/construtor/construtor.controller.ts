@@ -1,4 +1,4 @@
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, UseGuards, UseInterceptors } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
@@ -9,6 +9,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
 @ApiTags("Construtor")
+@ApiBearerAuth("JWT")
 @Controller("construtor")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("CONSTRUTOR", "TOMADOR", "ADMIN")

@@ -1,4 +1,4 @@
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, UseGuards } from "@nestjs/common";
 import { ScoreService } from "./score.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -6,6 +6,7 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decora
 
 @UseGuards(JwtAuthGuard)
 @ApiTags("Score")
+@ApiBearerAuth("JWT")
 @Controller("score")
 export class ScoreController {
   constructor(private readonly score: ScoreService) {}

@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Controller, Get, Query, ForbiddenException, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { hash } from "bcryptjs";
@@ -12,6 +13,7 @@ const STAFF_USERS = [
   { nome: "Tomador Teste",         email: "tomador@imobi.com.br",            cpf: "00000000006", telefone: "11900000006", senha: "Tomador@123",    tipo: "TOMADOR"    },
 ];
 
+@ApiTags("Setup")
 @Controller("setup")
 export class SetupController {
   private readonly logger = new Logger(SetupController.name);

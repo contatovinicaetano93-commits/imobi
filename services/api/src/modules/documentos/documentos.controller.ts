@@ -1,3 +1,4 @@
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import {
   Controller, Get, Post, Delete, Param, Body,
   UseGuards, UseInterceptors, UploadedFile,
@@ -7,6 +8,8 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import { DocumentosService } from "./documentos.service";
 
+@ApiTags("Documentos")
+@ApiBearerAuth("JWT")
 @Controller("documentos")
 @UseGuards(JwtAuthGuard)
 export class DocumentosController {

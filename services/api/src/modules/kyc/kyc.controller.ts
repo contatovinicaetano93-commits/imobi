@@ -1,4 +1,4 @@
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Post, Get, Patch, Body, Param, UseGuards } from "@nestjs/common";
 import { KycService } from "./kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -9,6 +9,7 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decora
 
 @UseGuards(JwtAuthGuard)
 @ApiTags("KYC")
+@ApiBearerAuth("JWT")
 @Controller("kyc")
 export class KycController {
   constructor(private readonly kyc: KycService) {}

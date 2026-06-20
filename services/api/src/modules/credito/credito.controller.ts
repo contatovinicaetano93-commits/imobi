@@ -1,4 +1,4 @@
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
 import { CreditoService } from "./credito.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -10,6 +10,7 @@ import { SimulacaoCreditoSchema, SolicitacaoCreditoSchema } from "@imbobi/schema
 import type { SimulacaoCreditoInput, SolicitacaoCreditoInput } from "@imbobi/schemas";
 
 @ApiTags("Crédito")
+@ApiBearerAuth("JWT")
 @Controller("credito")
 export class CreditoController {
   constructor(private readonly credito: CreditoService) {}

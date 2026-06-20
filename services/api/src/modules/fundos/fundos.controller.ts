@@ -1,4 +1,4 @@
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Query, UseGuards, UseInterceptors } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
@@ -8,6 +8,7 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 
 @ApiTags("Fundos")
+@ApiBearerAuth("JWT")
 @Controller("fundos")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("GESTOR_FUNDO", "ADMIN")

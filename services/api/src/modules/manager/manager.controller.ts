@@ -1,31 +1,20 @@
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Patch, Param, Query, Body, UseGuards, UseInterceptors } from "@nestjs/common";
-
 import { Throttle } from "@nestjs/throttler";
-
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
-
 import { ManagerService } from "./manager.service";
-
 import { KycService } from "../kyc/kyc.service";
-
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-
 import { RolesGuard } from "../../common/guards/roles.guard";
-
 import { Roles } from "../../common/decorators/roles.decorator";
-
 import { MANAGER_ROLES } from "../../common/constants/manager-roles";
-
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
-
-
+@ApiTags("Manager")
+@ApiBearerAuth("JWT")
 @UseGuards(JwtAuthGuard, RolesGuard)
-
 @Roles(...MANAGER_ROLES)
-
 @Controller("manager")
-
 export class ManagerController {
 
   constructor(

@@ -1,4 +1,4 @@
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Patch, Param, Body, UseGuards } from "@nestjs/common";
 import { EtapasService } from "./etapas.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -8,6 +8,7 @@ import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decora
 
 @UseGuards(JwtAuthGuard)
 @ApiTags("Etapas")
+@ApiBearerAuth("JWT")
 @Controller("etapas")
 export class EtapasController {
   constructor(private readonly etapas: EtapasService) {}
