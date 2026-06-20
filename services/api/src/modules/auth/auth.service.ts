@@ -51,12 +51,12 @@ export class AuthService {
     });
     if (!usuario) throw new UnauthorizedException("Credenciais inválidas.");
 
-    const senhaOk = await bcrypt.compare(input.senha, usuario.passwordHash);
-    if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
-
     if (usuario.bloqueadoEm) {
       throw new UnauthorizedException("Conta bloqueada pelo administrador. Entre em contato com o suporte.");
     }
+
+    const senhaOk = await bcrypt.compare(input.senha, usuario.passwordHash);
+    if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
 
     return {
       usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },

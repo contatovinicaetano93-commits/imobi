@@ -3,12 +3,31 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
 });
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "https://imobi-api-staging.onrender.com";
+const apiOrigin = (() => {
+  try { return new URL(apiUrl).origin; } catch { return apiUrl; }
+})();
+
+const csp = [
+  "default-src 'self'",
+  // Next.js requires unsafe-inline for its inline script hydration chunks
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
+  `img-src 'self' data: blob: https://*.amazonaws.com https://*.r2.cloudflarestorage.com`,
+  `connect-src 'self' ${apiOrigin} https://*.sentry.io https://*.ingest.sentry.io`,
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+].join("; ");
+
 const securityHeaders = [
-  { key: "X-Content-Type-Options",  value: "nosniff" },
-  { key: "X-Frame-Options",         value: "DENY" },
-  { key: "X-XSS-Protection",        value: "1; mode=block" },
-  { key: "Referrer-Policy",         value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy",      value: "geolocation=(), microphone=(), camera=()" },
+  { key: "Content-Security-Policy",  value: csp },
+  { key: "X-Content-Type-Options",   value: "nosniff" },
+  { key: "X-Frame-Options",          value: "DENY" },
+  { key: "Referrer-Policy",          value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy",       value: "geolocation=(), microphone=(), camera=()" },
 ];
 
 const nextConfig = {
