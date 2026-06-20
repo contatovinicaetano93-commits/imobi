@@ -47,6 +47,25 @@ export const CreateLeadSchema = z.object({
   segmentoCliente: SegmentoClienteEnum,
 });
 
+// API-side input schema: fonte/segmentoCliente optional (have DB defaults), tipoObra optional
+export const ApiCreateLeadSchema = z.object({
+  clienteNome: z.string().min(3, "Nome obrigatório"),
+  clienteEmail: z.string().email("Email inválido"),
+  clienteTelefone: z.string().min(10, "Telefone inválido"),
+  clienteCpf: z.string().length(11, "CPF deve ter 11 dígitos").optional(),
+  fonte: FonteEnum.optional().default("WEBSITE"),
+  tipoObra: TipoObraEnum.optional(),
+  segmentoCliente: SegmentoClienteEnum.optional().default("NOVO"),
+  observacoes: z.string().max(1000).optional(),
+});
+export type ApiCreateLeadInput = z.infer<typeof ApiCreateLeadSchema>;
+
+export const ApiAddLeadActivitySchema = z.object({
+  tipo: LeadActivityTypeEnum,
+  descricao: z.string().min(5, "Descrição obrigatória"),
+});
+export type ApiAddLeadActivityInput = z.infer<typeof ApiAddLeadActivitySchema>;
+
 export const LeadActivitySchema = z.object({
   leadActivityId: z.string().uuid(),
   leadId: z.string().uuid(),

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConversionScoringService } from './conversion-scoring.service';
+import type { ApiCreateLeadInput, ApiAddLeadActivityInput } from '@imbobi/schemas';
 
 @Injectable()
 export class ComercialService {
@@ -85,34 +86,20 @@ export class ComercialService {
     return lead;
   }
 
-  async criarLead(usuarioId: string, data: any) {
+  async criarLead(usuarioId: string, data: ApiCreateLeadInput) {
+    let stageId: string;
+
     const defaultStage = await this.prisma.pipelineStage.findFirst({
       orderBy: { ordem: 'asc' },
     });
 
-    if (!defaultStage) {
-      const seedStage = await this.prisma.pipelineStage.create({
+    if (defaultStage) {
+      stageId = defaultStage.stageId;
+    } else {
+      const seeded = await this.prisma.pipelineStage.create({
         data: { nome: 'PROSPECÇÃO', ordem: 1, corHex: '#6366f1' },
       });
-
-      const lead = await this.prisma.lead.create({
-        data: {
-          clienteNome: data.clienteNome,
-          clienteEmail: data.clienteEmail,
-          clienteTelefone: data.clienteTelefone,
-          fonte: data.fonte,
-          segmentoCliente: data.segmentoCliente,
-          stageId: seedStage.stageId,
-          usuarioId,
-          atribuidoEm: new Date(),
-        },
-        include: {
-          scoreHistorico: { take: 1, orderBy: { criadoEm: 'desc' } },
-        },
-      });
-
-      const score = await this.scoringService.calcularScore(lead.leadId);
-      return { ...lead, score };
+      stageId = seeded.stageId;
     }
 
     const lead = await this.prisma.lead.create({
@@ -120,9 +107,11 @@ export class ComercialService {
         clienteNome: data.clienteNome,
         clienteEmail: data.clienteEmail,
         clienteTelefone: data.clienteTelefone,
-        fonte: data.fonte,
-        segmentoCliente: data.segmentoCliente,
-        stageId: defaultStage.stageId,
+        clienteCpf: data.clienteCpf ?? null,
+        fonte: data.fonte ?? 'WEBSITE',
+        tipoObra: data.tipoObra ?? null,
+        segmentoCliente: data.segmentoCliente ?? 'NOVO',
+        stageId,
         usuarioId,
         atribuidoEm: new Date(),
       },
@@ -216,7 +205,7 @@ export class ComercialService {
     return this.scoringService.calcularScore(leadId);
   }
 
-  async adicionarAtividade(leadId: string, usuarioId: string, data: any) {
+  async adicionarAtividade(leadId: string, usuarioId: string, data: ApiAddLeadActivityInput) {
     const activity = await this.prisma.leadActivity.create({
       data: {
         leadId,
