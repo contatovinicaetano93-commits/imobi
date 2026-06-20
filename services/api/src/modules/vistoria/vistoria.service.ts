@@ -31,17 +31,21 @@ export class VistoriaService {
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
-    const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: { in: STATUSES_VISTORIAVEL } },
-      data: { status: "CONCLUIDA" as EtapaStatus, dataConclusaoReal: new Date() },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const r = await tx.etapaObra.updateMany({
+        where: { etapaId, status: { in: STATUSES_VISTORIAVEL } },
+        data: { status: "CONCLUIDA" as EtapaStatus, dataConclusaoReal: new Date() },
+      });
+      if (r.count > 0) {
+        await tx.etapaAuditLog.create({
+          data: { etapaId, acaoTipo: "APROVADA", usuarioId: gestorId, observacoes: observacoes ?? null },
+        });
+      }
+      return r;
     });
     if (updated.count === 0) {
       throw new BadRequestException("Etapa não pode ser aprovada no status atual.");
     }
-
-    await this.prisma.etapaAuditLog.create({
-      data: { etapaId, acaoTipo: "APROVADA", usuarioId: gestorId, observacoes: observacoes ?? null },
-    });
 
     await this.notificacoes.criar(
       etapa.obra.usuarioId,
@@ -106,17 +110,21 @@ export class VistoriaService {
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
-    const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: { in: STATUSES_VISTORIAVEL } },
-      data: { status: "REPROVADA" as EtapaStatus },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const r = await tx.etapaObra.updateMany({
+        where: { etapaId, status: { in: STATUSES_VISTORIAVEL } },
+        data: { status: "REPROVADA" as EtapaStatus },
+      });
+      if (r.count > 0) {
+        await tx.etapaAuditLog.create({
+          data: { etapaId, acaoTipo: "REJEITADA", usuarioId: gestorId, observacoes: motivo },
+        });
+      }
+      return r;
     });
     if (updated.count === 0) {
       throw new BadRequestException("Etapa não pode ser rejeitada no status atual.");
     }
-
-    await this.prisma.etapaAuditLog.create({
-      data: { etapaId, acaoTipo: "REJEITADA", usuarioId: gestorId, observacoes: motivo },
-    });
 
     await this.notificacoes.criar(
       etapa.obra.usuarioId,

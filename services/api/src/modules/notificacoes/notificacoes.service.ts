@@ -36,6 +36,7 @@ export class NotificacoesService {
     return this.prisma.notificacao.findMany({
       where: { usuarioId, lida: false },
       orderBy: { criadoEm: "desc" },
+      take: 50,
     });
   }
 

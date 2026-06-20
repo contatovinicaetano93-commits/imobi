@@ -65,6 +65,7 @@ export class CreditoService {
       include: {
         liberacoes: {
           orderBy: { criadoEm: "desc" },
+          take: 50,
         },
       },
     });
