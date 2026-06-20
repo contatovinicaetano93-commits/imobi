@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { RegionalMetrics, RoiDataPoint, InadimplenciaDataPoint, generateCSVReport } from "./fundos-utils";
 import { CreditoResumo } from "@/lib/api";
+import { useToast } from "@/hooks/toast-context";
 
 interface ReportExportProps {
   regional: RegionalMetrics[];
@@ -19,6 +20,7 @@ export function ReportExport({
   creditos,
 }: ReportExportProps) {
   const [isExporting, setIsExporting] = useState(false);
+  const { success, error: toastError } = useToast();
 
   const handleCSVExport = async () => {
     setIsExporting(true);
@@ -31,9 +33,10 @@ export function ReportExport({
       document.body.appendChild(element);
       element.click();
       document.body.removeChild(element);
+      success("Relatório CSV exportado.");
     } catch (error) {
       console.error("Erro ao exportar relatório:", error);
-      alert("Erro ao exportar relatório. Tente novamente.");
+      toastError("Erro ao exportar relatório. Tente novamente.");
     } finally {
       setIsExporting(false);
     }
@@ -45,9 +48,10 @@ export function ReportExport({
       // For PDF export, we'll use the browser's print functionality
       // This is a simpler approach that works across browsers
       window.print();
+      success("Abrindo visualização para impressão/PDF.");
     } catch (error) {
       console.error("Erro ao exportar PDF:", error);
-      alert("Erro ao exportar PDF. Tente novamente.");
+      toastError("Erro ao exportar PDF. Tente novamente.");
     } finally {
       setIsExporting(false);
     }
@@ -76,9 +80,10 @@ export function ReportExport({
       document.body.appendChild(element);
       element.click();
       document.body.removeChild(element);
+      success("Relatório JSON exportado.");
     } catch (error) {
       console.error("Erro ao exportar JSON:", error);
-      alert("Erro ao exportar dados. Tente novamente.");
+      toastError("Erro ao exportar dados. Tente novamente.");
     } finally {
       setIsExporting(false);
     }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
+import Link from "next/link";
 import {
   Bell,
   BellOff,
@@ -15,8 +16,12 @@ import {
   Building2,
   FileText,
   Megaphone,
+  Settings,
 } from "lucide-react";
 import { notificacoesApi, type Notificacao } from "@/lib/api";
+import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
+import { EmptyState } from "@/app/(dashboard)/_components/EmptyState";
+import { useToast } from "@/hooks/toast-context";
 
 type Tab = "todas" | "nao-lidas";
 
@@ -45,6 +50,7 @@ function getNotifIconStyle(tipo?: string) {
 
 export default function NotificacoesPage() {
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("todas");
@@ -82,10 +88,15 @@ export default function NotificacoesPage() {
 
   async function marcarTodasLidas() {
     setMarcandoTodas(true);
-    await notificacoesApi.marcarTudasComoLidas().catch(() => null);
-    setNotificacoes((prev) =>
-      prev.map((n) => ({ ...n, lida: true, lidoEm: n.lidoEm ?? new Date().toISOString() }))
-    );
+    const ok = await notificacoesApi.marcarTudasComoLidas().then(() => true).catch(() => false);
+    if (ok) {
+      setNotificacoes((prev) =>
+        prev.map((n) => ({ ...n, lida: true, lidoEm: n.lidoEm ?? new Date().toISOString() }))
+      );
+      success("Todas as notificações foram marcadas como lidas.");
+    } else {
+      toastError("Não foi possível marcar as notificações como lidas.");
+    }
     setMarcandoTodas(false);
   }
 
@@ -122,16 +133,26 @@ export default function NotificacoesPage() {
             </p>
           </div>
         </div>
-        {naoLidasCount > 0 && (
-          <button
-            onClick={marcarTodasLidas}
-            disabled={marcandoTodas}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#1B4FD8] hover:text-blue-800 disabled:opacity-50 transition-colors bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-xl"
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href={"/dashboard/notificacoes/preferencias" as Route}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition-colors"
+            aria-label="Preferências de notificação"
           >
-            <CheckCheck className="w-4 h-4" />
-            {marcandoTodas ? "Marcando..." : "Marcar todas como lidas"}
-          </button>
-        )}
+            <Settings className="w-4 h-4" />
+            <span className="hidden sm:inline">Preferências</span>
+          </Link>
+          {naoLidasCount > 0 && (
+            <button
+              onClick={marcarTodasLidas}
+              disabled={marcandoTodas}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#1B4FD8] hover:text-blue-800 disabled:opacity-50 transition-colors bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-xl"
+            >
+              <CheckCheck className="w-4 h-4" />
+              {marcandoTodas ? "Marcando..." : "Marcar todas como lidas"}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -165,41 +186,18 @@ export default function NotificacoesPage() {
 
       {/* Content */}
       {loading ? (
-        /* Skeleton Loaders */
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-gray-100 shrink-0" />
-                <div className="flex-1 space-y-2.5 pt-0.5">
-                  <div className="h-3.5 bg-gray-100 rounded-full w-2/3" />
-                  <div className="h-3 bg-gray-100 rounded-full w-full" />
-                  <div className="h-3 bg-gray-100 rounded-full w-1/4" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <PageSkeleton variant="list" count={4} showHeader={false} />
       ) : filtradas.length === 0 ? (
-        /* Empty State */
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 flex flex-col items-center gap-4">
-          <div className="p-5 bg-gray-50 rounded-2xl">
-            <BellOff className="w-12 h-12 text-gray-300" />
-          </div>
-          <div className="text-center">
-            <p className="font-semibold text-gray-700 mb-1">
-              {tab === "nao-lidas" ? "Nenhuma notificação não lida" : "Nenhuma notificação"}
-            </p>
-            <p className="text-sm text-gray-400">
-              {tab === "nao-lidas"
-                ? "Você está em dia com tudo."
-                : "Você não tem notificações ainda."}
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          icon={BellOff}
+          title={tab === "nao-lidas" ? "Nenhuma notificação não lida" : "Nenhuma notificação"}
+          description={
+            tab === "nao-lidas"
+              ? "Você está em dia com tudo."
+              : "Você não tem notificações ainda."
+          }
+          action={{ label: "Preferências de notificação", href: "/dashboard/notificacoes/preferencias" as Route, icon: Settings }}
+        />
       ) : (
         /* Notification List */
         <div className="space-y-2.5">

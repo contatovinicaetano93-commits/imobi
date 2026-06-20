@@ -16,6 +16,22 @@ export class StorageService {
 
   private readonly bucket = process.env["AWS_S3_BUCKET"] ?? "imbobi-evidencias";
 
+  async uploadAvatar(buffer: Buffer, mimeType: string, usuarioId: string) {
+    const ext = mimeType.split("/")[1]?.split("+")[0] ?? "jpg";
+    const key = `avatars/${usuarioId}/${randomUUID()}.${ext}`;
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: mimeType,
+        ServerSideEncryption: "AES256",
+      })
+    );
+    const url = await this.getSignedUrl(key);
+    return { url, key };
+  }
+
   async upload(buffer: Buffer, mimeType: string, etapaId: string) {
     const key = `evidencias/${etapaId}/${randomUUID()}`;
     await this.s3.send(

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Plus, Building2, ArrowRight, HardHat } from "lucide-react";
 import { obrasApi, type ObraResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
+import { EmptyState } from "@/app/(dashboard)/_components/EmptyState";
 
 export const dynamic = 'force-dynamic';
 
@@ -59,26 +60,13 @@ export default async function ObrasPage() {
         </Link>
       </div>
 
-      {/* Empty State */}
       {obras.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 flex flex-col items-center gap-4">
-          <div className="p-5 bg-gray-50 rounded-2xl">
-            <HardHat className="w-12 h-12 text-gray-300" />
-          </div>
-          <div className="text-center">
-            <p className="font-semibold text-gray-700 text-lg mb-1">Nenhuma obra cadastrada</p>
-            <p className="text-sm text-gray-400 max-w-xs">
-              Comece cadastrando sua primeira obra para acompanhar o progresso e gerenciar créditos.
-            </p>
-          </div>
-          <Link
-            href="/dashboard/obras/nova"
-            className="mt-2 inline-flex items-center gap-2 bg-[#1B4FD8] hover:bg-blue-800 text-white text-sm font-semibold px-6 py-3 rounded-xl shadow-sm hover:shadow transition-all duration-200"
-          >
-            <Plus className="w-4 h-4" />
-            Cadastrar primeira obra
-          </Link>
-        </div>
+        <EmptyState
+          icon={HardHat}
+          title="Nenhuma obra cadastrada"
+          description="Comece cadastrando sua primeira obra para acompanhar o progresso e gerenciar créditos."
+          action={{ label: "Cadastrar primeira obra", href: "/dashboard/obras/nova", icon: Plus }}
+        />
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
           {obras.map((obra: ObraResumo) => {

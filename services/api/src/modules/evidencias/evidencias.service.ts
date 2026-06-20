@@ -8,6 +8,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { calcularDistanciaMetros } from "@imbobi/core";
 import type { UploadEvidenciaInput } from "@imbobi/schemas";
+import { isManagerRole } from "../../common/constants/manager-roles";
 
 const MAX_ACCURACY_METROS = 15;
 
@@ -89,7 +90,7 @@ export class EvidenciasService {
       include: { obra: { select: { usuarioId: true } } },
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
-    if (usuario.tipo !== "ADMIN" && usuario.tipo !== "GESTOR" && etapa.obra.usuarioId !== usuario.id) {
+    if (!isManagerRole(usuario.tipo) && etapa.obra.usuarioId !== usuario.id) {
       throw new ForbiddenException("Acesso negado.");
     }
 
@@ -108,7 +109,7 @@ export class EvidenciasService {
   }
 
   async validar(usuario: { id: string; tipo: string }, evidenciaId: string, aprovado: boolean, observacao?: string) {
-    if (usuario.tipo !== "GESTOR" && usuario.tipo !== "ADMIN") {
+    if (!isManagerRole(usuario.tipo)) {
       throw new ForbiddenException("Apenas gestores e administradores podem validar evidências.");
     }
 

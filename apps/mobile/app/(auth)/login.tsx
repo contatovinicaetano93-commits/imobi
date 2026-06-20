@@ -5,6 +5,28 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { LoginSchema, type LoginInput } from "@imbobi/schemas";
 import { apiClient } from "@imbobi/core";
+import {
+  isBiometryAvailable,
+  setBiometryEnabled,
+} from "../../lib/biometry";
+import { registerForPushNotifications } from "../../lib/push-notifications";
+
+async function offerBiometrySetup() {
+  const available = await isBiometryAvailable();
+  if (!available) return;
+
+  Alert.alert(
+    "Desbloqueio rápido",
+    "Usar Face ID ou digital para entrar no app nas próximas vezes?",
+    [
+      { text: "Agora não", style: "cancel" },
+      {
+        text: "Ativar",
+        onPress: () => void setBiometryEnabled(true),
+      },
+    ]
+  );
+}
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -20,9 +42,11 @@ export default function LoginScreen() {
       );
       await SecureStore.setItemAsync("accessToken", res.accessToken);
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
+      void registerForPushNotifications();
+      await offerBiometrySetup();
       router.replace("/(tabs)/obras");
-    } catch (e: any) {
-      Alert.alert("Erro de autenticação", e.message ?? "E-mail ou senha inválidos.");
+    } catch (e: unknown) {
+      Alert.alert("Erro de autenticação", e instanceof Error ? e.message : "E-mail ou senha inválidos.");
     }
   };
 
@@ -44,12 +68,17 @@ export default function LoginScreen() {
                 placeholder="E-mail"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoComplete="email"
+                accessibilityLabel="E-mail"
+                accessibilityHint="Digite seu endereço de e-mail"
                 onChangeText={onChange}
                 value={value}
                 editable={!isSubmitting}
                 placeholderTextColor="#9ca3af"
               />
-              {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
+              {errors.email && (
+                <Text style={styles.errorText} accessibilityRole="alert">{errors.email.message}</Text>
+              )}
             </>
           )}
         />
@@ -63,12 +92,16 @@ export default function LoginScreen() {
                 style={[styles.input, errors.senha && styles.inputError]}
                 placeholder="Senha"
                 secureTextEntry
+                autoComplete="password"
+                accessibilityLabel="Senha"
                 onChangeText={onChange}
                 value={value}
                 editable={!isSubmitting}
                 placeholderTextColor="#9ca3af"
               />
-              {errors.senha && <Text style={styles.errorText}>{errors.senha.message}</Text>}
+              {errors.senha && (
+                <Text style={styles.errorText} accessibilityRole="alert">{errors.senha.message}</Text>
+              )}
             </>
           )}
         />
@@ -77,6 +110,8 @@ export default function LoginScreen() {
           style={[styles.button, isSubmitting && styles.buttonLoading]}
           onPress={handleSubmit(onSubmit)}
           disabled={isSubmitting}
+          accessibilityRole="button"
+          accessibilityLabel="Entrar"
         >
           {isSubmitting ? (
             <ActivityIndicator color="#fff" />

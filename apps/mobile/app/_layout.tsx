@@ -4,12 +4,18 @@ import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useRouter, useSegments } from "expo-router";
 import { setOnUnauthorized } from "../lib/api";
+import { initMobileSentry, Sentry } from "../lib/sentry";
+import { authenticateWithBiometry, isBiometryEnabled } from "../lib/biometry";
+import { registerForPushNotifications, addNotificationListeners } from "../lib/push-notifications";
+import { NetworkStatusBanner } from "../hooks/use-network-status";
+
+initMobileSentry();
 
 type RootLayoutProps = {
   children?: React.ReactNode;
 };
 
-export default function RootLayout() {
+function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   const [isLoading, setIsLoading] = useState(true);
@@ -25,9 +31,27 @@ export default function RootLayout() {
     const bootstrapAsync = async () => {
       try {
         const token = await SecureStore.getItemAsync("accessToken");
-        setIsSignedIn(!!token);
+        if (!token) {
+          setIsSignedIn(false);
+          return;
+        }
+
+        const bioEnabled = await isBiometryEnabled();
+        if (bioEnabled) {
+          const ok = await authenticateWithBiometry();
+          if (!ok) {
+            await SecureStore.deleteItemAsync("accessToken");
+            await SecureStore.deleteItemAsync("refreshToken");
+            setIsSignedIn(false);
+            return;
+          }
+        }
+
+        setIsSignedIn(true);
+        void registerForPushNotifications();
       } catch (e) {
-        console.error("Failed to restore token", e);
+        console.error("Failed to restore session", e);
+        setIsSignedIn(false);
       } finally {
         setIsLoading(false);
       }
@@ -37,11 +61,16 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
+    if (!isSignedIn) return;
+    return addNotificationListeners();
+  }, [isSignedIn]);
+
+  useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup  = segments[0] === "(auth)";
-    const inTabsGroup  = segments[0] === "(tabs)";
-    const onWelcome    = segments.length === 0;
+    const inAuthGroup = segments[0] === "(auth)";
+    const inTabsGroup = segments[0] === "(tabs)";
+    const onWelcome = !segments[0] || segments[0] === "index";
 
     if (isSignedIn && (inAuthGroup || onWelcome)) {
       router.replace("/(tabs)/obras");
@@ -59,30 +88,35 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen
-        name="index"
-        options={{
-          gestureEnabled: false,
-          animation: "none",
+    <View style={{ flex: 1 }}>
+      <NetworkStatusBanner />
+      <Stack
+        screenOptions={{
+          headerShown: false,
         }}
-      />
-      <Stack.Screen
-        name="(auth)"
-        options={{
-          gestureEnabled: false,
-        }}
-      />
-      <Stack.Screen
-        name="(tabs)"
-        options={{
-          gestureEnabled: false,
-        }}
-      />
-    </Stack>
+      >
+        <Stack.Screen
+          name="index"
+          options={{
+            gestureEnabled: false,
+            animation: "none",
+          }}
+        />
+        <Stack.Screen
+          name="(auth)"
+          options={{
+            gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            gestureEnabled: false,
+          }}
+        />
+      </Stack>
+    </View>
   );
 }
+
+export default Sentry.wrap(RootLayout);

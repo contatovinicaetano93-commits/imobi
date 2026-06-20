@@ -1,5 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { apiClient, ApiError } from "@imbobi/core";
+import type { UpdatePerfilUsuarioInput } from "@imbobi/schemas";
 
 let _onUnauthorized: (() => void) | null = null;
 
@@ -30,6 +31,11 @@ export const usuariosApi = {
     callApi(async () => {
       const token = await getToken();
       return apiClient.get<UsuarioPerfil>("/api/v1/usuarios/meu-perfil", token ?? undefined);
+    }),
+  atualizarPerfil: (data: UpdatePerfilUsuarioInput) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.patch<UsuarioPerfil>("/usuarios/me", data, token ?? undefined);
     }),
 };
 
@@ -141,4 +147,5 @@ export type UsuarioPerfil = {
   tipo: string;
   kycStatus: string;
   criadoEm: string;
+  avatarUrl?: string | null;
 };

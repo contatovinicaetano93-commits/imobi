@@ -1,17 +1,66 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Queue } from "bull";
 import { InjectQueue } from "@nestjs/bull";
+import { StorageService } from "../storage/storage.service";
+import {
+  criarPreferenciasPadrao,
+  PreferenciasNotificacaoSchema,
+  UpdatePreferenciasNotificacaoSchema,
+  type PreferenciasNotificacao,
+  type UpdatePreferenciasNotificacaoInput,
+  type UpdatePerfilUsuarioInput,
+} from "@imbobi/schemas";
+
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+const AVATAR_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 @Injectable()
 export class UsuariosService {
   constructor(
     private readonly prisma: PrismaService,
-    @InjectQueue("excluir-usuario") private readonly deleteUserQueue: Queue
+    @InjectQueue("excluir-usuario") private readonly deleteUserQueue: Queue,
+    private readonly storage: StorageService,
   ) {}
 
+  private async resolveAvatarUrl(key: string | null | undefined): Promise<string | null> {
+    if (!key) return null;
+    if (key.startsWith("http://") || key.startsWith("https://")) return key;
+    try {
+      return await this.storage.getSignedUrl(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private mapPerfil(usuario: {
+    usuarioId: string;
+    nome: string;
+    cpf: string;
+    email: string;
+    telefone: string;
+    tipo: string;
+    kycStatus: string;
+    avatarUrl: string | null;
+    criadoEm: Date;
+    atualizadoEm: Date;
+  }, avatarSigned: string | null) {
+    return {
+      usuarioId: usuario.usuarioId,
+      nome: usuario.nome,
+      cpf: usuario.cpf,
+      email: usuario.email,
+      telefone: usuario.telefone,
+      tipo: usuario.tipo,
+      kycStatus: usuario.kycStatus,
+      avatarUrl: avatarSigned,
+      criadoEm: usuario.criadoEm,
+      atualizadoEm: usuario.atualizadoEm,
+    };
+  }
+
   async buscarPerfil(usuarioId: string) {
-    return this.prisma.usuario.findUnique({
+    const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId },
       select: {
         usuarioId: true,
@@ -21,14 +70,18 @@ export class UsuariosService {
         telefone: true,
         tipo: true,
         kycStatus: true,
+        avatarUrl: true,
         criadoEm: true,
         atualizadoEm: true,
       },
     });
+    if (!usuario) return null;
+    const avatarSigned = await this.resolveAvatarUrl(usuario.avatarUrl);
+    return this.mapPerfil(usuario, avatarSigned);
   }
 
-  async atualizarPerfil(usuarioId: string, data: { nome?: string; telefone?: string }) {
-    return this.prisma.usuario.update({
+  async atualizarPerfil(usuarioId: string, data: UpdatePerfilUsuarioInput) {
+    const usuario = await this.prisma.usuario.update({
       where: { usuarioId },
       data: {
         nome: data.nome,
@@ -43,10 +96,90 @@ export class UsuariosService {
         telefone: true,
         tipo: true,
         kycStatus: true,
+        avatarUrl: true,
         criadoEm: true,
         atualizadoEm: true,
       },
     });
+    const avatarSigned = await this.resolveAvatarUrl(usuario.avatarUrl);
+    return this.mapPerfil(usuario, avatarSigned);
+  }
+
+  async uploadAvatar(usuarioId: string, fileBuffer: Buffer, mimeType: string) {
+    if (!AVATAR_MIMES.has(mimeType)) {
+      throw new BadRequestException("Formato inválido. Use JPEG, PNG ou WebP.");
+    }
+    if (fileBuffer.length > AVATAR_MAX_BYTES) {
+      throw new BadRequestException("Imagem muito grande. Máximo 5 MB.");
+    }
+
+    const existing = await this.prisma.usuario.findUnique({
+      where: { usuarioId },
+      select: { avatarUrl: true },
+    });
+    if (!existing) throw new NotFoundException("Usuário não encontrado");
+
+    const { key } = await this.storage.uploadAvatar(fileBuffer, mimeType, usuarioId);
+
+    if (existing.avatarUrl && !existing.avatarUrl.startsWith("http")) {
+      await this.storage.delete(existing.avatarUrl).catch(() => null);
+    }
+
+    const usuario = await this.prisma.usuario.update({
+      where: { usuarioId },
+      data: { avatarUrl: key, atualizadoEm: new Date() },
+      select: {
+        usuarioId: true,
+        nome: true,
+        cpf: true,
+        email: true,
+        telefone: true,
+        tipo: true,
+        kycStatus: true,
+        avatarUrl: true,
+        criadoEm: true,
+        atualizadoEm: true,
+      },
+    });
+
+    const avatarSigned = await this.resolveAvatarUrl(usuario.avatarUrl);
+    return this.mapPerfil(usuario, avatarSigned);
+  }
+
+  async obterPreferencias(usuarioId: string): Promise<PreferenciasNotificacao> {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { usuarioId },
+      select: { preferenciasNotificacao: true, deletadoEm: true },
+    });
+    if (!usuario || usuario.deletadoEm) {
+      throw new NotFoundException("Usuário não encontrado");
+    }
+    const padrao = criarPreferenciasPadrao();
+    if (!usuario.preferenciasNotificacao) return padrao;
+    const parsed = PreferenciasNotificacaoSchema.safeParse(usuario.preferenciasNotificacao);
+    if (!parsed.success) return padrao;
+    return { ...padrao, ...parsed.data };
+  }
+
+  async salvarPreferencias(
+    usuarioId: string,
+    patch: UpdatePreferenciasNotificacaoInput
+  ): Promise<PreferenciasNotificacao> {
+    const atual = await this.obterPreferencias(usuarioId);
+    const merged: PreferenciasNotificacao = { ...atual };
+    for (const [tipo, canais] of Object.entries(patch)) {
+      if (!canais) continue;
+      merged[tipo as keyof PreferenciasNotificacao] = {
+        ...merged[tipo as keyof PreferenciasNotificacao],
+        ...canais,
+      };
+    }
+    const validado = PreferenciasNotificacaoSchema.parse(merged);
+    await this.prisma.usuario.update({
+      where: { usuarioId },
+      data: { preferenciasNotificacao: JSON.parse(JSON.stringify(validado)) },
+    });
+    return validado;
   }
 
   /**

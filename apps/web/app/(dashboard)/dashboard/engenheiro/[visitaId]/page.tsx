@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { engenheirosApi, evidenciasApi, type Visita, type EvidenciaDetalhe, obrasApi, type ObraResumo } from "@/lib/api";
+import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
+import { useToast } from "@/hooks/toast-context";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -39,6 +41,7 @@ function getStatusLabel(status: string) {
 export default function VisitDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const [visita, setVisita] = useState<Visita | null>(null);
   const [obra, setObra] = useState<ObraResumo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -142,9 +145,10 @@ export default function VisitDetailPage() {
     try {
       await engenheirosApi.atualizarValidacao(visitaId, { status: "INICIADA" });
       setVisita({ ...visita, status: "INICIADA" });
+      success("Visita iniciada.");
       router.refresh();
     } catch (err) {
-      alert(`Erro: ${err instanceof Error ? err.message : "Desconhecido"}`);
+      toastError(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
       setSubmitting(false);
     }
@@ -156,20 +160,17 @@ export default function VisitDetailPage() {
     try {
       await engenheirosApi.atualizarValidacao(visitaId, { status: "CONCLUIDA" });
       setVisita({ ...visita, status: "CONCLUIDA" });
+      success("Visita concluída.");
       router.refresh();
     } catch (err) {
-      alert(`Erro: ${err instanceof Error ? err.message : "Desconhecido"}`);
+      toastError(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Carregando...</h1>
-      </div>
-    );
+    return <PageSkeleton variant="detail" />;
   }
 
   if (error || !visita) {

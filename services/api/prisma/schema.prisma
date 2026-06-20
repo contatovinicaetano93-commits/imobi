@@ -18,6 +18,7 @@ model Usuario {
   cpf           String   @unique
   email         String   @unique
   telefone      String
+  avatarUrl     String?
   passwordHash  String
   tipo          UsuarioTipo @default(TOMADOR)
   comercialRole ComercialRole?
@@ -31,6 +32,7 @@ model Usuario {
   passwordResetExpires  DateTime?
   bloqueadoEm         DateTime?
   funcoesBloqueadas   String[]  @default([])
+  preferenciasNotificacao Json?
   deletadoEm          DateTime?
   criadoEm            DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt

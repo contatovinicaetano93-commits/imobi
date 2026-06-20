@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { creditoApi, type CreditoResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
+import { EmptyState } from "@/app/(dashboard)/_components/EmptyState";
 
 export const dynamic = 'force-dynamic';
 
@@ -65,24 +66,12 @@ export default async function CreditoPage() {
             <p className="text-sm text-gray-500">Gerencie seus créditos de obra</p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 flex flex-col items-center gap-4">
-          <div className="p-5 bg-gray-50 rounded-2xl">
-            <CreditCard className="w-12 h-12 text-gray-300" />
-          </div>
-          <div className="text-center">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">Nenhum crédito ativo</h2>
-            <p className="text-sm text-gray-400 max-w-xs">
-              Você ainda não tem créditos aprovados. Use o simulador para calcular o melhor crédito.
-            </p>
-          </div>
-          <Link
-            href="/dashboard/simulador"
-            className="mt-2 inline-flex items-center gap-2 bg-[#1B4FD8] hover:bg-blue-800 text-white text-sm font-semibold px-6 py-3 rounded-xl shadow-sm hover:shadow transition-all duration-200"
-          >
-            <BarChart3 className="w-4 h-4" />
-            Simular Crédito
-          </Link>
-        </div>
+        <EmptyState
+          icon={CreditCard}
+          title="Nenhum crédito ativo"
+          description="Você ainda não tem créditos aprovados. Use o simulador para calcular o melhor crédito."
+          action={{ label: "Simular Crédito", href: "/dashboard/simulador", icon: BarChart3 }}
+        />
       </div>
     );
   }

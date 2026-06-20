@@ -23,11 +23,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId: payload.sub },
-      select: { bloqueadoEm: true },
+      select: { bloqueadoEm: true, tipo: true },
     });
     if (!usuario || usuario.bloqueadoEm) {
       throw new UnauthorizedException("Conta bloqueada pelo administrador.");
     }
-    return { id: payload.sub, tipo: normalizeUserRole(payload.role ?? null) };
+    const tipo = normalizeUserRole(usuario.tipo ?? payload.role ?? null);
+    return { id: payload.sub, tipo };
   }
 }

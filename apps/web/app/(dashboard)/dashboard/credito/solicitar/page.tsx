@@ -19,6 +19,7 @@ import {
   type CreditoSimulacao,
 } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
+import { useToast } from "@/hooks/toast-context";
 
 const FINALIDADES = [
   { value: "CONSTRUCAO", label: "Construção" },
@@ -32,6 +33,7 @@ const PRAZOS = [6, 12, 24, 36, 48, 60];
 function SolicitarForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { success: toastSuccess, error: toastError } = useToast();
 
   const paramValor = Number(searchParams.get("valor") ?? 0);
   const paramPrazo = Number(searchParams.get("prazo") ?? 12);
@@ -82,7 +84,12 @@ function SolicitarForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (valor < 5000) { setError("Valor mínimo é R$ 5.000."); return; }
+    if (valor < 5000) {
+      const msg = "Valor mínimo é R$ 5.000.";
+      setError(msg);
+      toastError(msg);
+      return;
+    }
     setSubmitLoading(true);
     setError(null);
     try {
@@ -95,8 +102,11 @@ function SolicitarForm() {
       });
       setCreditoId(result.solicitacaoId);
       setSuccess(true);
+      toastSuccess("Solicitação de crédito enviada com sucesso.");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao enviar solicitação.");
+      const msg = err instanceof Error ? err.message : "Erro ao enviar solicitação.";
+      setError(msg);
+      toastError(msg);
     } finally {
       setSubmitLoading(false);
     }

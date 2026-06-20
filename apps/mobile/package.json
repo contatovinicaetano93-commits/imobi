@@ -34,6 +34,12 @@
     "zod": "^3.23.0",
     "zustand": "^4.5.0",
     "react-native-maps": "1.14.0",
+    "@react-native-community/netinfo": "11.3.1",
+    "@react-native-async-storage/async-storage": "1.23.1",
+    "@sentry/react-native": "~5.24.3",
+    "expo-constants": "~16.0.0",
+    "expo-local-authentication": "~14.0.1",
+    "expo-notifications": "~0.28.0",
     "@react-native-community/slider": "^4.5.0"
   },
   "devDependencies": {

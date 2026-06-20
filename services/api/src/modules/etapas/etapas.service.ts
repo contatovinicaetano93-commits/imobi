@@ -137,7 +137,8 @@ export class EtapasService {
     });
     if (!etapaExistente) throw new NotFoundException("Etapa não encontrada.");
 
-    const isPrivileged = ["GESTOR", "ADMIN", "ENGENHEIRO"].includes(userTipo);
+    const normalizedTipo = userTipo === "GESTOR_FUNDO" ? "GESTOR" : userTipo;
+    const isPrivileged = ["GESTOR", "ADMIN", "ENGENHEIRO"].includes(normalizedTipo);
     if (!isPrivileged) {
       if (etapaExistente.obra.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
       if (status !== "AGUARDANDO_VISTORIA") throw new ForbiddenException("Você só pode submeter a etapa para vistoria.");

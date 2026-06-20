@@ -55,7 +55,12 @@ export class AuthService {
     }
 
     return {
-      usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
+      usuario: {
+        usuarioId: usuario.usuarioId,
+        nome: usuario.nome,
+        email: usuario.email,
+        tipo: normalizeUserRole(usuario.tipo) ?? usuario.tipo,
+      },
       ...await this.gerarTokens(usuario.usuarioId),
     };
   }

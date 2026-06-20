@@ -28,6 +28,8 @@ import {
   Image as ImageIcon,
   Shield,
 } from "lucide-react";
+import { useToast } from "@/hooks/toast-context";
+import "./obra-detail.css";
 
 // ─── Design tokens ──────────────────────────────────────────────────────────
 const NAVY = "#0C1A3D";
@@ -410,6 +412,7 @@ function TabGeralContent({
 
       {/* KPI cards */}
       <div
+        className="obra-stat-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
@@ -610,6 +613,7 @@ function TabEtapasContent({
   onRefresh: () => void;
 }) {
   const router = useRouter();
+  const { success, error: toastError, info } = useToast();
   const etapas = obra.etapas ?? [];
   const [uploadState, setUploadState] = useState<{
     etapaId: string;
@@ -701,18 +705,20 @@ function TabEtapasContent({
       setUploadState((u) =>
         u ? { ...u, submitting: false, success: true } : null
       );
+      success("Evidência enviada com sucesso.");
       setTimeout(() => {
         setUploadState(null);
         onRefresh();
       }, 1500);
     } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro inesperado.";
+      toastError(message);
       setUploadState((u) =>
         u
           ? {
               ...u,
               submitting: false,
-              error:
-                err instanceof Error ? err.message : "Erro inesperado.",
+              error: message,
             }
           : null
       );
@@ -910,7 +916,7 @@ function TabEtapasContent({
                     flexShrink: 0,
                     ...j,
                   }}
-                  onClick={() => alert("Formulário de medição em desenvolvimento.")}
+                  onClick={() => info("Formulário de medição em desenvolvimento.")}
                 >
                   <TrendingUp size={14} />
                   Registrar Medição
@@ -1551,6 +1557,7 @@ function TabDocumentosContent({
         </div>
       ) : (
         <div
+          className="obra-doc-grid"
           style={{
             display: "grid",
             gridTemplateColumns: docAtivo ? "280px 1fr" : "1fr",
@@ -2513,6 +2520,7 @@ export default function ObraDetailPage({
 
       {/* Tabs nav */}
       <div
+        className="obra-tab-bar"
         style={{
           display: "flex",
           gap: 0,

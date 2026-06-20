@@ -15,8 +15,15 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get("overview")
+  @Roles("GESTOR", "GESTOR_FUNDO", "ADMIN")
   overview() {
     return this.adminService.overview();
+  }
+
+  @Get("metricas")
+  @Roles("GESTOR", "GESTOR_FUNDO", "ADMIN")
+  metricas() {
+    return this.adminService.metricas();
   }
 
   @Get("atividades")

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatarBRL } from "@imbobi/core";
+import { useToast } from "@/hooks/toast-context";
 
 interface Props {
   etapaId: string;
@@ -12,26 +13,26 @@ interface Props {
 
 export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const [obs, setObs] = useState("");
   const [isPending, setIsPending] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
 
   const acao = async (aprovado: boolean) => {
-    setErro(null);
     setIsPending(true);
     try {
       const res = await fetch(`/api/etapas/${etapaId}/validar`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ observacao: obs }),
+        body: JSON.stringify({ observacao: obs, aprovado }),
       });
 
       if (!res.ok) {
         const body = await res.json() as { message?: string };
-        setErro(body.message ?? "Erro ao processar.");
+        toastError(body.message ?? "Erro ao processar.");
         return;
       }
 
+      success(aprovado ? "Etapa aprovada com sucesso." : "Etapa rejeitada.");
       router.push(`/dashboard/obras/${obraId}`);
       router.refresh();
     } finally {
@@ -49,8 +50,6 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
         className="w-full border border-gray-200 rounded-xl p-3 text-sm text-gray-700 resize-none outline-none focus:ring-2 focus:ring-blue-500"
         rows={3}
       />
-
-      {erro && <p className="text-sm text-red-600 mt-2">{erro}</p>}
 
       <div className="flex gap-3 mt-4">
         <button

@@ -18,6 +18,7 @@ import { managerApi, type KycPendente } from "@/lib/api";
 import { KycBatchActions } from "@/components/dashboard/KycBatchActions";
 import { GestorSubpageHeader } from "@/app/(dashboard)/_components/gestor/GestorSubpageHeader";
 import { ManagerListBanner } from "@/app/(dashboard)/_components/gestor/ManagerListBanner";
+import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -63,26 +64,8 @@ type StatusFilter = "TODOS" | "PENDENTE" | "EM_VERIFICACAO";
 
 // ── Skeleton ───────────────────────────────────────────────────────────
 
-function SkeletonCard() {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
-      <div className="flex items-start gap-4">
-        <div className="w-5 h-5 bg-gray-200 rounded shrink-0 mt-0.5" />
-        <div className="w-1 h-14 bg-gray-200 rounded-full shrink-0" />
-        <div className="w-11 h-11 rounded-full bg-gray-200 shrink-0" />
-        <div className="flex-1 space-y-3">
-          <div className="h-4 bg-gray-200 rounded w-2/5" />
-          <div className="h-3 bg-gray-200 rounded w-3/5" />
-          <div className="h-3 bg-gray-200 rounded w-1/4" />
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <div className="w-24 h-9 bg-gray-200 rounded-lg" />
-          <div className="w-20 h-9 bg-gray-200 rounded-lg" />
-          <div className="w-20 h-9 bg-gray-200 rounded-lg" />
-        </div>
-      </div>
-    </div>
-  );
+function KycListSkeleton() {
+  return <PageSkeleton variant="list" count={3} showHeader={false} />;
 }
 
 // ── Status Badge ───────────────────────────────────────────────────────
@@ -687,11 +670,7 @@ export default function KycPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <SkeletonCard key={i} />
-          ))}
-        </div>
+        <KycListSkeleton />
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-14 text-center">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

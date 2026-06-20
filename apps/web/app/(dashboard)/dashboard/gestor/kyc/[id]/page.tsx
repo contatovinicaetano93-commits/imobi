@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { managerApi, type KycPendente, type KycAuditEntry } from "@/lib/api";
 import { ApprovalAuditTrail } from "@/components/dashboard/ApprovalAuditTrail";
+import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
+import { useToast } from "@/hooks/toast-context";
 import Image from "next/image";
 
 function getTipoLabel(tipo: string): string {
@@ -22,6 +24,7 @@ function formatDate(date: string) {
 export default function KycDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const [doc, setDoc] = useState<KycPendente | null>(null);
   const [auditLogs, setAuditLogs] = useState<KycAuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,9 +72,10 @@ export default function KycDetailPage() {
     setSubmitting(true);
     try {
       await managerApi.aprovarKyc(docId);
+      success("Documento KYC aprovado.");
       router.push("/dashboard/gestor/kyc");
     } catch (err) {
-      alert(`Erro: ${err instanceof Error ? err.message : "Desconhecido"}`);
+      toastError(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
       setSubmitting(false);
     }
@@ -79,26 +83,23 @@ export default function KycDetailPage() {
 
   const handleReject = async () => {
     if (!rejectionReason.trim()) {
-      alert("Forneça um motivo para a rejeição");
+      toastError("Forneça um motivo para a rejeição");
       return;
     }
     setSubmitting(true);
     try {
       await managerApi.rejeitarKyc(docId, rejectionReason);
+      success("Documento KYC rejeitado.");
       router.push("/dashboard/gestor/kyc");
     } catch (err) {
-      alert(`Erro: ${err instanceof Error ? err.message : "Desconhecido"}`);
+      toastError(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Carregando...</h1>
-      </div>
-    );
+    return <PageSkeleton variant="detail" />;
   }
 
   if (error || !doc) {

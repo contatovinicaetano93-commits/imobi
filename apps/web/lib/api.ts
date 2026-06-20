@@ -221,14 +221,44 @@ export type UsuarioPerfil = {
   telefone: string;
   tipo: string;
   kycStatus: string;
+  avatarUrl?: string | null;
   criadoEm: string;
   atualizadoEm: string;
 };
 
+export type PreferenciaCanal = {
+  email: boolean;
+  push: boolean;
+  inApp: boolean;
+};
+
+export type PreferenciasNotificacao = Record<string, PreferenciaCanal>;
+
 export const usuariosApi = {
   meuPerfil: () => apiFetch<UsuarioPerfil>("/usuarios/meu-perfil"),
-  atualizarPerfil: (data: { nome?: string; telefone?: string }) =>
-    apiFetch<UsuarioPerfil>("/usuarios/meu-perfil", {
+  atualizarPerfil: (data: { nome: string; telefone: string }) =>
+    apiFetch<UsuarioPerfil>("/usuarios/me", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  uploadAvatar: async (file: File): Promise<UsuarioPerfil> => {
+    const form = new FormData();
+    form.append("avatar", file);
+    const res = await fetch("/api/proxy/usuarios/me/avatar", {
+      method: "POST",
+      body: form,
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { message?: string };
+      throw new ApiError(res.status, body.message ?? "Falha no upload do avatar");
+    }
+    return res.json() as Promise<UsuarioPerfil>;
+  },
+  obterPreferencias: () =>
+    apiFetch<PreferenciasNotificacao>("/usuarios/me/preferencias"),
+  salvarPreferencias: (data: PreferenciasNotificacao) =>
+    apiFetch<PreferenciasNotificacao>("/usuarios/me/preferencias", {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
@@ -508,6 +538,25 @@ export type AdminOverview = {
   filaLiberacao: number;
 };
 
+export type CreditoLiberadoMensal = {
+  mes: string;
+  valor: number;
+};
+
+export type ObrasPorStatus = {
+  status: string;
+  quantidade: number;
+};
+
+export type AdminMetricas = {
+  creditoLiberadoPorMes: CreditoLiberadoMensal[];
+  obrasPorStatus: ObrasPorStatus[];
+  taxaAprovacaoEtapas: number;
+  kycPendentes: number;
+  etapasAprovadas: number;
+  etapasRejeitadas: number;
+};
+
 export type AtividadeRecente = {
   id: string;
   tipo: string;
@@ -517,6 +566,7 @@ export type AtividadeRecente = {
 
 export const adminApi = {
   overview: () => apiFetch<AdminOverview>("/admin/overview"),
+  metricas: () => apiFetch<AdminMetricas>("/admin/metricas"),
   atividades: (limit?: number) =>
     apiFetch<AtividadeRecente[]>(`/admin/atividades${limit ? `?limit=${limit}` : ""}`),
 };

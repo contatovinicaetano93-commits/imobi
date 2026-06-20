@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { normalizeRole } from "@/lib/role-permissions";
 import { ToastProvider } from "@/hooks/toast-context";
 import { Toaster } from "@/components/ui/toaster";
+import { SkipLink } from "@/components/SkipLink";
 import {
   Home, HardHat, CreditCard, Calculator, Star, FileCheck2, Bell, User,
   ShieldCheck, BarChart3, Banknote, Settings, LogOut,
@@ -325,6 +326,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             window.location.href = "/login";
           }}
           title="Sair"
+          aria-label="Sair da conta"
           style={{
             background: "none", border: "none", cursor: "pointer",
             color: "rgba(255,255,255,0.28)", flexShrink: 0,
@@ -370,6 +372,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <ToastProvider>
+    <SkipLink />
     <div className="dash-root" style={{ display: "flex", minHeight: "100vh", background: "#EEF3FF", fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
 
       {/* Sidebar desktop */}
@@ -432,6 +435,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Menu"
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-nav-drawer"
           style={{
             background: "none", border: "none", cursor: "pointer",
             width: 44, height: 44, display: "flex", flexDirection: "column",
@@ -459,7 +464,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {mobileOpen && (
         <>
           <div onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(12,26,61,0.6)", zIndex: 150 }} />
-          <div style={{
+          <div id="mobile-nav-drawer" style={{
             position: "fixed", top: 52, left: 0, bottom: 0,
             width: "min(224px, calc(100vw - 48px))",
             background: NAVY, zIndex: 200,
@@ -471,7 +476,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Main */}
-      <main className="dash-main" style={{ flex: 1, overflowX: "hidden" }}>
+      <main id="main-content" className="dash-main" style={{ flex: 1, overflowX: "hidden" }}>
         <div style={{ height: 52 }} className="dash-spacer" />
         {children}
       </main>

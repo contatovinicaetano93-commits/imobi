@@ -103,6 +103,7 @@ export default function UsuariosAdminPage() {
   const [salvando, setSalvando] = useState<string | null>(null);
   const [erroAcao, setErroAcao] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [blockConfirmId, setBlockConfirmId] = useState<string | null>(null);
   const [excluindo, setExcluindo] = useState(false);
   const [apiErro, setApiErro] = useState("");
   const [editForm, setEditForm] = useState<EditarUsuarioForm | null>(null);
@@ -160,9 +161,17 @@ export default function UsuariosAdminPage() {
   }
 
   function toggleBloqueioConta(u: UsuarioAdmin) {
-    const bloquear = !u.bloqueadoEm;
-    if (bloquear && !window.confirm(`Bloquear a conta de ${u.nome}? O usuário perderá o acesso imediatamente.`)) return;
-    patchUsuario(u.id, { bloqueado: bloquear });
+    if (u.bloqueadoEm) {
+      setBlockConfirmId(null);
+      patchUsuario(u.id, { bloqueado: false });
+      return;
+    }
+    if (blockConfirmId !== u.id) {
+      setBlockConfirmId(u.id);
+      return;
+    }
+    setBlockConfirmId(null);
+    patchUsuario(u.id, { bloqueado: true });
   }
 
   function toggleFuncao(u: UsuarioAdmin, funcao: string) {
@@ -594,16 +603,36 @@ export default function UsuariosAdminPage() {
                                     ...jost, display: "inline-flex", alignItems: "center", gap: 6,
                                     fontSize: "0.8rem", fontWeight: 700, cursor: "pointer",
                                     padding: "0.45rem 1rem", borderRadius: 10,
-                                    border: bloqueado ? "1px solid #bbf7d0" : "1px solid #fecaca",
-                                    background: bloqueado ? "#f0fdf4" : "#fef2f2",
+                                    border: bloqueado ? "1px solid #bbf7d0" : blockConfirmId === u.id ? "1px solid #fca5a5" : "1px solid #fecaca",
+                                    background: bloqueado ? "#f0fdf4" : blockConfirmId === u.id ? "#fee2e2" : "#fef2f2",
                                     color: bloqueado ? "#16a34a" : "#dc2626",
                                     opacity: salvando === u.id ? 0.5 : 1,
                                     transition: "all 0.12s",
                                   }}
                                 >
                                   {bloqueado ? <Unlock size={13} /> : <Ban size={13} />}
-                                  {salvando === u.id ? "Salvando..." : bloqueado ? "Desbloquear conta" : "Bloquear conta"}
+                                  {salvando === u.id
+                                    ? "Salvando..."
+                                    : bloqueado
+                                      ? "Desbloquear conta"
+                                      : blockConfirmId === u.id
+                                        ? "Confirmar bloqueio"
+                                        : "Bloquear conta"}
                                 </button>
+                                {blockConfirmId === u.id && !bloqueado && (
+                                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                    <p style={{ ...jost, fontSize: "0.75rem", color: "#dc2626", margin: 0 }}>
+                                      {u.nome} perderá o acesso imediatamente.
+                                    </p>
+                                    <button
+                                      type="button"
+                                      onClick={() => setBlockConfirmId(null)}
+                                      style={{ ...jost, fontSize: "0.75rem", color: "rgba(12,26,61,0.55)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
+                                    >
+                                      Cancelar
+                                    </button>
+                                  </div>
+                                )}
                                 <p style={{ ...jost, fontSize: "0.7rem", color: "rgba(12,26,61,0.35)", lineHeight: 1.5 }}>
                                   Bloquear a conta derruba as sessões ativas e impede novo login até a liberação.
                                 </p>

@@ -62,6 +62,15 @@ export const UpdateUsuarioSchema = CadastroUsuarioSchema.omit({
   cpf: true,
 }).partial();
 
+/** Campos editáveis pelo usuário em /dashboard/perfil */
+export const UpdatePerfilUsuarioSchema = z.object({
+  nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres").max(120),
+  telefone: z
+    .string()
+    .transform((v) => v.replace(/\D/g, ""))
+    .pipe(z.string().regex(/^\d{10,11}$/, "Telefone inválido")),
+});
+
 // ── Fiscalização (Admin) ────────────────────────────────────────────
 // Funções de painel que o admin pode liberar/bloquear por usuário.
 export const FUNCOES_PAINEL = [
@@ -106,6 +115,7 @@ export type KycStatus = z.infer<typeof KycStatusEnum>;
 export type CadastroUsuarioInput = z.infer<typeof CadastroUsuarioSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
 export type UpdateUsuarioInput = z.infer<typeof UpdateUsuarioSchema>;
+export type UpdatePerfilUsuarioInput = z.infer<typeof UpdatePerfilUsuarioSchema>;
 export type EsqueceuSenhaInput = z.infer<typeof EsqueceuSenhaSchema>;
 export type RedefinirSenhaInput = z.infer<typeof RedefinirSenhaSchema>;
 export type FuncaoPainel = z.infer<typeof FuncaoPainelEnum>;

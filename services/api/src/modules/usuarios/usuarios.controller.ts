@@ -1,8 +1,18 @@
-import { Controller, Get, Patch, Post, Delete, UseGuards, Body, Res } from "@nestjs/common";
+import { Controller, Get, Patch, Post, Delete, UseGuards, Body, Res, Req, BadRequestException } from "@nestjs/common";
+import type { FastifyRequest } from "fastify";
 import { FastifyReply } from "fastify";
 import { UsuariosService } from "./usuarios.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import {
+  UpdatePreferenciasNotificacaoSchema,
+  UpdatePerfilUsuarioSchema,
+} from "@imbobi/schemas";
+import type {
+  UpdatePreferenciasNotificacaoInput,
+  UpdatePerfilUsuarioInput,
+} from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
 @Controller("usuarios")
@@ -14,12 +24,63 @@ export class UsuariosController {
     return this.usuarios.buscarPerfil(u.id);
   }
 
+  @Get("me")
+  async me(@UsuarioAtual() u: IUsuario) {
+    return this.usuarios.buscarPerfil(u.id);
+  }
+
   @Patch("meu-perfil")
+  async atualizarPerfilLegacy(
+    @UsuarioAtual() u: IUsuario,
+    @Body(new ZodPipe(UpdatePerfilUsuarioSchema)) body: UpdatePerfilUsuarioInput
+  ) {
+    return this.usuarios.atualizarPerfil(u.id, body);
+  }
+
+  @Patch("me")
   async atualizarPerfil(
     @UsuarioAtual() u: IUsuario,
-    @Body() data: { nome?: string; telefone?: string }
+    @Body(new ZodPipe(UpdatePerfilUsuarioSchema)) body: UpdatePerfilUsuarioInput
   ) {
-    return this.usuarios.atualizarPerfil(u.id, data);
+    return this.usuarios.atualizarPerfil(u.id, body);
+  }
+
+  @Post("me/avatar")
+  async uploadAvatar(@UsuarioAtual() u: IUsuario, @Req() req: FastifyRequest) {
+    if (!req.isMultipart()) {
+      throw new BadRequestException("Envio deve ser multipart/form-data.");
+    }
+
+    let fileBuffer: Buffer | null = null;
+    let mimeType = "image/jpeg";
+
+    for await (const part of req.parts()) {
+      if (part.type === "file" && (part.fieldname === "avatar" || part.fieldname === "file")) {
+        const chunks: Buffer[] = [];
+        for await (const chunk of part.file) chunks.push(chunk);
+        fileBuffer = Buffer.concat(chunks);
+        mimeType = part.mimetype;
+      }
+    }
+
+    if (!fileBuffer || fileBuffer.length === 0) {
+      throw new BadRequestException("Arquivo de avatar não enviado.");
+    }
+
+    return this.usuarios.uploadAvatar(u.id, fileBuffer, mimeType);
+  }
+
+  @Get("me/preferencias")
+  async obterPreferencias(@UsuarioAtual() u: IUsuario) {
+    return this.usuarios.obterPreferencias(u.id);
+  }
+
+  @Patch("me/preferencias")
+  async salvarPreferencias(
+    @UsuarioAtual() u: IUsuario,
+    @Body(new ZodPipe(UpdatePreferenciasNotificacaoSchema)) body: UpdatePreferenciasNotificacaoInput
+  ) {
+    return this.usuarios.salvarPreferencias(u.id, body);
   }
 
   /**

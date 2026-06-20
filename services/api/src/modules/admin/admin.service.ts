@@ -23,6 +23,25 @@ export interface AdminOverview {
   filaLiberacao: number;
 }
 
+export interface CreditoLiberadoMensal {
+  mes: string;
+  valor: number;
+}
+
+export interface ObrasPorStatus {
+  status: string;
+  quantidade: number;
+}
+
+export interface AdminMetricas {
+  creditoLiberadoPorMes: CreditoLiberadoMensal[];
+  obrasPorStatus: ObrasPorStatus[];
+  taxaAprovacaoEtapas: number;
+  kycPendentes: number;
+  etapasAprovadas: number;
+  etapasRejeitadas: number;
+}
+
 export interface Atividade {
   id: string;
   tipo: string;
@@ -127,6 +146,79 @@ export class AdminService {
     );
 
     return eventos.slice(0, limit);
+  }
+
+  async metricas(): Promise<AdminMetricas> {
+    const inicio = new Date();
+    inicio.setMonth(inicio.getMonth() - 11);
+    inicio.setDate(1);
+    inicio.setHours(0, 0, 0, 0);
+
+    const [
+      liberacoes,
+      obrasPorStatusRaw,
+      etapasAprovadas,
+      etapasRejeitadas,
+      kycPendentes,
+    ] = await Promise.all([
+      this.prisma.liberacaoParcela.findMany({
+        where: {
+          status: "CONCLUIDA",
+          processadoEm: { gte: inicio },
+        },
+        select: { valor: true, processadoEm: true },
+      }),
+      this.prisma.obra.groupBy({
+        by: ["status"],
+        _count: { obraId: true },
+      }),
+      this.prisma.etapaObra.count({ where: { status: "CONCLUIDA" } }),
+      this.prisma.etapaObra.count({ where: { status: "REPROVADA" } }),
+      this.prisma.kycDocumento.count({ where: { status: "PENDENTE" } }),
+    ]);
+
+    const mesesPt = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const buckets = new Map<string, number>();
+
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(inicio);
+      d.setMonth(inicio.getMonth() + i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      buckets.set(key, 0);
+    }
+
+    for (const lib of liberacoes) {
+      if (!lib.processadoEm) continue;
+      const d = lib.processadoEm;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (buckets.has(key)) {
+        buckets.set(key, (buckets.get(key) ?? 0) + Number(lib.valor));
+      }
+    }
+
+    const creditoLiberadoPorMes = Array.from(buckets.entries()).map(([key, valor]) => {
+      const [year, month] = key.split("-");
+      const mes = `${mesesPt[Number(month) - 1]}/${String(year).slice(2)}`;
+      return { mes, valor };
+    });
+
+    const obrasPorStatus = obrasPorStatusRaw.map((row) => ({
+      status: row.status,
+      quantidade: row._count.obraId,
+    }));
+
+    const totalDecididas = etapasAprovadas + etapasRejeitadas;
+    const taxaAprovacaoEtapas =
+      totalDecididas > 0 ? Math.round((etapasAprovadas / totalDecididas) * 1000) / 10 : 0;
+
+    return {
+      creditoLiberadoPorMes,
+      obrasPorStatus,
+      taxaAprovacaoEtapas,
+      kycPendentes,
+      etapasAprovadas,
+      etapasRejeitadas,
+    };
   }
 
   async listarUsuarios() {

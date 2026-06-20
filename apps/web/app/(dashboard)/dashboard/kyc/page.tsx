@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { kycApi, type KycStatus, type KycDocumento } from "@/lib/api";
 import { FileText, CheckCircle2, XCircle, Clock, Upload, AlertCircle } from "lucide-react";
+import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
+import { useToast } from "@/hooks/toast-context";
 
 const BADGE: Record<string, { label: string; cls: string }> = {
   PENDENTE:       { label: "Pendente",       cls: "bg-yellow-100 text-yellow-800" },
@@ -19,6 +21,7 @@ const DOC_TIPOS = [
 ];
 
 export default function KycPage() {
+  const { success, error: toastError } = useToast();
   const [status, setStatus] = useState<KycStatus | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +46,11 @@ export default function KycPage() {
       const mockUrl = `https://s3.example.com/kyc/${tipo}-${Date.now()}.jpg`;
       await kycApi.uploadDocumento(tipo, mockUrl);
       await loadStatus();
+      success("Documento enviado com sucesso.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao fazer upload");
+      const msg = err instanceof Error ? err.message : "Erro ao fazer upload";
+      setError(msg);
+      toastError(msg);
     } finally {
       setUploading(null);
     }
@@ -52,11 +58,8 @@ export default function KycPage() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Verificação de Identidade</h1>
-        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-          <p className="text-gray-400 text-sm">Carregando...</p>
-        </div>
+      <div className="max-w-2xl">
+        <PageSkeleton variant="cards" count={4} />
       </div>
     );
   }

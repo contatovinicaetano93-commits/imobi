@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
+import NetInfo from "@react-native-community/netinfo";
 import { obrasApi, type Obra } from "../../../lib/api";
+import { cacheObrasList, getCachedObrasList } from "../../../lib/offline-cache";
 
 const STATUS_LABEL: Record<string, string> = {
   PLANEJAMENTO: "Planejamento",
@@ -17,14 +19,39 @@ export default function ObrasScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fromCache, setFromCache] = useState(false);
 
   const carregar = async () => {
+    const net = await NetInfo.fetch();
+    const online = net.isConnected && net.isInternetReachable !== false;
+
+    if (!online) {
+      const cached = await getCachedObrasList();
+      if (cached) {
+        setObras(cached);
+        setFromCache(true);
+        setError(null);
+        return;
+      }
+      setError("Sem conexão. Nenhum dado em cache.");
+      return;
+    }
+
     try {
       const data = await obrasApi.listar();
       setObras(data);
+      setFromCache(false);
       setError(null);
-    } catch (e: any) {
-      setError(e.message ?? "Erro ao carregar obras");
+      await cacheObrasList(data);
+    } catch (e: unknown) {
+      const cached = await getCachedObrasList();
+      if (cached) {
+        setObras(cached);
+        setFromCache(true);
+        setError(null);
+      } else {
+        setError(e instanceof Error ? e.message : "Erro ao carregar obras");
+      }
     }
   };
 
@@ -35,6 +62,9 @@ export default function ObrasScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Minhas Obras</Text>
+      {fromCache && !error && (
+        <Text style={styles.cacheHint}>Exibindo dados salvos offline</Text>
+      )}
       {error && <Text style={styles.error}>{error}</Text>}
       <FlatList
         data={obras}
@@ -71,6 +101,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafb", padding: 16, paddingTop: 56 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   title: { fontSize: 22, fontWeight: "700", color: "#111827", marginBottom: 16 },
+  cacheHint: { color: "#92400e", fontSize: 12, marginBottom: 8, fontWeight: "500" },
   error: { color: "#dc2626", fontSize: 14, marginBottom: 12 },
   empty: { alignItems: "center", paddingVertical: 48 },
   emptyText: { color: "#9ca3af", fontSize: 14 },

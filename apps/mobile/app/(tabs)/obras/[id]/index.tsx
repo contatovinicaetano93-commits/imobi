@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import NetInfo from "@react-native-community/netinfo";
 import { formatarBRL } from "@imbobi/core";
 import { obrasApi, type ObraDetalhe } from "../../../../lib/api";
+import { cacheObraDetail, getCachedObraDetail } from "../../../../lib/offline-cache";
 
 const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
   PLANEJADA:           { bg: "#f3f4f6", text: "#6b7280" },
@@ -18,13 +20,47 @@ export default function ObraDetailScreen() {
   const [obra, setObra] = useState<ObraDetalhe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fromCache, setFromCache] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    obrasApi.buscar(id)
-      .then(setObra)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+
+    async function load() {
+      const net = await NetInfo.fetch();
+      const online = net.isConnected && net.isInternetReachable !== false;
+
+      if (!online) {
+        const cached = await getCachedObraDetail(id);
+        if (cached) {
+          setObra(cached);
+          setFromCache(true);
+        } else {
+          setError("Sem conexão. Obra não disponível offline.");
+        }
+        setLoading(false);
+        return;
+      }
+
+      obrasApi
+        .buscar(id)
+        .then(async (data) => {
+          setObra(data);
+          setFromCache(false);
+          await cacheObraDetail(id, data);
+        })
+        .catch(async (e) => {
+          const cached = await getCachedObraDetail(id);
+          if (cached) {
+            setObra(cached);
+            setFromCache(true);
+          } else {
+            setError(e instanceof Error ? e.message : "Erro ao carregar obra");
+          }
+        })
+        .finally(() => setLoading(false));
+    }
+
+    void load();
   }, [id]);
 
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
@@ -42,6 +78,7 @@ export default function ObraDetailScreen() {
       </TouchableOpacity>
 
       <Text style={styles.title}>{obra.nome}</Text>
+      {fromCache && <Text style={styles.cacheHint}>Dados salvos offline</Text>}
       <Text style={styles.sub}>{obra.endereco}</Text>
 
       {credito && (
@@ -118,6 +155,7 @@ const styles = StyleSheet.create({
   back: { marginBottom: 16 },
   backText: { color: "#2563eb", fontSize: 15 },
   title: { fontSize: 22, fontWeight: "700", color: "#111827", marginBottom: 4 },
+  cacheHint: { fontSize: 12, color: "#92400e", marginBottom: 4, fontWeight: "500" },
   sub: { fontSize: 13, color: "#6b7280", marginBottom: 16 },
   creditoCard: { backgroundColor: "#eff6ff", borderRadius: 16, padding: 16, marginBottom: 16 },
   creditoRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },

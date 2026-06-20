@@ -84,18 +84,44 @@ export declare const UpdateUsuarioSchema: z.ZodObject<{
     consentidoKyc?: boolean | undefined;
     consentidoMarketing?: boolean | undefined;
 }>;
+/** Campos editáveis pelo usuário em /dashboard/perfil */
+export declare const UpdatePerfilUsuarioSchema: z.ZodObject<{
+    nome: z.ZodString;
+    telefone: z.ZodPipeline<z.ZodEffects<z.ZodString, string, string>, z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    nome: string;
+    telefone: string;
+}, {
+    nome: string;
+    telefone: string;
+}>;
 export declare const FUNCOES_PAINEL: readonly ["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"];
 export declare const FuncaoPainelEnum: z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>;
 export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
+    nome: z.ZodOptional<z.ZodString>;
+    email: z.ZodOptional<z.ZodString>;
+    telefone: z.ZodOptional<z.ZodString>;
+    kycStatus: z.ZodOptional<z.ZodEnum<["PENDENTE", "EM_VERIFICACAO", "APROVADO", "REJEITADO"]>>;
+    novaSenha: z.ZodOptional<z.ZodString>;
     tipo: z.ZodOptional<z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"]>>;
     bloqueado: z.ZodOptional<z.ZodBoolean>;
     funcoesBloqueadas: z.ZodOptional<z.ZodArray<z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>, "many">>;
 }, "strip", z.ZodTypeAny, {
     tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
+    nome?: string | undefined;
+    email?: string | undefined;
+    telefone?: string | undefined;
+    novaSenha?: string | undefined;
+    kycStatus?: "PENDENTE" | "EM_VERIFICACAO" | "APROVADO" | "REJEITADO" | undefined;
     bloqueado?: boolean | undefined;
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }, {
     tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
+    nome?: string | undefined;
+    email?: string | undefined;
+    telefone?: string | undefined;
+    novaSenha?: string | undefined;
+    kycStatus?: "PENDENTE" | "EM_VERIFICACAO" | "APROVADO" | "REJEITADO" | undefined;
     bloqueado?: boolean | undefined;
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }>;
@@ -104,6 +130,7 @@ export type KycStatus = z.infer<typeof KycStatusEnum>;
 export type CadastroUsuarioInput = z.infer<typeof CadastroUsuarioSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
 export type UpdateUsuarioInput = z.infer<typeof UpdateUsuarioSchema>;
+export type UpdatePerfilUsuarioInput = z.infer<typeof UpdatePerfilUsuarioSchema>;
 export type EsqueceuSenhaInput = z.infer<typeof EsqueceuSenhaSchema>;
 export type RedefinirSenhaInput = z.infer<typeof RedefinirSenhaSchema>;
 export type FuncaoPainel = z.infer<typeof FuncaoPainelEnum>;

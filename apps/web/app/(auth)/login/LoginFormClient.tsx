@@ -42,28 +42,34 @@ export default function LoginFormClient({ next }: Props) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <label style={labelStyle}>E-mail</label>
+        <label htmlFor="login-email" style={labelStyle}>E-mail</label>
         <input
+          id="login-email"
           {...register("email")}
           type="email"
           autoComplete="email"
           placeholder="seu@email.com.br"
+          aria-invalid={errors.email ? "true" : "false"}
+          aria-describedby={errors.email ? "login-email-error" : undefined}
           style={errors.email ? inputErrorStyle : inputStyle}
         />
-        {errors.email && <p style={fieldErrorStyle}>{errors.email.message}</p>}
+        {errors.email && <p id="login-email-error" role="alert" style={fieldErrorStyle}>{errors.email.message}</p>}
       </div>
 
       <div>
-        <label style={labelStyle}>Senha</label>
+        <label htmlFor="login-senha" style={labelStyle}>Senha</label>
         <PasswordInput
+          id="login-senha"
           {...register("senha")}
           autoComplete="current-password"
           placeholder="••••••••"
           hasError={!!errors.senha}
+          aria-invalid={errors.senha ? "true" : "false"}
+          aria-describedby={errors.senha ? "login-senha-error" : undefined}
           style={inputStyle}
           errorStyle={inputErrorStyle}
         />
-        {errors.senha && <p style={fieldErrorStyle}>{errors.senha.message}</p>}
+        {errors.senha && <p id="login-senha-error" role="alert" style={fieldErrorStyle}>{errors.senha.message}</p>}
       </div>
 
       <div style={{ textAlign: "right" }}>

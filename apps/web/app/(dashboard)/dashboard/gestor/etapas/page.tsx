@@ -10,23 +10,8 @@ import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions"
 import { AdvancedFilters, type FilterState } from "@/components/dashboard/AdvancedFilters";
 import { GestorSubpageHeader } from "@/app/(dashboard)/_components/gestor/GestorSubpageHeader";
 import { ManagerListBanner } from "@/app/(dashboard)/_components/gestor/ManagerListBanner";
+import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
 import Link from "next/link";
-
-function EtapaSkeleton() {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
-      <div className="flex gap-4">
-        <div className="w-5 h-5 bg-gray-200 rounded shrink-0" />
-        <div className="w-1.5 h-20 bg-gray-200 rounded-full shrink-0" />
-        <div className="flex-1 space-y-3">
-          <div className="h-4 bg-gray-200 rounded w-1/2" />
-          <div className="h-3 bg-gray-200 rounded w-1/3" />
-          <div className="h-3 bg-gray-200 rounded w-2/3" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -102,11 +87,7 @@ function EtapasContent() {
     return (
       <div className="space-y-6">
         <GestorSubpageHeader title="Etapas Pendentes" subtitle="Carregando fila de aprovação..." />
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <EtapaSkeleton key={i} />
-          ))}
-        </div>
+        <PageSkeleton variant="timeline" count={3} showHeader={false} />
       </div>
     );
   }
@@ -276,7 +257,7 @@ function EtapasContent() {
                   isSelected ? "border-blue-300 bg-blue-50" : "border-gray-100 hover:shadow-md"
                 }`}
               >
-                <div className="flex items-start gap-4">
+                <div className="flex flex-col sm:flex-row items-start gap-4">
                   {/* Checkbox */}
                   <input
                     type="checkbox"
@@ -331,7 +312,7 @@ function EtapasContent() {
                   </div>
 
                   {/* Ações */}
-                  <div className="shrink-0 flex gap-2">
+                  <div className="shrink-0 flex gap-2 w-full sm:w-auto">
                     <Link
                       href={`/dashboard/gestor/etapas/${etapa.etapaId}`}
                       className="bg-[#1B4FD8] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors"

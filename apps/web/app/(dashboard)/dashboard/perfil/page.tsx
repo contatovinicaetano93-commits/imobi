@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { usuariosApi } from "@/lib/api";
 import { formatarCPF, formatarTelefone } from "@imbobi/core";
 import { PerfilForm } from "./perfil-form";
+import { PerfilAvatar } from "./perfil-avatar";
 import { AlertCircle } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
@@ -17,9 +18,14 @@ const KYC_STATUS_MAP: Record<string, { label: string; cor: string; icone: string
 
 const USER_TYPE_MAP: Record<string, string> = {
   TOMADOR:     "Tomador de Crédito",
+  CONSTRUTOR:  "Construtor",
+  GESTOR:      "Gestor de Fundo",
   GESTOR_OBRA: "Gestor de Obra",
+  GESTOR_FUNDO:"Gestor de Fundo",
   ADMIN:       "Administrador",
   PARCEIRO:    "Parceiro",
+  COMERCIAL:   "Comercial",
+  ENGENHEIRO:  "Engenheiro",
 };
 
 export default async function PerfilPage() {
@@ -56,9 +62,7 @@ export default async function PerfilPage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#EEF3FF] flex items-center justify-center text-xl font-bold text-[#1B4FD8] shrink-0">
-              {usuario.nome.charAt(0).toUpperCase()}
-            </div>
+            <PerfilAvatar nome={usuario.nome} avatarUrl={usuario.avatarUrl} />
             <div>
               <h2 className="text-xl font-bold text-gray-900">{usuario.nome}</h2>
               <p className="text-sm text-gray-500 mt-0.5">{USER_TYPE_MAP[usuario.tipo] ?? usuario.tipo}</p>
@@ -91,9 +95,10 @@ export default async function PerfilPage() {
         </div>
       )}
 
-      {/* Dados pessoais */}
+      {/* Dados pessoais — edição inline */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-base font-bold text-gray-900 mb-5">Informações Pessoais</h2>
+        <h2 className="text-base font-bold text-gray-900 mb-1">Informações pessoais</h2>
+        <p className="text-sm text-gray-500 mb-5">Edite seu nome e telefone. E-mail e CPF não podem ser alterados aqui.</p>
         <PerfilForm usuario={usuario} />
       </div>
 

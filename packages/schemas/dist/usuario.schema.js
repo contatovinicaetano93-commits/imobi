@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AtualizarUsuarioAdminSchema = exports.FuncaoPainelEnum = exports.FUNCOES_PAINEL = exports.UpdateUsuarioSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
+exports.AtualizarUsuarioAdminSchema = exports.FuncaoPainelEnum = exports.FUNCOES_PAINEL = exports.UpdatePerfilUsuarioSchema = exports.UpdateUsuarioSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
 const zod_1 = require("zod");
 exports.TipoUsuarioEnum = zod_1.z.enum([
     "TOMADOR",
@@ -57,6 +57,14 @@ exports.UpdateUsuarioSchema = exports.CadastroUsuarioSchema.omit({
     senha: true,
     cpf: true,
 }).partial();
+/** Campos editáveis pelo usuário em /dashboard/perfil */
+exports.UpdatePerfilUsuarioSchema = zod_1.z.object({
+    nome: zod_1.z.string().min(3, "Nome deve ter pelo menos 3 caracteres").max(120),
+    telefone: zod_1.z
+        .string()
+        .transform((v) => v.replace(/\D/g, ""))
+        .pipe(zod_1.z.string().regex(/^\d{10,11}$/, "Telefone inválido")),
+});
 // ── Fiscalização (Admin) ────────────────────────────────────────────
 // Funções de painel que o admin pode liberar/bloquear por usuário.
 exports.FUNCOES_PAINEL = [
@@ -76,6 +84,19 @@ exports.FUNCOES_PAINEL = [
 ];
 exports.FuncaoPainelEnum = zod_1.z.enum(exports.FUNCOES_PAINEL);
 exports.AtualizarUsuarioAdminSchema = zod_1.z.object({
+    nome: zod_1.z.string().min(3).max(120).optional(),
+    email: zod_1.z.string().email().optional(),
+    telefone: zod_1.z
+        .string()
+        .regex(/^\d{10,11}$/, "Telefone inválido")
+        .optional(),
+    kycStatus: exports.KycStatusEnum.optional(),
+    novaSenha: zod_1.z
+        .string()
+        .min(8, "Mínimo 8 caracteres")
+        .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
+        .regex(/[0-9]/, "Deve conter ao menos um número")
+        .optional(),
     tipo: exports.TipoUsuarioEnum.optional(),
     bloqueado: zod_1.z.boolean().optional(),
     funcoesBloqueadas: zod_1.z.array(exports.FuncaoPainelEnum).optional(),

@@ -3,35 +3,36 @@ import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { usuariosApi, authApi, type UsuarioPerfil } from "../../../lib/api";
+import { EditPerfilModal } from "../../../components/EditPerfilModal";
+import { isBiometryAvailable, isBiometryEnabled, setBiometryEnabled } from "../../../lib/biometry";
 
 export default function PerfilScreen() {
   const router = useRouter();
   const [usuario, setUsuario] = useState<UsuarioPerfil | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [bioEnabled, setBioEnabled] = useState(false);
 
   useEffect(() => {
     const carregarPerfil = async () => {
       try {
         const data = await usuariosApi.obterPerfil();
         setUsuario(data);
-      } catch (e: any) {
+        setBioEnabled(await isBiometryEnabled());
+      } catch (e) {
         console.error("Erro ao carregar perfil:", e);
       } finally {
         setLoading(false);
       }
     };
 
-    carregarPerfil();
+    void carregarPerfil();
   }, []);
 
   const handleLogout = async () => {
     Alert.alert("Sair", "Tem certeza que deseja sair da sua conta?", [
-      {
-        text: "Cancelar",
-        onPress: () => {},
-        style: "cancel",
-      },
+      { text: "Cancelar", style: "cancel" },
       {
         text: "Sair",
         onPress: async () => {
@@ -53,6 +54,17 @@ export default function PerfilScreen() {
       },
     ]);
   };
+
+  async function toggleBiometry() {
+    const available = await isBiometryAvailable();
+    if (!available) {
+      Alert.alert("Indisponível", "Biometria não está configurada neste dispositivo.");
+      return;
+    }
+    const next = !bioEnabled;
+    await setBiometryEnabled(next);
+    setBioEnabled(next);
+  }
 
   if (loading) {
     return (
@@ -77,6 +89,15 @@ export default function PerfilScreen() {
 
             <Text style={styles.name}>{usuario.nome}</Text>
             <Text style={styles.email}>{usuario.email}</Text>
+
+            <TouchableOpacity
+              style={styles.editBtn}
+              onPress={() => setEditOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Editar perfil"
+            >
+              <Text style={styles.editBtnText}>Editar nome e telefone</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.section}>
@@ -145,9 +166,22 @@ export default function PerfilScreen() {
             </View>
           </View>
 
+          <TouchableOpacity style={styles.bioBtn} onPress={toggleBiometry}>
+            <Text style={styles.bioBtnText}>
+              {bioEnabled ? "Desativar Face ID / Digital" : "Ativar Face ID / Digital"}
+            </Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} disabled={loggingOut}>
             <Text style={styles.logoutBtnText}>{loggingOut ? "Saindo..." : "Sair da Conta"}</Text>
           </TouchableOpacity>
+
+          <EditPerfilModal
+            visible={editOpen}
+            usuario={usuario}
+            onClose={() => setEditOpen(false)}
+            onSaved={setUsuario}
+          />
         </>
       )}
     </ScrollView>
@@ -165,6 +199,8 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 32, fontWeight: "700", color: "#fff" },
   name: { fontSize: 20, fontWeight: "700", color: "#111827" },
   email: { fontSize: 14, color: "#6b7280", marginTop: 4 },
+  editBtn: { marginTop: 16, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, backgroundColor: "#ecfdf5" },
+  editBtnText: { color: "#16a34a", fontWeight: "600", fontSize: 14 },
   section: { marginBottom: 24 },
   sectionTitle: { fontSize: 16, fontWeight: "600", color: "#111827", marginBottom: 12 },
   infoRow: { backgroundColor: "#fff", borderRadius: 12, padding: 14, marginBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
@@ -179,6 +215,8 @@ const styles = StyleSheet.create({
   badgeTextAprovado: { color: "#166534" },
   badgeTextAnalise: { color: "#1d4ed8" },
   badgeTextPendente: { color: "#6b7280" },
-  logoutBtn: { backgroundColor: "#ef4444", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 16 },
+  bioBtn: { backgroundColor: "#fff", borderRadius: 14, padding: 16, alignItems: "center", marginBottom: 12, borderWidth: 1, borderColor: "#e5e7eb" },
+  bioBtnText: { color: "#374151", fontSize: 15, fontWeight: "600" },
+  logoutBtn: { backgroundColor: "#ef4444", borderRadius: 14, padding: 16, alignItems: "center" },
   logoutBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });

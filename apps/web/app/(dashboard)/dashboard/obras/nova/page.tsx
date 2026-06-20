@@ -148,7 +148,7 @@ export default function NovaObraPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Área (m²)</label>
               <input
@@ -178,8 +178,8 @@ export default function NovaObraPage() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
           <h2 className="text-lg font-semibold text-gray-900">Endereço</h2>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="sm:col-span-2">
               <label className={labelCls}>Logradouro</label>
               <input
                 type="text"
@@ -227,8 +227,8 @@ export default function NovaObraPage() {
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="sm:col-span-2">
               <label className={labelCls}>Cidade</label>
               <input
                 type="text"
@@ -283,7 +283,7 @@ export default function NovaObraPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Latitude</label>
               <input

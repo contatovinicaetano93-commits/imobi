@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { managerApi, type EtapaDetalhe, type EtapaAuditEntry, evidenciasApi } from "@/lib/api";
 import { GpsValidationStatus } from "@/components/dashboard/GpsValidationStatus";
 import { ApprovalAuditTrail } from "@/components/dashboard/ApprovalAuditTrail";
+import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
+import { useToast } from "@/hooks/toast-context";
 import Image from "next/image";
 
 function brl(v: number) {
@@ -18,6 +20,7 @@ function formatDate(date: string) {
 export default function EtapaDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const [etapa, setEtapa] = useState<EtapaDetalhe | null>(null);
   const [gpsData, setGpsData] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<EtapaAuditEntry[]>([]);
@@ -70,9 +73,10 @@ export default function EtapaDetailPage() {
     setSubmitting(true);
     try {
       await managerApi.aprovarEtapa(etapaId);
+      success("Etapa aprovada com sucesso.");
       router.push("/dashboard/gestor/etapas");
     } catch (err) {
-      alert(`Erro: ${err instanceof Error ? err.message : "Desconhecido"}`);
+      toastError(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
       setSubmitting(false);
     }
@@ -80,26 +84,23 @@ export default function EtapaDetailPage() {
 
   const handleReject = async () => {
     if (!rejectionReason.trim()) {
-      alert("Forneça um motivo para a rejeição");
+      toastError("Forneça um motivo para a rejeição");
       return;
     }
     setSubmitting(true);
     try {
       await managerApi.rejeitarEtapa(etapaId, rejectionReason);
+      success("Etapa rejeitada.");
       router.push("/dashboard/gestor/etapas");
     } catch (err) {
-      alert(`Erro: ${err instanceof Error ? err.message : "Desconhecido"}`);
+      toastError(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Carregando...</h1>
-      </div>
-    );
+    return <PageSkeleton variant="detail" />;
   }
 
   if (error || !etapa) {
