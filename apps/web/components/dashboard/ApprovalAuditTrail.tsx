@@ -126,7 +126,7 @@ export function ApprovalAuditTrail({
             const badgeColor = getStatusBadgeColor(log.acaoTipo);
             const icon = getStatusIcon(log.acaoTipo);
             const label = getStatusLabel(log.acaoTipo);
-            const isLastItem = idx === auditLogs.length - 1;
+            const _isLastItem = idx === auditLogs.length - 1;
             const observacao =
               "observacoes" in log
                 ? log.observacoes

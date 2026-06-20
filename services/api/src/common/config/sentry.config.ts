@@ -28,7 +28,7 @@ export function initSentry(): void {
     // Attachment capture
     attachStacktrace: true,
     // Request filtering
-    beforeSend(event, hint) {
+    beforeSend(event, _hint) {
       // Filter out health check requests
       if (event.request?.url?.includes("/health")) {
         return null;

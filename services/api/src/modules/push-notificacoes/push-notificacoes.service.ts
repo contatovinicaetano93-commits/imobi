@@ -32,7 +32,7 @@ export class PushNotificacoesService {
       mensagem: `Parcela de R$ ${data.valor} foi liberada em sua conta para "${data.obraNome}"`,
       tipo: "PARCELA_LIBERADA",
     }),
-    KYC_APROVADO: (data) => ({
+    KYC_APROVADO: (_data) => ({
       titulo: "Validação Aprovada!",
       mensagem: "Sua validação de identidade (KYC) foi aprovada com sucesso!",
       tipo: "KYC_APROVADO",

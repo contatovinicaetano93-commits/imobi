@@ -110,8 +110,8 @@ export function ScoreDynamics({ historia, scoreAtual }: ScoreDynamicsProps) {
   }, [historia]);
 
   const colors = getScoreColor(scoreAtual);
-  const minScore = Math.min(...historia.map((h) => h.score));
-  const maxScore = Math.max(...historia.map((h) => h.score));
+  const _minScore = Math.min(...historia.map((h) => h.score));
+  const _maxScore = Math.max(...historia.map((h) => h.score));
   const trend =
     historia.length >= 2
       ? historia[historia.length - 1].score - historia[0].score

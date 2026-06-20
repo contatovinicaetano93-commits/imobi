@@ -3,7 +3,6 @@ import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
-import { KycDocumentoStatus } from "@prisma/client";
 
 @Injectable()
 export class KycService {

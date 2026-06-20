@@ -37,7 +37,7 @@ export function initSentry(): void {
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
     // Request filtering
-    beforeSend(event, hint) {
+    beforeSend(event, _hint) {
       // Filter out health check requests
       if (event.request?.url?.includes("/api/health")) {
         return null;
