@@ -34,7 +34,13 @@ export default function CadastroPage() {
     setStatusMsg("Conectando ao servidor… (a 1ª vez pode levar até 1 minuto)");
     try {
       const result = await registerWithRetry(data, setStatusMsg);
-      redirectAfterLogin(result.role ?? "TOMADOR", "/dashboard");
+      const q = new URLSearchParams(window.location.search);
+      const valor = q.get("valor");
+      const prazo = q.get("prazo");
+      const next = valor
+        ? `/dashboard/simulador?valor=${encodeURIComponent(valor)}&prazo=${encodeURIComponent(prazo ?? "")}`
+        : "/dashboard";
+      redirectAfterLogin(result.role ?? "TOMADOR", next);
     } catch (e) {
       setStatusMsg(null);
       setErro(e instanceof Error ? e.message : "Erro inesperado.");
