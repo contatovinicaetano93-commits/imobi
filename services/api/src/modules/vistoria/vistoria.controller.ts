@@ -1,5 +1,6 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Post, Param, Body, UseGuards, HttpCode } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { VistoriaService } from "./vistoria.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -19,6 +20,7 @@ export class VistoriaController {
 
   @Post(":etapaId/aprovar")
   @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   aprovar(
     @Param("etapaId") etapaId: string,
     @UsuarioAtual() u: IUsuario,
@@ -29,6 +31,7 @@ export class VistoriaController {
 
   @Post(":etapaId/rejeitar")
   @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   rejeitar(
     @Param("etapaId") etapaId: string,
     @UsuarioAtual() u: IUsuario,

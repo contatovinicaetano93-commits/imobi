@@ -1,5 +1,6 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
-import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, UseGuards, HttpCode } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { CreditoService } from "./credito.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -16,6 +17,7 @@ export class CreditoController {
   constructor(private readonly credito: CreditoService) {}
 
   @Post("simular")
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   simular(@Body(new ZodPipe(SimulacaoCreditoSchema)) body: SimulacaoCreditoInput) {
     return this.credito.simular(body);
   }
@@ -23,6 +25,8 @@ export class CreditoController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("ADMIN")
   @Post("solicitar")
+  @HttpCode(201)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   solicitar(
     @UsuarioAtual() u: IUsuario,
     @Body(new ZodPipe(SolicitacaoCreditoSchema)) body: SolicitacaoCreditoInput
