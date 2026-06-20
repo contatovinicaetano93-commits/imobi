@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
 import { ObrasService } from "./obras.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -7,6 +8,7 @@ import { CriarObraSchema } from "@imbobi/schemas";
 import type { CriarObraInput } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
+@ApiTags("Obras")
 @Controller("obras")
 export class ObrasController {
   constructor(private readonly obras: ObrasService) {}

@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, HttpCode } from "@nestjs/common";
 import { AdminService, CriarUsuarioAdminDto } from "./admin.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -8,6 +9,7 @@ import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { AtualizarUsuarioAdminSchema } from "@imbobi/schemas";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
 
+@ApiTags("Admin")
 @Controller("admin")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("ADMIN")

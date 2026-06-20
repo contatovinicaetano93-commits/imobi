@@ -28,6 +28,46 @@ export declare const CreateLeadSchema: z.ZodObject<{
     segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
     clienteCpf?: string | undefined;
 }>;
+export declare const ApiCreateLeadSchema: z.ZodObject<{
+    clienteNome: z.ZodString;
+    clienteEmail: z.ZodString;
+    clienteTelefone: z.ZodString;
+    clienteCpf: z.ZodOptional<z.ZodString>;
+    fonte: z.ZodDefault<z.ZodOptional<z.ZodEnum<["WEBSITE", "INDICACAO", "MARKETPLACE", "CAMPANHA_DIGITAL", "OFFLINE", "PARCEIRO"]>>>;
+    tipoObra: z.ZodOptional<z.ZodEnum<["residencial", "comercial", "industrial", "reforma"]>>;
+    segmentoCliente: z.ZodDefault<z.ZodOptional<z.ZodEnum<["NOVO", "RETORNO", "CONCORRENTE"]>>>;
+    observacoes: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    clienteNome: string;
+    clienteEmail: string;
+    clienteTelefone: string;
+    fonte: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO";
+    segmentoCliente: "NOVO" | "RETORNO" | "CONCORRENTE";
+    clienteCpf?: string | undefined;
+    tipoObra?: "residencial" | "comercial" | "industrial" | "reforma" | undefined;
+    observacoes?: string | undefined;
+}, {
+    clienteNome: string;
+    clienteEmail: string;
+    clienteTelefone: string;
+    clienteCpf?: string | undefined;
+    fonte?: "WEBSITE" | "INDICACAO" | "MARKETPLACE" | "CAMPANHA_DIGITAL" | "OFFLINE" | "PARCEIRO" | undefined;
+    tipoObra?: "residencial" | "comercial" | "industrial" | "reforma" | undefined;
+    segmentoCliente?: "NOVO" | "RETORNO" | "CONCORRENTE" | undefined;
+    observacoes?: string | undefined;
+}>;
+export type ApiCreateLeadInput = z.infer<typeof ApiCreateLeadSchema>;
+export declare const ApiAddLeadActivitySchema: z.ZodObject<{
+    tipo: z.ZodEnum<["CALL_OUTBOUND", "CALL_INBOUND", "EMAIL_SENT", "EMAIL_RECEIVED", "MEETING_SCHEDULED", "MEETING_COMPLETED", "PROPOSAL_SENT", "DOCUMENT_REQUESTED", "PAYMENT_RECEIVED", "STAGE_CHANGED", "NOTE_ADDED", "FOLLOW_UP_SET"]>;
+    descricao: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
+    descricao: string;
+}, {
+    tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
+    descricao: string;
+}>;
+export type ApiAddLeadActivityInput = z.infer<typeof ApiAddLeadActivitySchema>;
 export declare const LeadActivitySchema: z.ZodObject<{
     leadActivityId: z.ZodString;
     leadId: z.ZodString;
@@ -36,18 +76,18 @@ export declare const LeadActivitySchema: z.ZodObject<{
     descricao: z.ZodString;
     criadoEm: z.ZodDate;
 }, "strip", z.ZodTypeAny, {
+    tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
+    descricao: string;
     leadActivityId: string;
     leadId: string;
     usuarioId: string;
-    tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
-    descricao: string;
     criadoEm: Date;
 }, {
+    tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
+    descricao: string;
     leadActivityId: string;
     leadId: string;
     usuarioId: string;
-    tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
-    descricao: string;
     criadoEm: Date;
 }>;
 export declare const ConversionScoreSchema: z.ZodObject<{
@@ -258,18 +298,18 @@ export declare const LeadDetailSchema: z.ZodObject<{
         descricao: z.ZodString;
         criadoEm: z.ZodDate;
     }, "strip", z.ZodTypeAny, {
+        tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
+        descricao: string;
         leadActivityId: string;
         leadId: string;
         usuarioId: string;
-        tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
-        descricao: string;
         criadoEm: Date;
     }, {
+        tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
+        descricao: string;
         leadActivityId: string;
         leadId: string;
         usuarioId: string;
-        tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
-        descricao: string;
         criadoEm: Date;
     }>, "many">>;
     scoreBreakdown: z.ZodOptional<z.ZodObject<{
@@ -364,11 +404,11 @@ export declare const LeadDetailSchema: z.ZodObject<{
         pipelineId: string;
     } | undefined;
     atividades?: {
+        tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
+        descricao: string;
         leadActivityId: string;
         leadId: string;
         usuarioId: string;
-        tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
-        descricao: string;
         criadoEm: Date;
     }[] | undefined;
     scoreBreakdown?: {
@@ -425,11 +465,11 @@ export declare const LeadDetailSchema: z.ZodObject<{
         pipelineId: string;
     } | undefined;
     atividades?: {
+        tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
+        descricao: string;
         leadActivityId: string;
         leadId: string;
         usuarioId: string;
-        tipo: "CALL_OUTBOUND" | "CALL_INBOUND" | "EMAIL_SENT" | "EMAIL_RECEIVED" | "MEETING_SCHEDULED" | "MEETING_COMPLETED" | "PROPOSAL_SENT" | "DOCUMENT_REQUESTED" | "PAYMENT_RECEIVED" | "STAGE_CHANGED" | "NOTE_ADDED" | "FOLLOW_UP_SET";
-        descricao: string;
         criadoEm: Date;
     }[] | undefined;
     scoreBreakdown?: {

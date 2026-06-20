@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from "@nestjs/common";
 import { ComiteService } from "./comite.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -6,6 +7,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual } from "../../common/decorators/usuario-atual.decorator";
 import type { VotoDecisao } from "@prisma/client";
 
+@ApiTags("Comitê")
 @Controller("comite")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ComiteController {

@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Controller, Get, Patch, Post, Delete, UseGuards, Body, Res, Req, BadRequestException } from "@nestjs/common";
 import type { FastifyRequest } from "fastify";
 import { FastifyReply } from "fastify";
@@ -17,6 +18,7 @@ import type {
 } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
+@ApiTags("Usuários")
 @Controller("usuarios")
 export class UsuariosController {
   constructor(private readonly usuarios: UsuariosService) {}

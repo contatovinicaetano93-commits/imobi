@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Controller, Get, Post, Patch, Body, Param, UseGuards } from "@nestjs/common";
 import { DueDiligenceService, CriarDueDiligenceDto, AtualizarStatusDto } from "./due-diligence.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -6,6 +7,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
 @UseGuards(JwtAuthGuard)
+@ApiTags("Due Diligence")
 @Controller("due-diligence")
 export class DueDiligenceController {
   constructor(private readonly service: DueDiligenceService) {}

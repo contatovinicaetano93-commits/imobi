@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Controller, Get, Patch, Param, Body, UseGuards } from "@nestjs/common";
 import { EtapasService } from "./etapas.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -6,6 +7,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
 @UseGuards(JwtAuthGuard)
+@ApiTags("Etapas")
 @Controller("etapas")
 export class EtapasController {
   constructor(private readonly etapas: EtapasService) {}

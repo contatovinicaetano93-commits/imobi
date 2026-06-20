@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Controller, Get, Patch, Param, Body, UseGuards } from "@nestjs/common";
 import { EngenheirosService } from "./engenheiros.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -5,6 +6,7 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
+@ApiTags("Engenheiros")
 @Controller("engenheiros")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("ENGENHEIRO", "ADMIN")

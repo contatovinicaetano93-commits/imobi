@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import {
   Controller,
   Get,
@@ -22,6 +23,7 @@ interface AdicionarMailingDto {
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('COMERCIAL', 'PARCEIRO', 'ADMIN')
+@ApiTags("Parceiros")
 @Controller('parceiros')
 export class ParceirosController {
   constructor(private readonly parceirosService: ParceirosService) {}

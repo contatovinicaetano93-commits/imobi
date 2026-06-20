@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import {
   Controller,
   Get,
@@ -16,6 +17,7 @@ import { ZodPipe } from '../../common/pipes/zod.pipe';
 import { ApiCreateLeadSchema, ApiAddLeadActivitySchema } from '@imbobi/schemas';
 import type { ApiCreateLeadInput, ApiAddLeadActivityInput } from '@imbobi/schemas';
 
+@ApiTags("Comercial")
 @Controller('comercial')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('COMERCIAL', 'ADMIN')

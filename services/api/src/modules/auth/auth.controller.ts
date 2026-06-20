@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Controller, Post, Body, HttpCode, UseGuards } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
@@ -6,6 +7,7 @@ import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import type { CadastroUsuarioInput, LoginInput, EsqueceuSenhaInput, RedefinirSenhaInput } from "@imbobi/schemas";
 
+@ApiTags("Autenticação")
 @Controller("auth")
 export class AuthController {
   constructor(private readonly auth: AuthService) {}

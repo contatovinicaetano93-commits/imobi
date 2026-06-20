@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
 import { CreditoService } from "./credito.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -8,6 +9,7 @@ import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { SimulacaoCreditoSchema, SolicitacaoCreditoSchema } from "@imbobi/schemas";
 import type { SimulacaoCreditoInput, SolicitacaoCreditoInput } from "@imbobi/schemas";
 
+@ApiTags("Crédito")
 @Controller("credito")
 export class CreditoController {
   constructor(private readonly credito: CreditoService) {}

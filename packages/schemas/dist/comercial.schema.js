@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LeadsListResponseSchema = exports.DashboardStatsSchema = exports.AddLeadActivitySchema = exports.LeadDetailSchema = exports.LeadSchema = exports.ConversionScoreSchema = exports.LeadActivitySchema = exports.CreateLeadSchema = exports.LeadActivityTypeEnum = exports.TipoObraEnum = exports.SegmentoClienteEnum = exports.FonteEnum = void 0;
+exports.LeadsListResponseSchema = exports.DashboardStatsSchema = exports.AddLeadActivitySchema = exports.LeadDetailSchema = exports.LeadSchema = exports.ConversionScoreSchema = exports.LeadActivitySchema = exports.ApiAddLeadActivitySchema = exports.ApiCreateLeadSchema = exports.CreateLeadSchema = exports.LeadActivityTypeEnum = exports.TipoObraEnum = exports.SegmentoClienteEnum = exports.FonteEnum = void 0;
 const zod_1 = require("zod");
 exports.FonteEnum = zod_1.z.enum([
     "WEBSITE",
@@ -43,6 +43,21 @@ exports.CreateLeadSchema = zod_1.z.object({
     fonte: exports.FonteEnum,
     tipoObra: exports.TipoObraEnum,
     segmentoCliente: exports.SegmentoClienteEnum,
+});
+// API-side input schema: fonte/segmentoCliente optional (have DB defaults), tipoObra optional
+exports.ApiCreateLeadSchema = zod_1.z.object({
+    clienteNome: zod_1.z.string().min(3, "Nome obrigatório"),
+    clienteEmail: zod_1.z.string().email("Email inválido"),
+    clienteTelefone: zod_1.z.string().min(10, "Telefone inválido"),
+    clienteCpf: zod_1.z.string().length(11, "CPF deve ter 11 dígitos").optional(),
+    fonte: exports.FonteEnum.optional().default("WEBSITE"),
+    tipoObra: exports.TipoObraEnum.optional(),
+    segmentoCliente: exports.SegmentoClienteEnum.optional().default("NOVO"),
+    observacoes: zod_1.z.string().max(1000).optional(),
+});
+exports.ApiAddLeadActivitySchema = zod_1.z.object({
+    tipo: exports.LeadActivityTypeEnum,
+    descricao: zod_1.z.string().min(5, "Descrição obrigatória"),
 });
 exports.LeadActivitySchema = zod_1.z.object({
     leadActivityId: zod_1.z.string().uuid(),
