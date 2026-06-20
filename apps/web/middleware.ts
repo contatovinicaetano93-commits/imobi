@@ -18,6 +18,8 @@ const PUBLIC_PATHS = [
   "/api/proxy/auth",
   "/api/proxy/credito/simular",
   "/api/proxy/health",
+  "/vagas",
+  "/api/proxy/vagas",
   "/web-api/auth",
 ];
 
