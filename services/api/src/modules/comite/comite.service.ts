@@ -147,9 +147,9 @@ export class ComiteService {
     const s = comite.solicitacao;
     const usuario = s.usuario;
 
-    // If approved → create Credito
+    // If approved → create Credito and link to obra
     if (decisao === "APROVADO") {
-      await this.prisma.credito.create({
+      const credito = await this.prisma.credito.create({
         data: {
           usuarioId: s.usuarioId,
           valorAprovado: s.valorSolicitado,
@@ -160,6 +160,12 @@ export class ComiteService {
           dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
         },
       });
+      if (s.obraId) {
+        await this.prisma.obra.update({
+          where: { obraId: s.obraId },
+          data: { creditoId: credito.creditoId },
+        }).catch(() => {});
+      }
     }
 
     // Notify applicant about committee decision

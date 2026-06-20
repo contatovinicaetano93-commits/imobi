@@ -111,17 +111,10 @@ export class AuthService {
   }
 
   async revogarToken(refreshToken: string) {
-    const sessao = await this.prisma.sessaoToken.findUnique({ where: { refreshToken } });
     await this.prisma.sessaoToken.updateMany({
       where: { refreshToken },
       data: { revogadoEm: new Date() },
     });
-    if (sessao) {
-      await this.prisma.usuario.update({
-        where: { usuarioId: sessao.usuarioId },
-        data: { passwordResetToken: null, passwordResetExpires: null },
-      }).catch(() => {});
-    }
   }
 
   async revogarTodasSessoes(usuarioId: string) {
