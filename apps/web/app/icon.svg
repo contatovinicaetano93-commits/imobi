@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#1B4FD8"/>
+  <!-- IMOBI logo: 3×3 grid, corners + centre filled (X pattern) -->
+  <rect x="4"  y="4"  width="8" height="8" rx="1.5" fill="white"/>
+  <rect x="20" y="4"  width="8" height="8" rx="1.5" fill="white"/>
+  <rect x="12" y="12" width="8" height="8" rx="1.5" fill="white"/>
+  <rect x="4"  y="20" width="8" height="8" rx="1.5" fill="white"/>
+  <rect x="20" y="20" width="8" height="8" rx="1.5" fill="white"/>
+</svg>
