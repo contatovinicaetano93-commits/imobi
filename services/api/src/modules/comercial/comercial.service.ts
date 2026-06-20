@@ -192,11 +192,6 @@ export class ComercialService {
     };
   }
 
-  async leadExists(leadId: string): Promise<boolean> {
-    const count = await this.prisma.lead.count({ where: { leadId } });
-    return count > 0;
-  }
-
   async obterLeadDetalhe(leadId: string, scopeUserId?: string) {
     const lead = await this.prisma.lead.findUnique({
       where: { leadId },
@@ -209,8 +204,8 @@ export class ComercialService {
       },
     });
 
-    if (!lead) return null;
-    if (scopeUserId && lead.usuarioId !== scopeUserId) return null;
+    if (!lead) throw new NotFoundException("Lead não encontrado.");
+    if (scopeUserId && lead.usuarioId !== scopeUserId) throw new ForbiddenException("Acesso negado.");
 
     return {
       ...lead,
@@ -221,7 +216,8 @@ export class ComercialService {
   async calcularScoreConversao(leadId: string, scopeUserId?: string) {
     if (scopeUserId) {
       const lead = await this.prisma.lead.findUnique({ where: { leadId }, select: { usuarioId: true } });
-      if (!lead || lead.usuarioId !== scopeUserId) return null;
+      if (!lead) throw new NotFoundException("Lead não encontrado.");
+      if (lead.usuarioId !== scopeUserId) throw new ForbiddenException("Acesso negado.");
     }
     return this.scoringService.calcularScore(leadId);
   }

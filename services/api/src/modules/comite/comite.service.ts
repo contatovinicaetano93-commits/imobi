@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailQueueService } from "../email/email-queue.service";
@@ -6,6 +6,8 @@ import type { VotoDecisao, SolicitacaoStatus, ComiteStatus } from "@prisma/clien
 
 @Injectable()
 export class ComiteService {
+  private readonly logger = new Logger(ComiteService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
@@ -117,7 +119,7 @@ export class ComiteService {
     // Auto-close: majority of admins voted → resolve
     const todosVotos = await this.prisma.votoComite.findMany({ where: { comiteId } });
     const adminCount = await this.prisma.usuario.count({ where: { tipo: "ADMIN", bloqueadoEm: null } });
-    const quorum = Math.ceil(adminCount / 2);
+    const quorum = Math.ceil(Math.max(1, adminCount) / 2);
 
     if (todosVotos.length >= quorum) {
       await this.encerrarComite(comiteId, todosVotos);
@@ -131,8 +133,8 @@ export class ComiteService {
     for (const v of votos) contagem[v.voto]++;
 
     let decisao: "APROVADO" | "AJUSTADO" | "REPROVADO" = "REPROVADO";
-    if (contagem.APROVAR >= contagem.AJUSTAR && contagem.APROVAR >= contagem.REPROVAR) decisao = "APROVADO";
-    else if (contagem.AJUSTAR >= contagem.REPROVAR) decisao = "AJUSTADO";
+    if (contagem.APROVAR > contagem.AJUSTAR && contagem.APROVAR > contagem.REPROVAR) decisao = "APROVADO";
+    else if (contagem.AJUSTAR > contagem.REPROVAR) decisao = "AJUSTADO";
 
     const comite = await this.prisma.comiteDigital.update({
       where: { comiteId },
@@ -153,25 +155,27 @@ export class ComiteService {
     const s = comite.solicitacao;
     const usuario = s.usuario;
 
-    // If approved → create Credito and link to obra
+    // If approved → create Credito and link to obra atomically
     if (decisao === "APROVADO") {
-      const credito = await this.prisma.credito.create({
-        data: {
-          usuarioId: s.usuarioId,
-          valorAprovado: s.valorSolicitado,
-          valorLiberado: 0,
-          taxaMensal: s.taxaMensal,
-          prazoMeses: s.prazoMeses,
-          status: "ATIVO",
-          dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
-        },
+      await this.prisma.$transaction(async (tx) => {
+        const credito = await tx.credito.create({
+          data: {
+            usuarioId: s.usuarioId,
+            valorAprovado: s.valorSolicitado,
+            valorLiberado: 0,
+            taxaMensal: s.taxaMensal,
+            prazoMeses: s.prazoMeses,
+            status: "ATIVO",
+            dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
+          },
+        });
+        if (s.obraId) {
+          await tx.obra.update({
+            where: { obraId: s.obraId },
+            data: { creditoId: credito.creditoId },
+          });
+        }
       });
-      if (s.obraId) {
-        await this.prisma.obra.update({
-          where: { obraId: s.obraId },
-          data: { creditoId: credito.creditoId },
-        }).catch(() => {});
-      }
     }
 
     // Notify applicant about committee decision
@@ -182,7 +186,7 @@ export class ComiteService {
       decisao === "APROVADO" ? "CREDITO_APROVADO" : "COMITE_DECISAO",
       `Crédito ${textoDecisao}`,
       `Sua solicitação de crédito de R$ ${Number(s.valorSolicitado).toLocaleString("pt-BR")} foi ${textoDecisao} pelo comitê.`,
-    ).catch(() => {});
+    ).catch((e) => this.logger.warn("Falha ao criar notificação de decisão do comitê", e));
 
     if (usuario) {
       const valorFormatado = Number(s.valorSolicitado).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -192,7 +196,7 @@ export class ComiteService {
         `Decisão do Comitê: ${textoDecisao.toUpperCase()}`,
         `Solicitação de crédito ${valorFormatado}`,
         Number(s.valorSolicitado),
-      ).catch(() => {});
+      ).catch((e) => this.logger.warn("Falha ao enviar email de decisão do comitê", e));
     }
   }
 
