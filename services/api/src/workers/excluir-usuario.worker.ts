@@ -41,10 +41,11 @@ export class ExcluirUsuarioWorker {
       }
 
       // Verify that the user was actually marked for deletion 30+ days ago
+      const graceDays = Number(process.env.EXCLUSAO_GRACE_PERIOD_DAYS ?? "30");
       const agora = new Date();
       const diasDesdeDelecao = (agora.getTime() - usuario.deletadoEm!.getTime()) / (1000 * 60 * 60 * 24);
 
-      if (diasDesdeDelecao < 30) {
+      if (diasDesdeDelecao < graceDays) {
         this.logger.warn(
           `Tentativa de deletar usuário ${usuarioId} com apenas ${diasDesdeDelecao.toFixed(1)} dias - ignorando`
         );
