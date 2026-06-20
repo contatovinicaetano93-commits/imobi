@@ -198,18 +198,58 @@ export class EmailService {
     obraNome: string
   ): Promise<boolean> {
     const html = `
-      <h2>Parcela Liberada</h2>
+      <h2>Pagamento confirmado</h2>
       <p>Olá ${nome},</p>
-      <p>Uma parcela de R$ ${valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} foi liberada em sua conta!</p>
+      <p>O pagamento de ${valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} foi creditado na conta cadastrada.</p>
       <p>Obra: ${obraNome}</p>
       <p><a href="${process.env["APP_URL"] || "http://localhost:3000"}/dashboard/credito">Ver Extrato</a></p>
     `;
 
     return this.enviarEmail({
       to: email,
-      subject: "Parcela Liberada",
+      subject: "Pagamento confirmado — IMOBI",
       html,
     });
+  }
+
+  async capitalFaseAguardandoPagamentoEmail(params: {
+    nome: string;
+    email: string;
+    obraNome: string;
+    etapaNome: string;
+    valor: number;
+    whatsAppUrl: string;
+    liberacaoRef: string;
+  }): Promise<boolean> {
+    const valorFmt = params.valor.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+    const html = `
+      <h2>Capital fase liberado — ${params.etapaNome}</h2>
+      <p>Olá ${params.nome},</p>
+      <p>A vistoria da fase <strong>${params.etapaNome}</strong> da obra <strong>${params.obraNome}</strong> foi aprovada.</p>
+      <p>Valor: <strong>${valorFmt}</strong>${params.liberacaoRef ? ` · Ref. ${params.liberacaoRef}` : ""}</p>
+      <p>O financeiro IMOBI processará o pagamento manualmente na conta cadastrada.</p>
+      <p><a href="${params.whatsAppUrl}" style="background:#25D366;color:white;padding:10px 16px;border-radius:8px;text-decoration:none;display:inline-block;">Confirmar com Financeiro (WhatsApp)</a></p>
+      <p><a href="${process.env["APP_URL"] || "http://localhost:3000"}/dashboard/obras">Ver obra na plataforma</a></p>
+    `;
+
+    return this.enviarEmail({
+      to: params.email,
+      subject: `Capital fase ${params.etapaNome} liberado — IMOBI`,
+      html,
+    });
+  }
+
+  async obraHomologadaEmail(nome: string, email: string, obraNome: string): Promise<boolean> {
+    const html = `
+      <h2>Obra homologada no pipe IMOBI</h2>
+      <p>Olá ${nome},</p>
+      <p>Sua obra <strong>${obraNome}</strong> foi aprovada e entrou no pipe ativo. Você já pode executar etapas e enviar evidências.</p>
+      <p><a href="${process.env["APP_URL"] || "http://localhost:3000"}/dashboard/obras">Acessar obras</a></p>
+    `;
+    return this.enviarEmail({ to: email, subject: "Obra homologada — IMOBI", html });
   }
 
   async kycAprovadoEmail(nome: string, email: string): Promise<boolean> {

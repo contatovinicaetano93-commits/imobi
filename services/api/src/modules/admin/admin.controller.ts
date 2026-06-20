@@ -67,4 +67,30 @@ export class AdminController {
   ) {
     return this.adminService.excluirUsuario(id, admin.id);
   }
+
+  @Patch("obras/:id/homologar")
+  homologarObra(@Param("id") id: string, @UsuarioAtual() admin: UsuarioAtual) {
+    return this.adminService.homologarObra(id, admin.id);
+  }
+
+  @Patch("obras/:id/reprovar-homologacao")
+  reprovarHomologacao(
+    @Param("id") id: string,
+    @Body("motivo") motivo: string,
+  ) {
+    return this.adminService.reprovarHomologacaoObra(id, motivo ?? "Não homologada");
+  }
+
+  @Get("liberacoes/aguardando-pagamento")
+  listarLiberacoesPendentes() {
+    return this.adminService.listarLiberacoesAguardandoPagamento();
+  }
+
+  @Patch("liberacoes/:id/confirmar-pagamento")
+  confirmarPagamento(
+    @Param("id") id: string,
+    @Body("referenciaPagamento") referenciaPagamento?: string,
+  ) {
+    return this.adminService.confirmarPagamentoLiberacao(id, referenciaPagamento);
+  }
 }

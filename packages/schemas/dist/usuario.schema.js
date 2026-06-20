@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AtualizarUsuarioAdminSchema = exports.FuncaoPainelEnum = exports.FUNCOES_PAINEL = exports.UpdatePerfilUsuarioSchema = exports.UpdateUsuarioSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
+exports.AtualizarUsuarioAdminSchema = exports.FuncaoPainelEnum = exports.FUNCOES_PAINEL = exports.ContaBancariaEmpresaSchema = exports.UpdatePerfilUsuarioSchema = exports.UpdateUsuarioSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
 const zod_1 = require("zod");
 exports.TipoUsuarioEnum = zod_1.z.enum([
     "TOMADOR",
@@ -64,6 +64,14 @@ exports.UpdatePerfilUsuarioSchema = zod_1.z.object({
         .string()
         .transform((v) => v.replace(/\D/g, ""))
         .pipe(zod_1.z.string().regex(/^\d{10,11}$/, "Telefone inválido")),
+});
+/** Conta bancária da empresa (pagamentos manuais SIPOC). */
+exports.ContaBancariaEmpresaSchema = zod_1.z.object({
+    contaTitular: zod_1.z.string().min(3).max(120),
+    contaBanco: zod_1.z.string().min(2).max(80),
+    contaAgencia: zod_1.z.string().min(1).max(20),
+    contaNumero: zod_1.z.string().min(1).max(30),
+    contaPix: zod_1.z.string().min(5).max(120).optional().or(zod_1.z.literal("")),
 });
 // ── Fiscalização (Admin) ────────────────────────────────────────────
 // Funções de painel que o admin pode liberar/bloquear por usuário.

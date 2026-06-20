@@ -71,6 +71,17 @@ export const UpdatePerfilUsuarioSchema = z.object({
     .pipe(z.string().regex(/^\d{10,11}$/, "Telefone inválido")),
 });
 
+/** Conta bancária da empresa (pagamentos manuais SIPOC). */
+export const ContaBancariaEmpresaSchema = z.object({
+  contaTitular: z.string().min(3).max(120),
+  contaBanco: z.string().min(2).max(80),
+  contaAgencia: z.string().min(1).max(20),
+  contaNumero: z.string().min(1).max(30),
+  contaPix: z.string().min(5).max(120).optional().or(z.literal("")),
+});
+
+export type ContaBancariaEmpresaInput = z.infer<typeof ContaBancariaEmpresaSchema>;
+
 // ── Fiscalização (Admin) ────────────────────────────────────────────
 // Funções de painel que o admin pode liberar/bloquear por usuário.
 export const FUNCOES_PAINEL = [

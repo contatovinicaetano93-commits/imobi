@@ -6,8 +6,6 @@ import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
 
 import { ManagerService } from "./manager.service";
 
-import { EtapasService } from "../etapas/etapas.service";
-
 import { KycService } from "../kyc/kyc.service";
 
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -33,8 +31,6 @@ export class ManagerController {
   constructor(
 
     private readonly manager: ManagerService,
-
-    private readonly etapas: EtapasService,
 
     private readonly kyc: KycService,
 
@@ -149,42 +145,6 @@ export class ManagerController {
   async obterKycDetalhe(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
 
     return this.manager.obterKycDetalhe(id);
-
-  }
-
-
-
-  @Patch("etapas/:id/aprovar")
-
-  async aprovarEtapa(
-
-    @UsuarioAtual() u: IUsuario,
-
-    @Param("id") id: string,
-
-    @Body("observacao") observacao?: string
-
-  ) {
-
-    return this.etapas.aprovar(u.id, id, observacao);
-
-  }
-
-
-
-  @Patch("etapas/:id/rejeitar")
-
-  async rejeitarEtapa(
-
-    @UsuarioAtual() u: IUsuario,
-
-    @Param("id") id: string,
-
-    @Body("motivo") motivo: string
-
-  ) {
-
-    return this.etapas.rejeitar(u.id, id, motivo);
 
   }
 

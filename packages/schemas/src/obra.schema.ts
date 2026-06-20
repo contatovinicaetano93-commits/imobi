@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const StatusObraEnum = z.enum([
+  "AGUARDANDO_HOMOLOGACAO",
   "PLANEJAMENTO",
   "EM_EXECUCAO",
   "PAUSADA",

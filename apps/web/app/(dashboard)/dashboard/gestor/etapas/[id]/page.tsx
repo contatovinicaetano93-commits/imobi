@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { managerApi, type EtapaDetalhe, type EtapaAuditEntry, evidenciasApi } from "@/lib/api";
 import { GpsValidationStatus } from "@/components/dashboard/GpsValidationStatus";
 import { ApprovalAuditTrail } from "@/components/dashboard/ApprovalAuditTrail";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
-import { useToast } from "@/hooks/toast-context";
 import Image from "next/image";
+import Link from "next/link";
 
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -19,8 +19,6 @@ function formatDate(date: string) {
 
 export default function EtapaDetailPage() {
   const params = useParams();
-  const router = useRouter();
-  const { success, error: toastError } = useToast();
   const [etapa, setEtapa] = useState<EtapaDetalhe | null>(null);
   const [gpsData, setGpsData] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<EtapaAuditEntry[]>([]);
@@ -28,9 +26,6 @@ export default function EtapaDetailPage() {
   const [auditLoading, setAuditLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [auditError, setAuditError] = useState<string | null>(null);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [showRejectionForm, setShowRejectionForm] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   const etapaId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -68,36 +63,16 @@ export default function EtapaDetailPage() {
       .finally(() => setAuditLoading(false));
   }, [etapaId]);
 
-  const handleApprove = async () => {
-    if (!etapa) return;
-    setSubmitting(true);
-    try {
-      await managerApi.aprovarEtapa(etapaId);
-      success("Etapa aprovada com sucesso.");
-      router.push("/dashboard/gestor/etapas");
-    } catch (err) {
-      toastError(err instanceof Error ? err.message : "Erro desconhecido");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleReject = async () => {
-    if (!rejectionReason.trim()) {
-      toastError("Forneça um motivo para a rejeição");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await managerApi.rejeitarEtapa(etapaId, rejectionReason);
-      success("Etapa rejeitada.");
-      router.push("/dashboard/gestor/etapas");
-    } catch (err) {
-      toastError(err instanceof Error ? err.message : "Erro desconhecido");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const gpsOk = gpsData.length > 0;
+  const evidenciasOk = (etapa?.evidencias.length ?? 0) > 0;
+  const pontosFortes: string[] = [];
+  const pontosFracos: string[] = [];
+  if (evidenciasOk) pontosFortes.push("Evidências fotográficas enviadas");
+  else pontosFracos.push("Sem evidências fotográficas");
+  if (gpsOk) pontosFortes.push("Geolocalização registrada");
+  else pontosFracos.push("GPS não validado");
+  if (etapa?.obra.credito) pontosFortes.push("Crédito vinculado à operação");
+  else pontosFracos.push("Operação sem crédito ativo");
 
   if (loading) {
     return <PageSkeleton variant="detail" />;
@@ -122,7 +97,16 @@ export default function EtapaDetailPage() {
           <p className="text-gray-500 text-sm mt-1">
             {etapa.nome} (etapa {etapa.ordem}) · {etapa.percentualObra}% da obra
           </p>
+          <p className="text-xs text-blue-700 mt-2 font-medium">
+            Painel de visualização — o gestor do fundo não libera etapas nem participa do comitê.
+          </p>
         </div>
+        <Link
+          href="/dashboard/gestor/etapas"
+          className="text-[#1B4FD8] hover:text-blue-700 text-sm font-semibold shrink-0"
+        >
+          ← Voltar
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -209,73 +193,36 @@ export default function EtapaDetailPage() {
           </div>
         </div>
 
-        {/* Painel de ações */}
+        {/* Saúde da operação (somente leitura) */}
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="font-bold text-gray-900 mb-4">Decisão</h2>
+            <h2 className="font-bold text-gray-900 mb-4">Saúde da operação</h2>
             <div className="space-y-3">
               <div>
-                <p className="text-sm text-gray-600 mb-2">Valor a liberar</p>
+                <p className="text-sm text-gray-600 mb-2">Valor da fase</p>
                 <p className="text-2xl font-bold text-[#1B4FD8]">{brl(etapa.valorLiberacao)}</p>
               </div>
-
-              <div className="pt-4 border-t border-gray-100 space-y-3">
-                <button
-                  onClick={handleApprove}
-                  disabled={submitting}
-                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
-                >
-                  ✓ Aprovar Etapa
-                </button>
-
-                {!showRejectionForm ? (
-                  <button
-                    onClick={() => setShowRejectionForm(true)}
-                    className="w-full bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-3 rounded-lg transition-colors"
-                  >
-                    ✕ Rejeitar
-                  </button>
-                ) : (
-                  <div className="space-y-2">
-                    <textarea
-                      value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
-                      placeholder="Motivo da rejeição..."
-                      className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                      rows={3}
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleReject}
-                        disabled={submitting}
-                        className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white font-semibold py-2 rounded-lg transition-colors text-sm"
-                      >
-                        Confirmar
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowRejectionForm(false);
-                          setRejectionReason("");
-                        }}
-                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 rounded-lg transition-colors text-sm"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                )}
+              <div className="pt-3 border-t border-gray-100">
+                <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">Pontos fortes</p>
+                <ul className="space-y-1 text-sm text-gray-700">
+                  {pontosFortes.length ? pontosFortes.map((p) => <li key={p}>✓ {p}</li>) : <li className="text-gray-400">—</li>}
+                </ul>
+              </div>
+              <div className="pt-3 border-t border-gray-100">
+                <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">Pontos de atenção</p>
+                <ul className="space-y-1 text-sm text-gray-700">
+                  {pontosFracos.length ? pontosFracos.map((p) => <li key={p}>⚠ {p}</li>) : <li className="text-gray-400">Nenhum alerta</li>}
+                </ul>
               </div>
             </div>
           </div>
 
-          {/* Dicas */}
           <div className="bg-blue-50 rounded-2xl border border-blue-100 p-4">
-            <h3 className="font-semibold text-blue-900 mb-2">Checklist</h3>
+            <h3 className="font-semibold text-blue-900 mb-2">Fluxo de liberação</h3>
             <div className="space-y-1 text-sm text-blue-800">
-              <p>☐ Geolocalização validada</p>
-              <p>☐ Qualidade das fotos adequada</p>
-              <p>☐ Avanço condiz com % esperado</p>
-              <p>☐ Dados tomador confirmados</p>
+              <p>1. Engenheiro aprova vistoria técnica</p>
+              <p>2. Financeiro IMOBI paga na conta cadastrada</p>
+              <p>3. Admin confirma pagamento na plataforma</p>
             </div>
           </div>
         </div>

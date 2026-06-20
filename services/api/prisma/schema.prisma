@@ -33,6 +33,11 @@ model Usuario {
   bloqueadoEm         DateTime?
   funcoesBloqueadas   String[]  @default([])
   preferenciasNotificacao Json?
+  contaBanco              String?
+  contaAgencia            String?
+  contaNumero             String?
+  contaPix                String?
+  contaTitular            String?
   deletadoEm          DateTime?
   criadoEm            DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt
@@ -163,7 +168,7 @@ model Obra {
   raioValidacaoMetros Int      @default(50)
   areaM2              Float?
   tipo                String?
-  status              ObraStatus @default(PLANEJAMENTO)
+  status              ObraStatus @default(AGUARDANDO_HOMOLOGACAO)
   criadoEm            DateTime @default(now())
   atualizadoEm        DateTime @updatedAt
 
@@ -178,6 +183,7 @@ model Obra {
 }
 
 enum ObraStatus {
+  AGUARDANDO_HOMOLOGACAO
   PLANEJAMENTO
   EM_EXECUCAO
   PAUSADA
@@ -246,19 +252,23 @@ model LiberacaoParcela {
   liberacaoId     String   @id @default(uuid())
   creditoId       String
   credito         Credito  @relation(fields: [creditoId], references: [creditoId], onDelete: Cascade)
+  etapaId         String?
   valor           Float
   status          LiberacaoStatus @default(PENDENTE)
   motivo          String?
+  referenciaPagamento String?
   processadoEm    DateTime?
   criadoEm        DateTime @default(now())
   atualizadoEm    DateTime @updatedAt
 
   @@index([creditoId])
+  @@index([etapaId])
   @@index([status])
 }
 
 enum LiberacaoStatus {
   PENDENTE
+  AGUARDANDO_PAGAMENTO
   PROCESSANDO
   CONCLUIDA
   FALHA

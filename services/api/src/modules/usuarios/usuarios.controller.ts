@@ -8,10 +8,12 @@ import { ZodPipe } from "../../common/pipes/zod.pipe";
 import {
   UpdatePreferenciasNotificacaoSchema,
   UpdatePerfilUsuarioSchema,
+  ContaBancariaEmpresaSchema,
 } from "@imbobi/schemas";
 import type {
   UpdatePreferenciasNotificacaoInput,
   UpdatePerfilUsuarioInput,
+  ContaBancariaEmpresaInput,
 } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
@@ -43,6 +45,14 @@ export class UsuariosController {
     @Body(new ZodPipe(UpdatePerfilUsuarioSchema)) body: UpdatePerfilUsuarioInput
   ) {
     return this.usuarios.atualizarPerfil(u.id, body);
+  }
+
+  @Patch("me/conta-bancaria")
+  async atualizarContaBancaria(
+    @UsuarioAtual() u: IUsuario,
+    @Body(new ZodPipe(ContaBancariaEmpresaSchema)) body: ContaBancariaEmpresaInput
+  ) {
+    return this.usuarios.atualizarContaBancaria(u.id, body);
   }
 
   @Post("me/avatar")

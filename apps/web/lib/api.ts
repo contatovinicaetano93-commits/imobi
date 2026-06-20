@@ -222,6 +222,13 @@ export type UsuarioPerfil = {
   tipo: string;
   kycStatus: string;
   avatarUrl?: string | null;
+  contaBancaria?: {
+    titular: string | null;
+    banco: string | null;
+    agencia: string | null;
+    numero: string | null;
+    pix: string | null;
+  };
   criadoEm: string;
   atualizadoEm: string;
 };
@@ -259,6 +266,17 @@ export const usuariosApi = {
     apiFetch<PreferenciasNotificacao>("/usuarios/me/preferencias"),
   salvarPreferencias: (data: PreferenciasNotificacao) =>
     apiFetch<PreferenciasNotificacao>("/usuarios/me/preferencias", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  atualizarContaBancaria: (data: {
+    contaTitular: string;
+    contaBanco: string;
+    contaAgencia: string;
+    contaNumero: string;
+    contaPix?: string;
+  }) =>
+    apiFetch<UsuarioPerfil>("/usuarios/me/conta-bancaria", {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
@@ -399,10 +417,6 @@ export const managerApi = {
     ),
   obterEtapaDetalhe: (id: string) => apiFetch<EtapaDetalhe>(`/manager/etapas/${id}`),
   obterKycDetalhe: (id: string) => apiFetch<KycPendente>(`/manager/kyc/${id}`),
-  aprovarEtapa: (id: string, observacao?: string) =>
-    apiFetch(`/manager/etapas/${id}/aprovar`, { method: "PATCH", body: JSON.stringify({ observacao }) }),
-  rejeitarEtapa: (id: string, motivo: string) =>
-    apiFetch(`/manager/etapas/${id}/rejeitar`, { method: "PATCH", body: JSON.stringify({ motivo }) }),
   aprovarKyc: (id: string) =>
     apiFetch(`/manager/kyc/${id}/aprovar`, { method: "PATCH" }),
   rejeitarKyc: (id: string, motivo: string) =>
@@ -437,6 +451,16 @@ export const engenheirosApi = {
     apiFetch(`/engenheiros/visitas/${visitaId}`, {
       method: "PATCH",
       body: JSON.stringify(data),
+    }),
+  aprovarVistoria: (visitaId: string, observacao?: string) =>
+    apiFetch(`/engenheiros/visitas/${visitaId}/aprovar`, {
+      method: "PATCH",
+      body: JSON.stringify({ observacao }),
+    }),
+  rejeitarVistoria: (visitaId: string, motivo: string) =>
+    apiFetch(`/engenheiros/visitas/${visitaId}/rejeitar`, {
+      method: "PATCH",
+      body: JSON.stringify({ motivo }),
     }),
 };
 
@@ -564,11 +588,52 @@ export type AtividadeRecente = {
   criadoEm: string;
 };
 
+export type AdminObraResumo = {
+  id: string;
+  nome: string;
+  status: string;
+  tomador?: string;
+};
+
+export type LiberacaoAguardandoPagamento = {
+  liberacaoId: string;
+  etapaId: string | null;
+  valor: number;
+  status: string;
+  criadoEm: string;
+  tomador?: string;
+  email?: string;
+  conta: {
+    banco?: string | null;
+    agencia?: string | null;
+    numero?: string | null;
+    pix?: string | null;
+    titular?: string | null;
+  };
+  obra: { obraId: string; nome: string } | null;
+};
+
 export const adminApi = {
   overview: () => apiFetch<AdminOverview>("/admin/overview"),
   metricas: () => apiFetch<AdminMetricas>("/admin/metricas"),
   atividades: (limit?: number) =>
     apiFetch<AtividadeRecente[]>(`/admin/atividades${limit ? `?limit=${limit}` : ""}`),
+  listarObras: (limit = 50) =>
+    apiFetch<AdminObraResumo[]>(`/admin/obras?limit=${limit}`),
+  homologarObra: (obraId: string) =>
+    apiFetch(`/admin/obras/${obraId}/homologar`, { method: "PATCH" }),
+  reprovarHomologacao: (obraId: string, motivo: string) =>
+    apiFetch(`/admin/obras/${obraId}/reprovar-homologacao`, {
+      method: "PATCH",
+      body: JSON.stringify({ motivo }),
+    }),
+  listarLiberacoesAguardandoPagamento: () =>
+    apiFetch<LiberacaoAguardandoPagamento[]>("/admin/liberacoes/aguardando-pagamento"),
+  confirmarPagamento: (liberacaoId: string, referenciaPagamento?: string) =>
+    apiFetch(`/admin/liberacoes/${liberacaoId}/confirmar-pagamento`, {
+      method: "PATCH",
+      body: JSON.stringify({ referenciaPagamento }),
+    }),
 };
 
 // ── Notificações ──────────────────────────────────────────────────────

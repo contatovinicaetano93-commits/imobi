@@ -1,5 +1,5 @@
 import { z } from "zod";
-export declare const StatusObraEnum: z.ZodEnum<["PLANEJAMENTO", "EM_EXECUCAO", "PAUSADA", "CONCLUIDA", "CANCELADA"]>;
+export declare const StatusObraEnum: z.ZodEnum<["AGUARDANDO_HOMOLOGACAO", "PLANEJAMENTO", "EM_EXECUCAO", "PAUSADA", "CONCLUIDA", "CANCELADA"]>;
 export declare const StatusEtapaEnum: z.ZodEnum<["PLANEJADA", "EM_EXECUCAO", "AGUARDANDO_VISTORIA", "REPROVADA", "CONCLUIDA"]>;
 export declare const EnderecoSchema: z.ZodObject<{
     logradouro: z.ZodString;

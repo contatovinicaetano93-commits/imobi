@@ -3,7 +3,6 @@ import { EtapasService } from "./etapas.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
-import { MANAGER_ROLES } from "../../common/constants/manager-roles";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
 @UseGuards(JwtAuthGuard)
@@ -17,7 +16,7 @@ export class EtapasController {
   }
 
   @UseGuards(RolesGuard)
-  @Roles(...MANAGER_ROLES)
+  @Roles("ENGENHEIRO", "ADMIN")
   @Patch(":id/aprovar")
   aprovar(
     @Param("id") id: string,
@@ -25,6 +24,17 @@ export class EtapasController {
     @Body("observacao") obs?: string
   ) {
     return this.etapas.aprovar(u.id, id, obs);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles("ENGENHEIRO", "ADMIN")
+  @Patch(":id/rejeitar")
+  rejeitar(
+    @Param("id") id: string,
+    @UsuarioAtual() u: IUsuario,
+    @Body("motivo") motivo: string,
+  ) {
+    return this.etapas.rejeitar(u.id, id, motivo);
   }
 
   @Patch(":id/status")

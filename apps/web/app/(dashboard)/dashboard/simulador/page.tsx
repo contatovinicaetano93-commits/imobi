@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ChevronRight, ChevronLeft, AlertTriangle, CheckCircle2,
   TrendingUp, Building2, Wallet, BarChart3, Info,
@@ -361,9 +362,32 @@ function PctInput({
 const STEPS = ["Empreendimento", "Custos", "Financiamento", "Resultado"];
 
 export default function SimuladorPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Carregando simulador…</div>}>
+      <SimuladorContent />
+    </Suspense>
+  );
+}
+
+function SimuladorContent() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [form, setForm] = useState<Form>(DEFAULTS);
   const [gerado, setGerado] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
+
+  useEffect(() => {
+    if (prefilled) return;
+    const valor = Number(searchParams.get("valor"));
+    const prazo = Number(searchParams.get("prazo"));
+    if (!valor && !prazo) return;
+    setForm((f) => ({
+      ...f,
+      ...(valor > 0 ? { custoObra: valor, vgv: Math.round(valor * 1.35) } : {}),
+      ...(prazo >= 6 ? { prazo } : {}),
+    }));
+    setPrefilled(true);
+  }, [searchParams, prefilled]);
 
   const set = (k: keyof Form, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 

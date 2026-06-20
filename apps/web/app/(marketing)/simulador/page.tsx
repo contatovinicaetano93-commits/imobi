@@ -1,13 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { CreditoSimulacao } from "@/lib/api";
+import {
+  clampValorParaApi,
+  mapFaseToTipoObra,
+  simularCreditoPublic,
+} from "@/lib/simular-credito-public";
 import "../landing.css";
 import "./simulador.css";
 
 const WA = "5511993455589";
 const VALOR_MAX_EMPRESTIMO = 500_000_000;
+const VALOR_MAX_API = 5_000_000;
 const PRAZO_MIN_MESES = 12;
 const PRAZO_MAX_MESES = 48;
 const TOTAL_STEPS = 5;
@@ -62,13 +69,23 @@ export default function SimuladorPublicoPage() {
   const [estado, setEstado] = useState("");
   const [cidade, setCidade] = useState("");
   const [cnpj, setCnpj] = useState("");
+  const [simLoading, setSimLoading] = useState(false);
+  const [simStatus, setSimStatus] = useState<string | null>(null);
+  const [simError, setSimError] = useState<string | null>(null);
+  const [simulacao, setSimulacao] = useState<CreditoSimulacao | null>(null);
 
   const faseCfg = FASES.find((f) => f.id === fase)!;
   const valorFinanciavelBruto = Math.round(valorObra * (faseCfg.pct / 100));
   const valorFinanciavel = Math.min(valorFinanciavelBruto, VALOR_MAX_EMPRESTIMO);
+  const valorParaApi = clampValorParaApi(valorFinanciavel);
   const prazoMaximo = maxPrazoMeses(valorFinanciavel);
-  const taxaAnual = 8.5;
-  const parcelaMensal = parcelaMensalEstimada(valorFinanciavel, prazoMeses, taxaAnual);
+  const taxaAnualPreview = 8.5;
+  const parcelaPreview = parcelaMensalEstimada(valorFinanciavel, prazoMeses, taxaAnualPreview);
+  const parcelaExibida = simulacao?.parcelaMensal ?? parcelaPreview;
+  const taxaMensalExibida = simulacao
+    ? `${(simulacao.taxaMensal * 100).toFixed(2)}% a.m.`
+    : `${taxaAnualPreview}% a.a. (estimativa)`;
+  const cetExibido = simulacao ? `${(simulacao.cet * 100).toFixed(1)}% a.a.` : null;
 
   const prazoOpcoes = useMemo(() => {
     const opts: number[] = [];
@@ -83,6 +100,32 @@ export default function SimuladorPublicoPage() {
     if (prazoMeses > prazoMaximo) setPrazoMeses(prazoMaximo);
     else if (prazoMeses < PRAZO_MIN_MESES) setPrazoMeses(PRAZO_MIN_MESES);
   }, [prazoMaximo, prazoMeses]);
+
+  const fetchSimulacao = useCallback(async () => {
+    setSimLoading(true);
+    setSimError(null);
+    setSimulacao(null);
+    try {
+      const result = await simularCreditoPublic(
+        {
+          valorSolicitado: valorFinanciavel,
+          prazoMeses,
+          tipoObra: mapFaseToTipoObra(fase),
+        },
+        setSimStatus,
+      );
+      setSimulacao(result);
+    } catch (e) {
+      setSimError(e instanceof Error ? e.message : "Não foi possível realizar a simulação.");
+    } finally {
+      setSimLoading(false);
+      setSimStatus(null);
+    }
+  }, [valorFinanciavel, prazoMeses, fase]);
+
+  useEffect(() => {
+    if (step === 6) fetchSimulacao();
+  }, [step, fetchSimulacao]);
 
   function next() {
     if (step < TOTAL_STEPS + 1) setStep(step + 1);
@@ -102,7 +145,10 @@ export default function SimuladorPublicoPage() {
         ? `*(limitado ao teto de ${brl(VALOR_MAX_EMPRESTIMO)})*`
         : null,
       `*Prazo desejado:* ${prazoMeses} meses`,
-      `*Parcela mensal estimada:* ${brl(parcelaMensal)} (taxa ${taxaAnual}% a.a.)`,
+      simulacao
+        ? `*Parcela mensal:* ${brl(simulacao.parcelaMensal)} (${(simulacao.taxaMensal * 100).toFixed(2)}% a.m.)`
+        : `*Parcela mensal estimada:* ${brl(parcelaExibida)}`,
+      cetExibido ? `*CET:* ${cetExibido}` : null,
       `*Local da obra:* ${cidade} — ${estado}`,
       cnpj.trim() ? `*CNPJ:* ${cnpj.trim()}` : null,
       "",
@@ -246,7 +292,7 @@ export default function SimuladorPublicoPage() {
                   ))}
                 </div>
                 <p className="sim-hint">
-                  Parcela estimada: <strong>{brl(parcelaMensal)}/mês</strong> (taxa {taxaAnual}% a.a.)
+                  Parcela estimada: <strong>{brl(parcelaPreview)}/mês</strong> (prévia local)
                 </p>
                 <div className="sim-actions">
                   <button type="button" className="sim-btn-ghost" onClick={back}>← Voltar</button>
@@ -304,29 +350,59 @@ export default function SimuladorPublicoPage() {
 
             {step === 6 && (
               <div className="sim-result">
+                {simLoading && (
+                  <div className="sim-loading">
+                    <div className="sim-spinner" aria-hidden="true" />
+                    <p>{simStatus ?? "Consultando condições na API…"}</p>
+                  </div>
+                )}
+
+                {simError && !simLoading && (
+                  <div className="sim-error">
+                    <p>{simError}</p>
+                    <button type="button" className="sim-btn-primary" onClick={fetchSimulacao}>
+                      Tentar novamente
+                    </button>
+                  </div>
+                )}
+
+                {!simLoading && !simError && (
+                  <>
                 <p className="sim-result-label">Você pode financiar até</p>
-                <p className="sim-result-value">{brl(valorFinanciavel)}</p>
+                <p className="sim-result-value">{brl(simulacao?.valorSolicitado ?? valorParaApi)}</p>
                 <p className="sim-result-pct">
                   {faseCfg.pct}% de {brl(valorObra)} · {faseCfg.label}
-                  {valorFinanciavelBruto > VALOR_MAX_EMPRESTIMO ? " · teto aplicado" : ""}
+                  {valorFinanciavelBruto > VALOR_MAX_EMPRESTIMO ? " · teto UI aplicado" : ""}
+                  {valorFinanciavel > VALOR_MAX_API ? ` · simulação limitada a ${brl(VALOR_MAX_API)}` : ""}
                 </p>
 
+                {valorFinanciavel > VALOR_MAX_API && (
+                  <p className="sim-api-note">
+                    Valores acima de {brl(VALOR_MAX_API)} são analisados comercialmente após cadastro.
+                  </p>
+                )}
+
                 <div className="sim-metrics">
-                  <div><span>Taxa</span><strong>{taxaAnual}% a.a.</strong></div>
-                  <div><span>Prazo</span><strong>{prazoMeses} meses</strong></div>
-                  <div><span>Parcela/mês</span><strong>{brl(parcelaMensal)}</strong></div>
+                  <div><span>Taxa</span><strong>{taxaMensalExibida}</strong></div>
+                  {cetExibido && <div><span>CET</span><strong>{cetExibido}</strong></div>}
+                  <div><span>Prazo</span><strong>{simulacao?.prazoMeses ?? prazoMeses} meses</strong></div>
+                  <div><span>Parcela/mês</span><strong>{brl(parcelaExibida)}</strong></div>
                   <div><span>Local</span><strong>{cidade} — {estado}</strong></div>
+                  {simulacao && (
+                    <div><span>Total</span><strong>{brl(simulacao.totalPago)}</strong></div>
+                  )}
                 </div>
 
                 <p className="sim-disclaimer">Taxa indicativa. Valor final definido em comitê após KYC e due diligence.</p>
 
                 <div className="sim-actions sim-actions-col">
-                  <button type="button" className="sim-btn-wa sim-btn-lg" onClick={openWhatsApp}>
+                  <button type="button" className="sim-btn-wa sim-btn-lg" onClick={openWhatsApp} disabled={simLoading}>
                     <WaIcon size={18} /> Falar com comercial no WhatsApp
                   </button>
                   <button
                     type="button"
                     className="sim-btn-primary sim-btn-lg"
+                    disabled={simLoading}
                     onClick={() => {
                       const q = new URLSearchParams({
                         valor: String(valorObra),
@@ -344,6 +420,8 @@ export default function SimuladorPublicoPage() {
                     Já tenho conta — ver simulador completo
                   </Link>
                 </div>
+                  </>
+                )}
               </div>
             )}
           </div>

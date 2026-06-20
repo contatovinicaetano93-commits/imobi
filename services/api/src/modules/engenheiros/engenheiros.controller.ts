@@ -29,6 +29,24 @@ export class EngenheirosController {
     return this.engenheirosService.atualizarVisita(req.user.id, visitaId, body);
   }
 
+  @Patch("visitas/:visitaId/aprovar")
+  aprovarVistoria(
+    @Req() req: any,
+    @Param("visitaId") visitaId: string,
+    @Body("observacao") observacao?: string,
+  ) {
+    return this.engenheirosService.aprovarVistoria(req.user.id, visitaId, observacao);
+  }
+
+  @Patch("visitas/:visitaId/rejeitar")
+  rejeitarVistoria(
+    @Req() req: any,
+    @Param("visitaId") visitaId: string,
+    @Body("motivo") motivo: string,
+  ) {
+    return this.engenheirosService.rejeitarVistoria(req.user.id, visitaId, motivo);
+  }
+
   @Get("financeiro")
   financeiro(@Req() req: any) {
     return this.engenheirosService.financeiro(req.user.id);

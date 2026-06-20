@@ -144,6 +144,11 @@ function haversineMetros(
 // ─── Status configs ───────────────────────────────────────────────────────────
 const OBRA_STATUS: Record<string, { label: string; color: string; bg: string }> =
   {
+    AGUARDANDO_HOMOLOGACAO: {
+      label: "Aguardando homologação IMOBI",
+      color: "#b45309",
+      bg: "#FFFBEB",
+    },
     PLANEJAMENTO: { label: "Planejamento", color: "#6B7280", bg: "#F3F4F6" },
     EM_ANDAMENTO: { label: "Em Andamento", color: ROYAL, bg: "#EFF6FF" },
     EM_EXECUCAO: { label: "Em Execução", color: ROYAL, bg: "#EFF6FF" },
@@ -329,6 +334,11 @@ function TabGeralContent({
             >
               {obraStatus.label}
             </span>
+            {obra.status === "AGUARDANDO_HOMOLOGACAO" && (
+              <p style={{ ...j, fontSize: 13, color: "#b45309", marginBottom: 12, maxWidth: 480 }}>
+                Sua obra foi cadastrada e aguarda homologação do Admin IMOBI para entrar no pipe ativo.
+              </p>
+            )}
             {obra.endereco && (
               <div
                 style={{

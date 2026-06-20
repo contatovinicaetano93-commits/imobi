@@ -2,7 +2,8 @@
 
 import { useForm, Controller, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useState } from "react";
+import React, { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
 import PasswordInput from "../_components/PasswordInput";
 import { registerWithRetry } from "@/lib/register-with-retry";
@@ -10,7 +11,51 @@ import { redirectAfterLogin } from "@/lib/post-login-redirect";
 
 const WA = "5511993455589";
 
+function buildSimuladorRedirect(params: URLSearchParams): string | null {
+  const valor = params.get("valor");
+  const fase = params.get("fase");
+  const prazo = params.get("prazo");
+  if (!valor && !fase && !prazo) return null;
+  const q = new URLSearchParams();
+  if (valor) q.set("valor", valor);
+  if (fase) q.set("fase", fase);
+  if (prazo) q.set("prazo", prazo);
+  const estado = params.get("estado");
+  const cidade = params.get("cidade");
+  if (estado) q.set("estado", estado);
+  if (cidade) q.set("cidade", cidade);
+  return `/dashboard/simulador?${q.toString()}`;
+}
+
+function brl(v: number) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+}
+
 export default function CadastroPage() {
+  return (
+    <Suspense fallback={<CadastroFallback />}>
+      <CadastroForm />
+    </Suspense>
+  );
+}
+
+function CadastroFallback() {
+  return (
+    <div style={pageStyle}>
+      <div style={{ ...cardStyle, maxWidth: 460, textAlign: "center", color: "var(--gray)" }}>
+        Carregando…
+      </div>
+    </div>
+  );
+}
+
+function CadastroForm() {
+  const searchParams = useSearchParams();
+  const simuladorNext = useMemo(() => buildSimuladorRedirect(searchParams), [searchParams]);
+  const simValor = searchParams.get("valor");
+  const simFase = searchParams.get("fase");
+  const simPrazo = searchParams.get("prazo");
+
   const [erro, setErro] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
@@ -34,7 +79,7 @@ export default function CadastroPage() {
     setStatusMsg("Conectando ao servidor… (a 1ª vez pode levar até 1 minuto)");
     try {
       const result = await registerWithRetry(data, setStatusMsg);
-      redirectAfterLogin(result.role ?? "TOMADOR", "/dashboard");
+      redirectAfterLogin(result.role ?? "TOMADOR", simuladorNext ?? "/dashboard");
     } catch (e) {
       setStatusMsg(null);
       setErro(e instanceof Error ? e.message : "Erro inesperado.");
@@ -45,6 +90,20 @@ export default function CadastroPage() {
     <div style={pageStyle}>
       <div style={{ ...cardStyle, maxWidth: 460 }}>
         <LogoHeader />
+
+        {simuladorNext && (
+          <div style={simBannerStyle}>
+            <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "#1B4FD8", marginBottom: "0.35rem" }}>
+              Simulação em andamento
+            </p>
+            <p style={{ fontSize: "0.75rem", color: "#334155", lineHeight: 1.5, margin: 0 }}>
+              {simValor ? `Obra ${brl(Number(simValor))}` : "Obra simulada"}
+              {simFase ? ` · ${simFase}` : ""}
+              {simPrazo ? ` · ${simPrazo} meses` : ""}
+              {" — após criar a conta você continua no simulador completo."}
+            </p>
+          </div>
+        )}
 
         <h1 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--ink)", marginBottom: "0.25rem" }}>
           Criar conta
@@ -248,4 +307,12 @@ const submitStyle: React.CSSProperties = {
   transition: "all 0.15s",
   boxShadow: "0 4px 14px rgba(27,79,216,0.28)",
   marginTop: "0.25rem",
+};
+
+const simBannerStyle: React.CSSProperties = {
+  background: "#EFF6FF",
+  border: "1px solid #BFDBFE",
+  borderRadius: 10,
+  padding: "0.85rem 1rem",
+  marginBottom: "1.25rem",
 };

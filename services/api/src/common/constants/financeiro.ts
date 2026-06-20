@@ -1,0 +1,31 @@
+/** WhatsApp comercial/financeiro IMOBI (E.164 sem +). */
+export const IMOBI_FINANCEIRO_WHATS_E164 = "5511993455589";
+
+export const IMOBI_FINANCEIRO_EMAIL =
+  process.env["IMOBI_FINANCEIRO_EMAIL"] ?? "financeiro@imobi.com.br";
+
+export function buildFinanceiroWhatsAppUrl(mensagem: string): string {
+  return `https://wa.me/${IMOBI_FINANCEIRO_WHATS_E164}?text=${encodeURIComponent(mensagem)}`;
+}
+
+export function buildCapitalFaseWhatsAppMessage(params: {
+  obraNome: string;
+  etapaNome: string;
+  valorFormatado: string;
+  liberacaoId: string;
+  tomadorNome: string;
+}): string {
+  return [
+    "Olá, equipe financeira IMOBI!",
+    "",
+    `Solicito confirmação de pagamento — *Capital fase liberado*.`,
+    "",
+    `*Obra:* ${params.obraNome}`,
+    `*Fase/Etapa:* ${params.etapaNome}`,
+    `*Valor:* ${params.valorFormatado}`,
+    `*Tomador:* ${params.tomadorNome}`,
+    `*Ref. liberação:* ${params.liberacaoId.slice(0, 8).toUpperCase()}`,
+    "",
+    "Conta cadastrada na plataforma. Aguardo confirmação do crédito.",
+  ].join("\n");
+}

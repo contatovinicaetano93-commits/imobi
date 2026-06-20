@@ -11,6 +11,8 @@ import {
   type CreditoResumo, type ObraResumo, type KycStatus, type Notificacao,
 } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
+import { PanelSection } from "@/components/dashboard/PanelSection";
+import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Painel Construtor — IMOBI" };
@@ -38,28 +40,6 @@ function fmtDate(d: Date) {
 }
 
 // ── sub-components ────────────────────────────────────────────────────────────
-
-function Section({ title, icon: Icon, href, children }: {
-  title: string; icon: React.ElementType; href?: string; children: React.ReactNode;
-}) {
-  return (
-    <section>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-gray-400" />
-          <h2 className="text-sm font-bold text-gray-800">{title}</h2>
-        </div>
-        {href && (
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          <Link href={href as any} className="text-xs text-blue-600 font-semibold flex items-center gap-1 hover:text-blue-800 transition">
-            Ver tudo <ArrowRight className="w-3 h-3" />
-          </Link>
-        )}
-      </div>
-      {children}
-    </section>
-  );
-}
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
@@ -127,8 +107,19 @@ export default async function ConstrutorPage() {
   // Liberações do crédito (extrato de desembolsos)
   const liberacoes = credito?.liberacoes ?? [];
 
+  const construtorPanels = [
+    { id: "cronograma-pagamentos", priority: "primary" as const },
+    { id: "cronograma-liberacoes", priority: (etapasPendentes.length > 0 ? "critical" : "primary") as const },
+    { id: "medicao-obra", priority: "secondary" as const },
+    { id: "documentos-kyc", priority: (docsRejeitados > 0 ? "critical" : docsPendentes > 0 ? "primary" : "secondary") as const },
+    { id: "extrato-operacao", priority: "secondary" as const },
+    { id: "solicitacoes", priority: "primary" as const },
+    ...(notifs.length > 0 ? [{ id: "notificacoes", priority: "primary" as const }] : []),
+    { id: "contratos-documentos", priority: "secondary" as const },
+  ];
+
   return (
-    <div className="flex flex-col gap-6 pb-10 max-w-2xl">
+    <div className="flex flex-col gap-4 pb-10 max-w-2xl">
 
       {/* ── Alertas ─────────────────────────────────────────────────── */}
       {alertas.length > 0 && (
@@ -199,8 +190,22 @@ export default async function ConstrutorPage() {
         </Card>
       )}
 
+        </Card>
+      )}
+
+      <PanelToolbar sections={construtorPanels} />
+
       {/* ── Cronograma de pagamentos ─────────────────────────────────── */}
-      <Section title="Cronograma de Pagamentos" icon={Calendar} href="/dashboard/credito">
+      <PanelSection
+        flush
+        id="cronograma-pagamentos"
+        title="Cronograma de Pagamentos"
+        icon={<Calendar className="w-4 h-4" />}
+        priority="primary"
+        href="/dashboard/credito"
+        badge={parcela > 0 ? formatarBRL(parcela) : undefined}
+        summary={parcela > 0 ? `Parcela ${formatarBRL(parcela)}/mês` : "Sem parcelas"}
+      >
         {parcela > 0 ? (
           <Card>
             <div className="p-4 pb-2 border-b border-gray-50">
@@ -246,10 +251,20 @@ export default async function ConstrutorPage() {
             </Link>
           </Card>
         )}
-      </Section>
+      </PanelSection>
 
       {/* ── Cronograma de liberações ─────────────────────────────────── */}
-      <Section title="Cronograma de Liberações" icon={Banknote} href="/dashboard/obras">
+      <PanelSection
+        flush
+        id="cronograma-liberacoes"
+        title="Cronograma de Liberações"
+        icon={<Banknote className="w-4 h-4" />}
+        priority={etapasPendentes.length > 0 ? "critical" : "primary"}
+        href="/dashboard/obras"
+        badge={etapasPendentes.length > 0 ? `${etapasPendentes.length} ag. vistoria` : todasEtapas.length}
+        summary={`${etapasLiberadas.length} liberadas · ${pctObra}% da obra`}
+        urgency={etapasPendentes.length > 0 ? "warning" : "none"}
+      >
         {todasEtapas.length > 0 ? (
           <Card className="overflow-hidden">
             {/* sumário */}
@@ -306,10 +321,17 @@ export default async function ConstrutorPage() {
             </Link>
           </Card>
         )}
-      </Section>
+      </PanelSection>
 
       {/* ── Status da medição de obra ─────────────────────────────────── */}
-      <Section title="Medição de Obra" icon={Wrench} href="/dashboard/obras">
+      <PanelSection
+        id="medicao-obra"
+        title="Medição de Obra"
+        icon={<Wrench className="w-4 h-4" />}
+        priority="secondary"
+        href="/dashboard/obras"
+        summary={`${pctObra}% evolução física`}
+      >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* evolução física */}
           <Card className="p-4">
@@ -368,10 +390,20 @@ export default async function ConstrutorPage() {
             ))}
           </Card>
         )}
-      </Section>
+      </PanelSection>
 
       {/* ── Upload de documentos ──────────────────────────────────────── */}
-      <Section title="Documentos & KYC" icon={Upload} href="/dashboard/kyc">
+      <PanelSection
+        flush
+        id="documentos-kyc"
+        title="Documentos & KYC"
+        icon={<Upload className="w-4 h-4" />}
+        priority={docsRejeitados > 0 ? "critical" : docsPendentes > 0 ? "primary" : "secondary"}
+        href="/dashboard/kyc"
+        badge={docsPendentes + docsRejeitados > 0 ? docsPendentes + docsRejeitados : undefined}
+        summary={`${docsAprovados} aprovados · ${docsPendentes} pendentes`}
+        urgency={docsRejeitados > 0 ? "critical" : docsPendentes > 0 ? "warning" : "none"}
+      >
         <Card>
           {/* status geral */}
           <div className="grid grid-cols-3 gap-0 border-b border-gray-50">
@@ -422,10 +454,18 @@ export default async function ConstrutorPage() {
             </Link>
           </div>
         </Card>
-      </Section>
+      </PanelSection>
 
       {/* ── Extrato da operação ───────────────────────────────────────── */}
-      <Section title="Extrato da Operação" icon={FileText} href="/dashboard/credito">
+      <PanelSection
+        flush
+        id="extrato-operacao"
+        title="Extrato da Operação"
+        icon={<FileText className="w-4 h-4" />}
+        priority="secondary"
+        href="/dashboard/credito"
+        summary={liberacoes.length > 0 ? `${liberacoes.length} desembolso(s)` : "Sem movimentações"}
+      >
         {liberacoes.length > 0 ? (
           <Card className="overflow-hidden">
             <div className="divide-y divide-gray-50">
@@ -470,10 +510,16 @@ export default async function ConstrutorPage() {
             <p className="text-xs text-gray-400">Nenhum desembolso registrado ainda.</p>
           </Card>
         )}
-      </Section>
+      </PanelSection>
 
       {/* ── Solicitações ──────────────────────────────────────────────── */}
-      <Section title="Solicitações" icon={Send}>
+      <PanelSection
+        id="solicitacoes"
+        title="Solicitações"
+        icon={<Send className="w-4 h-4" />}
+        priority="primary"
+        summary="Tranches, renegociação, comitê"
+      >
         <div className="flex flex-col gap-2">
           {[
             { label: "Nova tranche",         sub: "Solicite liberação de recursos para a próxima etapa",  icon: PlusCircle,  href: "/dashboard/credito#solicitar-parcela", color: ROYAL },
@@ -494,11 +540,20 @@ export default async function ConstrutorPage() {
             </Link>
           ))}
         </div>
-      </Section>
+      </PanelSection>
 
       {/* ── Notificações recentes ─────────────────────────────────────── */}
       {notifs.length > 0 && (
-        <Section title={`Notificações (${notifs.length} não lidas)`} icon={Bell} href="/dashboard/notificacoes">
+        <PanelSection
+          flush
+          id="notificacoes"
+          title="Notificações"
+          icon={<Bell className="w-4 h-4" />}
+          priority="primary"
+          href="/dashboard/notificacoes"
+          badge={notifs.length}
+          summary={`${notifs.length} não lida(s)`}
+        >
           <Card className="overflow-hidden">
             <div className="divide-y divide-gray-50">
               {notifs.slice(0, 4).map((n) => (
@@ -518,11 +573,19 @@ export default async function ConstrutorPage() {
               </Link>
             </div>
           </Card>
-        </Section>
+        </PanelSection>
       )}
 
       {/* ── Contratos para download ───────────────────────────────────── */}
-      <Section title="Contratos & Documentos" icon={Download} href="/dashboard/credito">
+      <PanelSection
+        flush
+        id="contratos-documentos"
+        title="Contratos & Documentos"
+        icon={<Download className="w-4 h-4" />}
+        priority="secondary"
+        href="/dashboard/credito"
+        summary="Contrato, garantias, laudos"
+      >
         <Card>
           <div className="divide-y divide-gray-50">
             {[
@@ -552,7 +615,7 @@ export default async function ConstrutorPage() {
             ))}
           </div>
         </Card>
-      </Section>
+      </PanelSection>
 
     </div>
   );

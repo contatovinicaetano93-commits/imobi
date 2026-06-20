@@ -10,6 +10,7 @@ import {
   type PreferenciasNotificacao,
   type UpdatePreferenciasNotificacaoInput,
   type UpdatePerfilUsuarioInput,
+  type ContaBancariaEmpresaInput,
 } from "@imbobi/schemas";
 
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
@@ -42,6 +43,11 @@ export class UsuariosService {
     tipo: string;
     kycStatus: string;
     avatarUrl: string | null;
+    contaBanco: string | null;
+    contaAgencia: string | null;
+    contaNumero: string | null;
+    contaPix: string | null;
+    contaTitular: string | null;
     criadoEm: Date;
     atualizadoEm: Date;
   }, avatarSigned: string | null) {
@@ -54,26 +60,40 @@ export class UsuariosService {
       tipo: usuario.tipo,
       kycStatus: usuario.kycStatus,
       avatarUrl: avatarSigned,
+      contaBancaria: {
+        titular: usuario.contaTitular,
+        banco: usuario.contaBanco,
+        agencia: usuario.contaAgencia,
+        numero: usuario.contaNumero,
+        pix: usuario.contaPix,
+      },
       criadoEm: usuario.criadoEm,
       atualizadoEm: usuario.atualizadoEm,
     };
   }
 
+  private perfilSelect = {
+    usuarioId: true,
+    nome: true,
+    cpf: true,
+    email: true,
+    telefone: true,
+    tipo: true,
+    kycStatus: true,
+    avatarUrl: true,
+    contaBanco: true,
+    contaAgencia: true,
+    contaNumero: true,
+    contaPix: true,
+    contaTitular: true,
+    criadoEm: true,
+    atualizadoEm: true,
+  } as const;
+
   async buscarPerfil(usuarioId: string) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId },
-      select: {
-        usuarioId: true,
-        nome: true,
-        cpf: true,
-        email: true,
-        telefone: true,
-        tipo: true,
-        kycStatus: true,
-        avatarUrl: true,
-        criadoEm: true,
-        atualizadoEm: true,
-      },
+      select: this.perfilSelect,
     });
     if (!usuario) return null;
     const avatarSigned = await this.resolveAvatarUrl(usuario.avatarUrl);
@@ -88,18 +108,24 @@ export class UsuariosService {
         telefone: data.telefone,
         atualizadoEm: new Date(),
       },
-      select: {
-        usuarioId: true,
-        nome: true,
-        cpf: true,
-        email: true,
-        telefone: true,
-        tipo: true,
-        kycStatus: true,
-        avatarUrl: true,
-        criadoEm: true,
-        atualizadoEm: true,
+      select: this.perfilSelect,
+    });
+    const avatarSigned = await this.resolveAvatarUrl(usuario.avatarUrl);
+    return this.mapPerfil(usuario, avatarSigned);
+  }
+
+  async atualizarContaBancaria(usuarioId: string, data: ContaBancariaEmpresaInput) {
+    const usuario = await this.prisma.usuario.update({
+      where: { usuarioId },
+      data: {
+        contaTitular: data.contaTitular,
+        contaBanco: data.contaBanco,
+        contaAgencia: data.contaAgencia,
+        contaNumero: data.contaNumero,
+        contaPix: data.contaPix?.trim() ? data.contaPix.trim() : null,
+        atualizadoEm: new Date(),
       },
+      select: this.perfilSelect,
     });
     const avatarSigned = await this.resolveAvatarUrl(usuario.avatarUrl);
     return this.mapPerfil(usuario, avatarSigned);
@@ -128,18 +154,7 @@ export class UsuariosService {
     const usuario = await this.prisma.usuario.update({
       where: { usuarioId },
       data: { avatarUrl: key, atualizadoEm: new Date() },
-      select: {
-        usuarioId: true,
-        nome: true,
-        cpf: true,
-        email: true,
-        telefone: true,
-        tipo: true,
-        kycStatus: true,
-        avatarUrl: true,
-        criadoEm: true,
-        atualizadoEm: true,
-      },
+      select: this.perfilSelect,
     });
 
     const avatarSigned = await this.resolveAvatarUrl(usuario.avatarUrl);

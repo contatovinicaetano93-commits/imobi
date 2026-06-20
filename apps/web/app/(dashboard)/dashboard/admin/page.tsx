@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { formatarBRL } from "@imbobi/core";
 
+import { AdminSipocPanel } from "./_components/AdminSipocPanel";
+
 const NAVY  = "#0C1A3D";
 const ROYAL = "#1B4FD8";
 const MINT  = "#4ADE80";
@@ -551,6 +553,8 @@ function TabOperacional({
 
   return (
     <div className="space-y-6">
+      <AdminSipocPanel />
+
       {/* Aprovações pendentes */}
       <div style={card}>
         <SectionHeader title="Aprovações Pendentes" icon={<ShieldCheck size={14} color="#f59e0b" />} />

@@ -6,7 +6,6 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 import { managerApi, type EtapaPendente, ApiError } from "@/lib/api";
-import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions";
 import { AdvancedFilters, type FilterState } from "@/components/dashboard/AdvancedFilters";
 import { GestorSubpageHeader } from "@/app/(dashboard)/_components/gestor/GestorSubpageHeader";
 import { ManagerListBanner } from "@/app/(dashboard)/_components/gestor/ManagerListBanner";
@@ -33,8 +32,6 @@ function EtapasContent() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
-  const [selectedEtapas, setSelectedEtapas] = useState<string[]>([]);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     status: "todas",
     dataInicio: "",
@@ -90,7 +87,7 @@ function EtapasContent() {
   if (loading && !data) {
     return (
       <div className="space-y-6">
-        <GestorSubpageHeader title="Etapas Pendentes" subtitle="Carregando fila de aprovação..." />
+        <GestorSubpageHeader title="Monitoramento de operações" subtitle="Carregando operações do pipe..." />
         <PageSkeleton variant="timeline" count={3} showHeader={false} />
       </div>
     );
@@ -112,48 +109,10 @@ function EtapasContent() {
   const pages = Math.ceil(data.total / limit);
   const currentPage = offset / limit + 1;
 
-  const handleSelectEtapa = (etapaId: string) => {
-    setSelectedEtapas((prev) =>
-      prev.includes(etapaId) ? prev.filter((id) => id !== etapaId) : [...prev, etapaId]
-    );
-  };
-
-  const handleSelectAll = () => {
-    setSelectedEtapas((prev) =>
-      prev.length === data.etapas.length ? [] : data.etapas.map((e) => e.etapaId)
-    );
-  };
-
-  const handleBulkSuccess = (action: "approve" | "reject") => {
-    const actionText = action === "approve" ? "aprovada(s)" : "rejeitada(s)";
-    setSuccessMessage(`${selectedEtapas.length} etapa(s) ${actionText} com sucesso!`);
-    setSelectedEtapas([]);
-    setOffset(0);
-    loadEtapas();
-    setTimeout(() => setSuccessMessage(null), 5000);
-  };
-
-  const handleError = (message: string) => {
-    setError(message);
-  };
-
-  // Use data.etapas directly - filtering is now handled by the API
   const filteredEtapas = data.etapas;
 
   return (
     <div className="space-y-6">
-      {successMessage && (
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center justify-between">
-          <p className="text-green-800 text-sm font-medium">{successMessage}</p>
-          <button
-            onClick={() => setSuccessMessage(null)}
-            className="text-green-600 hover:text-green-700"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
       {loadError && (
         <ManagerListBanner
           variant="error"
@@ -164,13 +123,16 @@ function EtapasContent() {
       )}
 
       <GestorSubpageHeader
-        title="Etapas Pendentes"
-        subtitle={`${data.total} etapa${data.total !== 1 ? "s" : ""} aguardando aprovação${
-          selectedEtapas.length > 0 ? ` — ${selectedEtapas.length} selecionada(s)` : ""
-        }`}
+        title="Monitoramento de operações"
+        subtitle={`${data.total} operação${data.total !== 1 ? "ões" : ""} no pipe — visualização somente leitura`}
         onRefresh={loadEtapas}
         refreshing={loading}
       />
+
+      <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+        Como gestor do fundo, você acompanha saúde, pontos fortes e fracos das operações.
+        Liberações são feitas pelo engenheiro (vistoria) e pelo financeiro IMOBI (pagamento manual).
+      </p>
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
@@ -225,59 +187,22 @@ function EtapasContent() {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Selection Toolbar */}
-          {filteredEtapas.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={selectedEtapas.length === filteredEtapas.length && filteredEtapas.length > 0}
-                  onChange={() => {
-                    setSelectedEtapas((prev) =>
-                      prev.length === filteredEtapas.length ? [] : filteredEtapas.map((e) => e.etapaId)
-                    );
-                  }}
-                  className="w-5 h-5 rounded border-gray-300 text-[#1B4FD8] cursor-pointer"
-                  title="Selecionar/desselecionar todos"
-                />
-                <span className="text-sm text-gray-700">
-                  {selectedEtapas.length === 0
-                    ? "Selecionar etapas"
-                    : `${selectedEtapas.length} de ${filteredEtapas.length} selecionadas`}
-                </span>
-              </div>
-            </div>
-          )}
-
           {filteredEtapas.map((etapa) => {
             const horas = hoursAgo(etapa.criadoEm);
             const urgente = horas >= 24;
-            const isSelected = selectedEtapas.includes(etapa.etapaId);
 
             return (
               <div
                 key={etapa.etapaId}
-                className={`bg-white rounded-2xl border shadow-sm p-6 transition-all ${
-                  isSelected ? "border-blue-300 bg-blue-50" : "border-gray-100 hover:shadow-md"
-                }`}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 transition-all hover:shadow-md"
               >
                 <div className="flex flex-col sm:flex-row items-start gap-4">
-                  {/* Checkbox */}
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => handleSelectEtapa(etapa.etapaId)}
-                    className="w-5 h-5 rounded border-gray-300 text-[#1B4FD8] cursor-pointer mt-0.5 shrink-0"
-                  />
-
-                  {/* Urgência */}
                   <div
                     className={`w-1.5 h-full self-stretch rounded-full ${
                       urgente ? "bg-red-400" : horas >= 12 ? "bg-yellow-400" : "bg-green-400"
                     }`}
                   />
 
-                  {/* Conteúdo */}
                   <div className="flex-1 min-w-0 space-y-3">
                     <div>
                       <div className="flex items-start justify-between gap-4">
@@ -321,7 +246,7 @@ function EtapasContent() {
                       href={`/dashboard/gestor/etapas/${etapa.etapaId}`}
                       className="bg-[#1B4FD8] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors"
                     >
-                      Revisar
+                      Visualizar
                     </Link>
                   </div>
                 </div>
@@ -330,13 +255,6 @@ function EtapasContent() {
           })}
         </div>
       )}
-
-      <BulkApprovalActions
-        selectedEtapas={selectedEtapas}
-        onSuccess={handleBulkSuccess}
-        onError={handleError}
-        isDisabled={loading}
-      />
 
       {/* Paginação */}
       {pages > 1 && (

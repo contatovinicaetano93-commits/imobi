@@ -52,6 +52,8 @@ export default function VisitDetailPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [showRejectionForm, setShowRejectionForm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const visitaId = Array.isArray(params.visitaId) ? params.visitaId[0] : params.visitaId;
@@ -154,14 +156,35 @@ export default function VisitDetailPage() {
     }
   };
 
-  const handleComplete = async () => {
+  const handleApproveVistoria = async () => {
     if (!visita) return;
+    if (evidencias.length === 0) {
+      toastError("Adicione ao menos uma evidência antes de aprovar a vistoria.");
+      return;
+    }
     setSubmitting(true);
     try {
-      await engenheirosApi.atualizarValidacao(visitaId, { status: "CONCLUIDA" });
+      await engenheirosApi.aprovarVistoria(visitaId);
       setVisita({ ...visita, status: "CONCLUIDA" });
-      success("Visita concluída.");
-      router.refresh();
+      success("Vistoria técnica aprovada. Capital aguardando pagamento manual.");
+      router.push("/dashboard/engenheiro");
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : "Erro desconhecido");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectVistoria = async () => {
+    if (!rejectionReason.trim()) {
+      toastError("Informe o motivo da reprovação.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await engenheirosApi.rejeitarVistoria(visitaId, rejectionReason.trim());
+      success("Vistoria reprovada.");
+      router.push("/dashboard/engenheiro");
     } catch (err) {
       toastError(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
@@ -381,20 +404,61 @@ export default function VisitDetailPage() {
               )}
 
               {visita.status === "INICIADA" && (
-                <button
-                  onClick={handleComplete}
-                  disabled={submitting}
-                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
-                >
-                  {submitting ? "Concluindo..." : "Concluir Visita"}
-                </button>
+                <>
+                  <button
+                    onClick={handleApproveVistoria}
+                    disabled={submitting || evidencias.length === 0}
+                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
+                  >
+                    {submitting ? "Aprovando..." : "Aprovar vistoria técnica"}
+                  </button>
+                  {evidencias.length === 0 && (
+                    <p className="text-xs text-amber-700 text-center">Envie evidências antes de aprovar.</p>
+                  )}
+                  {!showRejectionForm ? (
+                    <button
+                      onClick={() => setShowRejectionForm(true)}
+                      className="w-full bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-3 rounded-lg transition-colors"
+                    >
+                      Reprovar vistoria
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <textarea
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        placeholder="Motivo da reprovação..."
+                        className="w-full border border-gray-300 rounded-lg p-3 text-sm"
+                        rows={3}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleRejectVistoria}
+                          disabled={submitting}
+                          className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white font-semibold py-2 rounded-lg text-sm"
+                        >
+                          Confirmar
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowRejectionForm(false);
+                            setRejectionReason("");
+                          }}
+                          className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 rounded-lg text-sm"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {visita.status === "CONCLUIDA" && (
                 <div className="bg-green-50 rounded-lg p-4 text-center">
-                  <p className="text-green-800 font-semibold">✓ Visita Concluída</p>
+                  <p className="text-green-800 font-semibold">✓ Vistoria aprovada</p>
                   <p className="text-green-700 text-sm mt-1">
-                    Concluída em {formatDate(visita.dataConclusao || visita.criadoEm)}
+                    Pagamento manual pelo financeiro IMOBI na conta cadastrada do construtor.
                   </p>
                 </div>
               )}

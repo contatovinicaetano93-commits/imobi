@@ -438,9 +438,13 @@ export default function LandingPage() {
           <div className="footer-top">
             <a className="logo footer-logo" href="#"><LogoIcon /><span className="logo-name">IMOBI</span></a>
             <div className="footer-links">
-              <a href="/simulador">Simular</a><a href="#vantagens">Vantagens</a><a href="#como">Processo</a>
-              <a href="#modalidades">Modalidades</a><a href="#faq">Dúvidas</a>
-              <a href="#analise">Contato</a><a href="/login">Login</a>
+              <a href="/simulador">Simular</a>
+              <a href="/quem-somos">Quem somos</a>
+              <a href="/como-funciona">Como funciona</a>
+              <a href="/contato">Contato</a>
+              <a href="#vantagens">Vantagens</a>
+              <a href="#faq">Dúvidas</a>
+              <a href="/login">Login</a>
             </div>
           </div>
           <div className="footer-bottom">

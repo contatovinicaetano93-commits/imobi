@@ -1,12 +1,18 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from "@nestjs/common";
 import type { EtapaStatus } from "@prisma/client";
-import { InjectQueue } from "@nestjs/bull";
-import { Queue } from "bull";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
-import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
+import {
+  buildCapitalFaseWhatsAppMessage,
+  buildFinanceiroWhatsAppUrl,
+} from "../../common/constants/financeiro";
 
 @Injectable()
 export class EtapasService {
@@ -15,25 +21,29 @@ export class EtapasService {
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
     private readonly pushNotificacoes: PushNotificacoesService,
-    @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue<LiberacaoJob>
   ) {}
 
-  async aprovar(gestorId: string, etapaId: string, observacao?: string) {
+  /** Aprovação técnica (engenheiro) — dispara liberação financeira manual. */
+  async aprovar(aprovadorId: string, etapaId: string, observacao?: string) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId },
       include: { obra: { include: { credito: true, usuario: true } } },
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
-    // Exige ao menos 1 evidência validada
-    const evidencias = await this.prisma.evidenciaEtapa.count({
-      where: { etapaId: etapaId, validada: true },
-    });
-    if (evidencias === 0) {
-      throw new BadRequestException("Etapa precisa ter ao menos uma evidência validada.");
+    if (etapa.obra.status !== "EM_EXECUCAO") {
+      throw new BadRequestException(
+        "Obra ainda não está no pipe ativo. Aguarde homologação do Admin.",
+      );
     }
 
-    // Atomic check + update: prevents double approval under concurrent requests
+    const evidencias = await this.prisma.evidenciaEtapa.count({
+      where: { etapaId },
+    });
+    if (evidencias === 0) {
+      throw new BadRequestException("Etapa precisa ter ao menos uma evidência fotográfica.");
+    }
+
     const updated = await this.prisma.etapaObra.updateMany({
       where: { etapaId, status: "AGUARDANDO_VISTORIA" },
       data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
@@ -42,60 +52,102 @@ export class EtapasService {
       throw new BadRequestException("Etapa não está aguardando vistoria.");
     }
 
-    // Create audit log entry
     await this.prisma.etapaAuditLog.create({
       data: {
         etapaId,
         acaoTipo: "APROVADA",
-        usuarioId: gestorId,
+        usuarioId: aprovadorId,
         observacoes: observacao || null,
       },
     });
 
-    // Notifica o criador da obra sobre a aprovação
+    const credito = etapa.obra.credito;
+    const valorLiberacao = credito
+      ? Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100)
+      : Number(etapa.valorLiberacao) || 0;
+
+    const valorFmt = new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(valorLiberacao);
+
+    let liberacaoId: string | null = null;
+
+    if (credito && credito.status === "ATIVO" && valorLiberacao > 0) {
+      const liberacao = await this.prisma.liberacaoParcela.create({
+        data: {
+          creditoId: credito.creditoId,
+          etapaId,
+          valor: valorLiberacao,
+          status: "AGUARDANDO_PAGAMENTO",
+        },
+      });
+      liberacaoId = liberacao.liberacaoId;
+    }
+
+    const whatsMsg = buildCapitalFaseWhatsAppMessage({
+      obraNome: etapa.obra.nome,
+      etapaNome: etapa.nome,
+      valorFormatado: valorFmt,
+      liberacaoId: liberacaoId ?? etapaId,
+      tomadorNome: etapa.obra.usuario?.nome ?? "Tomador",
+    });
+    const whatsUrl = buildFinanceiroWhatsAppUrl(whatsMsg);
+
+    const notifCorpo = [
+      `Capital da fase "${etapa.nome}" aprovado tecnicamente (${valorFmt}).`,
+      "O financeiro IMOBI processará o pagamento na conta cadastrada.",
+      `Confirme pelo WhatsApp: ${whatsUrl}`,
+    ].join(" ");
+
     await this.notificacoes.criar(
       etapa.obra.usuarioId,
-      "ETAPA_APROVADA",
-      `Etapa aprovada: ${etapa.nome}`,
-      `A etapa "${etapa.nome}" da obra "${etapa.obra.nome}" foi aprovada com sucesso. A liberação da parcela foi agendada.`,
-      `/dashboard/obras/${etapa.obra.obraId}`
+      "PARCELA_LIBERADA",
+      `Capital fase liberado: ${etapa.nome}`,
+      notifCorpo,
+      `/dashboard/obras/${etapa.obra.obraId}`,
     );
 
-    // Envia push notification
-    this.pushNotificacoes.enviarPush({
-      usuarioId: etapa.obra.usuarioId,
-      titulo: `Etapa Aprovada: ${etapa.nome}`,
-      mensagem: `Sua etapa foi aprovada e a parcela será liberada em breve.`,
-      tipo: "ETAPA_APROVADA",
-      dados: { obraId: etapa.obra.obraId, etapaId },
-    }).catch(() => {});
+    this.pushNotificacoes
+      .enviarPush({
+        usuarioId: etapa.obra.usuarioId,
+        titulo: `Capital fase ${etapa.nome} liberado`,
+        mensagem: `${valorFmt} — aguardando pagamento. Fale com o financeiro pelo WhatsApp.`,
+        tipo: "PARCELA_LIBERADA",
+        dados: {
+          obraId: etapa.obra.obraId,
+          etapaId,
+          liberacaoId: liberacaoId ?? "",
+          whatsAppUrl: whatsUrl,
+        },
+      })
+      .catch(() => {});
 
-    // Envia email de confirmação
-    const credito = etapa.obra.credito;
-    if (credito) {
-      const valorLiberacao = Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
-      this.email.etapaAprovadaEmail(
-        etapa.obra.usuario?.nome || "usuário",
-        etapa.obra.usuario?.email || "",
-        etapa.nome,
-        etapa.obra.nome,
-        valorLiberacao
-      ).catch(() => {});
+    if (etapa.obra.usuario?.email) {
+      this.email
+        .capitalFaseAguardandoPagamentoEmail({
+          nome: etapa.obra.usuario.nome,
+          email: etapa.obra.usuario.email,
+          obraNome: etapa.obra.nome,
+          etapaNome: etapa.nome,
+          valor: valorLiberacao,
+          whatsAppUrl: whatsUrl,
+          liberacaoRef: liberacaoId?.slice(0, 8).toUpperCase() ?? "",
+        })
+        .catch(() => {});
     }
 
-    // Dispara liberação de parcela via fila (assíncrono)
-    if (credito && credito.status === "ATIVO") {
-      const valorLiberacao = Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
-      const liberacao = await this.prisma.liberacaoParcela.create({
-        data: { creditoId: credito.creditoId, valor: valorLiberacao, status: "PENDENTE" },
-      });
-      await this.liberacaoQueue.add({ creditoId: credito.creditoId, etapaId, liberacaoId: liberacao.liberacaoId, valor: valorLiberacao });
-    }
-
-    return { ok: true, observacao };
+    return {
+      ok: true,
+      observacao,
+      liberacaoId,
+      valorLiberacao,
+      whatsAppUrl: whatsUrl,
+      aguardandoPagamento: !!liberacaoId,
+    };
   }
 
-  async rejeitar(gestorId: string, etapaId: string, motivo: string) {
+  async rejeitar(aprovadorId: string, etapaId: string, motivo: string) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId },
       include: { obra: { include: { usuario: true } } },
@@ -110,12 +162,11 @@ export class EtapasService {
       throw new BadRequestException("Etapa não está aguardando vistoria.");
     }
 
-    // Create audit log entry
     await this.prisma.etapaAuditLog.create({
       data: {
         etapaId,
         acaoTipo: "REJEITADA",
-        usuarioId: gestorId,
+        usuarioId: aprovadorId,
         observacoes: motivo,
       },
     });
@@ -124,8 +175,8 @@ export class EtapasService {
       etapa.obra.usuarioId,
       "ETAPA_REPROVADA",
       `Etapa reprovada: ${etapa.nome}`,
-      `A etapa "${etapa.nome}" foi reprovada. Motivo: ${motivo}`,
-      `/dashboard/obras/${etapa.obra.obraId}`
+      `A etapa "${etapa.nome}" foi reprovada na vistoria. Motivo: ${motivo}`,
+      `/dashboard/obras/${etapa.obra.obraId}`,
     );
 
     return { ok: true, motivo };
@@ -133,7 +184,8 @@ export class EtapasService {
 
   async atualizarStatus(etapaId: string, status: string, usuarioId: string, userTipo: string) {
     const etapaExistente = await this.prisma.etapaObra.findUnique({
-      where: { etapaId }, include: { obra: true },
+      where: { etapaId },
+      include: { obra: true },
     });
     if (!etapaExistente) throw new NotFoundException("Etapa não encontrada.");
 
@@ -141,7 +193,12 @@ export class EtapasService {
     const isPrivileged = ["GESTOR", "ADMIN", "ENGENHEIRO"].includes(normalizedTipo);
     if (!isPrivileged) {
       if (etapaExistente.obra.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
-      if (status !== "AGUARDANDO_VISTORIA") throw new ForbiddenException("Você só pode submeter a etapa para vistoria.");
+      if (status !== "AGUARDANDO_VISTORIA") {
+        throw new ForbiddenException("Você só pode submeter a etapa para vistoria.");
+      }
+      if (etapaExistente.obra.status !== "EM_EXECUCAO") {
+        throw new BadRequestException("Obra aguardando homologação do Admin IMOBI.");
+      }
     }
 
     return this.prisma.etapaObra.update({

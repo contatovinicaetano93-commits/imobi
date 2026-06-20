@@ -3,6 +3,7 @@ import { usuariosApi } from "@/lib/api";
 import { formatarCPF, formatarTelefone } from "@imbobi/core";
 import { PerfilForm } from "./perfil-form";
 import { PerfilAvatar } from "./perfil-avatar";
+import { PerfilContaBancaria } from "./perfil-conta-bancaria";
 import { AlertCircle } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
@@ -101,6 +102,10 @@ export default async function PerfilPage() {
         <p className="text-sm text-gray-500 mb-5">Edite seu nome e telefone. E-mail e CPF não podem ser alterados aqui.</p>
         <PerfilForm usuario={usuario} />
       </div>
+
+      {(usuario.tipo === "CONSTRUTOR" || usuario.tipo === "TOMADOR") && (
+        <PerfilContaBancaria usuario={usuario} />
+      )}
 
       {/* Dados da conta */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">

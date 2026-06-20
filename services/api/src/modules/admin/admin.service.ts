@@ -1,5 +1,7 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { EmailService } from "../email/email.service";
+import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import * as bcrypt from "bcryptjs";
 import { UsuarioTipo } from "@prisma/client";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
@@ -51,7 +53,11 @@ export interface Atividade {
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly email: EmailService,
+    private readonly notificacoes: NotificacoesService,
+  ) {}
 
   async overview(): Promise<AdminOverview> {
     const [
@@ -367,5 +373,159 @@ export class AdminService {
     ]);
 
     return { ok: true };
+  }
+
+  /** Homologa obra no pipe ativo (SIPOC — Admin). */
+  async homologarObra(obraId: string, adminId: string) {
+    const obra = await this.prisma.obra.findUnique({
+      where: { obraId },
+      include: { usuario: { select: { usuarioId: true, nome: true, email: true } } },
+    });
+    if (!obra) throw new NotFoundException("Obra não encontrada.");
+    if (!["AGUARDANDO_HOMOLOGACAO", "PLANEJAMENTO"].includes(obra.status)) {
+      throw new BadRequestException("Obra não está aguardando homologação.");
+    }
+
+    await this.prisma.obra.update({
+      where: { obraId },
+      data: { status: "EM_EXECUCAO" },
+    });
+
+    if (obra.usuario) {
+      await this.notificacoes.criar(
+        obra.usuario.usuarioId,
+        "OBRA_HOMOLOGADA",
+        "Obra homologada no pipe IMOBI",
+        `Sua obra "${obra.nome}" entrou no pipe ativo. Você já pode executar etapas e enviar evidências.`,
+        `/dashboard/obras/${obraId}`,
+      );
+      this.email
+        .obraHomologadaEmail(obra.usuario.nome, obra.usuario.email, obra.nome)
+        .catch(() => {});
+    }
+
+    return {
+      ok: true,
+      obraId,
+      status: "EM_EXECUCAO",
+      tomador: obra.usuario?.nome,
+      homologadoPor: adminId,
+    };
+  }
+
+  async reprovarHomologacaoObra(obraId: string, motivo: string) {
+    const obra = await this.prisma.obra.findUnique({ where: { obraId } });
+    if (!obra) throw new NotFoundException("Obra não encontrada.");
+    if (!["AGUARDANDO_HOMOLOGACAO", "PLANEJAMENTO"].includes(obra.status)) {
+      throw new BadRequestException("Obra não está aguardando homologação.");
+    }
+    await this.prisma.obra.update({
+      where: { obraId },
+      data: { status: "CANCELADA" },
+    });
+    return { ok: true, motivo };
+  }
+
+  async listarLiberacoesAguardandoPagamento(limit = 50) {
+    const rows = await this.prisma.liberacaoParcela.findMany({
+      where: { status: "AGUARDANDO_PAGAMENTO" },
+      orderBy: { criadoEm: "asc" },
+      take: limit,
+      include: {
+        credito: {
+          include: {
+            usuario: {
+              select: {
+                nome: true,
+                email: true,
+                contaBanco: true,
+                contaAgencia: true,
+                contaNumero: true,
+                contaPix: true,
+                contaTitular: true,
+              },
+            },
+            obras: { select: { obraId: true, nome: true }, take: 1 },
+          },
+        },
+      },
+    });
+
+    return rows.map((r) => ({
+      liberacaoId: r.liberacaoId,
+      etapaId: r.etapaId,
+      valor: r.valor,
+      status: r.status,
+      criadoEm: r.criadoEm,
+      tomador: r.credito.usuario?.nome,
+      email: r.credito.usuario?.email,
+      conta: {
+        banco: r.credito.usuario?.contaBanco,
+        agencia: r.credito.usuario?.contaAgencia,
+        numero: r.credito.usuario?.contaNumero,
+        pix: r.credito.usuario?.contaPix,
+        titular: r.credito.usuario?.contaTitular,
+      },
+      obra: r.credito.obras[0] ?? null,
+    }));
+  }
+
+  async confirmarPagamentoLiberacao(liberacaoId: string, referenciaPagamento?: string) {
+    const lib = await this.prisma.liberacaoParcela.findUnique({
+      where: { liberacaoId },
+      include: {
+        credito: {
+          include: {
+            usuario: true,
+            obras: { take: 1 },
+          },
+        },
+      },
+    });
+    if (!lib) throw new NotFoundException("Liberação não encontrada.");
+    if (lib.status !== "AGUARDANDO_PAGAMENTO") {
+      throw new BadRequestException("Liberação não está aguardando pagamento manual.");
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const current = await tx.liberacaoParcela.findUnique({ where: { liberacaoId } });
+      if (!current || current.status !== "AGUARDANDO_PAGAMENTO") return;
+
+      await tx.credito.update({
+        where: { creditoId: lib.creditoId },
+        data: { valorLiberado: { increment: lib.valor } },
+      });
+
+      await tx.liberacaoParcela.update({
+        where: { liberacaoId },
+        data: {
+          status: "CONCLUIDA",
+          processadoEm: new Date(),
+          referenciaPagamento: referenciaPagamento ?? null,
+        },
+      });
+    });
+
+    const usuario = lib.credito.usuario;
+    const obra = lib.credito.obras[0];
+    if (usuario) {
+      await this.notificacoes.criar(
+        usuario.usuarioId,
+        "PARCELA_LIBERADA",
+        "Pagamento confirmado",
+        `O pagamento de ${lib.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} foi creditado na conta cadastrada.`,
+        obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard/credito",
+      );
+      this.email
+        .parcelaLiberadaEmail(usuario.nome, usuario.email, lib.valor, obra?.nome ?? "sua obra")
+        .catch(() => {});
+    }
+
+    return {
+      ok: true,
+      liberacaoId,
+      valor: lib.valor,
+      referenciaPagamento,
+    };
   }
 }

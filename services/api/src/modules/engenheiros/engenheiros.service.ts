@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { EtapasService } from "../etapas/etapas.service";
 import type { EtapaStatus } from "@prisma/client";
 
 export interface ObraFinanceiro {
@@ -15,7 +16,10 @@ export interface ObraFinanceiro {
 
 @Injectable()
 export class EngenheirosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly etapas: EtapasService,
+  ) {}
 
   async listarVisitas(usuarioId: string) {
     // Visitas = etapas AGUARDANDO_VISTORIA ou recentemente concluídas, de obras do sistema
@@ -91,7 +95,6 @@ export class EngenheirosService {
 
     const statusMap: Record<string, string> = {
       INICIADA: "EM_EXECUCAO",
-      CONCLUIDA: "CONCLUIDA",
     };
 
     const newStatus = data.status ? statusMap[data.status] : undefined;
@@ -102,6 +105,14 @@ export class EngenheirosService {
     });
 
     return this.obterVisita(visitaId);
+  }
+
+  async aprovarVistoria(engenheiroId: string, visitaId: string, observacao?: string) {
+    return this.etapas.aprovar(engenheiroId, visitaId, observacao);
+  }
+
+  async rejeitarVistoria(engenheiroId: string, visitaId: string, motivo: string) {
+    return this.etapas.rejeitar(engenheiroId, visitaId, motivo);
   }
 
   async financeiro(_usuarioId: string): Promise<ObraFinanceiro[]> {

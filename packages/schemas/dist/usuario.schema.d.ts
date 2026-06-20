@@ -95,6 +95,27 @@ export declare const UpdatePerfilUsuarioSchema: z.ZodObject<{
     nome: string;
     telefone: string;
 }>;
+/** Conta bancária da empresa (pagamentos manuais SIPOC). */
+export declare const ContaBancariaEmpresaSchema: z.ZodObject<{
+    contaTitular: z.ZodString;
+    contaBanco: z.ZodString;
+    contaAgencia: z.ZodString;
+    contaNumero: z.ZodString;
+    contaPix: z.ZodUnion<[z.ZodOptional<z.ZodString>, z.ZodLiteral<"">]>;
+}, "strip", z.ZodTypeAny, {
+    contaTitular: string;
+    contaBanco: string;
+    contaAgencia: string;
+    contaNumero: string;
+    contaPix?: string | undefined;
+}, {
+    contaTitular: string;
+    contaBanco: string;
+    contaAgencia: string;
+    contaNumero: string;
+    contaPix?: string | undefined;
+}>;
+export type ContaBancariaEmpresaInput = z.infer<typeof ContaBancariaEmpresaSchema>;
 export declare const FUNCOES_PAINEL: readonly ["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"];
 export declare const FuncaoPainelEnum: z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>;
 export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{

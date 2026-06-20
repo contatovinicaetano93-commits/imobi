@@ -29,7 +29,7 @@ export class LiberacaoParcelaWorker {
         where: { liberacaoId },
       });
       if (!liberacao || liberacao.status !== "PENDENTE") {
-        this.logger.log(`Liberação ${liberacaoId} já processada, ignorando retry`);
+        this.logger.log(`Liberação ${liberacaoId} já processada ou aguardando pagamento manual, ignorando`);
         return;
       }
 

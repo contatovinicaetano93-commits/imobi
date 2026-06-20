@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EtapasPadraoEnum = exports.CriarEtapaSchema = exports.CriarObraSchema = exports.GeolocalizacaoSchema = exports.EnderecoSchema = exports.StatusEtapaEnum = exports.StatusObraEnum = void 0;
 const zod_1 = require("zod");
 exports.StatusObraEnum = zod_1.z.enum([
+    "AGUARDANDO_HOMOLOGACAO",
     "PLANEJAMENTO",
     "EM_EXECUCAO",
     "PAUSADA",

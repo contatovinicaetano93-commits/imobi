@@ -3,8 +3,15 @@
 import { useEffect, useState } from "react";
 import type { ManagerStats } from "@/lib/api";
 import Link from "next/link";
-import { ShieldCheck, FileCheck2, AlertTriangle } from "lucide-react";
+import { ShieldCheck, AlertTriangle, Zap, Lightbulb } from "lucide-react";
 import { fetchManagerDashboard } from "@/lib/fetch-manager-dashboard";
+import { PanelSection } from "@/components/dashboard/PanelSection";
+import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
+
+const GESTOR_PANELS = [
+  { id: "acoes-rapidas", priority: "primary" as const },
+  { id: "dicas", priority: "secondary" as const },
+];
 
 const ZERO_STATS: ManagerStats = {
   filaAprovacoes: 0,
@@ -150,9 +157,18 @@ export default function GestorPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
-          <h2 className="font-bold text-sm sm:text-base text-gray-900 mb-4">Ações Rápidas</h2>
+      <PanelToolbar sections={GESTOR_PANELS} />
+
+      <div className="space-y-4">
+        <PanelSection
+          id="acoes-rapidas"
+          title="Ações Rápidas"
+          icon={<Zap className="w-4 h-4 text-violet-600" />}
+          priority="primary"
+          badge={s.filaAprovacoes + s.filaKyc}
+          summary={`${s.filaAprovacoes + s.filaKyc} itens na fila`}
+          urgency={s.filaAprovacoes > 10 || s.filaKyc > 10 ? "critical" : s.filaAprovacoes + s.filaKyc > 0 ? "warning" : "none"}
+        >
           <div className="space-y-3">
             <Link
               href="/dashboard/gestor/etapas"
@@ -183,17 +199,22 @@ export default function GestorPage() {
               <span className="text-xs text-green-700 font-semibold">Due Diligence</span>
             </Link>
           </div>
-        </div>
+        </PanelSection>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
-          <h2 className="font-bold text-sm sm:text-base text-gray-900 mb-4">Dicas</h2>
+        <PanelSection
+          id="dicas"
+          title="Dicas"
+          icon={<Lightbulb className="w-4 h-4 text-amber-500" />}
+          priority="secondary"
+          summary="Boas práticas de revisão"
+        >
           <div className="space-y-2 text-xs sm:text-sm text-gray-600">
             <p>• Priorize itens na fila vermelha ({`>`} 24h)</p>
-            <p>• Revise com atenção às geolocalização</p>
+            <p>• Revise com atenção à geolocalização</p>
             <p>• Documente motivos de rejeição</p>
             <p>• Valide completude de KYC antes de aprovar</p>
           </div>
-        </div>
+        </PanelSection>
       </div>
     </div>
   );

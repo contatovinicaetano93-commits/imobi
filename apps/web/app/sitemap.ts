@@ -6,6 +6,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: base, lastModified: now, changeFrequency: "weekly", priority: 1 },
     { url: `${base}/simulador`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${base}/quem-somos`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${base}/como-funciona`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${base}/contato`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/login`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/cadastro`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/termos`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },

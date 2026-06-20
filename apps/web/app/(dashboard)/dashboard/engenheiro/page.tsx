@@ -9,6 +9,8 @@ import {
 } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { DynamicVisitQueueClient } from "./_components/DynamicVisitQueueClient";
+import { PanelSection } from "@/components/dashboard/PanelSection";
+import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
 import {
   Wallet,
   Package,
@@ -59,8 +61,15 @@ export default async function EngenheiroPortalPage() {
 
   const agendadas = visitas.filter((v: Visita) => v.status === "AGENDADA");
 
+  const engenheiroPanels = [
+    { id: "fila-visitas", priority: "critical" as const },
+    { id: "obras-responsabilidade", priority: "primary" as const },
+    { id: "licencas", priority: (licencasAtencao > 0 ? "critical" : "primary") as const },
+    { id: "etapas-projeto", priority: "secondary" as const },
+  ];
+
   return (
-    <div className="space-y-8 max-w-6xl">
+    <div className="space-y-6 max-w-6xl">
       {/* Hero engenheiro - laranja */}
       <div style={{ background: "linear-gradient(135deg, #431407 0%, #7c2d12 100%)", borderRadius: 16, padding: "1.5rem", marginBottom: "1.5rem", color: "white" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
@@ -114,12 +123,30 @@ export default async function EngenheiroPortalPage() {
         ))}
       </div>
 
+      <PanelToolbar sections={engenheiroPanels} />
+
+      {/* Fila de visitas — prioridade operacional */}
+      <PanelSection
+        id="fila-visitas"
+        title="Fila de visitas"
+        icon={<CalendarClock className="w-4 h-4 text-[#ea580c]" />}
+        priority="critical"
+        badge={agendadas.length}
+        summary={`${agendadas.length} agendada(s)`}
+        urgency={agendadas.length > 5 ? "warning" : "none"}
+      >
+        <DynamicVisitQueueClient visits={visitas} />
+      </PanelSection>
+
       {/* Obras — detalhamento financeiro */}
-      <section aria-labelledby="obras-fin-title">
-        <h2 id="obras-fin-title" className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <HardHat className="w-4 h-4 text-[#ea580c]" />
-          Obras sob responsabilidade
-        </h2>
+      <PanelSection
+        id="obras-responsabilidade"
+        title="Obras sob responsabilidade"
+        icon={<HardHat className="w-4 h-4 text-[#ea580c]" />}
+        priority="primary"
+        badge={financeiro.length}
+        summary={`${financeiro.length} obra(s) · ${formatarBRL(totalExecutado)} executado`}
+      >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {financeiro.map((obra) => (
             <div key={obra.obraId} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -152,40 +179,18 @@ export default async function EngenheiroPortalPage() {
             </div>
           ))}
         </div>
-      </section>
-
-      {/* Etapas por obra — acessar via obras */}
-      <section aria-labelledby="etapas-title">
-        <h2 id="etapas-title" className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <CalendarClock className="w-4 h-4 text-[#ea580c]" />
-          Etapas do projeto
-        </h2>
-        {financeiro.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
-            <HardHat className="w-8 h-8 text-gray-200 mx-auto mb-3" />
-            <p className="text-sm font-medium text-gray-500">Nenhuma obra atribuída</p>
-            <p className="text-xs text-gray-400 mt-1">As etapas aparecem quando uma obra for vinculada ao seu perfil.</p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
-            <p className="text-sm text-gray-500">Selecione uma obra para ver o cronograma de etapas.</p>
-          </div>
-        )}
-      </section>
+      </PanelSection>
 
       {/* Licenças */}
-      <section aria-labelledby="licencas-title">
-        <div className="flex items-center justify-between mb-4">
-          <h2 id="licencas-title" className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#ea580c]" />
-            Licenças e regularização
-          </h2>
-          {licencasAtencao > 0 && (
-            <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
-              {licencasAtencao} exigindo atenção
-            </span>
-          )}
-        </div>
+      <PanelSection
+        id="licencas"
+        title="Licenças e regularização"
+        icon={<ShieldCheck className="w-4 h-4 text-[#ea580c]" />}
+        priority={licencasAtencao > 0 ? "critical" : "primary"}
+        badge={licencasAtencao > 0 ? licencasAtencao : licencas.length}
+        summary={licencasAtencao > 0 ? `${licencasAtencao} exigindo atenção` : `${licencas.length} licença(s)`}
+        urgency={licencasAtencao > 0 ? "warning" : "none"}
+      >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {[
             { titulo: "Licenças de Construção", icon: FileCheck2, items: licencasConstrucao },
@@ -224,19 +229,28 @@ export default async function EngenheiroPortalPage() {
             </div>
           ))}
         </div>
-      </section>
+      </PanelSection>
 
-      {/* Fila de visitas */}
-      <section aria-labelledby="visitas-title">
-        <div className="flex items-center justify-between mb-4">
-          <h2 id="visitas-title" className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <CalendarClock className="w-4 h-4 text-[#ea580c]" />
-            Fila de visitas
-          </h2>
-          <span className="text-xs text-gray-400">{agendadas.length} agendada(s)</span>
-        </div>
-        <DynamicVisitQueueClient visits={visitas} />
-      </section>
+      {/* Etapas por obra */}
+      <PanelSection
+        id="etapas-projeto"
+        title="Etapas do projeto"
+        icon={<CalendarClock className="w-4 h-4 text-[#ea580c]" />}
+        priority="secondary"
+        summary={financeiro.length > 0 ? "Cronograma por obra" : "Nenhuma obra atribuída"}
+      >
+        {financeiro.length === 0 ? (
+          <div className="rounded-xl border border-gray-100 bg-gray-50 p-10 text-center">
+            <HardHat className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+            <p className="text-sm font-medium text-gray-500">Nenhuma obra atribuída</p>
+            <p className="text-xs text-gray-400 mt-1">As etapas aparecem quando uma obra for vinculada ao seu perfil.</p>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-gray-100 bg-gray-50 p-5 text-center">
+            <p className="text-sm text-gray-500">Selecione uma obra para ver o cronograma de etapas.</p>
+          </div>
+        )}
+      </PanelSection>
     </div>
   );
 }

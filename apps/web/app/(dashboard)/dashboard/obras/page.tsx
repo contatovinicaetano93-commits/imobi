@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: "Minhas Obras — imbobi" };
 
 const STATUS_LABEL: Record<string, string> = {
+  AGUARDANDO_HOMOLOGACAO: "Aguardando homologação IMOBI",
   EM_EXECUCAO:  "Em andamento",
   EM_ANDAMENTO: "Em andamento",
   PLANEJAMENTO: "Planejamento",
@@ -19,6 +20,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_BADGE: Record<string, string> = {
+  AGUARDANDO_HOMOLOGACAO: "bg-amber-50 text-amber-800 ring-1 ring-amber-200",
   EM_EXECUCAO:  "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
   EM_ANDAMENTO: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
   PLANEJAMENTO: "bg-gray-100 text-gray-600 ring-1 ring-gray-200",
@@ -28,6 +30,7 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 const STATUS_PROGRESS_COLOR: Record<string, string> = {
+  AGUARDANDO_HOMOLOGACAO: "bg-amber-400",
   EM_EXECUCAO:  "bg-[#1B4FD8]",
   EM_ANDAMENTO: "bg-[#1B4FD8]",
   PLANEJAMENTO: "bg-gray-400",

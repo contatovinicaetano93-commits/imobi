@@ -11,8 +11,12 @@ const PUBLIC_PATHS = [
   "/termos",
   "/privacy-policy",
   "/simulador",
+  "/quem-somos",
+  "/como-funciona",
+  "/contato",
   "/api/auth",
   "/api/proxy/auth",
+  "/api/proxy/credito/simular",
   "/api/proxy/health",
   "/web-api/auth",
 ];
