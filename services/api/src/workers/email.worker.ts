@@ -4,6 +4,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { EmailService } from "../modules/email/email.service";
 import { QUEUE_EMAIL, EmailJob } from "../common/constants";
 import { alertarSlack } from "../common/slack-alert";
+import { captureException } from "../common/config";
 
 @Injectable()
 @Processor(QUEUE_EMAIL)
@@ -65,6 +66,7 @@ export class EmailWorker {
   @OnQueueFailed()
   async onFailed(job: Job<EmailJob>, err: Error) {
     this.logger.error(`Job de email ${job.id} (${job.data.tipo}) falhou após ${job.attemptsMade} tentativas: ${err.message}`);
+    captureException(err, { queue: QUEUE_EMAIL, jobId: String(job.id), tipo: job.data.tipo, email: job.data.payload.email });
     await alertarSlack(
       `🚨 *Email Worker — Falha*\nTipo: \`${job.data.tipo}\`\nDestinatário: ${job.data.payload.email}\nErro: ${err.message}\nJob ID: ${job.id} | Tentativas: ${job.attemptsMade}`
     );

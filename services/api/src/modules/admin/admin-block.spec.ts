@@ -1,7 +1,10 @@
 import { Test } from "@nestjs/testing";
+import { getQueueToken } from "@nestjs/bull";
 import { AdminService } from "./admin.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { QUEUE_LIBERACAO, QUEUE_EMAIL } from "../../common/constants";
+import { QUEUE_EXCLUIR_USUARIO } from "../../workers/excluir-usuario.worker";
 
 const mockPrisma = {
   usuario: {
@@ -35,10 +38,14 @@ describe("AdminService — block/unblock", () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
+    const mockQueue = { getJobCounts: jest.fn().mockResolvedValue({}), getFailed: jest.fn().mockResolvedValue([]) };
     const module = await Test.createTestingModule({
       providers: [
         AdminService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: getQueueToken(QUEUE_LIBERACAO), useValue: mockQueue },
+        { provide: getQueueToken(QUEUE_EMAIL), useValue: mockQueue },
+        { provide: getQueueToken(QUEUE_EXCLUIR_USUARIO), useValue: mockQueue },
       ],
     }).compile();
 

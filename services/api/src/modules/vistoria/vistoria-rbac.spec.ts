@@ -29,7 +29,7 @@ const mockPrisma = {
 };
 
 const mockNotificacoes = { criar: jest.fn().mockResolvedValue(undefined) };
-const mockEmail = { etapaAprovadaEmail: jest.fn().mockResolvedValue(undefined) };
+const mockEmail = { etapaAprovada: jest.fn().mockResolvedValue(undefined) };
 const mockPush = { enviarPush: jest.fn().mockResolvedValue(undefined) };
 const mockQueue = { add: jest.fn().mockResolvedValue(undefined) };
 

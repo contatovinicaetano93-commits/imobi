@@ -7,6 +7,7 @@ import { EmailService } from "../modules/email/email.service";
 import { PushNotificacoesService } from "../modules/push-notificacoes/push-notificacoes.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../common/constants";
 import { alertarSlack } from "../common/slack-alert";
+import { captureException } from "../common/config";
 
 @Injectable()
 @Processor(QUEUE_LIBERACAO)
@@ -103,6 +104,7 @@ export class LiberacaoParcelaWorker {
   @OnQueueFailed()
   async onFailed(job: Job, err: Error) {
     this.logger.error(`Job ${job.id} falhou: ${err.message}`);
+    captureException(err, { queue: QUEUE_LIBERACAO, jobId: String(job.id), creditoId: job.data.creditoId, liberacaoId: job.data.liberacaoId });
 
     await alertarSlack(
       `🚨 *Liberação de Parcela — Falha*\nJob ID: ${job.id} | Tentativas: ${job.attemptsMade}\nCrédito: \`${job.data.creditoId}\` | Liberação: \`${job.data.liberacaoId}\`\nErro: ${err.message}`

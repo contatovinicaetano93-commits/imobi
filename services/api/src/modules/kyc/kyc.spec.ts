@@ -15,8 +15,8 @@ const mockPrisma = {
 
 const mockNotificacoes = { criar: jest.fn().mockResolvedValue(undefined) };
 const mockEmail = {
-  kycAprovadoEmail: jest.fn().mockResolvedValue(undefined),
-  kycRejeitadoEmail: jest.fn().mockResolvedValue(undefined),
+  kycAprovado: jest.fn().mockResolvedValue(undefined),
+  kycRejeitado: jest.fn().mockResolvedValue(undefined),
 };
 const mockPush = { enviarPush: jest.fn().mockResolvedValue(undefined) };
 

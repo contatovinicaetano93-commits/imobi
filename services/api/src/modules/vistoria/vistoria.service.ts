@@ -7,7 +7,7 @@ import { InjectQueue } from "@nestjs/bull";
 import { Queue } from "bull";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
-import { EmailService } from "../email/email.service";
+import { EmailQueueService } from "../email/email-queue.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../../common/constants";
 import type { EtapaStatus } from "@prisma/client";
@@ -19,7 +19,7 @@ export class VistoriaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
-    private readonly email: EmailService,
+    private readonly email: EmailQueueService,
     private readonly pushNotificacoes: PushNotificacoesService,
     @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue<LiberacaoJob>,
   ) {}
@@ -66,7 +66,7 @@ export class VistoriaService {
       const valorLiberacao = Number(credito.valorAprovado ?? 0) * (Number(etapa.percentualObra) / 100);
 
       this.email
-        .etapaAprovadaEmail(
+        .etapaAprovada(
           etapa.obra.usuario?.nome ?? "usuário",
           etapa.obra.usuario?.email ?? "",
           etapa.nome,

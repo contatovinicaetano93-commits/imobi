@@ -27,8 +27,8 @@ const mockPrisma = {
 
 const mockNotificacoes = { criar: jest.fn().mockResolvedValue(undefined) };
 const mockEmail = {
-  kycAprovadoEmail: jest.fn().mockResolvedValue(undefined),
-  kycRejeitadoEmail: jest.fn().mockResolvedValue(undefined),
+  kycAprovado: jest.fn().mockResolvedValue(undefined),
+  kycRejeitado: jest.fn().mockResolvedValue(undefined),
 };
 const mockPush = { enviarPush: jest.fn().mockResolvedValue(undefined) };
 
@@ -51,7 +51,7 @@ describe("KycService – aprovarDocumento", () => {
     mockPrisma.kycDocumento.update.mockResolvedValue({ kycDocumentoId: docId, status: "APROVADO" });
     mockNotificacoes.criar.mockResolvedValue(undefined);
     mockPush.enviarPush.mockResolvedValue(undefined);
-    mockEmail.kycAprovadoEmail.mockResolvedValue(undefined);
+    mockEmail.kycAprovado.mockResolvedValue(undefined);
   });
 
   it("throws NotFoundException when documento does not exist", async () => {
@@ -109,7 +109,7 @@ describe("KycService – rejeitarDocumento", () => {
     mockPrisma.kycDocumento.update.mockResolvedValue({ kycDocumentoId: docId, status: "REJEITADO" });
     mockNotificacoes.criar.mockResolvedValue(undefined);
     mockPush.enviarPush.mockResolvedValue(undefined);
-    mockEmail.kycRejeitadoEmail.mockResolvedValue(undefined);
+    mockEmail.kycRejeitado.mockResolvedValue(undefined);
   });
 
   it("throws NotFoundException when documento does not exist", async () => {

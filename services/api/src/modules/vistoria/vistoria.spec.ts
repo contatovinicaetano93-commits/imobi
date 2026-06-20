@@ -13,7 +13,7 @@ const mockPrisma = {
 };
 
 const mockNotificacoes = { criar: jest.fn() };
-const mockEmail = { etapaAprovadaEmail: jest.fn() };
+const mockEmail = { etapaAprovada: jest.fn().mockResolvedValue({}) };
 const mockPush = { enviarPush: jest.fn() };
 const mockQueue = { add: jest.fn() };
 
@@ -95,7 +95,7 @@ describe("VistoriaService — aprovar", () => {
     mockPrisma.etapaAuditLog.create.mockResolvedValue({});
     mockNotificacoes.criar.mockResolvedValue({});
     mockPush.enviarPush.mockResolvedValue({});
-    mockEmail.etapaAprovadaEmail.mockResolvedValue({});
+    mockEmail.etapaAprovada.mockResolvedValue({});
     mockPrisma.liberacaoParcela.create.mockResolvedValue({ liberacaoId: "lib1" });
     mockQueue.add.mockResolvedValue({});
 
@@ -124,7 +124,7 @@ describe("VistoriaService — aprovar", () => {
     mockPrisma.etapaAuditLog.create.mockResolvedValue({});
     mockNotificacoes.criar.mockResolvedValue({});
     mockPush.enviarPush.mockResolvedValue({});
-    mockEmail.etapaAprovadaEmail.mockResolvedValue({});
+    mockEmail.etapaAprovada.mockResolvedValue({});
 
     const svc = makeService();
     await svc.aprovar("g1", "e1");
