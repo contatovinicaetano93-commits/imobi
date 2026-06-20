@@ -1,3 +1,9 @@
 import { Module } from "@nestjs/common";
-@Module({})
+import { MarketplaceController } from "./marketplace.controller";
+import { MarketplaceService } from "./marketplace.service";
+
+@Module({
+  controllers: [MarketplaceController],
+  providers: [MarketplaceService],
+})
 export class MarketplaceModule {}

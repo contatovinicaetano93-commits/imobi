@@ -315,6 +315,32 @@ export class EmailService {
    * LGPD Article 17 - Account Deletion Confirmation
    * Sent after 30-day grace period when account is permanently deleted
    */
+  async comiteDecisaoEmail(
+    nome: string,
+    email: string,
+    decisao: "APROVADO" | "AJUSTADO" | "REPROVADO",
+    valorSolicitado: number,
+  ): Promise<boolean> {
+    const valorFmt = valorSolicitado.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    const titulosMap = {
+      APROVADO: "Crédito aprovado pelo comitê",
+      AJUSTADO: "Proposta requer ajustes",
+      REPROVADO: "Solicitação de crédito reprovada",
+    };
+    const mensagensMap = {
+      APROVADO: `Sua solicitação de <strong>${valorFmt}</strong> foi aprovada pelo comitê. O crédito já está disponível em seu painel.`,
+      AJUSTADO: `O comitê solicitou ajustes na sua proposta de <strong>${valorFmt}</strong>. Entre em contato com seu gestor para mais detalhes.`,
+      REPROVADO: `Infelizmente sua solicitação de <strong>${valorFmt}</strong> foi reprovada pelo comitê. Para mais informações, acesse seu painel.`,
+    };
+    const html = `
+      <h2>${titulosMap[decisao]}</h2>
+      <p>Olá ${nome},</p>
+      <p>${mensagensMap[decisao]}</p>
+      <p><a href="${process.env["APP_URL"] || "http://localhost:3000"}/dashboard/credito">Acessar painel</a></p>
+    `;
+    return this.enviarEmail({ to: email, subject: titulosMap[decisao], html });
+  }
+
   async contaExcluida(nome: string, email: string): Promise<boolean> {
     const html = `
       <h2>Sua Conta foi Permanentemente Excluída</h2>

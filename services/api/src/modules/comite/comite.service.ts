@@ -1,10 +1,16 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificacoesService } from "../notificacoes/notificacoes.service";
+import { EmailService } from "../email/email.service";
 import type { VotoDecisao, SolicitacaoStatus, ComiteStatus } from "@prisma/client";
 
 @Injectable()
 export class ComiteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificacoes: NotificacoesService,
+    private readonly email: EmailService,
+  ) {}
 
   // ── Construtor: submeter solicitação ──────────────────────────────
 
@@ -125,7 +131,11 @@ export class ComiteService {
     const comite = await this.prisma.comiteDigital.update({
       where: { comiteId },
       data: { status: "ENCERRADO", decisao, decisaoEm: new Date() },
-      include: { solicitacao: true },
+      include: {
+        solicitacao: {
+          include: { usuario: { select: { nome: true, email: true } } },
+        },
+      },
     });
 
     const novoStatus: SolicitacaoStatus = decisao === "APROVADO" ? "APROVADA" : decisao === "AJUSTADO" ? "AJUSTADA" : "REPROVADA";
@@ -134,10 +144,13 @@ export class ComiteService {
       data: { status: novoStatus },
     });
 
-    // If approved → create Credito
+    const s = comite.solicitacao;
+    const { nome, email: emailAddr } = s.usuario;
+
+    void this.email.comiteDecisaoEmail(nome, emailAddr, decisao, s.valorSolicitado);
+
     if (decisao === "APROVADO") {
-      const s = comite.solicitacao;
-      await this.prisma.credito.create({
+      const novoCredito = await this.prisma.credito.create({
         data: {
           usuarioId: s.usuarioId,
           valorAprovado: s.valorSolicitado,
@@ -148,6 +161,31 @@ export class ComiteService {
           dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
         },
       });
+
+      if (s.obraId) {
+        await this.prisma.obra.update({
+          where: { obraId: s.obraId },
+          data: { creditoId: novoCredito.creditoId },
+        });
+      }
+
+      await this.notificacoes.criar(
+        s.usuarioId,
+        "CREDITO_APROVADO",
+        "Crédito aprovado pelo comitê",
+        `Sua solicitação de R$ ${s.valorSolicitado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} foi aprovada.`,
+        "/dashboard/credito",
+      );
+    } else {
+      await this.notificacoes.criar(
+        s.usuarioId,
+        "COMITE_DECISAO",
+        decisao === "AJUSTADO" ? "Solicitação requer ajustes" : "Solicitação reprovada",
+        decisao === "AJUSTADO"
+          ? "O comitê solicitou ajustes na sua proposta. Entre em contato com seu gestor."
+          : "Sua solicitação de crédito foi reprovada pelo comitê.",
+        "/dashboard/credito",
+      );
     }
   }
 

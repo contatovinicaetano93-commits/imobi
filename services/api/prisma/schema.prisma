@@ -695,3 +695,55 @@ enum VotoDecisao {
   AJUSTAR
   REPROVAR
 }
+
+// ── Marketplace ───────────────────────────────────────────────────────────
+
+enum FornecedorTipo {
+  MATERIAL_CONSTRUCAO
+  MAO_DE_OBRA
+  EQUIPAMENTO
+  PROJETO_ARQUITETURA
+  ENGENHARIA
+  OUTROS
+}
+
+model Fornecedor {
+  fornecedorId    String          @id @default(uuid())
+  nome            String
+  tipo            FornecedorTipo
+  descricao       String?
+  website         String?
+  telefone        String?
+  email           String?
+  endereco        String?
+  uf              String?
+  cidade          String?
+  geoLatitude     Float?
+  geoLongitude    Float?
+  avaliacaoMedia  Float           @default(0.0)
+  totalAvaliacoes Int             @default(0)
+  ativo           Boolean         @default(true)
+  criadoEm        DateTime        @default(now())
+  atualizadoEm    DateTime        @updatedAt
+
+  avaliacoes      AvaliacaoFornecedor[]
+
+  @@index([tipo])
+  @@index([uf])
+  @@index([ativo])
+  @@map("fornecedores")
+}
+
+model AvaliacaoFornecedor {
+  avaliacaoId  String     @id @default(uuid())
+  fornecedorId String
+  fornecedor   Fornecedor @relation(fields: [fornecedorId], references: [fornecedorId], onDelete: Cascade)
+  usuarioId    String
+  nota         Int
+  comentario   String?
+  criadoEm     DateTime   @default(now())
+
+  @@unique([fornecedorId, usuarioId])
+  @@index([fornecedorId])
+  @@map("avaliacoes_fornecedor")
+}
