@@ -71,11 +71,21 @@ export default function RegistrarEtapaScreen() {
   const handleEnviar = async () => {
     if (!fotoUri || !coordenadasAtuais) return;
 
+    const token = await SecureStore.getItemAsync("accessToken");
+    if (!token) {
+      Alert.alert("Sessão expirada", "Faça login novamente para continuar.");
+      router.replace("/(auth)/login");
+      return;
+    }
+
+    const apiUrl = process.env["EXPO_PUBLIC_API_URL"];
+    if (!apiUrl) {
+      Alert.alert("Erro de configuração", "URL da API não configurada. Contate o suporte.");
+      return;
+    }
+
     setUploading(true);
     try {
-      const token = await SecureStore.getItemAsync("accessToken");
-      const apiUrl = process.env["EXPO_PUBLIC_API_URL"] ?? "";
-
       const form = new FormData();
       form.append("file", { uri: fotoUri, name: "evidencia.jpg", type: "image/jpeg" } as never);
       form.append("etapaId", params.etapaId);
@@ -86,7 +96,7 @@ export default function RegistrarEtapaScreen() {
 
       const res = await fetch(`${apiUrl}/api/v1/evidencias`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token ?? ""}` },
+        headers: { Authorization: `Bearer ${token}` },
         body: form,
       });
 
