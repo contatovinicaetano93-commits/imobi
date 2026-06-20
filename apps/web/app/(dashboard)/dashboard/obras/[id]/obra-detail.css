@@ -1,0 +1,30 @@
+@media (max-width: 767px) {
+  .obra-doc-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .obra-tab-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .obra-tab-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .obra-stat-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .obra-etapa-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .obra-etapa-actions button {
+    flex: 1;
+    min-width: 0;
+  }
+}

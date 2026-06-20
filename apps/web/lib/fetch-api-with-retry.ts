@@ -9,16 +9,20 @@ async function wakeApi(api: string): Promise<void> {
 
 export type FetchApiWithRetryOptions = {
   path: string;
+  method?: string;
+  body?: string;
   headers?: Record<string, string>;
   maxAttemptsPerApi?: number;
   wakeFirst?: boolean;
 };
 
 /**
- * GET na API com wake + retry (Render free tier demora ~60–90s para acordar).
+ * Chamada à API com wake + retry (Render free tier demora ~60–90s para acordar).
  */
 export async function fetchApiWithRetry({
   path,
+  method = 'GET',
+  body,
   headers = {},
   maxAttemptsPerApi = 5,
   wakeFirst = true,
@@ -31,7 +35,9 @@ export async function fetchApiWithRetry({
 
     for (let attempt = 0; attempt < maxAttemptsPerApi; attempt++) {
       const res = await fetch(`${api}${normalizedPath}`, {
+        method,
         headers,
+        body: body && method !== 'GET' && method !== 'HEAD' ? body : undefined,
         cache: 'no-store',
         signal: AbortSignal.timeout(30_000),
       }).catch(() => null);

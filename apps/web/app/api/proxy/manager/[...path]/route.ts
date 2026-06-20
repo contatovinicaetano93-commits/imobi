@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { fetchApiWithRetry } from '@/lib/fetch-api-with-retry';
 
-import { getApiV1Url } from '@/lib/api-base';
-
-const API = getApiV1Url();
+export const maxDuration = 60;
 
 async function getToken() {
   return (await cookies()).get('access_token')?.value;
@@ -12,27 +11,37 @@ async function getToken() {
 async function proxy(req: NextRequest, path: string[], method: string) {
   const token = await getToken();
   const qs = req.nextUrl.search;
-  const url = `${API}/manager/${path.join('/')}${qs}`;
+  const apiPath = `/manager/${path.join('/')}${qs}`;
 
-  const init: RequestInit = {
+  let body: string | undefined;
+  if (method !== 'GET' && method !== 'HEAD') {
+    const text = await req.text();
+    if (text) body = text;
+  }
+
+  const res = await fetchApiWithRetry({
+    path: apiPath,
     method,
+    body,
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    cache: 'no-store',
-  };
+    maxAttemptsPerApi: method === 'GET' ? 6 : 4,
+  });
 
-  if (method !== 'GET' && method !== 'HEAD') {
-    const body = await req.text();
-    if (body) (init as any).body = body;
+  if (!res) {
+    return NextResponse.json(
+      {
+        message:
+          'API indisponível no momento. O servidor Render pode levar até 1–2 minutos para acordar — tente novamente.',
+      },
+      { status: 503 },
+    );
   }
 
-  const res = await fetch(url, init).catch(() => null);
-  if (!res) return NextResponse.json({ message: 'Service unavailable' }, { status: 503 });
-
-  const body = await res.text();
-  return new NextResponse(body || null, {
+  const text = await res.text();
+  return new NextResponse(text || null, {
     status: res.status,
     headers: { 'Content-Type': 'application/json' },
   });

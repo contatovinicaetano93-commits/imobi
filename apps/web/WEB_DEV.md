@@ -38,10 +38,21 @@ pnpm --filter web dev
 
 ## Render (API) — obrigatório após push
 
-O site (Vercel) e a API (Render) deployam **separados**. Se o painel gestor der **403**, a API no Render está com build antigo.
+O site (Vercel) e a API (Render) deployam **separados**. Se o painel gestor der **403** em todas as abas:
 
 1. [Render Dashboard](https://dashboard.render.com) → serviço `imobi-api-efgg` (ou `imobi-api`)
 2. **Manual Deploy** → Deploy latest commit (`main`)
-3. Aguarde build + migration
+3. Aguarde build + `prisma migrate deploy` (migration `12_merge_gestor_fundo_into_gestor`)
 4. Teste: `GET https://imobi-api-efgg.onrender.com/api/v1/health` → 200
-5. Logout/login no site e abra `/dashboard/gestor` de novo
+5. **Logout/login** no site (JWT antigo pode ter role desatualizado)
+6. Abra `/dashboard/gestor` e `/dashboard/fundos`
+
+### Corrigir usuário gestor no banco (se 403 persistir)
+
+Com `SETUP_SECRET` configurado no Render:
+
+```
+GET https://imobi-api-efgg.onrender.com/api/v1/setup?secret=SEU_SETUP_SECRET
+```
+
+Isso faz upsert de `gestor@imobi.com.br` com `tipo: GESTOR`. Depois logout/login.

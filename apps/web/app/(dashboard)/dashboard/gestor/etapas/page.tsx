@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
-import { managerApi, type EtapaPendente } from "@/lib/api";
+import { managerApi, type EtapaPendente, ApiError } from "@/lib/api";
 import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions";
 import { AdvancedFilters, type FilterState } from "@/components/dashboard/AdvancedFilters";
 import { GestorSubpageHeader } from "@/app/(dashboard)/_components/gestor/GestorSubpageHeader";
@@ -72,9 +72,13 @@ function EtapasContent() {
         setData(d);
         setLoadError(null);
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         setData({ etapas: [], total: 0 });
-        setLoadError("Não foi possível carregar etapas pendentes da API.");
+        const msg =
+          err instanceof ApiError
+            ? `${err.message} Faça logout/login. Se persistir, redeploy a API no Render.`
+            : "Não foi possível carregar etapas pendentes da API.";
+        setLoadError(msg);
       })
       .finally(() => setLoading(false));
   };

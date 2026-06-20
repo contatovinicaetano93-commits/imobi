@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { managerApi, type ObraResumo, type CreditoResumo } from "@/lib/api";
+import type { ObraResumo, CreditoResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { normalizeRole } from "@/lib/role-permissions";
+import { fetchApiWithRetry } from "@/lib/fetch-api-with-retry";
+import { readApiErrorMessage } from "@/lib/read-api-error";
 import { PortfolioChart } from "./_components/PortfolioChart";
 import { RegionalDistribution } from "./_components/RegionalDistribution";
 import { InadimplenciaMetrics } from "./_components/InadimplenciaMetrics";
@@ -29,15 +31,46 @@ function decodeRole(token: string | undefined): string | null {
   }
 }
 
-async function loadPortfolio(role: string | null): Promise<{ obras: ObraResumo[]; creditos: CreditoResumo[] }> {
-  if (role === "GESTOR" || role === "ADMIN") {
-    try {
-      return await managerApi.carteira();
-    } catch {
-      /* fallback vazio */
-    }
+async function loadPortfolio(
+  role: string | null,
+  token: string | undefined,
+): Promise<{
+  obras: ObraResumo[];
+  creditos: CreditoResumo[];
+  error?: string;
+}> {
+  if (role !== "GESTOR" && role !== "ADMIN") {
+    return { obras: [], creditos: [] };
   }
-  return { obras: [], creditos: [] };
+
+  const res = await fetchApiWithRetry({
+    path: "/manager/carteira",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    maxAttemptsPerApi: 6,
+  });
+
+  if (!res) {
+    return {
+      obras: [],
+      creditos: [],
+      error: "API indisponível. Aguarde 1–2 minutos e recarregue a página.",
+    };
+  }
+
+  if (!res.ok) {
+    const msg = await readApiErrorMessage(res, "Erro ao carregar carteira do fundo");
+    return { obras: [], creditos: [], error: msg };
+  }
+
+  const data = (await res.json().catch(() => null)) as {
+    obras?: ObraResumo[];
+    creditos?: CreditoResumo[];
+  } | null;
+
+  return {
+    obras: Array.isArray(data?.obras) ? data.obras : [],
+    creditos: Array.isArray(data?.creditos) ? data.creditos : [],
+  };
 }
 
 export default async function FundosPage() {
@@ -46,7 +79,7 @@ export default async function FundosPage() {
   const role = decodeRole(token);
   const isAdmin = role === "ADMIN";
 
-  const { obras, creditos } = await loadPortfolio(role);
+  const { obras, creditos, error: portfolioError } = await loadPortfolio(role, token);
 
   const totalDesembolsado = creditos.reduce(
     (acc, c) => acc + Number(c.valorLiberado ?? 0),
@@ -82,6 +115,14 @@ export default async function FundosPage() {
           <p className="text-sm text-gray-500 mt-1">Visão consolidada da operação</p>
         </div>
       </div>
+
+      {portfolioError && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700">
+          {portfolioError}
+          {" "}
+          Faça logout/login. Se persistir, redeploy a API no Render (commit recente).
+        </div>
+      )}
 
       {isAdmin && <CapitalFundoAdmin />}
 
