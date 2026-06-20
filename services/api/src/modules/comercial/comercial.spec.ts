@@ -154,18 +154,16 @@ describe("ComercialService — listarLeads", () => {
 describe("ComercialService — obterLeadDetalhe", () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it("returns null when lead not found", async () => {
+  it("throws NotFoundException when lead not found", async () => {
     mockPrisma.lead.findUnique.mockResolvedValue(null);
     const svc = makeService();
-    const result = await svc.obterLeadDetalhe("bad-id");
-    expect(result).toBeNull();
+    await expect(svc.obterLeadDetalhe("bad-id")).rejects.toThrow(NotFoundException);
   });
 
-  it("returns null when scopeUserId does not match lead owner", async () => {
+  it("throws ForbiddenException when scopeUserId does not match lead owner", async () => {
     mockPrisma.lead.findUnique.mockResolvedValue(makeLead({ usuarioId: "other" }));
     const svc = makeService();
-    const result = await svc.obterLeadDetalhe("l1", "u1");
-    expect(result).toBeNull();
+    await expect(svc.obterLeadDetalhe("l1", "u1")).rejects.toThrow(ForbiddenException);
   });
 
   it("returns lead with scoreBreakdown from latest history entry", async () => {

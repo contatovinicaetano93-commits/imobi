@@ -19,6 +19,8 @@ const mockPrisma = {
   },
   usuario: { count: jest.fn() },
   credito: { create: jest.fn() },
+  obra: { update: jest.fn() },
+  $transaction: jest.fn((cb: (tx: typeof mockPrisma) => Promise<unknown>) => cb(mockPrisma)),
 };
 
 const mockNotificacoes = { criar: jest.fn().mockResolvedValue({}) };
