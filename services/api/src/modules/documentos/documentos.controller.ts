@@ -1,12 +1,21 @@
 import {
   Controller, Get, Post, Delete, Param, Body,
-  UseGuards, UseInterceptors, UploadedFile,
+  UseGuards, UseInterceptors, UploadedFile, BadRequestException,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from "@nestjs/swagger";
 import { FileInterceptor } from "@nestjs/platform-express";
+import { Throttle } from "@nestjs/throttler";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import { DocumentosService } from "./documentos.service";
+
+const MIME_DOCUMENTOS_PERMITIDOS = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+const MAX_DOCUMENTO_BYTES = 25 * 1024 * 1024; // 25 MB
 
 @ApiTags("documentos")
 @ApiBearerAuth()
@@ -18,6 +27,7 @@ export class DocumentosController {
   @ApiOperation({ summary: "Upload de documento (multipart/form-data)" })
   @ApiConsumes("multipart/form-data")
   @Post()
+  @Throttle({ upload: { limit: 10, ttl: 60000 } })
   @UseInterceptors(FileInterceptor("file"))
   async upload(
     @UsuarioAtual() user: IUsuario,
@@ -28,7 +38,19 @@ export class DocumentosController {
     @Body("descricao") descricao?: string,
     @Body("vencimento") vencimento?: string,
   ) {
-    const nomeArquivo = nome ?? file.originalname;
+    if (!file) throw new BadRequestException("Arquivo não enviado.");
+    if (!MIME_DOCUMENTOS_PERMITIDOS.includes(file.mimetype)) {
+      throw new BadRequestException(
+        `Tipo de arquivo não permitido: ${file.mimetype}. Use PDF, JPEG, PNG ou WebP.`,
+      );
+    }
+    if (file.buffer.length > MAX_DOCUMENTO_BYTES) {
+      throw new BadRequestException(
+        `Arquivo muito grande (${Math.round(file.buffer.length / 1024 / 1024)}MB). Máximo: 25MB.`,
+      );
+    }
+
+    const nomeArquivo = nome?.trim() || file.originalname;
     const tipoDoc = tipo ?? "OUTROS";
     return this.svc.upload(
       user.id, file.buffer, file.mimetype,

@@ -5,6 +5,8 @@ import { EmailQueueService } from "../email/email-queue.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { KycDocumentoStatus } from "@prisma/client";
 
+const KYC_TIPOS_REQUERIDOS = ["RG", "Selfie"] as const;
+
 @Injectable()
 export class KycService {
   private readonly logger = new Logger(KycService.name);
@@ -182,7 +184,7 @@ export class KycService {
       where: { usuarioId, status: "APROVADO" },
     });
 
-    const tiposRequeridos = ["RG", "Selfie"];
+    const tiposRequeridos: string[] = [...KYC_TIPOS_REQUERIDOS];
     const tiposPresentes = documentos.map((d) => d.tipo);
     const completo = tiposRequeridos.every((tipo) => tiposPresentes.includes(tipo));
 

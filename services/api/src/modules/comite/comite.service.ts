@@ -26,6 +26,12 @@ export class ComiteService {
     custoObra?: number;
     ltv?: number;
   }) {
+    if (body.obraId) {
+      const obra = await this.prisma.obra.findUnique({ where: { obraId: body.obraId } });
+      if (!obra) throw new NotFoundException("Obra não encontrada.");
+      if (obra.usuarioId !== usuarioId) throw new NotFoundException("Obra não encontrada.");
+    }
+
     const rating = this.calcularRating(body.ltv ?? 0);
 
     const solicitacao = await this.prisma.solicitacaoCredito.create({

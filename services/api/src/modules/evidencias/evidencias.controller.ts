@@ -49,6 +49,15 @@ export class EvidenciasController {
       throw new BadRequestException("Arquivo de foto não enviado.");
     }
 
+    const MIME_PERMITIDOS = ["image/jpeg", "image/png", "image/webp", "image/heic"];
+    const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+    if (!MIME_PERMITIDOS.includes(mimeType)) {
+      throw new BadRequestException(`Tipo de arquivo não permitido: ${mimeType}. Use JPEG, PNG ou WebP.`);
+    }
+    if (fileBuffer.length > MAX_BYTES) {
+      throw new BadRequestException(`Arquivo muito grande (${Math.round(fileBuffer.length / 1024 / 1024)}MB). Máximo: 10MB.`);
+    }
+
     const parsed = UploadEvidenciaSchema.safeParse({
       etapaId: fields["etapaId"],
       latitude: Number(fields["latitude"]),

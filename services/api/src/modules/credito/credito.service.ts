@@ -13,6 +13,17 @@ export class CreditoService {
   }
 
   async solicitar(usuarioId: string, input: SolicitacaoCreditoInput) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { usuarioId },
+      select: { kycStatus: true },
+    });
+    if (!usuario) throw new NotFoundException("Usuário não encontrado.");
+    if (usuario.kycStatus !== "APROVADO") {
+      throw new ForbiddenException(
+        "Validação de identidade (KYC) pendente. Aguarde a aprovação para solicitar crédito.",
+      );
+    }
+
     return this.prisma.credito.create({
       data: {
         usuarioId,

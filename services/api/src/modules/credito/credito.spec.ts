@@ -16,6 +16,7 @@ const mockPrisma = {
     findUnique: jest.fn(),
     update: jest.fn(),
   },
+  usuario: { findUnique: jest.fn() },
   liberacaoParcela: { findMany: jest.fn() },
 };
 
@@ -36,7 +37,8 @@ describe("CreditoService — simular", () => {
 describe("CreditoService — solicitar", () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it("creates credito with correct defaults", async () => {
+  it("creates credito with correct defaults when KYC is APROVADO", async () => {
+    mockPrisma.usuario.findUnique.mockResolvedValue({ kycStatus: "APROVADO" });
     const created = { creditoId: "c1", usuarioId: "u1", valorAprovado: 50000 };
     mockPrisma.credito.create.mockResolvedValue(created);
     const service = makeService();
@@ -45,6 +47,19 @@ describe("CreditoService — solicitar", () => {
     expect(mockPrisma.credito.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ usuarioId: "u1", valorAprovado: 50000, valorLiberado: 0, taxaMensal: 0.0099, prazoMeses: 24 }),
     });
+  });
+
+  it("throws ForbiddenException when KYC is not APROVADO", async () => {
+    mockPrisma.usuario.findUnique.mockResolvedValue({ kycStatus: "PENDENTE" });
+    const service = makeService();
+    await expect(service.solicitar("u1", { valorSolicitado: 50000, prazoMeses: 24 })).rejects.toThrow(ForbiddenException);
+    expect(mockPrisma.credito.create).not.toHaveBeenCalled();
+  });
+
+  it("throws NotFoundException when user does not exist", async () => {
+    mockPrisma.usuario.findUnique.mockResolvedValue(null);
+    const service = makeService();
+    await expect(service.solicitar("unknown", { valorSolicitado: 50000, prazoMeses: 24 })).rejects.toThrow(NotFoundException);
   });
 });
 

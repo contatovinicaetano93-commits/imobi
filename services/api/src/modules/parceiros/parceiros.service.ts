@@ -39,6 +39,7 @@ export class ParceirosService {
         where: { usuarioId, fonte: 'PARCEIRO' },
         include: {
           stage: true,
+          obra: { select: { creditoId: true, credito: { select: { valorAprovado: true, status: true } } } },
         },
       })
       .catch(() => [] as typeof leads);
@@ -53,12 +54,25 @@ export class ParceirosService {
         ? Math.round((leadsConvertidos.length / leads.length) * 100)
         : 0;
 
-    // Busca créditos aprovados para os leads convertidos desse parceiro
-    // Como não há vínculo direto Lead→Credito, usamos valores zerados para comissões
-    // até que a tabela de comissões seja implementada
-    const comissoesAReceber = 0;
-    const comissoesPagasMes = 0;
-    const comissoesPagasTotal = 0;
+    // Calcula comissões via cadeia Lead→Obra→Credito
+    const agora = new Date();
+    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+    let comissoesAReceber = 0;
+    let comissoesPagasMes = 0;
+    let comissoesPagasTotal = 0;
+
+    for (const lead of leadsConvertidos) {
+      const valorCredito = Number(lead.obra?.credito?.valorAprovado ?? 0);
+      if (valorCredito > 0) {
+        const comissao = (valorCredito * PERCENTUAL_COMISSAO_PADRAO) / 100;
+        comissoesPagasTotal += comissao;
+        if (lead.convertidoEm && lead.convertidoEm >= inicioMes) {
+          comissoesPagasMes += comissao;
+        } else {
+          comissoesAReceber += comissao;
+        }
+      }
+    }
 
     return {
       comissoesAReceber,
@@ -76,13 +90,14 @@ export class ParceirosService {
         where: { usuarioId, fonte: 'PARCEIRO' },
         include: {
           stage: true,
+          obra: { select: { creditoId: true, credito: { select: { valorAprovado: true } } } },
         },
         orderBy: { criadoEm: 'desc' },
       })
       .catch(() => [] as typeof leads);
 
     return leads.map((lead) => {
-      const valorBase = 0;
+      const valorBase = Number(lead.obra?.credito?.valorAprovado ?? 0);
       const percentualComissao = PERCENTUAL_COMISSAO_PADRAO;
       const valorComissao = (valorBase * percentualComissao) / 100;
 
