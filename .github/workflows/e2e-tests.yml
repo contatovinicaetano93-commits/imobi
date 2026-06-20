@@ -12,6 +12,63 @@ on:
       - develop
 
 jobs:
+  playwright:
+    name: Playwright Smoke Tests (Web)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Build Next.js
+        env:
+          NEXT_PUBLIC_API_URL: https://imobi-api-staging.onrender.com
+          NEXT_PUBLIC_APP_NAME: IMOBI
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          JWT_SECRET: test-jwt-secret-for-ci-only
+          NODE_ENV: production
+        run: pnpm build
+
+      - name: Run Playwright tests
+        env:
+          NEXT_PUBLIC_API_URL: https://imobi-api-staging.onrender.com
+          NEXT_PUBLIC_APP_NAME: IMOBI
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          JWT_SECRET: test-jwt-secret-for-ci-only
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          CI: true
+        run: |
+          pnpm start &
+          npx wait-on http://localhost:3000 --timeout 30000
+          pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: apps/web/playwright-report/
+          retention-days: 7
+
   e2e:
     runs-on: ubuntu-latest
 
