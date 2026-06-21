@@ -1,5 +1,5 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
-import { Controller, Post, Get, Patch, Body, Param, Query, UseGuards } from "@nestjs/common";
+import { Controller, Post, Get, Patch, Body, Param, Query, UseGuards, HttpCode } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { KycService } from "./kyc.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -19,6 +19,7 @@ export class KycController {
   constructor(private readonly kyc: KycService) {}
 
   @Post("upload")
+  @HttpCode(201)
   async uploadDocumento(
     @UsuarioAtual() u: IUsuario,
     @Body(new ZodPipe(KycUploadSchema)) body: KycUploadInput,

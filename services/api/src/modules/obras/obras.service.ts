@@ -64,6 +64,7 @@ export class ObrasService {
         },
       },
       orderBy: { criadoEm: "desc" },
+      take: 50,
     });
 
     return obras.map((o) => {

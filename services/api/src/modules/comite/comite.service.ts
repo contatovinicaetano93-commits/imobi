@@ -96,8 +96,10 @@ export class ComiteService {
     });
 
     // Auto-close: majority of admins voted → resolve
-    const todosVotos = await this.prisma.votoComite.findMany({ where: { comiteId } });
-    const adminCount = await this.prisma.usuario.count({ where: { tipo: "ADMIN", bloqueadoEm: null } });
+    const [todosVotos, adminCount] = await Promise.all([
+      this.prisma.votoComite.findMany({ where: { comiteId } }),
+      this.prisma.usuario.count({ where: { tipo: "ADMIN", bloqueadoEm: null } }),
+    ]);
     const quorum = Math.ceil(adminCount / 2);
 
     if (todosVotos.length >= quorum) {

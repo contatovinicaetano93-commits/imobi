@@ -27,6 +27,7 @@ export class ComercialService {
   async listarStages() {
     const stages = await this.prisma.pipelineStage.findMany({
       orderBy: { ordem: 'asc' },
+      take: 20,
     });
 
     if (stages.length === 0) {
@@ -232,10 +233,11 @@ export class ComercialService {
     const dataHoje = new Date();
     dataHoje.setHours(0, 0, 0, 0);
 
+    const diasSemana = Number(process.env["COMERCIAL_LEADS_SEMANA_DIAS"] ?? "7");
     const leadsThisWeek = await this.prisma.lead.count({
       where: {
         criadoEm: {
-          gte: new Date(dataHoje.getTime() - 7 * 24 * 60 * 60 * 1000),
+          gte: new Date(dataHoje.getTime() - diasSemana * 24 * 60 * 60 * 1000),
         },
       },
     });

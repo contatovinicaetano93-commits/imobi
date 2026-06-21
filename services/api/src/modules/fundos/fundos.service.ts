@@ -12,8 +12,9 @@ export class FundosService {
   constructor(private readonly prisma: PrismaService) {}
 
   async portfolio() {
+    const lookbackMeses = Number(process.env["METRICAS_LOOKBACK_MONTHS"] ?? "12");
     const umAnoAtras = new Date();
-    umAnoAtras.setFullYear(umAnoAtras.getFullYear() - 1);
+    umAnoAtras.setMonth(umAnoAtras.getMonth() - lookbackMeses);
 
     const [
       creditosAgregados,
@@ -155,6 +156,7 @@ export class FundosService {
   async porRegiao() {
     const obras = await this.prisma.obra.findMany({
       orderBy: { criadoEm: "desc" },
+      take: 1000,
       select: {
         endereco: true,
         status: true,
@@ -193,6 +195,7 @@ export class FundosService {
   async exposicaoCredito() {
     const creditos = await this.prisma.credito.findMany({
       where: { status: { in: ["ATIVO", "VENCIDO", "SUSPENSO"] } },
+      take: 500,
       select: {
         valorAprovado: true,
         valorLiberado: true,

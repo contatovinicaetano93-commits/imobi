@@ -1,6 +1,6 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import {
-  Controller, Post, Get, Patch, Param, Body, UseGuards, Req, BadRequestException,
+  Controller, Post, Get, Patch, Param, Body, UseGuards, Req, BadRequestException, HttpCode,
 } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import type { FastifyRequest } from "fastify";
@@ -19,6 +19,7 @@ export class EvidenciasController {
   constructor(private readonly evidencias: EvidenciasService) {}
 
   @Post()
+  @HttpCode(201)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async upload(
     @UsuarioAtual() u: IUsuario,

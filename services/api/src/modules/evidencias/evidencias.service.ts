@@ -97,6 +97,7 @@ export class EvidenciasService {
     const evidencias = await this.prisma.evidenciaEtapa.findMany({
       where: { etapaId },
       orderBy: { criadoEm: "desc" },
+      take: 100,
     });
 
     // Gera URLs pré-assinadas frescas (1h) para cada foto

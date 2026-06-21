@@ -34,6 +34,7 @@ export class ConstrutorService {
           status: true,
           etapas: { select: { status: true } },
         },
+        take: 50,
       }),
       this.prisma.scoreHistorico.findFirst({
         where: { usuarioId },

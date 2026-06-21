@@ -19,6 +19,7 @@ export class KycService {
   async uploadDocumento(usuarioId: string, tipo: string, url: string) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId },
+      select: { usuarioId: true },
     });
     if (!usuario) throw new NotFoundException("Usuário não encontrado");
 
@@ -46,6 +47,7 @@ export class KycService {
   async obterStatus(usuarioId: string) {
     const documentos = await this.prisma.kycDocumento.findMany({
       where: { usuarioId },
+      take: 50,
     });
 
     const pendentes = documentos.filter((d) => d.status === "PENDENTE").length;
@@ -205,6 +207,8 @@ export class KycService {
   async verificarKycCompleto(usuarioId: string) {
     const documentos = await this.prisma.kycDocumento.findMany({
       where: { usuarioId, status: "APROVADO" },
+      select: { tipo: true },
+      take: 50,
     });
 
     const tiposRequeridos = ["RG", "Selfie"];

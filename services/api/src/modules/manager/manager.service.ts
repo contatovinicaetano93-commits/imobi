@@ -112,16 +112,18 @@ export class ManagerService {
     // Priority filter (based on creation time)
     if (filters?.priority && filters.priority !== "todas") {
       const now = new Date();
-      const cutoff12h = new Date(now.getTime() - 12 * 60 * 60 * 1000);
-      const cutoff24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const urgentHours = Number(process.env["MANAGER_URGENTE_HORAS"] ?? "24");
+      const intermediariaHours = Number(process.env["MANAGER_INTERMEDIARIA_HORAS"] ?? "12");
+      const cutoffIntermediaria = new Date(now.getTime() - intermediariaHours * 60 * 60 * 1000);
+      const cutoffUrgente = new Date(now.getTime() - urgentHours * 60 * 60 * 1000);
 
       if (filters.priority === "urgente") {
-        dateFilter.lte = cutoff24h;
+        dateFilter.lte = cutoffUrgente;
       } else if (filters.priority === "intermediaria") {
-        dateFilter.lte = cutoff12h;
-        dateFilter.gt = cutoff24h;
+        dateFilter.lte = cutoffIntermediaria;
+        dateFilter.gt = cutoffUrgente;
       } else if (filters.priority === "normal") {
-        dateFilter.gt = cutoff12h;
+        dateFilter.gt = cutoffIntermediaria;
       }
       where.criadoEm = dateFilter;
     }

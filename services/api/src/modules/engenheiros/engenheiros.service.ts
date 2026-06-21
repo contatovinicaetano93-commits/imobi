@@ -160,12 +160,13 @@ export class EngenheirosService {
           (e) => e.status === "AGUARDANDO_VISTORIA" || e.status === "EM_EXECUCAO"
         )?.nome ?? "";
 
+      const percMaterial = Number(process.env["ENGENHEIRO_PERCENTUAL_MATERIAL"] ?? "0.56");
       return {
         obraId: obra.obraId,
         nome: obra.nome,
         valorTotal,
-        valorMaterial: Math.round(valorTotal * 0.56 * 100) / 100,
-        valorMaoDeObra: Math.round(valorTotal * 0.44 * 100) / 100,
+        valorMaterial: Math.round(valorTotal * percMaterial * 100) / 100,
+        valorMaoDeObra: Math.round(valorTotal * (1 - percMaterial) * 100) / 100,
         valorExecutado,
         progresso,
         etapaAtual,

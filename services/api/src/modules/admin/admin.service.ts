@@ -174,6 +174,7 @@ export class AdminService {
           processadoEm: { gte: inicio },
         },
         select: { valor: true, processadoEm: true },
+        take: 5000,
       }),
       this.prisma.obra.groupBy({
         by: ["status"],
