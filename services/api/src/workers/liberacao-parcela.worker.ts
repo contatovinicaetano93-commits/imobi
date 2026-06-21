@@ -5,7 +5,9 @@ import { PrismaService } from "../modules/prisma/prisma.service";
 import { NotificacoesService } from "../modules/notificacoes/notificacoes.service";
 import { EmailService } from "../modules/email/email.service";
 import { PushNotificacoesService } from "../modules/push-notificacoes/push-notificacoes.service";
+import { LedgerService } from "../modules/ledger/ledger.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../common/constants";
+import { liberacaoCounter } from "../common/utils/metrics.registry";
 
 @Injectable()
 @Processor(QUEUE_LIBERACAO)
@@ -16,7 +18,8 @@ export class LiberacaoParcelaWorker {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
+    private readonly ledger: LedgerService,
   ) {}
 
   @Process()
@@ -39,11 +42,28 @@ export class LiberacaoParcelaWorker {
       });
       if (!credito) throw new Error(`Crédito ${creditoId} não encontrado`);
 
-      // Re-check + update atomically inside the transaction
+      // Re-check + update atomically inside the transaction with advisory lock
       let processed = false;
       await this.prisma.$transaction(async (tx) => {
+        // Distributed lock: prevents concurrent liberações on the same credito
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`liberacao:${creditoId}`}))`;
+
         const lib = await tx.liberacaoParcela.findUnique({ where: { liberacaoId } });
         if (!lib || lib.status !== "PENDENTE") return;
+
+        // Ceiling enforcement: valorLiberado + valor must not exceed valorAprovado
+        const creditoLocked = await tx.credito.findUnique({
+          where: { creditoId },
+          select: { valorAprovado: true, valorLiberado: true },
+        });
+        if (!creditoLocked) throw new Error(`Crédito ${creditoId} não encontrado`);
+
+        const novoTotal = Number(creditoLocked.valorLiberado) + valor;
+        if (novoTotal > Number(creditoLocked.valorAprovado) + 0.01) {
+          throw new Error(
+            `Teto de crédito excedido: aprovado=${creditoLocked.valorAprovado} liberado=${creditoLocked.valorLiberado} tentativa=${valor}`,
+          );
+        }
 
         await tx.credito.update({
           where: { creditoId },
@@ -53,6 +73,32 @@ export class LiberacaoParcelaWorker {
         await tx.liberacaoParcela.update({
           where: { liberacaoId },
           data: { status: "CONCLUIDA", processadoEm: new Date() },
+        });
+
+        // Ledger imutável — registra lançamento na mesma transação
+        await this.ledger.criar(
+          {
+            tipo: "CREDITO",
+            categoria: "LIBERACAO_PARCELA",
+            valor,
+            creditoId,
+            liberacaoId,
+            usuarioId: credito.usuarioId,
+            descricao: `Liberação parcela — obra ${credito.obras?.[0]?.nome ?? creditoId}`,
+            idempotencyKey: `liberacao:${liberacaoId}`,
+          },
+          tx,
+        );
+
+        // Audit trail
+        await (tx as any).auditLog.create({
+          data: {
+            acao: 'LIBERACAO_PROCESSADA',
+            entidade: 'LiberacaoParcela',
+            entidadeId: liberacaoId,
+            usuarioId: credito.usuarioId,
+            metadata: { creditoId, valor, obraId: credito.obras?.[0]?.obraId ?? null },
+          },
         });
 
         processed = true;
@@ -92,6 +138,7 @@ export class LiberacaoParcelaWorker {
         )
         .catch((e) => this.logger.error(`Erro ao enviar email: ${e}`));
 
+      liberacaoCounter.inc({ status: 'success' });
       this.logger.log(`Liberação processada para crédito ${creditoId}: R$ ${valor}`);
     } catch (error) {
       this.logger.error(`Erro ao processar liberação: ${error}`);
@@ -101,6 +148,7 @@ export class LiberacaoParcelaWorker {
 
   @OnQueueFailed()
   onFailed(job: Job, err: Error) {
+    liberacaoCounter.inc({ status: 'error' });
     this.logger.error(`Job ${job.id} falhou: ${err.message}`);
 
     this.prisma.credito

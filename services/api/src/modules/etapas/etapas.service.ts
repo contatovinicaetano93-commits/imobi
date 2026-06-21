@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from "@nestjs/common";
 import type { EtapaStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
@@ -14,8 +15,12 @@ import {
   buildFinanceiroWhatsAppUrl,
 } from "../../common/constants/financeiro";
 
+const PRIVILEGED_ROLES = new Set(["GESTOR", "ADMIN", "ENGENHEIRO", "GESTOR_FUNDO", "GESTOR_OBRA"]);
+
 @Injectable()
 export class EtapasService {
+  private readonly logger = new Logger(EtapasService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
@@ -25,6 +30,8 @@ export class EtapasService {
 
   /** Aprovação técnica (engenheiro) — dispara liberação financeira manual. */
   async aprovar(aprovadorId: string, etapaId: string, observacao?: string) {
+    if (observacao && observacao.length > 1000) throw new BadRequestException("Observação não pode exceder 1000 caracteres.");
+
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId },
       include: { obra: { include: { credito: true, usuario: true } } },
@@ -37,53 +44,53 @@ export class EtapasService {
       );
     }
 
-    const evidencias = await this.prisma.evidenciaEtapa.count({
-      where: { etapaId },
-    });
+    const evidencias = await this.prisma.evidenciaEtapa.count({ where: { etapaId } });
     if (evidencias === 0) {
       throw new BadRequestException("Etapa precisa ter ao menos uma evidência fotográfica.");
     }
-
-    const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: "AGUARDANDO_VISTORIA" },
-      data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
-    });
-    if (updated.count === 0) {
-      throw new BadRequestException("Etapa não está aguardando vistoria.");
-    }
-
-    await this.prisma.etapaAuditLog.create({
-      data: {
-        etapaId,
-        acaoTipo: "APROVADA",
-        usuarioId: aprovadorId,
-        observacoes: observacao || null,
-      },
-    });
 
     const credito = etapa.obra.credito;
     const valorLiberacao = credito
       ? Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100)
       : Number(etapa.valorLiberacao) || 0;
 
+    let liberacaoId: string | null = null;
+
+    await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.etapaObra.updateMany({
+        where: { etapaId, status: "AGUARDANDO_VISTORIA" },
+        data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
+      });
+      if (updated.count === 0) {
+        throw new BadRequestException("Etapa não está aguardando vistoria.");
+      }
+
+      await tx.etapaAuditLog.create({
+        data: {
+          etapaId,
+          acaoTipo: "APROVADA",
+          usuarioId: aprovadorId,
+          observacoes: observacao || null,
+        },
+      });
+
+      if (credito && credito.status === "ATIVO" && valorLiberacao > 0) {
+        const liberacao = await tx.liberacaoParcela.create({
+          data: {
+            creditoId: credito.creditoId,
+            etapaId,
+            valor: valorLiberacao,
+            status: "AGUARDANDO_PAGAMENTO",
+          },
+        });
+        liberacaoId = liberacao.liberacaoId;
+      }
+    });
+
     const valorFmt = new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
     }).format(valorLiberacao);
-
-    let liberacaoId: string | null = null;
-
-    if (credito && credito.status === "ATIVO" && valorLiberacao > 0) {
-      const liberacao = await this.prisma.liberacaoParcela.create({
-        data: {
-          creditoId: credito.creditoId,
-          etapaId,
-          valor: valorLiberacao,
-          status: "AGUARDANDO_PAGAMENTO",
-        },
-      });
-      liberacaoId = liberacao.liberacaoId;
-    }
 
     const whatsMsg = buildCapitalFaseWhatsAppMessage({
       obraNome: etapa.obra.nome,
@@ -114,14 +121,9 @@ export class EtapasService {
         titulo: `Capital fase ${etapa.nome} liberado`,
         mensagem: `${valorFmt} — aguardando pagamento. Fale com o financeiro pelo WhatsApp.`,
         tipo: "PARCELA_LIBERADA",
-        dados: {
-          obraId: etapa.obra.obraId,
-          etapaId,
-          liberacaoId: liberacaoId ?? "",
-          whatsAppUrl: whatsUrl,
-        },
+        dados: { obraId: etapa.obra.obraId, etapaId, liberacaoId: liberacaoId ?? "", whatsAppUrl: whatsUrl },
       })
-      .catch(() => {});
+      .catch((e) => this.logger.error(`Push aprovação falhou etapa=${etapaId}: ${e}`));
 
     if (etapa.obra.usuario?.email) {
       this.email
@@ -134,41 +136,39 @@ export class EtapasService {
           whatsAppUrl: whatsUrl,
           liberacaoRef: liberacaoId?.slice(0, 8).toUpperCase() ?? "",
         })
-        .catch(() => {});
+        .catch((e) => this.logger.error(`Email aprovação falhou etapa=${etapaId}: ${e}`));
     }
 
-    return {
-      ok: true,
-      observacao,
-      liberacaoId,
-      valorLiberacao,
-      whatsAppUrl: whatsUrl,
-      aguardandoPagamento: !!liberacaoId,
-    };
+    return { ok: true, observacao, liberacaoId, valorLiberacao, whatsAppUrl: whatsUrl, aguardandoPagamento: !!liberacaoId };
   }
 
   async rejeitar(aprovadorId: string, etapaId: string, motivo: string) {
+    if (!motivo?.trim()) throw new BadRequestException("Motivo é obrigatório para rejeição.");
+    if (motivo.length > 1000) throw new BadRequestException("Motivo não pode exceder 1000 caracteres.");
+
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId },
       include: { obra: { include: { usuario: true } } },
     });
     if (!etapa) throw new NotFoundException("Etapa não encontrada.");
 
-    const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: "AGUARDANDO_VISTORIA" },
-      data: { status: "REPROVADA" },
-    });
-    if (updated.count === 0) {
-      throw new BadRequestException("Etapa não está aguardando vistoria.");
-    }
+    await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.etapaObra.updateMany({
+        where: { etapaId, status: "AGUARDANDO_VISTORIA" },
+        data: { status: "REPROVADA" },
+      });
+      if (updated.count === 0) {
+        throw new BadRequestException("Etapa não está aguardando vistoria.");
+      }
 
-    await this.prisma.etapaAuditLog.create({
-      data: {
-        etapaId,
-        acaoTipo: "REJEITADA",
-        usuarioId: aprovadorId,
-        observacoes: motivo,
-      },
+      await tx.etapaAuditLog.create({
+        data: {
+          etapaId,
+          acaoTipo: "REJEITADA",
+          usuarioId: aprovadorId,
+          observacoes: motivo,
+        },
+      });
     });
 
     await this.notificacoes.criar(
@@ -207,7 +207,12 @@ export class EtapasService {
     });
   }
 
-  async listarPorObra(obraId: string) {
+  async listarPorObra(obraId: string, usuarioId: string, userTipo: string) {
+    if (!PRIVILEGED_ROLES.has(userTipo)) {
+      const obra = await this.prisma.obra.findUnique({ where: { obraId }, select: { usuarioId: true } });
+      if (!obra) throw new NotFoundException("Obra não encontrada.");
+      if (obra.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
+    }
     return this.prisma.etapaObra.findMany({
       where: { obraId },
       orderBy: { ordem: "asc" },
@@ -219,5 +224,29 @@ export class EtapasService {
         },
       },
     });
+  }
+
+  async buscar(etapaId: string, usuarioId: string, userTipo: string) {
+    const etapa = await this.prisma.etapaObra.findUnique({
+      where: { etapaId },
+      include: {
+        obra: { select: { usuarioId: true } },
+        evidencias: {
+          select: { evidenciaId: true, fotoUrl: true, validada: true, criadoEm: true },
+          orderBy: { criadoEm: "desc" },
+          take: 50,
+        },
+        auditLogs: {
+          orderBy: { criadoEm: "desc" },
+          take: 10,
+          include: { usuario: { select: { nome: true } } },
+        },
+      },
+    });
+    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+    if (!PRIVILEGED_ROLES.has(userTipo) && etapa.obra.usuarioId !== usuarioId) {
+      throw new ForbiddenException("Acesso negado.");
+    }
+    return etapa;
   }
 }

@@ -1,4 +1,13 @@
-import { PrismaClient } from "@prisma/client";
+import {
+  PrismaClient,
+  UsuarioTipo,
+  KycStatus,
+  KycDocumentoStatus,
+  CreditoStatus,
+  ObraStatus,
+  EtapaStatus,
+  TipoNotificacao,
+} from "@prisma/client";
 import { hash } from "bcryptjs";
 import * as path from "path";
 import * as fs from "fs";
@@ -75,7 +84,6 @@ async function clearDatabase(): Promise<void> {
   console.log("Clearing database...");
 
   try {
-    // Delete in order of foreign key dependencies
     await prisma.notificacao.deleteMany({});
     await prisma.usuarioFcmToken.deleteMany({});
     await prisma.sessaoToken.deleteMany({});
@@ -87,6 +95,8 @@ async function clearDatabase(): Promise<void> {
     await prisma.credito.deleteMany({});
     await prisma.scoreHistorico.deleteMany({});
     await prisma.usuario.deleteMany({});
+    await prisma.avaliacaoFornecedor.deleteMany({});
+    await prisma.fornecedor.deleteMany({});
 
     console.log("✓ Database cleared successfully");
   } catch (error) {
@@ -114,8 +124,8 @@ async function seedUsuarios(data: any): Promise<Map<number, string>> {
         email: usuarioData.email,
         telefone: usuarioData.telefone,
         passwordHash,
-        tipo: usuarioData.tipo as any,
-        kycStatus: usuarioData.kycStatus as any,
+        tipo: usuarioData.tipo as UsuarioTipo,
+        kycStatus: usuarioData.kycStatus as KycStatus,
       },
     });
 
@@ -165,7 +175,7 @@ async function seedCreditos(
         valorLiberado: creditoData.valorLiberado,
         taxaMensal: creditoData.taxaMensal,
         prazoMeses: creditoData.prazoMeses,
-        status: creditoData.status as any,
+        status: creditoData.status as CreditoStatus,
         dataVencimento,
       },
     });
@@ -221,7 +231,7 @@ async function seedObras(
         raioValidacaoMetros: obraData.raioValidacaoMetros,
         areaM2: obraData.areaM2,
         tipo: obraData.tipo,
-        status: obraData.status as any,
+        status: obraData.status as ObraStatus,
       },
     });
 
@@ -314,7 +324,7 @@ async function seedEtapas(
           ordem: stage + 1,
           percentualObra,
           valorLiberacao,
-          status: stageStatuses[stage] as any,
+          status: stageStatuses[stage] as EtapaStatus,
           dataConclusaoPrevista,
         },
       });
@@ -433,7 +443,7 @@ async function seedKycDocumentos(
         usuarioId,
         tipo: kycData.tipo,
         url: kycData.url,
-        status: kycData.status as any,
+        status: kycData.status as KycDocumentoStatus,
         motivo_rejeicao: kycData.motivo_rejeicao || null,
         analisadoPor: analisadoPorId,
         analisadoEm,
@@ -528,7 +538,7 @@ async function seedNotificacoes(
       await prisma.notificacao.create({
         data: {
           usuarioId,
-          tipo: notification.tipo as any,
+          tipo: notification.tipo as TipoNotificacao,
           titulo: notification.titulo,
           mensagem: notification.mensagem,
         },
@@ -536,6 +546,130 @@ async function seedNotificacoes(
     }
 
     console.log(`  ✓ Created notifications for user: ${usuarioId}`);
+  }
+}
+
+async function seedMarketplace(): Promise<void> {
+  console.log("\n▶ Seeding marketplace fornecedores...");
+
+  const fornecedores = [
+    {
+      nome: "Construmax Materiais",
+      tipo: "MATERIAL_CONSTRUCAO" as const,
+      descricao: "Distribuidora de materiais de construção civil com foco em obras residenciais e comerciais.",
+      telefone: "(11) 3344-5566",
+      email: "vendas@construmax.com.br",
+      cidade: "São Paulo",
+      uf: "SP",
+      geoLatitude: -23.5505,
+      geoLongitude: -46.6333,
+      avaliacaoMedia: 4.5,
+      totalAvaliacoes: 38,
+    },
+    {
+      nome: "Mão Firme Serviços",
+      tipo: "MAO_DE_OBRA" as const,
+      descricao: "Equipe especializada em alvenaria, revestimentos e acabamentos. Mais de 15 anos de experiência.",
+      telefone: "(11) 9 8765-4321",
+      email: "contato@maofirme.com.br",
+      cidade: "São Paulo",
+      uf: "SP",
+      geoLatitude: -23.5489,
+      geoLongitude: -46.6388,
+      avaliacaoMedia: 4.2,
+      totalAvaliacoes: 22,
+    },
+    {
+      nome: "EquipAlug Locações",
+      tipo: "EQUIPAMENTO" as const,
+      descricao: "Locação de andaimes, betoneiras, compactadores e equipamentos de médio e grande porte.",
+      telefone: "(11) 4004-7788",
+      email: "locacao@equipalug.com.br",
+      cidade: "Guarulhos",
+      uf: "SP",
+      geoLatitude: -23.4533,
+      geoLongitude: -46.5332,
+      avaliacaoMedia: 4.7,
+      totalAvaliacoes: 51,
+    },
+    {
+      nome: "ArqPlan Projetos",
+      tipo: "PROJETO_ARQUITETURA" as const,
+      descricao: "Escritório de arquitetura e projetos executivos para obras residenciais, comerciais e industriais.",
+      telefone: "(11) 3210-9900",
+      email: "projetos@arqplan.com.br",
+      cidade: "São Paulo",
+      uf: "SP",
+      geoLatitude: -23.5620,
+      geoLongitude: -46.6560,
+      avaliacaoMedia: 4.8,
+      totalAvaliacoes: 17,
+    },
+    {
+      nome: "Engenharia Sólida",
+      tipo: "ENGENHARIA" as const,
+      descricao: "Laudos técnicos, ART, acompanhamento de obras e consultoria estrutural.",
+      telefone: "(11) 2233-4455",
+      email: "eng@solidaeng.com.br",
+      cidade: "São Bernardo do Campo",
+      uf: "SP",
+      geoLatitude: -23.6939,
+      geoLongitude: -46.5650,
+      avaliacaoMedia: 4.6,
+      totalAvaliacoes: 29,
+    },
+    {
+      nome: "Norte Construções",
+      tipo: "MAO_DE_OBRA" as const,
+      descricao: "Empreiteira completa: fundação, estrutura, alvenaria e cobertura.",
+      telefone: "(21) 3344-2211",
+      email: "orcamento@norteconstrucoes.com.br",
+      cidade: "Rio de Janeiro",
+      uf: "RJ",
+      geoLatitude: -22.9068,
+      geoLongitude: -43.1729,
+      avaliacaoMedia: 4.0,
+      totalAvaliacoes: 14,
+    },
+    {
+      nome: "BH Materiais Premium",
+      tipo: "MATERIAL_CONSTRUCAO" as const,
+      descricao: "Cimento, aço, blocos e materiais de acabamento com entrega em obra.",
+      telefone: "(31) 3456-7890",
+      email: "vendas@bhmateriais.com.br",
+      cidade: "Belo Horizonte",
+      uf: "MG",
+      geoLatitude: -19.9167,
+      geoLongitude: -43.9345,
+      avaliacaoMedia: 4.3,
+      totalAvaliacoes: 33,
+    },
+    {
+      nome: "TechForm Fôrmas e Escoramentos",
+      tipo: "EQUIPAMENTO" as const,
+      descricao: "Fôrmas metálicas, escoramentos e sistemas construtivos para lajes e pilares.",
+      telefone: "(11) 5566-3300",
+      email: "comercial@techform.com.br",
+      cidade: "Osasco",
+      uf: "SP",
+      geoLatitude: -23.5320,
+      geoLongitude: -46.7919,
+      avaliacaoMedia: 4.4,
+      totalAvaliacoes: 26,
+    },
+  ];
+
+  for (const f of fornecedores) {
+    await prisma.fornecedor.upsert({
+      where: { fornecedorId: `seed-${f.nome.toLowerCase().replace(/\s+/g, "-")}` },
+      update: {},
+      create: {
+        fornecedorId: `seed-${f.nome.toLowerCase().replace(/\s+/g, "-")}`,
+        ...f,
+        ativo: true,
+      },
+    });
+    console.log(`  ✓ Fornecedor: ${f.nome}`);
   }
 }
 
@@ -561,6 +695,7 @@ async function main(): Promise<void> {
     await seedKycDocumentos(data, usuarioMap);
     await seedScoreHistoricos(data, usuarioMap);
     await seedNotificacoes(usuarioMap);
+    await seedMarketplace();
 
     console.log("\n╔════════════════════════════════════════════════════════╗");
     console.log("║                  Seeding Complete! ✓                    ║");

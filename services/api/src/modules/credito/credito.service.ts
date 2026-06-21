@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException, ConflictException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { simularCredito } from "@imbobi/core";
 import type { SolicitacaoCreditoInput, SimulacaoCreditoInput } from "@imbobi/schemas";
@@ -7,9 +7,12 @@ import type { SolicitacaoCreditoInput, SimulacaoCreditoInput } from "@imbobi/sch
 export class CreditoService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private get taxaMensalDefault(): number {
+    return Number(process.env.TAXA_MENSAL_DEFAULT ?? "0.0099");
+  }
+
   simular(input: SimulacaoCreditoInput) {
-    const TAXA_MENSAL = 0.0099;
-    return simularCredito(input.valorSolicitado, TAXA_MENSAL, input.prazoMeses);
+    return simularCredito(input.valorSolicitado, this.taxaMensalDefault, input.prazoMeses);
   }
 
   async solicitar(usuarioId: string, input: SolicitacaoCreditoInput) {
@@ -18,7 +21,7 @@ export class CreditoService {
         usuarioId,
         valorAprovado: input.valorSolicitado,
         valorLiberado: 0,
-        taxaMensal: 0.0099,
+        taxaMensal: this.taxaMensalDefault,
         prazoMeses: input.prazoMeses,
       },
     });
@@ -62,6 +65,7 @@ export class CreditoService {
       include: {
         liberacoes: {
           orderBy: { criadoEm: "desc" },
+          take: 50,
         },
       },
     });
@@ -82,5 +86,63 @@ export class CreditoService {
         motivo: lib.motivo ?? undefined,
       })),
     };
+  }
+
+  async estornar(
+    creditoId: string,
+    liberacaoId: string,
+    solicitanteId: string,
+    motivo: string,
+  ) {
+    if (!motivo?.trim()) throw new BadRequestException("Motivo é obrigatório para estorno.");
+    if (motivo.length > 1000) throw new BadRequestException("Motivo não pode exceder 1000 caracteres.");
+
+    return this.prisma.$transaction(async (tx) => {
+      // Advisory lock: same key as liberacao worker to prevent race with in-flight liberação
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`liberacao:${creditoId}`}))`;
+
+      const lancamento = await tx.lancamentoFinanceiro.findFirst({
+        where: { liberacaoId, tipo: 'CREDITO' },
+      });
+      if (!lancamento) throw new NotFoundException('Lançamento de liberação não encontrado.');
+
+      // Prevent double reversal
+      const jaEstornado = await tx.lancamentoFinanceiro.findFirst({
+        where: { idempotencyKey: `estorno:${liberacaoId}` },
+      });
+      if (jaEstornado) throw new ConflictException('Esta liberação já foi estornada.');
+
+      const valor = Number(lancamento.valor);
+
+      const estorno = await tx.lancamentoFinanceiro.create({
+        data: {
+          tipo: 'DEBITO',
+          categoria: 'ESTORNO_LIBERACAO',
+          valor,
+          creditoId,
+          usuarioId: solicitanteId,
+          descricao: `Estorno de liberação: ${motivo}`,
+          metadata: { estornoDeId: lancamento.lancamentoId, motivo } as any,
+          idempotencyKey: `estorno:${liberacaoId}`,
+        },
+      });
+
+      await tx.credito.update({
+        where: { creditoId },
+        data: { valorLiberado: { decrement: valor } },
+      });
+
+      await (tx as any).auditLog.create({
+        data: {
+          acao: 'ESTORNO_LIBERACAO',
+          entidade: 'LancamentoFinanceiro',
+          entidadeId: lancamento.lancamentoId,
+          usuarioId: solicitanteId,
+          metadata: { creditoId, liberacaoId, valor, motivo },
+        },
+      });
+
+      return { estornoId: estorno.lancamentoId, valor, motivo };
+    });
   }
 }

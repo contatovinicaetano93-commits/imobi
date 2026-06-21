@@ -13,20 +13,20 @@ export declare const CadastroUsuarioSchema: z.ZodObject<{
     consentidoMarketing: z.ZodDefault<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     nome: string;
-    email: string;
-    cpf: string;
     telefone: string;
+    email: string;
     senha: string;
+    cpf: string;
     consentidoTermos: boolean;
     consentidoPrivacy: boolean;
     consentidoKyc: boolean;
     consentidoMarketing: boolean;
 }, {
     nome: string;
-    email: string;
-    cpf: string;
     telefone: string;
+    email: string;
     senha: string;
+    cpf: string;
     consentidoTermos: boolean;
     consentidoPrivacy: boolean;
     consentidoKyc: boolean;
@@ -61,24 +61,24 @@ export declare const RedefinirSenhaSchema: z.ZodObject<{
 }>;
 export declare const UpdateUsuarioSchema: z.ZodObject<{
     nome: z.ZodOptional<z.ZodString>;
-    email: z.ZodOptional<z.ZodString>;
     telefone: z.ZodOptional<z.ZodString>;
+    email: z.ZodOptional<z.ZodString>;
     consentidoTermos: z.ZodOptional<z.ZodEffects<z.ZodBoolean, boolean, boolean>>;
     consentidoPrivacy: z.ZodOptional<z.ZodEffects<z.ZodBoolean, boolean, boolean>>;
     consentidoKyc: z.ZodOptional<z.ZodEffects<z.ZodBoolean, boolean, boolean>>;
     consentidoMarketing: z.ZodOptional<z.ZodDefault<z.ZodBoolean>>;
 }, "strip", z.ZodTypeAny, {
     nome?: string | undefined;
-    email?: string | undefined;
     telefone?: string | undefined;
+    email?: string | undefined;
     consentidoTermos?: boolean | undefined;
     consentidoPrivacy?: boolean | undefined;
     consentidoKyc?: boolean | undefined;
     consentidoMarketing?: boolean | undefined;
 }, {
     nome?: string | undefined;
-    email?: string | undefined;
     telefone?: string | undefined;
+    email?: string | undefined;
     consentidoTermos?: boolean | undefined;
     consentidoPrivacy?: boolean | undefined;
     consentidoKyc?: boolean | undefined;
@@ -128,21 +128,21 @@ export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
     bloqueado: z.ZodOptional<z.ZodBoolean>;
     funcoesBloqueadas: z.ZodOptional<z.ZodArray<z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>, "many">>;
 }, "strip", z.ZodTypeAny, {
-    tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
     nome?: string | undefined;
-    email?: string | undefined;
+    tipo?: "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "GESTOR_OBRA" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | "TOMADOR" | undefined;
     telefone?: string | undefined;
+    email?: string | undefined;
     novaSenha?: string | undefined;
-    kycStatus?: "PENDENTE" | "EM_VERIFICACAO" | "APROVADO" | "REJEITADO" | undefined;
+    kycStatus?: "APROVADO" | "PENDENTE" | "EM_VERIFICACAO" | "REJEITADO" | undefined;
     bloqueado?: boolean | undefined;
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }, {
-    tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
     nome?: string | undefined;
-    email?: string | undefined;
+    tipo?: "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "GESTOR_OBRA" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | "TOMADOR" | undefined;
     telefone?: string | undefined;
+    email?: string | undefined;
     novaSenha?: string | undefined;
-    kycStatus?: "PENDENTE" | "EM_VERIFICACAO" | "APROVADO" | "REJEITADO" | undefined;
+    kycStatus?: "APROVADO" | "PENDENTE" | "EM_VERIFICACAO" | "REJEITADO" | undefined;
     bloqueado?: boolean | undefined;
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }>;

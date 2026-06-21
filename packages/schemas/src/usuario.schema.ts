@@ -1,5 +1,23 @@
 import { z } from "zod";
 
+const COMMON_PASSWORDS = new Set([
+  'password', 'senha123', '123456', '12345678', 'abc123',
+  'password1', 'iloveyou', 'admin123', 'letmein', 'welcome',
+  'monkey', 'dragon', 'master', 'sunshine', 'princess',
+  'senhaforte', 'segurança', 'brasil123', 'imbobi123',
+]);
+
+function isStrongPassword(pwd: string): boolean {
+  if (COMMON_PASSWORDS.has(pwd.toLowerCase())) return false;
+  let score = 0;
+  if (pwd.length >= 8) score++;
+  if (pwd.length >= 12) score++;
+  if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+  if (/\d/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+  return score >= 2;
+}
+
 export const TipoUsuarioEnum = z.enum([
   "TOMADOR",
   "GESTOR_OBRA",
@@ -32,7 +50,8 @@ export const CadastroUsuarioSchema = z.object({
     .string()
     .min(8, "Mínimo 8 caracteres")
     .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
-    .regex(/[0-9]/, "Deve conter ao menos um número"),
+    .regex(/[0-9]/, "Deve conter ao menos um número")
+    .refine(isStrongPassword, "Senha muito fraca ou comum. Use letras maiúsculas, minúsculas, números e caracteres especiais."),
   consentidoTermos: z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
   consentidoPrivacy: z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
   consentidoKyc: z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
@@ -42,6 +61,7 @@ export const CadastroUsuarioSchema = z.object({
 export const LoginSchema = z.object({
   email: z.string().email(),
   senha: z.string().min(1),
+  totpCode: z.string().optional(),
 });
 
 export const EsqueceuSenhaSchema = z.object({
@@ -54,7 +74,8 @@ export const RedefinirSenhaSchema = z.object({
     .string()
     .min(8, "Mínimo 8 caracteres")
     .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
-    .regex(/[0-9]/, "Deve conter ao menos um número"),
+    .regex(/[0-9]/, "Deve conter ao menos um número")
+    .refine(isStrongPassword, "Senha muito fraca ou comum."),
 });
 
 export const UpdateUsuarioSchema = CadastroUsuarioSchema.omit({

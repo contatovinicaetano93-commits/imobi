@@ -1,25 +1,36 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Inject } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import * as crypto from "crypto";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import type { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
+import { TotpService } from "../totp/totp.service";
 import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
 import { normalizeUserRole } from "../../common/constants/manager-roles";
+import { checkPasswordStrength } from "../../common/utils/password-strength.util";
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
-    private readonly email: EmailService
+    private readonly email: EmailService,
+    private readonly totp: TotpService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
-  async registrar(input: CadastroUsuarioInput) {
+  async registrar(input: CadastroUsuarioInput, meta?: { ip?: string; ua?: string }) {
     const existe = await this.prisma.usuario.findFirst({
       where: { OR: [{ email: input.email }, { cpf: input.cpf }] },
     });
     if (existe) throw new ConflictException("E-mail ou CPF já cadastrado.");
+
+    const strengthCheck = checkPasswordStrength(input.senha);
+    if (!strengthCheck.ok) {
+      throw new BadRequestException(strengthCheck.reason ?? "Senha fraca.");
+    }
 
     const passwordHash = await bcrypt.hash(input.senha, 12);
     const usuario = await this.prisma.usuario.create({
@@ -35,23 +46,44 @@ export class AuthService {
         consentidoMarketing: input.consentidoMarketing ?? false,
         consentidoEm: new Date(),
       },
-      select: { usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true },
+      select: {
+        usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true,
+        funcoesBloqueadas: true, bloqueadoEm: true,
+      },
     });
 
-    return { usuario, ...await this.gerarTokens(usuario.usuarioId) };
+    return { usuario, ...await this.gerarTokens(usuario.usuarioId, usuario, meta) };
   }
 
-  async login(input: LoginInput) {
+  async login(input: LoginInput, meta?: { ip?: string; ua?: string }) {
+    // Include TOTP status in the same query to avoid a timing side-channel:
+    // a separate estaAtivo() call after bcrypt.compare would only execute for
+    // users with correct passwords, revealing password correctness via latency.
     const usuario = await this.prisma.usuario.findUnique({
       where: { email: input.email },
+      include: { totp: { select: { ativo: true } } },
     });
     if (!usuario) throw new UnauthorizedException("Credenciais inválidas.");
+
+    // Check block status before bcrypt to avoid credential oracle:
+    // returning a distinct "blocked" message after a successful password check
+    // reveals that the password was correct, enabling brute-force enumeration.
+    if (usuario.bloqueadoEm) {
+      throw new UnauthorizedException("Credenciais inválidas.");
+    }
 
     const senhaOk = await bcrypt.compare(input.senha, usuario.passwordHash);
     if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
 
-    if (usuario.bloqueadoEm) {
-      throw new UnauthorizedException("Conta bloqueada pelo administrador. Entre em contato com o suporte.");
+    const totpAtivo = usuario.totp?.ativo ?? false;
+    if (totpAtivo) {
+      if (!input.totpCode) {
+        // Return an opaque challenge — do NOT leak usuarioId to unauthenticated callers.
+        // The client re-submits email+password+totpCode in the next request.
+        return { requiresTotp: true };
+      }
+      const totpOk = await this.totp.verificar(usuario.usuarioId, input.totpCode);
+      if (!totpOk) throw new UnauthorizedException("Código TOTP inválido.");
     }
 
     return {
@@ -61,7 +93,7 @@ export class AuthService {
         email: usuario.email,
         tipo: normalizeUserRole(usuario.tipo) ?? usuario.tipo,
       },
-      ...await this.gerarTokens(usuario.usuarioId),
+      ...await this.gerarTokens(usuario.usuarioId, usuario, meta),
     };
   }
 
@@ -87,11 +119,42 @@ export class AuthService {
     return await this.gerarTokens(sessao.usuarioId);
   }
 
-  async revogarToken(refreshToken: string) {
+  async listarSessoes(usuarioId: string) {
+    return this.prisma.sessaoToken.findMany({
+      where: { usuarioId, revogadoEm: null, expiresAt: { gt: new Date() } },
+      select: { sessionId: true, criadoEm: true, expiresAt: true, ipAddress: true, userAgent: true },
+      orderBy: { criadoEm: "desc" },
+      take: 20,
+    });
+  }
+
+  async revogarSessao(usuarioId: string, sessionId: string) {
+    const result = await this.prisma.sessaoToken.updateMany({
+      where: { sessionId, usuarioId, revogadoEm: null },
+      data: { revogadoEm: new Date() },
+    });
+    if (result.count === 0) throw new UnauthorizedException("Sessão não encontrada.");
+    return { ok: true };
+  }
+
+  async revogarToken(refreshToken: string, accessToken?: string) {
     await this.prisma.sessaoToken.updateMany({
       where: { refreshToken },
       data: { revogadoEm: new Date() },
     });
+
+    // Blacklist the access token jti so it can't be reused until natural expiry
+    if (accessToken) {
+      try {
+        const decoded = this.jwt.decode(accessToken) as { jti?: string; exp?: number } | null;
+        if (decoded?.jti && decoded?.exp) {
+          const ttlMs = decoded.exp * 1000 - Date.now();
+          if (ttlMs > 0) {
+            await this.cache.set(`blacklist:${decoded.jti}`, '1', ttlMs);
+          }
+        }
+      } catch { /* ignore */ }
+    }
   }
 
   async esqueceuSenha(emailInput: string) {
@@ -134,43 +197,75 @@ export class AuthService {
       throw new BadRequestException("Link inválido ou expirado");
     }
 
+    const strength = checkPasswordStrength(novaSenha);
+    if (!strength.ok) throw new BadRequestException(strength.reason ?? "Senha não atende aos requisitos de segurança.");
+
     const passwordHash = await bcrypt.hash(novaSenha, 12);
 
-    await this.prisma.usuario.update({
-      where: { usuarioId: usuario.usuarioId },
-      data: {
-        passwordHash,
-        passwordResetToken: null,
-        passwordResetExpires: null,
-      },
-    });
+    await this.prisma.$transaction([
+      this.prisma.usuario.update({
+        where: { usuarioId: usuario.usuarioId },
+        data: { passwordHash, passwordResetToken: null, passwordResetExpires: null },
+      }),
+      // Revoke all active sessions so stolen sessions cannot survive a password reset
+      this.prisma.sessaoToken.updateMany({
+        where: { usuarioId: usuario.usuarioId, revogadoEm: null },
+        data: { revogadoEm: new Date() },
+      }),
+    ]);
 
     return { message: "Senha redefinida com sucesso" };
   }
 
-  private async gerarTokens(usuarioId: string) {
-    const usuario = await this.prisma.usuario.findUnique({
+  private async gerarTokens(
+    usuarioId: string,
+    cached?: { tipo?: string; nome?: string | null; email?: string; funcoesBloqueadas?: string[]; bloqueadoEm?: Date | null },
+    meta?: { ip?: string; ua?: string },
+  ) {
+    const usuario = cached ?? await this.prisma.usuario.findUnique({
       where: { usuarioId },
       select: { tipo: true, nome: true, email: true, funcoesBloqueadas: true, bloqueadoEm: true },
     });
+    const jti = crypto.randomUUID();
     const accessToken = this.jwt.sign(
       {
         sub: usuarioId,
+        jti,
         role: normalizeUserRole(usuario?.tipo ?? null),
         nome: usuario?.nome ?? null,
         email: usuario?.email ?? null,
         funcoesBloqueadas: usuario?.funcoesBloqueadas ?? [],
         bloqueado: !!usuario?.bloqueadoEm,
       },
-      { expiresIn: "8h" }
+      { expiresIn: process.env["JWT_EXPIRES_IN"] ?? "15m" }
     );
-    const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
+    const refreshToken = this.jwt.sign(
+      { sub: usuarioId, type: "refresh" },
+      { expiresIn: process.env["JWT_REFRESH_EXPIRES_IN"] ?? "7d" },
+    );
+
+    // Evict oldest sessions if user exceeds 10 concurrent active sessions
+    const MAX_SESSIONS = 10;
+    const activeSessions = await this.prisma.sessaoToken.findMany({
+      where: { usuarioId, revogadoEm: null, expiresAt: { gt: new Date() } },
+      orderBy: { criadoEm: "asc" },
+      select: { sessionId: true },
+    });
+    if (activeSessions.length >= MAX_SESSIONS) {
+      const toRevoke = activeSessions.slice(0, activeSessions.length - MAX_SESSIONS + 1);
+      await this.prisma.sessaoToken.updateMany({
+        where: { sessionId: { in: toRevoke.map((s) => s.sessionId) } },
+        data: { revogadoEm: new Date() },
+      });
+    }
 
     await this.prisma.sessaoToken.create({
       data: {
         usuarioId,
         refreshToken,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        ipAddress: meta?.ip ?? null,
+        userAgent: meta?.ua ? meta.ua.slice(0, 255) : null,
       },
     });
 

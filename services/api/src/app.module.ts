@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
+import { Module, NestModule, MiddlewareConsumer, RequestMethod } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
 import { ThrottlerModule } from "@nestjs/throttler";
@@ -30,13 +30,28 @@ import { SetupModule } from "./modules/setup/setup.module";
 import { DueDiligenceModule } from "./modules/due-diligence/due-diligence.module";
 import { DocumentosModule } from "./modules/documentos/documentos.module";
 import { ComiteModule } from "./modules/comite/comite.module";
+import { FundosModule } from "./modules/fundos/fundos.module";
+import { ConstrutorModule } from "./modules/construtor/construtor.module";
+import { LedgerModule } from "./modules/ledger/ledger.module";
+import { OutboxModule } from "./modules/outbox/outbox.module";
+import { TotpModule } from "./modules/totp/totp.module";
+import { WebhooksModule } from "./modules/webhooks/webhooks.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker, QUEUE_EXCLUIR_USUARIO } from "./workers/excluir-usuario.worker";
+import { OutboxWorker } from "./workers/outbox.worker";
+import { ReconciliacaoWorker } from "./workers/reconciliacao.worker";
+import { IdempotencyInterceptor } from "./common/interceptors/idempotency.interceptor";
 import { QUEUE_LIBERACAO } from "./common/constants";
 import { HealthController } from "./common/health.controller";
+import { MetricsController } from "./common/controllers/metrics.controller";
 import { getRedisConfig } from "./common/config";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
+import { CorrelationIdMiddleware } from "./common/middleware/correlation-id.middleware";
+import { RequestLoggerMiddleware } from "./common/middleware/request-logger.middleware";
 import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
+import { AuditModule } from "./common/services/audit.module";
+import { CreditoVencidoWorker } from "./workers/credito-vencido.worker";
+import { LgpdDeleteWorker } from "./workers/lgpd-delete.worker";
 
 const redisConfig = getRedisConfig();
 
@@ -72,6 +87,12 @@ const redisConfig = getRedisConfig();
         enableReadyCheck: false,
         retryStrategy: (times: number) => Math.min(times * 50, 2000),
       },
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: { count: 1000 },
+        removeOnFail: { count: 500 },
+      },
     }),
     PrismaModule,
     AuthModule,
@@ -96,14 +117,29 @@ const redisConfig = getRedisConfig();
     DueDiligenceModule,
     DocumentosModule,
     ComiteModule,
+    FundosModule,
+    ConstrutorModule,
+    LedgerModule,
+    OutboxModule,
+    TotpModule,
+    WebhooksModule,
+    AuditModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, MetricsController],
   providers: [
     LiberacaoParcelaWorker,
     ExcluirUsuarioWorker,
+    OutboxWorker,
+    ReconciliacaoWorker,
+    CreditoVencidoWorker,
+    LgpdDeleteWorker,
     {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: IdempotencyInterceptor,
     },
     {
       provide: APP_GUARD,
@@ -118,9 +154,14 @@ const redisConfig = getRedisConfig();
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // Correlation ID and request logging on all routes
+    consumer
+      .apply(CorrelationIdMiddleware, RequestLoggerMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+
     const nodeEnv = process.env.NODE_ENV || 'development';
     if (nodeEnv === 'production') {
-      consumer.apply(ProductionMiddleware).forRoutes('*');
+      consumer.apply(ProductionMiddleware).forRoutes({ path: '*', method: RequestMethod.ALL });
     }
   }
 }

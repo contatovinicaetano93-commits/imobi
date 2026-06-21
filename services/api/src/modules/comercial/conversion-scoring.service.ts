@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import type { LeadActivity } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -41,7 +42,7 @@ export class ConversionScoringService {
   }
 
   private calcularEngajamentoScore(
-    atividades: any[],
+    atividades: LeadActivity[],
     ultimaAtividade?: Date
   ): number {
     const count = atividades?.length || 0;
@@ -136,13 +137,13 @@ export class ConversionScoringService {
     const lead = await this.prisma.lead.findUnique({
       where: { leadId },
       include: {
-        atividades: { orderBy: { criadoEm: 'desc' } },
+        atividades: { orderBy: { criadoEm: 'desc' }, take: 50 },
         scoreHistorico: { take: 1, orderBy: { criadoEm: 'desc' } },
       },
     });
 
     if (!lead) {
-      throw new Error(`Lead ${leadId} not found`);
+      throw new NotFoundException(`Lead ${leadId} não encontrado`);
     }
 
     const ultimoScore = lead.scoreHistorico[0]?.scoreFinal;

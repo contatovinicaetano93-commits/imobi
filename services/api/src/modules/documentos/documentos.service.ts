@@ -1,7 +1,10 @@
-import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
+import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
+import { validateMime, KYC_ALLOWED_MIMES } from "../../common/utils/mime-validator.util";
 import type { DocumentoTipo } from "@prisma/client";
+
+const DOC_MAX_BYTES = 20 * 1024 * 1024;
 
 @Injectable()
 export class DocumentosService {
@@ -13,19 +16,30 @@ export class DocumentosService {
   async upload(
     usuarioId: string,
     fileBuffer: Buffer,
-    mimeType: string,
+    _mimeType: string,
     nome: string,
     tipo: string,
     obraId?: string,
     descricao?: string,
     vencimento?: string,
   ) {
+    if (fileBuffer.length > DOC_MAX_BYTES) {
+      throw new BadRequestException("Arquivo muito grande. Máximo 20 MB.");
+    }
+
+    let detectedMime: string;
+    try {
+      detectedMime = validateMime(fileBuffer, KYC_ALLOWED_MIMES);
+    } catch (e: any) {
+      throw new BadRequestException(e.message);
+    }
+
     if (obraId) {
       const obra = await this.prisma.obra.findUnique({ where: { obraId } });
       if (!obra) throw new NotFoundException("Obra não encontrada.");
     }
 
-    const { key } = await this.storage.upload(fileBuffer, mimeType, obraId ?? usuarioId);
+    const { key } = await this.storage.upload(fileBuffer, detectedMime, obraId ?? usuarioId);
 
     return this.prisma.documento.create({
       data: {
@@ -34,7 +48,7 @@ export class DocumentosService {
         tipo: tipo as DocumentoTipo,
         nome,
         url: key,
-        mimeType,
+        mimeType: detectedMime,
         tamanhoBytes: fileBuffer.length,
         descricao,
         vencimento: vencimento ? new Date(vencimento) : undefined,
@@ -51,6 +65,7 @@ export class DocumentosService {
     return this.prisma.documento.findMany({
       where: { obraId },
       orderBy: { criadoEm: "desc" },
+      take: 100,
     });
   }
 
@@ -58,6 +73,7 @@ export class DocumentosService {
     return this.prisma.documento.findMany({
       where: { usuarioId },
       orderBy: { criadoEm: "desc" },
+      take: 100,
     });
   }
 

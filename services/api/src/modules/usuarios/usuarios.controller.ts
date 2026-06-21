@@ -1,4 +1,6 @@
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Patch, Post, Delete, UseGuards, Body, Res, Req, BadRequestException } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import type { FastifyRequest } from "fastify";
 import { FastifyReply } from "fastify";
 import { UsuariosService } from "./usuarios.service";
@@ -9,14 +11,18 @@ import {
   UpdatePreferenciasNotificacaoSchema,
   UpdatePerfilUsuarioSchema,
   ContaBancariaEmpresaSchema,
+  RevogarConsentimentoSchema,
 } from "@imbobi/schemas";
 import type {
   UpdatePreferenciasNotificacaoInput,
   UpdatePerfilUsuarioInput,
   ContaBancariaEmpresaInput,
+  RevogarConsentimentoInput,
 } from "@imbobi/schemas";
 
 @UseGuards(JwtAuthGuard)
+@ApiTags("Usuários")
+@ApiBearerAuth("JWT")
 @Controller("usuarios")
 export class UsuariosController {
   constructor(private readonly usuarios: UsuariosService) {}
@@ -56,6 +62,7 @@ export class UsuariosController {
   }
 
   @Post("me/avatar")
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async uploadAvatar(@UsuarioAtual() u: IUsuario, @Req() req: FastifyRequest) {
     if (!req.isMultipart()) {
       throw new BadRequestException("Envio deve ser multipart/form-data.");
@@ -108,6 +115,7 @@ export class UsuariosController {
    * Returns JSON file download
    */
   @Post("exportar-dados")
+  @Throttle({ default: { limit: 3, ttl: 3600000 } })
   async exportarDados(@UsuarioAtual() u: IUsuario, @Res() res: FastifyReply) {
     const dados = await this.usuarios.exportarDados(u.id);
     const json = JSON.stringify(dados, null, 2);
@@ -123,6 +131,7 @@ export class UsuariosController {
    * Initiates 30-day grace period before hard delete
    */
   @Delete("meu-perfil")
+  @Throttle({ default: { limit: 3, ttl: 3600000 } })
   async deletarPerfil(@UsuarioAtual() u: IUsuario) {
     return this.usuarios.marcarDelecao(u.id);
   }
@@ -134,8 +143,8 @@ export class UsuariosController {
   @Patch("revogar-consentimento")
   async revogarConsentimento(
     @UsuarioAtual() u: IUsuario,
-    @Body() { tipo }: { tipo: "MARKETING" | "NOTIFICACOES" | "TUDO" }
+    @Body(new ZodPipe(RevogarConsentimentoSchema)) body: RevogarConsentimentoInput,
   ) {
-    return this.usuarios.revogarConsentimento(u.id, tipo);
+    return this.usuarios.revogarConsentimento(u.id, body.tipo);
   }
 }

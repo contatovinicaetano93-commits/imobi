@@ -64,7 +64,7 @@ export default async function EngenheiroPortalPage() {
   const engenheiroPanels = [
     { id: "fila-visitas", priority: "critical" as const },
     { id: "obras-responsabilidade", priority: "primary" as const },
-    { id: "licencas", priority: (licencasAtencao > 0 ? "critical" : "primary") as const },
+    { id: "licencas", priority: (licencasAtencao > 0 ? "critical" : "primary") as "critical" | "primary" },
     { id: "etapas-projeto", priority: "secondary" as const },
   ];
 

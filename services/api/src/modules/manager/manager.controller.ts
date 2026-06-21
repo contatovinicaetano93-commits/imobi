@@ -1,31 +1,20 @@
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Controller, Get, Patch, Param, Query, Body, UseGuards, UseInterceptors } from "@nestjs/common";
-
 import { Throttle } from "@nestjs/throttler";
-
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
-
 import { ManagerService } from "./manager.service";
-
 import { KycService } from "../kyc/kyc.service";
-
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-
 import { RolesGuard } from "../../common/guards/roles.guard";
-
 import { Roles } from "../../common/decorators/roles.decorator";
-
 import { MANAGER_ROLES } from "../../common/constants/manager-roles";
-
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
-
-
+@ApiTags("Manager")
+@ApiBearerAuth("JWT")
 @UseGuards(JwtAuthGuard, RolesGuard)
-
 @Roles(...MANAGER_ROLES)
-
 @Controller("manager")
-
 export class ManagerController {
 
   constructor(
@@ -151,7 +140,7 @@ export class ManagerController {
 
 
   @Patch("kyc/:id/aprovar")
-
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async aprovarKyc(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
 
     return this.kyc.aprovarDocumento(id, u.id);
@@ -161,7 +150,7 @@ export class ManagerController {
 
 
   @Patch("kyc/:id/rejeitar")
-
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async rejeitarKyc(
 
     @UsuarioAtual() u: IUsuario,
@@ -180,9 +169,14 @@ export class ManagerController {
 
   @Get("etapas/:id/audit-log")
 
-  async obterEtapaAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
+  async obterEtapaAuditLog(
+    @UsuarioAtual() u: IUsuario,
+    @Param("id") id: string,
+    @Query("limit") limit: string = "20",
+    @Query("offset") offset: string = "0",
+  ) {
 
-    return this.manager.obterEtapaAuditLog(id);
+    return this.manager.obterEtapaAuditLog(id, Number(limit), Number(offset));
 
   }
 
@@ -190,9 +184,14 @@ export class ManagerController {
 
   @Get("kyc/:id/audit-log")
 
-  async obterKycAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
+  async obterKycAuditLog(
+    @UsuarioAtual() u: IUsuario,
+    @Param("id") id: string,
+    @Query("limit") limit: string = "20",
+    @Query("offset") offset: string = "0",
+  ) {
 
-    return this.manager.obterKycAuditLog(id);
+    return this.manager.obterKycAuditLog(id, Number(limit), Number(offset));
 
   }
 

@@ -41,57 +41,51 @@ export class ExcluirUsuarioWorker {
       }
 
       // Verify that the user was actually marked for deletion 30+ days ago
+      const graceDays = Number(process.env.EXCLUSAO_GRACE_PERIOD_DAYS ?? "30");
       const agora = new Date();
-      const diasDesdeDelecao = (agora.getTime() - usuario.deletadoEm!.getTime()) / (1000 * 60 * 60 * 24);
 
-      if (diasDesdeDelecao < 30) {
+      if (!usuario.deletadoEm) {
+        this.logger.warn(`Usuário ${usuarioId} não está marcado para exclusão — ignorando`);
+        return;
+      }
+
+      const diasDesdeDelecao = (agora.getTime() - usuario.deletadoEm.getTime()) / (1000 * 60 * 60 * 24);
+
+      if (diasDesdeDelecao < graceDays) {
         this.logger.warn(
           `Tentativa de deletar usuário ${usuarioId} com apenas ${diasDesdeDelecao.toFixed(1)} dias - ignorando`
         );
         return;
       }
 
-      // Perform hard deletion in a transaction
+      // Anonymize PII — hard deletion is blocked by RESTRICT constraints on
+      // LancamentoFinanceiro (ledger integrity, 7-year regulatory retention).
+      // Sessions, notifications, and push tokens are deleted; everything else
+      // (creditos, obras, lancamentos) is preserved with PII scrubbed.
       await this.prisma.$transaction(async (tx) => {
-        // Delete non-sensitive data in order of dependencies
+        await tx.sessaoToken.deleteMany({ where: { usuarioId } });
+        await tx.notificacao.deleteMany({ where: { usuarioId } });
+        await tx.usuarioFcmToken.deleteMany({ where: { usuarioId } });
+        await tx.scoreHistorico.deleteMany({ where: { usuarioId } });
 
-        // 1. Delete session tokens
-        await tx.sessaoToken.deleteMany({
+        // Anonymize PII — preserves ledger + KYC/audit records (AML + regulatory)
+        await tx.usuario.update({
           where: { usuarioId },
-        });
-
-        // 2. Delete notifications
-        await tx.notificacao.deleteMany({
-          where: { usuarioId },
-        });
-
-        // 3. Delete FCM tokens
-        await tx.usuarioFcmToken.deleteMany({
-          where: { usuarioId },
-        });
-
-        // 4. Delete score history
-        await tx.scoreHistorico.deleteMany({
-          where: { usuarioId },
-        });
-
-        // 5. Delete obras (cascades to etapas and evidencias via foreign key)
-        await tx.obra.deleteMany({
-          where: { usuarioId },
-        });
-
-        // 6. Delete creditos (cascades to liberacaoParcela via foreign key)
-        await tx.credito.deleteMany({
-          where: { usuarioId },
-        });
-
-        // NOTE: KycDocumento NOT deleted (5-year AML requirement per LGPD Article 16)
-        // NOTE: EtapaAuditLog NOT deleted (7-year regulatory requirement per LGPD Article 27)
-        // NOTE: KycAuditLog NOT deleted (7-year regulatory requirement per LGPD Article 27)
-
-        // 7. Finally delete the usuario record itself
-        await tx.usuario.delete({
-          where: { usuarioId },
+          data: {
+            nome: "[DELETADO]",
+            email: `deleted-${usuarioId}@anon.imobi`,
+            cpf: "00000000000",
+            telefone: "00000000000",
+            contaBanco: null,
+            contaAgencia: null,
+            contaNumero: null,
+            contaPix: null,
+            contaTitular: null,
+            avatarUrl: null,
+            passwordHash: "ANONIMIZADO",
+            passwordResetToken: null,
+            passwordResetExpires: null,
+          },
         });
       });
 

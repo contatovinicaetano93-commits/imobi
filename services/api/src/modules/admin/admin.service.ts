@@ -5,6 +5,7 @@ import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import * as bcrypt from "bcryptjs";
 import { UsuarioTipo } from "@prisma/client";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
+import { checkPasswordStrength } from "../../common/utils/password-strength.util";
 
 export interface CriarUsuarioAdminDto {
   nome: string;
@@ -155,8 +156,9 @@ export class AdminService {
   }
 
   async metricas(): Promise<AdminMetricas> {
+    const lookbackMonths = Number(process.env.METRICAS_LOOKBACK_MONTHS ?? "12");
     const inicio = new Date();
-    inicio.setMonth(inicio.getMonth() - 11);
+    inicio.setMonth(inicio.getMonth() - (lookbackMonths - 1));
     inicio.setDate(1);
     inicio.setHours(0, 0, 0, 0);
 
@@ -173,6 +175,7 @@ export class AdminService {
           processadoEm: { gte: inicio },
         },
         select: { valor: true, processadoEm: true },
+        take: 5000,
       }),
       this.prisma.obra.groupBy({
         by: ["status"],
@@ -186,7 +189,7 @@ export class AdminService {
     const mesesPt = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     const buckets = new Map<string, number>();
 
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < lookbackMonths; i++) {
       const d = new Date(inicio);
       d.setMonth(inicio.getMonth() + i);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -227,29 +230,61 @@ export class AdminService {
     };
   }
 
-  async listarUsuarios() {
-    const rows = await this.prisma.usuario.findMany({
-      where: { deletadoEm: null },
-      orderBy: { criadoEm: "desc" },
+  async listarUsuarios(limit = 20, offset = 0) {
+    const [rows, total] = await Promise.all([
+      this.prisma.usuario.findMany({
+        where: { deletadoEm: null },
+        orderBy: { criadoEm: "desc" },
+        take: Math.min(limit, 100),
+        skip: offset,
+        select: {
+          usuarioId: true,
+          nome: true,
+          email: true,
+          telefone: true,
+          tipo: true,
+          kycStatus: true,
+          bloqueadoEm: true,
+          funcoesBloqueadas: true,
+          criadoEm: true,
+          _count: { select: { obras: true, creditos: true } },
+        },
+      }),
+      this.prisma.usuario.count({ where: { deletadoEm: null } }),
+    ]);
+    return {
+      items: rows.map(({ usuarioId, _count, ...rest }) => ({
+        id: usuarioId,
+        ...rest,
+        totalObras: _count.obras,
+        totalCreditos: _count.creditos,
+      })),
+      total,
+    };
+  }
+
+  async buscarUsuario(id: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { usuarioId: id, deletadoEm: null },
       select: {
         usuarioId: true,
         nome: true,
         email: true,
+        cpf: true,
         telefone: true,
         tipo: true,
         kycStatus: true,
         bloqueadoEm: true,
         funcoesBloqueadas: true,
+        consentidoTermos: true,
+        consentidoMarketing: true,
         criadoEm: true,
-        _count: { select: { obras: true, creditos: true } },
+        _count: { select: { obras: true, creditos: true, kycDocumentos: true } },
       },
     });
-    return rows.map(({ usuarioId, _count, ...rest }) => ({
-      id: usuarioId,
-      ...rest,
-      totalObras: _count.obras,
-      totalCreditos: _count.creditos,
-    }));
+    if (!usuario) throw new NotFoundException("Usuário não encontrado");
+    const { usuarioId, _count, ...rest } = usuario;
+    return { id: usuarioId, ...rest, totalObras: _count.obras, totalCreditos: _count.creditos, totalDocumentosKyc: _count.kycDocumentos };
   }
 
   async atualizarUsuario(id: string, dto: AtualizarUsuarioAdminInput, adminId: string) {
@@ -293,8 +328,8 @@ export class AdminService {
       },
     });
 
-    // Bloqueio de conta derruba as sessões ativas do usuário
-    if (dto.bloqueado === true) {
+    // Bloqueio ou troca de senha derruba as sessões ativas do usuário
+    if (dto.bloqueado === true || dto.novaSenha) {
       await this.prisma.sessaoToken.updateMany({
         where: { usuarioId: id, revogadoEm: null },
         data: { revogadoEm: new Date() },
@@ -306,7 +341,7 @@ export class AdminService {
 
   async listarObras(limit: number, offset: number) {
     const obras = await this.prisma.obra.findMany({
-      take: limit, skip: offset,
+      take: Math.min(limit, 100), skip: offset,
       orderBy: { criadoEm: "desc" },
       include: {
         usuario: { select: { nome: true } },
@@ -325,6 +360,12 @@ export class AdminService {
   async criarUsuario(dto: CriarUsuarioAdminDto) {
     const existe = await this.prisma.usuario.findUnique({ where: { email: dto.email } });
     if (existe && !existe.deletadoEm) throw new ConflictException("E-mail já cadastrado");
+
+    const strengthCheck = checkPasswordStrength(dto.senha);
+    if (!strengthCheck.ok) {
+      throw new BadRequestException(strengthCheck.reason ?? "Senha fraca.");
+    }
+
     const passwordHash = await bcrypt.hash(dto.senha, 12);
     const cpfDigits = Buffer.from(dto.email.toLowerCase())
       .toString("hex")
@@ -513,11 +554,11 @@ export class AdminService {
         usuario.usuarioId,
         "PARCELA_LIBERADA",
         "Pagamento confirmado",
-        `O pagamento de ${lib.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} foi creditado na conta cadastrada.`,
+        `O pagamento de ${Number(lib.valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} foi creditado na conta cadastrada.`,
         obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard/credito",
       );
       this.email
-        .parcelaLiberadaEmail(usuario.nome, usuario.email, lib.valor, obra?.nome ?? "sua obra")
+        .parcelaLiberadaEmail(usuario.nome, usuario.email, Number(lib.valor), obra?.nome ?? "sua obra")
         .catch(() => {});
     }
 
@@ -526,6 +567,55 @@ export class AdminService {
       liberacaoId,
       valor: lib.valor,
       referenciaPagamento,
+    };
+  }
+
+  async relatorioFinanceiro() {
+    const [
+      creditosAtivos,
+      liberacoesMes,
+      liberacoesTotais,
+      obrasPorStatus,
+    ] = await Promise.all([
+      this.prisma.credito.aggregate({
+        where: { status: "ATIVO" },
+        _sum: { valorAprovado: true, valorLiberado: true },
+        _count: { creditoId: true },
+      }),
+      this.prisma.liberacaoParcela.aggregate({
+        where: {
+          status: "CONCLUIDA",
+          processadoEm: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
+        },
+        _sum: { valor: true },
+        _count: { liberacaoId: true },
+      }),
+      this.prisma.liberacaoParcela.aggregate({
+        where: { status: "CONCLUIDA" },
+        _sum: { valor: true },
+        _count: { liberacaoId: true },
+      }),
+      this.prisma.obra.groupBy({
+        by: ["status"],
+        _count: { obraId: true },
+      }),
+    ]);
+
+    return {
+      creditos: {
+        ativos: creditosAtivos._count.creditoId,
+        totalAprovado: Number(creditosAtivos._sum.valorAprovado ?? 0),
+        totalLiberado: Number(creditosAtivos._sum.valorLiberado ?? 0),
+        saldoRestante: Number(creditosAtivos._sum.valorAprovado ?? 0) - Number(creditosAtivos._sum.valorLiberado ?? 0),
+      },
+      liberacoes: {
+        totalGeralValor: Number(liberacoesTotais._sum.valor ?? 0),
+        totalGeralCount: liberacoesTotais._count.liberacaoId,
+        mesAtualValor: Number(liberacoesMes._sum.valor ?? 0),
+        mesAtualCount: liberacoesMes._count.liberacaoId,
+      },
+      obrasPorStatus: obrasPorStatus.map((o) => ({ status: o.status, total: o._count.obraId })),
+      geradoEm: new Date().toISOString(),
     };
   }
 }

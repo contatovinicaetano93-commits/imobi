@@ -1,9 +1,17 @@
-import { Controller, Get, Patch, Param, Body, UseGuards, Req } from "@nestjs/common";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
+import { Controller, Get, Patch, Param, Body, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { EngenheirosService } from "./engenheiros.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
+import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { AtualizarVisitaSchema } from "@imbobi/schemas";
+import type { AtualizarVisitaInput } from "@imbobi/schemas";
 
+@ApiTags("Engenheiros")
+@ApiBearerAuth("JWT")
 @Controller("engenheiros")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("ENGENHEIRO", "ADMIN")
@@ -11,45 +19,48 @@ export class EngenheirosController {
   constructor(private readonly engenheirosService: EngenheirosService) {}
 
   @Get("visitas")
-  listarVisitas(@Req() req: any) {
-    return this.engenheirosService.listarVisitas(req.user.id);
+  listarVisitas(@UsuarioAtual() u: IUsuario) {
+    return this.engenheirosService.listarVisitas(u.id);
   }
 
   @Get("visitas/:visitaId")
-  obterVisita(@Param("visitaId") visitaId: string) {
-    return this.engenheirosService.obterVisita(visitaId);
+  obterVisita(@Param("visitaId") visitaId: string, @UsuarioAtual() u: IUsuario) {
+    return this.engenheirosService.obterVisita(visitaId, u.id, u.tipo);
   }
 
   @Patch("visitas/:visitaId")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   atualizarVisita(
-    @Req() req: any,
+    @UsuarioAtual() u: IUsuario,
     @Param("visitaId") visitaId: string,
-    @Body() body: { status?: string; dataAgendada?: string; observacoes?: string }
+    @Body(new ZodPipe(AtualizarVisitaSchema)) body: AtualizarVisitaInput,
   ) {
-    return this.engenheirosService.atualizarVisita(req.user.id, visitaId, body);
+    return this.engenheirosService.atualizarVisita(u.id, visitaId, body);
   }
 
   @Patch("visitas/:visitaId/aprovar")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   aprovarVistoria(
-    @Req() req: any,
+    @UsuarioAtual() u: IUsuario,
     @Param("visitaId") visitaId: string,
     @Body("observacao") observacao?: string,
   ) {
-    return this.engenheirosService.aprovarVistoria(req.user.id, visitaId, observacao);
+    return this.engenheirosService.aprovarVistoria(u.id, visitaId, observacao);
   }
 
   @Patch("visitas/:visitaId/rejeitar")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   rejeitarVistoria(
-    @Req() req: any,
+    @UsuarioAtual() u: IUsuario,
     @Param("visitaId") visitaId: string,
     @Body("motivo") motivo: string,
   ) {
-    return this.engenheirosService.rejeitarVistoria(req.user.id, visitaId, motivo);
+    return this.engenheirosService.rejeitarVistoria(u.id, visitaId, motivo);
   }
 
   @Get("financeiro")
-  financeiro(@Req() req: any) {
-    return this.engenheirosService.financeiro(req.user.id);
+  financeiro(@UsuarioAtual() u: IUsuario) {
+    return this.engenheirosService.financeiro(u.id);
   }
 
   @Get("licencas")
@@ -58,7 +69,7 @@ export class EngenheirosController {
   }
 
   @Get("obras/:obraId/etapas")
-  etapasDaObra(@Param("obraId") obraId: string) {
-    return this.engenheirosService.etapasDaObra(obraId);
+  etapasDaObra(@Param("obraId") obraId: string, @UsuarioAtual() u: IUsuario) {
+    return this.engenheirosService.etapasDaObra(obraId, u.id);
   }
 }

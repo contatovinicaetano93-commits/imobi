@@ -4,8 +4,12 @@
  *
  * Executar: pnpm --filter api seed:dev
  */
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, UsuarioTipo, KycStatus } from "@prisma/client";
 import { hash } from "bcryptjs";
+
+if (process.env.NODE_ENV === "production") {
+  throw new Error("dev-seed must not run in production — set NODE_ENV to development");
+}
 
 const prisma = new PrismaClient();
 
@@ -61,15 +65,15 @@ async function main() {
     const passwordHash = await hash(u.senha, 12);
     const usuario = await prisma.usuario.upsert({
       where: { email: u.email },
-      update: { passwordHash, tipo: u.tipo as any, kycStatus: "APROVADO", nome: u.nome },
+      update: { passwordHash, tipo: u.tipo as UsuarioTipo, kycStatus: KycStatus.APROVADO, nome: u.nome },
       create: {
         nome:         u.nome,
         email:        u.email,
         cpf:          u.cpf,
         telefone:     u.telefone,
         passwordHash,
-        tipo:         u.tipo as any,
-        kycStatus:    "APROVADO",
+        tipo:         u.tipo as UsuarioTipo,
+        kycStatus:    KycStatus.APROVADO,
         consentidoTermos:    true,
         consentidoPrivacy:   true,
         consentidoKyc:       true,

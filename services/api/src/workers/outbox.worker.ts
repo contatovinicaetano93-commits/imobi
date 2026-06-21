@@ -1,0 +1,90 @@
+import { Injectable, Logger, OnApplicationBootstrap, OnModuleDestroy } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bull";
+import type { Queue } from "bull";
+import { OutboxService } from "../modules/outbox/outbox.service";
+import { WebhooksService } from "../modules/webhooks/webhooks.service";
+import { QUEUE_LIBERACAO } from "../common/constants";
+import { outboxEventCounter } from "../common/utils/metrics.registry";
+
+export const QUEUE_OUTBOX = "outbox-processor";
+
+@Injectable()
+export class OutboxWorker implements OnApplicationBootstrap, OnModuleDestroy {
+  private readonly logger = new Logger(OutboxWorker.name);
+  private running = false;
+  private timer?: ReturnType<typeof setInterval>;
+
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly webhooks: WebhooksService,
+    @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue,
+  ) {}
+
+  onApplicationBootstrap() {
+    const interval = Number(process.env["OUTBOX_POLL_INTERVAL_MS"] ?? "10000");
+    this.timer = setInterval(() => void this.processar(), interval);
+    // Runs after all onModuleInit hooks complete, so PrismaService is guaranteed connected
+    void this.processar();
+  }
+
+  onModuleDestroy() {
+    if (this.timer) clearInterval(this.timer);
+  }
+
+  /** Chamado pelo scheduler (setInterval) para processar eventos pendentes. */
+  async processar() {
+    if (this.running) return;
+    this.running = true;
+    try {
+      // Recover events stuck in PROCESSANDO (e.g., from a previous crashed worker instance)
+      const recuperados = await this.outbox.recuperarEventosTravados();
+      if (recuperados > 0) {
+        this.logger.warn(`Outbox: ${recuperados} evento(s) travados em PROCESSANDO foram resetados para PENDENTE`);
+      }
+
+      const eventos = await this.outbox.buscarPendentes(50);
+      const CONCURRENCY = 5;
+      for (let i = 0; i < eventos.length; i += CONCURRENCY) {
+        await Promise.all(eventos.slice(i, i + CONCURRENCY).map((e) => this.processarEvento(e)));
+      }
+    } finally {
+      this.running = false;
+    }
+  }
+
+  private async processarEvento(evento: { eventId: string; tipo: string; payload: unknown; tentativas: number }) {
+    await this.outbox.marcarProcessando(evento.eventId);
+    try {
+      await this.dispatch(evento.tipo, evento.payload as Record<string, unknown>);
+      await this.outbox.marcarConcluido(evento.eventId);
+      outboxEventCounter.inc({ status: 'success' });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Outbox evento ${evento.eventId} (${evento.tipo}) falhou: ${msg}`);
+      await this.outbox.marcarFalha(evento.eventId, msg, evento.tentativas + 1);
+      outboxEventCounter.inc({ status: 'error' });
+    }
+  }
+
+  private async dispatch(tipo: string, payload: Record<string, unknown>) {
+    switch (tipo) {
+      case "LIBERACAO_PARCELA":
+        await this.liberacaoQueue.add(payload, {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 5000 },
+          removeOnComplete: { count: 1000 },
+          removeOnFail: { count: 500 },
+        });
+        break;
+      case "WEBHOOK_EMIT":
+        await this.webhooks.entregar(
+          payload["webhookId"] as string,
+          payload["evento"] as string,
+          payload["data"] as Record<string, unknown>,
+        );
+        break;
+      default:
+        this.logger.warn(`Outbox: tipo desconhecido ${tipo}`);
+    }
+  }
+}

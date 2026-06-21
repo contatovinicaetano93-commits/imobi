@@ -1,3 +1,4 @@
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import {
   Controller,
   Get,
@@ -6,13 +7,20 @@ import {
   Param,
   Query,
   UseGuards,
+  HttpCode,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ComercialService } from './comercial.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from '../../common/decorators/usuario-atual.decorator';
+import { ZodPipe } from '../../common/pipes/zod.pipe';
+import { ApiCreateLeadSchema, ApiAddLeadActivitySchema } from '@imbobi/schemas';
+import type { ApiCreateLeadInput, ApiAddLeadActivityInput } from '@imbobi/schemas';
 
+@ApiTags("Comercial")
+@ApiBearerAuth("JWT")
 @Controller('comercial')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('COMERCIAL', 'ADMIN')
@@ -57,25 +65,32 @@ export class ComercialController {
   }
 
   @Post('leads')
-  async createLead(@UsuarioAtual() u: IUsuario, @Body() data: any) {
+  @HttpCode(201)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async createLead(
+    @UsuarioAtual() u: IUsuario,
+    @Body(new ZodPipe(ApiCreateLeadSchema)) data: ApiCreateLeadInput,
+  ) {
     return this.comercialService.criarLead(u.id, data);
   }
 
   @Get('leads/:leadId')
-  async getLeadDetail(@Param('leadId') leadId: string) {
-    return this.comercialService.obterLeadDetalhe(leadId);
+  async getLeadDetail(@Param('leadId') leadId: string, @UsuarioAtual() u: IUsuario) {
+    return this.comercialService.obterLeadDetalhe(leadId, u.id, u.tipo);
   }
 
   @Get('leads/:leadId/score')
-  async getLeadScore(@Param('leadId') leadId: string) {
-    return this.comercialService.calcularScoreConversao(leadId);
+  async getLeadScore(@Param('leadId') leadId: string, @UsuarioAtual() u: IUsuario) {
+    return this.comercialService.calcularScoreConversao(leadId, u.id, u.tipo);
   }
 
   @Post('leads/:leadId/atividades')
+  @HttpCode(201)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async addActivity(
     @Param('leadId') leadId: string,
-    @Body() data: any,
-    @UsuarioAtual() u: IUsuario
+    @Body(new ZodPipe(ApiAddLeadActivitySchema)) data: ApiAddLeadActivityInput,
+    @UsuarioAtual() u: IUsuario,
   ) {
     return this.comercialService.adicionarAtividade(leadId, u.id, data);
   }

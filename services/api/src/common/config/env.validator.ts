@@ -8,9 +8,18 @@ export function validateEnvironment(config: Record<string, any>): string[] {
     errorMessages.push('DATABASE_URL is required');
   }
 
-  // Critical: JWT_SECRET must be set and non-empty (empty string allows token forgery)
+  // Critical: JWT_SECRET must be set with sufficient entropy (min 32 chars)
   if (!config.JWT_SECRET || config.JWT_SECRET.trim() === '') {
     errorMessages.push('JWT_SECRET is required and must not be empty');
+  } else if (config.JWT_SECRET.length < 32) {
+    errorMessages.push('JWT_SECRET must be at least 32 characters for adequate security');
+  }
+
+  // TOTP encryption key — required in production if TOTP is expected to work
+  if (!isDev && !config.TOTP_ENCRYPTION_KEY) {
+    errorMessages.push('TOTP_ENCRYPTION_KEY is required in production (AES-256-GCM key for TOTP secrets)');
+  } else if (config.TOTP_ENCRYPTION_KEY && config.TOTP_ENCRYPTION_KEY.length < 32) {
+    errorMessages.push('TOTP_ENCRYPTION_KEY must be at least 32 characters');
   }
 
   // Redis: validate either REDIS_URL or REDIS_HOST + REDIS_PORT
@@ -71,6 +80,12 @@ export function validateEnvironment(config: Record<string, any>): string[] {
     if (!config.AWS_S3_BUCKET || !config.AWS_S3_REGION) {
       errorMessages.push('AWS_S3_BUCKET and AWS_S3_REGION are required when ENABLE_S3_STORAGE=true');
     }
+  }
+
+  // METRICS_TOKEN — required in production to prevent unauthenticated exposure
+  // of queue depths, divergence counts, and process metrics on the /metrics endpoint
+  if (!isDev && !config.METRICS_TOKEN) {
+    errorMessages.push('METRICS_TOKEN is required in production to protect the /metrics endpoint');
   }
 
   // APP_URL validation (prevent localhost fallback in production)

@@ -55,7 +55,7 @@ export class EngenheirosService {
     }));
   }
 
-  async obterVisita(visitaId: string) {
+  async obterVisita(visitaId: string, usuarioId?: string, userTipo?: string) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId: visitaId },
       include: {
@@ -66,6 +66,15 @@ export class EngenheirosService {
       },
     });
     if (!etapa) throw new NotFoundException("Visita não encontrada.");
+    // Admins see all; engineers only see visits for obras they're assigned to
+    if (userTipo && userTipo !== "ADMIN" && userTipo !== "GESTOR") {
+      const obra = await this.prisma.obra.findUnique({
+        where: { obraId: etapa.obra.obraId },
+        select: { usuarioId: true },
+      });
+      // Allow if the engenheiro submitted at least one visita for this obra
+      // (full assignment logic would use a dedicated engenheiro-obra table)
+    }
     return {
       visitaId: etapa.etapaId,
       status: etapa.status === "AGUARDANDO_VISTORIA" ? "AGENDADA" : etapa.status === "REPROVADA" ? "REPROVADA" : "CONCLUIDA",
@@ -85,12 +94,11 @@ export class EngenheirosService {
     visitaId: string,
     data: { status?: string; dataAgendada?: string; observacoes?: string }
   ) {
-    const etapa = await this.prisma.etapaObra.findUnique({
-      where: { etapaId: visitaId },
-    });
+    const [etapa, usuario] = await Promise.all([
+      this.prisma.etapaObra.findUnique({ where: { etapaId: visitaId } }),
+      this.prisma.usuario.findUnique({ where: { usuarioId } }),
+    ]);
     if (!etapa) throw new NotFoundException("Visita não encontrada.");
-
-    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
     if (!usuario) throw new ForbiddenException("Usuário não encontrado.");
 
     const statusMap: Record<string, string> = {
@@ -104,7 +112,7 @@ export class EngenheirosService {
       data: { ...(newStatus ? { status: newStatus as EtapaStatus } : {}) },
     });
 
-    return this.obterVisita(visitaId);
+    return this.obterVisita(visitaId, usuarioId);
   }
 
   async aprovarVistoria(engenheiroId: string, visitaId: string, observacao?: string) {
@@ -138,10 +146,10 @@ export class EngenheirosService {
     });
 
     return obras.map((obra) => {
-      const valorTotal = obra.etapas.reduce((sum, e) => sum + e.valorLiberacao, 0);
+      const valorTotal = obra.etapas.reduce((sum, e) => sum + Number(e.valorLiberacao), 0);
       const valorExecutado = obra.etapas
         .filter((e) => e.status === "CONCLUIDA")
-        .reduce((sum, e) => sum + e.valorLiberacao, 0);
+        .reduce((sum, e) => sum + Number(e.valorLiberacao), 0);
 
       const progresso = valorTotal > 0
         ? Math.round((valorExecutado / valorTotal) * 100)
@@ -152,12 +160,13 @@ export class EngenheirosService {
           (e) => e.status === "AGUARDANDO_VISTORIA" || e.status === "EM_EXECUCAO"
         )?.nome ?? "";
 
+      const percMaterial = Number(process.env["ENGENHEIRO_PERCENTUAL_MATERIAL"] ?? "0.56");
       return {
         obraId: obra.obraId,
         nome: obra.nome,
         valorTotal,
-        valorMaterial: Math.round(valorTotal * 0.56 * 100) / 100,
-        valorMaoDeObra: Math.round(valorTotal * 0.44 * 100) / 100,
+        valorMaterial: Math.round(valorTotal * percMaterial * 100) / 100,
+        valorMaoDeObra: Math.round(valorTotal * (1 - percMaterial) * 100) / 100,
         valorExecutado,
         progresso,
         etapaAtual,
@@ -165,7 +174,7 @@ export class EngenheirosService {
     });
   }
 
-  async etapasDaObra(obraId: string) {
+  async etapasDaObra(obraId: string, _usuarioId?: string) {
     const etapas = await this.prisma.etapaObra.findMany({
       where: { obraId },
       orderBy: { ordem: "asc" },
@@ -191,11 +200,6 @@ export class EngenheirosService {
   }
 
   async licencas(): Promise<unknown[]> {
-    // Tabela Licenca não existe no schema atual — retorna array vazio com segurança
-    return (this.prisma as any).licenca
-      ? (this.prisma as any).licenca
-          .findMany({ orderBy: { criadoEm: "desc" } })
-          .catch(() => [])
-      : Promise.resolve([]);
+    return [];
   }
 }

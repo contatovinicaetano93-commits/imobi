@@ -43,8 +43,8 @@ model Usuario {
   atualizadoEm  DateTime  @updatedAt
 
   sessoes       SessaoToken[]
-  creditos      Credito[]
-  obras         Obra[]
+  creditos       Credito[]
+  obras          Obra[]
   scoreHistorico ScoreHistorico[]
   kycDocumentos KycDocumento[] @relation("KycDocumentos")
   notificacoes  Notificacao[]
@@ -57,6 +57,9 @@ model Usuario {
   documentos      Documento[]
   solicitacoes    SolicitacaoCredito[]
   votosComite     VotoComite[]
+  lancamentos     LancamentoFinanceiro[]
+  totp            UsuarioTotp?
+  webhooks        WebhookEndpoint[]
 
   @@index([email])
   @@index([cpf])
@@ -105,6 +108,8 @@ model SessaoToken {
   expiresAt     DateTime
   revogadoEm    DateTime?
   criadoEm      DateTime  @default(now())
+  ipAddress     String?
+  userAgent     String?
 
   @@index([usuarioId])
 }
@@ -129,8 +134,8 @@ model Credito {
   creditoId       String    @id @default(uuid())
   usuarioId       String
   usuario         Usuario   @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
-  valorAprovado   Float
-  valorLiberado   Float
+  valorAprovado   Decimal   @db.Decimal(14, 2)
+  valorLiberado   Decimal   @db.Decimal(14, 2)
   taxaMensal      Float     @default(0.0099)
   prazoMeses      Int
   status          CreditoStatus @default(ATIVO)
@@ -141,9 +146,11 @@ model Credito {
 
   obras           Obra[]
   liberacoes      LiberacaoParcela[]
+  lancamentos     LancamentoFinanceiro[]
 
   @@index([usuarioId])
   @@index([status])
+  @@index([usuarioId, criadoEm])
 }
 
 enum CreditoStatus {
@@ -200,7 +207,7 @@ model EtapaObra {
   nome                String
   ordem               Int
   percentualObra      Float
-  valorLiberacao      Float
+  valorLiberacao      Decimal  @db.Decimal(14, 2)
   status              EtapaStatus @default(PLANEJADA)
   dataConclusaoPrevista DateTime?
   dataConclusaoReal   DateTime?
@@ -213,6 +220,7 @@ model EtapaObra {
   @@unique([obraId, ordem])
   @@index([obraId])
   @@index([status])
+  @@index([obraId, status])
 }
 
 enum EtapaStatus {
@@ -238,12 +246,15 @@ model EvidenciaEtapa {
   distanciaObra     Float?
   validada          Boolean  @default(false)
   observacao        String?
+  deletadoEm        DateTime?
   criadoEm          DateTime @default(now())
   atualizadoEm      DateTime @updatedAt
 
   @@index([etapaId])
   @@index([obraId])
   @@index([validada])
+  @@index([obraId, validada])
+  @@index([deletadoEm])
 }
 
 // ── Liberações de Parcelas ──────────────────────────────────────────
@@ -253,7 +264,7 @@ model LiberacaoParcela {
   creditoId       String
   credito         Credito  @relation(fields: [creditoId], references: [creditoId], onDelete: Cascade)
   etapaId         String?
-  valor           Float
+  valor           Decimal  @db.Decimal(14, 2)
   status          LiberacaoStatus @default(PENDENTE)
   motivo          String?
   referenciaPagamento String?
@@ -332,6 +343,7 @@ model Notificacao {
   @@index([usuarioId])
   @@index([lida])
   @@index([criadoEm])
+  @@index([usuarioId, lida])
 }
 
 enum TipoNotificacao {
@@ -343,6 +355,7 @@ enum TipoNotificacao {
   KYC_APROVADO
   KYC_REJEITADO
   OBRA_CRIADA
+  OBRA_HOMOLOGADA
   SCORE_ATUALIZADO
   VISTORIA_PENDENTE
   PARECER_SOLICITADO
@@ -556,8 +569,8 @@ model DueDiligence {
   nomeIncorporadora     String?
   cnpjIncorporadora     String?
   modeloAmortizacao     String?
-  totalCarteira         Float?
-  totalAReceber         Float?
+  totalCarteira         Decimal? @db.Decimal(14, 2)
+  totalAReceber         Decimal? @db.Decimal(14, 2)
   estruturaSocietaria   String?
   payload               Json
   status                DueDiligenceStatus @default(RASCUNHO)
@@ -595,6 +608,8 @@ model Documento {
   obra    Obra?   @relation(fields: [obraId], references: [obraId])
   usuario Usuario @relation(fields: [usuarioId], references: [usuarioId])
 
+  @@index([usuarioId])
+  @@index([obraId, criadoEm])
   @@map("documentos")
 }
 
@@ -606,7 +621,7 @@ model SolicitacaoCredito {
   usuario         Usuario            @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
   obraId          String?
 
-  valorSolicitado Float
+  valorSolicitado Decimal  @db.Decimal(14, 2)
   prazoMeses      Int
   taxaMensal      Float
   finalidade      String
@@ -614,12 +629,13 @@ model SolicitacaoCredito {
   observacoes     String?
 
   // Snapshot da simulação para o dossiê
-  vgv             Float?
+  vgv             Decimal? @db.Decimal(14, 2)
   ltv             Float?
-  custoObra       Float?
+  custoObra       Decimal? @db.Decimal(14, 2)
   ratingCalculado String?            // A/B/C/D
 
   status          SolicitacaoStatus  @default(PENDENTE)
+  creditoEmitido  Boolean            @default(false)
   comite          ComiteDigital?
 
   criadoEm        DateTime           @default(now())
@@ -694,4 +710,206 @@ enum VotoDecisao {
   APROVAR
   AJUSTAR
   REPROVAR
+}
+
+// ── Marketplace ───────────────────────────────────────────────────────────
+
+enum FornecedorTipo {
+  MATERIAL_CONSTRUCAO
+  MAO_DE_OBRA
+  EQUIPAMENTO
+  PROJETO_ARQUITETURA
+  ENGENHARIA
+  OUTROS
+}
+
+model Fornecedor {
+  fornecedorId    String          @id @default(uuid())
+  nome            String
+  tipo            FornecedorTipo
+  descricao       String?
+  website         String?
+  telefone        String?
+  email           String?
+  endereco        String?
+  uf              String?
+  cidade          String?
+  geoLatitude     Float?
+  geoLongitude    Float?
+  avaliacaoMedia  Float           @default(0.0)
+  totalAvaliacoes Int             @default(0)
+  ativo           Boolean         @default(true)
+  criadoEm        DateTime        @default(now())
+  atualizadoEm    DateTime        @updatedAt
+
+  avaliacoes      AvaliacaoFornecedor[]
+
+  @@index([tipo])
+  @@index([uf])
+  @@index([ativo])
+  @@map("fornecedores")
+}
+
+model AvaliacaoFornecedor {
+  avaliacaoId  String     @id @default(uuid())
+  fornecedorId String
+  fornecedor   Fornecedor @relation(fields: [fornecedorId], references: [fornecedorId], onDelete: Cascade)
+  usuarioId    String
+  nota         Int
+  comentario   String?
+  criadoEm     DateTime   @default(now())
+
+  @@unique([fornecedorId, usuarioId])
+  @@index([fornecedorId])
+  @@map("avaliacoes_fornecedor")
+}
+
+// ── Ledger Imutável ───────────────────────────────────────────────────────────
+// Registro append-only de toda movimentação financeira. Nunca deletar/atualizar.
+
+model LancamentoFinanceiro {
+  lancamentoId   String              @id @default(uuid())
+  tipo           LancamentoTipo
+  categoria      LancamentoCategoria
+  valor          Decimal             @db.Decimal(14, 2)
+  moeda          String              @default("BRL")
+  creditoId      String?
+  liberacaoId    String?             @unique
+  usuarioId      String
+  descricao      String?
+  metadata       Json?
+  idempotencyKey String?             @unique
+  criadoEm       DateTime            @default(now())
+
+  credito        Credito?            @relation(fields: [creditoId], references: [creditoId], onDelete: Restrict)
+  usuario        Usuario             @relation(fields: [usuarioId], references: [usuarioId], onDelete: Restrict)
+
+  @@index([creditoId, criadoEm])
+  @@index([usuarioId, criadoEm])
+  @@map("lancamentos_financeiros")
+}
+
+enum LancamentoTipo {
+  CREDITO
+  DEBITO
+}
+
+enum LancamentoCategoria {
+  LIBERACAO_PARCELA
+  ESTORNO_LIBERACAO
+  TAXA_GESTAO
+  AJUSTE_MANUAL
+}
+
+// ── Idempotência ──────────────────────────────────────────────────────────────
+
+model IdempotencyRecord {
+  key          String   @id
+  endpoint     String
+  statusCode   Int
+  responseBody Json
+  criadoEm     DateTime @default(now())
+  expiraEm     DateTime
+
+  @@index([expiraEm])
+  @@map("idempotency_records")
+}
+
+// ── Outbox Transacional ───────────────────────────────────────────────────────
+// Garante entrega de eventos mesmo se o servidor cair após o commit.
+
+model OutboxEvent {
+  eventId      String      @id @default(uuid())
+  tipo         String
+  payload      Json
+  status       OutboxStatus @default(PENDENTE)
+  tentativas   Int          @default(0)
+  erro         String?
+  processadoEm DateTime?
+  criadoEm     DateTime    @default(now())
+  agendadoPara DateTime    @default(now())
+
+  @@index([status, agendadoPara])
+  @@map("outbox_events")
+}
+
+enum OutboxStatus {
+  PENDENTE
+  PROCESSANDO
+  CONCLUIDO
+  FALHA
+}
+
+// ── 2FA / TOTP ────────────────────────────────────────────────────────────────
+
+model UsuarioTotp {
+  totpId          String    @id @default(uuid())
+  usuarioId       String    @unique
+  secretCrypto    String
+  ativo           Boolean   @default(false)
+  ativadoEm       DateTime?
+  backupCodes     String[]
+  criadoEm        DateTime  @default(now())
+
+  usuario         Usuario   @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+
+  @@map("usuario_totp")
+}
+
+// ── Webhooks SaaS ──────────────────────────────────────────────────────────────
+
+model WebhookEndpoint {
+  webhookId    String    @id @default(uuid())
+  usuarioId    String
+  url          String
+  secret       String
+  eventos      String[]
+  ativo        Boolean   @default(true)
+  criadoEm     DateTime  @default(now())
+  atualizadoEm DateTime  @updatedAt
+
+  usuario      Usuario   @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  deliveries   WebhookDelivery[]
+
+  @@index([usuarioId])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  deliveryId      String    @id @default(uuid())
+  webhookId       String
+  evento          String
+  payload         Json
+  statusCode      Int?
+  tentativas      Int       @default(0)
+  sucesso         Boolean   @default(false)
+  erro            String?
+  criadoEm        DateTime  @default(now())
+  ultimaTentativa DateTime?
+
+  webhook         WebhookEndpoint @relation(fields: [webhookId], references: [webhookId], onDelete: Cascade)
+
+  @@index([webhookId, criadoEm])
+  @@index([sucesso])
+  @@map("webhook_deliveries")
+}
+
+// ── Audit Log Financeiro ──────────────────────────────────────────────────────
+// Rastreabilidade de toda ação financeira e administrativa.
+
+model AuditLog {
+  auditId    String   @id @default(uuid())
+  acao       String
+  entidade   String
+  entidadeId String
+  usuarioId  String?
+  ipAddress  String?
+  metadata   Json?
+  criadoEm   DateTime @default(now())
+
+  @@index([entidade, entidadeId])
+  @@index([usuarioId])
+  @@index([acao])
+  @@index([criadoEm])
+  @@map("audit_logs")
 }

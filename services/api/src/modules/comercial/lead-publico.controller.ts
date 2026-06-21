@@ -1,4 +1,6 @@
-import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { Controller, Post, Body, BadRequestException, HttpCode } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ComercialService } from './comercial.service';
 import { z } from 'zod';
 
@@ -13,11 +15,14 @@ const CapturaPublicaSchema = z.object({
   observacoes:     z.string().max(1000).optional(),
 });
 
+@ApiTags("Comercial")
 @Controller('leads')
 export class LeadPublicoController {
   constructor(private readonly comercial: ComercialService) {}
 
   @Post('captura')
+  @HttpCode(201)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async captura(@Body() body: unknown) {
     const parsed = CapturaPublicaSchema.safeParse(body);
     if (!parsed.success) {

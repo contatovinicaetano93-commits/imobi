@@ -1,11 +1,27 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from "@nestjs/common";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { ComiteService } from "./comite.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual } from "../../common/decorators/usuario-atual.decorator";
-import type { VotoDecisao } from "@prisma/client";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import {
+  ComiteSolicitarSchema,
+  ComiteParecerSchema,
+  ComiteVotarSchema,
+  ComiteEncerrarSchema,
+} from "@imbobi/schemas";
+import type {
+  ComiteSolicitarInput,
+  ComiteParecerInput,
+  ComiteVotarInput,
+  ComiteEncerrarInput,
+} from "@imbobi/schemas";
 
+@ApiTags("Comitê")
+@ApiBearerAuth("JWT")
 @Controller("comite")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ComiteController {
@@ -17,18 +33,7 @@ export class ComiteController {
   @Roles("CONSTRUTOR", "TOMADOR")
   solicitar(
     @UsuarioAtual() user: UsuarioAtual,
-    @Body() body: {
-      valorSolicitado: number;
-      prazoMeses: number;
-      taxaMensal: number;
-      finalidade: string;
-      garantias?: string;
-      observacoes?: string;
-      obraId?: string;
-      vgv?: number;
-      custoObra?: number;
-      ltv?: number;
-    },
+    @Body(new ZodPipe(ComiteSolicitarSchema)) body: ComiteSolicitarInput,
   ) {
     return this.comiteService.submeterSolicitacao(user.id, body);
   }
@@ -45,10 +50,11 @@ export class ComiteController {
 
   @Post(":comiteId/parecer")
   @Roles("ENGENHEIRO", "GESTOR_OBRA")
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   parecer(
     @Param("comiteId") comiteId: string,
     @UsuarioAtual() user: UsuarioAtual,
-    @Body() body: { parecerTecnico: string },
+    @Body(new ZodPipe(ComiteParecerSchema)) body: ComiteParecerInput,
   ) {
     return this.comiteService.submeterParecer(comiteId, user.id, body.parecerTecnico);
   }
@@ -57,18 +63,19 @@ export class ComiteController {
 
   @Post(":comiteId/votar")
   @Roles("ADMIN")
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   votar(
     @Param("comiteId") comiteId: string,
     @UsuarioAtual() user: UsuarioAtual,
-    @Body() body: { voto: VotoDecisao; justificativa?: string; condicoes?: string },
+    @Body(new ZodPipe(ComiteVotarSchema)) body: ComiteVotarInput,
   ) {
     return this.comiteService.votar(comiteId, user.id, body.voto, body.justificativa, body.condicoes);
   }
 
-  // ── Leitura: listar comitês (Admin + Fundo) ───────────────────────
+  // ── Leitura: listar comitês ───────────────────────────────────────
 
   @Get()
-  @Roles("ADMIN", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA")
+  @Roles("ADMIN", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "GESTOR_OBRA")
   listar(@Query("status") status?: string) {
     return this.comiteService.listarComites(status);
   }
@@ -76,8 +83,19 @@ export class ComiteController {
   // ── Leitura: dossiê completo ─────────────────────────────────────
 
   @Get(":comiteId")
-  @Roles("ADMIN", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA")
+  @Roles("ADMIN", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "GESTOR_OBRA")
   dossie(@Param("comiteId") comiteId: string) {
     return this.comiteService.getDossie(comiteId);
+  }
+
+  // ── Admin: encerrar manualmente ───────────────────────────────────
+
+  @Patch(":comiteId/encerrar")
+  @Roles("ADMIN")
+  encerrar(
+    @Param("comiteId") comiteId: string,
+    @Body(new ZodPipe(ComiteEncerrarSchema)) body: ComiteEncerrarInput,
+  ) {
+    return this.comiteService.encerrarManualmente(comiteId, body.decisao, body.motivo);
   }
 }

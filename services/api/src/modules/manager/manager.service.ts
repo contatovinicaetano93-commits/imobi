@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, Inject } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { ETAPA_STATUS_MAP } from "../../common/constants";
 import { isManagerRole } from "../../common/constants/manager-roles";
@@ -65,7 +66,8 @@ export class ManagerService {
     const cached = await this.cacheManager.get(cacheKey);
     if (cached) return cached;
 
-    const where: any = {};
+    const where: Prisma.EtapaObraWhereInput = {};
+    const dateFilter: Prisma.DateTimeFilter = {};
 
     // Status filter
     if (filters?.status && filters.status !== "todas") {
@@ -77,15 +79,13 @@ export class ManagerService {
 
     // Date range filter
     if (filters?.dataInicio || filters?.dataFim) {
-      where.criadoEm = {};
-      if (filters.dataInicio) {
-        where.criadoEm.gte = new Date(filters.dataInicio);
-      }
+      if (filters.dataInicio) dateFilter.gte = new Date(filters.dataInicio);
       if (filters.dataFim) {
         const endDate = new Date(filters.dataFim);
         endDate.setHours(23, 59, 59, 999);
-        where.criadoEm.lte = endDate;
+        dateFilter.lte = endDate;
       }
+      where.criadoEm = dateFilter;
     }
 
     // Obra type filter
@@ -95,34 +95,37 @@ export class ManagerService {
 
     // Search term filter (by obra name or usuario name)
     if (filters?.searchTerm?.trim()) {
-      const searchCondition = {
-        OR: [
-          { obra: { nome: { contains: filters.searchTerm, mode: "insensitive" } } },
-          { obra: { usuario: { nome: { contains: filters.searchTerm, mode: "insensitive" } } } },
-        ],
-      };
+      const mode = Prisma.QueryMode.insensitive;
+      const searchOr: Prisma.EtapaObraWhereInput[] = [
+        { obra: { is: { nome: { contains: filters.searchTerm, mode } } } },
+        { obra: { is: { usuario: { is: { nome: { contains: filters.searchTerm, mode } } } } } },
+      ];
       // Merge search with existing obra filters
       if (where.obra) {
-        where.AND = [{ obra: where.obra }, searchCondition];
+        where.AND = [{ obra: where.obra }, { OR: searchOr }];
         delete where.obra;
       } else {
-        where.OR = searchCondition.OR;
+        where.OR = searchOr;
       }
     }
 
     // Priority filter (based on creation time)
     if (filters?.priority && filters.priority !== "todas") {
       const now = new Date();
-      const cutoff12h = new Date(now.getTime() - 12 * 60 * 60 * 1000);
-      const cutoff24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const urgentHours = Number(process.env["MANAGER_URGENTE_HORAS"] ?? "24");
+      const intermediariaHours = Number(process.env["MANAGER_INTERMEDIARIA_HORAS"] ?? "12");
+      const cutoffIntermediaria = new Date(now.getTime() - intermediariaHours * 60 * 60 * 1000);
+      const cutoffUrgente = new Date(now.getTime() - urgentHours * 60 * 60 * 1000);
 
       if (filters.priority === "urgente") {
-        where.criadoEm = { ...where.criadoEm, lte: cutoff24h };
+        dateFilter.lte = cutoffUrgente;
       } else if (filters.priority === "intermediaria") {
-        where.criadoEm = { ...where.criadoEm, lte: cutoff12h, gt: cutoff24h };
+        dateFilter.lte = cutoffIntermediaria;
+        dateFilter.gt = cutoffUrgente;
       } else if (filters.priority === "normal") {
-        where.criadoEm = { ...where.criadoEm, gt: cutoff12h };
+        dateFilter.gt = cutoffIntermediaria;
       }
+      where.criadoEm = dateFilter;
     }
 
     const [etapas, total] = await Promise.all([
@@ -287,12 +290,15 @@ export class ManagerService {
   }
 
   /** Visão agregada da operação — somente leitura (gestor IMOBI + investidor do fundo). */
-  async obterCarteira() {
+  async obterCarteira(limit = 200) {
     const [obras, creditos] = await Promise.all([
       this.prisma.obra.findMany({
         where: { status: { not: "CANCELADA" } },
         include: {
-          etapas: { orderBy: { ordem: "asc" } },
+          etapas: {
+            orderBy: { ordem: "asc" },
+            select: { etapaId: true, nome: true, ordem: true, percentualObra: true, valorLiberacao: true, status: true },
+          },
           credito: {
             select: {
               creditoId: true,
@@ -303,10 +309,20 @@ export class ManagerService {
           },
         },
         orderBy: { criadoEm: "desc" },
+        take: limit,
       }),
       this.prisma.credito.findMany({
         where: { status: { in: ["ATIVO", "SUSPENSO", "VENCIDO"] } },
         orderBy: { criadoEm: "desc" },
+        take: limit,
+        select: {
+          creditoId: true,
+          valorAprovado: true,
+          valorLiberado: true,
+          taxaMensal: true,
+          prazoMeses: true,
+          status: true,
+        },
       }),
     ]);
 
@@ -347,41 +363,57 @@ export class ManagerService {
     };
   }
 
-  async obterEtapaAuditLog(etapaId: string) {
-    const auditLogs = await this.prisma.etapaAuditLog.findMany({
-      where: { etapaId },
-      include: {
-        usuario: { select: { usuarioId: true, nome: true, email: true } },
-      },
-      orderBy: { criadoEm: "desc" },
-    });
+  async obterEtapaAuditLog(etapaId: string, limit = 20, offset = 0) {
+    const [auditLogs, total] = await Promise.all([
+      this.prisma.etapaAuditLog.findMany({
+        where: { etapaId },
+        include: {
+          usuario: { select: { usuarioId: true, nome: true, email: true } },
+        },
+        orderBy: { criadoEm: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      this.prisma.etapaAuditLog.count({ where: { etapaId } }),
+    ]);
 
-    return auditLogs.map((log) => ({
-      auditId: log.auditId,
-      acaoTipo: log.acaoTipo,
-      gerenciador: log.usuario.nome,
-      gerenciadorEmail: log.usuario.email,
-      observacoes: log.observacoes,
-      criadoEm: log.criadoEm,
-    }));
+    return {
+      logs: auditLogs.map((log) => ({
+        auditId: log.auditId,
+        acaoTipo: log.acaoTipo,
+        gerenciador: log.usuario.nome,
+        gerenciadorEmail: log.usuario.email,
+        observacoes: log.observacoes,
+        criadoEm: log.criadoEm,
+      })),
+      total,
+    };
   }
 
-  async obterKycAuditLog(kycDocumentoId: string) {
-    const auditLogs = await this.prisma.kycAuditLog.findMany({
-      where: { kycDocumentoId },
-      include: {
-        usuario: { select: { usuarioId: true, nome: true, email: true } },
-      },
-      orderBy: { criadoEm: "desc" },
-    });
+  async obterKycAuditLog(kycDocumentoId: string, limit = 20, offset = 0) {
+    const [auditLogs, total] = await Promise.all([
+      this.prisma.kycAuditLog.findMany({
+        where: { kycDocumentoId },
+        include: {
+          usuario: { select: { usuarioId: true, nome: true, email: true } },
+        },
+        orderBy: { criadoEm: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      this.prisma.kycAuditLog.count({ where: { kycDocumentoId } }),
+    ]);
 
-    return auditLogs.map((log) => ({
-      auditId: log.auditId,
-      acaoTipo: log.acaoTipo,
-      gerenciador: log.usuario.nome,
-      gerenciadorEmail: log.usuario.email,
-      motivo: log.motivo,
-      criadoEm: log.criadoEm,
-    }));
+    return {
+      logs: auditLogs.map((log) => ({
+        auditId: log.auditId,
+        acaoTipo: log.acaoTipo,
+        gerenciador: log.usuario.nome,
+        gerenciadorEmail: log.usuario.email,
+        motivo: log.motivo,
+        criadoEm: log.criadoEm,
+      })),
+      total,
+    };
   }
 }

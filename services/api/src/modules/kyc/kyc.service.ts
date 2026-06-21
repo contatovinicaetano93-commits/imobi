@@ -4,6 +4,7 @@ import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { KycDocumentoStatus } from "@prisma/client";
+import { addMonths } from "../../common/utils/date.util";
 
 @Injectable()
 export class KycService {
@@ -19,6 +20,7 @@ export class KycService {
   async uploadDocumento(usuarioId: string, tipo: string, url: string) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId },
+      select: { usuarioId: true },
     });
     if (!usuario) throw new NotFoundException("Usuário não encontrado");
 
@@ -31,12 +33,22 @@ export class KycService {
     return this.prisma.kycDocumento.findMany({
       where: { usuarioId },
       orderBy: { criadoEm: "desc" },
+      select: {
+        kycDocumentoId: true,
+        tipo: true,
+        url: true,
+        status: true,
+        motivo_rejeicao: true,
+        criadoEm: true,
+        analisadoEm: true,
+      },
     });
   }
 
   async obterStatus(usuarioId: string) {
     const documentos = await this.prisma.kycDocumento.findMany({
       where: { usuarioId },
+      take: 50,
     });
 
     const pendentes = documentos.filter((d) => d.status === "PENDENTE").length;
@@ -112,6 +124,12 @@ export class KycService {
       this.logger.warn(`Failed to send KYC approval email: ${error}`);
     }
 
+    // Check if all required KYC documents are now approved; if so, update kycStatus
+    // and auto-issue any credits whose committee approved them while KYC was pending.
+    // Awaited so that credit-issuance failures surface as 500 rather than being silently dropped.
+    // The advisory lock inside emitirCreditosPendentes makes this idempotent on retry.
+    await this.verificarKycCompleto(documento.usuarioId);
+
     return atualizado;
   }
 
@@ -129,6 +147,9 @@ export class KycService {
 
     if (!motivo || motivo.trim().length === 0) {
       throw new BadRequestException("Motivo da rejeição é obrigatório");
+    }
+    if (motivo.length > 1000) {
+      throw new BadRequestException("Motivo não pode exceder 1000 caracteres");
     }
 
     const atualizado = await this.prisma.kycDocumento.update({
@@ -179,17 +200,25 @@ export class KycService {
     return atualizado;
   }
 
-  async listarPendentes() {
-    return this.prisma.kycDocumento.findMany({
-      where: { status: "PENDENTE" },
-      include: { usuario: { select: { nome: true, email: true, cpf: true } } },
-      orderBy: { criadoEm: "asc" },
-    });
+  async listarPendentes(limit = 50, offset = 0) {
+    const [items, total] = await Promise.all([
+      this.prisma.kycDocumento.findMany({
+        where: { status: "PENDENTE" },
+        include: { usuario: { select: { nome: true, email: true, cpf: true } } },
+        orderBy: { criadoEm: "asc" },
+        take: Math.min(limit, 100),
+        skip: offset,
+      }),
+      this.prisma.kycDocumento.count({ where: { status: "PENDENTE" } }),
+    ]);
+    return { items, total };
   }
 
   async verificarKycCompleto(usuarioId: string) {
     const documentos = await this.prisma.kycDocumento.findMany({
       where: { usuarioId, status: "APROVADO" },
+      select: { tipo: true },
+      take: 50,
     });
 
     const tiposRequeridos = ["RG", "Selfie"];
@@ -201,8 +230,74 @@ export class KycService {
         where: { usuarioId },
         data: { kycStatus: "APROVADO" },
       });
+
+      // Issue any credits whose committee approved them while KYC was still pending.
+      await this.emitirCreditosPendentes(usuarioId);
     }
 
     return { completo, documentos };
+  }
+
+  /** Creates Credito records for APROVADA solicitações that were held back due to pending KYC. */
+  private async emitirCreditosPendentes(usuarioId: string) {
+    const pendentes = await this.prisma.solicitacaoCredito.findMany({
+      where: { usuarioId, status: "APROVADA", creditoEmitido: false },
+      include: { comite: { select: { solicitacaoId: true } } },
+    });
+
+    for (const s of pendentes) {
+      try {
+        const novoCredito = await this.prisma.$transaction(async (tx) => {
+          // Advisory lock prevents concurrent KYC approvals from issuing duplicate credits
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`emitir_credito:${s.solicitacaoId}`}))`;
+
+          const sol = await tx.solicitacaoCredito.findUnique({
+            where: { solicitacaoId: s.solicitacaoId },
+            select: { creditoEmitido: true },
+          });
+          if (sol?.creditoEmitido) return null;
+
+          const taxaMensal = Number(process.env.TAXA_MENSAL_DEFAULT ?? "0.0099");
+          const dataVencimento = addMonths(new Date(), s.prazoMeses);
+          const credito = await tx.credito.create({
+            data: {
+              usuarioId: s.usuarioId,
+              valorAprovado: s.valorSolicitado,
+              valorLiberado: 0,
+              taxaMensal,
+              prazoMeses: s.prazoMeses,
+              status: "ATIVO",
+              dataVencimento,
+            },
+          });
+
+          await tx.solicitacaoCredito.update({
+            where: { solicitacaoId: s.solicitacaoId },
+            data: { creditoEmitido: true },
+          });
+
+          if (s.obraId) {
+            await tx.obra.update({
+              where: { obraId: s.obraId },
+              data: { creditoId: credito.creditoId },
+            });
+          }
+
+          return credito;
+        });
+
+        if (!novoCredito) continue;
+
+        await this.notificacoes.criar(
+          usuarioId,
+          "CREDITO_APROVADO",
+          "Crédito liberado após aprovação do KYC",
+          `Sua identidade foi verificada e o crédito de R$ ${Number(s.valorSolicitado).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} foi ativado.`,
+          "/dashboard/credito",
+        );
+      } catch (err) {
+        this.logger.error(`Falha ao emitir crédito pós-KYC para solicitação ${s.solicitacaoId}: ${err}`);
+      }
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
+import { validateMime } from "../../common/utils/mime-validator.util";
 import { PrismaService } from "../prisma/prisma.service";
 import { Queue } from "bull";
 import { InjectQueue } from "@nestjs/bull";
@@ -131,12 +132,16 @@ export class UsuariosService {
     return this.mapPerfil(usuario, avatarSigned);
   }
 
-  async uploadAvatar(usuarioId: string, fileBuffer: Buffer, mimeType: string) {
-    if (!AVATAR_MIMES.has(mimeType)) {
-      throw new BadRequestException("Formato inválido. Use JPEG, PNG ou WebP.");
-    }
+  async uploadAvatar(usuarioId: string, fileBuffer: Buffer, _mimeType: string) {
     if (fileBuffer.length > AVATAR_MAX_BYTES) {
       throw new BadRequestException("Imagem muito grande. Máximo 5 MB.");
+    }
+
+    let detectedMime: string;
+    try {
+      detectedMime = validateMime(fileBuffer, AVATAR_MIMES);
+    } catch (e: any) {
+      throw new BadRequestException(e.message);
     }
 
     const existing = await this.prisma.usuario.findUnique({
@@ -145,7 +150,7 @@ export class UsuariosService {
     });
     if (!existing) throw new NotFoundException("Usuário não encontrado");
 
-    const { key } = await this.storage.uploadAvatar(fileBuffer, mimeType, usuarioId);
+    const { key } = await this.storage.uploadAvatar(fileBuffer, detectedMime, usuarioId);
 
     if (existing.avatarUrl && !existing.avatarUrl.startsWith("http")) {
       await this.storage.delete(existing.avatarUrl).catch(() => null);
@@ -340,8 +345,9 @@ export class UsuariosService {
     }
 
     // Soft delete: mark account with deletadoEm timestamp
+    const graceDays = Number(process.env.EXCLUSAO_GRACE_PERIOD_DAYS ?? "30");
     const now = new Date();
-    const deletionScheduledFor = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const deletionScheduledFor = new Date(Date.now() + graceDays * 24 * 60 * 60 * 1000);
 
     await this.prisma.usuario.update({
       where: { usuarioId },
@@ -350,18 +356,17 @@ export class UsuariosService {
       },
     });
 
-    // Schedule hard delete job for 30 days from now
-    const delayMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+    // Schedule hard delete job
+    const delayMs = graceDays * 24 * 60 * 60 * 1000;
     await this.deleteUserQueue.add(
       "hard-delete",
       { usuarioId },
       {
         delay: delayMs,
         attempts: 3,
-        backoff: {
-          type: "exponential",
-          delay: 2000,
-        },
+        backoff: { type: "exponential", delay: 2000 },
+        removeOnComplete: { count: 1000 },
+        removeOnFail: { count: 500 },
       }
     );
 
@@ -369,54 +374,8 @@ export class UsuariosService {
       message: "Conta marcada para exclusão",
       gracePeriodDays: 30,
       deletionScheduledFor,
-      notaGraca: "Você pode fazer login novamente durante o período de 30 dias para restaurar sua conta",
+      notaGraca: `Você pode fazer login novamente durante o período de ${graceDays} dias para restaurar sua conta`,
     };
-  }
-
-  /**
-   * Hard deletion of user account
-   * Called after 30-day grace period by BullMQ job
-   * Deletes all non-audit user data
-   */
-  async deletarContaCompleto(usuarioId: string) {
-    // Begin transaction
-    await this.prisma.$transaction(async (tx) => {
-      // Delete non-sensitive data
-      await tx.sessaoToken.deleteMany({
-        where: { usuarioId },
-      });
-
-      await tx.notificacao.deleteMany({
-        where: { usuarioId },
-      });
-
-      await tx.usuarioFcmToken.deleteMany({
-        where: { usuarioId },
-      });
-
-      await tx.scoreHistorico.deleteMany({
-        where: { usuarioId },
-      });
-
-      // Delete obras (cascades to etapas and evidencias)
-      await tx.obra.deleteMany({
-        where: { usuarioId },
-      });
-
-      // Delete creditos (cascades to liberacaoParcela)
-      await tx.credito.deleteMany({
-        where: { usuarioId },
-      });
-
-      // NOTE: KycDocumento NOT deleted (5-year AML requirement)
-      // NOTE: EtapaAuditLog NOT deleted (7-year regulatory requirement)
-      // NOTE: KycAuditLog NOT deleted (7-year regulatory requirement)
-
-      // Finally, delete the usuario record
-      await tx.usuario.delete({
-        where: { usuarioId },
-      });
-    });
   }
 
   /**
@@ -432,11 +391,7 @@ export class UsuariosService {
       throw new BadRequestException("Usuário não encontrado");
     }
 
-    // Update consent flags (requires adding to schema)
-    // This is a placeholder for consent tracking fields that need to be added
-
     if (tipo === "NOTIFICACOES" || tipo === "TUDO") {
-      // Disable all FCM tokens
       await this.prisma.usuarioFcmToken.updateMany({
         where: { usuarioId },
         data: { ativo: false },
@@ -444,7 +399,10 @@ export class UsuariosService {
     }
 
     if (tipo === "MARKETING" || tipo === "TUDO") {
-      // Mark consentimento as revoked (requires schema update)
+      await this.prisma.usuario.update({
+        where: { usuarioId },
+        data: { consentidoMarketing: false },
+      });
     }
 
     return {

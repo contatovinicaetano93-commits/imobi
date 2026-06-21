@@ -9,8 +9,9 @@ import { StorageService } from "../storage/storage.service";
 import { calcularDistanciaMetros } from "@imbobi/core";
 import type { UploadEvidenciaInput } from "@imbobi/schemas";
 import { isManagerRole } from "../../common/constants/manager-roles";
+import { validateMime, EVIDENCE_ALLOWED_MIMES } from "../../common/utils/mime-validator.util";
 
-const MAX_ACCURACY_METROS = 15;
+const MAX_ACCURACY_METROS = Number(process.env.GPS_MAX_ACCURACY_METROS ?? "15");
 
 @Injectable()
 export class EvidenciasService {
@@ -67,8 +68,16 @@ export class EvidenciasService {
       );
     }
 
+    // Magic-byte MIME validation — reject forged Content-Type headers
+    let detectedMime: string;
+    try {
+      detectedMime = validateMime(fileBuffer, EVIDENCE_ALLOWED_MIMES);
+    } catch (e: any) {
+      throw new BadRequestException(e.message);
+    }
+
     // Salva a key S3, não a URL pré-assinada — URLs expiram em 1h, keys são permanentes
-    const { key } = await this.storage.upload(fileBuffer, mimeType, input.etapaId);
+    const { key } = await this.storage.upload(fileBuffer, detectedMime, input.etapaId);
 
     return this.prisma.evidenciaEtapa.create({
       data: {
@@ -97,6 +106,7 @@ export class EvidenciasService {
     const evidencias = await this.prisma.evidenciaEtapa.findMany({
       where: { etapaId },
       orderBy: { criadoEm: "desc" },
+      take: 100,
     });
 
     // Gera URLs pré-assinadas frescas (1h) para cada foto
@@ -111,6 +121,9 @@ export class EvidenciasService {
   async validar(usuario: { id: string; tipo: string }, evidenciaId: string, aprovado: boolean, observacao?: string) {
     if (!isManagerRole(usuario.tipo)) {
       throw new ForbiddenException("Apenas gestores e administradores podem validar evidências.");
+    }
+    if (observacao && observacao.length > 1000) {
+      throw new BadRequestException("Observação não pode exceder 1000 caracteres.");
     }
 
     const evidencia = await this.prisma.evidenciaEtapa.findUnique({

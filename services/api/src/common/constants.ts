@@ -2,7 +2,7 @@ export const QUEUE_LIBERACAO = "liberacao-parcela";
 
 export interface LiberacaoJob {
   creditoId: string;
-  etapaId: string;
+  etapaId?: string;     // optional: set when triggered by etapa approval
   liberacaoId: string;
   valor: number;
 }
