@@ -108,6 +108,8 @@ model SessaoToken {
   expiresAt     DateTime
   revogadoEm    DateTime?
   criadoEm      DateTime  @default(now())
+  ipAddress     String?
+  userAgent     String?
 
   @@index([usuarioId])
 }

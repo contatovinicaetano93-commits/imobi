@@ -20,7 +20,7 @@ export class AuthService {
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
-  async registrar(input: CadastroUsuarioInput) {
+  async registrar(input: CadastroUsuarioInput, meta?: { ip?: string; ua?: string }) {
     const existe = await this.prisma.usuario.findFirst({
       where: { OR: [{ email: input.email }, { cpf: input.cpf }] },
     });
@@ -46,10 +46,10 @@ export class AuthService {
       },
     });
 
-    return { usuario, ...await this.gerarTokens(usuario.usuarioId, usuario) };
+    return { usuario, ...await this.gerarTokens(usuario.usuarioId, usuario, meta) };
   }
 
-  async login(input: LoginInput) {
+  async login(input: LoginInput, meta?: { ip?: string; ua?: string }) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { email: input.email },
     });
@@ -79,7 +79,7 @@ export class AuthService {
         email: usuario.email,
         tipo: normalizeUserRole(usuario.tipo) ?? usuario.tipo,
       },
-      ...await this.gerarTokens(usuario.usuarioId, usuario),
+      ...await this.gerarTokens(usuario.usuarioId, usuario, meta),
     };
   }
 
@@ -108,7 +108,7 @@ export class AuthService {
   async listarSessoes(usuarioId: string) {
     return this.prisma.sessaoToken.findMany({
       where: { usuarioId, revogadoEm: null, expiresAt: { gt: new Date() } },
-      select: { sessionId: true, criadoEm: true, expiresAt: true },
+      select: { sessionId: true, criadoEm: true, expiresAt: true, ipAddress: true, userAgent: true },
       orderBy: { criadoEm: "desc" },
       take: 20,
     });
@@ -200,6 +200,7 @@ export class AuthService {
   private async gerarTokens(
     usuarioId: string,
     cached?: { tipo?: string; nome?: string | null; email?: string; funcoesBloqueadas?: string[]; bloqueadoEm?: Date | null },
+    meta?: { ip?: string; ua?: string },
   ) {
     const usuario = cached ?? await this.prisma.usuario.findUnique({
       where: { usuarioId },
@@ -220,11 +221,28 @@ export class AuthService {
     );
     const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
 
+    // Evict oldest sessions if user exceeds 10 concurrent active sessions
+    const MAX_SESSIONS = 10;
+    const activeSessions = await this.prisma.sessaoToken.findMany({
+      where: { usuarioId, revogadoEm: null, expiresAt: { gt: new Date() } },
+      orderBy: { criadoEm: "asc" },
+      select: { sessionId: true },
+    });
+    if (activeSessions.length >= MAX_SESSIONS) {
+      const toRevoke = activeSessions.slice(0, activeSessions.length - MAX_SESSIONS + 1);
+      await this.prisma.sessaoToken.updateMany({
+        where: { sessionId: { in: toRevoke.map((s) => s.sessionId) } },
+        data: { revogadoEm: new Date() },
+      });
+    }
+
     await this.prisma.sessaoToken.create({
       data: {
         usuarioId,
         refreshToken,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        ipAddress: meta?.ip ?? null,
+        userAgent: meta?.ua ? meta.ua.slice(0, 255) : null,
       },
     });
 

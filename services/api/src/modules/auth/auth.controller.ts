@@ -1,5 +1,6 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
-import { Controller, Get, Post, Delete, Body, Headers, HttpCode, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Delete, Body, Headers, HttpCode, Param, UseGuards, Req } from "@nestjs/common";
+import type { FastifyRequest } from "fastify";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { CadastroUsuarioSchema, LoginSchema, EsqueceuSenhaSchema, RedefinirSenhaSchema } from "@imbobi/schemas";
@@ -15,15 +16,21 @@ export class AuthController {
 
   @Post("registrar")
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  registrar(@Body(new ZodPipe(CadastroUsuarioSchema)) body: CadastroUsuarioInput) {
-    return this.auth.registrar(body);
+  registrar(
+    @Body(new ZodPipe(CadastroUsuarioSchema)) body: CadastroUsuarioInput,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.auth.registrar(body, { ip: req.ip, ua: req.headers["user-agent"] });
   }
 
   @Post("login")
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  login(@Body(new ZodPipe(LoginSchema)) body: LoginInput) {
-    return this.auth.login(body);
+  login(
+    @Body(new ZodPipe(LoginSchema)) body: LoginInput,
+    @Req() req: FastifyRequest,
+  ) {
+    return this.auth.login(body, { ip: req.ip, ua: req.headers["user-agent"] });
   }
 
   @Post("renovar")
