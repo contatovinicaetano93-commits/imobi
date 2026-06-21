@@ -20,6 +20,11 @@ export class LgpdDeleteWorker implements OnModuleInit, OnModuleDestroy {
   }
 
   private async processar() {
+    await this.anonimizarUsuarios();
+    await this.limparIdempotencyExpirados();
+  }
+
+  private async anonimizarUsuarios() {
     const cutoff = new Date(Date.now() - GRACE_DAYS * 24 * 60 * 60 * 1000);
     try {
       const usuarios = await this.prisma.usuario.findMany({
@@ -54,6 +59,19 @@ export class LgpdDeleteWorker implements OnModuleInit, OnModuleDestroy {
       }
     } catch (err) {
       this.logger.error(`Erro LGPD anonimização: ${err}`);
+    }
+  }
+
+  private async limparIdempotencyExpirados() {
+    try {
+      const result = await this.prisma.idempotencyRecord.deleteMany({
+        where: { expiraEm: { lt: new Date() } },
+      });
+      if (result.count > 0) {
+        this.logger.log(`Cleanup: ${result.count} registro(s) de idempotência expirados removidos`);
+      }
+    } catch (err) {
+      this.logger.error(`Erro limpeza idempotency: ${err}`);
     }
   }
 }

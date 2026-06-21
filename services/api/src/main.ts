@@ -25,7 +25,7 @@ async function bootstrap() {
   const fastifyOptions: any = {
     logger: process.env["NODE_ENV"] !== "production",
     trustProxy: true,
-    bodyLimit: 104857600, // 100MB for file uploads
+    bodyLimit: 26_214_400, // 25MB ceiling — covers 20MB KYC doc + multipart overhead
   };
 
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -44,7 +44,7 @@ async function bootstrap() {
       : false,
   });
 
-  await app.register(fastifyMultipart, { limits: { fileSize: 10 * 1024 * 1024 } }); // 10 MB
+  await app.register(fastifyMultipart, { limits: { fileSize: 20 * 1024 * 1024 } }); // 20 MB — matches documentos.service DOC_MAX_BYTES
 
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");

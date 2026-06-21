@@ -33,6 +33,12 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
     if (this.running) return;
     this.running = true;
     try {
+      // Recover events stuck in PROCESSANDO (e.g., from a previous crashed worker instance)
+      const recuperados = await this.outbox.recuperarEventosTravados();
+      if (recuperados > 0) {
+        this.logger.warn(`Outbox: ${recuperados} evento(s) travados em PROCESSANDO foram resetados para PENDENTE`);
+      }
+
       const eventos = await this.outbox.buscarPendentes(50);
       for (const evento of eventos) {
         await this.processarEvento(evento);

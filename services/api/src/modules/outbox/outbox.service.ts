@@ -59,4 +59,16 @@ export class OutboxService {
       },
     });
   }
+
+  /** Resets events stuck in PROCESSANDO for more than `thresholdMs` (default 5 min).
+   *  Uses agendadoPara as proxy for "last scheduled time" — events picked up immediately
+   *  after creation still have agendadoPara ≈ criadoEm, so the threshold is meaningful. */
+  async recuperarEventosTravados(thresholdMs = 5 * 60_000) {
+    const cutoff = new Date(Date.now() - thresholdMs);
+    const result = await this.prisma.outboxEvent.updateMany({
+      where: { status: "PROCESSANDO", agendadoPara: { lt: cutoff } },
+      data: { status: "PENDENTE", agendadoPara: new Date() },
+    });
+    return result.count;
+  }
 }
