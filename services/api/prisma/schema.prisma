@@ -57,6 +57,9 @@ model Usuario {
   documentos      Documento[]
   solicitacoes    SolicitacaoCredito[]
   votosComite     VotoComite[]
+  lancamentos     LancamentoFinanceiro[]
+  totp            UsuarioTotp?
+  webhooks        WebhookEndpoint[]
 
   @@index([email])
   @@index([cpf])
@@ -141,6 +144,7 @@ model Credito {
 
   obras           Obra[]
   liberacoes      LiberacaoParcela[]
+  lancamentos     LancamentoFinanceiro[]
 
   @@index([usuarioId])
   @@index([status])
@@ -755,4 +759,134 @@ model AvaliacaoFornecedor {
   @@unique([fornecedorId, usuarioId])
   @@index([fornecedorId])
   @@map("avaliacoes_fornecedor")
+}
+
+// ── Ledger Imutável ───────────────────────────────────────────────────────────
+// Registro append-only de toda movimentação financeira. Nunca deletar/atualizar.
+
+model LancamentoFinanceiro {
+  lancamentoId   String              @id @default(uuid())
+  tipo           LancamentoTipo
+  categoria      LancamentoCategoria
+  valor          Decimal             @db.Decimal(14, 2)
+  moeda          String              @default("BRL")
+  creditoId      String?
+  liberacaoId    String?             @unique
+  usuarioId      String
+  descricao      String?
+  metadata       Json?
+  idempotencyKey String?             @unique
+  criadoEm       DateTime            @default(now())
+
+  credito        Credito?            @relation(fields: [creditoId], references: [creditoId], onDelete: Restrict)
+  usuario        Usuario             @relation(fields: [usuarioId], references: [usuarioId], onDelete: Restrict)
+
+  @@index([creditoId, criadoEm])
+  @@index([usuarioId, criadoEm])
+  @@map("lancamentos_financeiros")
+}
+
+enum LancamentoTipo {
+  CREDITO
+  DEBITO
+}
+
+enum LancamentoCategoria {
+  LIBERACAO_PARCELA
+  ESTORNO_LIBERACAO
+  TAXA_GESTAO
+  AJUSTE_MANUAL
+}
+
+// ── Idempotência ──────────────────────────────────────────────────────────────
+
+model IdempotencyRecord {
+  key          String   @id
+  endpoint     String
+  statusCode   Int
+  responseBody Json
+  criadoEm     DateTime @default(now())
+  expiraEm     DateTime
+
+  @@index([expiraEm])
+  @@map("idempotency_records")
+}
+
+// ── Outbox Transacional ───────────────────────────────────────────────────────
+// Garante entrega de eventos mesmo se o servidor cair após o commit.
+
+model OutboxEvent {
+  eventId      String      @id @default(uuid())
+  tipo         String
+  payload      Json
+  status       OutboxStatus @default(PENDENTE)
+  tentativas   Int          @default(0)
+  erro         String?
+  processadoEm DateTime?
+  criadoEm     DateTime    @default(now())
+  agendadoPara DateTime    @default(now())
+
+  @@index([status, agendadoPara])
+  @@map("outbox_events")
+}
+
+enum OutboxStatus {
+  PENDENTE
+  PROCESSANDO
+  CONCLUIDO
+  FALHA
+}
+
+// ── 2FA / TOTP ────────────────────────────────────────────────────────────────
+
+model UsuarioTotp {
+  totpId          String    @id @default(uuid())
+  usuarioId       String    @unique
+  secretCrypto    String
+  ativo           Boolean   @default(false)
+  ativadoEm       DateTime?
+  backupCodes     String[]
+  criadoEm        DateTime  @default(now())
+
+  usuario         Usuario   @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+
+  @@map("usuario_totp")
+}
+
+// ── Webhooks SaaS ──────────────────────────────────────────────────────────────
+
+model WebhookEndpoint {
+  webhookId    String    @id @default(uuid())
+  usuarioId    String
+  url          String
+  secret       String
+  eventos      String[]
+  ativo        Boolean   @default(true)
+  criadoEm     DateTime  @default(now())
+  atualizadoEm DateTime  @updatedAt
+
+  usuario      Usuario   @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  deliveries   WebhookDelivery[]
+
+  @@index([usuarioId])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  deliveryId      String    @id @default(uuid())
+  webhookId       String
+  evento          String
+  payload         Json
+  statusCode      Int?
+  tentativas      Int       @default(0)
+  sucesso         Boolean   @default(false)
+  erro            String?
+  criadoEm        DateTime  @default(now())
+  ultimaTentativa DateTime?
+
+  webhook         WebhookEndpoint @relation(fields: [webhookId], references: [webhookId], onDelete: Cascade)
+
+  @@index([webhookId, criadoEm])
+  @@index([sucesso])
+  @@map("webhook_deliveries")
 }

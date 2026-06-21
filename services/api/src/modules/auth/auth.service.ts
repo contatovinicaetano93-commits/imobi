@@ -4,6 +4,7 @@ import * as bcrypt from "bcryptjs";
 import * as crypto from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
+import { TotpService } from "../totp/totp.service";
 import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
 import { normalizeUserRole } from "../../common/constants/manager-roles";
 
@@ -12,7 +13,8 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
-    private readonly email: EmailService
+    private readonly email: EmailService,
+    private readonly totp: TotpService,
   ) {}
 
   async registrar(input: CadastroUsuarioInput) {
@@ -55,6 +57,16 @@ export class AuthService {
 
     if (usuario.bloqueadoEm) {
       throw new UnauthorizedException("Conta bloqueada pelo administrador. Entre em contato com o suporte.");
+    }
+
+    // Se o usuário tem TOTP ativo, solicita o código antes de emitir tokens
+    const totpAtivo = await this.totp.estaAtivo(usuario.usuarioId);
+    if (totpAtivo) {
+      if (!input.totpCode) {
+        return { requiresTotp: true, usuarioId: usuario.usuarioId };
+      }
+      const totpOk = await this.totp.verificar(usuario.usuarioId, input.totpCode);
+      if (!totpOk) throw new UnauthorizedException("Código TOTP inválido.");
     }
 
     return {

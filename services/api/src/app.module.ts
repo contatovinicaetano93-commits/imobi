@@ -32,8 +32,15 @@ import { DocumentosModule } from "./modules/documentos/documentos.module";
 import { ComiteModule } from "./modules/comite/comite.module";
 import { FundosModule } from "./modules/fundos/fundos.module";
 import { ConstrutorModule } from "./modules/construtor/construtor.module";
+import { LedgerModule } from "./modules/ledger/ledger.module";
+import { OutboxModule } from "./modules/outbox/outbox.module";
+import { TotpModule } from "./modules/totp/totp.module";
+import { WebhooksModule } from "./modules/webhooks/webhooks.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker, QUEUE_EXCLUIR_USUARIO } from "./workers/excluir-usuario.worker";
+import { OutboxWorker } from "./workers/outbox.worker";
+import { ReconciliacaoWorker } from "./workers/reconciliacao.worker";
+import { IdempotencyInterceptor } from "./common/interceptors/idempotency.interceptor";
 import { QUEUE_LIBERACAO } from "./common/constants";
 import { HealthController } from "./common/health.controller";
 import { getRedisConfig } from "./common/config";
@@ -100,14 +107,24 @@ const redisConfig = getRedisConfig();
     ComiteModule,
     FundosModule,
     ConstrutorModule,
+    LedgerModule,
+    OutboxModule,
+    TotpModule,
+    WebhooksModule,
   ],
   controllers: [HealthController],
   providers: [
     LiberacaoParcelaWorker,
     ExcluirUsuarioWorker,
+    OutboxWorker,
+    ReconciliacaoWorker,
     {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: IdempotencyInterceptor,
     },
     {
       provide: APP_GUARD,

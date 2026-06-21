@@ -5,6 +5,7 @@ import { PrismaService } from "../modules/prisma/prisma.service";
 import { NotificacoesService } from "../modules/notificacoes/notificacoes.service";
 import { EmailService } from "../modules/email/email.service";
 import { PushNotificacoesService } from "../modules/push-notificacoes/push-notificacoes.service";
+import { LedgerService } from "../modules/ledger/ledger.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../common/constants";
 
 @Injectable()
@@ -16,7 +17,8 @@ export class LiberacaoParcelaWorker {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
+    private readonly ledger: LedgerService,
   ) {}
 
   @Process()
@@ -54,6 +56,21 @@ export class LiberacaoParcelaWorker {
           where: { liberacaoId },
           data: { status: "CONCLUIDA", processadoEm: new Date() },
         });
+
+        // Ledger imutável — registra lançamento na mesma transação
+        await this.ledger.criar(
+          {
+            tipo: "CREDITO",
+            categoria: "LIBERACAO_PARCELA",
+            valor,
+            creditoId,
+            liberacaoId,
+            usuarioId: credito.usuarioId,
+            descricao: `Liberação parcela — obra ${credito.obras?.[0]?.nome ?? creditoId}`,
+            idempotencyKey: `liberacao:${liberacaoId}`,
+          },
+          tx,
+        );
 
         processed = true;
       });

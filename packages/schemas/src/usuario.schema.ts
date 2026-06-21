@@ -42,6 +42,7 @@ export const CadastroUsuarioSchema = z.object({
 export const LoginSchema = z.object({
   email: z.string().email(),
   senha: z.string().min(1),
+  totpCode: z.string().optional(),
 });
 
 export const EsqueceuSenhaSchema = z.object({
