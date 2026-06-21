@@ -220,8 +220,57 @@ export class KycService {
         where: { usuarioId },
         data: { kycStatus: "APROVADO" },
       });
+
+      // Issue any credits whose committee approved them while KYC was still pending.
+      await this.emitirCreditosPendentes(usuarioId);
     }
 
     return { completo, documentos };
+  }
+
+  /** Creates Credito records for APROVADA solicitações that were held back due to pending KYC. */
+  private async emitirCreditosPendentes(usuarioId: string) {
+    const pendentes = await this.prisma.solicitacaoCredito.findMany({
+      where: { usuarioId, status: "APROVADA", creditoEmitido: false },
+      include: { comite: { select: { solicitacaoId: true } } },
+    });
+
+    for (const s of pendentes) {
+      try {
+        const novoCredito = await this.prisma.credito.create({
+          data: {
+            usuarioId: s.usuarioId,
+            valorAprovado: s.valorSolicitado,
+            valorLiberado: 0,
+            taxaMensal: s.taxaMensal,
+            prazoMeses: s.prazoMeses,
+            status: "ATIVO",
+            dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
+          },
+        });
+
+        await this.prisma.solicitacaoCredito.update({
+          where: { solicitacaoId: s.solicitacaoId },
+          data: { creditoEmitido: true },
+        });
+
+        if (s.obraId) {
+          await this.prisma.obra.update({
+            where: { obraId: s.obraId },
+            data: { creditoId: novoCredito.creditoId },
+          });
+        }
+
+        await this.notificacoes.criar(
+          usuarioId,
+          "CREDITO_APROVADO",
+          "Crédito liberado após aprovação do KYC",
+          `Sua identidade foi verificada e o crédito de R$ ${Number(s.valorSolicitado).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} foi ativado.`,
+          "/dashboard/credito",
+        );
+      } catch (err) {
+        this.logger.error(`Falha ao emitir crédito pós-KYC para solicitação ${s.solicitacaoId}: ${err}`);
+      }
+    }
   }
 }

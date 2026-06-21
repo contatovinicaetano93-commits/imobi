@@ -635,6 +635,7 @@ model SolicitacaoCredito {
   ratingCalculado String?            // A/B/C/D
 
   status          SolicitacaoStatus  @default(PENDENTE)
+  creditoEmitido  Boolean            @default(false)
   comite          ComiteDigital?
 
   criadoEm        DateTime           @default(now())

@@ -122,7 +122,7 @@ export class ComiteService {
       data: { status: "ENCERRADO", decisao, decisaoEm: new Date() },
       include: {
         solicitacao: {
-          include: { usuario: { select: { nome: true, email: true } } },
+          include: { usuario: { select: { nome: true, email: true, kycStatus: true } } },
         },
       },
     });
@@ -139,6 +139,20 @@ export class ComiteService {
     void this.email.comiteDecisaoEmail(nome, emailAddr, decisao, Number(s.valorSolicitado));
 
     if (decisao === "APROVADO") {
+      // KYC must be fully approved before a credit contract is issued (fintech compliance).
+      // The committee decision is recorded as APROVADA, but the Credito object is only
+      // created once KYC is complete — the user is notified to finish verification.
+      if (s.usuario.kycStatus !== "APROVADO") {
+        await this.notificacoes.criar(
+          s.usuarioId,
+          "CREDITO_APROVADO",
+          "Crédito aprovado — KYC pendente",
+          `Sua solicitação de R$ ${Number(s.valorSolicitado).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} foi aprovada pelo comitê, mas a liberação está sujeita à conclusão da verificação de identidade (KYC). Acesse o app para finalizar.`,
+          "/dashboard/kyc",
+        );
+        return;
+      }
+
       const novoCredito = await this.prisma.credito.create({
         data: {
           usuarioId: s.usuarioId,
@@ -149,6 +163,11 @@ export class ComiteService {
           status: "ATIVO",
           dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
         },
+      });
+
+      await this.prisma.solicitacaoCredito.update({
+        where: { solicitacaoId: comite.solicitacaoId },
+        data: { creditoEmitido: true },
       });
 
       if (s.obraId) {
