@@ -1,10 +1,11 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
-import { Controller, Post, Body, Headers, HttpCode, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Delete, Body, Headers, HttpCode, Param, UseGuards } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { CadastroUsuarioSchema, LoginSchema, EsqueceuSenhaSchema, RedefinirSenhaSchema } from "@imbobi/schemas";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import type { CadastroUsuarioInput, LoginInput, EsqueceuSenhaInput, RedefinirSenhaInput } from "@imbobi/schemas";
 
 @ApiTags("Autenticação")
@@ -30,6 +31,21 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   renovar(@Body("refreshToken") token: string) {
     return this.auth.renovarToken(token);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("JWT")
+  @Get("sessoes")
+  sessoes(@UsuarioAtual() u: IUsuario) {
+    return this.auth.listarSessoes(u.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("JWT")
+  @Delete("sessoes/:sessionId")
+  @HttpCode(204)
+  revogarSessao(@Param("sessionId") sessionId: string, @UsuarioAtual() u: IUsuario) {
+    return this.auth.revogarSessao(u.id, sessionId);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -8,11 +8,19 @@ import helmet from "@fastify/helmet";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
-import { validateEnvironmentOrThrow, initSentry } from "./common/config";
+import { validateEnvironmentOrThrow, initSentry, getRedisConfig } from "./common/config";
+import { QUEUE_LIBERACAO } from "./common/constants";
 
 async function bootstrap() {
   validateEnvironmentOrThrow();
   initSentry();
+
+  const redisConf = getRedisConfig();
+  const redisOpts = {
+    host: redisConf.host,
+    port: redisConf.port,
+    ...(redisConf.password && { password: redisConf.password }),
+  };
 
   const fastifyOptions: any = {
     logger: process.env["NODE_ENV"] !== "production",
@@ -40,6 +48,26 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api/v1");
+
+  // Bull Board — queue monitoring dashboard
+  // Requires: pnpm add ejs (peer dep of @bull-board/fastify)
+  // Enable with BULL_BOARD_ENABLED=true
+  if (process.env["BULL_BOARD_ENABLED"] === "true") {
+    try {
+      const { createBullBoard } = await import("@bull-board/api");
+      const { BullAdapter } = await import("@bull-board/api/bullAdapter");
+      const { FastifyAdapter: BullBoardAdapter } = await import("@bull-board/fastify");
+      const Bull = (await import("bull")).default;
+      const liberacaoQueue = new Bull(QUEUE_LIBERACAO, { redis: redisOpts });
+      const boardAdapter = new BullBoardAdapter();
+      boardAdapter.setBasePath("/api/v1/admin/queues");
+      createBullBoard({ queues: [new BullAdapter(liberacaoQueue)], serverAdapter: boardAdapter });
+      await app.register(boardAdapter.registerPlugin());
+      console.log(`[STARTUP] Bull Board enabled at /api/v1/admin/queues`);
+    } catch (e) {
+      console.warn(`[STARTUP] Bull Board disabled: ${(e as Error).message}`);
+    }
+  }
 
   if (process.env["NODE_ENV"] !== "production" || process.env["SWAGGER_ENABLED"] === "true") {
     const config = new DocumentBuilder()

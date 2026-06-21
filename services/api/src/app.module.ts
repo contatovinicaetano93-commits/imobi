@@ -87,6 +87,12 @@ const redisConfig = getRedisConfig();
         enableReadyCheck: false,
         retryStrategy: (times: number) => Math.min(times * 50, 2000),
       },
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: { count: 1000 },
+        removeOnFail: { count: 500 },
+      },
     }),
     PrismaModule,
     AuthModule,

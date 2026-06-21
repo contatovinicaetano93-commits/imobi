@@ -9,6 +9,7 @@ import { StorageService } from "../storage/storage.service";
 import { calcularDistanciaMetros } from "@imbobi/core";
 import type { UploadEvidenciaInput } from "@imbobi/schemas";
 import { isManagerRole } from "../../common/constants/manager-roles";
+import { validateMime, EVIDENCE_ALLOWED_MIMES } from "../../common/utils/mime-validator.util";
 
 const MAX_ACCURACY_METROS = Number(process.env.GPS_MAX_ACCURACY_METROS ?? "15");
 
@@ -67,8 +68,16 @@ export class EvidenciasService {
       );
     }
 
+    // Magic-byte MIME validation — reject forged Content-Type headers
+    let detectedMime: string;
+    try {
+      detectedMime = validateMime(fileBuffer, EVIDENCE_ALLOWED_MIMES);
+    } catch (e: any) {
+      throw new BadRequestException(e.message);
+    }
+
     // Salva a key S3, não a URL pré-assinada — URLs expiram em 1h, keys são permanentes
-    const { key } = await this.storage.upload(fileBuffer, mimeType, input.etapaId);
+    const { key } = await this.storage.upload(fileBuffer, detectedMime, input.etapaId);
 
     return this.prisma.evidenciaEtapa.create({
       data: {

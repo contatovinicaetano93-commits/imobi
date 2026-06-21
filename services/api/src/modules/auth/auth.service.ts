@@ -105,6 +105,24 @@ export class AuthService {
     return await this.gerarTokens(sessao.usuarioId);
   }
 
+  async listarSessoes(usuarioId: string) {
+    return this.prisma.sessaoToken.findMany({
+      where: { usuarioId, revogadoEm: null, expiresAt: { gt: new Date() } },
+      select: { sessionId: true, criadoEm: true, expiresAt: true },
+      orderBy: { criadoEm: "desc" },
+      take: 20,
+    });
+  }
+
+  async revogarSessao(usuarioId: string, sessionId: string) {
+    const result = await this.prisma.sessaoToken.updateMany({
+      where: { sessionId, usuarioId, revogadoEm: null },
+      data: { revogadoEm: new Date() },
+    });
+    if (result.count === 0) throw new UnauthorizedException("Sessão não encontrada.");
+    return { ok: true };
+  }
+
   async revogarToken(refreshToken: string, accessToken?: string) {
     await this.prisma.sessaoToken.updateMany({
       where: { refreshToken },
