@@ -217,9 +217,12 @@ export class AuthService {
         funcoesBloqueadas: usuario?.funcoesBloqueadas ?? [],
         bloqueado: !!usuario?.bloqueadoEm,
       },
-      { expiresIn: "8h" }
+      { expiresIn: process.env["JWT_EXPIRES_IN"] ?? "15m" }
     );
-    const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
+    const refreshToken = this.jwt.sign(
+      { sub: usuarioId, type: "refresh" },
+      { expiresIn: process.env["JWT_REFRESH_EXPIRES_IN"] ?? "7d" },
+    );
 
     // Evict oldest sessions if user exceeds 10 concurrent active sessions
     const MAX_SESSIONS = 10;
