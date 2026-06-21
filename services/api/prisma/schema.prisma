@@ -134,8 +134,8 @@ model Credito {
   creditoId       String    @id @default(uuid())
   usuarioId       String
   usuario         Usuario   @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
-  valorAprovado   Float
-  valorLiberado   Float
+  valorAprovado   Decimal   @db.Decimal(14, 2)
+  valorLiberado   Decimal   @db.Decimal(14, 2)
   taxaMensal      Float     @default(0.0099)
   prazoMeses      Int
   status          CreditoStatus @default(ATIVO)
@@ -207,7 +207,7 @@ model EtapaObra {
   nome                String
   ordem               Int
   percentualObra      Float
-  valorLiberacao      Float
+  valorLiberacao      Decimal  @db.Decimal(14, 2)
   status              EtapaStatus @default(PLANEJADA)
   dataConclusaoPrevista DateTime?
   dataConclusaoReal   DateTime?
@@ -264,7 +264,7 @@ model LiberacaoParcela {
   creditoId       String
   credito         Credito  @relation(fields: [creditoId], references: [creditoId], onDelete: Cascade)
   etapaId         String?
-  valor           Float
+  valor           Decimal  @db.Decimal(14, 2)
   status          LiberacaoStatus @default(PENDENTE)
   motivo          String?
   referenciaPagamento String?
@@ -569,8 +569,8 @@ model DueDiligence {
   nomeIncorporadora     String?
   cnpjIncorporadora     String?
   modeloAmortizacao     String?
-  totalCarteira         Float?
-  totalAReceber         Float?
+  totalCarteira         Decimal? @db.Decimal(14, 2)
+  totalAReceber         Decimal? @db.Decimal(14, 2)
   estruturaSocietaria   String?
   payload               Json
   status                DueDiligenceStatus @default(RASCUNHO)
@@ -621,7 +621,7 @@ model SolicitacaoCredito {
   usuario         Usuario            @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
   obraId          String?
 
-  valorSolicitado Float
+  valorSolicitado Decimal  @db.Decimal(14, 2)
   prazoMeses      Int
   taxaMensal      Float
   finalidade      String
@@ -629,9 +629,9 @@ model SolicitacaoCredito {
   observacoes     String?
 
   // Snapshot da simulação para o dossiê
-  vgv             Float?
+  vgv             Decimal? @db.Decimal(14, 2)
   ltv             Float?
-  custoObra       Float?
+  custoObra       Decimal? @db.Decimal(14, 2)
   ratingCalculado String?            // A/B/C/D
 
   status          SolicitacaoStatus  @default(PENDENTE)

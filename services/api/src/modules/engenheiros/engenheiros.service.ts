@@ -146,10 +146,10 @@ export class EngenheirosService {
     });
 
     return obras.map((obra) => {
-      const valorTotal = obra.etapas.reduce((sum, e) => sum + e.valorLiberacao, 0);
+      const valorTotal = obra.etapas.reduce((sum, e) => sum + Number(e.valorLiberacao), 0);
       const valorExecutado = obra.etapas
         .filter((e) => e.status === "CONCLUIDA")
-        .reduce((sum, e) => sum + e.valorLiberacao, 0);
+        .reduce((sum, e) => sum + Number(e.valorLiberacao), 0);
 
       const progresso = valorTotal > 0
         ? Math.round((valorExecutado / valorTotal) * 100)

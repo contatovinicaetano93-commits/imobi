@@ -547,11 +547,11 @@ export class AdminService {
         usuario.usuarioId,
         "PARCELA_LIBERADA",
         "Pagamento confirmado",
-        `O pagamento de ${lib.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} foi creditado na conta cadastrada.`,
+        `O pagamento de ${Number(lib.valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} foi creditado na conta cadastrada.`,
         obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard/credito",
       );
       this.email
-        .parcelaLiberadaEmail(usuario.nome, usuario.email, lib.valor, obra?.nome ?? "sua obra")
+        .parcelaLiberadaEmail(usuario.nome, usuario.email, Number(lib.valor), obra?.nome ?? "sua obra")
         .catch(() => {});
     }
 
@@ -599,7 +599,7 @@ export class AdminService {
         ativos: creditosAtivos._count.creditoId,
         totalAprovado: Number(creditosAtivos._sum.valorAprovado ?? 0),
         totalLiberado: Number(creditosAtivos._sum.valorLiberado ?? 0),
-        saldoRestante: Number((creditosAtivos._sum.valorAprovado ?? 0) - (creditosAtivos._sum.valorLiberado ?? 0)),
+        saldoRestante: Number(creditosAtivos._sum.valorAprovado ?? 0) - Number(creditosAtivos._sum.valorLiberado ?? 0),
       },
       liberacoes: {
         totalGeralValor: Number(liberacoesTotais._sum.valor ?? 0),

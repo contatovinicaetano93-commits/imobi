@@ -58,7 +58,9 @@ export class FundosService {
         ? Number((totalAprovado / totalCreditosCount).toFixed(2))
         : 0;
 
-    const liberacoesPorMes = this.agruparPorMes(liberacoesRecentes);
+    const liberacoesPorMes = this.agruparPorMes(
+      liberacoesRecentes.map((l) => ({ valor: Number(l.valor), processadoEm: l.processadoEm })),
+    );
     const crescimentoMensal = this.calcularCrescimentoMensal(liberacoesPorMes);
 
     return {

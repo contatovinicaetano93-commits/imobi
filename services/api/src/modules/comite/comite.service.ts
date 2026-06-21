@@ -136,7 +136,7 @@ export class ComiteService {
     const s = comite.solicitacao;
     const { nome, email: emailAddr } = s.usuario;
 
-    void this.email.comiteDecisaoEmail(nome, emailAddr, decisao, s.valorSolicitado);
+    void this.email.comiteDecisaoEmail(nome, emailAddr, decisao, Number(s.valorSolicitado));
 
     if (decisao === "APROVADO") {
       const novoCredito = await this.prisma.credito.create({
@@ -162,7 +162,7 @@ export class ComiteService {
         s.usuarioId,
         "CREDITO_APROVADO",
         "Crédito aprovado pelo comitê",
-        `Sua solicitação de R$ ${s.valorSolicitado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} foi aprovada.`,
+        `Sua solicitação de R$ ${Number(s.valorSolicitado).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} foi aprovada.`,
         "/dashboard/credito",
       );
     } else {
