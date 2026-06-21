@@ -1,6 +1,7 @@
-import { Controller, Get, Header } from '@nestjs/common';
+import { Controller, Get, Header, Req, UnauthorizedException } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Registry, collectDefaultMetrics, Counter } from 'prom-client';
+import type { FastifyRequest } from 'fastify';
 
 const registry = new Registry();
 collectDefaultMetrics({ register: registry, prefix: 'imobi_' });
@@ -30,7 +31,14 @@ export const outboxEventCounter = new Counter({
 export class MetricsController {
   @Get()
   @Header('Content-Type', registry.contentType)
-  async getMetrics(): Promise<string> {
+  async getMetrics(@Req() req: FastifyRequest): Promise<string> {
+    const token = process.env['METRICS_TOKEN'];
+    if (token) {
+      const auth = req.headers.authorization ?? '';
+      if (auth !== `Bearer ${token}`) {
+        throw new UnauthorizedException('Metrics token required.');
+      }
+    }
     return registry.metrics();
   }
 }
