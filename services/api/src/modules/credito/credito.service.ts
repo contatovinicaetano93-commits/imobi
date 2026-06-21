@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException, ConflictException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { simularCredito } from "@imbobi/core";
 import type { SolicitacaoCreditoInput, SimulacaoCreditoInput } from "@imbobi/schemas";
@@ -94,6 +94,9 @@ export class CreditoService {
     solicitanteId: string,
     motivo: string,
   ) {
+    if (!motivo?.trim()) throw new BadRequestException("Motivo é obrigatório para estorno.");
+    if (motivo.length > 1000) throw new BadRequestException("Motivo não pode exceder 1000 caracteres.");
+
     return this.prisma.$transaction(async (tx) => {
       // Advisory lock: same key as liberacao worker to prevent race with in-flight liberação
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`liberacao:${creditoId}`}))`;

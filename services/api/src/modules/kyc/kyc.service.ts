@@ -141,6 +141,9 @@ export class KycService {
     if (!motivo || motivo.trim().length === 0) {
       throw new BadRequestException("Motivo da rejeição é obrigatório");
     }
+    if (motivo.length > 1000) {
+      throw new BadRequestException("Motivo não pode exceder 1000 caracteres");
+    }
 
     const atualizado = await this.prisma.kycDocumento.update({
       where: { kycDocumentoId },

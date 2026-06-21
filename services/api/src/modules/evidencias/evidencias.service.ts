@@ -122,6 +122,9 @@ export class EvidenciasService {
     if (!isManagerRole(usuario.tipo)) {
       throw new ForbiddenException("Apenas gestores e administradores podem validar evidências.");
     }
+    if (observacao && observacao.length > 1000) {
+      throw new BadRequestException("Observação não pode exceder 1000 caracteres.");
+    }
 
     const evidencia = await this.prisma.evidenciaEtapa.findUnique({
       where: { evidenciaId },
