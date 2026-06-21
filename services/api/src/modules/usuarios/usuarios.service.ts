@@ -379,52 +379,6 @@ export class UsuariosService {
   }
 
   /**
-   * Hard deletion of user account
-   * Called after 30-day grace period by BullMQ job
-   * Deletes all non-audit user data
-   */
-  async deletarContaCompleto(usuarioId: string) {
-    // Begin transaction
-    await this.prisma.$transaction(async (tx) => {
-      // Delete non-sensitive data
-      await tx.sessaoToken.deleteMany({
-        where: { usuarioId },
-      });
-
-      await tx.notificacao.deleteMany({
-        where: { usuarioId },
-      });
-
-      await tx.usuarioFcmToken.deleteMany({
-        where: { usuarioId },
-      });
-
-      await tx.scoreHistorico.deleteMany({
-        where: { usuarioId },
-      });
-
-      // Delete obras (cascades to etapas and evidencias)
-      await tx.obra.deleteMany({
-        where: { usuarioId },
-      });
-
-      // Delete creditos (cascades to liberacaoParcela)
-      await tx.credito.deleteMany({
-        where: { usuarioId },
-      });
-
-      // NOTE: KycDocumento NOT deleted (5-year AML requirement)
-      // NOTE: EtapaAuditLog NOT deleted (7-year regulatory requirement)
-      // NOTE: KycAuditLog NOT deleted (7-year regulatory requirement)
-
-      // Finally, delete the usuario record
-      await tx.usuario.delete({
-        where: { usuarioId },
-      });
-    });
-  }
-
-  /**
    * Revoke consent for marketing/notifications
    * LGPD Article 8 - Right to Revoke Consent
    */
