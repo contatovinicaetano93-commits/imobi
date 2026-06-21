@@ -29,17 +29,39 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
     const existing = await this.prisma.idempotencyRecord.findUnique({ where: { key } });
     if (existing) {
-      const expired = existing.expiraEm < new Date();
-      if (!expired && existing.endpoint !== endpoint) {
+      // Endpoint-collision check applies regardless of expiry: a key that was bound to
+      // endpoint A should never silently execute against endpoint B, even after expiry.
+      if (existing.endpoint !== endpoint) {
         throw new ConflictException("Idempotency-Key já usada em outro endpoint.");
-      } else if (!expired) {
+      }
+
+      const expired = existing.expiraEm < new Date();
+      if (!expired) {
         const reply = ctx.switchToHttp().getResponse<FastifyReply>();
         reply.status(existing.statusCode).send(existing.responseBody);
         return new Observable((subscriber) => subscriber.complete());
       }
-      // Expired: fall through and re-execute. Expired records are cleaned up
-      // by LgpdDeleteWorker — deleting here would create a TOCTOU window
-      // where two concurrent requests with the same expired key both mutate.
+
+      // Expired with same endpoint: attempt to claim the key optimistically before re-executing.
+      // PostgreSQL row-level locking ensures only one concurrent request wins the UPDATE;
+      // the loser sees count=0 and replays whichever response the winner writes.
+      const sentinel: Prisma.InputJsonValue = {};
+      const claimed = await this.prisma.idempotencyRecord.updateMany({
+        where: { key, expiraEm: { lte: new Date() } },
+        data: { endpoint, statusCode: 0, responseBody: sentinel, expiraEm: new Date(Date.now() + TTL_MS) },
+      });
+      if (claimed.count === 0) {
+        // Another concurrent request claimed this expired key; wait for their response to land
+        // and replay it, or reject if they haven't written it yet.
+        const fresh = await this.prisma.idempotencyRecord.findUnique({ where: { key } });
+        if (fresh && fresh.statusCode > 0) {
+          const reply = ctx.switchToHttp().getResponse<FastifyReply>();
+          reply.status(fresh.statusCode).send(fresh.responseBody);
+          return new Observable((subscriber) => subscriber.complete());
+        }
+        throw new ConflictException("Requisição duplicada em processamento.");
+      }
+      // Won the claim — fall through to execute and overwrite the sentinel in the tap below.
     }
 
     return next.handle().pipe(

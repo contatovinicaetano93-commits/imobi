@@ -1,15 +1,15 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
+import { Injectable, Logger, OnApplicationBootstrap, OnModuleDestroy } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bull";
 import type { Queue } from "bull";
 import { OutboxService } from "../modules/outbox/outbox.service";
 import { WebhooksService } from "../modules/webhooks/webhooks.service";
 import { QUEUE_LIBERACAO } from "../common/constants";
-import { outboxEventCounter } from "../common/controllers/metrics.controller";
+import { outboxEventCounter } from "../common/utils/metrics.registry";
 
 export const QUEUE_OUTBOX = "outbox-processor";
 
 @Injectable()
-export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
+export class OutboxWorker implements OnApplicationBootstrap, OnModuleDestroy {
   private readonly logger = new Logger(OutboxWorker.name);
   private running = false;
   private timer?: ReturnType<typeof setInterval>;
@@ -20,9 +20,10 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
     @InjectQueue(QUEUE_LIBERACAO) private readonly liberacaoQueue: Queue,
   ) {}
 
-  onModuleInit() {
+  onApplicationBootstrap() {
     const interval = Number(process.env["OUTBOX_POLL_INTERVAL_MS"] ?? "10000");
     this.timer = setInterval(() => void this.processar(), interval);
+    // Runs after all onModuleInit hooks complete, so PrismaService is guaranteed connected
     void this.processar();
   }
 

@@ -4,6 +4,7 @@ import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import type { VotoDecisao, SolicitacaoStatus, ComiteStatus } from "@prisma/client";
 import type { ComiteSolicitarInput } from "@imbobi/schemas";
+import { addMonths } from "../../common/utils/date.util";
 
 @Injectable()
 export class ComiteService {
@@ -130,20 +131,25 @@ export class ComiteService {
     decisao: "APROVADO" | "AJUSTADO" | "REPROVADO",
     motivo?: string,
   ) {
-    const comite = await this.prisma.comiteDigital.update({
-      where: { comiteId },
-      data: { status: "ENCERRADO", decisao, decisaoEm: new Date(), decisaoMotivo: motivo ?? null },
-      include: {
-        solicitacao: {
-          include: { usuario: { select: { nome: true, email: true, kycStatus: true } } },
-        },
-      },
-    });
-
     const novoStatus: SolicitacaoStatus = decisao === "APROVADO" ? "APROVADA" : decisao === "AJUSTADO" ? "AJUSTADA" : "REPROVADA";
-    await this.prisma.solicitacaoCredito.update({
-      where: { solicitacaoId: comite.solicitacaoId },
-      data: { status: novoStatus },
+
+    // Both writes are atomic — torn state (comite=ENCERRADO but solicitacao still EM_COMITE)
+    // would leave the system inconsistent if the process crashes between them.
+    const comite = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.comiteDigital.update({
+        where: { comiteId },
+        data: { status: "ENCERRADO", decisao, decisaoEm: new Date(), decisaoMotivo: motivo ?? null },
+        include: {
+          solicitacao: {
+            include: { usuario: { select: { nome: true, email: true, kycStatus: true } } },
+          },
+        },
+      });
+      await tx.solicitacaoCredito.update({
+        where: { solicitacaoId: updated.solicitacaoId },
+        data: { status: novoStatus },
+      });
+      return updated;
     });
 
     const s = comite.solicitacao;
@@ -177,8 +183,7 @@ export class ComiteService {
         });
         if (sol?.creditoEmitido) return null;
 
-        const dataVencimento = new Date();
-        dataVencimento.setMonth(dataVencimento.getMonth() + s.prazoMeses);
+        const dataVencimento = addMonths(new Date(), s.prazoMeses);
 
         const credito = await tx.credito.create({
           data: {

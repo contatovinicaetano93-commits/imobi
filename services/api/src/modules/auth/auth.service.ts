@@ -197,6 +197,9 @@ export class AuthService {
       throw new BadRequestException("Link inválido ou expirado");
     }
 
+    const strength = checkPasswordStrength(novaSenha);
+    if (!strength.ok) throw new BadRequestException(strength.reason ?? "Senha não atende aos requisitos de segurança.");
+
     const passwordHash = await bcrypt.hash(novaSenha, 12);
 
     await this.prisma.$transaction([

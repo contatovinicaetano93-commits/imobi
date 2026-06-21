@@ -4,6 +4,7 @@ import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { KycDocumentoStatus } from "@prisma/client";
+import { addMonths } from "../../common/utils/date.util";
 
 @Injectable()
 export class KycService {
@@ -125,9 +126,9 @@ export class KycService {
 
     // Check if all required KYC documents are now approved; if so, update kycStatus
     // and auto-issue any credits whose committee approved them while KYC was pending.
-    this.verificarKycCompleto(documento.usuarioId).catch((err) =>
-      this.logger.error(`Falha ao verificar KYC completo após aprovação de documento: ${err}`),
-    );
+    // Awaited so that credit-issuance failures surface as 500 rather than being silently dropped.
+    // The advisory lock inside emitirCreditosPendentes makes this idempotent on retry.
+    await this.verificarKycCompleto(documento.usuarioId);
 
     return atualizado;
   }
@@ -257,8 +258,7 @@ export class KycService {
           if (sol?.creditoEmitido) return null;
 
           const taxaMensal = Number(process.env.TAXA_MENSAL_DEFAULT ?? "0.0099");
-          const dataVencimento = new Date();
-          dataVencimento.setMonth(dataVencimento.getMonth() + s.prazoMeses);
+          const dataVencimento = addMonths(new Date(), s.prazoMeses);
           const credito = await tx.credito.create({
             data: {
               usuarioId: s.usuarioId,
