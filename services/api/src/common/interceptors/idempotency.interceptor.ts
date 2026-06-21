@@ -29,15 +29,17 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
     const existing = await this.prisma.idempotencyRecord.findUnique({ where: { key } });
     if (existing) {
-      if (existing.expiraEm < new Date()) {
-        await this.prisma.idempotencyRecord.delete({ where: { key } });
-      } else if (existing.endpoint !== endpoint) {
+      const expired = existing.expiraEm < new Date();
+      if (!expired && existing.endpoint !== endpoint) {
         throw new ConflictException("Idempotency-Key já usada em outro endpoint.");
-      } else {
+      } else if (!expired) {
         const reply = ctx.switchToHttp().getResponse<FastifyReply>();
         reply.status(existing.statusCode).send(existing.responseBody);
         return new Observable((subscriber) => subscriber.complete());
       }
+      // Expired: fall through and re-execute. Expired records are cleaned up
+      // by LgpdDeleteWorker — deleting here would create a TOCTOU window
+      // where two concurrent requests with the same expired key both mutate.
     }
 
     return next.handle().pipe(

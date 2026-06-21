@@ -55,12 +55,15 @@ export class AuthService {
     });
     if (!usuario) throw new UnauthorizedException("Credenciais inválidas.");
 
+    // Check block status before bcrypt to avoid credential oracle:
+    // returning a distinct "blocked" message after a successful password check
+    // reveals that the password was correct, enabling brute-force enumeration.
+    if (usuario.bloqueadoEm) {
+      throw new UnauthorizedException("Credenciais inválidas.");
+    }
+
     const senhaOk = await bcrypt.compare(input.senha, usuario.passwordHash);
     if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
-
-    if (usuario.bloqueadoEm) {
-      throw new UnauthorizedException("Conta bloqueada pelo administrador. Entre em contato com o suporte.");
-    }
 
     // Se o usuário tem TOTP ativo, solicita o código antes de emitir tokens
     const totpAtivo = await this.totp.estaAtivo(usuario.usuarioId);

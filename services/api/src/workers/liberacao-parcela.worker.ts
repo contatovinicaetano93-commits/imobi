@@ -7,6 +7,7 @@ import { EmailService } from "../modules/email/email.service";
 import { PushNotificacoesService } from "../modules/push-notificacoes/push-notificacoes.service";
 import { LedgerService } from "../modules/ledger/ledger.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../common/constants";
+import { liberacaoCounter } from "../common/controllers/metrics.controller";
 
 @Injectable()
 @Processor(QUEUE_LIBERACAO)
@@ -137,6 +138,7 @@ export class LiberacaoParcelaWorker {
         )
         .catch((e) => this.logger.error(`Erro ao enviar email: ${e}`));
 
+      liberacaoCounter.inc({ status: 'success' });
       this.logger.log(`Liberação processada para crédito ${creditoId}: R$ ${valor}`);
     } catch (error) {
       this.logger.error(`Erro ao processar liberação: ${error}`);
@@ -146,6 +148,7 @@ export class LiberacaoParcelaWorker {
 
   @OnQueueFailed()
   onFailed(job: Job, err: Error) {
+    liberacaoCounter.inc({ status: 'error' });
     this.logger.error(`Job ${job.id} falhou: ${err.message}`);
 
     this.prisma.credito

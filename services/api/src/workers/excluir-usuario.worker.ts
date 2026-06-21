@@ -43,7 +43,13 @@ export class ExcluirUsuarioWorker {
       // Verify that the user was actually marked for deletion 30+ days ago
       const graceDays = Number(process.env.EXCLUSAO_GRACE_PERIOD_DAYS ?? "30");
       const agora = new Date();
-      const diasDesdeDelecao = (agora.getTime() - usuario.deletadoEm!.getTime()) / (1000 * 60 * 60 * 24);
+
+      if (!usuario.deletadoEm) {
+        this.logger.warn(`Usuário ${usuarioId} não está marcado para exclusão — ignorando`);
+        return;
+      }
+
+      const diasDesdeDelecao = (agora.getTime() - usuario.deletadoEm.getTime()) / (1000 * 60 * 60 * 24);
 
       if (diasDesdeDelecao < graceDays) {
         this.logger.warn(

@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../modules/prisma/prisma.service';
 
-const GRACE_DAYS = Number(process.env['LGPD_HARD_DELETE_DAYS'] ?? '30');
+const GRACE_DAYS = Number(process.env['EXCLUSAO_GRACE_PERIOD_DAYS'] ?? '30');
 
 @Injectable()
 export class LgpdDeleteWorker implements OnModuleInit, OnModuleDestroy {

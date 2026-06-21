@@ -240,29 +240,44 @@ export class KycService {
 
     for (const s of pendentes) {
       try {
-        const novoCredito = await this.prisma.credito.create({
-          data: {
-            usuarioId: s.usuarioId,
-            valorAprovado: s.valorSolicitado,
-            valorLiberado: 0,
-            taxaMensal: s.taxaMensal,
-            prazoMeses: s.prazoMeses,
-            status: "ATIVO",
-            dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
-          },
-        });
+        const novoCredito = await this.prisma.$transaction(async (tx) => {
+          // Advisory lock prevents concurrent KYC approvals from issuing duplicate credits
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`emitir_credito:${s.solicitacaoId}`}))`;
 
-        await this.prisma.solicitacaoCredito.update({
-          where: { solicitacaoId: s.solicitacaoId },
-          data: { creditoEmitido: true },
-        });
-
-        if (s.obraId) {
-          await this.prisma.obra.update({
-            where: { obraId: s.obraId },
-            data: { creditoId: novoCredito.creditoId },
+          const sol = await tx.solicitacaoCredito.findUnique({
+            where: { solicitacaoId: s.solicitacaoId },
+            select: { creditoEmitido: true },
           });
-        }
+          if (sol?.creditoEmitido) return null;
+
+          const credito = await tx.credito.create({
+            data: {
+              usuarioId: s.usuarioId,
+              valorAprovado: s.valorSolicitado,
+              valorLiberado: 0,
+              taxaMensal: s.taxaMensal,
+              prazoMeses: s.prazoMeses,
+              status: "ATIVO",
+              dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
+            },
+          });
+
+          await tx.solicitacaoCredito.update({
+            where: { solicitacaoId: s.solicitacaoId },
+            data: { creditoEmitido: true },
+          });
+
+          if (s.obraId) {
+            await tx.obra.update({
+              where: { obraId: s.obraId },
+              data: { creditoId: credito.creditoId },
+            });
+          }
+
+          return credito;
+        });
+
+        if (!novoCredito) continue;
 
         await this.notificacoes.criar(
           usuarioId,

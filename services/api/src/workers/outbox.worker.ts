@@ -4,6 +4,7 @@ import type { Queue } from "bull";
 import { OutboxService } from "../modules/outbox/outbox.service";
 import { WebhooksService } from "../modules/webhooks/webhooks.service";
 import { QUEUE_LIBERACAO } from "../common/constants";
+import { outboxEventCounter } from "../common/controllers/metrics.controller";
 
 export const QUEUE_OUTBOX = "outbox-processor";
 
@@ -22,6 +23,7 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
   onModuleInit() {
     const interval = Number(process.env["OUTBOX_POLL_INTERVAL_MS"] ?? "10000");
     this.timer = setInterval(() => void this.processar(), interval);
+    void this.processar();
   }
 
   onModuleDestroy() {
@@ -40,8 +42,9 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
       }
 
       const eventos = await this.outbox.buscarPendentes(50);
-      for (const evento of eventos) {
-        await this.processarEvento(evento);
+      const CONCURRENCY = 5;
+      for (let i = 0; i < eventos.length; i += CONCURRENCY) {
+        await Promise.all(eventos.slice(i, i + CONCURRENCY).map((e) => this.processarEvento(e)));
       }
     } finally {
       this.running = false;
@@ -53,10 +56,12 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
     try {
       await this.dispatch(evento.tipo, evento.payload as Record<string, unknown>);
       await this.outbox.marcarConcluido(evento.eventId);
+      outboxEventCounter.inc({ status: 'success' });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.error(`Outbox evento ${evento.eventId} (${evento.tipo}) falhou: ${msg}`);
       await this.outbox.marcarFalha(evento.eventId, msg, evento.tentativas + 1);
+      outboxEventCounter.inc({ status: 'error' });
     }
   }
 
