@@ -66,18 +66,20 @@ export class HealthController {
           ? "ok"
           : "degraded";
 
+    const isProd = process.env["NODE_ENV"] === "production";
     const health: HealthCheck = {
       status,
       timestamp: new Date().toISOString(),
       redis: {
         status: redisStatus,
-        host: redisConfig.host,
-        port: redisConfig.port,
-        ...(redisError && { error: redisError }),
+        // Omit host/port in production to avoid leaking infrastructure details
+        ...(!isProd && { host: redisConfig.host, port: redisConfig.port }),
+        // Omit detailed error messages in production
+        ...(redisError && { error: isProd ? "unreachable" : redisError }),
       },
       database: {
         status: dbStatus,
-        ...(dbError && { error: dbError }),
+        ...(dbError && { error: isProd ? "unreachable" : dbError }),
       },
       email: {
         provider: emailProvider,
