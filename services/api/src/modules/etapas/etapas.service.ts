@@ -30,6 +30,8 @@ export class EtapasService {
 
   /** Aprovação técnica (engenheiro) — dispara liberação financeira manual. */
   async aprovar(aprovadorId: string, etapaId: string, observacao?: string) {
+    if (observacao && observacao.length > 1000) throw new BadRequestException("Observação não pode exceder 1000 caracteres.");
+
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId },
       include: { obra: { include: { credito: true, usuario: true } } },
@@ -141,6 +143,9 @@ export class EtapasService {
   }
 
   async rejeitar(aprovadorId: string, etapaId: string, motivo: string) {
+    if (!motivo?.trim()) throw new BadRequestException("Motivo é obrigatório para rejeição.");
+    if (motivo.length > 1000) throw new BadRequestException("Motivo não pode exceder 1000 caracteres.");
+
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId },
       include: { obra: { include: { usuario: true } } },
