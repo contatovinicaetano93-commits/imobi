@@ -41,6 +41,7 @@ export class AdminController {
   }
 
   @Get("atividades")
+  @Roles("ADMIN")
   atividades(@Query("limit") limit: string = "8") {
     const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 8, 1), 50);
     return this.adminService.atividades(parsedLimit);

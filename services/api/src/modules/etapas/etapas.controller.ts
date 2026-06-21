@@ -52,6 +52,8 @@ export class EtapasController {
   }
 
   @HttpCode(200)
+  @UseGuards(RolesGuard)
+  @Roles("CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "ADMIN")
   @Patch(":id/status")
   status(
     @Param("id") id: string,

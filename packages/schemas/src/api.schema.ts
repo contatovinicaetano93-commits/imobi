@@ -19,7 +19,6 @@ export type VistoriaRejeitarInput = z.infer<typeof VistoriaRejeitarSchema>;
 export const ComiteSolicitarSchema = z.object({
   valorSolicitado: z.number().positive("Valor deve ser positivo"),
   prazoMeses: z.number().int().min(1).max(360),
-  taxaMensal: z.number().min(0).max(100),
   finalidade: z.string().min(5, "Finalidade obrigatória").max(1000),
   garantias: z.string().max(2000).optional(),
   observacoes: z.string().max(2000).optional(),
@@ -121,7 +120,15 @@ export const KycDocumentoTipoEnum = z.enum([
 
 export const KycUploadSchema = z.object({
   tipo: KycDocumentoTipoEnum,
-  url: z.string().url("URL do documento inválida").min(1),
+  url: z.string().url("URL do documento inválida").refine(
+    (url) => {
+      try {
+        const { hostname } = new URL(url);
+        return hostname.endsWith(".amazonaws.com") || hostname.endsWith(".cloudfront.net");
+      } catch { return false; }
+    },
+    { message: "URL deve ser um endereço S3 ou CloudFront válido" },
+  ),
 });
 
 export const KycRejeitarSchema = z.object({

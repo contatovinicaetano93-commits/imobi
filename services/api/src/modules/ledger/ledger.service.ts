@@ -50,7 +50,7 @@ export class LedgerService {
     return this.prisma.lancamentoFinanceiro.findMany({
       where: { creditoId },
       orderBy: { criadoEm: "desc" },
-      take,
+      take: Math.min(take, 200),
     });
   }
 
@@ -58,7 +58,7 @@ export class LedgerService {
     return this.prisma.lancamentoFinanceiro.findMany({
       where: { usuarioId },
       orderBy: { criadoEm: "desc" },
-      take,
+      take: Math.min(take, 200),
     });
   }
 

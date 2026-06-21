@@ -7,6 +7,10 @@
 import { PrismaClient, UsuarioTipo, KycStatus } from "@prisma/client";
 import { hash } from "bcryptjs";
 
+if (process.env.NODE_ENV === "production") {
+  throw new Error("dev-seed must not run in production — set NODE_ENV to development");
+}
+
 const prisma = new PrismaClient();
 
 const USUARIOS = [

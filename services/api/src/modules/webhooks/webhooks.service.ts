@@ -27,7 +27,13 @@ export class WebhooksService {
     if (isProd && parsed.protocol !== "https:") {
       throw new BadRequestException("URL do webhook deve usar HTTPS em produção.");
     }
-    if (isProd && /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(parsed.hostname)) {
+    const PRIVATE_HOST_RE = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/;
+    const isPrivateHostname =
+      PRIVATE_HOST_RE.test(parsed.hostname) ||
+      parsed.hostname === "::1" ||
+      parsed.hostname === "[::1]" ||
+      parsed.hostname.startsWith("[::ffff:");
+    if (isProd && isPrivateHostname) {
       throw new BadRequestException("URL do webhook não pode apontar para rede interna.");
     }
     // Validate event names

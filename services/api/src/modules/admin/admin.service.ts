@@ -5,6 +5,7 @@ import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import * as bcrypt from "bcryptjs";
 import { UsuarioTipo } from "@prisma/client";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
+import { checkPasswordStrength } from "../../common/utils/password-strength.util";
 
 export interface CriarUsuarioAdminDto {
   nome: string;
@@ -327,8 +328,8 @@ export class AdminService {
       },
     });
 
-    // Bloqueio de conta derruba as sessões ativas do usuário
-    if (dto.bloqueado === true) {
+    // Bloqueio ou troca de senha derruba as sessões ativas do usuário
+    if (dto.bloqueado === true || dto.novaSenha) {
       await this.prisma.sessaoToken.updateMany({
         where: { usuarioId: id, revogadoEm: null },
         data: { revogadoEm: new Date() },
@@ -340,7 +341,7 @@ export class AdminService {
 
   async listarObras(limit: number, offset: number) {
     const obras = await this.prisma.obra.findMany({
-      take: limit, skip: offset,
+      take: Math.min(limit, 100), skip: offset,
       orderBy: { criadoEm: "desc" },
       include: {
         usuario: { select: { nome: true } },
@@ -359,6 +360,12 @@ export class AdminService {
   async criarUsuario(dto: CriarUsuarioAdminDto) {
     const existe = await this.prisma.usuario.findUnique({ where: { email: dto.email } });
     if (existe && !existe.deletadoEm) throw new ConflictException("E-mail já cadastrado");
+
+    const strengthCheck = checkPasswordStrength(dto.senha);
+    if (!strengthCheck.ok) {
+      throw new BadRequestException(strengthCheck.reason ?? "Senha fraca.");
+    }
+
     const passwordHash = await bcrypt.hash(dto.senha, 12);
     const cpfDigits = Buffer.from(dto.email.toLowerCase())
       .toString("hex")

@@ -82,6 +82,12 @@ export function validateEnvironment(config: Record<string, any>): string[] {
     }
   }
 
+  // METRICS_TOKEN — required in production to prevent unauthenticated exposure
+  // of queue depths, divergence counts, and process metrics on the /metrics endpoint
+  if (!isDev && !config.METRICS_TOKEN) {
+    errorMessages.push('METRICS_TOKEN is required in production to protect the /metrics endpoint');
+  }
+
   // APP_URL validation (prevent localhost fallback in production)
   const appUrl = config.APP_URL;
   if (appUrl && appUrl.includes('localhost')) {

@@ -9,6 +9,7 @@ import { EmailService } from "../email/email.service";
 import { TotpService } from "../totp/totp.service";
 import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
 import { normalizeUserRole } from "../../common/constants/manager-roles";
+import { checkPasswordStrength } from "../../common/utils/password-strength.util";
 
 @Injectable()
 export class AuthService {
@@ -25,6 +26,11 @@ export class AuthService {
       where: { OR: [{ email: input.email }, { cpf: input.cpf }] },
     });
     if (existe) throw new ConflictException("E-mail ou CPF já cadastrado.");
+
+    const strengthCheck = checkPasswordStrength(input.senha);
+    if (!strengthCheck.ok) {
+      throw new BadRequestException(strengthCheck.reason ?? "Senha fraca.");
+    }
 
     const passwordHash = await bcrypt.hash(input.senha, 12);
     const usuario = await this.prisma.usuario.create({
@@ -69,7 +75,9 @@ export class AuthService {
     const totpAtivo = await this.totp.estaAtivo(usuario.usuarioId);
     if (totpAtivo) {
       if (!input.totpCode) {
-        return { requiresTotp: true, usuarioId: usuario.usuarioId };
+        // Return an opaque challenge — do NOT leak usuarioId to unauthenticated callers.
+        // The client re-submits email+password+totpCode in the next request.
+        return { requiresTotp: true };
       }
       const totpOk = await this.totp.verificar(usuario.usuarioId, input.totpCode);
       if (!totpOk) throw new UnauthorizedException("Código TOTP inválido.");
@@ -188,14 +196,17 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(novaSenha, 12);
 
-    await this.prisma.usuario.update({
-      where: { usuarioId: usuario.usuarioId },
-      data: {
-        passwordHash,
-        passwordResetToken: null,
-        passwordResetExpires: null,
-      },
-    });
+    await this.prisma.$transaction([
+      this.prisma.usuario.update({
+        where: { usuarioId: usuario.usuarioId },
+        data: { passwordHash, passwordResetToken: null, passwordResetExpires: null },
+      }),
+      // Revoke all active sessions so stolen sessions cannot survive a password reset
+      this.prisma.sessaoToken.updateMany({
+        where: { usuarioId: usuario.usuarioId, revogadoEm: null },
+        data: { revogadoEm: new Date() },
+      }),
+    ]);
 
     return { message: "Senha redefinida com sucesso" };
   }

@@ -15,6 +15,10 @@ export class ComiteService {
 
   // ── Construtor: submeter solicitação ──────────────────────────────
 
+  private get taxaMensalDefault(): number {
+    return Number(process.env.TAXA_MENSAL_DEFAULT ?? "0.0099");
+  }
+
   async submeterSolicitacao(usuarioId: string, body: ComiteSolicitarInput) {
     const rating = this.calcularRating(body.ltv ?? 0);
 
@@ -25,7 +29,7 @@ export class ComiteService {
           obraId: body.obraId ?? null,
           valorSolicitado: body.valorSolicitado,
           prazoMeses: body.prazoMeses,
-          taxaMensal: body.taxaMensal,
+          taxaMensal: this.taxaMensalDefault,
           finalidade: body.finalidade,
           garantias: body.garantias ?? null,
           observacoes: body.observacoes ?? null,
@@ -169,7 +173,7 @@ export class ComiteService {
             usuarioId: s.usuarioId,
             valorAprovado: s.valorSolicitado,
             valorLiberado: 0,
-            taxaMensal: s.taxaMensal,
+            taxaMensal: this.taxaMensalDefault,
             prazoMeses: s.prazoMeses,
             status: "ATIVO",
             dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),

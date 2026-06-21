@@ -11,7 +11,8 @@ const BACKUP_CODE_COUNT = 8;
 function getEncKey(): Buffer {
   const raw = process.env["TOTP_ENCRYPTION_KEY"];
   if (!raw || raw.length < 32) throw new Error("TOTP_ENCRYPTION_KEY must be at least 32 characters");
-  return Buffer.from(raw.slice(0, 32));
+  // SHA-256 the key to always produce exactly 32 bytes regardless of multibyte UTF-8 characters
+  return crypto.createHash("sha256").update(raw).digest();
 }
 
 function encryptSecret(secret: string): string {
@@ -67,8 +68,9 @@ export class TotpService {
     const result = verifySync({ token: otp, secret });
     if (!result.valid) throw new UnauthorizedException("Código OTP inválido.");
 
+    // 8 bytes = 16 hex chars ≈ 48 bits of entropy per backup code
     const rawCodes = Array.from({ length: BACKUP_CODE_COUNT }, () =>
-      crypto.randomBytes(5).toString("hex")
+      crypto.randomBytes(8).toString("hex")
     );
     const hashedCodes = await Promise.all(rawCodes.map((c) => bcrypt.hash(c, 10)));
 
@@ -99,6 +101,7 @@ export class TotpService {
           where: { usuarioId },
           data: { backupCodes: newCodes },
         });
+        this.logger.warn(`TOTP backup code used for usuário ${usuarioId} — ${newCodes.length} remaining`);
         return true;
       }
     }

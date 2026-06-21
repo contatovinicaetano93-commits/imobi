@@ -1,5 +1,6 @@
 import { Controller, Get, Header, Req, UnauthorizedException } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
+import { timingSafeEqual } from 'crypto';
 import { Registry, collectDefaultMetrics, Counter } from 'prom-client';
 import type { FastifyRequest } from 'fastify';
 
@@ -35,7 +36,10 @@ export class MetricsController {
     const token = process.env['METRICS_TOKEN'];
     if (token) {
       const auth = req.headers.authorization ?? '';
-      if (auth !== `Bearer ${token}`) {
+      const authBuf = Buffer.from(auth);
+      const expectedBuf = Buffer.from(`Bearer ${token}`);
+      const valid = authBuf.length === expectedBuf.length && timingSafeEqual(authBuf, expectedBuf);
+      if (!valid) {
         throw new UnauthorizedException('Metrics token required.');
       }
     }
