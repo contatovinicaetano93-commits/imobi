@@ -2,10 +2,14 @@ import { Injectable, Logger, NotFoundException, ForbiddenException } from "@nest
 import * as crypto from "crypto";
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { CircuitBreaker } from "../../common/utils/circuit-breaker.util";
+import { withRetry } from "../../common/utils/retry.util";
 
 @Injectable()
 export class WebhooksService {
   private readonly logger = new Logger(WebhooksService.name);
+  // Per-service circuit breaker — trips after 5 consecutive HTTP failures, resets after 60s
+  private readonly breaker = new CircuitBreaker({ threshold: 5, timeoutMs: 60_000 });
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -58,19 +62,30 @@ export class WebhooksService {
     });
 
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10_000);
-      const res = await fetch(endpoint.url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Imbobi-Signature": `sha256=${signature}`,
-          "X-Imbobi-Event": evento,
-          "X-Imbobi-Delivery": delivery.deliveryId,
-        },
-        body: payload,
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeout));
+      const res = await this.breaker.execute(() =>
+        withRetry(
+          async () => {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10_000);
+            try {
+              return await fetch(endpoint.url, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Imbobi-Signature": `sha256=${signature}`,
+                  "X-Imbobi-Event": evento,
+                  "X-Imbobi-Delivery": delivery.deliveryId,
+                },
+                body: payload,
+                signal: controller.signal,
+              });
+            } finally {
+              clearTimeout(timeout);
+            }
+          },
+          { retries: 2, baseMs: 500 },
+        ),
+      );
 
       await this.prisma.webhookDelivery.update({
         where: { deliveryId: delivery.deliveryId },
