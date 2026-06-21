@@ -123,6 +123,12 @@ export class KycService {
       this.logger.warn(`Failed to send KYC approval email: ${error}`);
     }
 
+    // Check if all required KYC documents are now approved; if so, update kycStatus
+    // and auto-issue any credits whose committee approved them while KYC was pending.
+    this.verificarKycCompleto(documento.usuarioId).catch((err) =>
+      this.logger.error(`Falha ao verificar KYC completo após aprovação de documento: ${err}`),
+    );
+
     return atualizado;
   }
 
@@ -251,6 +257,8 @@ export class KycService {
           if (sol?.creditoEmitido) return null;
 
           const taxaMensal = Number(process.env.TAXA_MENSAL_DEFAULT ?? "0.0099");
+          const dataVencimento = new Date();
+          dataVencimento.setMonth(dataVencimento.getMonth() + s.prazoMeses);
           const credito = await tx.credito.create({
             data: {
               usuarioId: s.usuarioId,
@@ -259,7 +267,7 @@ export class KycService {
               taxaMensal,
               prazoMeses: s.prazoMeses,
               status: "ATIVO",
-              dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
+              dataVencimento,
             },
           });
 

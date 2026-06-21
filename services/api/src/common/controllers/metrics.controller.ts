@@ -42,6 +42,11 @@ export class MetricsController {
       if (!valid) {
         throw new UnauthorizedException('Metrics token required.');
       }
+    } else if (process.env['NODE_ENV'] === 'production') {
+      // METRICS_TOKEN is required in production (env validator enforces this).
+      // This else-branch is a defence-in-depth guard against empty-string misconfiguration
+      // (METRICS_TOKEN= would be falsy, bypassing the auth check above).
+      throw new UnauthorizedException('Metrics token not configured.');
     }
     return registry.metrics();
   }

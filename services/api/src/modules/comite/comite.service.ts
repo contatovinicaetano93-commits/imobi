@@ -121,9 +121,18 @@ export class ComiteService {
     if (contagem.APROVAR >= contagem.AJUSTAR && contagem.APROVAR >= contagem.REPROVAR) decisao = "APROVADO";
     else if (contagem.AJUSTAR >= contagem.REPROVAR) decisao = "AJUSTADO";
 
+    await this._fecharComite(comiteId, decisao);
+  }
+
+  /** Applies a committee decision: persists the outcome and triggers downstream effects. */
+  private async _fecharComite(
+    comiteId: string,
+    decisao: "APROVADO" | "AJUSTADO" | "REPROVADO",
+    motivo?: string,
+  ) {
     const comite = await this.prisma.comiteDigital.update({
       where: { comiteId },
-      data: { status: "ENCERRADO", decisao, decisaoEm: new Date() },
+      data: { status: "ENCERRADO", decisao, decisaoEm: new Date(), decisaoMotivo: motivo ?? null },
       include: {
         solicitacao: {
           include: { usuario: { select: { nome: true, email: true, kycStatus: true } } },
@@ -168,6 +177,9 @@ export class ComiteService {
         });
         if (sol?.creditoEmitido) return null;
 
+        const dataVencimento = new Date();
+        dataVencimento.setMonth(dataVencimento.getMonth() + s.prazoMeses);
+
         const credito = await tx.credito.create({
           data: {
             usuarioId: s.usuarioId,
@@ -176,7 +188,7 @@ export class ComiteService {
             taxaMensal: this.taxaMensalDefault,
             prazoMeses: s.prazoMeses,
             status: "ATIVO",
-            dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
+            dataVencimento,
           },
         });
 
@@ -269,18 +281,9 @@ export class ComiteService {
     if (comite.status === "ENCERRADO") throw new BadRequestException("Comitê já encerrado");
     if (motivo && motivo.length > 1000) throw new BadRequestException("Motivo não pode exceder 1000 caracteres.");
 
-    await this.prisma.comiteDigital.update({
-      where: { comiteId },
-      data: { decisaoMotivo: motivo ?? null },
-    });
-
-    const votosSimulados: { voto: "APROVAR" | "AJUSTAR" | "REPROVAR" }[] = decisao === "APROVADO"
-      ? [{ voto: "APROVAR" }, { voto: "APROVAR" }]
-      : decisao === "AJUSTADO"
-        ? [{ voto: "AJUSTAR" }, { voto: "AJUSTAR" }]
-        : [{ voto: "REPROVAR" }, { voto: "REPROVAR" }];
-
-    await this.encerrarComite(comiteId, votosSimulados);
+    // decisaoMotivo is written inside _fecharComite in the same update as status/decisao,
+    // so a partial failure cannot leave the motivo persisted without a final decision.
+    await this._fecharComite(comiteId, decisao, motivo);
     return { ok: true, decisao };
   }
 

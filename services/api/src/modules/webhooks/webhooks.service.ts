@@ -27,7 +27,7 @@ export class WebhooksService {
     if (isProd && parsed.protocol !== "https:") {
       throw new BadRequestException("URL do webhook deve usar HTTPS em produção.");
     }
-    const PRIVATE_HOST_RE = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/;
+    const PRIVATE_HOST_RE = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.0\.0\.0|169\.254\.)/;
     const isPrivateHostname =
       PRIVATE_HOST_RE.test(parsed.hostname) ||
       parsed.hostname === "::1" ||

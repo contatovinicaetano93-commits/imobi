@@ -56,8 +56,12 @@ export class AuthService {
   }
 
   async login(input: LoginInput, meta?: { ip?: string; ua?: string }) {
+    // Include TOTP status in the same query to avoid a timing side-channel:
+    // a separate estaAtivo() call after bcrypt.compare would only execute for
+    // users with correct passwords, revealing password correctness via latency.
     const usuario = await this.prisma.usuario.findUnique({
       where: { email: input.email },
+      include: { totp: { select: { ativo: true } } },
     });
     if (!usuario) throw new UnauthorizedException("Credenciais inválidas.");
 
@@ -71,8 +75,7 @@ export class AuthService {
     const senhaOk = await bcrypt.compare(input.senha, usuario.passwordHash);
     if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
 
-    // Se o usuário tem TOTP ativo, solicita o código antes de emitir tokens
-    const totpAtivo = await this.totp.estaAtivo(usuario.usuarioId);
+    const totpAtivo = usuario.totp?.ativo ?? false;
     if (totpAtivo) {
       if (!input.totpCode) {
         // Return an opaque challenge — do NOT leak usuarioId to unauthenticated callers.
