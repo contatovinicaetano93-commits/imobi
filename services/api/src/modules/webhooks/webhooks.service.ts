@@ -1,9 +1,15 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
 import * as crypto from "crypto";
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CircuitBreaker } from "../../common/utils/circuit-breaker.util";
 import { withRetry } from "../../common/utils/retry.util";
+
+const ALLOWED_WEBHOOK_EVENTS = new Set([
+  "LIBERACAO_PROCESSADA", "LIBERACAO_FALHA", "ETAPA_APROVADA", "ETAPA_REJEITADA",
+  "KYC_APROVADO", "KYC_REJEITADO", "OBRA_CRIADA", "CREDITO_ATIVO", "CREDITO_VENCIDO",
+  "*",
+]);
 
 @Injectable()
 export class WebhooksService {
@@ -14,6 +20,23 @@ export class WebhooksService {
   constructor(private readonly prisma: PrismaService) {}
 
   async registrar(usuarioId: string, url: string, eventos: string[]) {
+    // Validate URL — must be https in production, reject localhost/private ranges
+    let parsed: URL;
+    try { parsed = new URL(url); } catch { throw new BadRequestException("URL do webhook inválida."); }
+    const isProd = process.env["NODE_ENV"] === "production";
+    if (isProd && parsed.protocol !== "https:") {
+      throw new BadRequestException("URL do webhook deve usar HTTPS em produção.");
+    }
+    if (isProd && /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(parsed.hostname)) {
+      throw new BadRequestException("URL do webhook não pode apontar para rede interna.");
+    }
+    // Validate event names
+    const invalid = eventos.filter((e) => !ALLOWED_WEBHOOK_EVENTS.has(e));
+    if (invalid.length > 0) throw new BadRequestException(`Eventos inválidos: ${invalid.join(", ")}.`);
+    // Max 20 webhooks per user
+    const count = await this.prisma.webhookEndpoint.count({ where: { usuarioId } });
+    if (count >= 20) throw new BadRequestException("Limite de 20 webhooks por usuário atingido.");
+
     const secret = crypto.randomBytes(32).toString("hex");
     return this.prisma.webhookEndpoint.create({
       data: { usuarioId, url, secret, eventos },

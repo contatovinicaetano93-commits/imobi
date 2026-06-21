@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
+import { validateMime } from "../../common/utils/mime-validator.util";
 import { PrismaService } from "../prisma/prisma.service";
 import { Queue } from "bull";
 import { InjectQueue } from "@nestjs/bull";
@@ -131,12 +132,16 @@ export class UsuariosService {
     return this.mapPerfil(usuario, avatarSigned);
   }
 
-  async uploadAvatar(usuarioId: string, fileBuffer: Buffer, mimeType: string) {
-    if (!AVATAR_MIMES.has(mimeType)) {
-      throw new BadRequestException("Formato inválido. Use JPEG, PNG ou WebP.");
-    }
+  async uploadAvatar(usuarioId: string, fileBuffer: Buffer, _mimeType: string) {
     if (fileBuffer.length > AVATAR_MAX_BYTES) {
       throw new BadRequestException("Imagem muito grande. Máximo 5 MB.");
+    }
+
+    let detectedMime: string;
+    try {
+      detectedMime = validateMime(fileBuffer, AVATAR_MIMES);
+    } catch (e: any) {
+      throw new BadRequestException(e.message);
     }
 
     const existing = await this.prisma.usuario.findUnique({
@@ -145,7 +150,7 @@ export class UsuariosService {
     });
     if (!existing) throw new NotFoundException("Usuário não encontrado");
 
-    const { key } = await this.storage.uploadAvatar(fileBuffer, mimeType, usuarioId);
+    const { key } = await this.storage.uploadAvatar(fileBuffer, detectedMime, usuarioId);
 
     if (existing.avatarUrl && !existing.avatarUrl.startsWith("http")) {
       await this.storage.delete(existing.avatarUrl).catch(() => null);
