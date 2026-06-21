@@ -247,6 +247,7 @@ export class ComiteService {
     const comite = await this.prisma.comiteDigital.findUnique({ where: { comiteId } });
     if (!comite) throw new NotFoundException("Comitê não encontrado");
     if (comite.status === "ENCERRADO") throw new BadRequestException("Comitê já encerrado");
+    if (motivo && motivo.length > 1000) throw new BadRequestException("Motivo não pode exceder 1000 caracteres.");
 
     await this.prisma.comiteDigital.update({
       where: { comiteId },
