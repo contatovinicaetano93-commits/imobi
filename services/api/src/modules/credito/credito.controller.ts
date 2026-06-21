@@ -45,4 +45,17 @@ export class CreditoController {
   extrato(@Param("id") id: string, @UsuarioAtual() u: IUsuario) {
     return this.credito.extrato(id, u.id);
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("ADMIN", "GESTOR", "GESTOR_FUNDO")
+  @Post(":id/estornar/:liberacaoId")
+  @HttpCode(200)
+  estornar(
+    @Param("id") creditoId: string,
+    @Param("liberacaoId") liberacaoId: string,
+    @Body("motivo") motivo: string,
+    @UsuarioAtual() u: IUsuario,
+  ) {
+    return this.credito.estornar(creditoId, liberacaoId, u.id, motivo ?? "Estorno administrativo");
+  }
 }

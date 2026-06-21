@@ -1,7 +1,9 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Inject } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import * as crypto from "crypto";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import type { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
 import { TotpService } from "../totp/totp.service";
@@ -15,6 +17,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly email: EmailService,
     private readonly totp: TotpService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
   async registrar(input: CadastroUsuarioInput) {
@@ -102,11 +105,24 @@ export class AuthService {
     return await this.gerarTokens(sessao.usuarioId);
   }
 
-  async revogarToken(refreshToken: string) {
+  async revogarToken(refreshToken: string, accessToken?: string) {
     await this.prisma.sessaoToken.updateMany({
       where: { refreshToken },
       data: { revogadoEm: new Date() },
     });
+
+    // Blacklist the access token jti so it can't be reused until natural expiry
+    if (accessToken) {
+      try {
+        const decoded = this.jwt.decode(accessToken) as { jti?: string; exp?: number } | null;
+        if (decoded?.jti && decoded?.exp) {
+          const ttlMs = decoded.exp * 1000 - Date.now();
+          if (ttlMs > 0) {
+            await this.cache.set(`blacklist:${decoded.jti}`, '1', ttlMs);
+          }
+        }
+      } catch { /* ignore */ }
+    }
   }
 
   async esqueceuSenha(emailInput: string) {
@@ -171,9 +187,11 @@ export class AuthService {
       where: { usuarioId },
       select: { tipo: true, nome: true, email: true, funcoesBloqueadas: true, bloqueadoEm: true },
     });
+    const jti = crypto.randomUUID();
     const accessToken = this.jwt.sign(
       {
         sub: usuarioId,
+        jti,
         role: normalizeUserRole(usuario?.tipo ?? null),
         nome: usuario?.nome ?? null,
         email: usuario?.email ?? null,

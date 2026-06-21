@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
+import { Module, NestModule, MiddlewareConsumer, RequestMethod } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bull";
 import { ThrottlerModule } from "@nestjs/throttler";
@@ -43,9 +43,15 @@ import { ReconciliacaoWorker } from "./workers/reconciliacao.worker";
 import { IdempotencyInterceptor } from "./common/interceptors/idempotency.interceptor";
 import { QUEUE_LIBERACAO } from "./common/constants";
 import { HealthController } from "./common/health.controller";
+import { MetricsController } from "./common/controllers/metrics.controller";
 import { getRedisConfig } from "./common/config";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
+import { CorrelationIdMiddleware } from "./common/middleware/correlation-id.middleware";
+import { RequestLoggerMiddleware } from "./common/middleware/request-logger.middleware";
 import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
+import { AuditModule } from "./common/services/audit.module";
+import { CreditoVencidoWorker } from "./workers/credito-vencido.worker";
+import { LgpdDeleteWorker } from "./workers/lgpd-delete.worker";
 
 const redisConfig = getRedisConfig();
 
@@ -111,13 +117,16 @@ const redisConfig = getRedisConfig();
     OutboxModule,
     TotpModule,
     WebhooksModule,
+    AuditModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, MetricsController],
   providers: [
     LiberacaoParcelaWorker,
     ExcluirUsuarioWorker,
     OutboxWorker,
     ReconciliacaoWorker,
+    CreditoVencidoWorker,
+    LgpdDeleteWorker,
     {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
@@ -139,9 +148,14 @@ const redisConfig = getRedisConfig();
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // Correlation ID and request logging on all routes
+    consumer
+      .apply(CorrelationIdMiddleware, RequestLoggerMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+
     const nodeEnv = process.env.NODE_ENV || 'development';
     if (nodeEnv === 'production') {
-      consumer.apply(ProductionMiddleware).forRoutes('*');
+      consumer.apply(ProductionMiddleware).forRoutes({ path: '*', method: RequestMethod.ALL });
     }
   }
 }

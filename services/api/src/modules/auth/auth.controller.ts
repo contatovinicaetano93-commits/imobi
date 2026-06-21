@@ -1,5 +1,5 @@
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
-import { Controller, Post, Body, HttpCode, UseGuards } from "@nestjs/common";
+import { Controller, Post, Body, Headers, HttpCode, UseGuards } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { CadastroUsuarioSchema, LoginSchema, EsqueceuSenhaSchema, RedefinirSenhaSchema } from "@imbobi/schemas";
@@ -36,8 +36,12 @@ export class AuthController {
   @ApiBearerAuth("JWT")
   @Post("logout")
   @HttpCode(204)
-  logout(@Body("refreshToken") token: string) {
-    return this.auth.revogarToken(token);
+  logout(
+    @Body("refreshToken") token: string,
+    @Headers("authorization") authHeader: string,
+  ) {
+    const accessToken = authHeader?.replace(/^Bearer\s+/i, '');
+    return this.auth.revogarToken(token, accessToken);
   }
 
   @Post("esqueceu-senha")

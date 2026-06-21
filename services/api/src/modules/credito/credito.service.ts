@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException, ConflictException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { simularCredito } from "@imbobi/core";
 import type { SolicitacaoCreditoInput, SimulacaoCreditoInput } from "@imbobi/schemas";
@@ -86,5 +86,60 @@ export class CreditoService {
         motivo: lib.motivo ?? undefined,
       })),
     };
+  }
+
+  async estornar(
+    creditoId: string,
+    liberacaoId: string,
+    solicitanteId: string,
+    motivo: string,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      // Advisory lock: same key as liberacao worker to prevent race with in-flight liberação
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`liberacao:${creditoId}`}))`;
+
+      const lancamento = await tx.lancamentoFinanceiro.findFirst({
+        where: { liberacaoId, tipo: 'CREDITO' },
+      });
+      if (!lancamento) throw new NotFoundException('Lançamento de liberação não encontrado.');
+
+      // Prevent double reversal
+      const jaEstornado = await tx.lancamentoFinanceiro.findFirst({
+        where: { idempotencyKey: `estorno:${liberacaoId}` },
+      });
+      if (jaEstornado) throw new ConflictException('Esta liberação já foi estornada.');
+
+      const valor = Number(lancamento.valor);
+
+      const estorno = await tx.lancamentoFinanceiro.create({
+        data: {
+          tipo: 'DEBITO',
+          categoria: 'ESTORNO_LIBERACAO',
+          valor,
+          creditoId,
+          usuarioId: solicitanteId,
+          descricao: `Estorno de liberação: ${motivo}`,
+          metadata: { estornoDeId: lancamento.lancamentoId, motivo } as any,
+          idempotencyKey: `estorno:${liberacaoId}`,
+        },
+      });
+
+      await tx.credito.update({
+        where: { creditoId },
+        data: { valorLiberado: { decrement: valor } },
+      });
+
+      await (tx as any).auditLog.create({
+        data: {
+          acao: 'ESTORNO_LIBERACAO',
+          entidade: 'LancamentoFinanceiro',
+          entidadeId: lancamento.lancamentoId,
+          usuarioId: solicitanteId,
+          metadata: { creditoId, liberacaoId, valor, motivo },
+        },
+      });
+
+      return { estornoId: estorno.lancamentoId, valor, motivo };
+    });
   }
 }

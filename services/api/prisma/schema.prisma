@@ -890,3 +890,23 @@ model WebhookDelivery {
   @@index([sucesso])
   @@map("webhook_deliveries")
 }
+
+// ── Audit Log Financeiro ──────────────────────────────────────────────────────
+// Rastreabilidade de toda ação financeira e administrativa.
+
+model AuditLog {
+  auditId    String   @id @default(uuid())
+  acao       String
+  entidade   String
+  entidadeId String
+  usuarioId  String?
+  ipAddress  String?
+  metadata   Json?
+  criadoEm   DateTime @default(now())
+
+  @@index([entidade, entidadeId])
+  @@index([usuarioId])
+  @@index([acao])
+  @@index([criadoEm])
+  @@map("audit_logs")
+}

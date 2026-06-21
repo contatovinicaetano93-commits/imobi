@@ -62,6 +62,29 @@ export class LedgerService {
     });
   }
 
+  /** Cursor-based pagination — stable under concurrent inserts, efficient on large tables. */
+  async extratoCursor(
+    creditoId: string,
+    cursor?: string,
+    take = 20,
+  ): Promise<{ data: any[]; nextCursor: string | undefined; hasMore: boolean }> {
+    const limit = Math.min(take, 100);
+    const items = await this.prisma.lancamentoFinanceiro.findMany({
+      where: { creditoId },
+      orderBy: { criadoEm: "desc" },
+      take: limit + 1,
+      ...(cursor
+        ? { cursor: { lancamentoId: cursor }, skip: 1 }
+        : {}),
+    });
+
+    const hasMore = items.length > limit;
+    const data = hasMore ? items.slice(0, limit) : items;
+    const nextCursor = hasMore ? data[data.length - 1]?.lancamentoId : undefined;
+
+    return { data, nextCursor, hasMore };
+  }
+
   /** Verifica consistência: soma do ledger deve bater com valorLiberado do crédito. */
   async verificarConsistencia(creditoId: string): Promise<{ ok: boolean; divergencia: number }> {
     const [credito, somaLedger] = await Promise.all([
