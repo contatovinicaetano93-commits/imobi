@@ -45,6 +45,10 @@ import { StructuredLoggerService } from "./common/logging/structured-logger.serv
 import { ShardingService } from "./common/scalability/sharding.service";
 import { MultiTierCacheService } from "./common/scalability/multi-tier-cache.service";
 import { ReadReplicaService } from "./common/scalability/read-replica.service";
+import { ZeroTrustService } from "./common/security/zero-trust.service";
+import { ImmutableAuditService } from "./common/security/immutable-audit.service";
+import { SecretRotationService } from "./common/security/secret-rotation.service";
+import { EncryptionService } from "./common/security/encryption.service";
 
 const redisConfig = getRedisConfig();
 
@@ -113,6 +117,10 @@ const redisConfig = getRedisConfig();
     ShardingService,
     MultiTierCacheService,
     ReadReplicaService,
+    ZeroTrustService,
+    ImmutableAuditService,
+    SecretRotationService,
+    EncryptionService,
     LiberacaoParcelaWorker,
     ExcluirUsuarioWorker,
     {
