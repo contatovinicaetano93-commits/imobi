@@ -382,8 +382,32 @@ export type KycAuditEntry = {
 
 export const managerApi = {
   dashboard: () => apiFetch<ManagerStats>("/manager/dashboard"),
-  carteira: () =>
-    apiFetch<{ obras: ObraResumo[]; creditos: CreditoResumo[] }>("/manager/carteira"),
+  getCarteira: () =>
+    apiFetch<{
+      totalObras: number;
+      totalCreditos: number;
+      valorTotalCreditos: number;
+      valorPagoCreditos: number;
+      obras: Array<{
+        id: string;
+        nome: string;
+        endereco: string;
+        cidade: string;
+        status: string;
+        totalUnidades: number;
+        unidadesDisp: number;
+      }>;
+      creditos: Array<{
+        id: string;
+        usuarioId: string;
+        usuarioNome: string;
+        valor: number;
+        status: string;
+        dataAprovacao?: string;
+        dataVencimento?: string;
+        valorPago: number;
+      }>;
+    }>("/manager/carteira"),
   listarEtapasPendentes: (
     limit?: number,
     offset?: number,
