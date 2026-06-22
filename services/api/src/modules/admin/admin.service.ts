@@ -394,7 +394,7 @@ export class AdminService {
     if (obra.usuario) {
       await this.notificacoes.criar(
         obra.usuario.usuarioId,
-        "OBRA_HOMOLOGADA",
+        "OBRA_CRIADA",
         "Obra homologada no pipe IMOBI",
         `Sua obra "${obra.nome}" entrou no pipe ativo. Você já pode executar etapas e enviar evidências.`,
         `/dashboard/obras/${obraId}`,

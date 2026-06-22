@@ -447,6 +447,16 @@ export const managerApi = {
     apiFetch(`/manager/kyc/${id}/rejeitar`, { method: "PATCH", body: JSON.stringify({ motivo }) }),
   obterEtapaAuditLog: (id: string) => apiFetch<EtapaAuditEntry[]>(`/manager/etapas/${id}/audit-log`),
   obterKycAuditLog: (id: string) => apiFetch<KycAuditEntry[]>(`/manager/kyc/${id}/audit-log`),
+  aprovarEtapa: (id: string, observacao?: string) =>
+    apiFetch(`/manager/etapas/${id}/aprovar`, {
+      method: "PATCH",
+      body: JSON.stringify({ observacao }),
+    }),
+  rejeitarEtapa: (id: string, motivo: string) =>
+    apiFetch(`/manager/etapas/${id}/rejeitar`, {
+      method: "PATCH",
+      body: JSON.stringify({ motivo }),
+    }),
 };
 
 // ── Engenheiros ──────────────────────────────────────────────────────

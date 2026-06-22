@@ -61,10 +61,12 @@ export default async function EngenheiroPortalPage() {
 
   const agendadas = visitas.filter((v: Visita) => v.status === "AGENDADA");
 
+  const licencasPriority = licencasAtencao > 0 ? ("critical" as const) : ("primary" as const);
+
   const engenheiroPanels = [
     { id: "fila-visitas", priority: "critical" as const },
     { id: "obras-responsabilidade", priority: "primary" as const },
-    { id: "licencas", priority: (licencasAtencao > 0 ? "critical" : "primary") as const },
+    { id: "licencas", priority: licencasPriority },
     { id: "etapas-projeto", priority: "secondary" as const },
   ];
 

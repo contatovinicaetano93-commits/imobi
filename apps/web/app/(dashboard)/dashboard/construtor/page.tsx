@@ -107,11 +107,14 @@ export default async function ConstrutorPage() {
   // Liberações do crédito (extrato de desembolsos)
   const liberacoes = credito?.liberacoes ?? [];
 
+  const liberacoesPriority = etapasPendentes.length > 0 ? ("critical" as const) : ("primary" as const);
+  const kycPriority = docsRejeitados > 0 ? ("critical" as const) : docsPendentes > 0 ? ("primary" as const) : ("secondary" as const);
+
   const construtorPanels = [
     { id: "cronograma-pagamentos", priority: "primary" as const },
-    { id: "cronograma-liberacoes", priority: (etapasPendentes.length > 0 ? "critical" : "primary") as const },
+    { id: "cronograma-liberacoes", priority: liberacoesPriority },
     { id: "medicao-obra", priority: "secondary" as const },
-    { id: "documentos-kyc", priority: (docsRejeitados > 0 ? "critical" : docsPendentes > 0 ? "primary" : "secondary") as const },
+    { id: "documentos-kyc", priority: kycPriority },
     { id: "extrato-operacao", priority: "secondary" as const },
     { id: "solicitacoes", priority: "primary" as const },
     ...(notifs.length > 0 ? [{ id: "notificacoes", priority: "primary" as const }] : []),
@@ -187,9 +190,6 @@ export default async function ConstrutorPage() {
           <Link href="/dashboard/simulador" style={{ display: "inline-block", background: ROYAL, color: "white", borderRadius: 10, padding: "0.55rem 1.25rem", fontSize: "0.8rem", fontWeight: 600, textDecoration: "none" }}>
             Fazer simulação
           </Link>
-        </Card>
-      )}
-
         </Card>
       )}
 
