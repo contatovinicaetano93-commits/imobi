@@ -44,10 +44,10 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
-    "@expo/metro-config": "~0.18.11",
+    "@expo/metro-config": "~0.21.11",
     "@types/react": "~18.2.0",
     "@types/node": "^20.19.43",
-    "metro": "~0.80.12",
+    "metro": "~0.84.4",
     "typescript": "^5.5.0"
   }
 }
