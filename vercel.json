@@ -4,7 +4,7 @@
   "outputDirectory": "apps/web/.next",
   "framework": "nextjs",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://imobi-api-efgg.onrender.com"
+    "NEXT_PUBLIC_API_URL": "https://api.imbobi.com.br"
   },
   "headers": [
     {
@@ -12,7 +12,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *.amazonaws.com *.r2.cloudflarestorage.com; connect-src 'self' https://imobi-api-efgg.onrender.com https://imobi-api-staging.onrender.com *.sentry.io; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *.amazonaws.com *.r2.cloudflarestorage.com; connect-src 'self' https://api.imbobi.com.br *.sentry.io; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
         }
       ]
     }
