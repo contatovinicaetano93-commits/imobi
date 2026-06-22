@@ -42,6 +42,9 @@ import { MetricsController } from "./common/metrics.controller";
 import { HttpLoggingInterceptor } from "./common/interceptors/http-logging.interceptor";
 import { TieredRateLimitService } from "./common/rate-limiting/tiered-rate-limit.service";
 import { StructuredLoggerService } from "./common/logging/structured-logger.service";
+import { ShardingService } from "./common/scalability/sharding.service";
+import { MultiTierCacheService } from "./common/scalability/multi-tier-cache.service";
+import { ReadReplicaService } from "./common/scalability/read-replica.service";
 
 const redisConfig = getRedisConfig();
 
@@ -107,6 +110,9 @@ const redisConfig = getRedisConfig();
     PrometheusService,
     TieredRateLimitService,
     StructuredLoggerService,
+    ShardingService,
+    MultiTierCacheService,
+    ReadReplicaService,
     LiberacaoParcelaWorker,
     ExcluirUsuarioWorker,
     {
