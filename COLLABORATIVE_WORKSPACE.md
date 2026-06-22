@@ -127,6 +127,14 @@
 - ✅ `CLAUDE.md` (full version) saved to local workspace
 - 📋 **Kit colaborativo 5/5 completo** — pronto para implementar prioridade A–E
 
+### 2026-06-22 — Cursor: Priority C complete (KYC upload)
+
+- ✅ **Priority C** — `KycDocumentUpload` com drag-drop, preview, barra de progresso e validação Zod
+- ✅ `uploadKycArquivo()` — proxy correto `POST /api/proxy/kyc/upload-arquivo` (substitui fluxo quebrado via `/documentos`)
+- ✅ `@imbobi/schemas` — `kyc.schema.ts` (tipos, catálogo, `validateKycFile`)
+- ✅ Página `/dashboard/kyc` refatorada para usar o componente
+- 📋 **Next up**: Priority D (Property Search Interface)
+
 ### 2026-06-22 — Cursor: Priority B complete (Dashboard Layout & Navigation)
 
 - ✅ **Priority B** — Refactored dashboard shell into reusable nav components
@@ -174,7 +182,7 @@ You are Claude's collaborative partner on the Imobi fintech platform.
 
 - ~~A) Fix Next.js SSR build issue on /404 and /500 pages~~ ✅ Done (2026-06-22)
 - ~~B) Implement responsive dashboard layout with Tailwind~~ ✅ Done (2026-06-22)
-- C) Create KYC document upload component
+- ~~C) Create KYC document upload component~~ ✅ Done (2026-06-22)
 - D) Build real estate property search interface
 - E) Set up mobile app navigation (React Native + Expo)
 

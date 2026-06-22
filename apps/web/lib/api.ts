@@ -278,6 +278,45 @@ export const kycApi = {
   verificarKycCompleto: () => apiFetch<{ completo: boolean; documentos: KycDocumento[] }>("/kyc/verificar"),
 };
 
+/** Upload KYC file via multipart proxy (single step — creates KYC document record). */
+export function uploadKycArquivo(
+  file: File,
+  tipo: string,
+  onProgress?: (percent: number) => void,
+): Promise<KycDocumento> {
+  return new Promise((resolve, reject) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("tipo", tipo);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/proxy/kyc/upload-arquivo");
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      let body: { message?: string } & Partial<KycDocumento> = {};
+      try {
+        body = JSON.parse(xhr.responseText) as typeof body;
+      } catch {
+        /* non-json */
+      }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(body as KycDocumento);
+        return;
+      }
+      reject(new ApiError(xhr.status, body.message ?? "Erro no upload do documento"));
+    };
+
+    xhr.onerror = () => reject(new ApiError(0, "Falha de rede ao enviar documento"));
+    xhr.send(fd);
+  });
+}
+
 // ── Manager ───────────────────────────────────────────────────────────
 
 export type EtapaPendente = {
