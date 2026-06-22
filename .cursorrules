@@ -1,0 +1,449 @@
+# 🏛️ Cursor Rules — Imobi Architecture & Development
+
+## 🎯 PROJECT CONTEXT
+
+This is **Imobi**, a professional fintech platform for real estate credit.
+
+**Key Characteristics**:
+- ✅ Monorepo (Turborepo + pnpm)
+- ✅ Type-safe (TypeScript strict, Zod validation)
+- ✅ API-first (OpenAPI 3.0)
+- ✅ Resilient (Circuit breaker, retry, timeout patterns)
+- ✅ Scalable (Sharding, caching, horizontal scaling)
+- ✅ Observable (Structured logging, tracing, metrics)
+
+**Master Architecture Guide**: `ARCHITECTURE_RESILIENCE_API_FIRST.md`
+**Project Guide**: `CLAUDE.md`
+
+---
+
+## 🔑 CORE PRINCIPLES
+
+### 1. Type Safety First
+```
+- ❌ Never use `any` type
+- ✅ Use specific types or `unknown` if unsure
+- ✅ TypeScript strict mode enabled
+- ✅ Zod schemas as source of truth
+```
+
+### 2. API First Design
+```
+- ✅ OpenAPI 3.0 specification first
+- ✅ Semantic versioning (v1, v2, v3)
+- ✅ No breaking changes between versions
+- ✅ Rate limiting configured per tier
+```
+
+### 3. Resilient by Default
+```
+- ✅ Circuit breaker for external services
+- ✅ Retry with exponential backoff
+- ✅ Timeout on all operations
+- ✅ Graceful degradation (fallback values)
+```
+
+### 4. Observable Everything
+```
+- ✅ Structured logging (JSON)
+- ✅ Distributed tracing on critical paths
+- ✅ Prometheus metrics
+- ✅ Error tracking (Sentry)
+```
+
+---
+
+## 📁 DIRECTORY STRUCTURE
+
+```
+apps/web/                  # Next.js 14 frontend
+  ├── app/                 # App Router (pages + layouts)
+  ├── components/          # React components
+  ├── lib/                 # api.ts, sentry.ts, utils
+  └── next.config.js
+
+services/api/              # NestJS backend
+  ├── src/modules/         # Modular structure (auth, kyc, obras, etc)
+  ├── prisma/              # Migrations + schema
+  └── nest-cli.json
+
+packages/
+  ├── @imbobi/schemas/     # Zod validation (source of truth)
+  ├── @imbobi/core/        # Hooks, utils, api-client
+  └── @imbobi/ui/          # Components (shadcn + React Native)
+```
+
+---
+
+## 🚀 DEVELOPMENT WORKFLOW
+
+### 1. Before Writing Code
+- [ ] Check if schema exists in `@imbobi/schemas`
+- [ ] Read `ARCHITECTURE_RESILIENCE_API_FIRST.md` for patterns
+- [ ] Plan API endpoint in OpenAPI format
+- [ ] Design component/service in isolation
+
+### 2. Writing Code
+- [ ] Use TypeScript (no `any`)
+- [ ] Follow monorepo package isolation
+- [ ] Implement resilience patterns (circuit breaker, retry)
+- [ ] Add structured logging
+- [ ] Handle errors explicitly
+
+### 3. Before Committing
+- [ ] Run `pnpm type-check` (0 errors required)
+- [ ] Run `pnpm lint` (0 errors, acceptable warnings)
+- [ ] Test locally: `pnpm dev`
+- [ ] Update OpenAPI spec if API changed
+- [ ] Update CLAUDE.md if architecture changed
+
+---
+
+## 📋 CODE PATTERNS
+
+### NestJS Service (Backend)
+
+```typescript
+@Injectable()
+export class ObraService {
+  constructor(
+    private db: PrismaService,
+    private cache: RedisService,
+    private logger: LoggerService,
+    private queue: Queue,  // BullMQ for async
+  ) {}
+
+  async getObra(id: string, usuarioId: string) {
+    try {
+      // 1. Check cache (Redis)
+      const cached = await this.cache.get(`obra:${id}`);
+      if (cached) return JSON.parse(cached);
+
+      // 2. Query database
+      const obra = await this.db.obra.findUnique({
+        where: { id },
+        include: { etapas: true, creditos: true },
+      });
+
+      // 3. Validate access
+      if (!obra) throw new NotFoundException('Obra not found');
+      if (obra.usuarioId !== usuarioId) throw new ForbiddenException();
+
+      // 4. Cache result
+      await this.cache.set(
+        `obra:${id}`,
+        JSON.stringify(obra),
+        'EX',
+        600  // 10 min TTL
+      );
+
+      // 5. Log
+      this.logger.debug('Obra fetched', { obraId: id, cached: false });
+
+      return obra;
+    } catch (error) {
+      this.logger.error('Failed to fetch obra', { obraId: id, error });
+      throw error;
+    }
+  }
+
+  // Async operations ALWAYS use BullMQ
+  async aprovarEtapa(etapaId: string, managerId: string) {
+    await this.queue.add('etapa-approval', {
+      etapaId,
+      managerId,
+      timestamp: new Date(),
+    }, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 1000 },
+    });
+  }
+}
+```
+
+### React Component (Frontend)
+
+```typescript
+import { obraSchema } from '@imbobi/schemas';
+import { useApi } from '@imbobi/core';
+
+type ObraCardProps = {
+  obra: z.infer<typeof obraSchema>;
+  onSelect?: (obra) => void;
+};
+
+export function ObraCard({ obra, onSelect }: ObraCardProps) {
+  const { data: detalhes, loading, error } = useApi(
+    () => fetch(`/api/obras/${obra.id}`),
+    [obra.id]
+  );
+
+  if (loading) return <Skeleton className="h-40 w-full" />;
+  if (error) return <ErrorAlert message={error.message} />;
+
+  return (
+    <Card
+      className="cursor-pointer hover:shadow-lg"
+      onClick={() => onSelect?.(obra)}
+    >
+      <h3 className="font-bold">{obra.nome}</h3>
+      <p className="text-sm text-gray-600">{detalhes?.endereco}</p>
+    </Card>
+  );
+}
+```
+
+### Zod Schema (Shared Validation)
+
+```typescript
+// packages/@imbobi/schemas/src/obra.ts
+
+export const obraSchema = z.object({
+  id: z.string().uuid(),
+  nome: z.string().min(3).max(255),
+  endereco: z.string(),
+  status: z.enum(['CRIADA', 'APROVADA', 'ATIVA', 'CONCLUIDA', 'CANCELADA']),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  dataInicio: z.date(),
+  dataConclusao: z.date().optional(),
+  usuarioId: z.string().uuid(),
+  criadoEm: z.date(),
+});
+
+export type Obra = z.infer<typeof obraSchema>;
+```
+
+---
+
+## 🔄 RESILIENCE PATTERNS
+
+### Circuit Breaker
+```typescript
+// For external API calls that might fail
+const circuitBreaker = new CircuitBreaker({
+  failureThreshold: 5,        // Fail after 5 errors
+  resetTimeout: 60000,        // Wait 1 min before retrying
+  monitorInterval: 10000,
+});
+
+await circuitBreaker.execute(() =>
+  externalService.call()
+);
+```
+
+### Retry with Exponential Backoff
+```typescript
+// For transient failures (network timeouts, etc)
+const retry = new RetryPolicy({
+  maxAttempts: 3,
+  initialDelayMs: 100,
+  maxDelayMs: 5000,
+  multiplier: 2,
+});
+
+await retry.execute(() => database.query());
+```
+
+### Timeout
+```typescript
+// Always set timeouts
+return Promise.race([
+  externalService.call(),
+  new Promise((_, reject) =>
+    setTimeout(() => reject(new TimeoutError()), 5000)
+  ),
+]);
+```
+
+### Bulkhead (Resource Isolation)
+```typescript
+// Separate queues by criticality
+BullModule.registerQueue(
+  { name: 'kyc-approval', defaultJobOptions: { attempts: 3 } },      // Critical
+  { name: 'etapa-liberacao', defaultJobOptions: { attempts: 5 } },    // Critical
+  { name: 'notification', defaultJobOptions: { attempts: 1 } },       // Non-critical
+);
+```
+
+---
+
+## 📊 OBSERVABILITY REQUIREMENTS
+
+### Structured Logging
+```typescript
+// ✅ DO THIS
+this.logger.log('Obra created', {
+  obraId: obra.id,
+  usuarioId: usuario.id,
+  endereco: obra.endereco,
+  timestamp: new Date(),
+});
+
+// ❌ DON'T DO THIS
+console.log('Created obra:', obra);
+```
+
+### Distributed Tracing
+```typescript
+// Add trace context to critical operations
+const span = tracer.startSpan('processar_etapa', {
+  attributes: { 'etapa.id': etapaId }
+});
+
+// Automatically traced:
+// - validate()
+// - processarDocumentos()
+// - triggearAprovacao()
+
+span.end();
+```
+
+### Metrics
+```typescript
+// Track business metrics
+this.metrics.increment('obras_criadas_total', {
+  status: obra.status,
+  tipo: obra.tipo,
+});
+
+this.metrics.histogram('etapa_processamento_ms', processingTime);
+```
+
+---
+
+## 🔐 SECURITY RULES
+
+### 1. Authorization
+```typescript
+// ✅ Always check authorization
+if (obra.usuarioId !== currentUser.id && !currentUser.isAdmin) {
+  throw new ForbiddenException();
+}
+
+// ❌ Never assume user has access
+return obra;  // Without checking!
+```
+
+### 2. Input Validation
+```typescript
+// ✅ Always validate with Zod
+const obra = obraSchema.parse(req.body);
+
+// ❌ Never trust client input
+const obra = req.body;
+```
+
+### 3. Secrets
+```bash
+# ✅ Use environment variables
+DATABASE_URL=postgresql://...
+
+# ❌ Never commit secrets
+password = "secret123"
+```
+
+### 4. Audit Logging
+```typescript
+// Log sensitive operations
+this.auditService.log({
+  action: 'APPROVE_KYC',
+  entityId: kycId,
+  userId: managerId,
+  changes: { before: oldStatus, after: 'APROVADO' },
+  timestamp: new Date(),
+});
+```
+
+---
+
+## 🧪 TESTING EXPECTATIONS
+
+### Current Status
+- ✅ Type checking: 0 errors (required)
+- ✅ Linting: 0 errors, <10 warnings (required)
+- ✅ E2E tests: 54+ assertions documented
+- ⏳ Unit tests: 0% (plan to add post-launch)
+- ⏳ Integration tests: 0% (plan to add post-launch)
+
+### Before Pushing
+- [ ] `pnpm type-check` passes
+- [ ] `pnpm lint` passes (0 errors)
+- [ ] Manual testing on feature
+- [ ] OpenAPI spec updated (if API changed)
+
+---
+
+## 🚀 DEPLOYMENT CHECKLIST
+
+### Before Deploying to Production
+- [ ] All tests pass
+- [ ] Code review completed
+- [ ] OpenAPI spec updated
+- [ ] No hardcoded secrets
+- [ ] Logging + monitoring configured
+- [ ] Graceful degradation implemented
+- [ ] Rate limiting configured
+
+### Rollback Plan
+- [ ] Blue-green deployment ready
+- [ ] Canary monitoring configured
+- [ ] Feature flags for new code
+- [ ] Instant rollback procedure documented
+
+---
+
+## 🎯 COMMON MISTAKES TO AVOID
+
+| ❌ Mistake | ✅ Correct |
+|-----------|----------|
+| Using `any` type | Specific types or `unknown` |
+| No error handling | Try/catch + logging |
+| Hardcoded URLs | Environment variables |
+| Sync heavy operations | Use BullMQ queues |
+| No timeout on calls | Always set timeout |
+| Duplicating validation | Use Zod schemas |
+| Modifying audit logs | Immutable event sourcing |
+| No caching | 3-tier cache strategy |
+| No circuit breaker | Implement for external APIs |
+| Silent failures | Always log + alert |
+
+---
+
+## 📚 REFERENCE DOCUMENTS
+
+- `CLAUDE.md` — Project overview & commands
+- `ARCHITECTURE_RESILIENCE_API_FIRST.md` — Master architecture guide
+- `CODE_REVIEW_AUDIT.md` — Code quality assessment (7.8/10)
+- `docs/API_ENDPOINTS.md` — REST API documentation
+
+---
+
+## 🔗 COLLABORATION WORKFLOW
+
+### Claude (AI Assistant) Responsibilities
+- ✅ Architecture design & patterns
+- ✅ Backend implementation (NestJS, databases)
+- ✅ Code review & refactoring
+- ✅ Documentation & planning
+- ✅ Debugging complex issues
+
+### Cursor (IDE + Human Developer) Responsibilities
+- ✅ Frontend implementation (React, React Native)
+- ✅ UI/UX components
+- ✅ Local testing & debugging
+- ✅ Integration testing
+- ✅ Deployment operations
+
+### Shared Responsibilities
+- ✅ Code quality standards
+- ✅ Type safety
+- ✅ Security compliance
+- ✅ Documentation updates
+- ✅ Architecture decisions
+
+---
+
+**Last Updated**: June 2026
+**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`
+**Status**: Production-ready architecture (soft launch ready)
