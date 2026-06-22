@@ -1,18 +1,82 @@
-@keyframes pulse {
+@keyframes dash-pulse {
   0%, 100% { opacity: 0.4; }
-  50%       { opacity: 0.8; }
+  50% { opacity: 0.8; }
+}
+
+/* Dashboard theme tokens (scoped to .dash-root) */
+.dash-root {
+  --dash-bg: #eef3ff;
+  --dash-surface: #ffffff;
+  --dash-text: #0f172a;
+  --dash-muted: #64748b;
+  --dash-border: #e2e8f0;
+  --dash-card-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  color: var(--dash-text);
+}
+
+.dash-root[data-theme="dark"] {
+  --dash-bg: #0a1224;
+  --dash-surface: #111d33;
+  --dash-text: #e2e8f0;
+  --dash-muted: #94a3b8;
+  --dash-border: rgba(255, 255, 255, 0.08);
+  --dash-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.dash-root[data-theme="dark"] .bg-white {
+  background-color: var(--dash-surface) !important;
+}
+
+.dash-root[data-theme="dark"] .border-gray-100 {
+  border-color: var(--dash-border) !important;
+}
+
+.dash-root[data-theme="dark"] .text-gray-500,
+.dash-root[data-theme="dark"] .text-gray-600,
+.dash-root[data-theme="dark"] .text-gray-700 {
+  color: var(--dash-muted) !important;
 }
 
 .dash-main {
   padding: 1rem;
   overflow-x: hidden;
-  /* clearance for fixed WhatsApp FAB on mobile */
-  padding-bottom: 88px;
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  background: var(--dash-bg);
+}
+
+.dash-bottomnav {
+  display: flex;
 }
 
 @media (min-width: 768px) {
-  .dash-sidebar  { display: flex !important; }
-  .dash-mhidden  { display: none !important; }
-  .dash-spacer   { display: none !important; }
-  .dash-main     { padding: 2rem; padding-bottom: 2rem; }
+  .dash-sidebar {
+    display: flex !important;
+  }
+
+  .dash-mhidden {
+    display: none !important;
+  }
+
+  .dash-spacer {
+    display: none !important;
+  }
+
+  .dash-bottomnav {
+    display: none !important;
+  }
+
+  .dash-main {
+    padding: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .dash-wa {
+    bottom: 1.5rem !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .dash-main {
+    padding-bottom: calc(140px + env(safe-area-inset-bottom));
+  }
 }

@@ -127,6 +127,17 @@
 - ✅ `CLAUDE.md` (full version) saved to local workspace
 - 📋 **Kit colaborativo 5/5 completo** — pronto para implementar prioridade A–E
 
+### 2026-06-22 — Cursor: Priority B complete (Dashboard Layout & Navigation)
+
+- ✅ **Priority B** — Refactored dashboard shell into reusable nav components
+- ✅ `components/dashboard/nav/` — config, sidebar, mobile header, bottom tabs, theme toggle
+- ✅ `hooks/use-dashboard-auth.ts` + `hooks/use-dashboard-theme.ts`
+- ✅ Responsive: desktop sidebar, mobile drawer + bottom tab bar (role-based, max 5 tabs)
+- ✅ Light/dark theme toggle (persisted in `localStorage`, scoped to dashboard)
+- ✅ `GESTOR_FUNDO` role support in nav filtering
+- ✅ `pnpm --filter @imbobi/web type-check` — 0 errors
+- 📋 **Next up**: Priority C (KYC Document Upload Component)
+
 ### 2026-06-22 — Cursor: Priority A complete (Next.js build)
 
 - ✅ **Priority A** — Next.js production build passes (`pnpm --filter @imbobi/web build`, exit 0)
@@ -162,7 +173,7 @@ You are Claude's collaborative partner on the Imobi fintech platform.
 **CURRENT PRIORITIES (select ONE to start):**
 
 - ~~A) Fix Next.js SSR build issue on /404 and /500 pages~~ ✅ Done (2026-06-22)
-- B) Implement responsive dashboard layout with Tailwind
+- ~~B) Implement responsive dashboard layout with Tailwind~~ ✅ Done (2026-06-22)
 - C) Create KYC document upload component
 - D) Build real estate property search interface
 - E) Set up mobile app navigation (React Native + Expo)
