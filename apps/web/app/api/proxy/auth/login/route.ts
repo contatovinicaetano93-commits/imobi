@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { handleLoginPost } from '@/lib/auth-handlers';
 
 export const maxDuration = 60;

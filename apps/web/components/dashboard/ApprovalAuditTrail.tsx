@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import type { EtapaAuditEntry, KycAuditEntry } from "@/lib/api";
 import { CheckCircle2, XCircle, Edit3, Clock, User, Mail, AlertCircle } from "lucide-react";
 
@@ -122,11 +121,10 @@ export function ApprovalAuditTrail({
         <div className="absolute left-5 top-0 bottom-0 w-1 bg-gradient-to-b from-gray-200 via-gray-200 to-transparent" />
 
         <div className="space-y-6 relative z-10">
-          {auditLogs.map((log, idx) => {
+          {auditLogs.map((log, _idx) => {
             const badgeColor = getStatusBadgeColor(log.acaoTipo);
             const icon = getStatusIcon(log.acaoTipo);
             const label = getStatusLabel(log.acaoTipo);
-            const isLastItem = idx === auditLogs.length - 1;
             const observacao =
               "observacoes" in log
                 ? log.observacoes

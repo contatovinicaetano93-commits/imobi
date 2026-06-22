@@ -16,10 +16,6 @@ function brl(v: number) {
 function pct(v: number) {
   return v.toFixed(2).replace(".", ",") + "%";
 }
-function parseBRL(s: string): number {
-  const n = Number(s.replace(/\./g, "").replace(",", ".").replace(/[^0-9.]/g, ""));
-  return isNaN(n) ? 0 : n;
-}
 function fmtInput(v: number): string {
   if (v === 0) return "";
   return v.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
