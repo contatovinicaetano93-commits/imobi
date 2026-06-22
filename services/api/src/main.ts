@@ -7,6 +7,7 @@ import fastifyMultipart from "@fastify/multipart";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { validateEnvironmentOrThrow, initSentry } from "./common/config";
+import { setupSwagger } from "./common/config/swagger.config";
 
 async function bootstrap() {
   // Validate environment first to catch all config errors at startup
@@ -30,9 +31,15 @@ async function bootstrap() {
 
   // ThrottlerGuard is registered via AppModule providers
   app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Setup Swagger API documentation
+  const nodeEnv = process.env["NODE_ENV"] || "development";
+  if (nodeEnv === "development" || nodeEnv === "staging") {
+    setupSwagger(app);
+  }
+
   app.setGlobalPrefix("api/v1");
 
-  const nodeEnv = process.env["NODE_ENV"] || "development";
   const corsOrigins = process.env["CORS_ORIGIN"]?.split(",").map((o) => o.trim()).filter(Boolean);
   const isDev = nodeEnv === "development" || nodeEnv === "test";
 

@@ -37,6 +37,11 @@ import { HealthController } from "./common/health.controller";
 import { getRedisConfig } from "./common/config";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
 import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
+import { PrometheusService } from "./common/observability/prometheus.service";
+import { MetricsController } from "./common/metrics.controller";
+import { HttpLoggingInterceptor } from "./common/interceptors/http-logging.interceptor";
+import { TieredRateLimitService } from "./common/rate-limiting/tiered-rate-limit.service";
+import { StructuredLoggerService } from "./common/logging/structured-logger.service";
 
 const redisConfig = getRedisConfig();
 
@@ -97,13 +102,20 @@ const redisConfig = getRedisConfig();
     DocumentosModule,
     ComiteModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, MetricsController],
   providers: [
+    PrometheusService,
+    TieredRateLimitService,
+    StructuredLoggerService,
     LiberacaoParcelaWorker,
     ExcluirUsuarioWorker,
     {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: HttpLoggingInterceptor,
     },
     {
       provide: APP_GUARD,

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as os from 'os';
 
 export interface LogContext {
@@ -6,7 +6,7 @@ export interface LogContext {
 }
 
 @Injectable()
-export class StructuredLoggerService extends Logger {
+export class StructuredLoggerService {
   private readonly service = 'imobi-api';
   private readonly version = '1.0.0';
   private readonly hostname = os.hostname();

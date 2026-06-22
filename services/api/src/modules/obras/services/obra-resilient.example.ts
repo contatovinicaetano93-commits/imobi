@@ -73,7 +73,7 @@ export class ObraResilientExampleService {
                 body: JSON.stringify({ usuarioId }),
               }).then((res) => {
                 if (!res.ok) throw new Error(`Score API returned ${res.status}`);
-                return res.json().then((data) => data.score);
+                return res.json().then((data: any) => (data.score as number));
               }),
               5000, // 5 segundo timeout
             ),
@@ -87,7 +87,7 @@ export class ObraResilientExampleService {
           // return this.cache.get(`score:${usuarioId}:old`) || 500;
           return 500;
         },
-      );
+      ) as number;
 
       const duration = Date.now() - start;
       this.logger.logPerformance('getScore', duration, {

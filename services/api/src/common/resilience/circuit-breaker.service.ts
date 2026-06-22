@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { PrometheusService } from '../observability/prometheus.service';
 
 export enum CircuitState {
   CLOSED = 'CLOSED',
@@ -11,6 +12,7 @@ export interface CircuitBreakerConfig {
   resetTimeout: number;
   monitorInterval: number;
   name: string;
+  prometheus?: PrometheusService;
 }
 
 @Injectable()
@@ -35,7 +37,13 @@ export class CircuitBreakerService {
         this.lastFailureTime &&
         Date.now() - this.lastFailureTime > this.config.resetTimeout
       ) {
+        const prevState = this.state;
         this.state = CircuitState.HALF_OPEN;
+        this.config.prometheus?.recordCircuitBreakerStateChange(
+          this.config.name,
+          prevState,
+          this.state,
+        );
         this.logger.warn(
           `[${this.config.name}] Circuit breaker moved to HALF_OPEN`,
         );
@@ -56,7 +64,8 @@ export class CircuitBreakerService {
       return result;
     } catch (error) {
       this.onFailure();
-      if (this.state === CircuitState.OPEN && fallback) {
+      // After failure, if state is OPEN, use fallback
+      if (fallback && (this.state as CircuitState) === CircuitState.OPEN) {
         this.logger.warn(
           `[${this.config.name}] Executing fallback after failure`,
         );
@@ -72,7 +81,13 @@ export class CircuitBreakerService {
     if (this.state === CircuitState.HALF_OPEN) {
       this.successCount++;
       if (this.successCount >= 2) {
+        const prevState = this.state;
         this.state = CircuitState.CLOSED;
+        this.config.prometheus?.recordCircuitBreakerStateChange(
+          this.config.name,
+          prevState,
+          this.state,
+        );
         this.successCount = 0;
         this.logger.log(
           `[${this.config.name}] Circuit breaker closed after successful recovery`,
@@ -89,14 +104,26 @@ export class CircuitBreakerService {
       this.failureCount >= this.config.failureThreshold &&
       this.state === CircuitState.CLOSED
     ) {
+      const prevState = this.state;
       this.state = CircuitState.OPEN;
+      this.config.prometheus?.recordCircuitBreakerStateChange(
+        this.config.name,
+        prevState,
+        this.state,
+      );
       this.logger.error(
         `[${this.config.name}] Circuit breaker opened after ${this.failureCount} failures`,
       );
     }
 
     if (this.state === CircuitState.HALF_OPEN) {
+      const prevState = this.state;
       this.state = CircuitState.OPEN;
+      this.config.prometheus?.recordCircuitBreakerStateChange(
+        this.config.name,
+        prevState,
+        this.state,
+      );
       this.logger.warn(
         `[${this.config.name}] Circuit breaker reopened during recovery`,
       );
