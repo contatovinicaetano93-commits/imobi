@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import type { ObraResumo, EvidenciaDetalhe } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { AprovarEtapaForm } from "./aprovar-form";
+import { useUserRole } from "@/hooks/use-user-role";
 
 export default function VistoriaPage({ params }: { params: { id: string; etapaId: string } }) {
   const router = useRouter();
+  const { canLiberarEtapas, isGestorFundoMonitor } = useUserRole();
   const [obra, setObra] = useState<ObraResumo | null>(null);
   const [evidencias, setEvidencias] = useState<EvidenciaDetalhe[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,11 +86,17 @@ export default function VistoriaPage({ params }: { params: { id: string; etapaId
         )}
       </div>
 
-      <AprovarEtapaForm
-        etapaId={params.etapaId}
-        obraId={params.id}
-        valorLiberacao={Number(etapa.valorLiberacao)}
-      />
+      {canLiberarEtapas ? (
+        <AprovarEtapaForm
+          etapaId={params.etapaId}
+          obraId={params.id}
+          valorLiberacao={Number(etapa.valorLiberacao)}
+        />
+      ) : isGestorFundoMonitor ? (
+        <div className="bg-purple-50 border border-purple-100 rounded-2xl p-5 text-sm text-purple-900">
+          Gestor do fundo: acompanhamento somente leitura. Liberação por engenheiro ou admin.
+        </div>
+      ) : null}
     </div>
   );
 }

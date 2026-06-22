@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, HttpCode } from "@nestjs/common";
 import { AdminService, CriarUsuarioAdminDto } from "./admin.service";
+import { lerConfiguracoes, salvarConfiguracoes, type ConfiguracaoSistema } from "./config-store";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -15,8 +16,15 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get("overview")
+  @Roles("GESTOR", "ADMIN")
   overview() {
     return this.adminService.overview();
+  }
+
+  @Get("metricas")
+  @Roles("GESTOR", "ADMIN")
+  metricas() {
+    return this.adminService.metricas();
   }
 
   @Get("atividades")
@@ -59,5 +67,24 @@ export class AdminController {
     @UsuarioAtual() admin: UsuarioAtual,
   ) {
     return this.adminService.excluirUsuario(id, admin.id);
+  }
+
+  @Get("configuracoes")
+  obterConfiguracoes() {
+    return lerConfiguracoes();
+  }
+
+  @Patch("configuracoes")
+  atualizarConfiguracoes(@Body() body: Partial<ConfiguracaoSistema>) {
+    return salvarConfiguracoes(body);
+  }
+
+  @Post("prisma/regenerate")
+  @HttpCode(200)
+  regenerarPrisma() {
+    return {
+      ok: false,
+      message: "Regeneração do Prisma deve ser executada via CLI no servidor (npx prisma generate).",
+    };
   }
 }

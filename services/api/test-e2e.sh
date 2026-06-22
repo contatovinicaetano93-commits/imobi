@@ -26,7 +26,7 @@ while [ $attempt -lt $max_attempts ]; do
       break
     fi
   fi
-  
+
   echo "⏳ Waiting... ($((attempt + 1))/$max_attempts)"
   sleep 2
   attempt=$((attempt + 1))

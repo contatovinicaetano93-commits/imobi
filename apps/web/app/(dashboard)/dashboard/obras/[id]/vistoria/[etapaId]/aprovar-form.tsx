@@ -25,7 +25,7 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
         : `/api/proxy/vistoria/${etapaId}/rejeitar`;
       const body = aprovado
         ? { observacoes: obs || undefined }
-        : { motivo: obs || "Reprovado pelo gestor." };
+        : { motivo: obs || "Reprovado na vistoria." };
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -47,7 +47,7 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-      <h3 className="font-semibold text-gray-900 mb-4">Parecer do gestor</h3>
+      <h3 className="font-semibold text-gray-900 mb-4">Parecer técnico (engenheiro / admin)</h3>
       <textarea
         value={obs}
         onChange={(e) => setObs(e.target.value)}

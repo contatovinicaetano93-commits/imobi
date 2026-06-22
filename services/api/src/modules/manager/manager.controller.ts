@@ -10,7 +10,6 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("GESTOR", "ADMIN")
 @Controller("manager")
 export class ManagerController {
   constructor(
@@ -20,12 +19,21 @@ export class ManagerController {
   ) {}
 
   @Get("dashboard")
+  @Roles("GESTOR", "ADMIN")
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   async dashboard(@UsuarioAtual() u: IUsuario) {
     return this.manager.obterEstatisticas();
   }
 
+  @Get("portfolio")
+  @Roles("GESTOR", "ADMIN")
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  async portfolio(@UsuarioAtual() u: IUsuario) {
+    return this.manager.obterPortfolio();
+  }
+
   @Get("etapas-pendentes")
+  @Roles("GESTOR", "ADMIN")
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(120) // 2 min
@@ -55,6 +63,7 @@ export class ManagerController {
   }
 
   @Get("kyc-pendentes")
+  @Roles("GESTOR", "ADMIN")
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(120) // 2 min
@@ -67,16 +76,20 @@ export class ManagerController {
   }
 
   @Get("etapas/:id")
+  @Roles("GESTOR", "ADMIN")
   async obterEtapaDetalhe(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     return this.manager.obterEtapaDetalhe(id);
   }
 
   @Get("kyc/:id")
+  @Roles("GESTOR", "ADMIN")
   async obterKycDetalhe(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     return this.manager.obterKycDetalhe(id);
   }
 
+  /** Liberação de etapa/crédito: engenheiro ou admin — gestor do fundo só acompanha. */
   @Patch("etapas/:id/aprovar")
+  @Roles("ADMIN", "ENGENHEIRO")
   async aprovarEtapa(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
@@ -86,6 +99,7 @@ export class ManagerController {
   }
 
   @Patch("etapas/:id/rejeitar")
+  @Roles("ADMIN", "ENGENHEIRO")
   async rejeitarEtapa(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
@@ -95,11 +109,13 @@ export class ManagerController {
   }
 
   @Patch("kyc/:id/aprovar")
+  @Roles("ADMIN")
   async aprovarKyc(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     return this.kyc.aprovarDocumento(id, u.id);
   }
 
   @Patch("kyc/:id/rejeitar")
+  @Roles("ADMIN")
   async rejeitarKyc(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
@@ -109,11 +125,13 @@ export class ManagerController {
   }
 
   @Get("etapas/:id/audit-log")
+  @Roles("GESTOR", "ADMIN")
   async obterEtapaAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     return this.manager.obterEtapaAuditLog(id);
   }
 
   @Get("kyc/:id/audit-log")
+  @Roles("GESTOR", "ADMIN")
   async obterKycAuditLog(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
     return this.manager.obterKycAuditLog(id);
   }

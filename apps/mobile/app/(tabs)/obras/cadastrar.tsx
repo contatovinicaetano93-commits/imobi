@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, Alert, Platform,
@@ -7,8 +7,10 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import ScreenHeader from "../../../components/ScreenHeader";
+import FlowGateBanner from "../../../components/FlowGateBanner";
 import KeyboardAwareScroll from "../../../components/KeyboardAwareScroll";
-import { obrasApi, creditoApi } from "../../../lib/api";
+import { obrasApi, creditoApi, fluxoApi, type FluxoStatus } from "../../../lib/api";
+import { proximoPassoFluxo } from "../../../lib/flow-gates";
 
 const C = { blue: "#1B4FD8", bluePale: "#EEF3FF", ink: "#0F172A", gray: "#64748B", border: "#E2E8F0", white: "#FFFFFF", surface: "#F8FAFC" };
 
@@ -26,6 +28,14 @@ export default function CadastrarObraScreen() {
   const [creditoId, setCreditoId] = useState<string | undefined>();
   const [creditos, setCreditos] = useState<{ creditoId: string; label: string }[]>([]);
   const [salvando, setSalvando] = useState(false);
+  const [fluxo, setFluxo] = useState<FluxoStatus | null>(null);
+
+  const gate = proximoPassoFluxo(fluxo);
+  const kycBloqueado = fluxo !== null && !fluxo.kycUsuarioCompleto;
+
+  useEffect(() => {
+    fluxoApi.status().then(setFluxo).catch(() => null);
+  }, []);
 
   const carregarCreditos = async () => {
     try {
@@ -56,6 +66,10 @@ export default function CadastrarObraScreen() {
 
   const handleSalvar = async () => {
     if (!validarStep1()) return;
+    if (kycBloqueado) {
+      Alert.alert("KYC pendente", "Complete a verificação de identidade em Documentos antes de cadastrar uma obra.");
+      return;
+    }
     setSalvando(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -120,6 +134,8 @@ export default function CadastrarObraScreen() {
       />
 
       <KeyboardAwareScroll contentContainerStyle={styles.form}>
+        {gate && <FlowGateBanner {...gate} />}
+
         {step === 1 ? (
           <>
             <Text style={styles.label}>Nome da obra *</Text>
@@ -175,7 +191,7 @@ export default function CadastrarObraScreen() {
               <Text style={styles.gpsText}>Localização GPS será registrada automaticamente para validação de evidências.</Text>
             </View>
 
-            <TouchableOpacity style={[styles.btn, salvando && styles.btnDisabled]} onPress={handleSalvar} disabled={salvando}>
+            <TouchableOpacity style={[styles.btn, salvando && styles.btnDisabled, kycBloqueado && styles.btnDisabled]} onPress={handleSalvar} disabled={salvando || kycBloqueado}>
               {salvando ? <ActivityIndicator color={C.white} /> : <Text style={styles.btnText}>Confirmar e cadastrar obra</Text>}
             </TouchableOpacity>
           </>

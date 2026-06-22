@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import type { CSSProperties } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { etapasApi, fluxoApi, type RequisitosObra } from "@/lib/api";
+import { FlowGateBanner } from "@/components/FlowGateBanner";
+import { proximoPassoObra } from "@/lib/flow-gates";
 import {
   Building2,
   MapPin,
@@ -619,7 +622,35 @@ function TabEtapasContent({
     error: string | null;
     distancia: number | null;
   } | null>(null);
+  const [medicaoState, setMedicaoState] = useState<{
+    etapaId: string;
+    etapaNome: string;
+    percentual: string;
+    observacao: string;
+    submitting: boolean;
+    error: string | null;
+  } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleSubmitMedicao() {
+    if (!medicaoState) return;
+    setMedicaoState((m) => (m ? { ...m, submitting: true, error: null } : null));
+    try {
+      await etapasApi.atualizarStatus(medicaoState.etapaId, "AGUARDANDO_VISTORIA");
+      setMedicaoState(null);
+      onRefresh();
+    } catch (err) {
+      setMedicaoState((m) =>
+        m
+          ? {
+              ...m,
+              submitting: false,
+              error: err instanceof Error ? err.message : "Erro ao registrar medição.",
+            }
+          : null
+      );
+    }
+  }
 
   function openUpload(etapaId: string) {
     setUploadState({
@@ -725,7 +756,7 @@ function TabEtapasContent({
 
   const canAprovar = (status: string) =>
     role &&
-    ["GESTOR", "ADMIN"].includes(role) &&
+    ["ADMIN", "ENGENHEIRO"].includes(role) &&
     ["AGUARDANDO_VISTORIA"].includes(status);
 
   const canMedicao = (status: string) =>
@@ -908,7 +939,16 @@ function TabEtapasContent({
                     flexShrink: 0,
                     ...j,
                   }}
-                  onClick={() => alert("Formulário de medição em desenvolvimento.")}
+                  onClick={() =>
+                    setMedicaoState({
+                      etapaId: etId,
+                      etapaNome: etapa.nome,
+                      percentual: String(etapa.percentualObra ?? ""),
+                      observacao: "",
+                      submitting: false,
+                      error: null,
+                    })
+                  }
                 >
                   <TrendingUp size={14} />
                   Registrar Medição
@@ -1111,6 +1151,113 @@ function TabEtapasContent({
           </div>
         );
       })}
+
+      {medicaoState && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(12,26,61,0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 50,
+            padding: 16,
+          }}
+          onClick={() => !medicaoState.submitting && setMedicaoState(null)}
+        >
+          <div
+            style={{ ...card, width: "100%", maxWidth: 420, padding: 24 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontWeight: 700, color: NAVY, fontSize: 16, marginBottom: 4, ...j }}>
+              Registrar medição
+            </h3>
+            <p style={{ fontSize: 13, color: "#6B7280", marginBottom: 16, ...j }}>
+              Etapa: {medicaoState.etapaNome}
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 12, color: "#6B7280", ...j }}>% da obra nesta etapa</label>
+                <input
+                  type="text"
+                  value={medicaoState.percentual}
+                  readOnly
+                  style={{
+                    width: "100%",
+                    marginTop: 4,
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #E5E7EB",
+                    background: "#F9FAFB",
+                    ...j,
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: "#6B7280", ...j }}>Observações (opcional)</label>
+                <textarea
+                  value={medicaoState.observacao}
+                  onChange={(e) =>
+                    setMedicaoState((m) => (m ? { ...m, observacao: e.target.value } : null))
+                  }
+                  rows={3}
+                  style={{
+                    width: "100%",
+                    marginTop: 4,
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #E5E7EB",
+                    resize: "vertical",
+                    ...j,
+                  }}
+                />
+              </div>
+              {medicaoState.error && (
+                <p style={{ fontSize: 12, color: RED, ...j }}>{medicaoState.error}</p>
+              )}
+              <p style={{ fontSize: 12, color: "#6B7280", ...j }}>
+                Ao confirmar, a etapa será enviada para vistoria (engenheiro ou admin libera).
+              </p>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => setMedicaoState(null)}
+                  disabled={medicaoState.submitting}
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    borderRadius: 10,
+                    border: "1px solid #E5E7EB",
+                    background: "white",
+                    cursor: "pointer",
+                    ...j,
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSubmitMedicao}
+                  disabled={medicaoState.submitting}
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    borderRadius: 10,
+                    border: "none",
+                    background: "#7C3AED",
+                    color: "white",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    opacity: medicaoState.submitting ? 0.6 : 1,
+                    ...j,
+                  }}
+                >
+                  {medicaoState.submitting ? "Enviando..." : "Submeter para vistoria"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2295,11 +2442,19 @@ export default function ObraDetailPage({
   params: { id: string };
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const obraId = params.id;
+
+  const tabParam = searchParams.get("tab");
+  const initialTab =
+    tabParam === "etapas" || tabParam === "documentos" || tabParam === "financeiro" || tabParam === "historico"
+      ? tabParam
+      : "geral";
 
   const [tab, setTab] = useState<
     "geral" | "etapas" | "documentos" | "financeiro" | "historico"
-  >("geral");
+  >(initialTab);
+  const [requisitosObra, setRequisitosObra] = useState<RequisitosObra | null>(null);
   const [obra, setObra] = useState<Obra | null>(null);
   const [progresso, setProgresso] = useState<number>(0);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
@@ -2360,8 +2515,13 @@ export default function ObraDetailPage({
   useEffect(() => {
     setLoading(true);
     // Fetch obra, role AND documentos in parallel on mount — no waiting for tab change
-    Promise.all([fetchObra(), fetchRole(), fetchDocumentos()]).finally(() => setLoading(false));
-  }, [fetchObra, fetchRole, fetchDocumentos]);
+    Promise.all([
+      fetchObra(),
+      fetchRole(),
+      fetchDocumentos(),
+      fluxoApi.requisitosObra(obraId).then(setRequisitosObra).catch(() => null),
+    ]).finally(() => setLoading(false));
+  }, [fetchObra, fetchRole, fetchDocumentos, obraId]);
 
   const tabs = [
     { key: "geral" as const, label: "Visão Geral" },
@@ -2413,6 +2573,7 @@ export default function ObraDetailPage({
 
   const obraNome = obra.nome ?? "Obra";
   const etapas = obra.etapas ?? [];
+  const gateObra = proximoPassoObra(requisitosObra, obraId);
 
   return (
     <div style={{ maxWidth: 960, ...j }}>
@@ -2508,6 +2669,12 @@ export default function ObraDetailPage({
           Voltar
         </button>
       </div>
+
+      {gateObra && (
+        <div style={{ marginBottom: 20 }}>
+          <FlowGateBanner {...gateObra} />
+        </div>
+      )}
 
       {/* Tabs nav */}
       <div

@@ -10,12 +10,12 @@ export default function GestorTabLayout() {
       headerShown: false,
     }}>
       <Tabs.Screen name="dashboard/index" options={{
-        title: "Operações",
+        title: "Fundo",
         tabBarIcon: ({ color, size }) => <Ionicons name="analytics" size={size} color={color} />,
       }} />
       <Tabs.Screen name="filas/index" options={{
-        title: "Filas",
-        tabBarIcon: ({ color, size }) => <Ionicons name="list" size={size} color={color} />,
+        title: "Monitorar",
+        tabBarIcon: ({ color, size }) => <Ionicons name="eye" size={size} color={color} />,
       }} />
       <Tabs.Screen name="comite/index" options={{
         title: "Comitê",

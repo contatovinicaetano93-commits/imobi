@@ -4,7 +4,10 @@ import * as bcrypt from "bcryptjs";
 import * as crypto from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
+import { generateMfaSecret, verifyTotp, getOtpAuthUrl } from "../../common/utils/mfa.util";
 import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
+
+const PRIVILEGED_ROLES = new Set(["ADMIN", "GESTOR", "GESTOR_FUNDO"]);
 
 @Injectable()
 export class AuthService {
@@ -46,6 +49,74 @@ export class AuthService {
 
     if (usuario.bloqueadoEm) {
       throw new UnauthorizedException("Conta bloqueada pelo administrador. Entre em contato com o suporte.");
+    }
+
+    if (PRIVILEGED_ROLES.has(usuario.tipo) && usuario.mfaEnabled) {
+      const mfaToken = this.jwt.sign(
+        { sub: usuario.usuarioId, type: "mfa_pending" },
+        { expiresIn: "5m" },
+      );
+      return {
+        requiresMfa: true,
+        mfaToken,
+        usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
+      };
+    }
+
+    return {
+      usuario: { usuarioId: usuario.usuarioId, nome: usuario.nome, email: usuario.email, tipo: usuario.tipo },
+      ...await this.gerarTokens(usuario.usuarioId),
+    };
+  }
+
+  async setupMfa(usuarioId: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
+    if (!usuario) throw new UnauthorizedException("Usuário não encontrado");
+    if (!PRIVILEGED_ROLES.has(usuario.tipo)) {
+      throw new BadRequestException("MFA disponível apenas para ADMIN e GESTOR");
+    }
+
+    const secret = generateMfaSecret();
+    await this.prisma.usuario.update({
+      where: { usuarioId },
+      data: { mfaSecret: secret, mfaEnabled: false },
+    });
+
+    return {
+      secret,
+      otpauthUrl: getOtpAuthUrl(secret, usuario.email),
+    };
+  }
+
+  async ativarMfa(usuarioId: string, code: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
+    if (!usuario?.mfaSecret) throw new BadRequestException("Configure MFA antes de ativar");
+    if (!verifyTotp(usuario.mfaSecret, code)) throw new BadRequestException("Código inválido");
+
+    await this.prisma.usuario.update({
+      where: { usuarioId },
+      data: { mfaEnabled: true },
+    });
+    return { ok: true };
+  }
+
+  async verificarMfaLogin(mfaToken: string, code: string) {
+    let payload: { sub?: string; type?: string };
+    try {
+      payload = this.jwt.verify(mfaToken) as { sub?: string; type?: string };
+    } catch {
+      throw new UnauthorizedException("Sessão MFA expirada");
+    }
+    if (payload.type !== "mfa_pending" || !payload.sub) {
+      throw new UnauthorizedException("Token MFA inválido");
+    }
+
+    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId: payload.sub } });
+    if (!usuario?.mfaSecret || !usuario.mfaEnabled) {
+      throw new UnauthorizedException("MFA não configurado");
+    }
+    if (!verifyTotp(usuario.mfaSecret, code)) {
+      throw new UnauthorizedException("Código MFA inválido");
     }
 
     return {

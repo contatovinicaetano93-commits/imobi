@@ -3,8 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { MessageCircle, CheckCircle2, Loader2 } from "lucide-react";
 import "../landing.css";
 import "./simulador.css";
+
+const WA = "5511993455589";
 
 type Fase = "terreno" | "construcao" | "acabamento" | "comprador";
 
@@ -29,6 +32,34 @@ function fmtInput(v: number): string {
   return v.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
 }
 
+function buildWhatsAppMessage(p: {
+  nome: string;
+  email: string;
+  telefone: string;
+  valorObra: number;
+  faseLabel: string;
+  pct: number;
+  valorFinanciavel: number;
+  cidade: string;
+  estado: string;
+  cnpj: string;
+}) {
+  return [
+    "Olá! Fiz uma simulação no site IMOBI e gostaria de falar com um especialista.",
+    "",
+    `*Nome:* ${p.nome}`,
+    `*E-mail:* ${p.email}`,
+    `*Telefone:* ${p.telefone}`,
+    `*Valor da obra:* ${brl(p.valorObra)}`,
+    `*Fase:* ${p.faseLabel} (${p.pct}%)`,
+    `*Financiável até:* ${brl(p.valorFinanciavel)}`,
+    `*Local:* ${p.cidade}${p.estado ? `, ${p.estado}` : ""}`,
+    p.cnpj ? `*CNPJ:* ${p.cnpj}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export default function SimuladorPublicoPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -38,20 +69,91 @@ export default function SimuladorPublicoPage() {
   const [estado, setEstado] = useState("");
   const [cidade, setCidade] = useState("");
   const [cnpj, setCnpj] = useState("");
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [leadOk, setLeadOk] = useState(false);
+  const [leadLoading, setLeadLoading] = useState(false);
+  const [leadError, setLeadError] = useState<string | null>(null);
 
   const faseCfg = FASES.find((f) => f.id === fase)!;
   const valorFinanciavel = Math.round(valorObra * (faseCfg.pct / 100));
-  const taxaAnual = 8.5;
-  const prazoMeses = 36;
   const numParcelas = 6;
   const valorParcela = numParcelas > 0 ? Math.round(valorFinanciavel / numParcelas) : 0;
 
-  function next() {
+  async function capturarLead(): Promise<boolean> {
+    setLeadLoading(true);
+    setLeadError(null);
+    const observacoes = [
+      `Valor obra: ${brl(valorObra)}`,
+      `Fase: ${faseCfg.label} (${faseCfg.pct}%)`,
+      `Financiável: ${brl(valorFinanciavel)}`,
+      `Local: ${cidade}, ${estado}`,
+      cnpj ? `CNPJ: ${cnpj}` : null,
+      `Parcelas estimadas: ${numParcelas} × ~${brl(valorParcela)}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    try {
+      const res = await fetch("/api/proxy/leads/captura", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clienteNome: nome.trim(),
+          clienteEmail: email.trim(),
+          clienteTelefone: telefone.replace(/\D/g, ""),
+          modalidade: faseCfg.label,
+          volume: String(valorObra),
+          observacoes,
+        }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        throw new Error(body.message ?? "Erro ao registrar interesse");
+      }
+      setLeadOk(true);
+      return true;
+    } catch (e) {
+      setLeadError(e instanceof Error ? e.message : "Erro ao registrar");
+      return false;
+    } finally {
+      setLeadLoading(false);
+    }
+  }
+
+  async function next() {
+    if (step === 4) {
+      const ok = await capturarLead();
+      if (ok) setStep(5);
+      return;
+    }
     if (step < 5) setStep(step + 1);
   }
+
   function back() {
     if (step > 1) setStep(step - 1);
   }
+
+  const whatsappUrl = `https://wa.me/${WA}?text=${encodeURIComponent(
+    buildWhatsAppMessage({
+      nome,
+      email,
+      telefone,
+      valorObra,
+      faseLabel: faseCfg.label,
+      pct: faseCfg.pct,
+      valorFinanciavel,
+      cidade,
+      estado,
+      cnpj,
+    }),
+  )}`;
+
+  const canStep4 =
+    nome.trim().length >= 2 &&
+    email.includes("@") &&
+    telefone.replace(/\D/g, "").length >= 10;
 
   return (
     <>
@@ -71,7 +173,7 @@ export default function SimuladorPublicoPage() {
         <div className="sim-inner">
           <p className="sim-eyebrow">Simulador IMOBI</p>
           <h1 className="sim-title">Descubra em 2 minutos quanto sua obra pode financiar</h1>
-          <p className="sim-sub">Estimativa preliminar — proposta final após análise de crédito e documentação.</p>
+          <p className="sim-sub">Estimativa preliminar — um especialista confirma a proposta após análise.</p>
 
           <div className="sim-progress">
             {[1, 2, 3, 4].map((n) => (
@@ -149,6 +251,10 @@ export default function SimuladorPublicoPage() {
                     <input type="text" placeholder="Sua cidade" value={cidade} onChange={(e) => setCidade(e.target.value)} />
                   </label>
                 </div>
+                <label className="sim-field">
+                  <span>CNPJ (opcional)</span>
+                  <input type="text" placeholder="00.000.000/0000-00" value={cnpj} onChange={(e) => setCnpj(e.target.value)} />
+                </label>
                 <div className="sim-actions">
                   <button type="button" className="sim-btn-ghost" onClick={back}>← Voltar</button>
                   <button type="button" className="sim-btn-primary" disabled={!estado || !cidade.trim()} onClick={next}>
@@ -160,57 +266,65 @@ export default function SimuladorPublicoPage() {
 
             {step === 4 && (
               <>
-                <h2>CNPJ da empresa (opcional)</h2>
-                <p className="sim-hint">Validação completa na API em breve. Por ora, simulação estimada.</p>
+                <h2>Seus dados para contato</h2>
+                <p className="sim-hint">Registramos seu interesse e você pode falar direto no WhatsApp com nossa equipe.</p>
                 <label className="sim-field">
-                  <span>CNPJ</span>
-                  <input
-                    type="text"
-                    placeholder="00.000.000/0000-00"
-                    value={cnpj}
-                    onChange={(e) => setCnpj(e.target.value)}
-                  />
+                  <span>Nome completo</span>
+                  <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Seu nome" />
                 </label>
+                <label className="sim-field">
+                  <span>E-mail</span>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com.br" />
+                </label>
+                <label className="sim-field">
+                  <span>WhatsApp / telefone</span>
+                  <input type="tel" value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" />
+                </label>
+                {leadError && <p className="sim-hint" style={{ color: "#dc2626" }}>{leadError}</p>}
                 <div className="sim-actions">
                   <button type="button" className="sim-btn-ghost" onClick={back}>← Voltar</button>
-                  <button type="button" className="sim-btn-primary" onClick={next}>Ver simulação →</button>
+                  <button type="button" className="sim-btn-primary" disabled={!canStep4 || leadLoading} onClick={next}>
+                    {leadLoading ? "Registrando..." : "Ver resultado →"}
+                  </button>
                 </div>
               </>
             )}
 
             {step === 5 && (
               <div className="sim-result">
+                {leadOk && (
+                  <p className="sim-hint flex items-center gap-2 justify-center mb-3" style={{ color: "#16a34a" }}>
+                    <CheckCircle2 size={16} /> Interesse registrado com sucesso
+                  </p>
+                )}
                 <p className="sim-result-label">Você pode financiar até</p>
                 <p className="sim-result-value">{brl(valorFinanciavel)}</p>
                 <p className="sim-result-pct">{faseCfg.pct}% de {brl(valorObra)} · {faseCfg.label}</p>
 
                 <div className="sim-metrics">
-                  <div><span>Taxa</span><strong>{taxaAnual}% a.a.</strong></div>
-                  <div><span>Prazo</span><strong>{prazoMeses} meses</strong></div>
+                  <div><span>Local</span><strong>{cidade}, {estado}</strong></div>
                   <div><span>Liberações</span><strong>{numParcelas} etapas</strong></div>
                   <div><span>~ por etapa</span><strong>{brl(valorParcela)}</strong></div>
                 </div>
 
-                <p className="sim-disclaimer">Taxa indicativa. Valor final definido em comitê após KYC e due diligence.</p>
+                <p className="sim-disclaimer">Valores indicativos. Proposta final após KYC, comitê e due diligence.</p>
 
                 <div className="sim-actions sim-actions-col">
-                  <button
-                    type="button"
-                    className="sim-btn-primary sim-btn-lg"
-                    onClick={() => {
-                      const q = new URLSearchParams({
-                        valor: String(valorObra),
-                        fase,
-                        estado,
-                        cidade,
-                      });
-                      router.push(`/cadastro?${q.toString()}`);
-                    }}
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="sim-btn-primary sim-btn-lg inline-flex items-center justify-center gap-2"
+                    style={{ textDecoration: "none" }}
                   >
-                    Começar processo →
-                  </button>
-                  <Link href="/login?next=/dashboard/simulador" className="sim-link">
-                    Já tenho conta — ver simulador completo
+                    <MessageCircle size={18} />
+                    Falar no WhatsApp com especialista
+                  </a>
+                  <Link href="/cadastro" className="sim-link">
+                    Criar conta e iniciar processo completo
+                  </Link>
+                  <Link href="/login?next=/dashboard/kyc" className="sim-link">
+                    Já tenho conta — fazer login
                   </Link>
                 </div>
               </div>

@@ -3,12 +3,17 @@ import { PrismaService } from "../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 import type { CriarObraInput } from "@imbobi/schemas";
 import { ETAPAS_PADRAO } from "./etapas-padrao";
+import { FluxoService } from "../fluxo/fluxo.service";
 
 @Injectable()
 export class ObrasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly fluxo: FluxoService,
+  ) {}
 
   async criar(usuarioId: string, input: CriarObraInput) {
+    await this.fluxo.assertPodeCriarObra(usuarioId);
     return this.prisma.$transaction(async (tx) => {
       if (input.geo != null) {
         const gpsValidation = await tx.$queryRaw<Array<{ valid: boolean }>>(

@@ -30,6 +30,8 @@ import { SetupModule } from "./modules/setup/setup.module";
 import { DueDiligenceModule } from "./modules/due-diligence/due-diligence.module";
 import { DocumentosModule } from "./modules/documentos/documentos.module";
 import { ComiteModule } from "./modules/comite/comite.module";
+import { FluxoModule } from "./modules/fluxo/fluxo.module";
+import { PaymentModule } from "./modules/payments/payment.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker, QUEUE_EXCLUIR_USUARIO } from "./workers/excluir-usuario.worker";
 import { QUEUE_LIBERACAO } from "./common/constants";
@@ -96,11 +98,14 @@ const redisConfig = getRedisConfig();
     DueDiligenceModule,
     DocumentosModule,
     ComiteModule,
+    FluxoModule,
+    PaymentModule,
   ],
   controllers: [HealthController],
   providers: [
-    LiberacaoParcelaWorker,
-    ExcluirUsuarioWorker,
+    ...(process.env.DISABLE_IN_PROCESS_WORKERS !== "true"
+      ? [LiberacaoParcelaWorker, ExcluirUsuarioWorker]
+      : []),
     {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,

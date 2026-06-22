@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { managerApi, type KycPendente, type KycAuditEntry } from "@/lib/api";
 import { ApprovalAuditTrail } from "@/components/dashboard/ApprovalAuditTrail";
+import { useUserRole } from "@/hooks/use-user-role";
 import Image from "next/image";
 
 function getTipoLabel(tipo: string): string {
@@ -31,6 +32,7 @@ export default function KycDetailPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionForm, setShowRejectionForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { canAprovarKyc, isGestorFundoMonitor } = useUserRole();
 
   const docId = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -179,12 +181,20 @@ export default function KycDetailPage() {
         {/* Painel de ações */}
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="font-bold text-gray-900 mb-4">Decisão</h2>
+            <h2 className="font-bold text-gray-900 mb-4">
+              {canAprovarKyc ? "Decisão" : "Documento"}
+            </h2>
+            {isGestorFundoMonitor && (
+              <p className="text-sm text-purple-800 bg-purple-50 border border-purple-100 rounded-lg p-3 mb-4">
+                Gestor do fundo acompanha — aprovação de KYC é feita pelo admin.
+              </p>
+            )}
             <div className="space-y-3">
               <div className="bg-purple-50 rounded-lg p-3 text-sm text-purple-900">
                 <span className="font-semibold">Tipo:</span> {getTipoLabel(doc.tipo)}
               </div>
 
+              {canAprovarKyc && (
               <div className="pt-4 border-t border-gray-100 space-y-3">
                 <button
                   onClick={handleApprove}
@@ -231,6 +241,7 @@ export default function KycDetailPage() {
                   </div>
                 )}
               </div>
+              )}
             </div>
           </div>
 

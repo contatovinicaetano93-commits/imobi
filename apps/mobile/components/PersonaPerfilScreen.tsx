@@ -3,17 +3,17 @@ import {
   ActivityIndicator, Alert,
 } from "react-native";
 import { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import ScreenHeader from "./ScreenHeader";
 import { usuariosApi, authApi, type UsuarioPerfil } from "../lib/api";
+import { useAuth } from "../lib/auth-context";
 import { roleLabel } from "../lib/roles";
 
 type Props = { accent?: string; panelLabel?: string };
 
 export default function PersonaPerfilScreen({ accent = "#1B4FD8", panelLabel = "Minha conta" }: Props) {
-  const router = useRouter();
+  const { signOut } = useAuth();
   const [usuario, setUsuario] = useState<UsuarioPerfil | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -32,10 +32,7 @@ export default function PersonaPerfilScreen({ accent = "#1B4FD8", panelLabel = "
           const rt = await SecureStore.getItemAsync("refreshToken");
           if (rt) await authApi.logout(rt);
         } catch { /* */ }
-        await SecureStore.deleteItemAsync("accessToken");
-        await SecureStore.deleteItemAsync("refreshToken");
-        await SecureStore.deleteItemAsync("userTipo");
-        router.replace("/login");
+        await signOut();
       }},
     ]);
   };

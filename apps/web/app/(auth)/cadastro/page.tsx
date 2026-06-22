@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, Controller, type Control } from "react-hook-form";
+import { useForm, type UseFormRegister } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -16,12 +16,10 @@ export default function CadastroPage() {
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors, isSubmitting },
   } = useForm<CadastroUsuarioInput>({
     resolver: zodResolver(CadastroUsuarioSchema),
     defaultValues: {
-      tipo: "TOMADOR",
       consentidoTermos: false,
       consentidoPrivacy: false,
       consentidoKyc: false,
@@ -91,23 +89,23 @@ export default function CadastroPage() {
               CONSENTIMENTOS (LGPD)
             </p>
 
-            <ConsentController control={control} name="consentidoTermos" error={errors.consentidoTermos?.message}>
+            <ConsentCheckbox register={register} name="consentidoTermos" error={errors.consentidoTermos?.message}>
               Li e aceito os{" "}
               <a href="/termos" target="_blank" style={{ color: "var(--blue)", textDecoration: "underline" }}>Termos de Uso</a> *
-            </ConsentController>
+            </ConsentCheckbox>
 
-            <ConsentController control={control} name="consentidoPrivacy" error={errors.consentidoPrivacy?.message}>
+            <ConsentCheckbox register={register} name="consentidoPrivacy" error={errors.consentidoPrivacy?.message}>
               Li e aceito a{" "}
               <a href="/privacidade" target="_blank" style={{ color: "var(--blue)", textDecoration: "underline" }}>Política de Privacidade</a> *
-            </ConsentController>
+            </ConsentCheckbox>
 
-            <ConsentController control={control} name="consentidoKyc" error={errors.consentidoKyc?.message}>
+            <ConsentCheckbox register={register} name="consentidoKyc" error={errors.consentidoKyc?.message}>
               Autorizo verificação de identidade (KYC) *
-            </ConsentController>
+            </ConsentCheckbox>
 
-            <ConsentController control={control} name="consentidoMarketing">
+            <ConsentCheckbox register={register} name="consentidoMarketing">
               Aceito comunicações de marketing (opcional)
-            </ConsentController>
+            </ConsentCheckbox>
           </div>
 
           {erro && (
@@ -157,31 +155,26 @@ function LogoHeader() {
   );
 }
 
-function ConsentController({ control, name, error, children }: {
-  control: Control<CadastroUsuarioInput>;
-  name: string;
+type ConsentField = "consentidoTermos" | "consentidoPrivacy" | "consentidoKyc" | "consentidoMarketing";
+
+function ConsentCheckbox({ register, name, error, children }: {
+  register: UseFormRegister<CadastroUsuarioInput>;
+  name: ConsentField;
   error?: string;
   children: React.ReactNode;
 }) {
   return (
-    <Controller
-      control={control}
-      name={name as keyof CadastroUsuarioInput}
-      render={({ field }) => (
-        <div>
-          <label style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", cursor: "pointer" }}>
-            <input
-              type="checkbox"
-              style={{ marginTop: 2, accentColor: "var(--blue)", flexShrink: 0 }}
-              checked={!!field.value}
-              onChange={(e) => field.onChange(e.target.checked)}
-            />
-            <span style={{ fontSize: "0.72rem", color: "var(--gray)", lineHeight: 1.5 }}>{children}</span>
-          </label>
-          {error && <p style={{ fontSize: "0.7rem", color: "#EF4444", marginTop: "0.2rem", marginLeft: "1.25rem" }}>{error}</p>}
-        </div>
-      )}
-    />
+    <div>
+      <label style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", cursor: "pointer" }}>
+        <input
+          type="checkbox"
+          {...register(name)}
+          style={{ marginTop: 2, accentColor: "var(--blue)", flexShrink: 0 }}
+        />
+        <span style={{ fontSize: "0.72rem", color: "var(--gray)", lineHeight: 1.5 }}>{children}</span>
+      </label>
+      {error && <p style={{ fontSize: "0.7rem", color: "#EF4444", marginTop: "0.2rem", marginLeft: "1.25rem" }}>{error}</p>}
+    </div>
   );
 }
 

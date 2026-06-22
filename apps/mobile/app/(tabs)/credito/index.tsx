@@ -5,8 +5,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { formatarBRL, formatarPercentual } from "@imbobi/core";
 import Slider from "@react-native-community/slider";
 import ScreenHeader from "../../../components/ScreenHeader";
-import { creditoApi, type Credito, type SimulacaoCreditoResult } from "../../../lib/api";
+import FlowGateBanner from "../../../components/FlowGateBanner";
+import { creditoApi, fluxoApi, type Credito, type SimulacaoCreditoResult, type FluxoStatus } from "../../../lib/api";
 import { comiteApi, type SolicitacaoComite } from "../../../lib/api-roles";
+import { proximoPassoFluxo } from "../../../lib/flow-gates";
 import {
   TAXA_SIMULACAO,
   formatTaxaSimulacao,
@@ -43,6 +45,10 @@ export default function CreditoScreen() {
   const [valorSolicitado, setValorSolicitado] = useState(100000);
   const [prazoMeses, setPrazoMeses] = useState(36);
   const [resultado, setResultado] = useState<SimulacaoCreditoResult | null>(null);
+  const [fluxo, setFluxo] = useState<FluxoStatus | null>(null);
+
+  const gate = proximoPassoFluxo(fluxo);
+  const kycBloqueado = fluxo !== null && !fluxo.kycUsuarioCompleto;
 
   const simular = useCallback(async () => {
     setSimLoading(true);
@@ -50,8 +56,9 @@ export default function CreditoScreen() {
       setResultado(await creditoApi.simular(valorSolicitado, prazoMeses));
     } catch {
       setResultado(null);
+    } finally {
+      setSimLoading(false);
     }
-    setSimLoading(false);
   }, [valorSolicitado, prazoMeses]);
 
   useEffect(() => {
@@ -63,14 +70,16 @@ export default function CreditoScreen() {
     Promise.all([
       creditoApi.meus().catch(() => []),
       comiteApi.minhas().catch(() => []),
-    ]).then(([c, s]) => {
+      fluxoApi.status().catch(() => null),
+    ]).then(([c, s, f]) => {
       setCreditos(c);
       setSolicitacoes(s);
+      setFluxo(f);
     }).finally(() => setLoading(false));
   }, []);
 
   const solicitarCredito = async () => {
-    if (!resultado) return;
+    if (!resultado || kycBloqueado) return;
     setSolicitando(true);
     try {
       await comiteApi.solicitar({
@@ -97,9 +106,11 @@ export default function CreditoScreen() {
       <ScreenHeader
         title="Crédito"
         subtitle="Parcela máxima garantida"
-        onBack={() => router.navigate("/(tabs)/obras")}
+        onBack={() => router.navigate("/(tabs)/documentos")}
       />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
+        {gate && <FlowGateBanner {...gate} />}
+
         <View style={styles.hero}>
           <View style={styles.taxBadge}>
             <Text style={styles.taxBadgeLabel}>TRAVA SIMULAÇÃO</Text>
@@ -213,9 +224,9 @@ export default function CreditoScreen() {
         ) : null}
 
         <TouchableOpacity
-          style={[styles.solicitarBtn, (solicitando || !resultado) && styles.btnDisabled]}
+          style={[styles.solicitarBtn, (solicitando || !resultado || kycBloqueado) && styles.btnDisabled]}
           onPress={solicitarCredito}
-          disabled={solicitando || !resultado}
+          disabled={solicitando || !resultado || kycBloqueado}
         >
           {solicitando ? <ActivityIndicator color="#fff" /> : (
             <>

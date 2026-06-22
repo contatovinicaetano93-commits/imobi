@@ -22,19 +22,19 @@ const NAVY = "#0C1A3D";
 const MINT = "#4ADE80";
 
 const NAV: NavItem[] = [
-  { label: "Início",        href: "/dashboard",                         icon: Home,        roles: [null],                             section: "geral" },
+  // Construtor — ordem segue jornada: Painel → KYC → Simulador → Crédito → Comitê → Obras → Score
   { label: "Painel",        href: "/dashboard/construtor",              icon: Home,        roles: ["CONSTRUTOR", "TOMADOR"],          section: "geral" },
-  { label: "Minhas Obras",  href: "/dashboard/obras",                   icon: HardHat,     roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "obras" },
+  { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "kyc" },
+  { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "simulador" },
   { label: "Crédito",       href: "/dashboard/credito",                 icon: CreditCard,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "credito" },
   { label: "Comitê",        href: "/dashboard/comite",                  icon: Vote,        roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "credito" },
-  { label: "Simulador",     href: "/dashboard/simulador",               icon: Calculator,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "simulador" },
+  { label: "Minhas Obras",  href: "/dashboard/obras",                   icon: HardHat,     roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "obras" },
   { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "score" },
-  { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "kyc" },
-  { label: "Operações",     href: "/dashboard/gestor",                  icon: Banknote,    roles: ["GESTOR"],        section: "geral",  funcao: "gestor" },
+  { label: "Painel do Fundo", href: "/dashboard/gestor",                  icon: Banknote,    roles: ["GESTOR"],        section: "geral",  funcao: "gestor" },
   { label: "Comitês",       href: "/dashboard/gestor/comite",           icon: Vote,        roles: ["GESTOR"],                          funcao: "gestor" },
-  { label: "Etapas",        href: "/dashboard/gestor/etapas",           icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "gestor" },
-  { label: "KYC",           href: "/dashboard/gestor/kyc",              icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "kyc" },
-  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2, roles: ["GESTOR"],                          funcao: "due-diligence" },
+  { label: "Monitorar etapas", href: "/dashboard/gestor/etapas",        icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "gestor" },
+  { label: "Monitorar KYC", href: "/dashboard/gestor/kyc",              icon: FileCheck2,  roles: ["GESTOR"],                          funcao: "kyc" },
+  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence",    icon: Building2, roles: ["GESTOR"],                          funcao: "due-diligence" },
   { label: "Portfolio",     href: "/dashboard/gestor/fundos",           icon: Banknote,    roles: ["GESTOR"],                          funcao: "fundos" },
   { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["GESTOR"],                          funcao: "relatorios" },
   { label: "Engenharia",    href: "/dashboard/engenheiro",              icon: Wrench,      roles: ["ENGENHEIRO","GESTOR_OBRA"], section: "geral", funcao: "engenharia" },
@@ -46,14 +46,16 @@ const NAV: NavItem[] = [
   { label: "Visão Geral",   href: "/dashboard/admin",                   icon: LayoutDashboard, roles: ["ADMIN"],     section: "admin" },
   { label: "Pipeline",      href: "/dashboard/admin/pipeline",          icon: Banknote,    roles: ["ADMIN"] },
   { label: "Comitê",        href: "/dashboard/admin/comite",            icon: Vote,        roles: ["ADMIN"] },
+  { label: "Liberar etapas", href: "/dashboard/gestor/etapas",         icon: FileCheck2,  roles: ["ADMIN"] },
+  { label: "KYC operacional", href: "/dashboard/gestor/kyc",           icon: ShieldCheck, roles: ["ADMIN"] },
   { label: "Usuários",      href: "/dashboard/admin/usuarios",          icon: User,        roles: ["ADMIN"] },
   { label: "Configurações", href: "/dashboard/admin/configuracoes",     icon: Settings,    roles: ["ADMIN"] },
-  { label: "Obras",         href: "/dashboard/obras",                   icon: HardHat,     roles: ["ADMIN"],                           funcao: "obras" },
-  { label: "Portfolio",     href: "/dashboard/gestor/fundos",           icon: Banknote,    roles: ["ADMIN"],                           funcao: "fundos" },
-  { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["ADMIN"],                           funcao: "relatorios" },
+  { label: "Obras",         href: "/dashboard/obras",                   icon: HardHat,     roles: ["ADMIN"], section: "explorar",       funcao: "obras" },
+  { label: "Portfolio",     href: "/dashboard/gestor/fundos",           icon: Banknote,    roles: ["ADMIN"], section: "explorar",       funcao: "fundos" },
+  { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["ADMIN"], section: "explorar",       funcao: "relatorios" },
 ];
 
-const SECTION_LABELS: Record<string, string> = { geral: "Geral", operacional: "Operacional", admin: "Admin" };
+const SECTION_LABELS: Record<string, string> = { geral: "Geral", operacional: "Operacional", admin: "Admin", explorar: "Explorar" };
 
 const ROLE_META: Record<string, { label: string; accent: string }> = {
   CONSTRUTOR:  { label: "Construtor",  accent: MINT },
@@ -285,7 +287,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Logout — padded to 44×44 touch target */}
         <button
           onClick={async () => {
-            await fetch("/api/auth/session", { method: "DELETE" });
+            try {
+              await fetch("/api/auth/logout", { method: "POST" });
+            } catch { /* limpa sessão local mesmo se API falhar */ }
             window.location.href = "/login";
           }}
           title="Sair"

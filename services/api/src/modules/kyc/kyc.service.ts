@@ -3,7 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
-import { KycDocumentoStatus } from "@prisma/client";
+import { StorageService } from "../storage/storage.service";
 
 @Injectable()
 export class KycService {
@@ -13,25 +13,43 @@ export class KycService {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
+    private readonly storage: StorageService,
   ) {}
 
   async uploadDocumento(usuarioId: string, tipo: string, url: string) {
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { usuarioId },
-    });
+    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
     if (!usuario) throw new NotFoundException("Usuário não encontrado");
+
+    const signedUrl = await this.storage.getSignedUrl(url).catch(() => url);
 
     return this.prisma.kycDocumento.create({
       data: { usuarioId, tipo, url, status: "PENDENTE" },
+    }).then(async (doc) => ({ ...doc, url: signedUrl }));
+  }
+
+  async uploadArquivo(usuarioId: string, tipo: string, buffer: Buffer, mimeType: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
+    if (!usuario) throw new NotFoundException("Usuário não encontrado");
+
+    const { key, url } = await this.storage.uploadKyc(buffer, mimeType, usuarioId);
+    const doc = await this.prisma.kycDocumento.create({
+      data: { usuarioId, tipo, url: key, status: "PENDENTE" },
     });
+    return { ...doc, url };
+  }
+
+  private async signDoc<T extends { url: string }>(doc: T): Promise<T & { url: string }> {
+    const url = await this.storage.getSignedUrl(doc.url).catch(() => doc.url);
+    return { ...doc, url };
   }
 
   async listarDocumentos(usuarioId: string) {
-    return this.prisma.kycDocumento.findMany({
+    const docs = await this.prisma.kycDocumento.findMany({
       where: { usuarioId },
       orderBy: { criadoEm: "desc" },
     });
+    return Promise.all(docs.map((d) => this.signDoc(d)));
   }
 
   async obterStatus(usuarioId: string) {
@@ -44,20 +62,17 @@ export class KycService {
     const rejeitados = documentos.filter((d) => d.status === "REJEITADO").length;
 
     let status: string;
-    if (documentos.length === 0) {
-      status = "NENHUM";
-    } else if (rejeitados > 0) {
-      status = "REJEITADO";
-    } else if (aprovados > 0 && pendentes === 0) {
-      status = "APROVADO";
-    } else {
-      status = "ENVIADO";
-    }
+    if (documentos.length === 0) status = "NENHUM";
+    else if (rejeitados > 0) status = "REJEITADO";
+    else if (aprovados > 0 && pendentes === 0) status = "APROVADO";
+    else status = "ENVIADO";
+
+    const signedDocs = await Promise.all(documentos.map((d) => this.signDoc(d)));
 
     return {
       usuarioId,
       status,
-      documentos,
+      documentos: signedDocs,
       resumo: { pendentes, aprovados, rejeitados },
     };
   }
@@ -72,32 +87,23 @@ export class KycService {
 
     const atualizado = await this.prisma.kycDocumento.update({
       where: { kycDocumentoId },
-      data: {
-        status: "APROVADO",
-        analisadoPor: gestorId,
-        analisadoEm: new Date(),
-      },
+      data: { status: "APROVADO", analisadoPor: gestorId, analisadoEm: new Date() },
     });
 
-    // Create audit log entry
     await this.prisma.kycAuditLog.create({
-      data: {
-        kycDocumentoId,
-        acaoTipo: "APROVADO",
-        usuarioId: gestorId,
-      },
+      data: { kycDocumentoId, acaoTipo: "APROVADO", usuarioId: gestorId },
     });
 
-    // Notifica usuário
+    await this.verificarKycCompleto(documento.usuarioId);
+
     await this.notificacoes.criar(
       documento.usuarioId,
       "KYC_APROVADO",
       "Documento KYC aprovado",
       `Seu documento "${documento.tipo}" foi aprovado com sucesso.`,
-      "/dashboard/perfil"
+      "/dashboard/perfil",
     );
 
-    // Envia push notification
     this.pushNotificacoes.enviarPush({
       usuarioId: documento.usuarioId,
       titulo: "Documentação Aprovada",
@@ -105,7 +111,6 @@ export class KycService {
       tipo: "KYC_APROVADO",
     }).catch(() => {});
 
-    // BUG-003: Ensure email is sent before returning response
     try {
       await this.email.kycAprovadoEmail(documento.usuario.nome, documento.usuario.email);
     } catch (error) {
@@ -115,21 +120,14 @@ export class KycService {
     return atualizado;
   }
 
-  async rejeitarDocumento(
-    kycDocumentoId: string,
-    gestorId: string,
-    motivo: string
-  ) {
+  async rejeitarDocumento(kycDocumentoId: string, gestorId: string, motivo: string) {
     const documento = await this.prisma.kycDocumento.findUnique({
       where: { kycDocumentoId },
       include: { usuario: true },
     });
     if (!documento) throw new NotFoundException("Documento não encontrado");
     if (documento.usuarioId === gestorId) throw new ForbiddenException("Não é permitido rejeitar o próprio documento.");
-
-    if (!motivo || motivo.trim().length === 0) {
-      throw new BadRequestException("Motivo da rejeição é obrigatório");
-    }
+    if (!motivo?.trim()) throw new BadRequestException("Motivo da rejeição é obrigatório");
 
     const atualizado = await this.prisma.kycDocumento.update({
       where: { kycDocumentoId },
@@ -141,26 +139,18 @@ export class KycService {
       },
     });
 
-    // Create audit log entry
     await this.prisma.kycAuditLog.create({
-      data: {
-        kycDocumentoId,
-        acaoTipo: "REJEITADO",
-        usuarioId: gestorId,
-        motivo,
-      },
+      data: { kycDocumentoId, acaoTipo: "REJEITADO", usuarioId: gestorId, motivo },
     });
 
-    // Notifica usuário
     await this.notificacoes.criar(
       documento.usuarioId,
       "KYC_REJEITADO",
       "Documento KYC rejeitado",
-      `Seu documento "${documento.tipo}" foi rejeitado. Motivo: ${motivo}. Por favor, envie um novo documento.`,
-      "/dashboard/perfil"
+      `Seu documento "${documento.tipo}" foi rejeitado. Motivo: ${motivo}.`,
+      "/dashboard/perfil",
     );
 
-    // Envia push notification
     this.pushNotificacoes.enviarPush({
       usuarioId: documento.usuarioId,
       titulo: "Documentação Rejeitada",
@@ -169,7 +159,6 @@ export class KycService {
       dados: { motivo },
     }).catch(() => {});
 
-    // Envia email
     try {
       await this.email.kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo);
     } catch (error) {
@@ -180,11 +169,12 @@ export class KycService {
   }
 
   async listarPendentes() {
-    return this.prisma.kycDocumento.findMany({
+    const docs = await this.prisma.kycDocumento.findMany({
       where: { status: "PENDENTE" },
       include: { usuario: { select: { nome: true, email: true, cpf: true } } },
       orderBy: { criadoEm: "asc" },
     });
+    return Promise.all(docs.map((d) => this.signDoc(d)));
   }
 
   async verificarKycCompleto(usuarioId: string) {

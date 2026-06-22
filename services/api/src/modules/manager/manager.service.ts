@@ -2,6 +2,7 @@ import { Injectable, ForbiddenException, Inject } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
+import { StorageService } from "../storage/storage.service";
 import { ETAPA_STATUS_MAP } from "../../common/constants";
 
 const CACHE_KEYS = {
@@ -36,7 +37,8 @@ const CACHE_KEYS = {
 export class ManagerService {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    private readonly storage: StorageService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async verificarPermissao(usuarioId: string) {
@@ -205,7 +207,12 @@ export class ManagerService {
       }),
     ]);
 
-    const result = { documentos, total };
+    const result = { documentos: await Promise.all(
+      documentos.map(async (d) => ({
+        ...d,
+        url: await this.storage.getSignedUrl(d.url).catch(() => d.url),
+      })),
+    ), total };
     // Cache TTL: 120 seconds (matches controller CacheTTL decorator)
     await this.cacheManager.set(cacheKey, result, 120000);
     return result;
@@ -245,7 +252,7 @@ export class ManagerService {
   }
 
   async obterKycDetalhe(kycDocumentoId: string) {
-    return this.prisma.kycDocumento.findUnique({
+    const doc = await this.prisma.kycDocumento.findUnique({
       where: { kycDocumentoId },
       include: {
         usuario: {
@@ -260,6 +267,11 @@ export class ManagerService {
         },
       },
     });
+    if (!doc) return null;
+    return {
+      ...doc,
+      url: await this.storage.getSignedUrl(doc.url).catch(() => doc.url),
+    };
   }
 
   async obterEstatisticas() {
@@ -283,6 +295,74 @@ export class ManagerService {
 
     await this.cacheManager.set(cacheKey, result, 60000);
     return result;
+  }
+
+  async obterPortfolio() {
+    const [creditosAgregados, creditos, obras, etapasAguardando] = await Promise.all([
+      this.prisma.credito.aggregate({
+        where: { status: "ATIVO" },
+        _sum: { valorAprovado: true, valorLiberado: true },
+        _count: true,
+      }),
+      this.prisma.credito.findMany({
+        where: { status: "ATIVO" },
+        select: {
+          creditoId: true,
+          valorAprovado: true,
+          valorLiberado: true,
+          taxaMensal: true,
+          prazoMeses: true,
+          status: true,
+        },
+        orderBy: { criadoEm: "desc" },
+        take: 50,
+      }),
+      this.prisma.obra.findMany({
+        select: {
+          obraId: true,
+          nome: true,
+          status: true,
+          endereco: true,
+          etapas: { select: { etapaId: true, status: true, percentualObra: true } },
+        },
+        orderBy: { criadoEm: "desc" },
+        take: 100,
+      }),
+      this.prisma.etapaObra.count({ where: { status: "AGUARDANDO_VISTORIA" } }),
+    ]);
+
+    const creditoTotalAprovado = Number(creditosAgregados._sum.valorAprovado ?? 0);
+    const creditoTotalLiberado = Number(creditosAgregados._sum.valorLiberado ?? 0);
+    const obrasAtivas = obras.filter((o) => o.status === "EM_EXECUCAO").length;
+    const roiEstimadoPct = creditoTotalAprovado > 0
+      ? Math.round((creditoTotalLiberado / creditoTotalAprovado) * 15 * 10) / 10
+      : 0;
+
+    return {
+      creditoTotalAprovado,
+      creditoTotalLiberado,
+      creditosAtivos: creditosAgregados._count,
+      obrasAtivas,
+      obrasTotal: obras.length,
+      etapasAguardandoVistoria: etapasAguardando,
+      roiEstimadoPct,
+      inadimplenciaRate: 0,
+      creditos: creditos.map((c) => ({
+        id: c.creditoId,
+        valorAprovado: Number(c.valorAprovado),
+        valorLiberado: Number(c.valorLiberado),
+        taxaMensal: Number(c.taxaMensal),
+        prazoMeses: c.prazoMeses,
+        status: c.status,
+      })),
+      obras: obras.map((o) => ({
+        id: o.obraId,
+        nome: o.nome,
+        status: o.status,
+        endereco: o.endereco,
+        etapas: o.etapas,
+      })),
+    };
   }
 
   async obterEtapaAuditLog(etapaId: string) {

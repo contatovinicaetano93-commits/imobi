@@ -1,75 +1,38 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
-import * as SecureStore from "expo-secure-store";
-import { setOnUnauthorized, usuariosApi } from "../lib/api";
+import { AuthProvider, useAuth } from "../lib/auth-context";
 import { getHomeRoute, isInCorrectApp } from "../lib/roles";
 
-const AUTH_SEGMENTS = new Set(["(auth)", "login", "cadastro", "esqueceu-senha"]);
+const AUTH_SEGMENTS = new Set(["(auth)", "login", "cadastro", "esqueceu-senha", "index"]);
 
-function isAuthRoute(segments: string[]) {
+function isPublicRoute(segments: string[]) {
+  if (segments.length === 0) return true;
   return segments.some((s) => AUTH_SEGMENTS.has(s));
 }
 
-export default function RootLayout() {
+function RootNavigator() {
   const router = useRouter();
   const segments = useSegments();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSignedIn, setIsSignedIn] = useState(false);
-  const [userTipo, setUserTipo] = useState<string>("TOMADOR");
-
-  useEffect(() => {
-    setOnUnauthorized(() => {
-      setIsSignedIn(false);
-      setUserTipo("TOMADOR");
-      SecureStore.deleteItemAsync("userTipo").catch(() => {});
-    });
-  }, []);
-
-  useEffect(() => {
-    const bootstrap = async () => {
-      try {
-        const token = await SecureStore.getItemAsync("accessToken");
-        if (!token) {
-          setIsSignedIn(false);
-          return;
-        }
-        setIsSignedIn(true);
-        const cached = await SecureStore.getItemAsync("userTipo");
-        if (cached) setUserTipo(cached);
-        try {
-          const perfil = await usuariosApi.obterPerfil();
-          setUserTipo(perfil.tipo);
-          await SecureStore.setItemAsync("userTipo", perfil.tipo);
-        } catch {
-          /* offline — usa cache */
-        }
-      } catch (e) {
-        console.error("bootstrap", e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    bootstrap();
-  }, []);
+  const { isLoading, isSignedIn, userTipo } = useAuth();
 
   useEffect(() => {
     if (isLoading) return;
-    const onAuth = isAuthRoute(segments);
+    const onPublic = isPublicRoute(segments);
     const home = getHomeRoute(userTipo);
 
-    if (!isSignedIn && !onAuth) {
+    if (!isSignedIn && !onPublic) {
       router.replace("/login");
       return;
     }
-    if (isSignedIn && onAuth) {
+    if (isSignedIn && onPublic) {
       router.replace(home as never);
       return;
     }
-    if (isSignedIn && !onAuth && !isInCorrectApp(segments, userTipo)) {
+    if (isSignedIn && !onPublic && !isInCorrectApp(segments, userTipo)) {
       router.replace(home as never);
     }
-  }, [isSignedIn, isLoading, segments, userTipo]);
+  }, [isSignedIn, isLoading, segments, userTipo, router]);
 
   if (isLoading) {
     return (
@@ -81,6 +44,7 @@ export default function RootLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
       <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="(admin)" options={{ gestureEnabled: false }} />
@@ -90,6 +54,10 @@ export default function RootLayout() {
   );
 }
 
-export async function persistSession(tipo: string) {
-  await SecureStore.setItemAsync("userTipo", tipo);
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
+  );
 }

@@ -30,6 +30,8 @@ model Usuario {
   passwordResetToken    String?
   passwordResetExpires  DateTime?
   bloqueadoEm         DateTime?
+  mfaSecret           String?
+  mfaEnabled          Boolean   @default(false)
   funcoesBloqueadas   String[]  @default([])
   deletadoEm          DateTime?
   criadoEm            DateTime  @default(now())
@@ -245,9 +247,12 @@ model LiberacaoParcela {
   creditoId       String
   credito         Credito  @relation(fields: [creditoId], references: [creditoId], onDelete: Cascade)
   valor           Float
-  status          LiberacaoStatus @default(PENDENTE)
-  motivo          String?
-  processadoEm    DateTime?
+  status              LiberacaoStatus @default(PENDENTE)
+  motivo              String?
+  externalPaymentId   String?
+  paymentProvider     String?
+  failureReason       String?
+  processadoEm        DateTime?
   criadoEm        DateTime @default(now())
   atualizadoEm    DateTime @updatedAt
 

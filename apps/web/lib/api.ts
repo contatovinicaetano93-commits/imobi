@@ -328,6 +328,32 @@ export type ManagerStats = {
   obrasAtivas: number;
 };
 
+export type PortfolioGestor = {
+  creditoTotalAprovado: number;
+  creditoTotalLiberado: number;
+  creditosAtivos: number;
+  obrasAtivas: number;
+  obrasTotal: number;
+  etapasAguardandoVistoria: number;
+  roiEstimadoPct: number;
+  inadimplenciaRate: number;
+  creditos: Array<{
+    id: string;
+    valorAprovado: number;
+    valorLiberado: number;
+    taxaMensal: number;
+    prazoMeses: number;
+    status: string;
+  }>;
+  obras: Array<{
+    id: string;
+    nome: string;
+    status: string;
+    endereco: string;
+    etapas: Array<{ etapaId: string; status: string; percentualObra: number }>;
+  }>;
+};
+
 export type EtapaAuditEntry = {
   auditId: string;
   acaoTipo: string;
@@ -348,6 +374,7 @@ export type KycAuditEntry = {
 
 export const managerApi = {
   dashboard: () => apiFetch<ManagerStats>("/manager/dashboard"),
+  portfolio: () => apiFetch<PortfolioGestor>("/manager/portfolio"),
   listarEtapasPendentes: (
     limit?: number,
     offset?: number,
@@ -520,6 +547,25 @@ export type AdminOverview = {
   filaLiberacao: number;
 };
 
+export type CreditoLiberadoMensal = {
+  mes: string;
+  valor: number;
+};
+
+export type ObrasPorStatus = {
+  status: string;
+  quantidade: number;
+};
+
+export type AdminMetricas = {
+  creditoLiberadoPorMes: CreditoLiberadoMensal[];
+  obrasPorStatus: ObrasPorStatus[];
+  taxaAprovacaoEtapas: number;
+  kycPendentes: number;
+  etapasAprovadas: number;
+  etapasRejeitadas: number;
+};
+
 export type AtividadeRecente = {
   id: string;
   tipo: string;
@@ -529,6 +575,7 @@ export type AtividadeRecente = {
 
 export const adminApi = {
   overview: () => apiFetch<AdminOverview>("/admin/overview"),
+  metricas: () => apiFetch<AdminMetricas>("/admin/metricas"),
   atividades: (limit?: number) =>
     apiFetch<AtividadeRecente[]>(`/admin/atividades${limit ? `?limit=${limit}` : ""}`),
 };
@@ -658,4 +705,127 @@ export const comiteApi = {
     apiFetch<ComiteDigital & { solicitacao: SolicitacaoCredito & { usuario: { usuarioId: string; nome: string; email: string; telefone: string; kycStatus: string; tipo: string; criadoEm: string } } }>(
       `/comite/${comiteId}`
     ),
+};
+
+// ── Due Diligence ─────────────────────────────────────────────────────
+
+export type DueDiligenceResumo = {
+  id: string;
+  nomeEmpreendimento: string;
+  tipologia?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  status: string;
+  criadoEm: string;
+  atualizadoEm: string;
+};
+
+export const dueDiligenceApi = {
+  listar: () => apiFetch<DueDiligenceResumo[]>("/due-diligence"),
+  buscar: (id: string) => apiFetch<DueDiligenceResumo>(`/due-diligence/${id}`),
+};
+
+// ── Comercial / Pipeline ──────────────────────────────────────────────
+
+export type PipelineStage = {
+  stageId: string;
+  nome: string;
+  ordem: number;
+  cor: string;
+};
+
+export type ComercialLead = {
+  leadId: string;
+  clienteNome: string;
+  clienteEmail: string;
+  clienteTelefone: string;
+  fonte?: string;
+  tipoObra?: string | null;
+  stageId: string;
+  criadoEm: string;
+  stage?: { stageId: string; nome: string; ordem: number; corHex?: string };
+  scoreHistorico?: Array<{ scoreFinal: number }>;
+};
+
+export const comercialApi = {
+  pipelineStages: () => apiFetch<PipelineStage[]>("/comercial/pipeline/stages"),
+  listarLeads: (limit = 100, offset = 0) =>
+    apiFetch<{ leads: ComercialLead[]; total: number }>(
+      `/comercial/leads?limit=${limit}&offset=${offset}`
+    ),
+};
+
+// ── Etapas ────────────────────────────────────────────────────────────
+
+export const etapasApi = {
+  atualizarStatus: (etapaId: string, status: string) =>
+    apiFetch(`/etapas/${etapaId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
+};
+
+// ── Documentos (upload de arquivo) ────────────────────────────────────
+
+export type DocumentoUpload = {
+  documentoId: string;
+  url: string;
+  nome: string;
+  tipo: string;
+};
+
+export async function uploadDocumentoArquivo(
+  file: File,
+  opts?: { tipo?: string; nome?: string; obraId?: string },
+): Promise<DocumentoUpload> {
+  const fd = new FormData();
+  fd.append("file", file);
+  if (opts?.tipo) fd.append("tipo", opts.tipo);
+  if (opts?.nome) fd.append("nome", opts.nome);
+  if (opts?.obraId) fd.append("obraId", opts.obraId);
+
+  const res = await fetch("/api/proxy/documentos", { method: "POST", body: fd });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { message?: string };
+    throw new ApiError(res.status, body.message ?? "Erro no upload");
+  }
+  return res.json() as Promise<DocumentoUpload>;
+}
+
+// ── Fluxo (gates KYC / comitê por obra) ───────────────────────────────
+
+export type RequisitosObra = {
+  obraId: string;
+  kycUsuarioOk: boolean;
+  kycObraOk: boolean;
+  docsObraCount: number;
+  docsObraMinimo: number;
+  comiteOk: boolean;
+  comitePendente: boolean;
+  comiteStatus: string | null;
+  podeSolicitarComite: boolean;
+  podeLiberarEtapas: boolean;
+  rolesLiberacaoEtapas?: readonly string[];
+  rolesLiberacaoKyc?: readonly string[];
+  gestorFundoSomenteLeitura?: boolean;
+};
+
+export type FluxoObraStatus = RequisitosObra & {
+  nome: string;
+  status: string;
+};
+
+export type FluxoStatus = {
+  kycUsuarioCompleto: boolean;
+  kycUsuarioStatus: string;
+  primeiraOperacao: boolean;
+  obras: FluxoObraStatus[];
+  rolesLiberacaoEtapas?: readonly string[];
+  rolesLiberacaoKyc?: readonly string[];
+  gestorFundoSomenteLeitura?: boolean;
+};
+
+export const fluxoApi = {
+  status: () => apiFetch<FluxoStatus>("/fluxo/status"),
+  requisitosObra: (obraId: string) => apiFetch<RequisitosObra>(`/fluxo/obra/${obraId}`),
 };

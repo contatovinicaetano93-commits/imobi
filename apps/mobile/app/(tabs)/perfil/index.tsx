@@ -9,6 +9,7 @@ import * as SecureStore from "expo-secure-store";
 import ScreenHeader from "../../../components/ScreenHeader";
 import KeyboardAwareScroll from "../../../components/KeyboardAwareScroll";
 import { usuariosApi, authApi, type UsuarioPerfil } from "../../../lib/api";
+import { useAuth } from "../../../lib/auth-context";
 
 function formatCpf(cpf: string): string {
   const d = cpf.replace(/\D/g, "");
@@ -27,6 +28,7 @@ function formatTelefone(tel: string): string {
 /** Perfil da empresa — mesmos campos do cadastro inicial (CadastroUsuarioSchema) */
 export default function PerfilScreen() {
   const router = useRouter();
+  const { signOut } = useAuth();
   const [usuario, setUsuario] = useState<UsuarioPerfil | null>(null);
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -91,9 +93,7 @@ export default function PerfilScreen() {
             const refreshToken = await SecureStore.getItemAsync("refreshToken");
             if (refreshToken) await authApi.logout(refreshToken);
           } catch { /* ignore */ } finally {
-            await SecureStore.deleteItemAsync("accessToken");
-            await SecureStore.deleteItemAsync("refreshToken");
-            router.replace("/login");
+            await signOut();
           }
         },
       },
@@ -118,6 +118,9 @@ export default function PerfilScreen() {
             <Text style={styles.erroText}>{erro}</Text>
             <TouchableOpacity style={styles.retryBtn} onPress={carregarDados}>
               <Text style={styles.retryBtnText}>Tentar novamente</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} disabled={loggingOut}>
+              <Text style={styles.logoutBtnText}>{loggingOut ? "Saindo..." : "Sair e trocar de conta"}</Text>
             </TouchableOpacity>
           </View>
         )}

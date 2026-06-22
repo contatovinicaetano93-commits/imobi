@@ -15,7 +15,7 @@ class RejeitarDto {
 }
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("GESTOR", "ENGENHEIRO", "ADMIN")
+@Roles("ENGENHEIRO", "ADMIN")
 @Controller("vistoria")
 export class VistoriaController {
   constructor(private readonly vistoria: VistoriaService) {}
@@ -37,6 +37,6 @@ export class VistoriaController {
     @UsuarioAtual() u: IUsuario,
     @Body() body: RejeitarDto,
   ) {
-    return this.vistoria.rejeitar(u.id, etapaId, body.motivo ?? "Reprovado pelo gestor.");
+    return this.vistoria.rejeitar(u.id, etapaId, body.motivo ?? "Reprovado na vistoria.");
   }
 }

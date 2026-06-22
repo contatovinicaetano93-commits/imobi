@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { obrasApi } from "@/lib/api";
+import { obrasApi, fluxoApi, type FluxoStatus } from "@/lib/api";
+import { FlowGateBanner } from "@/components/FlowGateBanner";
+import { proximoPassoFluxo } from "@/lib/flow-gates";
 
 type FormState = {
   nome: string;
@@ -23,6 +25,12 @@ type FormState = {
 
 export default function NovaObraPage() {
   const router = useRouter();
+  const [fluxo, setFluxo] = useState<FluxoStatus | null>(null);
+
+  useEffect(() => {
+    fluxoApi.status().then(setFluxo).catch(() => null);
+  }, []);
+
   const [form, setForm] = useState<FormState>({
     nome: "",
     logradouro: "",
@@ -120,6 +128,8 @@ export default function NovaObraPage() {
     "w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:opacity-50 text-sm";
   const labelCls = "block text-sm font-semibold text-gray-900 mb-2";
 
+  const gate = proximoPassoFluxo(fluxo);
+
   return (
     <div className="max-w-2xl space-y-8">
       <div>
@@ -131,7 +141,10 @@ export default function NovaObraPage() {
           <ArrowLeft className="w-4 h-4" /> Voltar
         </button>
         <h1 className="text-2xl font-bold text-gray-900">Nova Obra</h1>
+        <p className="text-sm text-gray-500 mt-1">Cada nova obra exige documentos próprios e aprovação de comitê.</p>
       </div>
+
+      {gate && <FlowGateBanner {...gate} />}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">

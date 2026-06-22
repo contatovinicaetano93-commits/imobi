@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
+import { apiBaseUrl } from "../../../../lib/api";
 import { useGeoValidation } from "@imbobi/core/hooks";
 import ScreenHeader from "../../../../components/ScreenHeader";
 
@@ -71,8 +72,6 @@ export default function RegistrarEtapaScreen() {
     setUploading(true);
     try {
       const token = await SecureStore.getItemAsync("accessToken");
-      const base = process.env["EXPO_PUBLIC_API_URL"] ?? "http://localhost:4000";
-      const apiUrl = base.endsWith("/api/v1") ? base : `${base}/api/v1`;
       const form = new FormData();
       form.append("file", { uri: fotoUri, name: "evidencia.jpg", type: "image/jpeg" } as never);
       form.append("etapaId", params.etapaId);
@@ -80,7 +79,7 @@ export default function RegistrarEtapaScreen() {
       form.append("longitude", String(coordenadasAtuais.longitude));
       form.append("accuracyMetros", String(accuracyMetros ?? 10));
       form.append("timestampCaptura", new Date().toISOString());
-      const res = await fetch(`${apiUrl}/evidencias`, {
+      const res = await fetch(`${apiBaseUrl()}/evidencias`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token ?? ""}` },
         body: form,

@@ -1,17 +1,47 @@
 import * as SecureStore from "expo-secure-store";
-import { apiClient, ApiError } from "@imbobi/core";
+import { ApiError } from "@imbobi/core";
+import { apiFetch, withAuthApi } from "./api";
 
 async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync("accessToken");
 }
 
-async function callApi<T>(fn: () => Promise<T>): Promise<T> {
-  try {
-    return await fn();
-  } catch (e) {
-    if (e instanceof ApiError && e.status === 401) throw e;
-    throw e;
+function asString(v: unknown, fallback = ""): string {
+  return typeof v === "string" ? v : fallback;
+}
+
+function normalizeEtapaPendente(raw: Record<string, unknown>): EtapaPendente {
+  const obra = raw.obra as Record<string, unknown> | undefined;
+  return {
+    etapaId: asString(raw.etapaId ?? raw.id),
+    nome: asString(raw.nome),
+    status: asString(raw.status, "AGUARDANDO_VISTORIA"),
+    obra: obra
+      ? { obraId: asString(obra.obraId ?? obra.id), nome: asString(obra.nome) }
+      : undefined,
+  };
+}
+
+function normalizeKycPendente(raw: Record<string, unknown>): KycPendente {
+  const usuario = raw.usuario as Record<string, unknown> | undefined;
+  if (usuario) {
+    return {
+      kycDocumentoId: asString(raw.kycDocumentoId ?? raw.id),
+      usuarioId: asString(usuario.usuarioId ?? usuario.id),
+      nome: asString(usuario.nome),
+      email: asString(usuario.email),
+      kycStatus: asString(usuario.kycStatus, "PENDENTE"),
+      tipo: asString(raw.tipo),
+    };
   }
+  return {
+    kycDocumentoId: asString(raw.kycDocumentoId ?? raw.id),
+    usuarioId: asString(raw.usuarioId ?? raw.id),
+    nome: asString(raw.nome),
+    email: asString(raw.email),
+    kycStatus: asString(raw.kycStatus, "PENDENTE"),
+    tipo: asString(raw.tipo),
+  };
 }
 
 export type AdminOverview = {
@@ -24,14 +54,6 @@ export type AdminOverview = {
   etapasPendentes: number;
   filaLiberacao: number;
   visitasAgendadas: number;
-};
-
-export type TaxaPolitica = {
-  taxaSimulacao: number;
-  minAprovacao: number;
-  maxSimulacao: number;
-  faixaAprovacao: string;
-  mensagem: string;
 };
 
 export type ManagerDashboard = {
@@ -60,10 +82,12 @@ export type EtapaPendente = {
 };
 
 export type KycPendente = {
+  kycDocumentoId: string;
   usuarioId: string;
   nome?: string;
   email?: string;
   kycStatus?: string;
+  tipo?: string;
 };
 
 export type ComiteItem = {
@@ -88,114 +112,124 @@ export type SolicitacaoComite = {
 
 export const adminApi = {
   overview: () =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.get<AdminOverview>("/admin/overview", token ?? undefined);
+      return apiFetch.get<AdminOverview>("/admin/overview", token ?? undefined);
     }),
   obras: (limit = 20) =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.get<{ obras: unknown[]; total: number }>(
+      return apiFetch.get<{ obras: unknown[]; total: number }>(
         `/admin/obras?limit=${limit}`,
-        token ?? undefined
+        token ?? undefined,
       );
-    }),
-  getTaxaPolitica: () =>
-    callApi(async () => {
-      const token = await getToken();
-      return apiClient.get<TaxaPolitica>("/admin/taxa-referencia", token ?? undefined);
     }),
 };
 
 export const managerApi = {
   dashboard: () =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.get<ManagerDashboard>("/manager/dashboard", token ?? undefined);
+      return apiFetch.get<ManagerDashboard>("/manager/dashboard", token ?? undefined);
     }),
   etapasPendentes: () =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      const data = await apiClient.get<{ etapas: EtapaPendente[] } | EtapaPendente[]>(
+      const data = await apiFetch.get<{ etapas: unknown[]; total?: number } | unknown[]>(
         "/manager/etapas-pendentes",
-        token ?? undefined
+        token ?? undefined,
       );
-      return Array.isArray(data) ? data : data.etapas ?? [];
+      const list = Array.isArray(data) ? data : data.etapas ?? [];
+      return list.map((e) => normalizeEtapaPendente(e as Record<string, unknown>));
     }),
   kycPendentes: () =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      const data = await apiClient.get<{ documentos: KycPendente[] } | KycPendente[]>(
+      const data = await apiFetch.get<{ documentos: unknown[]; total?: number } | unknown[]>(
         "/manager/kyc-pendentes",
-        token ?? undefined
+        token ?? undefined,
       );
-      return Array.isArray(data) ? data : data.documentos ?? [];
+      const list = Array.isArray(data) ? data : data.documentos ?? [];
+      return list.map((d) => normalizeKycPendente(d as Record<string, unknown>));
     }),
   aprovarEtapa: (id: string) =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.patch<{ ok: boolean }>(`/manager/etapas/${id}/aprovar`, {}, token ?? undefined);
+      return apiFetch.patch<{ ok: boolean }>(`/manager/etapas/${id}/aprovar`, {}, token ?? undefined);
     }),
   rejeitarEtapa: (id: string, motivo: string) =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.patch<{ ok: boolean }>(
+      return apiFetch.patch<{ ok: boolean }>(
         `/manager/etapas/${id}/rejeitar`,
         { motivo },
-        token ?? undefined
+        token ?? undefined,
       );
     }),
-  validarEvidencia: (id: string, aprovado: boolean, observacao?: string) =>
-    callApi(async () => {
+  aprovarKyc: (id: string) =>
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.patch<{ ok: boolean }>(
-        `/evidencias/${id}/validar`,
-        { aprovado, observacao },
-        token ?? undefined
+      return apiFetch.patch<{ ok: boolean }>(`/manager/kyc/${id}/aprovar`, {}, token ?? undefined);
+    }),
+  rejeitarKyc: (id: string, motivo: string) =>
+    withAuthApi(async () => {
+      const token = await getToken();
+      return apiFetch.patch<{ ok: boolean }>(
+        `/manager/kyc/${id}/rejeitar`,
+        { motivo },
+        token ?? undefined,
       );
     }),
 };
 
 export const engenheiroApi = {
   visitas: () =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.get<VisitaEng[]>("/engenheiros/visitas", token ?? undefined);
+      const data = await apiFetch.get<VisitaEng[] | { visitas: VisitaEng[] }>(
+        "/engenheiros/visitas",
+        token ?? undefined,
+      );
+      return Array.isArray(data) ? data : data.visitas ?? [];
     }),
   visitaDetalhe: (visitaId: string) =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.get<Record<string, unknown>>(
+      return apiFetch.get<Record<string, unknown>>(
         `/engenheiros/visitas/${visitaId}`,
-        token ?? undefined
+        token ?? undefined,
       );
     }),
   atualizarVisita: (visitaId: string, body: { status: string; observacoes?: string }) =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.patch<{ ok: boolean }>(
+      return apiFetch.patch<{ ok: boolean }>(
         `/engenheiros/visitas/${visitaId}`,
         body,
-        token ?? undefined
+        token ?? undefined,
       );
     }),
 };
 
 export const comiteApi = {
   listar: (status?: string) =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
       const q = status ? `?status=${status}` : "";
-      const data = await apiClient.get<{ comites: ComiteItem[] } | ComiteItem[]>(
+      const data = await apiFetch.get<{ comites: ComiteItem[] } | ComiteItem[]>(
         `/comite${q}`,
-        token ?? undefined
+        token ?? undefined,
       );
       return Array.isArray(data) ? data : data.comites ?? [];
     }),
   minhas: () =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.get<SolicitacaoComite[]>("/comite/minhas", token ?? undefined);
+      const data = await apiFetch.get<SolicitacaoComite[] | { solicitacoes: SolicitacaoComite[] }>(
+        "/comite/minhas",
+        token ?? undefined,
+      );
+      return Array.isArray(data) ? data : data.solicitacoes ?? [];
     }),
   solicitar: (body: {
     valorSolicitado: number;
@@ -205,31 +239,37 @@ export const comiteApi = {
     obraId?: string;
     observacoes?: string;
   }) =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.post<SolicitacaoComite>("/comite/solicitar", body, token ?? undefined);
+      return apiFetch.post<SolicitacaoComite>("/comite/solicitar", body, token ?? undefined);
     }),
   votar: (
     comiteId: string,
-    voto: "APROVADO" | "REPROVADO",
+    voto: "APROVAR" | "AJUSTAR" | "REPROVAR",
     justificativa?: string,
-    taxaFinal?: number
+    taxaFinal?: number,
   ) =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.post<{ ok: boolean }>(
+      return apiFetch.post<{ ok: boolean }>(
         `/comite/${comiteId}/votar`,
-        { voto, justificativa, taxaFinal },
-        token ?? undefined
+        {
+          voto,
+          justificativa,
+          condicoes: taxaFinal != null ? `taxa:${taxaFinal}` : undefined,
+        },
+        token ?? undefined,
       );
     }),
   parecer: (comiteId: string, parecerTecnico: string) =>
-    callApi(async () => {
+    withAuthApi(async () => {
       const token = await getToken();
-      return apiClient.post<{ ok: boolean }>(
+      return apiFetch.post<{ ok: boolean }>(
         `/comite/${comiteId}/parecer`,
         { parecerTecnico },
-        token ?? undefined
+        token ?? undefined,
       );
     }),
 };
+
+export { ApiError };

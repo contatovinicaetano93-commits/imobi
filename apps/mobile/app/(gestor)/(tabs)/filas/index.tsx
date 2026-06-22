@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity, Alert } from "react-native";
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity } from "react-native";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -26,22 +26,16 @@ export default function GestorFilasScreen() {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const aprovar = (id: string) => {
-    Alert.alert("Aprovar liberação", "Confirmar liberação de etapa?", [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Aprovar", onPress: async () => {
-        try { await managerApi.aprovarEtapa(id); load(); } catch (e: unknown) {
-          Alert.alert("Erro", e instanceof Error ? e.message : "Falha");
-        }
-      }},
-    ]);
-  };
-
   if (loading) return <View style={styles.center}><ActivityIndicator color="#7C3AED" /></View>;
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Filas operacionais" subtitle="Validar etapas e KYC" dark accent="#7C3AED" />
+      <ScreenHeader
+        title="Monitoramento"
+        subtitle="Gestor do fundo — somente leitura. Liberação: engenheiro e admin."
+        dark
+        accent="#7C3AED"
+      />
       <View style={styles.seg}>
         {(["etapas", "kyc"] as Tab[]).map((t) => (
           <TouchableOpacity key={t} style={[styles.segBtn, tab === t && styles.segActive]} onPress={() => setTab(t)}>
@@ -57,7 +51,7 @@ export default function GestorFilasScreen() {
           etapas.length === 0 ? (
             <View style={styles.emptyWrap}>
               <Ionicons name="checkmark-circle" size={40} color="#C4B5FD" />
-              <Text style={styles.empty}>Fila de etapas vazia.</Text>
+              <Text style={styles.empty}>Nenhuma etapa aguardando liberação.</Text>
             </View>
           ) : etapas.map((e) => (
             <View key={e.etapaId} style={styles.card}>
@@ -67,10 +61,10 @@ export default function GestorFilasScreen() {
               <View style={styles.cardRight}>
                 <Text style={styles.nome}>{e.nome}</Text>
                 <Text style={styles.obra}>{e.obra?.nome ?? "Obra"}</Text>
-                <Text style={styles.status}>{e.status.replace(/_/g, " ")}</Text>
-                <TouchableOpacity style={styles.btn} onPress={() => aprovar(e.etapaId)}>
-                  <Text style={styles.btnText}>Liberar etapa</Text>
-                </TouchableOpacity>
+                <Text style={styles.status}>{(e.status ?? "AGUARDANDO_VISTORIA").replace(/_/g, " ")}</Text>
+                <View style={styles.readOnlyBadge}>
+                  <Text style={styles.readOnlyText}>Aguardando engenheiro/admin</Text>
+                </View>
               </View>
             </View>
           ))
@@ -78,13 +72,13 @@ export default function GestorFilasScreen() {
           kyc.length === 0 ? (
             <Text style={styles.empty}>Nenhum KYC pendente.</Text>
           ) : kyc.map((k) => (
-            <View key={k.usuarioId} style={styles.kycRow}>
+            <View key={k.kycDocumentoId || k.usuarioId} style={styles.kycRow}>
               <Ionicons name="document-attach" size={24} color="#7C3AED" />
               <View style={{ flex: 1 }}>
                 <Text style={styles.nome}>{k.nome ?? "Construtor"}</Text>
                 <Text style={styles.obra}>{k.email ?? ""}</Text>
               </View>
-              <View style={styles.kycBadge}><Text style={styles.kycBadgeText}>REVISAR</Text></View>
+              <View style={styles.kycBadge}><Text style={styles.kycBadgeText}>ADMIN</Text></View>
             </View>
           ))
         )}
@@ -111,8 +105,8 @@ const styles = StyleSheet.create({
   nome: { fontSize: 15, fontWeight: "700", color: "#0F172A" },
   obra: { fontSize: 12, color: "#64748B" },
   status: { fontSize: 10, color: "#7C3AED", fontWeight: "600", letterSpacing: 0.5 },
-  btn: { backgroundColor: "#7C3AED", paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, alignSelf: "flex-start", marginTop: 6 },
-  btnText: { color: "#FFF", fontWeight: "700", fontSize: 12 },
+  readOnlyBadge: { marginTop: 6, alignSelf: "flex-start", backgroundColor: "#F5F3FF", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  readOnlyText: { fontSize: 10, color: "#6D28D9", fontWeight: "600" },
   kycRow: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#FFF", padding: 16, borderRadius: 14, borderWidth: 1, borderColor: "#EDE9FE" },
   kycBadge: { backgroundColor: "#EDE9FE", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   kycBadgeText: { fontSize: 9, fontWeight: "800", color: "#7C3AED" },

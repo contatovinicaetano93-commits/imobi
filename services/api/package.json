@@ -3,10 +3,11 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "build": "cd ../.. && pnpm --filter @imbobi/schemas build && cd services/api && prisma generate --schema prisma/schema.prisma && nest build",
+    "build": "prisma generate --schema prisma/schema.prisma && nest build",
     "dev": "nest start --watch",
     "dev:local": "node -r dotenv/config dist/main.js",
-    "start": "prisma migrate deploy --schema prisma/schema.prisma && node dist/main.js",
+    "start": "prisma migrate deploy --schema prisma/schema.prisma && node ./dist/main.js",
+    "start:worker": "node ./dist/main.worker.js",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit",
     "test": "jest",
@@ -15,9 +16,9 @@
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "prisma:migrate:dev": "prisma migrate dev --schema prisma/schema.prisma",
     "prisma:studio": "prisma studio --schema prisma/schema.prisma",
-    "seed": "ts-node --project tsconfig.json src/seeds/seed.ts",
-    "seed:prod": "node -r ts-node/register -r tsconfig-paths/register src/seeds/seed.ts",
-    "seed:dev": "ts-node --project tsconfig.json src/seeds/dev-seed.ts"
+    "seed": "pnpm exec tsx src/seeds/seed.ts",
+    "seed:prod": "pnpm exec tsx src/seeds/seed.ts",
+    "seed:dev": "pnpm exec tsx src/seeds/dev-seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",
@@ -47,6 +48,7 @@
     "firebase-admin": "^13.10.0",
     "keyv": "^5.6.0",
     "nodemailer": "^8.0.9",
+    "otplib": "^13.4.1",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
     "prisma": "^5.0.0",

@@ -13,11 +13,15 @@ export default function AdminDashboard() {
   const [data, setData] = useState<AdminOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       setData(await adminApi.overview());
-    } catch { /* offline */ }
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha ao carregar painel");
+    }
     setLoading(false);
     setRefreshing(false);
   }, []);
@@ -28,7 +32,18 @@ export default function AdminDashboard() {
     return <View style={styles.center}><ActivityIndicator color={C.red} size="large" /></View>;
   }
 
-  const d = data!;
+  if (!data) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>{error ?? "Sem dados do painel"}</Text>
+        <TouchableOpacity style={styles.retryBtn} onPress={() => { setLoading(true); load(); }}>
+          <Text style={styles.retryText}>Tentar novamente</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const d = data;
   const alertas = [
     { n: d.kycPendentes, label: "KYC aguardando", route: "/(admin)/(tabs)/aprovacoes", icon: "document-text" as const },
     { n: d.etapasPendentes, label: "Etapas p/ vistoria", route: "/(admin)/(tabs)/aprovacoes", icon: "camera" as const },
@@ -113,7 +128,10 @@ function HeroStat({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#F1F5F9" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },
+  errorText: { color: C.gray, textAlign: "center", marginBottom: 16 },
+  retryBtn: { backgroundColor: C.red, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10 },
+  retryText: { color: "#FFF", fontWeight: "700" },
   scroll: { padding: 16, gap: 16, paddingBottom: 40 },
   hero: { backgroundColor: C.surface, borderRadius: 20, padding: 20, gap: 16 },
   heroTop: { flexDirection: "row", gap: 14, alignItems: "center" },

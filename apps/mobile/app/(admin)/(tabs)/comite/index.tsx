@@ -41,15 +41,15 @@ export default function AdminComiteScreen() {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const votar = (id: string, voto: "APROVADO" | "REPROVADO") => {
-    if (voto === "APROVADO" && taxaAprovada > TAXA_SIMULACAO) {
+  const votar = (id: string, voto: "APROVAR" | "REPROVAR") => {
+    if (voto === "APROVAR" && taxaAprovada > TAXA_SIMULACAO) {
       Alert.alert("Taxa inválida", "A taxa aprovada não pode ser maior que a simulada (1,90% a.m.).");
       return;
     }
-    const msg = voto === "APROVADO"
+    const msg = voto === "APROVAR"
       ? `Aprovar com taxa ${formatTaxaPercent(taxaAprovada)}?\n(Simulado em ${formatTaxaSimulacao()})`
       : "Reprovar solicitação?";
-    Alert.alert(voto === "APROVADO" ? "Aprovar crédito" : "Reprovar crédito", msg, [
+    Alert.alert(voto === "APROVAR" ? "Aprovar crédito" : "Reprovar crédito", msg, [
       { text: "Cancelar", style: "cancel" },
       { text: "Confirmar", onPress: async () => {
         try {
@@ -57,7 +57,7 @@ export default function AdminComiteScreen() {
             id,
             voto,
             justificativa || undefined,
-            voto === "APROVADO" ? taxaAprovada : undefined
+            voto === "APROVAR" ? taxaAprovada : undefined
           );
           setExpanded(null);
           setJustificativa("");
@@ -147,10 +147,10 @@ export default function AdminComiteScreen() {
                     multiline
                   />
                   <View style={styles.row}>
-                    <TouchableOpacity style={[styles.btn, styles.approve]} onPress={() => votar(c.comiteId, "APROVADO")}>
+                    <TouchableOpacity style={[styles.btn, styles.approve]} onPress={() => votar(c.comiteId, "APROVAR")}>
                       <Text style={styles.btnText}>Aprovar</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.btn, styles.reject]} onPress={() => votar(c.comiteId, "REPROVADO")}>
+                    <TouchableOpacity style={[styles.btn, styles.reject]} onPress={() => votar(c.comiteId, "REPROVAR")}>
                       <Text style={styles.btnText}>Reprovar</Text>
                     </TouchableOpacity>
                   </View>

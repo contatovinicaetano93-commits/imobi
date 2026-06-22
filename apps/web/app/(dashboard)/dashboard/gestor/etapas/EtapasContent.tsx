@@ -7,6 +7,7 @@ import { managerApi, type EtapaPendente } from "@/lib/api";
 import { BulkApprovalActions } from "@/components/dashboard/BulkApprovalActions";
 import { AdvancedFilters, type FilterState } from "@/components/dashboard/AdvancedFilters";
 import Link from "next/link";
+import { useUserRole } from "@/hooks/use-user-role";
 
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -22,6 +23,7 @@ function hoursAgo(date: string): number {
 
 export default function EtapasContent() {
   const router = useRouter();
+  const { canLiberarEtapas, isGestorFundoMonitor } = useUserRole();
   const searchParams = useSearchParams();
   const [data, setData] = useState<{ etapas: EtapaPendente[]; total: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -134,9 +136,12 @@ export default function EtapasContent() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Etapas Pendentes</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isGestorFundoMonitor ? "Monitoramento de etapas" : "Etapas pendentes"}
+          </h1>
           <p className="text-gray-500 text-sm mt-1">
-            {data.total} etapa{data.total !== 1 ? "s" : ""} aguardando aprovação
+            {data.total} etapa{data.total !== 1 ? "s" : ""} aguardando liberação
+            {isGestorFundoMonitor && " — somente leitura (gestor do fundo)"}
             {selectedEtapas.length > 0 && ` — ${selectedEtapas.length} selecionada(s)`}
             {filters.priority && filters.priority !== "todas" && ` — Filtrando por: ${filters.priority}`}
           </p>
@@ -188,7 +193,7 @@ export default function EtapasContent() {
       ) : (
         <div className="space-y-4">
           {/* Selection Toolbar */}
-          {filteredEtapas.length > 0 && (
+          {filteredEtapas.length > 0 && canLiberarEtapas && (
             <div className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <input
@@ -224,13 +229,14 @@ export default function EtapasContent() {
                 }`}
               >
                 <div className="flex items-start gap-4">
-                  {/* Checkbox */}
+                  {canLiberarEtapas && (
                   <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => handleSelectEtapa(etapa.etapaId)}
                     className="w-5 h-5 rounded border-gray-300 text-[#1B4FD8] cursor-pointer mt-0.5 shrink-0"
                   />
+                  )}
 
                   {/* Urgência */}
                   <div
@@ -283,7 +289,7 @@ export default function EtapasContent() {
                       href={`/dashboard/gestor/etapas/${etapa.etapaId}`}
                       className="bg-[#1B4FD8] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors"
                     >
-                      Revisar
+                      {canLiberarEtapas ? "Analisar" : "Ver detalhe"}
                     </Link>
                   </div>
                 </div>
@@ -293,12 +299,14 @@ export default function EtapasContent() {
         </div>
       )}
 
-      <BulkApprovalActions
-        selectedEtapas={selectedEtapas}
-        onSuccess={handleBulkSuccess}
-        onError={handleError}
-        isDisabled={loading}
-      />
+      {canLiberarEtapas && (
+        <BulkApprovalActions
+          selectedEtapas={selectedEtapas}
+          onSuccess={handleBulkSuccess}
+          onError={handleError}
+          isDisabled={loading}
+        />
+      )}
 
       {/* Paginação */}
       {pages > 1 && (

@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { managerApi, type KycPendente } from "@/lib/api";
 import { KycBatchActions } from "@/components/dashboard/KycBatchActions";
+import { useUserRole } from "@/hooks/use-user-role";
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -324,6 +325,7 @@ function DocCard({
   onApprove,
   onRejectClick,
   onPreview,
+  canAct,
 }: {
   doc: DocWithStatus;
   isSelected: boolean;
@@ -331,6 +333,7 @@ function DocCard({
   onApprove: (id: string) => void;
   onRejectClick: (doc: DocWithStatus) => void;
   onPreview: (doc: DocWithStatus) => void;
+  canAct: boolean;
 }) {
   const diffH = Math.floor(
     (Date.now() - new Date(doc.criadoEm).getTime()) / 3600000
@@ -351,7 +354,7 @@ function DocCard({
       }`}
     >
       <div className="flex items-start gap-4">
-        {/* Checkbox */}
+        {canAct && (
         <input
           type="checkbox"
           checked={isSelected}
@@ -360,6 +363,7 @@ function DocCard({
           disabled={isResolved}
           aria-label={`Selecionar documento de ${doc.usuario.nome}`}
         />
+        )}
 
         {/* Urgency strip */}
         <div
@@ -437,6 +441,8 @@ function DocCard({
               <Eye className="w-3.5 h-3.5" />
               Ver documento
             </button>
+            {canAct && (
+            <>
             <button
               onClick={() => onApprove(doc.kycDocumentoId)}
               className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -451,6 +457,8 @@ function DocCard({
               <XCircle className="w-3.5 h-3.5" />
               Rejeitar
             </button>
+            </>
+            )}
           </div>
         ) : (
           <div className="shrink-0">
@@ -472,6 +480,7 @@ function DocCard({
 const PAGE_SIZE = 5;
 
 export default function KycPage() {
+  const { canAprovarKyc, isGestorFundoMonitor } = useUserRole();
   const [docs, setDocs] = useState<DocWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
@@ -707,7 +716,9 @@ export default function KycPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900">Análise de KYC</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isGestorFundoMonitor ? "Monitoramento de KYC" : "Análise de KYC"}
+            </h1>
             {!loading && (
               <span
                 className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}`}
@@ -717,7 +728,9 @@ export default function KycPage() {
             )}
           </div>
           <p className="text-gray-500 text-sm mt-1">
-            Analise e aprove ou rejeite documentos enviados pelos usuários
+            {canAprovarKyc
+              ? "Analise e aprove ou rejeite documentos enviados pelos usuários"
+              : "Acompanhe a fila de KYC — liberação é feita pelo admin"}
             {isDemo && (
               <span className="ml-2 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
                 Modo demo
@@ -848,6 +861,7 @@ export default function KycPage() {
               onApprove={handleApprove}
               onRejectClick={setRejectDoc}
               onPreview={setPreviewDoc}
+              canAct={canAprovarKyc}
             />
           ))}
         </div>
@@ -881,12 +895,14 @@ export default function KycPage() {
       )}
 
       {/* Batch actions (fixed bottom bar) */}
+      {canAprovarKyc && (
       <KycBatchActions
         selectedDocs={selectedDocs}
         onSuccess={handleBulkSuccess}
         onError={handleBulkError}
         isDisabled={loading}
       />
+      )}
 
       {/* Preview modal */}
       {previewDoc && (

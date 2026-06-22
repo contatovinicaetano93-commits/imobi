@@ -48,17 +48,29 @@ export class DocumentosService {
       if (!obra) throw new NotFoundException("Obra não encontrada.");
       if (obra.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
     }
-    return this.prisma.documento.findMany({
+    const docs = await this.prisma.documento.findMany({
       where: { obraId },
       orderBy: { criadoEm: "desc" },
     });
+    return Promise.all(
+      docs.map(async (d) => ({
+        ...d,
+        url: await this.storage.getSignedUrl(d.url).catch(() => d.url),
+      })),
+    );
   }
 
   async listarPorUsuario(usuarioId: string) {
-    return this.prisma.documento.findMany({
+    const docs = await this.prisma.documento.findMany({
       where: { usuarioId },
       orderBy: { criadoEm: "desc" },
     });
+    return Promise.all(
+      docs.map(async (d) => ({
+        ...d,
+        url: await this.storage.getSignedUrl(d.url).catch(() => d.url),
+      })),
+    );
   }
 
   async deletar(documentoId: string, usuarioId: string, isAdmin: boolean) {

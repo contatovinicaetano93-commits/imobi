@@ -1,9 +1,13 @@
+import { View } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import DevAccountBar from "../../components/DevAccountBar";
 
 export default function TabLayout() {
   return (
-    <Tabs
+    <View style={{ flex: 1 }}>
+      <DevAccountBar />
+      <Tabs
       screenOptions={{
         tabBarActiveTintColor: "#16a34a",
         tabBarInactiveTintColor: "#9ca3af",
@@ -21,11 +25,20 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="obras/index"
+        name="obras"
         options={{
           title: "Obras",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="documentos/index"
+        options={{
+          title: "Documentos",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="document-text" size={size} color={color} />
           ),
         }}
       />
@@ -47,8 +60,8 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen name="documentos/index" options={{ href: null }} />
       <Tabs.Screen name="notificacoes/index" options={{ href: null }} />
     </Tabs>
+    </View>
   );
 }

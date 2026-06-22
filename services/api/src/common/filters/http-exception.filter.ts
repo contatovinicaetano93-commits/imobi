@@ -1,5 +1,6 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from "@nestjs/common";
 import type { FastifyReply } from "fastify";
+import { captureException } from "../config/sentry.config";
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -23,6 +24,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       message = "Erro interno do servidor";
+    }
+
+    if (status >= 500) {
+      captureException(
+        exception instanceof Error ? exception : new Error(String(exception)),
+        { statusCode: status },
+      );
     }
 
     reply.code(status).send({

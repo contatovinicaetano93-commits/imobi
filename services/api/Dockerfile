@@ -1,36 +1,27 @@
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 WORKDIR /app
 
-RUN apk add --no-cache openssl
-RUN npm install -g pnpm@9
+RUN apk add --no-cache openssl \
+  && npm install -g pnpm@9
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json .npmrc ./
 COPY packages/ ./packages/
 COPY services/api/ ./services/api/
 
-RUN pnpm install --frozen-lockfile
-RUN pnpm --filter @imbobi/schemas build || true
-RUN pnpm --filter @imbobi/core build
-RUN pnpm --filter @imbobi/api run prisma:generate
-RUN pnpm --filter @imbobi/api build
+# Render injects NODE_ENV=production during build; devDeps are required for nest/tsc.
+ENV NODE_ENV=development
 
-# ── Runtime ─────────────────────────────────────────
-FROM node:20-alpine AS runner
+RUN pnpm install --frozen-lockfile \
+  && pnpm --filter @imbobi/schemas build \
+  && pnpm --filter @imbobi/core build
+
+WORKDIR /app/services/api
+RUN pnpm exec prisma generate --schema prisma/schema.prisma \
+  && pnpm exec nest build \
+  && test -f dist/main.js
+
 WORKDIR /app
-
-RUN apk add --no-cache openssl
-RUN npm install -g pnpm@9
-
-COPY --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
-COPY --from=builder /app/packages/ ./packages/
-COPY --from=builder /app/services/api/package.json ./services/api/
-COPY --from=builder /app/services/api/dist/ ./services/api/dist/
-COPY --from=builder /app/services/api/prisma/ ./services/api/prisma/
-
-RUN pnpm install --frozen-lockfile --prod
-RUN pnpm --filter @imbobi/api run prisma:generate
-
 ENV NODE_ENV=production
 EXPOSE 4000
 
-CMD ["sh", "-c", "pnpm --filter @imbobi/api start"]
+CMD ["sh", "-c", "cd /app/services/api && pnpm exec prisma migrate deploy --schema prisma/schema.prisma && exec node dist/main.js"]

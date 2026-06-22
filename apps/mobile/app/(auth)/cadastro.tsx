@@ -9,8 +9,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
 import { Ionicons } from "@expo/vector-icons";
-import * as SecureStore from "expo-secure-store";
 import { authApi, salvarTokens } from "../../lib/api";
+import { useAuth } from "../../lib/auth-context";
+import { getHomeRoute } from "../../lib/roles";
 
 const C = {
   mint: "#22C55E", mintDark: "#16A34A", navy: "#0C1A3D", ink: "#0F172A",
@@ -38,6 +39,7 @@ const FIELDS: FieldDef[] = [
 
 export default function CadastroScreen() {
   const router = useRouter();
+  const { signIn } = useAuth();
   const [showPass, setShowPass] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
 
@@ -45,7 +47,6 @@ export default function CadastroScreen() {
     useForm<CadastroUsuarioInput>({
       resolver: zodResolver(CadastroUsuarioSchema),
       defaultValues: {
-        tipo: "TOMADOR",
         consentidoTermos: false,
         consentidoPrivacy: false,
         consentidoKyc: false,
@@ -65,14 +66,14 @@ export default function CadastroScreen() {
 
   const onSubmit = async (data: CadastroUsuarioInput) => {
     try {
-      const res = await authApi.registrar({ ...data, tipo: "TOMADOR" });
+      const res = await authApi.registrar(data);
       await salvarTokens(res);
       const tipo = res.usuario?.tipo ?? "TOMADOR";
-      await SecureStore.setItemAsync("userTipo", tipo);
+      await signIn(tipo);
       Alert.alert(
         "Conta criada!",
         "Envie seus documentos para liberar crédito.",
-        [{ text: "Continuar", onPress: () => router.replace("/documentos") }]
+        [{ text: "Continuar", onPress: () => router.replace(getHomeRoute(tipo) as never) }],
       );
     } catch (e: unknown) {
       Alert.alert("Erro no cadastro", e instanceof Error ? e.message : "Tente novamente.");

@@ -7,6 +7,8 @@ import { GpsValidationStatus } from "@/components/dashboard/GpsValidationStatus"
 import { ApprovalAuditTrail } from "@/components/dashboard/ApprovalAuditTrail";
 import Image from "next/image";
 
+import { useUserRole } from "@/hooks/use-user-role";
+
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -29,6 +31,7 @@ export default function EtapaDetailPage() {
   const [showRejectionForm, setShowRejectionForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const { canLiberarEtapas, isGestorFundoMonitor } = useUserRole();
 
   const etapaId = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -211,20 +214,28 @@ export default function EtapaDetailPage() {
         {/* Painel de ações */}
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="font-bold text-gray-900 mb-4">Decisão</h2>
+            <h2 className="font-bold text-gray-900 mb-4">
+              {canLiberarEtapas ? "Decisão" : "Status da etapa"}
+            </h2>
+            {isGestorFundoMonitor && (
+              <p className="text-sm text-purple-800 bg-purple-50 border border-purple-100 rounded-lg p-3 mb-4">
+                Gestor do fundo acompanha o sistema — liberação é feita pelo engenheiro ou admin.
+              </p>
+            )}
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-gray-600 mb-2">Valor a liberar</p>
                 <p className="text-2xl font-bold text-[#1B4FD8]">{brl(etapa.valorLiberacao)}</p>
               </div>
 
+              {canLiberarEtapas && (
               <div className="pt-4 border-t border-gray-100 space-y-3">
                 <button
                   onClick={handleApprove}
                   disabled={submitting}
                   className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
                 >
-                  ✓ Aprovar Etapa
+                  ✓ Aprovar etapa
                 </button>
 
                 {!showRejectionForm ? (
@@ -264,6 +275,7 @@ export default function EtapaDetailPage() {
                   </div>
                 )}
               </div>
+              )}
             </div>
           </div>
 

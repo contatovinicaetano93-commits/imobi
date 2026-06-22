@@ -24,7 +24,10 @@ export default function ObrasScreen() {
       setObras(data);
       setError(null);
     } catch (e: any) {
-      setError(e.message ?? "Erro ao carregar obras");
+      const msg = e?.message ?? "Erro ao carregar obras";
+      setError(msg.includes("timeout") || msg.includes("aborted")
+        ? "API não respondeu. Confira se pnpm dev:api está rodando (porta 4001)."
+        : msg);
     }
   };
 

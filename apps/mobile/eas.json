@@ -10,11 +10,20 @@
     },
     "preview": {
       "distribution": "internal",
-      "android": { "buildType": "apk" }
+      "android": { "buildType": "apk" },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://imobi-api-staging.onrender.com/api/v1"
+      }
     },
-    "production": {}
+    "production": {
+      "autoIncrement": true,
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.imobi.com.br/api/v1"
+      }
+    }
   },
   "update": {
-    "channel": "main"
+    "channel": "production"
   }
 }

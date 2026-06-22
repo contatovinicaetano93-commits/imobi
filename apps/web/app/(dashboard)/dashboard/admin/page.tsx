@@ -156,378 +156,125 @@ type ApiObra = {
 
 // ─── Tab Views ────────────────────────────────────────────────────────────────
 
-function TabPortfolio({ overview }: { overview: ApiOverview | null }) {
-  const p = DEMO.portfolio;
-  const receitaTotal = p.receitaJuros + p.receitaEstruturacao + p.receitaOperacional;
-  const ebitdaPct = p.ebitdaMargem;
-
-  // Overlay real API data on top of DEMO KPIs when available
-  const rawObras = overview?.obrasAtivas;
-  const obrasAtivas = (typeof rawObras === "number" && isFinite(rawObras)) ? rawObras : p.operacoesAtivas;
-  const rawCredito = overview?.creditoAprovado;
-  const creditoAprovado = (typeof rawCredito === "number" && isFinite(rawCredito)) ? rawCredito : p.carteiraAtiva;
-  const metaPct = p.meta > 0 ? Math.round((creditoAprovado / p.meta) * 100) : 0;
+function TabPortfolio({
+  overview,
+  portfolio,
+}: {
+  overview: ApiOverview | null;
+  portfolio: {
+    creditoTotalAprovado: number;
+    creditoTotalLiberado: number;
+    obrasAtivas: number;
+    creditosAtivos: number;
+    inadimplenciaRate: number;
+  } | null;
+}) {
+  const creditoAprovado = portfolio?.creditoTotalAprovado ?? overview?.creditoAprovado ?? 0;
+  const creditoLiberado = portfolio?.creditoTotalLiberado ?? overview?.creditoLiberado ?? 0;
+  const obrasAtivas = portfolio?.obrasAtivas ?? overview?.obrasAtivas ?? 0;
+  const aDesembolsar = Math.max(0, creditoAprovado - creditoLiberado);
 
   return (
     <div className="space-y-6">
-      {/* Carteira */}
-      <div style={card}>
-        <SectionHeader title="Carteira Ativa" icon={<TrendingUp size={14} color={MINT} />} />
-        <div style={{ padding: "1.25rem" }} className="space-y-4">
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 }}>
-            <div>
-              <p style={{ ...bc, fontWeight: 800, fontSize: "clamp(1.8rem,3.5vw,2.4rem)", color: NAVY, lineHeight: 1 }}>
-                {formatarBRL(creditoAprovado)}
-              </p>
-              <p style={{ ...j, fontSize: "0.8rem", color: "rgba(12,26,61,0.45)", marginTop: 4 }}>
-                Meta {formatarBRL(p.meta)} até {p.metaData} — <strong style={{ color: ROYAL }}>{metaPct}% atingida</strong>
-              </p>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <p style={{ ...bc, fontWeight: 800, fontSize: "1.4rem", color: NAVY }}>{metaPct}%</p>
-              <p style={{ ...j, fontSize: "0.68rem", color: "rgba(12,26,61,0.35)" }}>da meta</p>
-            </div>
-          </div>
-          <Bar pct={metaPct} color={MINT} bg="rgba(12,26,61,0.07)" />
-          <div className="grid grid-cols-2 gap-4">
-            <div style={{ padding: "0.85rem 1rem", borderRadius: 10, background: "rgba(27,79,216,0.04)", border: "1px solid rgba(27,79,216,0.1)" }}>
-              <p style={{ ...j, fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: ROYAL, marginBottom: 4 }}>Desembolsado</p>
-              <p style={{ ...bc, fontWeight: 800, fontSize: "1.2rem", color: NAVY }}>{formatarBRL(p.desembolsado)}</p>
-            </div>
-            <div style={{ padding: "0.85rem 1rem", borderRadius: 10, background: "rgba(12,26,61,0.03)", border: "1px solid rgba(12,26,61,0.07)" }}>
-              <p style={{ ...j, fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(12,26,61,0.4)", marginBottom: 4 }}>A Desembolsar</p>
-              <p style={{ ...bc, fontWeight: 800, fontSize: "1.2rem", color: NAVY }}>{formatarBRL(p.aDesembolsar)}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Taxa + Spread */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Taxa Méd. Ponderada" value={`${p.taxaMediaPonderada.toFixed(2)}% a.m.`} sub={`meta: ${p.taxaMeta}% a.m.`} accent={p.taxaMediaPonderada >= p.taxaMeta ? MINT : "#f59e0b"} delta={((p.taxaMediaPonderada - p.taxaMeta) / p.taxaMeta) * 100} />
-        <KpiCard label="Spread Efetivo" value={`${p.spreadEfetivo.toFixed(2)}%`} sub="sobre CDI" accent={ROYAL} />
-        <KpiCard label="Ticket Méd./Operação" value={formatarBRL(p.ticketMedioPorOperacao)} sub={`${obrasAtivas} operações ativas`} accent={NAVY} />
-        <KpiCard label="Ticket Méd./Incorporadora" value={formatarBRL(p.ticketMedioPorIncorporadora)} sub="por tomador" accent={NAVY} />
+        <KpiCard label="Crédito aprovado" value={formatarBRL(creditoAprovado)} accent={MINT} />
+        <KpiCard label="Desembolsado" value={formatarBRL(creditoLiberado)} sub="total liberado" accent={ROYAL} />
+        <KpiCard label="A desembolsar" value={formatarBRL(aDesembolsar)} accent={NAVY} />
+        <KpiCard label="Obras ativas" value={String(obrasAtivas)} sub={`${portfolio?.creditosAtivos ?? 0} linhas de crédito`} accent={NAVY} />
       </div>
 
-      {/* Receita */}
       <div style={card}>
-        <SectionHeader title="Receita — Realizado vs Projetado" icon={<Banknote size={14} color={ROYAL} />} />
+        <SectionHeader title="Carteira — fundo único IMOBI" icon={<TrendingUp size={14} color={MINT} />} />
         <div style={{ padding: "1.25rem" }} className="space-y-3">
-          {[
-            { label: "Juros acruados (mensal)",        val: p.receitaJuros,         pct: Math.round((p.receitaJuros / p.receitaProjetada) * 100) },
-            { label: "Taxa de estruturação (3%)",      val: p.receitaEstruturacao,  pct: Math.round((p.receitaEstruturacao / p.receitaProjetada) * 100) },
-            { label: "Taxa operacional (7%)",          val: p.receitaOperacional,   pct: Math.round((p.receitaOperacional / p.receitaProjetada) * 100) },
-          ].map(({ label, val, pct }) => (
-            <div key={label}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                <span style={{ ...j, fontSize: "0.8rem", color: "rgba(12,26,61,0.65)" }}>{label}</span>
-                <span style={{ ...j, fontSize: "0.8rem", fontWeight: 700, color: NAVY }}>{formatarBRL(val)}</span>
-              </div>
-              <Bar pct={pct} color={ROYAL} />
-            </div>
-          ))}
-          <div style={{ borderTop: "1px solid rgba(12,26,61,0.07)", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ ...j, fontSize: "0.82rem", fontWeight: 700, color: NAVY }}>Total realizado</span>
-            <div style={{ textAlign: "right" }}>
-              <p style={{ ...bc, fontWeight: 800, fontSize: "1.15rem", color: NAVY }}>{formatarBRL(receitaTotal)}</p>
-              <p style={{ ...j, fontSize: "0.68rem", color: "rgba(12,26,61,0.4)" }}>projetado: {formatarBRL(p.receitaProjetada)}</p>
-            </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ ...j, fontSize: "0.8rem", color: "rgba(12,26,61,0.55)" }}>Inadimplência</span>
+            <span style={{ ...j, fontSize: "0.8rem", fontWeight: 700, color: NAVY }}>{portfolio?.inadimplenciaRate ?? 0}%</span>
           </div>
-        </div>
-      </div>
-
-      {/* EBITDA */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div style={card}>
-          <SectionHeader title="EBITDA Mensal" icon={<BarChart3 size={14} color={NAVY} />} />
-          <div style={{ padding: "1.25rem" }} className="space-y-3">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <p style={{ ...bc, fontWeight: 800, fontSize: "1.5rem", color: NAVY }}>{formatarBRL(p.ebitdaRealizado)}</p>
-              <p style={{ ...j, fontSize: "0.75rem", color: "rgba(12,26,61,0.4)" }}>projetado: {formatarBRL(p.ebitdaProjetado)}</p>
-            </div>
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                <span style={{ ...j, fontSize: "0.78rem", color: "rgba(12,26,61,0.55)" }}>Margem EBITDA realizada</span>
-                <span style={{ ...j, fontSize: "0.78rem", fontWeight: 700, color: ebitdaPct >= p.ebitdaMeta ? "#16a34a" : "#f59e0b" }}>{ebitdaPct.toFixed(1)}%</span>
-              </div>
-              <Bar pct={ebitdaPct} color={ebitdaPct >= p.ebitdaMeta ? MINT : "#fbbf24"} />
-              <p style={{ ...j, fontSize: "0.68rem", color: "rgba(12,26,61,0.35)", marginTop: 4 }}>Benchmark: {p.ebitdaMeta}%</p>
-            </div>
-          </div>
-        </div>
-        <div style={{ ...card, display: "flex", flexDirection: "column", justifyContent: "center", padding: "1.5rem 1.25rem" }}>
-          <p style={{ ...j, fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(12,26,61,0.35)", marginBottom: 12 }}>Resumo de portfólio</p>
-          {[
-            { label: "Operações ativas",       val: `${obrasAtivas}` },
-            { label: "Incorporadoras",         val: `${DEMO.pipeline.incorporadorasAtivas}` },
-            { label: "Crédito aprovado",       val: formatarBRL(creditoAprovado) },
-          ].map(({ label, val }) => (
-            <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid rgba(12,26,61,0.05)" }}>
-              <span style={{ ...j, fontSize: "0.8rem", color: "rgba(12,26,61,0.5)" }}>{label}</span>
-              <span style={{ ...j, fontSize: "0.8rem", fontWeight: 700, color: NAVY }}>{val}</span>
-            </div>
-          ))}
+          <Bar pct={Math.min(portfolio?.inadimplenciaRate ?? 0, 100)} color="#f59e0b" />
+          <p style={{ ...j, fontSize: "0.72rem", color: "rgba(12,26,61,0.4)" }}>
+            Visão global do único fundo sócio IMOBI (gestor).
+          </p>
         </div>
       </div>
     </div>
   );
 }
 
-function TabRisco() {
-  const r = DEMO.risco;
-  const inadimTotalValor = r.inadimplencia.reduce((s, i) => s + i.valor, 0);
-
-  return (
-    <div className="space-y-6">
-      {/* KPIs rápidos */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Inadimplência Total" value={formatarBRL(inadimTotalValor)} sub={`${r.inadimplencia.reduce((s, i) => s + i.pct, 0).toFixed(2)}% da carteira`} accent="#f59e0b" />
-        <KpiCard label="PDD Provisionada"    value={formatarBRL(r.pdd)}            sub="provisão p/ devedores duvidosos" accent="#dc2626" />
-        <KpiCard label="LTV Médio"           value={`${r.ltvMedio}%`}              sub="loan-to-value da carteira"      accent={r.ltvMedio > 80 ? "#dc2626" : ROYAL} />
-        <KpiCard label="Cobertura Garantias" value={`${r.coberturaGarantias}%`}    sub="valor garantia / saldo devedor" accent={MINT} />
-      </div>
-
-      {/* Inadimplência aging */}
-      <div style={card}>
-        <SectionHeader title="Inadimplência por Aging" icon={<Clock size={14} color="#f59e0b" />} />
-        <div style={{ padding: "1.25rem" }} className="space-y-3">
-          {r.inadimplencia.map(({ aging, valor, pct }) => (
-            <div key={aging}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                <span style={{ ...j, fontSize: "0.8rem", fontWeight: 600, color: NAVY }}>{aging}</span>
-                <div style={{ display: "flex", gap: 16, alignItems: "baseline" }}>
-                  <span style={{ ...j, fontSize: "0.8rem", fontWeight: 700, color: NAVY }}>{formatarBRL(valor)}</span>
-                  <span style={{ ...j, fontSize: "0.72rem", color: "#dc2626", fontWeight: 700 }}>{pct.toFixed(2)}%</span>
-                </div>
-              </div>
-              <Bar pct={pct * 20} color="#f59e0b" bg="rgba(245,158,11,0.1)" />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Concentração */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div style={card}>
-          <SectionHeader title="Concentração por Tomador" icon={<Users size={14} color={ROYAL} />} />
-          <div>
-            {r.concentracao.map(({ nome, valor, pct }) => (
-              <div key={nome} style={{ padding: "0.75rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.04)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span style={{ ...j, fontSize: "0.8rem", color: NAVY, fontWeight: 500 }}>{nome}</span>
-                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                    <span style={{ ...j, fontSize: "0.75rem", color: "rgba(12,26,61,0.45)" }}>{formatarBRL(valor)}</span>
-                    <span style={{ ...j, fontSize: "0.75rem", fontWeight: 700, color: pct > 20 ? "#dc2626" : pct > 15 ? "#f59e0b" : NAVY }}>{pct}%</span>
-                  </div>
-                </div>
-                <Bar pct={pct} color={pct > 20 ? "#dc2626" : pct > 15 ? "#fbbf24" : ROYAL} bg="rgba(12,26,61,0.05)" />
-                {pct > 15 && <p style={{ ...j, fontSize: "0.65rem", color: pct > 20 ? "#dc2626" : "#d97706", marginTop: 3 }}>⚠ Limite 20%: {pct > 20 ? "excedido" : "atenção"}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={card}>
-          <SectionHeader title="Alertas de Risco" icon={<AlertCircle size={14} color="#dc2626" />} />
-          <div style={{ padding: "1.25rem" }} className="space-y-3">
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.75rem 1rem", borderRadius: 10, background: r.watchlist > 0 ? "#fef2f2" : "rgba(74,222,128,0.08)", border: `1px solid ${r.watchlist > 0 ? "#fecaca" : "rgba(74,222,128,0.25)"}` }}>
-              <span style={{ ...j, fontSize: "0.82rem", fontWeight: 600, color: NAVY }}>Operações em Watchlist</span>
-              <span style={{ ...bc, fontWeight: 800, fontSize: "1.4rem", color: r.watchlist > 0 ? "#dc2626" : "#16a34a" }}>{r.watchlist}</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.75rem 1rem", borderRadius: 10, background: r.covenantsViolados > 0 ? "#fef2f2" : "rgba(74,222,128,0.08)", border: `1px solid ${r.covenantsViolados > 0 ? "#fecaca" : "rgba(74,222,128,0.25)"}` }}>
-              <span style={{ ...j, fontSize: "0.82rem", fontWeight: 600, color: NAVY }}>Covenants Violados</span>
-              <span style={{ ...bc, fontWeight: 800, fontSize: "1.4rem", color: r.covenantsViolados > 0 ? "#dc2626" : "#16a34a" }}>{r.covenantsViolados}</span>
-            </div>
-            <div style={{ padding: "0.75rem 1rem", borderRadius: 10, background: "rgba(12,26,61,0.03)", border: "1px solid rgba(12,26,61,0.07)" }}>
-              <p style={{ ...j, fontSize: "0.78rem", fontWeight: 600, color: NAVY, marginBottom: 6 }}>LTV por quartil</p>
-              {[
-                { label: "Q1 (≤60%)", pct: 42, color: MINT },
-                { label: "Q2 (60–70%)", pct: 31, color: ROYAL },
-                { label: "Q3 (70–80%)", pct: 19, color: "#f59e0b" },
-                { label: "Q4 (>80%)", pct: 8, color: "#dc2626" },
-              ].map(({ label, pct, color }) => (
-                <div key={label} style={{ marginBottom: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                    <span style={{ ...j, fontSize: "0.7rem", color: "rgba(12,26,61,0.55)" }}>{label}</span>
-                    <span style={{ ...j, fontSize: "0.7rem", fontWeight: 700, color }}>{pct}%</span>
-                  </div>
-                  <Bar pct={pct} color={color} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TabPipeline() {
-  const pl = DEMO.pipeline;
-  const maxQtde = Math.max(...pl.funil.map(f => f.qtde));
-
+function TabRisco({ overview, inadimplenciaRate }: { overview: ApiOverview | null; inadimplenciaRate: number }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Pipeline Total"    value={formatarBRL(pl.pipelineTotal)} sub={`${pl.incorporadorasAtivas} incorporadoras`} accent={MINT} />
-        <KpiCard label="Taxa de Conversão" value={`${pl.taxaConversao}%`}        sub="lead → desembolso"                          accent={ROYAL} />
-        <KpiCard label="Ciclo Médio"       value={`${pl.cicloMedioDias} dias`}   sub="da originação ao desembolso"                accent={NAVY} />
-        <KpiCard label="Leads Ativos"      value={String(pl.funil[0].qtde)}      sub={formatarBRL(pl.funil[0].valor)}             accent={NAVY} />
+        <KpiCard label="Inadimplência" value={`${inadimplenciaRate}%`} sub="taxa da carteira" accent="#f59e0b" />
+        <KpiCard label="KYC pendentes" value={String(overview?.kycPendentes ?? 0)} accent={ROYAL} />
+        <KpiCard label="Etapas pendentes" value={String(overview?.etapasPendentes ?? 0)} accent={NAVY} />
+        <KpiCard label="Fila liberação" value={String(overview?.filaLiberacao ?? 0)} accent={MINT} />
       </div>
-
-      {/* Funil */}
       <div style={card}>
-        <SectionHeader title="Funil de Originação" icon={<Target size={14} color={ROYAL} />} />
-        <div style={{ padding: "1.25rem" }} className="space-y-2">
-          {pl.funil.map(({ etapa, qtde, valor }, i) => {
-            const widthPct = Math.round((qtde / maxQtde) * 100);
-            const convPct = i > 0 ? Math.round((qtde / pl.funil[i-1].qtde) * 100) : 100;
-            return (
-              <div key={etapa}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 5, flexWrap: "wrap" }}>
-                  <div style={{ width: 80, flexShrink: 0 }}>
-                    <p style={{ ...j, fontSize: "0.78rem", fontWeight: 600, color: NAVY }}>{etapa}</p>
-                    {i > 0 && <p style={{ ...j, fontSize: "0.65rem", color: "rgba(12,26,61,0.35)" }}>{convPct}% conv.</p>}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ height: 28, background: "rgba(12,26,61,0.06)", borderRadius: 6, overflow: "hidden", position: "relative" }}>
-                      <div style={{ position: "absolute", inset: 0, width: `${widthPct}%`, background: i === 0 ? NAVY : i === 1 ? ROYAL : i === 2 ? "#2563eb" : i === 3 ? "#3b82f6" : MINT, borderRadius: 6, transition: "width 0.6s ease" }} />
-                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", paddingLeft: 10 }}>
-                        <span style={{ ...bc, fontWeight: 800, fontSize: "0.9rem", color: widthPct > 25 ? "white" : NAVY }}>{qtde} operações</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: "right", minWidth: 80 }}>
-                    <p style={{ ...j, fontSize: "0.78rem", fontWeight: 700, color: NAVY }}>{formatarBRL(valor)}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Incorporadoras pipeline */}
-      <div style={card}>
-        <SectionHeader title="Pipeline Ativo por Incorporadora" icon={<Building2 size={14} color={NAVY} />} />
+        <SectionHeader title="Monitoramento operacional" icon={<AlertCircle size={14} color="#dc2626" />} />
         <div style={{ padding: "1.25rem" }}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {["Construtora Alpha", "Incorporadora Beta", "Grupo Gama", "Delta Empreend.", "Constru-Tech", "INCO Ltda.", "Projetur", "Sólida Eng."].map((nome, i) => {
-              const val = [8_500_000, 7_200_000, 5_100_000, 3_800_000, 2_400_000, 1_900_000, 900_000, 450_000][i];
-              const pct = Math.round((val / DEMO.portfolio.carteiraAtiva) * 100);
-              return (
-                <div key={nome} style={{ padding: "0.75rem 0.9rem", borderRadius: 10, border: "1px solid rgba(12,26,61,0.07)" }}>
-                  <p style={{ ...j, fontSize: "0.72rem", fontWeight: 600, color: NAVY, marginBottom: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nome}</p>
-                  <p style={{ ...bc, fontWeight: 800, fontSize: "1rem", color: NAVY }}>{formatarBRL(val)}</p>
-                  <p style={{ ...j, fontSize: "0.65rem", color: "rgba(12,26,61,0.38)" }}>{pct}% da carteira</p>
-                </div>
-              );
-            })}
-          </div>
+          <p style={{ ...j, fontSize: "0.82rem", color: "rgba(12,26,61,0.55)" }}>
+            Dados de aging, PDD e concentração serão alimentados conforme integração contábil. Métricas operacionais já vêm da API.
+          </p>
         </div>
       </div>
     </div>
   );
 }
 
-function TabObras() {
-  const obras = DEMO.obras;
-  const atrasadas = obras.filter(o => o.status === "ATRASADO").length;
-  const noPrazo   = obras.filter(o => o.status === "NO_PRAZO").length;
-  const adiantadas= obras.filter(o => o.status === "ADIANTADO").length;
+function TabPipeline({ stats, stagesCount, leadsTotal }: {
+  stats: { totalLeads: number; leadsThisWeek: number; avgScore: number; conversionRate: number } | null;
+  stagesCount: number;
+  leadsTotal: number;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard label="Leads no pipeline" value={String(stats?.totalLeads ?? leadsTotal)} accent={MINT} />
+        <KpiCard label="Leads esta semana" value={String(stats?.leadsThisWeek ?? 0)} accent={ROYAL} />
+        <KpiCard label="Score médio" value={String(stats?.avgScore ?? 0)} accent={NAVY} />
+        <KpiCard label="Taxa conversão" value={`${stats?.conversionRate ?? 0}%`} accent={MINT} />
+      </div>
+      <div style={card}>
+        <SectionHeader title="Estágios comerciais" icon={<BarChart3 size={14} color={ROYAL} />} />
+        <div style={{ padding: "1.25rem" }}>
+          <p style={{ ...j, fontSize: "0.82rem", color: "rgba(12,26,61,0.55)" }}>
+            {stagesCount} estágios configurados · {leadsTotal} leads distribuídos.
+          </p>
+          <a href="/dashboard/admin/pipeline" style={{ ...j, display: "inline-flex", marginTop: 12, fontSize: "0.8rem", fontWeight: 600, color: ROYAL }}>
+            Abrir kanban completo →
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  const STATUS_STYLE: Record<string, { color: string; bg: string; label: string }> = {
-    ATRASADO:  { color: "#dc2626", bg: "#fef2f2", label: "Atrasado" },
-    NO_PRAZO:  { color: "#16a34a", bg: "rgba(74,222,128,0.1)", label: "No prazo" },
-    ADIANTADO: { color: ROYAL, bg: "rgba(27,79,216,0.07)", label: "Adiantado" },
-  };
+function TabObras({ obras, overview }: { obras: ApiObra[] | null; overview: ApiOverview | null }) {
+  const lista = obras ?? [];
+  const emExecucao = lista.filter((o) => o.status === "EM_EXECUCAO").length;
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
-        <KpiCard label="No Prazo"   value={String(noPrazo)}   sub="obras" accent={MINT}     style={{ padding: "0.6rem 0.75rem" }} />
-        <KpiCard label="Atrasadas"  value={String(atrasadas)} sub="obras" accent="#dc2626"  style={{ padding: "0.6rem 0.75rem" }} />
-        <KpiCard label="Adiantadas" value={String(adiantadas)}sub="obras" accent={ROYAL}    style={{ padding: "0.6rem 0.75rem" }} />
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <KpiCard label="Total de obras" value={String(overview?.obrasTotal ?? lista.length)} accent={NAVY} />
+        <KpiCard label="Em execução" value={String(overview?.obrasAtivas ?? emExecucao)} accent={MINT} />
+        <KpiCard label="Visitas agendadas" value={String(overview?.visitasAgendadas ?? 0)} accent={ROYAL} />
       </div>
-
-      {/* Tabela obras */}
       <div style={card}>
-        <SectionHeader title="% Físico vs % Financeiro por Obra" icon={<Building2 size={14} color={NAVY} />} />
+        <SectionHeader title="Obras recentes" icon={<Building2 size={14} color={NAVY} />} />
         <div>
-          {obras.map((o) => {
-            const st = STATUS_STYLE[o.status];
-            const desvio = o.fisicoP - o.financeiroP;
-            return (
-              <div key={o.nome} style={{ padding: "0.9rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ ...j, fontSize: "0.82rem", fontWeight: 600, color: NAVY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{o.nome}</p>
-                    <p style={{ ...j, fontSize: "0.68rem", color: "rgba(12,26,61,0.38)", marginTop: 2 }}>
-                      Próxima tranche: {formatarBRL(o.trancheValor)} em {fmtDate(o.trancheData)}
-                    </p>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
-                    {desvio !== 0 && (
-                      <span style={{ ...j, fontSize: "0.68rem", fontWeight: 700, color: desvio < -5 ? "#dc2626" : "#d97706" }}>
-                        {desvio > 0 ? "+" : ""}{desvio}pp
-                      </span>
-                    )}
-                    <span style={{ ...j, fontSize: "0.68rem", fontWeight: 700, padding: "0.2rem 0.55rem", borderRadius: 999, background: st.bg, color: st.color }}>{st.label}</span>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                      <span style={{ ...j, fontSize: "0.65rem", color: "rgba(12,26,61,0.4)" }}>Físico</span>
-                      <span style={{ ...j, fontSize: "0.65rem", fontWeight: 700, color: NAVY }}>{o.fisicoP}%</span>
-                    </div>
-                    <Bar pct={o.fisicoP} color={NAVY} />
-                  </div>
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                      <span style={{ ...j, fontSize: "0.65rem", color: "rgba(12,26,61,0.4)" }}>Financeiro</span>
-                      <span style={{ ...j, fontSize: "0.65rem", fontWeight: 700, color: ROYAL }}>{o.financeiroP}%</span>
-                    </div>
-                    <Bar pct={o.financeiroP} color={ROYAL} />
-                  </div>
-                </div>
+          {lista.length === 0 ? (
+            <p style={{ ...j, fontSize: "0.82rem", color: "rgba(12,26,61,0.4)", padding: "1.25rem" }}>Nenhuma obra registrada.</p>
+          ) : (
+            lista.map((o) => (
+              <div key={o.id} style={{ padding: "0.85rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)" }}>
+                <p style={{ ...j, fontSize: "0.82rem", fontWeight: 600, color: NAVY }}>{o.nome}</p>
+                <p style={{ ...j, fontSize: "0.72rem", color: "rgba(12,26,61,0.45)" }}>
+                  {o.tomador ?? "—"} · {o.status.replace(/_/g, " ")}
+                </p>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Cronograma 30/60/90 dias */}
-      <div style={card}>
-        <SectionHeader title="Cronograma de Liberações" icon={<Clock size={14} color={MINT} />} />
-        <div style={{ padding: "1.25rem" }}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              { label: "Próximos 30 dias", obras: obras.filter(o => { const d = new Date(o.trancheData); const now = new Date(); const diff = (d.getTime() - now.getTime()) / 86_400_000; return diff >= 0 && diff <= 30; }) },
-              { label: "30–60 dias",       obras: obras.filter(o => { const d = new Date(o.trancheData); const now = new Date(); const diff = (d.getTime() - now.getTime()) / 86_400_000; return diff > 30 && diff <= 60; }) },
-              { label: "60–90 dias",       obras: obras.filter(o => { const d = new Date(o.trancheData); const now = new Date(); const diff = (d.getTime() - now.getTime()) / 86_400_000; return diff > 60 && diff <= 90; }) },
-            ].map(({ label, obras: lista }) => (
-              <div key={label} style={{ padding: "0.85rem 1rem", borderRadius: 10, border: "1px solid rgba(12,26,61,0.07)", background: "rgba(12,26,61,0.02)" }}>
-                <p style={{ ...j, fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(12,26,61,0.4)", marginBottom: 8 }}>{label}</p>
-                {lista.length === 0 ? (
-                  <p style={{ ...j, fontSize: "0.78rem", color: "rgba(12,26,61,0.3)" }}>—</p>
-                ) : (
-                  lista.map(o => (
-                    <div key={o.nome} style={{ marginBottom: 6 }}>
-                      <p style={{ ...j, fontSize: "0.78rem", fontWeight: 600, color: NAVY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{o.nome}</p>
-                      <p style={{ ...j, fontSize: "0.7rem", color: ROYAL, fontWeight: 700 }}>{formatarBRL(o.trancheValor)} · {fmtDate(o.trancheData)}</p>
-                    </div>
-                  ))
-                )}
-                {lista.length > 0 && (
-                  <div style={{ borderTop: "1px solid rgba(12,26,61,0.06)", marginTop: 8, paddingTop: 8 }}>
-                    <p style={{ ...j, fontSize: "0.72rem", fontWeight: 700, color: NAVY }}>Total: {formatarBRL(lista.reduce((s, o) => s + o.trancheValor, 0))}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+            ))
+          )}
         </div>
       </div>
     </div>
@@ -537,155 +284,21 @@ function TabObras() {
 function TabOperacional({
   atividades,
   obras,
+  overview,
 }: {
   atividades: ApiAtividade[] | null;
   obras: ApiObra[] | null;
+  overview: ApiOverview | null;
 }) {
-  const op = DEMO.operacional;
-
-  const URGENCIA_STYLE: Record<string, { color: string; bg: string }> = {
-    ALTA:  { color: "#dc2626", bg: "#fef2f2" },
-    MEDIA: { color: "#d97706", bg: "#fffbeb" },
-    BAIXA: { color: "#16a34a", bg: "rgba(74,222,128,0.1)" },
-  };
-
   return (
     <div className="space-y-6">
-      {/* Aprovações pendentes */}
-      <div style={card}>
-        <SectionHeader title="Aprovações Pendentes" icon={<ShieldCheck size={14} color="#f59e0b" />} />
-        {op.aprovacoes.length === 0 ? (
-          <p style={{ ...j, padding: "2rem", textAlign: "center", fontSize: "0.82rem", color: "rgba(12,26,61,0.3)" }}>Nenhuma pendência</p>
-        ) : (
-          <div>
-            {op.aprovacoes.map((a, i) => {
-              const st = URGENCIA_STYLE[a.urgencia];
-              return (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "0.85rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)" }}>
-                  <span style={{ ...j, fontSize: "0.68rem", fontWeight: 700, padding: "0.2rem 0.6rem", borderRadius: 999, background: st.bg, color: st.color, flexShrink: 0 }}>{a.urgencia}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ ...j, fontSize: "0.7rem", fontWeight: 700, color: ROYAL, display: "block" }}>{a.tipo}</span>
-                    <span style={{ ...j, fontSize: "0.8rem", color: NAVY }}>{a.desc}</span>
-                  </div>
-                  <span style={{ ...j, fontSize: "0.7rem", color: "rgba(12,26,61,0.35)", flexShrink: 0 }}>há {rel(a.data)}</span>
-                  <ArrowRight size={13} color="rgba(12,26,61,0.2)" style={{ flexShrink: 0 }} />
-                </div>
-              );
-            })}
-          </div>
-        )}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard label="KYC pendentes" value={String(overview?.kycPendentes ?? 0)} accent={ROYAL} />
+        <KpiCard label="Etapas pendentes" value={String(overview?.etapasPendentes ?? 0)} accent="#f59e0b" />
+        <KpiCard label="Fila liberação" value={String(overview?.filaLiberacao ?? 0)} accent={MINT} />
+        <KpiCard label="Usuários" value={String(overview?.totalUsuarios ?? 0)} accent={NAVY} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* KYC / Onboarding */}
-        <div style={card}>
-          <SectionHeader title="Onboarding / KYC" icon={<FileCheck2 size={14} color={ROYAL} />} />
-          <div>
-            {op.kyc.map(({ nome, email, etapa, dias }) => (
-              <div key={email} style={{ padding: "0.8rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(27,79,216,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ ...bc, fontWeight: 800, fontSize: "0.7rem", color: ROYAL }}>{nome.slice(0, 2).toUpperCase()}</span>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...j, fontSize: "0.8rem", fontWeight: 600, color: NAVY }}>{nome}</p>
-                  <p style={{ ...j, fontSize: "0.68rem", color: "rgba(12,26,61,0.4)" }}>{etapa}</p>
-                </div>
-                <span style={{ ...j, fontSize: "0.7rem", fontWeight: 700, color: dias > 5 ? "#dc2626" : "#d97706", flexShrink: 0 }}>{dias}d em análise</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Documentos vencendo */}
-        <div style={card}>
-          <SectionHeader title="Documentos — Alerta de Vencimento" icon={<AlertTriangle size={14} color="#f59e0b" />} />
-          <div>
-            {op.documentosVencendo.map(({ doc, obra, venc }) => {
-              const diasParaVencer = Math.ceil((new Date(venc).getTime() - Date.now()) / 86_400_000);
-              const urgente = diasParaVencer <= 30;
-              return (
-                <div key={doc+obra} style={{ padding: "0.8rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ ...j, fontSize: "0.8rem", fontWeight: 600, color: NAVY }}>{doc}</p>
-                    <p style={{ ...j, fontSize: "0.68rem", color: "rgba(12,26,61,0.4)" }}>{obra}</p>
-                  </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <p style={{ ...j, fontSize: "0.72rem", fontWeight: 700, color: urgente ? "#dc2626" : "#d97706" }}>{fmtDate(venc)}</p>
-                    <p style={{ ...j, fontSize: "0.65rem", color: urgente ? "#dc2626" : "#d97706" }}>{diasParaVencer} dias</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Trilha de auditoria */}
-        <div style={card}>
-          <SectionHeader title="Trilha de Auditoria" icon={<Activity size={14} color={NAVY} />} />
-          <div>
-            {op.auditoria.map(({ acao, usuario, desc, data }, i) => (
-              <div key={i} style={{ display: "flex", gap: 10, padding: "0.75rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)" }}>
-                <span style={{ marginTop: 5, width: 6, height: 6, borderRadius: "50%", background: MINT, flexShrink: 0, display: "block" }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...j, fontSize: "0.78rem", fontWeight: 700, color: NAVY }}>{acao}</p>
-                  <p style={{ ...j, fontSize: "0.72rem", color: "rgba(12,26,61,0.5)" }}>{desc}</p>
-                  <p style={{ ...j, fontSize: "0.65rem", color: "rgba(12,26,61,0.35)" }}>{usuario} · há {rel(data)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Logs de integração */}
-        <div style={card}>
-          <SectionHeader title="Logs de Integração" icon={<Zap size={14} color={ROYAL} />} />
-          <div style={{ padding: "1rem 1.25rem" }} className="space-y-2">
-            {op.logs.map(({ servico, status, exec, msg }) => (
-              <div key={servico} style={{ display: "flex", alignItems: "center", gap: 10, padding: "0.6rem 0.85rem", borderRadius: 10, background: status === "OK" ? "rgba(74,222,128,0.06)" : "#fffbeb", border: `1px solid ${status === "OK" ? "rgba(74,222,128,0.2)" : "#fde68a"}` }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: status === "OK" ? MINT : "#f59e0b", flexShrink: 0, display: "block" }} />
-                <span style={{ ...j, fontSize: "0.78rem", fontWeight: 700, color: NAVY, flex: 1 }}>{servico}</span>
-                <div style={{ textAlign: "right" }}>
-                  <p style={{ ...j, fontSize: "0.7rem", color: "rgba(12,26,61,0.45)" }}>{exec}</p>
-                  <p style={{ ...j, fontSize: "0.68rem", color: status === "OK" ? "#16a34a" : "#d97706", fontWeight: 600 }}>{msg}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Obras recentes */}
-      <div style={card}>
-        <SectionHeader title="Obras Recentes" icon={<Building2 size={14} color={NAVY} />} />
-        <div>
-          {(obras && obras.length > 0 ? obras : DEMO.obras.slice(0, 5).map((o, i) => ({ id: `demo-${i}`, nome: o.nome, status: o.status, tomador: "Incorporadora Demo" }))).map((o) => {
-            const statusMap: Record<string, { color: string; bg: string; label: string }> = {
-              ATRASADO:  { color: "#dc2626", bg: "#fef2f2", label: "Atrasado" },
-              NO_PRAZO:  { color: "#16a34a", bg: "rgba(74,222,128,0.1)", label: "No prazo" },
-              ADIANTADO: { color: ROYAL,     bg: "rgba(27,79,216,0.07)", label: "Adiantado" },
-            };
-            const st = statusMap[o.status] ?? { color: "rgba(12,26,61,0.5)", bg: "rgba(12,26,61,0.04)", label: o.status };
-            return (
-              <a
-                key={o.id}
-                href={o.id.startsWith("demo-") ? undefined : `/dashboard/obras/${o.id}`}
-                style={{ display: "flex", alignItems: "center", gap: 12, padding: "0.85rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)", textDecoration: "none", cursor: o.id.startsWith("demo-") ? "default" : "pointer" }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...j, fontSize: "0.82rem", fontWeight: 600, color: NAVY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{o.nome}</p>
-                  {o.tomador && <p style={{ ...j, fontSize: "0.68rem", color: "rgba(12,26,61,0.4)", marginTop: 2 }}>{o.tomador}</p>}
-                </div>
-                <span style={{ ...j, fontSize: "0.68rem", fontWeight: 700, padding: "0.2rem 0.55rem", borderRadius: 999, background: st.bg, color: st.color, flexShrink: 0 }}>{st.label}</span>
-                <ChevronRight size={13} color="rgba(12,26,61,0.25)" style={{ flexShrink: 0 }} />
-              </a>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Atividades recentes */}
       {atividades && atividades.length > 0 && (
         <div style={card}>
           <SectionHeader title="Atividades Recentes" icon={<Activity size={14} color={MINT} />} />
@@ -704,7 +317,29 @@ function TabOperacional({
         </div>
       )}
 
-      {/* Credenciais de teste — apenas em desenvolvimento */}
+      <div style={card}>
+        <SectionHeader title="Obras recentes" icon={<Building2 size={14} color={NAVY} />} />
+        <div>
+          {(obras ?? []).length === 0 ? (
+            <p style={{ ...j, padding: "1.25rem", fontSize: "0.82rem", color: "rgba(12,26,61,0.4)" }}>Nenhuma obra.</p>
+          ) : (
+            (obras ?? []).slice(0, 8).map((o) => (
+              <a
+                key={o.id}
+                href={`/dashboard/obras/${o.id}`}
+                style={{ display: "flex", alignItems: "center", gap: 12, padding: "0.85rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)", textDecoration: "none" }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ ...j, fontSize: "0.82rem", fontWeight: 600, color: NAVY }}>{o.nome}</p>
+                  {o.tomador && <p style={{ ...j, fontSize: "0.68rem", color: "rgba(12,26,61,0.4)" }}>{o.tomador}</p>}
+                </div>
+                <ChevronRight size={13} color="rgba(12,26,61,0.25)" />
+              </a>
+            ))
+          )}
+        </div>
+      </div>
+
       {process.env.NODE_ENV !== "production" && (
         <div style={{ ...card, border: "1px solid rgba(251,191,36,0.35)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0.85rem 1.25rem", background: "rgba(254,243,199,0.6)", borderBottom: "1px solid rgba(251,191,36,0.25)" }}>
@@ -784,25 +419,53 @@ export default function AdminPage() {
   const [overview, setOverview] = useState<ApiOverview | null>(null);
   const [atividades, setAtividades] = useState<ApiAtividade[] | null>(null);
   const [obras, setObras] = useState<ApiObra[] | null>(null);
+  const [portfolio, setPortfolio] = useState<{
+    creditoTotalAprovado: number;
+    creditoTotalLiberado: number;
+    obrasAtivas: number;
+    creditosAtivos: number;
+    inadimplenciaRate: number;
+  } | null>(null);
+  const [comercialStats, setComercialStats] = useState<{
+    totalLeads: number;
+    leadsThisWeek: number;
+    avgScore: number;
+    conversionRate: number;
+  } | null>(null);
+  const [pipelineMeta, setPipelineMeta] = useState({ stagesCount: 0, leadsTotal: 0 });
 
   useEffect(() => {
-    // Fetch overview data
     fetch("/api/proxy/admin/overview")
       .then((r) => (r.ok ? r.json() as Promise<ApiOverview> : Promise.reject()))
       .then((data) => { setOverview(data); setIsDemo(false); })
       .catch(() => { setIsDemo(true); });
 
-    // Fetch atividades
     fetch("/api/proxy/admin/atividades?limit=8")
       .then((r) => (r.ok ? r.json() as Promise<ApiAtividade[]> : Promise.reject()))
       .then((data) => { setAtividades(data); })
       .catch(() => { /* silently fallback */ });
 
-    // Fetch obras recentes
-    fetch("/api/proxy/admin/obras?limit=5")
+    fetch("/api/proxy/admin/obras?limit=20")
       .then((r) => (r.ok ? r.json() as Promise<ApiObra[]> : Promise.reject()))
       .then((data) => { setObras(data); })
       .catch(() => { /* silently fallback */ });
+
+    fetch("/api/proxy/manager/portfolio")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data) setPortfolio(data); })
+      .catch(() => null);
+
+    Promise.all([
+      fetch("/api/proxy/comercial/dashboard/stats").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/proxy/comercial/pipeline/stages").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/proxy/comercial/leads?limit=1").then((r) => (r.ok ? r.json() : null)),
+    ]).then(([stats, stages, leadsRes]) => {
+      if (stats) setComercialStats(stats);
+      setPipelineMeta({
+        stagesCount: Array.isArray(stages) ? stages.length : 0,
+        leadsTotal: leadsRes?.total ?? 0,
+      });
+    }).catch(() => null);
   }, []);
 
   return (
@@ -896,11 +559,11 @@ export default function AdminPage() {
       </div>
 
       {/* Tab Content */}
-      {tab === "portfolio"   && <TabPortfolio overview={overview} />}
-      {tab === "risco"       && <TabRisco />}
-      {tab === "pipeline"    && <TabPipeline />}
-      {tab === "obras"       && <TabObras />}
-      {tab === "operacional" && <TabOperacional atividades={atividades} obras={obras} />}
+      {tab === "portfolio"   && <TabPortfolio overview={overview} portfolio={portfolio} />}
+      {tab === "risco"       && <TabRisco overview={overview} inadimplenciaRate={portfolio?.inadimplenciaRate ?? 0} />}
+      {tab === "pipeline"    && <TabPipeline stats={comercialStats} stagesCount={pipelineMeta.stagesCount} leadsTotal={pipelineMeta.leadsTotal} />}
+      {tab === "obras"       && <TabObras obras={obras} overview={overview} />}
+      {tab === "operacional" && <TabOperacional atividades={atividades} obras={obras} overview={overview} />}
     </div>
   );
 }

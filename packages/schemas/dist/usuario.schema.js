@@ -76,6 +76,19 @@ exports.FUNCOES_PAINEL = [
 ];
 exports.FuncaoPainelEnum = zod_1.z.enum(exports.FUNCOES_PAINEL);
 exports.AtualizarUsuarioAdminSchema = zod_1.z.object({
+    nome: zod_1.z.string().min(3).max(120).optional(),
+    email: zod_1.z.string().email().optional(),
+    telefone: zod_1.z
+        .string()
+        .regex(/^\d{10,11}$/, "Telefone inválido")
+        .optional(),
+    kycStatus: exports.KycStatusEnum.optional(),
+    novaSenha: zod_1.z
+        .string()
+        .min(8, "Mínimo 8 caracteres")
+        .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
+        .regex(/[0-9]/, "Deve conter ao menos um número")
+        .optional(),
     tipo: exports.TipoUsuarioEnum.optional(),
     bloqueado: zod_1.z.boolean().optional(),
     funcoesBloqueadas: zod_1.z.array(exports.FuncaoPainelEnum).optional(),

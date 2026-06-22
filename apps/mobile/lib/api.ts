@@ -1,5 +1,8 @@
 import * as SecureStore from "expo-secure-store";
-import { apiClient, ApiError } from "@imbobi/core";
+import Constants from "expo-constants";
+import { ApiError } from "@imbobi/core";
+
+const REQUEST_TIMEOUT_MS = 15_000;
 
 let _onUnauthorized: (() => void) | null = null;
 
@@ -7,10 +10,71 @@ export function setOnUnauthorized(cb: () => void) {
   _onUnauthorized = cb;
 }
 
-function apiBaseUrl(): string {
-  const base = process.env["EXPO_PUBLIC_API_URL"] ?? "http://localhost:4000";
-  return base.endsWith("/api/v1") ? base : `${base.replace(/\/$/, "")}/api/v1`;
+/** URL da API no device — não depende do @imbobi/core (evita localhost:4000 no iPhone). */
+export function apiBaseUrl(): string {
+  const extra = Constants.expoConfig?.extra as { apiUrl?: string } | undefined;
+  const base = (
+    process.env.EXPO_PUBLIC_API_URL ??
+    extra?.apiUrl ??
+    "http://localhost:4001"
+  ).replace(/\/$/, "");
+  return base.endsWith("/api/v1") ? base : `${base}/api/v1`;
 }
+
+export function apiHostLabel(): string {
+  return apiBaseUrl().replace(/\/api\/v1$/, "");
+}
+
+type RequestOptions = RequestInit & { token?: string };
+
+async function mobileRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const { token, ...init } = options;
+  const headers = new Headers(init.headers);
+  headers.set("Content-Type", "application/json");
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(`${apiBaseUrl()}${path}`, {
+      ...init,
+      headers,
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { message?: string; code?: string };
+      throw new ApiError(res.status, body.message ?? res.statusText, body.code);
+    }
+
+    if (res.status === 204) return undefined as T;
+    return res.json() as Promise<T>;
+  } catch (e) {
+    if (e instanceof ApiError) throw e;
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new ApiError(
+        0,
+        `API não respondeu (${apiHostLabel()}). Confira pnpm dev:api e firewall porta 4001.`,
+      );
+    }
+    throw new ApiError(
+      0,
+      `Sem conexão com a API (${apiHostLabel()}). Verifique hotspot e firewall.`,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const mobileApiClient = {
+  get: <T>(path: string, token?: string) => mobileRequest<T>(path, { method: "GET", token }),
+  post: <T>(path: string, body: unknown, token?: string) =>
+    mobileRequest<T>(path, { method: "POST", body: JSON.stringify(body), token }),
+  patch: <T>(path: string, body: unknown, token?: string) =>
+    mobileRequest<T>(path, { method: "PATCH", body: JSON.stringify(body), token }),
+  delete: <T>(path: string, token?: string) => mobileRequest<T>(path, { method: "DELETE", token }),
+};
 
 async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync("accessToken");
@@ -46,7 +110,20 @@ export async function salvarTokens(res: AuthResponse): Promise<void> {
   await SecureStore.setItemAsync("refreshToken", res.refreshToken);
 }
 
+export async function clearSession(): Promise<void> {
+  await SecureStore.deleteItemAsync("accessToken");
+  await SecureStore.deleteItemAsync("refreshToken");
+  await SecureStore.deleteItemAsync("userTipo");
+}
+
 export { ApiError };
+
+/** Cliente HTTP mobile (URL correta + timeout). */
+export const apiFetch = mobileApiClient;
+
+export async function withAuthApi<T>(fn: () => Promise<T>): Promise<T> {
+  return callApi(fn);
+}
 
 function asString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;
@@ -158,13 +235,13 @@ export const usuariosApi = {
   obterPerfil: () =>
     callApi(async () => {
       const token = await getToken();
-      const data = await apiClient.get<Record<string, unknown>>("/usuarios/meu-perfil", token ?? undefined);
+      const data = await mobileApiClient.get<Record<string, unknown>>("/usuarios/meu-perfil", token ?? undefined);
       return normalizeUsuarioPerfil(data);
     }),
   atualizarPerfil: (dados: { nome?: string; telefone?: string }) =>
     callApi(async () => {
       const token = await getToken();
-      const data = await apiClient.patch<Record<string, unknown>>("/usuarios/meu-perfil", dados, token ?? undefined);
+      const data = await mobileApiClient.patch<Record<string, unknown>>("/usuarios/meu-perfil", dados, token ?? undefined);
       return normalizeUsuarioPerfil(data);
     }),
 };
@@ -173,24 +250,24 @@ export const obrasApi = {
   listar: () =>
     callApi(async () => {
       const token = await getToken();
-      const data = await apiClient.get<unknown[]>("/obras", token ?? undefined);
+      const data = await mobileApiClient.get<unknown[]>("/obras", token ?? undefined);
       return (Array.isArray(data) ? data : []).map((o) => normalizeObra(o as Record<string, unknown>));
     }),
   buscar: (obraId: string) =>
     callApi(async () => {
       const token = await getToken();
-      const data = await apiClient.get<Record<string, unknown>>(`/obras/${obraId}`, token ?? undefined);
+      const data = await mobileApiClient.get<Record<string, unknown>>(`/obras/${obraId}`, token ?? undefined);
       return normalizeObraDetalhe(data);
     }),
   progresso: (obraId: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<number>(`/obras/${obraId}/progresso`, token ?? undefined);
+      return mobileApiClient.get<number>(`/obras/${obraId}/progresso`, token ?? undefined);
     }),
   criar: (dados: Record<string, unknown>) =>
     callApi(async () => {
       const token = await getToken();
-      const data = await apiClient.post<Record<string, unknown>>("/obras", dados, token ?? undefined);
+      const data = await mobileApiClient.post<Record<string, unknown>>("/obras", dados, token ?? undefined);
       return normalizeObraDetalhe(data);
     }),
 };
@@ -199,13 +276,13 @@ export const creditoApi = {
   meus: () =>
     callApi(async () => {
       const token = await getToken();
-      const data = await apiClient.get<unknown[]>("/credito/meus", token ?? undefined);
+      const data = await mobileApiClient.get<unknown[]>("/credito/meus", token ?? undefined);
       return (Array.isArray(data) ? data : []).map((c) => normalizeCredito(c as Record<string, unknown>));
     }),
   simular: (valorSolicitado: number, prazoMeses: number) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.post<SimulacaoCreditoResult>("/credito/simular", { valorSolicitado, prazoMeses }, token ?? undefined);
+      return mobileApiClient.post<SimulacaoCreditoResult>("/credito/simular", { valorSolicitado, prazoMeses }, token ?? undefined);
     }),
 };
 
@@ -213,23 +290,23 @@ export const scoreApi = {
   obter: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<ScoreData>("/score/atual", token ?? undefined);
+      return mobileApiClient.get<ScoreData>("/score/atual", token ?? undefined);
     }),
 };
 
 export const authApi = {
   login: (email: string, senha: string) =>
-    callApi(async () => apiClient.post<AuthResponse>("/auth/login", { email, senha })),
+    callApi(async () => mobileApiClient.post<AuthResponse>("/auth/login", { email, senha })),
   registrar: (dados: Record<string, unknown>) =>
-    callApi(async () => apiClient.post<AuthResponse>("/auth/registrar", dados)),
+    callApi(async () => mobileApiClient.post<AuthResponse>("/auth/registrar", dados)),
   esqueceuSenha: (email: string) =>
-    callApi(async () => apiClient.post<{ message?: string }>("/auth/esqueceu-senha", { email })),
+    callApi(async () => mobileApiClient.post<{ message?: string }>("/auth/esqueceu-senha", { email })),
   redefinirSenha: (token: string, novaSenha: string) =>
-    callApi(async () => apiClient.post<{ ok: boolean }>("/auth/redefinir-senha", { token, novaSenha })),
+    callApi(async () => mobileApiClient.post<{ ok: boolean }>("/auth/redefinir-senha", { token, novaSenha })),
   logout: (refreshToken: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.post("/auth/logout", { refreshToken }, token ?? undefined);
+      return mobileApiClient.post("/auth/logout", { refreshToken }, token ?? undefined);
     }),
 };
 
@@ -237,7 +314,7 @@ export const notificacoesApi = {
   listar: (limit = 20, offset = 0) =>
     callApi(async () => {
       const token = await getToken();
-      const data = await apiClient.get<{ notificacoes: unknown[]; total: number }>(
+      const data = await mobileApiClient.get<{ notificacoes: unknown[]; total: number }>(
         `/notificacoes?limit=${limit}&offset=${offset}`,
         token ?? undefined
       );
@@ -249,28 +326,28 @@ export const notificacoesApi = {
   contarNaoLidas: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<{ count: number }>("/notificacoes/contar-nao-lidas", token ?? undefined);
+      return mobileApiClient.get<{ count: number }>("/notificacoes/contar-nao-lidas", token ?? undefined);
     }),
   marcarComoLida: (id: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.patch<void>(`/notificacoes/${id}/lida`, {}, token ?? undefined);
+      return mobileApiClient.patch<void>(`/notificacoes/${id}/lida`, {}, token ?? undefined);
     }),
   marcarTodasComoLidas: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.patch<{ ok: boolean }>("/notificacoes/marcar-todas-lidas", {}, token ?? undefined);
+      return mobileApiClient.patch<{ ok: boolean }>("/notificacoes/marcar-todas-lidas", {}, token ?? undefined);
     }),
   listarNaoLidas: () =>
     callApi(async () => {
       const token = await getToken();
-      const data = await apiClient.get<unknown[]>("/notificacoes/nao-lidas", token ?? undefined);
+      const data = await mobileApiClient.get<unknown[]>("/notificacoes/nao-lidas", token ?? undefined);
       return (Array.isArray(data) ? data : []).map((n) => normalizeNotificacao(n as Record<string, unknown>));
     }),
   listarPorStatus: (lida: boolean, limit = 50, offset = 0) =>
     callApi(async () => {
       const token = await getToken();
-      const data = await apiClient.get<{ notificacoes: unknown[]; total: number }>(
+      const data = await mobileApiClient.get<{ notificacoes: unknown[]; total: number }>(
         `/notificacoes?limit=${limit}&offset=${offset}&lida=${lida}`,
         token ?? undefined
       );
@@ -285,13 +362,13 @@ export const kycApi = {
   listarDocumentos: () =>
     callApi(async () => {
       const token = await getToken();
-      const data = await apiClient.get<unknown[]>("/kyc/documentos", token ?? undefined);
+      const data = await mobileApiClient.get<unknown[]>("/kyc/documentos", token ?? undefined);
       return (Array.isArray(data) ? data : []).map((d) => normalizeKycDocumento(d as Record<string, unknown>));
     }),
   obterStatus: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<KycStatus>("/kyc/status", token ?? undefined);
+      return mobileApiClient.get<KycStatus>("/kyc/status", token ?? undefined);
     }),
   uploadArquivo: async (tipo: string, uri: string, mimeType: string, fileName?: string): Promise<KycDocumento> => {
     const token = await getToken();
@@ -315,8 +392,46 @@ export const pushApi = {
   registrarToken: (fcmToken: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.post("/push-notificacoes/registrar-token", { token: fcmToken }, token ?? undefined);
+      return mobileApiClient.post("/push-notificacoes/registrar-token", { token: fcmToken }, token ?? undefined);
     }),
+};
+
+export const fluxoApi = {
+  status: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return mobileApiClient.get<FluxoStatus>("/fluxo/status", token ?? undefined);
+    }),
+  requisitosObra: (obraId: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return mobileApiClient.get<RequisitosObra>(`/fluxo/obra/${obraId}`, token ?? undefined);
+    }),
+};
+
+export type RequisitosObra = {
+  obraId: string;
+  kycUsuarioOk: boolean;
+  kycObraOk: boolean;
+  docsObraCount: number;
+  docsObraMinimo: number;
+  comiteOk: boolean;
+  comitePendente: boolean;
+  comiteStatus: string | null;
+  podeSolicitarComite: boolean;
+  podeLiberarEtapas: boolean;
+};
+
+export type FluxoObraStatus = RequisitosObra & {
+  nome: string;
+  status: string;
+};
+
+export type FluxoStatus = {
+  kycUsuarioCompleto: boolean;
+  kycUsuarioStatus: string;
+  primeiraOperacao: boolean;
+  obras: FluxoObraStatus[];
 };
 
 export type Obra = {

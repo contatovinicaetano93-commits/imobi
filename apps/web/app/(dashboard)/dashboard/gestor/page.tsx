@@ -84,9 +84,9 @@ export default function GestorPage() {
               <ShieldCheck size={18} color="#a78bfa" />
               <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Painel do Fundo</p>
             </div>
-            <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0 0 0.4rem" }}>Fila de Aprovações</h1>
+            <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0 0 0.4rem" }}>Monitoramento do fundo</h1>
             <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.65)", margin: 0 }}>
-              {s.filaAprovacoes + s.filaKyc} {s.filaAprovacoes + s.filaKyc === 1 ? "item pendente" : "itens pendentes"} de análise
+              {s.filaAprovacoes + s.filaKyc} {s.filaAprovacoes + s.filaKyc === 1 ? "item em fila" : "itens em fila"} — acompanhamento (liberação: engenheiro e admin)
             </p>
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function GestorPage() {
               className="flex items-center justify-between p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-12 sm:min-h-auto"
               aria-label={`Revisar Etapas com ${s.filaAprovacoes} itens pendentes`}
             >
-              <span className="font-medium text-xs sm:text-sm text-blue-900">Revisar Etapas</span>
+              <span className="font-medium text-xs sm:text-sm text-blue-900">Monitorar etapas</span>
               <span className="text-xs sm:text-sm bg-blue-200 text-blue-900 px-2 py-1 rounded font-semibold">
                 {s.filaAprovacoes}
               </span>
@@ -144,7 +144,7 @@ export default function GestorPage() {
               className="flex items-center justify-between p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 min-h-12 sm:min-h-auto"
               aria-label={`Revisar KYC com ${s.filaKyc} itens pendentes`}
             >
-              <span className="font-medium text-xs sm:text-sm text-purple-900">Revisar KYC</span>
+              <span className="font-medium text-xs sm:text-sm text-purple-900">Monitorar KYC</span>
               <span className="text-xs sm:text-sm bg-purple-200 text-purple-900 px-2 py-1 rounded font-semibold">
                 {s.filaKyc}
               </span>
@@ -163,10 +163,10 @@ export default function GestorPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
           <h2 className="font-bold text-sm sm:text-base text-gray-900 mb-4">Dicas</h2>
           <div className="space-y-2 text-xs sm:text-sm text-gray-600">
+            <p>• Gestor do fundo só acompanha — não libera</p>
+            <p>• Liberação de etapas: engenheiro ou admin</p>
+            <p>• KYC operacional: admin</p>
             <p>• Priorize itens na fila vermelha ({`>`} 24h)</p>
-            <p>• Revise com atenção às geolocalização</p>
-            <p>• Documente motivos de rejeição</p>
-            <p>• Valide completude de KYC antes de aprovar</p>
           </div>
         </div>
       </div>

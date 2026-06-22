@@ -15,6 +15,7 @@ export default function AdminAprovacoes() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [motivo, setMotivo] = useState("");
+  const [kycMotivo, setKycMotivo] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -56,6 +57,32 @@ export default function AdminAprovacoes() {
     ]);
   };
 
+  const aprovarKyc = (id: string) => {
+    Alert.alert("Aprovar KYC", "Confirmar aprovação do documento?", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Aprovar", onPress: async () => {
+        try { await managerApi.aprovarKyc(id); load(); } catch (e: unknown) {
+          Alert.alert("Erro", e instanceof Error ? e.message : "Falha");
+        }
+      }},
+    ]);
+  };
+
+  const rejeitarKyc = (id: string) => {
+    if (!kycMotivo.trim()) {
+      Alert.alert("Motivo obrigatório", "Informe o motivo da rejeição.");
+      return;
+    }
+    Alert.alert("Rejeitar KYC", "Confirmar rejeição?", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Rejeitar", style: "destructive", onPress: async () => {
+        try { await managerApi.rejeitarKyc(id, kycMotivo); setKycMotivo(""); load(); } catch (e: unknown) {
+          Alert.alert("Erro", e instanceof Error ? e.message : "Falha");
+        }
+      }},
+    ]);
+  };
+
   if (loading) return <View style={styles.center}><ActivityIndicator color="#DC2626" /></View>;
 
   return (
@@ -79,7 +106,7 @@ export default function AdminAprovacoes() {
               <View style={styles.cardAccent} />
               <View style={styles.cardBody}>
                 <Text style={styles.nome}>{e.nome}</Text>
-                <Text style={styles.sub}>{e.obra?.nome ?? "Obra"} · {e.status.replace(/_/g, " ")}</Text>
+                <Text style={styles.sub}>{e.obra?.nome ?? "Obra"} · {(e.status ?? "AGUARDANDO_VISTORIA").replace(/_/g, " ")}</Text>
                 <TextInput
                   style={styles.motivoInput}
                   placeholder="Motivo (se rejeitar)"
@@ -104,12 +131,29 @@ export default function AdminAprovacoes() {
           kyc.length === 0 ? (
             <Text style={styles.empty}>Nenhum KYC pendente.</Text>
           ) : kyc.map((k) => (
-            <View key={k.usuarioId} style={styles.kycCard}>
+            <View key={k.kycDocumentoId} style={styles.kycCard}>
               <Ionicons name="person-circle-outline" size={36} color="#DC2626" />
               <View style={{ flex: 1 }}>
                 <Text style={styles.nome}>{k.nome ?? "Usuário"}</Text>
                 <Text style={styles.sub}>{k.email ?? k.usuarioId}</Text>
-                <Text style={styles.kycStatus}>{k.kycStatus ?? "PENDENTE"}</Text>
+                <Text style={styles.kycStatus}>{k.tipo ?? "DOC"} · {k.kycStatus ?? "PENDENTE"}</Text>
+                <TextInput
+                  style={styles.motivoInput}
+                  placeholder="Motivo (se rejeitar)"
+                  placeholderTextColor="#94A3B8"
+                  value={kycMotivo}
+                  onChangeText={setKycMotivo}
+                />
+                <View style={styles.actions}>
+                  <TouchableOpacity style={styles.btnOk} onPress={() => aprovarKyc(k.kycDocumentoId)}>
+                    <Ionicons name="checkmark" size={16} color="#FFF" />
+                    <Text style={styles.btnText}>Aprovar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.btnNo} onPress={() => rejeitarKyc(k.kycDocumentoId)}>
+                    <Ionicons name="close" size={16} color="#FFF" />
+                    <Text style={styles.btnText}>Rejeitar</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           ))

@@ -36,7 +36,7 @@ export default function WelcomeScreen() {
         {/* Badge */}
         <View style={s.badge}>
           <View style={s.badgeDot} />
-          <Text style={s.badgeText}>Crédito Imobiliário Estruturado</Text>
+          <Text style={s.badgeText}>Crédito desburocratizado · aprovação ágil</Text>
         </View>
 
         {/* Headline */}
@@ -47,7 +47,7 @@ export default function WelcomeScreen() {
 
         {/* Sub */}
         <Text style={s.sub}>
-          Aprovação em 15 a 30 dias. Do pedido ao capital sem travar o cronograma.
+          Crédito ágil e desburocratizado. Documentação simplificada, versatilidade de modalidades e aprovação em tempo recorde.
         </Text>
 
         {/* CTAs */}
@@ -73,20 +73,17 @@ export default function WelcomeScreen() {
 
         {/* Credibility strip */}
         <View style={s.strip}>
-          <View style={s.stripItem}>
-            <Text style={s.stripVal}>15–30</Text>
-            <Text style={s.stripLbl}>dias p/ aprovação</Text>
-          </View>
-          <View style={s.stripDiv} />
-          <View style={s.stripItem}>
-            <Text style={s.stripVal}>R$1M+</Text>
-            <Text style={s.stripLbl}>volume mínimo</Text>
-          </View>
-          <View style={s.stripDiv} />
-          <View style={s.stripItem}>
-            <Text style={s.stripVal}>100%</Text>
-            <Text style={s.stripLbl}>digital</Text>
-          </View>
+          {[
+            ["Rápido", "aprovação recorde"],
+            ["Simples", "doc. simplificada"],
+            ["Versátil", "modalidades"],
+            ["Próprio", "garantias caso a caso"],
+          ].map(([val, lbl], i) => (
+            <View key={lbl} style={[s.stripItem, i % 2 === 0 && s.stripItemLeft, i % 2 === 1 && s.stripItemRight]}>
+              <Text style={s.stripVal}>{val}</Text>
+              <Text style={s.stripLbl}>{lbl}</Text>
+            </View>
+          ))}
         </View>
       </View>
     </SafeAreaView>
@@ -182,21 +179,23 @@ const s = StyleSheet.create({
 
   /* Strip */
   strip: {
-    flexDirection: "row", alignItems: "center",
+    flexDirection: "row", flexWrap: "wrap",
     borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)",
-    paddingTop: 24,
+    paddingTop: 20, gap: 10,
   },
   stripItem: {
-    flex: 1, alignItems: "center", gap: 4,
+    width: "47%", alignItems: "center", gap: 4,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 10, paddingVertical: 12, paddingHorizontal: 8,
   },
+  stripItemLeft: {},
+  stripItemRight: {},
   stripVal: {
     color: WHITE, fontSize: 22, fontWeight: "800", letterSpacing: -0.5,
   },
   stripLbl: {
-    color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: "600",
-    letterSpacing: 1, textTransform: "uppercase", textAlign: "center",
-  },
-  stripDiv: {
-    width: 1, height: 32, backgroundColor: "rgba(255,255,255,0.12)",
+    color: "rgba(255,255,255,0.45)", fontSize: 8.5, fontWeight: "600",
+    letterSpacing: 0.6, textTransform: "uppercase", textAlign: "center",
   },
 });

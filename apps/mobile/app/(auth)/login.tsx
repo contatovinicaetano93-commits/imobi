@@ -1,17 +1,14 @@
+import { useState, useEffect } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, Alert, ActivityIndicator,
   KeyboardAvoidingView, Platform, ScrollView,
   StatusBar,
 } from "react-native";
-import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "expo-router";
-import { LoginSchema, type LoginInput } from "@imbobi/schemas";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import * as SecureStore from "expo-secure-store";
-import { authApi, salvarTokens } from "../../lib/api";
+import { authApi, apiHostLabel, salvarTokens } from "../../lib/api";
+import { useAuth } from "../../lib/auth-context";
 import { getHomeRoute } from "../../lib/roles";
 
 const C = {
@@ -20,22 +17,67 @@ const C = {
   surface: "#F8FAFC", white: "#FFFFFF", red: "#EF4444", mint: "#4ADE80",
 };
 
+const DEV_USERS = [
+  { label: "Tomador", email: "tomador@imobi.com.br", senha: "Tomador@123" },
+  { label: "Admin", email: "admin@imobi.com.br", senha: "Admin@123" },
+  { label: "Gestor", email: "gestor@imobi.com.br", senha: "Gestor@123" },
+  { label: "Eng", email: "eng@imobi.com.br", senha: "Eng@123" },
+];
+
 export default function LoginScreen() {
   const router = useRouter();
+  const { signIn } = useAuth();
+  const params = useLocalSearchParams<{ email?: string; senha?: string }>();
   const [showPass, setShowPass] = useState(false);
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; senha?: string }>({});
 
-  const { control, handleSubmit, formState: { errors, isSubmitting } } =
-    useForm<LoginInput>({ resolver: zodResolver(LoginSchema) });
+  useEffect(() => {
+    if (typeof params.email === "string") setEmail(params.email);
+    if (typeof params.senha === "string") setSenha(params.senha);
+  }, [params.email, params.senha]);
 
-  const onSubmit = async (data: LoginInput) => {
+  const onSubmit = async () => {
+    const nextErrors: { email?: string; senha?: string } = {};
+    if (!email.includes("@")) nextErrors.email = "E-mail inválido";
+    if (senha.length < 6) nextErrors.senha = "Senha muito curta";
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      return;
+    }
+    setErrors({});
+    setIsSubmitting(true);
     try {
-      const res = await authApi.login(data.email, data.senha);
+      const res = await authApi.login(email.trim(), senha);
       await salvarTokens(res);
       const tipo = res.usuario?.tipo ?? "TOMADOR";
-      await SecureStore.setItemAsync("userTipo", tipo);
+      await signIn(tipo);
       router.replace(getHomeRoute(tipo) as never);
     } catch (e: unknown) {
-      Alert.alert("Acesso negado", e instanceof Error ? e.message : "E-mail ou senha inválidos.");
+      const msg = e instanceof Error ? e.message : "E-mail ou senha inválidos.";
+      Alert.alert("Acesso negado", msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const quickLogin = async (u: (typeof DEV_USERS)[number]) => {
+    setEmail(u.email);
+    setSenha(u.senha);
+    setIsSubmitting(true);
+    try {
+      const res = await authApi.login(u.email, u.senha);
+      await salvarTokens(res);
+      const tipo = res.usuario?.tipo ?? "TOMADOR";
+      await signIn(tipo);
+      router.replace(getHomeRoute(tipo) as never);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Falha no login rápido.";
+      Alert.alert("Acesso negado", msg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -52,33 +94,43 @@ export default function LoginScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }} keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}>
         <ScrollView contentContainerStyle={styles.sheet} keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
-          <Controller control={control} name="email" render={({ field: { onChange, value } }) => (
-            <Field label="E-MAIL" error={errors.email?.message}>
-              <TextInput style={[styles.input, errors.email && styles.inputErr]} placeholder="seu@email.com.br"
-                placeholderTextColor={C.grayL} keyboardType="email-address" autoCapitalize="none"
-                autoComplete="email" onChangeText={onChange} value={value} editable={!isSubmitting} />
-            </Field>
-          )} />
-
-          <Controller control={control} name="senha" render={({ field: { onChange, value } }) => (
-            <Field label="SENHA" error={errors.senha?.message}>
-              <View style={styles.passWrap}>
-                <TextInput style={[styles.input, styles.passInput, errors.senha && styles.inputErr]}
-                  placeholder="Sua senha" placeholderTextColor={C.grayL} secureTextEntry={!showPass}
-                  autoComplete="password" onChangeText={onChange} value={value} editable={!isSubmitting} />
-                <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPass((v) => !v)}>
-                  <Ionicons name={showPass ? "eye-off-outline" : "eye-outline"} size={20} color={C.grayL} />
-                </TouchableOpacity>
+          {__DEV__ && (
+            <View style={styles.devBox}>
+              <Text style={styles.devTitle}>Dev — login rápido</Text>
+              <Text style={styles.devApi}>API: {apiHostLabel()}</Text>
+              <View style={styles.devRow}>
+                {DEV_USERS.map((u) => (
+                  <TouchableOpacity key={u.label} style={styles.devChip} onPress={() => quickLogin(u)} disabled={isSubmitting}>
+                    <Text style={styles.devChipText}>{u.label}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-            </Field>
-          )} />
+            </View>
+          )}
+
+          <Field label="E-MAIL" error={errors.email}>
+            <TextInput style={[styles.input, errors.email && styles.inputErr]} placeholder="seu@email.com.br"
+              placeholderTextColor={C.grayL} keyboardType="email-address" autoCapitalize="none"
+              autoComplete="email" onChangeText={setEmail} value={email} editable={!isSubmitting} />
+          </Field>
+
+          <Field label="SENHA" error={errors.senha}>
+            <View style={styles.passWrap}>
+              <TextInput style={[styles.input, styles.passInput, errors.senha && styles.inputErr]}
+                placeholder="Sua senha" placeholderTextColor={C.grayL} secureTextEntry={!showPass}
+                autoComplete="password" onChangeText={setSenha} value={senha} editable={!isSubmitting} />
+              <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPass((v) => !v)}>
+                <Ionicons name={showPass ? "eye-off-outline" : "eye-outline"} size={20} color={C.grayL} />
+              </TouchableOpacity>
+            </View>
+          </Field>
 
           <TouchableOpacity onPress={() => router.push("/esqueceu-senha")} style={styles.forgot}>
             <Text style={styles.forgotText}>Esqueci minha senha</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.primaryBtn, isSubmitting && styles.disabled]}
-            onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
+            onPress={onSubmit} disabled={isSubmitting}>
             {isSubmitting
               ? <ActivityIndicator color={C.white} />
               : <Text style={styles.primaryBtnText}>Entrar</Text>}
@@ -156,4 +208,10 @@ const styles = StyleSheet.create({
   footer: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 8 },
   footerText: { fontSize: 14, color: C.gray },
   footerLink: { fontSize: 14, color: C.blue, fontWeight: "700" },
+  devBox: { backgroundColor: "#F0FDF4", borderRadius: 12, padding: 12, gap: 8, borderWidth: 1, borderColor: "#4ADE80" },
+  devTitle: { fontSize: 11, fontWeight: "800", color: "#166534", letterSpacing: 0.5 },
+  devApi: { fontSize: 10, color: "#15803d", fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" },
+  devRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  devChip: { backgroundColor: "#4ADE80", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  devChipText: { fontSize: 12, fontWeight: "800", color: "#0F172A" },
 });

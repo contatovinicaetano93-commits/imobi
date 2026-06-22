@@ -4,8 +4,12 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   ChevronRight, ChevronLeft, AlertTriangle, CheckCircle2,
-  TrendingUp, Building2, Wallet, BarChart3, Info,
+  TrendingUp, Building2, Wallet, BarChart3, Info, Loader2,
 } from "lucide-react";
+import { creditoApi, type CreditoSimulacao } from "@/lib/api";
+import { FlowGateBanner } from "@/components/FlowGateBanner";
+import { proximoPassoFluxo, loadFluxoStatus } from "@/lib/flow-gates";
+import type { FluxoStatus } from "@/lib/api";
 
 // ─── Formatters ──────────────────────────────────────────────────────────────
 
@@ -364,10 +368,36 @@ export default function SimuladorPage() {
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [form, setForm] = useState<Form>(DEFAULTS);
   const [gerado, setGerado] = useState(false);
+  const [creditoApiSim, setCreditoApiSim] = useState<CreditoSimulacao | null>(null);
+  const [creditoApiLoading, setCreditoApiLoading] = useState(false);
+  const [creditoApiError, setCreditoApiError] = useState<string | null>(null);
+  const [fluxo, setFluxo] = useState<FluxoStatus | null>(null);
 
   const set = (k: keyof Form, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
+  useEffect(() => {
+    loadFluxoStatus().then(setFluxo);
+  }, []);
+
   const viab = useMemo(() => calcViability(form), [form]);
+
+  useEffect(() => {
+    if (step !== 3 || viab.finTotalObra <= 0) {
+      setCreditoApiSim(null);
+      return;
+    }
+    let cancelled = false;
+    setCreditoApiLoading(true);
+    setCreditoApiError(null);
+    creditoApi
+      .simular({ valorSolicitado: Math.round(viab.finTotalObra), prazoMeses: form.prazo })
+      .then((r) => { if (!cancelled) setCreditoApiSim(r); })
+      .catch((e) => {
+        if (!cancelled) setCreditoApiError(e instanceof Error ? e.message : "Erro na simulação de crédito");
+      })
+      .finally(() => { if (!cancelled) setCreditoApiLoading(false); });
+    return () => { cancelled = true; };
+  }, [step, viab.finTotalObra, form.prazo]);
 
   const totals = useMemo(() => {
     const r = viab.rows;
@@ -386,8 +416,11 @@ export default function SimuladorPage() {
     true,
   ][step];
 
+  const gateFluxo = proximoPassoFluxo(fluxo);
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {gateFluxo && <FlowGateBanner {...gateFluxo} />}
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Estudo de Viabilidade</h1>
@@ -704,6 +737,40 @@ export default function SimuladorPage() {
                     <p className="text-white font-bold">{pct(form.vgv > 0 ? (viab.totalCustoImobi / form.vgv) * 100 : 0)}</p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Simulação oficial de crédito (API) */}
+            {viab.finTotalObra > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-[#1B4FD8]" />
+                  Simulação de crédito IMOBI
+                </p>
+                {creditoApiLoading && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Calculando condições via API...
+                  </div>
+                )}
+                {creditoApiError && (
+                  <p className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{creditoApiError}</p>
+                )}
+                {creditoApiSim && !creditoApiLoading && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: "Valor solicitado", value: brl(creditoApiSim.valorSolicitado) },
+                      { label: "Parcela mensal", value: brl(creditoApiSim.parcelaMensal) },
+                      { label: "Taxa mensal", value: pct(creditoApiSim.taxaMensal * 100) },
+                      { label: "CET", value: pct(creditoApiSim.cet) },
+                    ].map((item) => (
+                      <div key={item.label} className="bg-gray-50 rounded-xl p-3">
+                        <p className="text-xs text-gray-500">{item.label}</p>
+                        <p className="text-sm font-bold text-gray-900">{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

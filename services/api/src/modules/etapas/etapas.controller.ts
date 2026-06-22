@@ -16,7 +16,7 @@ export class EtapasController {
   }
 
   @UseGuards(RolesGuard)
-  @Roles("GESTOR", "ADMIN")
+  @Roles("ADMIN", "ENGENHEIRO")
   @Patch(":id/aprovar")
   aprovar(
     @Param("id") id: string,

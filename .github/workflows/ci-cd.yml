@@ -270,15 +270,14 @@ jobs:
 
       - name: Terraform Plan
         run: |
-          cd infrastructure/terraform
+          cd terraform
           terraform init
           terraform plan -var="version=${{ steps.version.outputs.version }}" -out=tfplan
 
       - name: Terraform Apply
         run: |
-          cd infrastructure/terraform
+          cd terraform
           terraform apply -auto-approve tfplan
-        continue-on-error: true
 
       - name: Post-Deployment Health Checks
         run: |
@@ -286,10 +285,10 @@ jobs:
           sleep 30
 
           echo "🏥 Health Check: API"
-          curl -f https://api.imobi.com/health || echo "⚠️  API health check failed"
+          curl -f https://api.imobi.com.br/api/v1/health || exit 1
 
           echo "🏥 Health Check: Web"
-          curl -f https://imobi.com/ || echo "⚠️  Web health check failed"
+          curl -f https://app.imobi.com.br/ || exit 1
 
       - name: Notify Slack - Production Deployed
         uses: slackapi/slack-github-action@v1

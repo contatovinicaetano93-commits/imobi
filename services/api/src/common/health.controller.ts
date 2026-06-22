@@ -1,7 +1,8 @@
-import { Controller, Get, Logger, Inject } from "@nestjs/common";
+import { Controller, Get, Logger, Inject, Res, HttpStatus } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { getRedisConfig, validateRedisConfig } from "./config";
 import type { Cache } from "cache-manager";
+import type { FastifyReply } from "fastify";
 
 interface HealthCheck {
   status: "ok" | "degraded" | "error";
@@ -19,7 +20,7 @@ export class HealthController {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   @Get()
-  async getHealth(): Promise<HealthCheck> {
+  async getHealth(@Res({ passthrough: true }) reply: FastifyReply): Promise<HealthCheck> {
     const redisConfig = getRedisConfig();
     const redisValidationErrors = validateRedisConfig(redisConfig);
     let redisStatus = "connected";
@@ -75,6 +76,13 @@ export class HealthController {
     };
 
     this.logger.debug(`Health check: ${JSON.stringify(health)}`);
+
+    if (health.status === "error") {
+      reply.status(HttpStatus.SERVICE_UNAVAILABLE);
+    } else if (health.status === "degraded") {
+      reply.status(HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
     return health;
   }
 

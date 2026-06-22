@@ -5,7 +5,9 @@ import { PrismaService } from "../modules/prisma/prisma.service";
 import { NotificacoesService } from "../modules/notificacoes/notificacoes.service";
 import { EmailService } from "../modules/email/email.service";
 import { PushNotificacoesService } from "../modules/push-notificacoes/push-notificacoes.service";
+import { PaymentService } from "../modules/payments/payment.service";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../common/constants";
+import { captureException } from "../common/config/sentry.config";
 
 @Injectable()
 @Processor(QUEUE_LIBERACAO)
@@ -16,7 +18,8 @@ export class LiberacaoParcelaWorker {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
+    private readonly payments: PaymentService,
   ) {}
 
   @Process()
@@ -24,7 +27,6 @@ export class LiberacaoParcelaWorker {
     const { creditoId, liberacaoId, valor } = job.data;
 
     try {
-      // Idempotency guard: if a previous attempt already committed, skip silently
       const liberacao = await this.prisma.liberacaoParcela.findUnique({
         where: { liberacaoId },
       });
@@ -39,11 +41,36 @@ export class LiberacaoParcelaWorker {
       });
       if (!credito) throw new Error(`Crédito ${creditoId} não encontrado`);
 
-      // Re-check + update atomically inside the transaction
+      await this.prisma.liberacaoParcela.update({
+        where: { liberacaoId },
+        data: { status: "PROCESSANDO" },
+      });
+
+      const payment = await this.payments.disburse({
+        liberacaoId,
+        creditoId,
+        usuarioId: credito.usuarioId,
+        valor,
+        idempotencyKey: liberacaoId,
+      });
+
+      if (!payment.success) {
+        await this.prisma.liberacaoParcela.update({
+          where: { liberacaoId },
+          data: {
+            status: "FALHA",
+            failureReason: payment.failureReason ?? "Pagamento recusado",
+            paymentProvider: payment.provider,
+            processadoEm: new Date(),
+          },
+        });
+        throw new Error(payment.failureReason ?? "Pagamento falhou");
+      }
+
       let processed = false;
       await this.prisma.$transaction(async (tx) => {
         const lib = await tx.liberacaoParcela.findUnique({ where: { liberacaoId } });
-        if (!lib || lib.status !== "PENDENTE") return;
+        if (!lib || lib.status === "CONCLUIDA") return;
 
         await tx.credito.update({
           where: { creditoId },
@@ -52,7 +79,12 @@ export class LiberacaoParcelaWorker {
 
         await tx.liberacaoParcela.update({
           where: { liberacaoId },
-          data: { status: "CONCLUIDA", processadoEm: new Date() },
+          data: {
+            status: "CONCLUIDA",
+            processadoEm: new Date(),
+            externalPaymentId: payment.externalPaymentId,
+            paymentProvider: payment.provider,
+          },
         });
 
         processed = true;
@@ -60,7 +92,6 @@ export class LiberacaoParcelaWorker {
 
       if (!processed) return;
 
-      // Notifica usuário sobre liberação bem-sucedida
       const obra = credito.obras?.[0];
       const formattedValue = new Intl.NumberFormat("pt-BR", {
         style: "currency",
@@ -72,7 +103,7 @@ export class LiberacaoParcelaWorker {
         "PARCELA_LIBERADA",
         "Parcela liberada com sucesso",
         `Liberação de ${formattedValue} foi processada para ${obra?.nome || "sua obra"}.`,
-        obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
+        obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard",
       );
 
       this.pushNotificacoes.enviarPush({
@@ -84,17 +115,16 @@ export class LiberacaoParcelaWorker {
       }).catch((e) => this.logger.error(`Erro ao enviar push: ${e}`));
 
       this.email
-        .parcelaLiberadaEmail(
-          credito.usuario.nome,
-          credito.usuario.email,
-          valor,
-          obra?.nome || "sua obra"
-        )
+        .parcelaLiberadaEmail(credito.usuario.nome, credito.usuario.email, valor, obra?.nome || "sua obra")
         .catch((e) => this.logger.error(`Erro ao enviar email: ${e}`));
 
-      this.logger.log(`Liberação processada para crédito ${creditoId}: R$ ${valor}`);
+      this.logger.log(`Liberação processada para crédito ${creditoId}: R$ ${valor} via ${payment.provider}`);
     } catch (error) {
       this.logger.error(`Erro ao processar liberação: ${error}`);
+      captureException(error instanceof Error ? error : new Error(String(error)), {
+        liberacaoId,
+        creditoId,
+      });
       throw error;
     }
   }
@@ -102,20 +132,16 @@ export class LiberacaoParcelaWorker {
   @OnQueueFailed()
   onFailed(job: Job, err: Error) {
     this.logger.error(`Job ${job.id} falhou: ${err.message}`);
+    captureException(err, { liberacaoId: job.data.liberacaoId, creditoId: job.data.creditoId });
 
     this.prisma.credito
-      .findUnique({
-        where: { creditoId: job.data.creditoId },
-        include: { obras: true },
-      })
+      .findUnique({ where: { creditoId: job.data.creditoId }, include: { obras: true } })
       .then(async (credito) => {
         if (!credito) return;
 
-        // Use updateMany with status filter to avoid clobbering a CONCLUIDA record
-        // (job may have succeeded but crashed before BullMQ ACK)
         await this.prisma.liberacaoParcela.updateMany({
-          where: { liberacaoId: job.data.liberacaoId, status: "PENDENTE" },
-          data: { status: "FALHA", processadoEm: new Date() },
+          where: { liberacaoId: job.data.liberacaoId, status: { in: ["PENDENTE", "PROCESSANDO"] } },
+          data: { status: "FALHA", processadoEm: new Date(), failureReason: err.message },
         });
 
         const obra = credito.obras?.[0];
@@ -124,8 +150,8 @@ export class LiberacaoParcelaWorker {
             credito.usuarioId,
             "PARCELA_FALHA",
             "Erro na liberação da parcela",
-            `Ocorreu um erro ao processar a liberação para ${obra?.nome || "sua obra"}. Por favor, contate o suporte.`,
-            obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard"
+            `Ocorreu um erro ao processar a liberação para ${obra?.nome || "sua obra"}.`,
+            obra ? `/dashboard/obras/${obra.obraId}` : "/dashboard",
           )
           .catch((e) => this.logger.error(`Erro ao notificar falha: ${e}`));
       })

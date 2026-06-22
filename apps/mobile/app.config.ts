@@ -18,6 +18,9 @@ const config: ExpoConfig = {
   runtimeVersion: { policy: "appVersion" },
   updates: {
     url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
+    enabled: process.env.EAS_BUILD === "true",
+    checkAutomatically: "NEVER",
+    fallbackToCacheTimeout: 0,
   },
   ios: {
     supportsTablet: false,

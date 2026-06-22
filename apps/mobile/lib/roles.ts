@@ -9,10 +9,11 @@ export type UserTipo =
   | "COMERCIAL"
   | "PARCEIRO";
 
-/** GESTOR_FUNDO é alias de GESTOR — mesmo painel no app. */
+/** GESTOR_FUNDO e GESTOR_OBRA são alias de GESTOR — mesmo painel no app. */
 export function normalizeTipo(tipo?: string | null): UserTipo {
   const raw = (tipo ?? "TOMADOR").toUpperCase();
-  const t = raw === "GESTOR_FUNDO" ? "GESTOR" : raw;
+  const t =
+    raw === "GESTOR_FUNDO" || raw === "GESTOR_OBRA" ? "GESTOR" : raw;
   const allowed: UserTipo[] = [
     "CONSTRUTOR", "TOMADOR", "ADMIN", "ENGENHEIRO", "GESTOR",
     "GESTOR_FUNDO", "GESTOR_OBRA", "COMERCIAL", "PARCEIRO",

@@ -23,6 +23,25 @@ export interface AdminOverview {
   filaLiberacao: number;
 }
 
+export interface CreditoLiberadoMensal {
+  mes: string;
+  valor: number;
+}
+
+export interface ObrasPorStatus {
+  status: string;
+  quantidade: number;
+}
+
+export interface AdminMetricas {
+  creditoLiberadoPorMes: CreditoLiberadoMensal[];
+  obrasPorStatus: ObrasPorStatus[];
+  taxaAprovacaoEtapas: number;
+  kycPendentes: number;
+  etapasAprovadas: number;
+  etapasRejeitadas: number;
+}
+
 export interface Atividade {
   id: string;
   tipo: string;
@@ -129,6 +148,79 @@ export class AdminService {
     return eventos.slice(0, limit);
   }
 
+  async metricas(): Promise<AdminMetricas> {
+    const inicio = new Date();
+    inicio.setMonth(inicio.getMonth() - 11);
+    inicio.setDate(1);
+    inicio.setHours(0, 0, 0, 0);
+
+    const [
+      liberacoes,
+      obrasPorStatusRaw,
+      etapasAprovadas,
+      etapasRejeitadas,
+      kycPendentes,
+    ] = await Promise.all([
+      this.prisma.liberacaoParcela.findMany({
+        where: {
+          status: "CONCLUIDA",
+          processadoEm: { gte: inicio },
+        },
+        select: { valor: true, processadoEm: true },
+      }),
+      this.prisma.obra.groupBy({
+        by: ["status"],
+        _count: { obraId: true },
+      }),
+      this.prisma.etapaObra.count({ where: { status: "CONCLUIDA" } }),
+      this.prisma.etapaObra.count({ where: { status: "REPROVADA" } }),
+      this.prisma.kycDocumento.count({ where: { status: "PENDENTE" } }),
+    ]);
+
+    const mesesPt = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const buckets = new Map<string, number>();
+
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(inicio);
+      d.setMonth(inicio.getMonth() + i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      buckets.set(key, 0);
+    }
+
+    for (const lib of liberacoes) {
+      if (!lib.processadoEm) continue;
+      const d = lib.processadoEm;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (buckets.has(key)) {
+        buckets.set(key, (buckets.get(key) ?? 0) + Number(lib.valor));
+      }
+    }
+
+    const creditoLiberadoPorMes = Array.from(buckets.entries()).map(([key, valor]) => {
+      const [year, month] = key.split("-");
+      const mes = `${mesesPt[Number(month) - 1]}/${String(year).slice(2)}`;
+      return { mes, valor };
+    });
+
+    const obrasPorStatus = obrasPorStatusRaw.map((row) => ({
+      status: row.status,
+      quantidade: row._count.obraId,
+    }));
+
+    const totalDecididas = etapasAprovadas + etapasRejeitadas;
+    const taxaAprovacaoEtapas =
+      totalDecididas > 0 ? Math.round((etapasAprovadas / totalDecididas) * 1000) / 10 : 0;
+
+    return {
+      creditoLiberadoPorMes,
+      obrasPorStatus,
+      taxaAprovacaoEtapas,
+      kycPendentes,
+      etapasAprovadas,
+      etapasRejeitadas,
+    };
+  }
+
   async listarUsuarios() {
     const rows = await this.prisma.usuario.findMany({
       where: { deletadoEm: null },
@@ -158,22 +250,35 @@ export class AdminService {
     const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId: id } });
     if (!usuario || usuario.deletadoEm) throw new NotFoundException("Usuário não encontrado");
 
-    // O admin não pode bloquear a própria conta nem rebaixar o próprio perfil
     if (id === adminId && (dto.bloqueado === true || (dto.tipo && dto.tipo !== "ADMIN"))) {
       throw new BadRequestException("Não é possível bloquear ou rebaixar a própria conta de administrador.");
     }
 
+    if (dto.email && dto.email !== usuario.email) {
+      const emailEmUso = await this.prisma.usuario.findFirst({
+        where: { email: dto.email, usuarioId: { not: id }, deletadoEm: null },
+      });
+      if (emailEmUso) throw new ConflictException("E-mail já cadastrado.");
+    }
+
+    const data: Record<string, unknown> = {};
+    if (dto.nome !== undefined) data.nome = dto.nome;
+    if (dto.email !== undefined) data.email = dto.email;
+    if (dto.telefone !== undefined) data.telefone = dto.telefone;
+    if (dto.kycStatus !== undefined) data.kycStatus = dto.kycStatus;
+    if (dto.tipo !== undefined) data.tipo = dto.tipo as UsuarioTipo;
+    if (dto.bloqueado !== undefined) data.bloqueadoEm = dto.bloqueado ? new Date() : null;
+    if (dto.funcoesBloqueadas !== undefined) data.funcoesBloqueadas = dto.funcoesBloqueadas;
+    if (dto.novaSenha) data.passwordHash = await bcrypt.hash(dto.novaSenha, 12);
+
     const { usuarioId, ...atualizado } = await this.prisma.usuario.update({
       where: { usuarioId: id },
-      data: {
-        ...(dto.tipo !== undefined && { tipo: dto.tipo as UsuarioTipo }),
-        ...(dto.bloqueado !== undefined && { bloqueadoEm: dto.bloqueado ? new Date() : null }),
-        ...(dto.funcoesBloqueadas !== undefined && { funcoesBloqueadas: dto.funcoesBloqueadas }),
-      },
+      data,
       select: {
         usuarioId: true,
         nome: true,
         email: true,
+        telefone: true,
         tipo: true,
         kycStatus: true,
         bloqueadoEm: true,
@@ -182,7 +287,6 @@ export class AdminService {
       },
     });
 
-    // Bloqueio de conta derruba as sessões ativas do usuário
     if (dto.bloqueado === true) {
       await this.prisma.sessaoToken.updateMany({
         where: { usuarioId: id, revogadoEm: null },

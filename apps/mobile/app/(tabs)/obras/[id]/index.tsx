@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { formatarBRL } from "@imbobi/core";
-import { obrasApi, type ObraDetalhe } from "../../../../lib/api";
+import { obrasApi, fluxoApi, type ObraDetalhe, type RequisitosObra } from "../../../../lib/api";
+import FlowGateBanner from "../../../../components/FlowGateBanner";
+import { proximoPassoObra } from "../../../../lib/flow-gates";
 
 const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
   PLANEJADA:           { bg: "#f3f4f6", text: "#6b7280" },
@@ -18,11 +20,18 @@ export default function ObraDetailScreen() {
   const [obra, setObra] = useState<ObraDetalhe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [requisitos, setRequisitos] = useState<RequisitosObra | null>(null);
 
   useEffect(() => {
     if (!id) return;
-    obrasApi.buscar(id)
-      .then(setObra)
+    Promise.all([
+      obrasApi.buscar(id),
+      fluxoApi.requisitosObra(id).catch(() => null),
+    ])
+      .then(([obraData, req]) => {
+        setObra(obraData);
+        setRequisitos(req);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [id]);
@@ -34,12 +43,15 @@ export default function ObraDetailScreen() {
   const saldoDisponivel = credito ? credito.valorAprovado - credito.valorLiberado : 0;
   const concluidas = obra.etapas.filter((e) => e.status === "CONCLUIDA").length;
   const progresso = obra.etapas.length ? Math.round((concluidas / obra.etapas.length) * 100) : 0;
+  const gate = id ? proximoPassoObra(requisitos, id) : null;
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <TouchableOpacity onPress={() => router.back()} style={styles.back}>
         <Text style={styles.backText}>← Voltar</Text>
       </TouchableOpacity>
+
+      {gate && <FlowGateBanner {...gate} />}
 
       <Text style={styles.title}>{obra.nome}</Text>
       <Text style={styles.sub}>{obra.endereco}</Text>

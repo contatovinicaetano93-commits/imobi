@@ -254,7 +254,7 @@ export class EmailService {
     email: string,
     token: string
   ): Promise<boolean> {
-    const resetLink = `${process.env["APP_URL"] || "http://localhost:3000"}/reset-password?token=${token}`;
+    const resetLink = `${process.env["APP_URL"] || "http://localhost:3000"}/redefinir-senha?token=${token}`;
     const html = `
       <h2>Recuperar Senha</h2>
       <p>Olá ${nome},</p>

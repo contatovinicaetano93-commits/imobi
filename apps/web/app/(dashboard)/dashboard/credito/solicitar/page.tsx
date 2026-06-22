@@ -15,10 +15,14 @@ import {
   creditoApi,
   comiteApi,
   obrasApi,
+  fluxoApi,
   type ObraResumo,
   type CreditoSimulacao,
+  type FluxoStatus,
 } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
+import { FlowGateBanner } from "@/components/FlowGateBanner";
+import { proximoPassoFluxo } from "@/lib/flow-gates";
 
 const FINALIDADES = [
   { value: "CONSTRUCAO", label: "Construção" },
@@ -47,6 +51,11 @@ function SolicitarForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [creditoId, setCreditoId] = useState<string | null>(null);
+  const [fluxo, setFluxo] = useState<FluxoStatus | null>(null);
+
+  useEffect(() => {
+    fluxoApi.status().then(setFluxo).catch(() => null);
+  }, []);
 
   useEffect(() => {
     obrasApi.listar().then(setObras).catch(() => setObras([]));
@@ -82,6 +91,10 @@ function SolicitarForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (proximoPassoFluxo(fluxo)) {
+      setError("Complete o KYC antes de solicitar crédito.");
+      return;
+    }
     if (valor < 5000) { setError("Valor mínimo é R$ 5.000."); return; }
     setSubmitLoading(true);
     setError(null);
@@ -136,7 +149,11 @@ function SolicitarForm() {
     );
   }
 
+  const gate = proximoPassoFluxo(fluxo);
+
   return (
+    <div className="space-y-6">
+      {gate && <FlowGateBanner {...gate} />}
     <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
       {/* Left: Form */}
       <div className="lg:col-span-3 space-y-6">
@@ -307,6 +324,7 @@ function SolicitarForm() {
         </div>
       </div>
     </form>
+    </div>
   );
 }
 
