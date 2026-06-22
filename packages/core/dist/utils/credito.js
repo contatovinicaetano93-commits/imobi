@@ -8,6 +8,8 @@ exports.simularCredito = simularCredito;
  * Retorna parcela mensal em R$.
  */
 function calcularParcelaPrice(valorPrincipal, taxaMensalDecimal, prazoMeses) {
+    if (!prazoMeses)
+        return 0;
     if (taxaMensalDecimal === 0)
         return valorPrincipal / prazoMeses;
     const fator = Math.pow(1 + taxaMensalDecimal, prazoMeses) /
