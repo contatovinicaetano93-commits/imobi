@@ -6,6 +6,8 @@ export const metadata = {
   description: "Plataforma fintech de crédito imobiliário",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>

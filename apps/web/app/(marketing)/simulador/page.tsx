@@ -12,6 +12,8 @@ import {
 import "../landing.css";
 import "./simulador.css";
 
+export const dynamic = "force-dynamic";
+
 const WA = "5511993455589";
 const VALOR_MAX_EMPRESTIMO = 500_000_000;
 const VALOR_MAX_API = 5_000_000;

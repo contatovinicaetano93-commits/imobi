@@ -10,6 +10,7 @@ import "./landing.css";
 
 const WA = "5511993455589";
 
+export const dynamic = "force-dynamic";
 
 export default function LandingPage() {
   const router = useRouter();
