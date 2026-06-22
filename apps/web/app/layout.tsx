@@ -8,7 +8,10 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <meta name="description" content="Plataforma fintech de crédito imobiliário" />
+      </head>
       <body>{children}</body>
     </html>
   );

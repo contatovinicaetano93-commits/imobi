@@ -16,13 +16,7 @@ const nextConfig = {
   experimental: {
     typedRoutes: true,
     serverComponentsExternalPackages: ["@opentelemetry/instrumentation", "require-in-the-middle"],
-    isrMemoryCacheSize: 52 * 1024 * 1024,
   },
-  onDemandEntries: {
-    maxInactiveAge: 60000,
-    pagesBufferLength: 5,
-  },
-  staticPageGenerationTimeout: 300,
   webpack: (config) => {
     config.ignoreWarnings = [
       { module: /require-in-the-middle/ },
@@ -32,11 +26,6 @@ const nextConfig = {
   },
 };
 
-// Allow export errors for special pages (404/500) - they'll be generated on-demand
-const withBuildFallback = (config) => {
-  return config;
-};
-
-module.exports = withBuildFallback(nextConfig);
+module.exports = nextConfig;
 
 module.exports = nextConfig;
