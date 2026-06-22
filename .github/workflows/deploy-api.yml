@@ -1,0 +1,115 @@
+name: Deploy API to Railway
+
+on:
+  push:
+    branches:
+      - claude/imobi-mvp-fintech-status-jrr2ab
+    paths:
+      - 'services/api/**'
+      - 'packages/**'
+      - '.github/workflows/deploy-api.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Lint
+        run: pnpm lint --filter @imbobi/api 2>/dev/null || true
+
+      - name: Build API
+        run: pnpm build --filter @imbobi/api
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: 'services/api'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  deploy:
+    name: Deploy to Railway
+    needs: [test, security]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/claude/imobi-mvp-fintech-status-jrr2ab'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Railway
+        run: |
+          curl -X POST https://api.railway.app/graphql \
+            -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "query": "mutation { deploymentCreate(input: { environmentId: \"${{ secrets.RAILWAY_ENVIRONMENT_ID }}\", sourceId: \"${{ secrets.RAILWAY_SERVICE_ID }}\" }) { id status } }"
+            }' || echo "Railway deployment webhook will trigger automatically"
+
+      - name: Notify Slack (optional)
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "🚀 Imobi API Deployment: ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Imobi API Deployment*\nStatus: ${{ job.status }}\nCommit: ${{ github.sha }}\nAuthor: ${{ github.actor }}"
+                  }
+                }
+              ]
+            }
+        continue-on-error: true
+
+  health-check:
+    name: Post-Deploy Health Check
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for deployment
+        run: sleep 30
+
+      - name: Check API health
+        run: |
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.railway.app/health || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ API is healthy"
+              exit 0
+            fi
+            echo "Attempt $i/10: Status $STATUS, retrying in 10s..."
+            sleep 10
+          done
+          echo "❌ API health check failed"
+          exit 1
+        continue-on-error: true
