@@ -1,13 +1,35 @@
-# Documentação legada — não usar
+# Documentação e scripts legados — NÃO USAR
 
-Estes arquivos são **histórico**. A stack ativa é **Vercel + Render**.
+**Stack ativa:** Vercel (web) + Render (API) na branch **`main`**.
 
-→ Leia [`../DEPLOY_STACK.md`](../DEPLOY_STACK.md) e [`../../START_HERE.md`](../../START_HERE.md).
+## Fonte única (use só estes)
 
-| Arquivo | Motivo do arquivamento |
-|---------|------------------------|
-| `RAILWAY_DEPLOYMENT.md` | Railway pausado (PostGIS/P3009, instabilidade) |
-| `RAILWAY_QUICK_START.md` | Substituído por DEPLOY_STACK.md |
-| `railway.toml.deprecated` | Config Railway — não conectar novo deploy |
+| Arquivo | Conteúdo |
+|---------|----------|
+| [`../../START_HERE.md`](../../START_HERE.md) | Fluxo de deploy passo a passo |
+| [`../DEPLOY_STACK.md`](../DEPLOY_STACK.md) | URLs, secrets, CI, Vercel/Render |
+| [`../CLAUDE_SYNC.md`](../CLAUDE_SYNC.md) | Prompt para alinhar Claude/Cursor |
+| [`../../CLAUDE.md`](../../CLAUDE.md) | Guia do monorepo |
 
-**Não reativar Railway** sem decisão explícita do time.
+## O que foi arquivado (junho 2026)
+
+| Pasta | Conteúdo |
+|-------|----------|
+| [`archive/root/`](archive/root/) | ~190 markdowns da raiz (status, cutover, AWS, beta duplicado) |
+| [`archive/docs/`](archive/docs/) | ~80 markdowns em `docs/` (PHASE9/10, cutover, Railway/AWS) |
+| [`archive/docs-subdirs/`](archive/docs-subdirs/) | Subpastas `PHASE*`, `RUNBOOKS` |
+| [`scripts/`](scripts/) | Deploy AWS EC2 (`deploy-api.sh`, `deploy-web.sh`, …) |
+| [`infrastructure-aws/`](infrastructure-aws/) | Terraform/AWS + `infrastructure/` legado |
+| [`api-vercel-handler/`](api-vercel-handler/) | Handler NestJS em Vercel (API migrou para Render) |
+| `RAILWAY_*.md`, `railway.toml.deprecated` | Railway pausado |
+
+## Proibido reativar sem decisão do time
+
+- Railway (`RAILWAY_*`)
+- AWS EC2 (`deploy-api.sh`, `infrastructure-aws/`)
+- Branches `claude/*` para deploy
+- URLs antigas: `api.imbobi.com.br`, `imobi-staging.vercel.app`
+
+## Scripts ativos
+
+Ver [`../../scripts/README.md`](../../scripts/README.md).

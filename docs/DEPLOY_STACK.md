@@ -76,7 +76,7 @@ Deploy de código: **auto-deploy** no push em `main` (Vercel + Render dashboards
 ## Legado (não seguir)
 
 - `docs/legacy/RAILWAY_*.md`, `docs/legacy/railway.toml.deprecated` — Railway pausado/removido (PostGIS/P3009)
-- `scripts/deploy-api.sh` — AWS EC2, não usado
+- `docs/legacy/scripts/deploy-api.sh` — AWS EC2, não usado
 - `PRODUCTION_INFRASTRUCTURE_GUIDE.md` — mistura Railway/AWS; usar este arquivo
 
 ## Vercel (web) — config obrigatória

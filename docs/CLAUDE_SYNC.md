@@ -31,7 +31,7 @@ Entrada rápida: START_HERE.md
 
 Legado bloqueado (não sugerir nem reativar):
 - Railway, AWS EC2, Terraform para API
-- scripts/deploy-api.sh
+- docs/legacy/scripts/deploy-api.sh
 - URLs antigas: imobi.vercel.app, api.imbobi.com.br, imobi-staging.vercel.app
 
 CI/CD:

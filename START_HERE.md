@@ -121,7 +121,7 @@ pnpm type-check       # antes de push
 ## Legado (não usar)
 
 - `docs/legacy/RAILWAY_*.md`, `railway.toml`
-- `scripts/deploy-api.sh` (AWS EC2)
+- `docs/legacy/scripts/deploy-api.sh` (AWS EC2)
 - Secrets `RAILWAY_*` no GitHub
 
 ---
