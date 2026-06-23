@@ -34,11 +34,17 @@ async function bootstrap() {
   app.setGlobalPrefix("api/v1");
 
   const nodeEnv = process.env["NODE_ENV"] || "development";
-  const corsOrigins = process.env["CORS_ORIGIN"]?.split(",").map((o) => o.trim()).filter(Boolean);
   const isDev = nodeEnv === "development" || nodeEnv === "test";
+  const railwayOrigin = process.env["RAILWAY_PUBLIC_DOMAIN"]
+    ? `https://${process.env["RAILWAY_PUBLIC_DOMAIN"]}`
+    : undefined;
+  const corsOrigins = process.env["CORS_ORIGIN"]?.split(",").map((o) => o.trim()).filter(Boolean)
+    ?? (railwayOrigin ? [railwayOrigin, "https://imobi-web-ten.vercel.app"] : undefined);
 
   if (!isDev && !corsOrigins?.length) {
-    throw new Error("CORS_ORIGIN is required in production mode. Please set it as a comma-separated list of allowed origins.");
+    throw new Error(
+      "CORS_ORIGIN is required in production (or deploy on Railway with RAILWAY_PUBLIC_DOMAIN).",
+    );
   }
 
   app.enableCors({

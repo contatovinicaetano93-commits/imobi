@@ -24,4 +24,4 @@ WORKDIR /app
 ENV NODE_ENV=production
 EXPOSE 4000
 
-CMD ["sh", "-c", "cd /app/services/api && pnpm exec prisma migrate deploy --schema prisma/schema.prisma && exec node dist/main.js"]
+CMD ["sh", "-c", "cd /app/services/api && node ./scripts/railway-start.mjs"]

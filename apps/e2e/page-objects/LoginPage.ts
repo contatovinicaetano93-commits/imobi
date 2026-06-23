@@ -3,10 +3,10 @@ import type { Page } from '@playwright/test';
 export class LoginPage {
   readonly email = this.page.locator('input[type="email"]');
   readonly senha = this.page.locator('input[type="password"]');
-  readonly submitBtn = this.page.getByRole('button', { name: /Entrar/ });
-  readonly errorMsg = this.page.locator('p.text-red-600');
-  readonly cadastroLink = this.page.getByRole('link', { name: 'Cadastre-se' });
-  readonly brand = this.page.getByRole('heading', { name: 'imbobi' });
+  readonly submitBtn = this.page.getByRole('button', { name: /Login na plataforma|Entrando/ });
+  readonly errorMsg = this.page.locator('form p').filter({ hasText: /.+/ }).first();
+  readonly cadastroLink = this.page.getByRole('link', { name: 'Criar conta' });
+  readonly brand = this.page.getByText('IMOBI', { exact: true });
 
   constructor(private page: Page) {}
 

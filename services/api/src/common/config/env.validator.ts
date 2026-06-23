@@ -1,7 +1,14 @@
+function resolveAppUrl(config: Record<string, any>): string | undefined {
+  if (config.APP_URL) return config.APP_URL;
+  if (config.RAILWAY_PUBLIC_DOMAIN) return `https://${config.RAILWAY_PUBLIC_DOMAIN}`;
+  return undefined;
+}
+
 export function validateEnvironment(config: Record<string, any>): string[] {
   const errorMessages: string[] = [];
   const nodeEnv = config.NODE_ENV || 'development';
   const isDev = nodeEnv === 'development' || nodeEnv === 'test' || nodeEnv === 'staging';
+  const appUrl = resolveAppUrl(config);
 
   // Critical: DATABASE_URL always required
   if (!config.DATABASE_URL) {
@@ -18,8 +25,8 @@ export function validateEnvironment(config: Record<string, any>): string[] {
   const hasRedisHostPort = config.REDIS_HOST && config.REDIS_PORT;
 
   if (!hasRedisUrl && !hasRedisHostPort && !isDev) {
-    errorMessages.push(
-      'Redis configuration missing. Either set REDIS_URL or both REDIS_HOST and REDIS_PORT',
+    console.warn(
+      '[CONFIG] Redis not configured — API will start; add REDIS_URL for cache and job queues',
     );
   }
 
@@ -74,14 +81,15 @@ export function validateEnvironment(config: Record<string, any>): string[] {
   }
 
   // APP_URL validation (prevent localhost fallback in production)
-  const appUrl = config.APP_URL;
   if (appUrl && appUrl.includes('localhost')) {
     if (!isDev) {
       errorMessages.push('APP_URL must not contain localhost in production');
     }
   }
   if (!appUrl && !isDev) {
-    errorMessages.push('APP_URL is required in production to generate correct email links');
+    errorMessages.push(
+      'APP_URL is required in production (or set RAILWAY_PUBLIC_DOMAIN on Railway)',
+    );
   }
 
   return errorMessages;

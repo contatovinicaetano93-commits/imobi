@@ -36,7 +36,7 @@ import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker, QUEUE_EXCLUIR_USUARIO } from "./workers/excluir-usuario.worker";
 import { QUEUE_LIBERACAO } from "./common/constants";
 import { HealthController } from "./common/health.controller";
-import { getRedisConfig } from "./common/config";
+import { getRedisConfig, hasRedisEnv } from "./common/config";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
 import { CustomThrottlerGuard } from "./common/guards/throttler.guard";
 
@@ -51,18 +51,22 @@ const redisConfig = getRedisConfig();
       { ttl: 60000, limit: 5, name: "upload" },
       { ttl: 60000, limit: 20, name: "manager" },
     ]),
-    CacheModule.registerAsync({
-      isGlobal: true,
-      useFactory: () => {
-        const redisUrl = redisConfig.password
-          ? `redis://:${redisConfig.password}@${redisConfig.host}:${redisConfig.port}`
-          : `redis://${redisConfig.host}:${redisConfig.port}`;
-        return {
-          stores: [new KeyvRedis(redisUrl)],
-          ttl: 300_000,
-        };
-      },
-    }),
+    ...(hasRedisEnv()
+      ? [
+          CacheModule.registerAsync({
+            isGlobal: true,
+            useFactory: () => {
+              const redisUrl = redisConfig.password
+                ? `redis://:${redisConfig.password}@${redisConfig.host}:${redisConfig.port}`
+                : `redis://${redisConfig.host}:${redisConfig.port}`;
+              return {
+                stores: [new KeyvRedis(redisUrl)],
+                ttl: 300_000,
+              };
+            },
+          }),
+        ]
+      : [CacheModule.register({ isGlobal: true, ttl: 300_000 })]),
     BullModule.registerQueue({ name: QUEUE_LIBERACAO }),
     BullModule.registerQueue({ name: QUEUE_EXCLUIR_USUARIO }),
     BullModule.forRoot({
@@ -72,6 +76,7 @@ const redisConfig = getRedisConfig();
         ...(redisConfig.password && { password: redisConfig.password }),
         maxRetriesPerRequest: null,
         enableReadyCheck: false,
+        lazyConnect: !hasRedisEnv(),
         retryStrategy: (times: number) => Math.min(times * 50, 2000),
       },
     }),

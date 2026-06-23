@@ -19,6 +19,12 @@ export class HealthController {
 
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
+  /** Liveness probe — Railway/container orchestrators only need process up. */
+  @Get("live")
+  live() {
+    return { status: "ok", timestamp: new Date().toISOString() };
+  }
+
   @Get()
   async getHealth(@Res({ passthrough: true }) reply: FastifyReply): Promise<HealthCheck> {
     const redisConfig = getRedisConfig();
@@ -78,8 +84,6 @@ export class HealthController {
     this.logger.debug(`Health check: ${JSON.stringify(health)}`);
 
     if (health.status === "error") {
-      reply.status(HttpStatus.SERVICE_UNAVAILABLE);
-    } else if (health.status === "degraded") {
       reply.status(HttpStatus.SERVICE_UNAVAILABLE);
     }
 

@@ -1,9 +1,8 @@
 [build]
-builder = "RAILPACK"
-buildCommand = "pnpm run build:api"
-watchPatterns = ["services/api/**", "packages/**"]
+builder = "DOCKERFILE"
+dockerfilePath = "services/api/Dockerfile"
 
 [deploy]
-startCommand = "pnpm --filter @imbobi/api start"
-healthcheckPath = "/api/v1/health"
+startCommand = "pnpm --filter @imbobi/api start:railway"
+healthcheckPath = "/api/v1/health/live"
 restartPolicyType = "ON_FAILURE"

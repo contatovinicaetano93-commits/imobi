@@ -32,10 +32,21 @@ export function getRedisConfig(): RedisConfig {
     };
   }
 
-  // Production requires explicit configuration
+  // Production without Redis: allow API boot (cache/queues degrade until REDIS_URL is wired)
+  if (nodeEnv === 'production') {
+    console.warn(
+      '[CONFIG] REDIS_URL not set — starting without Redis (set REDIS_URL for cache and Bull queues)',
+    );
+    return { host: '127.0.0.1', port: 6379 };
+  }
+
   throw new Error(
     'Redis configuration missing. Either set REDIS_URL or both REDIS_HOST and REDIS_PORT environment variables.',
   );
+}
+
+export function hasRedisEnv(): boolean {
+  return !!(process.env.REDIS_URL || (process.env.REDIS_HOST && process.env.REDIS_PORT));
 }
 
 function parseRedisUrl(url: string): RedisConfig {

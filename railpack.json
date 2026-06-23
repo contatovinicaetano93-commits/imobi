@@ -6,10 +6,10 @@
   "steps": {
     "build": {
       "inputs": [{ "step": "install" }],
-      "commands": ["pnpm run build:api"]
+      "commands": ["pnpm --filter @imbobi/schemas build && pnpm --filter @imbobi/core build && pnpm --filter @imbobi/api build"]
     }
   },
   "deploy": {
-    "startCommand": "pnpm --filter @imbobi/api start"
+    "startCommand": "pnpm --filter @imbobi/api start:railway"
   }
 }

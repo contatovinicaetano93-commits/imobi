@@ -9,6 +9,7 @@ export class CircuitBreaker {
     private readonly name: string,
     private readonly threshold = 5,
     private readonly resetMs = 30_000,
+    private readonly onStateChange?: (state: CircuitState) => void,
   ) {}
 
   getState(): CircuitState {
@@ -32,8 +33,9 @@ export class CircuitBreaker {
     } catch (err) {
       this.failures += 1;
       this.lastFailure = Date.now();
-      if (this.failures >= this.threshold) {
+      if (this.failures >= this.threshold && this.state !== "open") {
         this.state = "open";
+        this.onStateChange?.("open");
       }
       throw err;
     }
