@@ -85,6 +85,12 @@ jobs:
     timeout-minutes: 20
     needs: validate
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/imobi_test
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: test-secret-key
+      NODE_ENV: test
+      CORS_ORIGIN: http://localhost:3000,http://localhost:3001
     services:
       postgres:
         image: postgis/postgis:16-3.4
@@ -127,22 +133,13 @@ jobs:
 
       - name: Generate Prisma Client
         run: pnpm db:generate
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/imobi_test
 
       - name: Run database migrations
         run: pnpm -F @imbobi/api exec prisma migrate deploy
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/imobi_test
         continue-on-error: true
 
       - name: Run E2E tests (Critical Flows)
         run: pnpm -F @imbobi/api test -- critical-flows.e2e.spec.ts
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/imobi_test
-          REDIS_URL: redis://localhost:6379
-          JWT_SECRET: test-secret-key
-          NODE_ENV: test
 
   # Após merge em main: Vercel + Render já fazem deploy.
   # Este job só valida que staging ficou saudável (gate resiliente).
