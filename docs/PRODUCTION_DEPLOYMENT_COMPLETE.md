@@ -603,7 +603,7 @@ JWT_REFRESH_EXPIRES_IN=7d
 
 # Encryption Key: 32-byte hex (256-bit AES)
 # Generate: openssl rand -hex 32
-ENCRYPTION_KEY="7c4f999f60fc6f7681c2f4b48e99cde233f68ef10edee5141d7ffa33bcd8f98b"
+ENCRYPTION_KEY="REPLACE_WITH_GENERATED_64_HEX_CHAR_ENCRYPTION_KEY"
 
 # ============================================================================
 # CORS & API CONFIGURATION (REQUIRED)
@@ -616,7 +616,7 @@ NEXT_PUBLIC_API_URL="https://api.imobi.com.br"
 EXPO_PUBLIC_API_URL="https://api.imobi.com.br"
 
 # Application URL (for email links, etc.)
-APP_URL="https://api.imobi.com.br"
+APP_URL="https://imobi-web.vercel.app"
 
 # ============================================================================
 # EMAIL CONFIGURATION (REQUIRED - pick ONE provider)
@@ -652,12 +652,14 @@ FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxxxx@your_project.iam.gserviceaccount.
 # AWS S3 CONFIGURATION (REQUIRED - for evidence photo storage)
 # ============================================================================
 AWS_REGION="us-east-1"
+AWS_S3_REGION="us-east-1"
 AWS_S3_BUCKET="imobi-prod-evidence"
 AWS_ACCESS_KEY_ID="your_aws_access_key"
 AWS_SECRET_ACCESS_KEY="your_aws_secret_key"
 
 # Cloudflare R2 (alternative S3-compatible storage)
 # AWS_REGION="auto"
+# AWS_S3_REGION="auto"
 # AWS_S3_BUCKET="imobi-prod"
 # AWS_S3_ENDPOINT="https://your-account.r2.cloudflarestorage.com"
 # AWS_ACCESS_KEY_ID="..."

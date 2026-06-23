@@ -48,7 +48,7 @@ jobs:
         run: pnpm type-check
 
       - name: Lint API
-        run: pnpm lint --filter @imbobi/api 2>/dev/null || true
+        run: pnpm --filter @imbobi/api lint
 
       - name: Build API
         run: pnpm build --filter @imbobi/api

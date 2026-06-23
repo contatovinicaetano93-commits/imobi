@@ -300,7 +300,7 @@ pnpm dev
 ### What's Configured ✅
 ```
 JWT_SECRET=dev-secret-change-in-production...
-ENCRYPTION_KEY=7c4f999f60fc6f7681c2f4b48e99cde233f68ef10edee5141d7ffa33bcd8f98b
+ENCRYPTION_KEY=REPLACE_WITH_GENERATED_64_HEX_CHAR_ENCRYPTION_KEY
 DATABASE_URL=postgresql://user:pass@staging-db-host:5432/db_name
 REDIS_URL=redis://default:pass@funky-dane.upstash.io:6379
 CORS_ORIGIN=http://localhost:3000,http://localhost:3001

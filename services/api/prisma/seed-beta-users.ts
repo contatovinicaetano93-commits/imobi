@@ -1,5 +1,5 @@
 import { PrismaClient, UsuarioTipo, KycStatus, ObraStatus, EtapaStatus } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 
 const prisma = new PrismaClient();

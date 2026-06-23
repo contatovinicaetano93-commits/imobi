@@ -24,7 +24,7 @@
 ### Step 1: Seed Test Data (2 min)
 ```bash
 cd /home/user/imobi
-npm run db:seed:beta
+pnpm db:seed:beta
 ```
 
 **Output** 🎉:
@@ -35,7 +35,7 @@ npm run db:seed:beta
 
 ### Step 2: Configure Stripe (3 min)
 ```bash
-# Add to Railway/Render environment variables:
+# Add to Render environment variables:
 STRIPE_SECRET_KEY=sk_test_YOUR_KEY
 STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY
 STRIPE_WEBHOOK_SECRET=whsec_test_YOUR_KEY
@@ -46,8 +46,9 @@ STRIPE_WEBHOOK_SECRET=whsec_test_YOUR_KEY
 git add -A
 git commit -m "chore: beta launch infrastructure"
 git push origin claude/imobi-mvp-fintech-status-jrr2ab
-npm run deploy:api
-npm run deploy:web
+pnpm render:redeploy
+pnpm vercel:env:push
+bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com
 ```
 
 ---
@@ -236,11 +237,11 @@ CVC: Any 3 digits
 - [ ] Brief support team
 
 ### Deploy
-- [ ] Run seed script: `npm run db:seed:beta`
-- [ ] Push to main: `git push`
-- [ ] Deploy API: `npm run deploy:api`
-- [ ] Deploy web: `npm run deploy:web`
-- [ ] Verify health: `curl https://api.imobi.com/health`
+- [ ] Run seed script: `pnpm db:seed:beta`
+- [ ] Push configured branch: `git push origin claude/imobi-mvp-fintech-status-jrr2ab`
+- [ ] Redeploy API on Render: `pnpm render:redeploy`
+- [ ] Sync web env on Vercel: `pnpm vercel:env:push`
+- [ ] Verify health: `bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com`
 
 ### Go Live
 - [ ] Send welcome emails
