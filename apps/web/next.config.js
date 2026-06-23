@@ -16,7 +16,6 @@ const nextConfig = {
   experimental: {
     typedRoutes: true,
     serverComponentsExternalPackages: ["@opentelemetry/instrumentation", "require-in-the-middle"],
-    isrMemoryCacheSize: 0,
   },
   onDemandEntries: {
     maxInactiveAge: 60 * 1000,
@@ -30,7 +29,5 @@ const nextConfig = {
     return config;
   },
 };
-
-module.exports = nextConfig;
 
 module.exports = nextConfig;
