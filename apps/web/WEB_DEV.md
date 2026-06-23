@@ -1,58 +1,60 @@
-# Web IMOBI — desenvolvimento local
+# Web IMOBI — dev local
 
-Site oficial: https://imobi-web-ten.vercel.app/
+**Stack oficial:** Vercel (web) + Render (API + Postgres + Redis). Railway não é usado.
 
-## PowerShell
+| Ambiente | URL |
+|----------|-----|
+| Web (produção) | https://imobi-web.vercel.app |
+| API staging (padrão Vercel/E2E) | https://imobi-api-staging.onrender.com |
+| API alternativa | https://imobi-api-efgg.onrender.com (`imobi-api` no Render) |
 
-```powershell
-cd "c:\Users\Usuário\Desktop\vini Claude\imobi-push"
-pnpm install
-Copy-Item apps\web\.env.local.example apps\web\.env.local
-# Edite JWT_SECRET (mesmo valor da API staging)
-pnpm --filter web dev
-```
+Guia completo: [`docs/DEPLOY_STACK.md`](../../docs/DEPLOY_STACK.md)
 
-## WSL
+## Setup local
 
 ```bash
-cd ~/imobi/imobi
+cd imobi
 pnpm install
 cp apps/web/.env.local.example apps/web/.env.local
-pnpm --filter web dev
+# JWT_SECRET = mesmo valor da API (local ou staging)
+pnpm dev:web
 ```
 
-## Variáveis (Vercel + local)
+Abra http://localhost:3000
 
-| Variável | Valor sugerido |
-|----------|----------------|
-| `NEXT_PUBLIC_API_URL` | URL da API Render staging |
-| `JWT_SECRET` | Igual ao da API (obrigatório para login/painéis) |
+## Modos de API
 
-## Login teste (staging)
+| Modo | `NEXT_PUBLIC_API_URL` | Quando |
+|------|------------------------|--------|
+| Staging | `https://imobi-api-staging.onrender.com` | Padrão sem API local |
+| Local | `http://localhost:4000` | Com `pnpm dev:api` |
 
-| Perfil | Email | Senha | Painel |
-|--------|-------|-------|--------|
-| Tomador | tomador@imobi.com.br | Tomador@123 | `/dashboard` |
-| Gestor do Fundo | gestor@imobi.com.br | Gestor@123 | `/dashboard/gestor` |
-| Admin | admin@imobi.com.br | Admin@123 | `/dashboard/admin` |
+## Login teste (staging / seed)
 
-## Render (API) — obrigatório após push
+| Perfil | Email | Senha |
+|--------|-------|-------|
+| Tomador | tomador@imobi.com.br | Tomador@123 |
+| Gestor | gestor@imobi.com.br | Gestor@123 |
+| Admin | admin@imobi.com.br | Admin@123 |
 
-O site (Vercel) e a API (Render) deployam **separados**. Se o painel gestor der **403** em todas as abas:
+## Comandos úteis
 
-1. [Render Dashboard](https://dashboard.render.com) → serviço `imobi-api-efgg` (ou `imobi-api`)
-2. **Manual Deploy** → Deploy latest commit (`main`)
-3. Aguarde build + `prisma migrate deploy` (migration `12_merge_gestor_fundo_into_gestor`)
-4. Teste: `GET https://imobi-api-efgg.onrender.com/api/v1/health` → 200
-5. **Logout/login** no site (JWT antigo pode ter role desatualizado)
-6. Abra `/dashboard/gestor` e `/dashboard/fundos`
-
-### Corrigir usuário gestor no banco (se 403 persistir)
-
-Com `SETUP_SECRET` configurado no Render:
-
-```
-GET https://imobi-api-efgg.onrender.com/api/v1/setup?secret=SEU_SETUP_SECRET
+```bash
+pnpm vercel:env:push          # JWT + API URL → Vercel (secrets em .env.vercel.local)
+pnpm render:env:push          # env API → Render staging
+pnpm render:redeploy          # redeploy API staging
+curl https://imobi-api-staging.onrender.com/api/v1/health
 ```
 
-Isso faz upsert de `gestor@imobi.com.br` com `tipo: GESTOR`. Depois logout/login.
+## Render — se gestor der 403
+
+1. [Render Dashboard](https://dashboard.render.com) → `imobi-api-staging`
+2. Manual Deploy → latest commit
+3. Health: `GET …/api/v1/health` → `"status":"ok"`
+4. Logout/login no site (JWT antigo pode ter role desatualizada)
+
+Com `SETUP_SECRET` no Render:
+
+```
+GET https://imobi-api-staging.onrender.com/api/v1/setup?secret=SEU_SETUP_SECRET
+```

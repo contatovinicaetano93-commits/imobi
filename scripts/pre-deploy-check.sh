@@ -46,7 +46,7 @@ check "All dependencies installed" "test -d node_modules/@imbobi"
 # Database Checks
 echo -e "\n${BLUE}🗄️  Database${NC}"
 if [ -z "$DATABASE_URL" ]; then
-  warn "DATABASE_URL not set (will be set in Railway)"
+  warn "DATABASE_URL not set (configure in .env.render.local / Render dashboard)"
 else
   check "Can connect to database" "psql \$DATABASE_URL -c 'SELECT 1;'"
 fi
@@ -73,7 +73,7 @@ check "API version specified" "grep -q 'version' services/api/package.json"
 echo -e "\n${BLUE}📚 Documentation${NC}"
 check "OpenAPI spec exists" "test -f docs/OPENAPI_SPECIFICATION.md"
 check "Soft launch guide exists" "test -f docs/SOFT_LAUNCH_GUIDE.md"
-check "Railway deployment guide exists" "test -f docs/RAILWAY_DEPLOYMENT.md"
+check "Deploy stack guide exists" "test -f docs/DEPLOY_STACK.md"
 
 # Git & Version Control
 echo -e "\n${BLUE}🔀 Git${NC}"
@@ -97,11 +97,10 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 if [ $FAILED -eq 0 ]; then
   echo -e "\n${GREEN}✨ All checks passed! Ready to deploy.${NC}"
   echo -e "\n${BLUE}Next steps:${NC}"
-  echo "1. Set up Railway project (see docs/RAILWAY_DEPLOYMENT.md)"
-  echo "2. Configure environment variables in Railway"
-  echo "3. Deploy using: git push origin claude/imobi-mvp-fintech-status-jrr2ab"
-  echo "4. Monitor deployment in GitHub Actions & Railway dashboard"
-  echo "5. Run post-deployment verification (curl https://api.railway.app/health)"
+  echo "1. Push env: pnpm render:env:push && pnpm vercel:env:push"
+  echo "2. Redeploy API: pnpm render:redeploy (or auto-deploy on Render)"
+  echo "3. Verify: bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com"
+  echo "4. See docs/DEPLOY_STACK.md"
   exit 0
 else
   echo -e "\n${RED}❌ Some checks failed. Fix issues before deploying.${NC}"

@@ -17,7 +17,8 @@ echo -e "${BLUE}📊 Imobi MVP - Monitoring Setup${NC}\n"
 API_URL="${1:-}"
 
 if [ -z "$API_URL" ]; then
-  read -p "Enter API URL (https://...railway.app): " API_URL
+  read -p "Enter API URL (default: https://imobi-api-staging.onrender.com): " API_URL
+  API_URL="${API_URL:-https://imobi-api-staging.onrender.com}"
 fi
 
 echo -e "${BLUE}🔧 Monitoring Options${NC}\n"
@@ -42,11 +43,10 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 
   if [ -n "$SENTRY_DSN" ]; then
     echo -e "${YELLOW}Manual Step:${NC}"
-    echo "1. Go to Railway dashboard"
-    echo "2. Select imobi-api service"
-    echo "3. Go to Variables tab"
-    echo "4. Add: SENTRY_DSN=$SENTRY_DSN"
-    echo "5. Redeploy service"
+    echo "1. Add SENTRY_DSN to .env.render.local"
+    echo "2. Run: pnpm render:env:push"
+    echo "   Or set in Render dashboard → imobi-api-staging → Environment"
+    echo "3. Redeploy: pnpm render:redeploy"
     echo ""
     read -p "Press Enter when Sentry is configured..."
     echo -e "${GREEN}✓${NC} Sentry configured"

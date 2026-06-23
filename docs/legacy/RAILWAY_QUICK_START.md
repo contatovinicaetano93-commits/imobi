@@ -1,5 +1,7 @@
 # 🚂 Railway Deployment - Quick Start (15 minutes)
 
+> **⚠️ DEPRECADO (jun/2026):** Imobi não usa Railway. Stack oficial: **Vercel + Render** — ver [`DEPLOY_STACK.md`](./DEPLOY_STACK.md).
+
 **Status**: Ready for deployment  
 **Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
 **Estimated Time**: 15-20 minutes

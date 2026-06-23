@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 
 import { getApiV1Url } from "@/lib/api-base";
 
+export const dynamic = "force-dynamic";
+
 const API_URL = getApiV1Url();
 
 export async function PATCH(

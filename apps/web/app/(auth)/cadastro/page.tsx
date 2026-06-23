@@ -3,7 +3,7 @@
 import { useForm, Controller, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React, { Suspense, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
 import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schemas";
 import PasswordInput from "../_components/PasswordInput";
 import { registerWithRetry } from "@/lib/register-with-retry";
@@ -11,7 +11,7 @@ import { redirectAfterLogin } from "@/lib/post-login-redirect";
 
 const WA = "5511993455589";
 
-function buildSimuladorRedirect(params: URLSearchParams): string | null {
+function buildSimuladorRedirect(params: ReadonlyURLSearchParams): string | null {
   const valor = params.get("valor");
   const fase = params.get("fase");
   const prazo = params.get("prazo");
@@ -51,10 +51,13 @@ function CadastroFallback() {
 
 function CadastroForm() {
   const searchParams = useSearchParams();
-  const simuladorNext = useMemo(() => buildSimuladorRedirect(searchParams), [searchParams]);
-  const simValor = searchParams.get("valor");
-  const simFase = searchParams.get("fase");
-  const simPrazo = searchParams.get("prazo");
+  const simuladorNext = useMemo(
+    () => (searchParams ? buildSimuladorRedirect(searchParams) : null),
+    [searchParams],
+  );
+  const simValor = searchParams?.get("valor");
+  const simFase = searchParams?.get("fase");
+  const simPrazo = searchParams?.get("prazo");
 
   const [erro, setErro] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);

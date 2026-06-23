@@ -35,7 +35,7 @@
 
 ### Infrastructure
 - **Monorepo**: Turborepo + pnpm workspaces
-- **Deployment**: Vercel (web), Render/Railway (api)
+- **Deployment**: Vercel (web), Render (api) — ver `docs/DEPLOY_STACK.md`
 - **Monitoring**: Sentry, New Relic, UptimeRobot
 - **CI/CD**: GitHub Actions
 
@@ -169,7 +169,7 @@ const { register } = useForm({ resolver: zodResolver(usuarioSchema) });
 ```bash
 ❌ NUNCA commitar .env
 ✅ Use .env.example com placeholders
-✅ Credenciais apenas em Vercel/Railway dashboards
+✅ Credenciais apenas em Vercel/Render dashboards (`.env.vercel.local`, `.env.render.local`)
 ✅ Arquivo local: .env.vercel.local (git ignored)
 ```
 
@@ -285,7 +285,8 @@ Inclui:
 
 - `CODE_REVIEW_AUDIT.md` — Análise de qualidade (7.8/10)
 - `DETAILED_REVIEW_REPORT.md` — Review completo com recomendações
-- `QUICK_START_PROVISIONING.md` — Setup de infraestrutura (Railway, Upstash, AWS, Firebase, SendGrid)
+- `docs/DEPLOY_STACK.md` — Stack canônica Vercel + Render
+- `QUICK_START_PROVISIONING.md` — Setup de infraestrutura (Render, Upstash, AWS, Firebase, SendGrid)
 - `VERCEL_DEPLOYMENT_GUIDE.md` — Deploy em produção
 - `ARCHITECTURE_RESILIENCE_API_FIRST.md` — Master architecture guide
 - `API_ENDPOINTS.md` — Documentação REST (em `docs/`)

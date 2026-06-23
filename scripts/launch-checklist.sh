@@ -10,7 +10,7 @@ API_URL="${1:-}"
 
 if [ -z "$API_URL" ]; then
   echo "Usage: bash scripts/launch-checklist.sh <api-url>"
-  echo "Example: bash scripts/launch-checklist.sh https://imobi-api-production.railway.app"
+  echo "Example: bash scripts/launch-checklist.sh https://imobi-api-staging.onrender.com"
   exit 1
 fi
 
@@ -173,7 +173,7 @@ else
   echo ""
   echo -e "${BLUE}Next Steps:${NC}"
   echo "1. Review failed checks above"
-  echo "2. Check API logs in Railway dashboard"
+  echo "2. Check API logs in Render dashboard"
   echo "3. Fix issues and redeploy"
   echo "4. Re-run: bash scripts/launch-checklist.sh ${API_URL}"
   exit 1

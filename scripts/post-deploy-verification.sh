@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Post-Deployment Verification Script
-# Run this after API is deployed to Railway
-# Usage: bash scripts/post-deploy-verification.sh https://api.railway.app
+# Run after API deploy on Render
+# Usage: bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com
 
 set -e
 
-API_URL="${1:-https://api.railway.app}"
+API_URL="${1:-https://imobi-api-staging.onrender.com}"
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'

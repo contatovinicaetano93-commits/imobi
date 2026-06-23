@@ -1,13 +1,16 @@
 # 🚀 QUICK START — Provisioning em 30-45 minutos
 
-**Objetivo**: Provisionar infraestrutura e coletar 15 credenciais para production
+> **Stack ativa:** Vercel (web) + Render (API + Postgres). Railway está em `docs/legacy/`.  
+> **Referência:** [`docs/DEPLOY_STACK.md`](docs/DEPLOY_STACK.md)
+
+**Objetivo**: Provisionar infraestrutura e coletar credenciais para production
 
 ---
 
 ## 📋 CHECKLIST
 
-- [ ] PostgreSQL (Railway) — 5 min
-- [ ] Redis (Upstash) — 5 min
+- [ ] PostgreSQL (Render) — 5 min
+- [ ] Redis (Render ou Upstash) — 5 min
 - [ ] S3 Bucket (AWS) — 10 min
 - [ ] Firebase (Google) — 10 min
 - [ ] SendGrid API Key — 5 min
@@ -15,53 +18,34 @@
 
 ---
 
-## FASE 1: PostgreSQL + PostGIS (Railway) — 5 min
+## FASE 1: PostgreSQL + PostGIS (Render) — 5 min
 
-### Step 1: Criar Railway Account
+### Step 1: Dashboard Render
 ```
-1. Ir para: https://railway.app
-2. Login com GitHub
-3. Criar novo projeto
-```
-
-### Step 2: Adicionar PostgreSQL
-```
-1. New Project → Add Service → PostgreSQL
-2. Aguardar criação (~30s)
+1. Ir para: https://dashboard.render.com
+2. Projeto imobi → database imobi-postgres (ou criar via render.yaml)
 ```
 
-### Step 3: Configurar Banco
+### Step 2: Credenciais
 ```
-1. Clicar no serviço PostgreSQL
-2. Ir para aba "Variables"
-3. Ver credenciais:
-   - PGHOST
-   - PGPORT
-   - PGUSER
-   - PGPASSWORD
-   - PGDATABASE (copiar como "postgres" ou deixar vazio)
+1. Database → Connect → Internal/External URL
+2. Copiar connection string → DATABASE_URL em .env.render.local
 ```
 
-### Step 4: Habilitar PostGIS
+### Step 3: Habilitar PostGIS
 ```
-# Conectar via psql (local ou CLI do Railway)
-psql postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}
+psql "$DATABASE_URL"
 
-# Dentro do psql:
 CREATE EXTENSION IF NOT EXISTS postgis;
 SELECT postgis_version();
-# Deve retornar: "3.4.x"
 ```
 
-### Step 5: Coletar DATABASE_URL
-```
-DATABASE_URL = "postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}?schema=public"
-
-Exemplo:
-DATABASE_URL="postgresql://postgres:abc123@containers-us-west-108.railway.app:5432/railway?schema=public"
+### Step 4: Push para Render
+```bash
+pnpm render:env:push
 ```
 
-**✅ SALVAR**: `DATABASE_URL`
+**✅ SALVAR**: `DATABASE_URL` em `.env.render.local`
 
 ---
 

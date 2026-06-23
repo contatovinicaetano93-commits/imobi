@@ -1,0 +1,45 @@
+---
+description: Stack de deploy canônica — Vercel + Render apenas. Railway e AWS EC2 são legado bloqueado.
+globs:
+alwaysApply: true
+---
+
+# Deploy stack — Imobi (fonte única)
+
+**Decisão vigente:** API no **Render**, web no **Vercel**. Railway e AWS EC2 estão **pausados/bloqueados**.
+
+## Referência obrigatória
+
+Antes de sugerir deploy, infra ou env vars, ler `docs/DEPLOY_STACK.md`.
+
+## URLs canônicas
+
+| Recurso | URL |
+|---------|-----|
+| Web | https://imobi-web.vercel.app |
+| API staging | https://imobi-api-staging.onrender.com |
+| API prod | https://imobi-api-efgg.onrender.com |
+
+## Comandos de deploy
+
+```bash
+pnpm vercel:env:push
+pnpm render:env:push
+pnpm render:redeploy
+bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com
+```
+
+Secrets locais: `.env.vercel.local`, `.env.render.local` (gitignored).
+
+## Proibido (não sugerir nem reativar)
+
+- Railway (`railway.toml`, `docs/legacy/RAILWAY_*.md`, `RAILWAY_*` secrets)
+- `scripts/deploy-api.sh` (AWS EC2)
+- Workflow `.github/workflows/deploy-api.yml` (legado Railway — desativado)
+- Criar novos guias ou scripts que mencionem Railway como opção ativa
+
+## Ao tocar em CI/CD ou scripts de deploy
+
+1. Validar contra `docs/DEPLOY_STACK.md`
+2. Usar Render API (`pnpm render:*`) e Vercel (`pnpm vercel:*`)
+3. Health check: `curl -s https://imobi-api-staging.onrender.com/api/v1/health`

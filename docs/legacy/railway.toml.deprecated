@@ -1,3 +1,6 @@
+# DEPRECATED — Imobi usa Vercel + Render apenas. Ver docs/DEPLOY_STACK.md
+# Mantido só para referência; não conectar novo deploy Railway.
+
 [build]
 builder = "RAILPACK"
 buildCommand = "pnpm run build:api"

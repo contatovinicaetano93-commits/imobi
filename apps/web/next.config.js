@@ -15,7 +15,10 @@ const nextConfig = {
   },
   experimental: {
     typedRoutes: true,
-    serverComponentsExternalPackages: ["@opentelemetry/instrumentation", "require-in-the-middle"],
+    serverComponentsExternalPackages: [
+      "@opentelemetry/instrumentation",
+      "require-in-the-middle",
+    ],
   },
   onDemandEntries: {
     maxInactiveAge: 60 * 1000,

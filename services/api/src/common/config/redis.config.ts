@@ -12,15 +12,15 @@ export function getRedisConfig(): RedisConfig {
 
   // Priority 1: REDIS_URL (e.g., redis://default:password@host:port)
   if (redisUrl) {
-    return parseRedisUrl(redisUrl);
+    return parseRedisUrl(redisUrl.trim());
   }
 
   // Priority 2: REDIS_HOST and REDIS_PORT
   if (redisHost && redisPort) {
     return {
-      host: redisHost,
+      host: redisHost.trim(),
       port: Number(redisPort),
-      password: process.env.REDIS_PASSWORD,
+      password: process.env.REDIS_PASSWORD?.trim(),
     };
   }
 
@@ -46,7 +46,7 @@ function parseRedisUrl(url: string): RedisConfig {
       throw new Error(`Invalid Redis URL protocol: ${parsed.protocol}`);
     }
 
-    const host = parsed.hostname;
+    const host = parsed.hostname.trim();
     const nodeEnv = process.env.NODE_ENV || 'development';
     // Only allow port fallback in dev/test; production must be explicit
     const port = parsed.port
