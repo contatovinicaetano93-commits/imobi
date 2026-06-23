@@ -12,6 +12,7 @@ import {
   getNavRole,
   isAdminPreviewingPanel,
 } from "@/lib/panel-navigation";
+import { isMvpNavHref } from "@/lib/beta-mvp";
 import { ToastProvider } from "@/hooks/toast-context";
 import { Toaster } from "@/components/ui/toaster";
 import { SkipLink } from "@/components/SkipLink";
@@ -89,6 +90,7 @@ function filterNav(role: UserRole, path: string, funcoesBloqueadas: string[]): N
   const filtered = NAV.filter((item) => {
     if (!item.roles.includes(navRole)) return false;
     if (navRole !== "ADMIN" && item.funcao && funcoesBloqueadas.includes(item.funcao)) return false;
+    if (!isMvpNavHref(item.href, navRole)) return false;
     return true;
   });
   const main = filtered.filter((item) => !ACCOUNT_NAV_HREFS.has(item.href));

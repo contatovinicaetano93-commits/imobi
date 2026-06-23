@@ -2,7 +2,16 @@
 
 Stack: **Vercel + Render** · Branch: **`main`** · Ver [`../docs/DEPLOY_STACK.md`](../docs/DEPLOY_STACK.md)
 
-## Deploy e env
+## Comando único (use este)
+
+| Comando | Uso |
+|---------|-----|
+| **`pnpm check:staging`** | Valida API + web staging (health, auth, simulador, `/login`) |
+| `pnpm check:staging:local` | + `type-check` e build web |
+
+URLs: `scripts/lib/staging-urls.mjs` (`STAGING_WEB_URL`, `STAGING_API_URL`).
+
+## Env Render / Vercel
 
 | Script / comando | Uso |
 |------------------|-----|
@@ -13,15 +22,15 @@ Stack: **Vercel + Render** · Branch: **`main`** · Ver [`../docs/DEPLOY_STACK.m
 | `pnpm render:redeploy` | Redeploy API Render |
 | `pnpm seed:staging:from-render` | Seed usuários teste (só API key) |
 
-## Verificação pós-deploy
+## E2E
 
-| Script | Uso |
-|--------|-----|
-| `scripts/post-deploy-verification.sh` | Smoke API (health, auth, simulador) |
-| `scripts/deploy-orchestrator.sh [--yes]` | Orquestrador local |
-| `scripts/launch-checklist.sh` | Checklist pré-launch |
-| `scripts/pre-deploy-check.sh` | Gate antes de push |
+| Comando | Uso |
+|---------|-----|
+| `pnpm test:e2e:staging` | Playwright contra staging |
+| `pnpm test:e2e:local` | E2E com servidores locais |
 
-## Legado
+## Legado (não usar no dia a dia)
 
-Scripts AWS/Railway em [`../docs/legacy/scripts/`](../docs/legacy/scripts/) — **não executar**.
+`post-deploy-verification.sh`, `launch-checklist.sh`, `deploy-orchestrator.sh`, `pre-deploy-check.sh` — mantidos para CI/debug; prefira **`pnpm check:staging`**.
+
+Scripts AWS/Railway em [`../docs/legacy/scripts/`](../docs/legacy/scripts/).

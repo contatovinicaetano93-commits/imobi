@@ -13,6 +13,10 @@ import {
 import { formatarBRL } from "@imbobi/core";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
+import {
+  TomadorJourneyWizard,
+  buildTomadorJourneySteps,
+} from "@/components/dashboard/TomadorJourneyWizard";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Painel Construtor — IMOBI" };
@@ -121,6 +125,17 @@ export default async function ConstrutorPage() {
     { id: "contratos-documentos", priority: "secondary" as const },
   ];
 
+  const kycAprovado =
+    kycStatus?.status === "APROVADO" ||
+    ((kycStatus?.resumo?.aprovados ?? 0) > 0 && (kycStatus?.resumo?.pendentes ?? 0) === 0);
+
+  const journeySteps = buildTomadorJourneySteps({
+    kycAprovado,
+    temObra: obras.length > 0,
+    temCredito: creditos.length > 0,
+    temEtapaLiberada: etapasLiberadas.length > 0,
+  });
+
   return (
     <div className="flex flex-col gap-4 pb-10 max-w-2xl">
 
@@ -141,6 +156,8 @@ export default async function ConstrutorPage() {
           })}
         </div>
       )}
+
+      <TomadorJourneyWizard steps={journeySteps} />
 
       {/* ── Hero: operação de crédito ────────────────────────────────── */}
       {credito ? (

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { decodeJwtPayload } from "@/lib/decode-jwt-payload";
 import { ROLE_HOME, normalizeRole } from "@/lib/role-permissions";
+import { isMvpRouteAllowed } from "@/lib/beta-mvp";
 
 const PUBLIC_PATHS = [
   "/",
@@ -77,6 +78,11 @@ export function middleware(request: NextRequest) {
   const rule = ROLE_RULES.find((r) => pathname === r.prefix || pathname.startsWith(r.prefix + "/"));
   if (rule && (!role || !rule.roles.includes(role))) {
     const home = role ? (ROLE_HOME[role] ?? "/dashboard") : "/dashboard";
+    return NextResponse.redirect(new URL(home, request.url));
+  }
+
+  if (role && !isMvpRouteAllowed(pathname, role)) {
+    const home = ROLE_HOME[role] ?? "/dashboard/construtor";
     return NextResponse.redirect(new URL(home, request.url));
   }
 

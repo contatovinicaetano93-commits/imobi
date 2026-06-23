@@ -8,6 +8,7 @@
 import { spawn } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { STAGING_API_URL, STAGING_WEB_URL } from './lib/staging-urls.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const e2eDir = resolve(root, 'apps/e2e');
@@ -15,8 +16,8 @@ const extra = process.argv.slice(2);
 
 const env = {
   ...process.env,
-  BASE_URL: 'https://imobi-web.vercel.app',
-  API_URL: 'https://imobi-api-staging.onrender.com/api/v1',
+  BASE_URL: process.env.E2E_BASE_URL ?? STAGING_WEB_URL,
+  API_URL: `${(process.env.STAGING_API_URL ?? STAGING_API_URL).replace(/\/$/, '')}/api/v1`,
   E2E_SKIP_SERVERS: '1',
   E2E_TOMADOR_EMAIL: 'tomador@imobi.com.br',
   E2E_TOMADOR_PASSWORD: 'Tomador@123',
@@ -42,6 +43,21 @@ if (!preflight.ok) {
   console.error('   Depois: pnpm test:e2e:staging\n');
   process.exit(1);
 }
+
+const webProbe = await fetch(`${env.BASE_URL}/login`, {
+  signal: AbortSignal.timeout(20_000),
+}).catch(() => null);
+const webBody = webProbe ? await webProbe.text().catch(() => '') : '';
+if (!webProbe?.ok || webBody.includes('DEPLOYMENT_NOT_FOUND')) {
+  console.error(`\n❌ Staging web indisponível: ${env.BASE_URL}/login → HTTP ${webProbe?.status ?? 'n/a'}`);
+  console.error('   Vercel: Production Branch = main + Redeploy');
+  console.error('   Smoke só API: pnpm test:smoke -- --api-only');
+  console.error('   E2E UI exige web no ar.\n');
+  process.exit(1);
+}
+
+console.log('✓ API login tomador OK');
+console.log(`✓ Web ${env.BASE_URL}/login → HTTP ${webProbe.status}`);
 
 const child = spawn(
   'pnpm',

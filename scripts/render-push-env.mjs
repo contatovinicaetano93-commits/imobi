@@ -90,7 +90,7 @@ const env = {
   APP_URL: trim(fileEnv.APP_URL ?? 'https://imobi-api-staging.onrender.com'),
   CORS_ORIGIN: trim(
     fileEnv.CORS_ORIGIN ??
-      'https://imobi-web.vercel.app,http://localhost:3000,https://imobi-api-staging.onrender.com',
+      'https://imobi-web-ten.vercel.app,https://imobi-web.vercel.app,http://localhost:3000,https://imobi-api-staging.onrender.com',
   ),
   EMAIL_PROVIDER: trim(fileEnv.EMAIL_PROVIDER ?? 'ses'),
   AWS_REGION: trim(fileEnv.AWS_REGION ?? fileEnv.AWS_S3_REGION ?? 'sa-east-1'),

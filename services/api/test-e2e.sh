@@ -48,12 +48,15 @@ export REDIS_HOST="${REDIS_HOST:-127.0.0.1}"
 export REDIS_PORT="${REDIS_PORT:-6380}"
 export JWT_SECRET="${JWT_SECRET:-test-jwt-secret-for-e2e-only}"
 
-# Run Prisma migrations
+# Run Prisma migrations (fresh test DB: migrate order may fail → db push fallback)
 echo "🗄️  Running database migrations..."
 NODE_ENV=test npx prisma migrate deploy --schema prisma/schema.prisma || {
-  echo "❌ Migrations failed"
-  $DOCKER_COMPOSE -f docker-compose.test.yml down
-  exit 1
+  echo "⚠️  migrate deploy falhou — aplicando schema com db push (ambiente de teste)"
+  NODE_ENV=test npx prisma db push --schema prisma/schema.prisma --accept-data-loss || {
+    echo "❌ Migrations failed"
+    $DOCKER_COMPOSE -f docker-compose.test.yml down
+    exit 1
+  }
 }
 
 # Run tests

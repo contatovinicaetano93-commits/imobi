@@ -17,14 +17,14 @@
 
 | Recurso | URL / ID |
 |---------|----------|
-| Web | https://imobi-web.vercel.app |
+| Web | https://imobi-web-ten.vercel.app |
 | API staging (usar no Vercel) | https://imobi-api-staging.onrender.com |
 | Render service staging | `srv-d8fl07h9rddc73ajs7ag` |
 | API prod alternativa | https://imobi-api-efgg.onrender.com |
 | Render service prod | `srv-d8hnpmflk1mc73fc1h3g` |
 | Vercel project | `imobi-web` (`prj_fluxM6jOm86QpNoMUY770c3q40Qc`) |
 
-**Não usar como referência:** `imobi.vercel.app`, `imobi-web-ten.vercel.app`, `api.imobi.render.com` (docs antigos).
+**Não usar como referência:** `imobi.vercel.app`, `imobi-web.vercel.app` (alias antigo), `api.imobi.render.com`
 
 ## Secrets locais (gitignored)
 
@@ -93,6 +93,6 @@ Sem `apps/web` como root, o deploy retorna **404** (build não encontra as rotas
 ## Checklist pós-push
 
 1. `curl` health staging → `ok`
-2. `curl -s -o /dev/null -w "%{http_code}\n" https://imobi-web.vercel.app/login` → `200`
-3. Login em https://imobi-web.vercel.app/login (tomador@imobi.com.br)
+2. `curl -s -o /dev/null -w "%{http_code}\n" https://imobi-web-ten.vercel.app/login` → `200`
+3. Login em https://imobi-web-ten.vercel.app/login (tomador@imobi.com.br)
 4. Se API mudou JWT: `pnpm vercel:env:push` + redeploy Vercel

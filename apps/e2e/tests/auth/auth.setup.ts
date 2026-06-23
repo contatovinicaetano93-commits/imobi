@@ -60,24 +60,30 @@ setup.beforeAll(async () => {
   await mkdir(authDir, { recursive: true });
 });
 
-// Warm up Next.js dev server using a real Chromium browser so that Next.js
-// compiles BOTH the HTML route AND the JavaScript chunks on first visit.
-// A plain Node.js fetch only triggers HTML compilation; the JS chunks (which
-// tests depend on) are compiled lazily on the first browser request and can
-// add 3-8 minutes to the first test.  Running the browser warm-up concurrently
-// with the NestJS auth saves means the extra cost is near-zero.
+// Warm up Next.js only when the web app is reachable (staging Vercel may be down).
 setup('auth:all', async ({ page }) => {
   await assertApiReachable();
 
   const cookieBase = cookieBaseFromUrl(BASE_URL);
-  // Start /login warm-up immediately using the real browser so Next.js
-  // compiles JS chunks.  waitUntil:'domcontentloaded' means we don't wait for
-  // every resource — just enough to guarantee the chunk compilation kicked off.
-  const loginWarmup = page
-    .goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 280_000 })
-    .catch(() => {});
 
-  // Save all three auth states in parallel (~4 s on WSL2)
+  const webProbe = await fetch(`${BASE_URL}/login`, {
+    signal: AbortSignal.timeout(20_000),
+  }).catch(() => null);
+  const webBody = webProbe ? await webProbe.text().catch(() => '') : '';
+  const webOk = webProbe?.ok && !webBody.includes('DEPLOYMENT_NOT_FOUND');
+
+  const loginWarmup = webOk
+    ? page
+        .goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 280_000 })
+        .catch(() => {})
+    : Promise.resolve();
+
+  if (!webOk) {
+    console.warn(
+      `[auth.setup] Web ${BASE_URL} indisponível (HTTP ${webProbe?.status ?? 'n/a'}) — pulando warm-up do Next.js`,
+    );
+  }
+
   const [tomadorToken] = await Promise.all([
     saveAuthState(TOMADOR.email, TOMADOR.password, path.join(authDir, 'tomador.json')),
     saveAuthState(GESTOR.email, GESTOR.password, path.join(authDir, 'gestor.json')),
@@ -94,8 +100,10 @@ setup('auth:all', async ({ page }) => {
 
   await Promise.all([
     loginWarmup,
-    page
-      .goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded', timeout: 280_000 })
-      .catch(() => {}),
+    webOk
+      ? page
+          .goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded', timeout: 280_000 })
+          .catch(() => {})
+      : Promise.resolve(),
   ]);
 });

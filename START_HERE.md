@@ -11,7 +11,7 @@ Railway e AWS EC2 estão **bloqueados** (legado em `docs/legacy/`).
 
 | Serviço | URL |
 |---------|-----|
-| Web | https://imobi-web.vercel.app |
+| Web | https://imobi-web-ten.vercel.app |
 | API staging | https://imobi-api-staging.onrender.com |
 | API prod | https://imobi-api-efgg.onrender.com |
 
@@ -59,17 +59,19 @@ pnpm vercel:env:push
 
 ---
 
-## STEP 3: Orquestrador + checklist (15 min)
+## STEP 3: Validar staging (1 comando)
 
 ```bash
-bash scripts/deploy-orchestrator.sh
-# ou com URL explícita:
-bash scripts/deploy-orchestrator.sh https://imobi-api-staging.onrender.com
-
-bash scripts/launch-checklist.sh https://imobi-api-staging.onrender.com
+pnpm check:staging
 ```
 
-O orchestrator verifica health, roda smoke de auth e configura `apps/web/.env.local`.
+Inclui: health API, auth, simulador, login web. Opcional local: `pnpm check:staging:local` (+ type-check + build).
+
+Alternativa detalhada:
+
+```bash
+bash scripts/deploy-orchestrator.sh https://imobi-api-staging.onrender.com
+```
 
 ---
 

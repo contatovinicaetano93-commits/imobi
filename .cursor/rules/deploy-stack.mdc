@@ -16,7 +16,7 @@ Antes de sugerir deploy, infra ou env vars, ler `docs/DEPLOY_STACK.md`.
 
 | Recurso | URL |
 |---------|-----|
-| Web | https://imobi-web.vercel.app |
+| Web | https://imobi-web-ten.vercel.app |
 | API staging | https://imobi-api-staging.onrender.com |
 | API prod | https://imobi-api-efgg.onrender.com |
 
