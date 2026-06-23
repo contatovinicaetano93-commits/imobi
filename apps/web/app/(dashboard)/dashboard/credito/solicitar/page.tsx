@@ -15,13 +15,11 @@ import {
   creditoApi,
   comiteApi,
   obrasApi,
-  jornadaApi,
   type ObraResumo,
   type CreditoSimulacao,
 } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { useToast } from "@/hooks/toast-context";
-import { BETA_MVP_MODE } from "@/lib/beta-mvp";
 
 const FINALIDADES = [
   { value: "CONSTRUCAO", label: "Construção" },
@@ -55,18 +53,6 @@ function SolicitarForm() {
   useEffect(() => {
     obrasApi.listar().then(setObras).catch(() => setObras([]));
   }, []);
-
-  useEffect(() => {
-    if (!BETA_MVP_MODE) return;
-    jornadaApi
-      .obter()
-      .then((j) => {
-        if (j.passoAtual !== "credito") {
-          router.replace(j.href as "/");
-        }
-      })
-      .catch(() => {});
-  }, [router]);
 
   useEffect(() => {
     const t = setTimeout(() => runSimulacao(), 500);

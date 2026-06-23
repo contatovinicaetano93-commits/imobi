@@ -3,7 +3,30 @@ import { test, expect } from '@playwright/test';
 import { LoginPage } from '../../page-objects/LoginPage';
 import { TOMADOR } from '../../fixtures/auth.fixture';
 
-const MOCK_SESSION_COOKIE = 'access_token=mock_token; Path=/; SameSite=Lax';
+const MOCK_LOGIN_OK = JSON.stringify({ ok: true, role: 'CONSTRUTOR' });
+
+function tomadorCookies() {
+  const state = JSON.parse(readFileSync(TOMADOR.storageState, 'utf-8')) as {
+    cookies: Array<{
+      name: string;
+      value: string;
+      domain: string;
+      path: string;
+      httpOnly?: boolean;
+      secure?: boolean;
+      sameSite?: 'Strict' | 'Lax' | 'None';
+    }>;
+  };
+  const base = process.env.BASE_URL ?? 'http://localhost:3000';
+  const host = new URL(base).hostname;
+  const secure = base.startsWith('https');
+  return state.cookies.map((c) => ({
+    ...c,
+    domain: host,
+    secure,
+    sameSite: c.sameSite ?? 'Lax',
+  }));
+}
 
 test.describe('Login', () => {
   test('renders login form', async ({ page }) => {
@@ -20,7 +43,7 @@ test.describe('Login', () => {
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.submitBtn.click();
-    await expect(page.locator('p.text-xs.text-red-500').first()).toBeVisible();
+    await expect(page.getByRole('alert').first()).toBeVisible();
   });
 
   test('shows API error for wrong credentials', async ({ page }) => {
@@ -33,25 +56,23 @@ test.describe('Login', () => {
     await expect(lp.errorMsg).toBeVisible({ timeout: 30_000 });
   });
 
-  test('redirects to painel tomador after valid login', async ({ page }) => {
-    await page.route((url) => url.href.includes('/api/proxy/auth/login'), (route) =>
-      route.fulfill({
+  test('redirects to construtor after valid login', async ({ page }) => {
+    await page.route((url) => url.href.includes('/api/proxy/auth/login'), async (route) => {
+      await page.context().addCookies(tomadorCookies());
+      await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        headers: { 'Set-Cookie': MOCK_SESSION_COOKIE },
-        body: JSON.stringify({ ok: true }),
-      })
-    );
+        body: MOCK_LOGIN_OK,
+      });
+    });
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL(/\/dashboard(\/|$)/, { timeout: 120_000 });
-    await expect(page).toHaveURL(/\/dashboard/);
+    await page.waitForURL(/\/dashboard\/construtor/, { timeout: 120_000 });
+    await expect(page).toHaveURL(/\/dashboard\/construtor/);
   });
 
   test('sets access_token cookie after login', async () => {
-    // auth:all setup calls NestJS directly and writes .auth/tomador.json.
-    // Reading the file here avoids a slow dashboard SSR round-trip in this test.
     const state = JSON.parse(readFileSync(TOMADOR.storageState, 'utf-8')) as {
       cookies: Array<{ name: string }>;
     };
@@ -60,33 +81,25 @@ test.describe('Login', () => {
 
   test('logout clears session and redirects to /login', async ({ page }) => {
     await page.route((url) => url.href.includes('/api/proxy/auth/login'), async (route) => {
-      // route.fulfill Set-Cookie doesn't propagate to Chromium cookie jar for
-      // fetch() responses; set the cookie explicitly before fulfilling.
-      await page.context().addCookies([{
-        name: 'access_token', value: 'mock_token',
-        domain: 'localhost', path: '/',
-        httpOnly: true, secure: false, sameSite: 'Lax',
-      }]);
+      await page.context().addCookies(tomadorCookies());
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ ok: true }),
+        body: MOCK_LOGIN_OK,
       });
     });
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard', { timeout: 60_000 });
+    await page.waitForURL(/\/dashboard\/construtor/, { timeout: 60_000 });
 
-    // Logout via API
     await page.evaluate(async () => {
       await fetch('/api/auth/session', { method: 'DELETE' });
     });
     await page.goto('/login');
     await expect(lp.brand).toBeVisible();
 
-    // Dashboard should redirect to login now
-    await page.goto('/dashboard');
+    await page.goto('/dashboard/construtor');
     await page.waitForURL('**/login**', { timeout: 30_000 });
   });
 });

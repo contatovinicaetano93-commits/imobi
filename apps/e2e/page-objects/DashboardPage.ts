@@ -1,22 +1,23 @@
 import type { Page } from '@playwright/test';
 
+/** Page object — painel construtor (MVP jornada, erro ou painel completo). */
 export class DashboardPage {
-  readonly obrasLink = this.page.getByRole('link', { name: 'Minhas Obras' });
-  readonly simuladorLink = this.page.getByRole('link', { name: 'Simulador' });
-  readonly documentosLink = this.page.getByRole('link', { name: 'Documentos' });
-  readonly gestorLink = this.page.getByRole('link', { name: 'Painel do Gestor' });
+  readonly hero = this.page.getByLabel('Próximo passo');
+  readonly jornadaError = this.page.getByText('Conexão com o servidor');
+  readonly fullPanel = this.page.getByText(/Nenhuma operação ativa|Operação ativa/);
 
   constructor(private page: Page) {}
 
   async goto() {
     await this.page.goto('/dashboard/construtor', { waitUntil: 'domcontentloaded', timeout: 120_000 });
-    await this.page
-      .getByText(/Operação ativa|Nenhuma operação ativa/)
-      .first()
-      .waitFor({ timeout: 90_000 });
+    await this.hero.or(this.jornadaError).or(this.fullPanel).first().waitFor({ timeout: 90_000 });
   }
 
-  getKpiCard(label: string) {
-    return this.page.locator('.bg-white').filter({ hasText: label });
+  nextStepHeading() {
+    return this.hero.getByRole('heading').first();
+  }
+
+  continueButton() {
+    return this.page.getByRole('link', { name: /Continuar/i });
   }
 }

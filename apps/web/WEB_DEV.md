@@ -4,7 +4,7 @@
 
 | Ambiente | URL |
 |----------|-----|
-| Web (produção) | https://imobi-web.vercel.app |
+| Web (produção) | https://imobi-web-ten.vercel.app |
 | API staging (padrão Vercel/E2E) | https://imobi-api-staging.onrender.com |
 | API alternativa | https://imobi-api-efgg.onrender.com (`imobi-api` no Render) |
 

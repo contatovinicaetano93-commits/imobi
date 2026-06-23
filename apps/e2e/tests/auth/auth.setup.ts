@@ -30,30 +30,39 @@ async function assertApiReachable(): Promise<void> {
 // Playwright storageState file with the cookie pre-set.  This avoids the
 // Next.js + NestJS cold-start chain (can exceed 5 min on WSL2 PostgreSQL).
 async function saveAuthState(email: string, password: string, outFile: string): Promise<string> {
-  const res = await fetch(`${NEST_API}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, senha: password }),
-    signal: AbortSignal.timeout(120_000),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => res.statusText);
-    throw new Error(`NestJS login failed (${res.status}) for ${email}: ${body}`);
+  let lastError = '';
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    const res = await fetch(`${NEST_API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha: password }),
+      signal: AbortSignal.timeout(120_000),
+    });
+    if (res.status === 429) {
+      lastError = await res.text().catch(() => res.statusText);
+      await new Promise((r) => setTimeout(r, 3000 * attempt));
+      continue;
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => res.statusText);
+      throw new Error(`NestJS login failed (${res.status}) for ${email}: ${body}`);
+    }
+    const data = await res.json() as { accessToken: string; refreshToken?: string };
+
+    const now = Math.floor(Date.now() / 1000);
+    const base = cookieBaseFromUrl(BASE_URL);
+
+    await writeFile(outFile, JSON.stringify({
+      cookies: [
+        { ...base, name: 'access_token',  value: data.accessToken,              expires: now + 8 * 3600 },
+        ...(data.refreshToken ? [{ ...base, name: 'refresh_token', value: data.refreshToken, expires: now + 7 * 24 * 3600 }] : []),
+      ],
+      origins: [],
+    }, null, 2), 'utf-8');
+
+    return data.accessToken;
   }
-  const data = await res.json() as { accessToken: string; refreshToken?: string };
-
-  const now = Math.floor(Date.now() / 1000);
-  const base = cookieBaseFromUrl(BASE_URL);
-
-  await writeFile(outFile, JSON.stringify({
-    cookies: [
-      { ...base, name: 'access_token',  value: data.accessToken,              expires: now + 8 * 3600 },
-      ...(data.refreshToken ? [{ ...base, name: 'refresh_token', value: data.refreshToken, expires: now + 7 * 24 * 3600 }] : []),
-    ],
-    origins: [],
-  }, null, 2), 'utf-8');
-
-  return data.accessToken;
+  throw new Error(`NestJS login rate-limited for ${email}: ${lastError}`);
 }
 
 setup.beforeAll(async () => {
@@ -84,11 +93,9 @@ setup('auth:all', async ({ page }) => {
     );
   }
 
-  const [tomadorToken] = await Promise.all([
-    saveAuthState(TOMADOR.email, TOMADOR.password, path.join(authDir, 'tomador.json')),
-    saveAuthState(GESTOR.email, GESTOR.password, path.join(authDir, 'gestor.json')),
-    saveAuthState(ENGENHEIRO.email, ENGENHEIRO.password, path.join(authDir, 'engenheiro.json')),
-  ]);
+  const tomadorToken = await saveAuthState(TOMADOR.email, TOMADOR.password, path.join(authDir, 'tomador.json'));
+  await saveAuthState(GESTOR.email, GESTOR.password, path.join(authDir, 'gestor.json'));
+  await saveAuthState(ENGENHEIRO.email, ENGENHEIRO.password, path.join(authDir, 'engenheiro.json'));
 
   // Warm up /dashboard with a real JWT cookie so the authenticated route's
   // JS chunks are also compiled before the actual tests run.
@@ -102,7 +109,7 @@ setup('auth:all', async ({ page }) => {
     loginWarmup,
     webOk
       ? page
-          .goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded', timeout: 280_000 })
+          .goto(`${BASE_URL}/dashboard/construtor`, { waitUntil: 'domcontentloaded', timeout: 280_000 })
           .catch(() => {})
       : Promise.resolve(),
   ]);

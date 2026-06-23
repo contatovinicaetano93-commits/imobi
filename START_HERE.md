@@ -93,7 +93,7 @@ pnpm vercel:env:push
 # Redeploy: Deployments → ... → Redeploy (ou push em main)
 ```
 
-Validar: `curl -s -o /dev/null -w "%{http_code}\n" https://imobi-web.vercel.app/login` → `200`
+Validar: `curl -s -o /dev/null -w "%{http_code}\n" https://imobi-web-ten.vercel.app/login` → `200`
 
 ---
 
@@ -130,6 +130,6 @@ pnpm type-check       # antes de push
 
 ## Próximo passo após checklist verde
 
-1. Login em https://imobi-web.vercel.app/login
+1. Login em https://imobi-web-ten.vercel.app/login
 2. `bash scripts/setup-monitoring.sh https://imobi-api-staging.onrender.com`
 3. Seguir roadmap em `CLAUDE.md`

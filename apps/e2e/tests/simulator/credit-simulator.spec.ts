@@ -3,44 +3,45 @@ import { TOMADOR } from '../../fixtures/auth.fixture';
 
 test.use({ storageState: TOMADOR.storageState });
 
-test.describe('Simulador de Crédito', () => {
+test.describe('Estudo de Viabilidade', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/simulador', { timeout: 60_000 });
-    // Explicit 30s timeout: on first Next.js dev compile this route can be slow.
-    await expect(page.getByRole('heading', { name: 'Simulador de Crédito' })).toBeVisible({ timeout: 30_000 });
+    await page.goto('/dashboard/simulador', { waitUntil: 'domcontentloaded', timeout: 120_000 });
+    await expect(page.getByRole('heading', { name: 'Estudo de Viabilidade' })).toBeVisible({
+      timeout: 60_000,
+    });
   });
 
-  test('renders sliders and result cards', async ({ page }) => {
-    const [valorSlider, prazoSlider] = await page.locator('input[type="range"]').all();
-    await expect(valorSlider).toBeVisible();
-    await expect(prazoSlider).toBeVisible();
-
-    await expect(page.getByText('Parcela mensal')).toBeVisible();
-    await expect(page.getByText('Total pago')).toBeVisible();
-    await expect(page.getByText('Total de juros')).toBeVisible();
-    await expect(page.getByText('CET ao ano')).toBeVisible();
+  test('renders wizard steps', async ({ page }) => {
+    const stepper = page.locator('.flex.items-center.gap-0').first();
+    for (const step of ['Empreendimento', 'Custos', 'Financiamento', 'Resultado']) {
+      await expect(stepper.getByText(step, { exact: true })).toBeVisible();
+    }
   });
 
-  test('slider labels show BRL and month formatting', async ({ page }) => {
-    // Default values appear in labels — label reads "Valor desejado: R$ 150.000,00"
-    await expect(page.getByText(/Valor desejado/i)).toBeVisible();
-    await expect(page.getByText(/meses/).first()).toBeVisible();
-    await expect(page.getByText('R$ 10.000')).toBeVisible();
-    await expect(page.getByText('R$ 1.000.000')).toBeVisible();
-    await expect(page.getByText('12 meses')).toBeVisible();
-    await expect(page.getByText('180 meses')).toBeVisible();
+  test('step 1 shows project form fields', async ({ page }) => {
+    await expect(page.getByText('Dados do Empreendimento')).toBeVisible();
+    await expect(page.getByPlaceholder('Ex: Residencial Gralha Azul')).toBeVisible();
+    await expect(page.getByText('VGV — Valor Geral de Vendas')).toBeVisible();
+    await expect(page.getByText('Número de unidades')).toBeVisible();
   });
 
-  test('valor slider change updates the displayed value', async ({ page }) => {
-    const valorSlider = page.locator('input[type="range"]').first();
-    await valorSlider.fill('500000');
-    // The label text should update reactively
-    await expect(page.locator('label').filter({ hasText: /R\$/ }).first()).toContainText('500');
+  test('VGV input accepts currency values', async ({ page }) => {
+    const input = vgvInput(page);
+    await input.click();
+    await input.fill('1500000');
+    await expect(input).toHaveValue(/1\.500\.000/);
   });
 
-  test('solicitar link points to /dashboard/credito/solicitar', async ({ page }) => {
-    const link = page.getByRole('link', { name: /Solicitar este crédito/ });
-    await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('href', '/dashboard/credito/solicitar');
+  test('Próximo enabled after filling required fields', async ({ page }) => {
+    const nextBtn = page.getByRole('button', { name: 'Próximo' });
+    await expect(nextBtn).toBeDisabled();
+
+    await page.getByPlaceholder('Ex: Residencial Gralha Azul').fill('Residencial E2E');
+    await vgvInput(page).fill('2000000');
+    await expect(nextBtn).toBeEnabled();
   });
 });
+
+function vgvInput(page: import('@playwright/test').Page) {
+  return page.locator('label').filter({ hasText: 'VGV — Valor Geral de Vendas' }).locator('..').locator('input');
+}

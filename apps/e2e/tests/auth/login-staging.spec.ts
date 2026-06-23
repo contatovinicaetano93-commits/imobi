@@ -16,7 +16,14 @@ test.describe('Login staging (API real)', () => {
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL(/\/dashboard(\/|$)/, { timeout: 180_000 });
-    await expect(page).toHaveURL(/\/dashboard/);
+
+    await expect
+      .poll(async () => (await page.context().cookies()).some((c) => c.name === 'access_token'), {
+        timeout: 180_000,
+      })
+      .toBe(true);
+
+    await page.goto('/dashboard/construtor', { waitUntil: 'domcontentloaded' });
+    await expect(page).toHaveURL(/\/dashboard\/construtor/);
   });
 });

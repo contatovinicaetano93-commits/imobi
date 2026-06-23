@@ -22,7 +22,7 @@ Contexto Imobi — atualização de fluxo (junho 2026)
 TUDO está na branch main. Não criar nem usar branches claude/* para deploy ou entrega.
 
 Stack canônica (única):
-- Web: Vercel → https://imobi-web.vercel.app (projeto imobi-web, Root Directory: apps/web)
+- Web: Vercel → https://imobi-web-ten.vercel.app (projeto imobi-web, Root Directory: apps/web)
 - API staging: Render → https://imobi-api-staging.onrender.com
 - API prod: Render → https://imobi-api-efgg.onrender.com
 
@@ -54,7 +54,7 @@ Confirme que leu docs/DEPLOY_STACK.md e que vai trabalhar apenas em main.
 
 ```bash
 curl -s https://imobi-api-staging.onrender.com/api/v1/health | jq .
-curl -s -o /dev/null -w "web-login:%{http_code}\n" https://imobi-web.vercel.app/login
+curl -s -o /dev/null -w "web-login:%{http_code}\n" https://imobi-web-ten.vercel.app/login
 ```
 
 Esperado: API `"status":"ok"` e web `/login` HTTP 200.

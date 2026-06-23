@@ -29,14 +29,21 @@ const env = {
 
 console.log('E2E staging:', env.BASE_URL, '→', env.API_URL);
 
-const preflight = await fetch(`${env.API_URL}/auth/login`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email: env.E2E_TOMADOR_EMAIL, senha: env.E2E_TOMADOR_PASSWORD }),
-  signal: AbortSignal.timeout(30_000),
-});
+const loginBody = JSON.stringify({ email: env.E2E_TOMADOR_EMAIL, senha: env.E2E_TOMADOR_PASSWORD });
 
-if (!preflight.ok) {
+let preflight = null;
+for (let attempt = 1; attempt <= 5; attempt++) {
+  preflight = await fetch(`${env.API_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: loginBody,
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (preflight.status !== 429) break;
+  await new Promise((r) => setTimeout(r, 3000 * attempt));
+}
+
+if (!preflight?.ok) {
   console.error('\n❌ Staging: login tomador falhou — usuários de teste ausentes no banco Render.');
   console.error('   Seed (mais fácil): pnpm seed:staging:from-render');
   console.error('   (só RENDER_API_KEY real em .env.render.local — ver Account Settings no Render)');

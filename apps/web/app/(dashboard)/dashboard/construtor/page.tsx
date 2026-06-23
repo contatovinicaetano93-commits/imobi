@@ -14,6 +14,7 @@ import { formatarBRL } from "@imbobi/core";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
 import { NextStepHero } from "@/components/dashboard/NextStepHero";
+import { JornadaError } from "@/components/dashboard/JornadaError";
 import { BETA_MVP_MODE } from "@/lib/beta-mvp";
 
 export const dynamic = "force-dynamic";
@@ -54,11 +55,15 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default async function ConstrutorPage() {
-  const jornada = BETA_MVP_MODE
-    ? await jornadaApi.obter().catch(() => null)
-    : null;
-
-  if (BETA_MVP_MODE && jornada) {
+  if (BETA_MVP_MODE) {
+    const jornada = await jornadaApi.obter().catch(() => null);
+    if (!jornada) {
+      return (
+        <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
+          <JornadaError />
+        </div>
+      );
+    }
     return (
       <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
         <NextStepHero jornada={jornada} variant="tomador" />

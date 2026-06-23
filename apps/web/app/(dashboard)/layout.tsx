@@ -12,7 +12,8 @@ import {
   getNavRole,
   isAdminPreviewingPanel,
 } from "@/lib/panel-navigation";
-import { isMvpNavHref } from "@/lib/beta-mvp";
+import { isMvpNavHref, BETA_MVP_MODE } from "@/lib/beta-mvp";
+import { JornadaGuard } from "@/components/dashboard/JornadaGuard";
 import { ToastProvider } from "@/hooks/toast-context";
 import { Toaster } from "@/components/ui/toaster";
 import { SkipLink } from "@/components/SkipLink";
@@ -270,6 +271,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const parentPath = getParentPath(path);
 
+  const mvpGuided =
+    BETA_MVP_MODE &&
+    role != null &&
+    (role === "TOMADOR" || role === "CONSTRUTOR" || role === "GESTOR");
+
   const userFooter = (compact = false) => (
     <div>
       {navMeta && (
@@ -365,9 +371,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <ToastProvider>
     <SkipLink />
+    <JornadaGuard role={role}>
     <div className="dash-root" style={{ display: "flex", minHeight: "100vh", background: "#EEF3FF", fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
 
-      {/* Sidebar desktop */}
+      {/* Sidebar desktop — oculto no MVP guiado */}
+      {!mvpGuided && (
       <aside
         className="dash-sidebar"
         style={{
@@ -380,8 +388,37 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       >
         {sidebarContent()}
       </aside>
+      )}
 
-      {/* Mobile header */}
+      {/* Mobile header — simplificado no MVP */}
+      {mvpGuided ? (
+        <div
+          className="dash-mhidden"
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+            height: 52, background: NAVY,
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "0 1rem",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none" }}>
+            <Logo size={20} />
+            <span style={{ color: "white", fontWeight: 800, fontSize: "1rem", letterSpacing: "0.04em", fontFamily: "'Barlow Condensed', sans-serif" }}>IMOBI</span>
+          </Link>
+          <button
+            onClick={async () => {
+              await fetch("/api/auth/session", { method: "DELETE" });
+              window.location.href = "/login";
+            }}
+            aria-label="Sair"
+            style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)", padding: 8 }}
+          >
+            <LogOut size={18} />
+          </button>
+        </div>
+      ) : (
+      <>
       <div
         className="dash-mhidden"
         style={{
@@ -466,6 +503,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </>
       )}
+      </>
+      )}
 
       {/* Main */}
       <main id="main-content" className="dash-main" style={{ flex: 1, overflowX: "hidden" }}>
@@ -495,6 +534,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       <Toaster />
     </div>
+    </JornadaGuard>
     </ToastProvider>
   );
 }

@@ -32,7 +32,7 @@ export default function LoginFormClient({ next }: Props) {
     setStatusMsg("Conectando ao servidor… (a 1ª vez pode levar até 1 minuto)");
     try {
       const result = await loginWithRetry(data, setStatusMsg);
-      redirectAfterLogin(result.role ?? "", next);
+      await redirectAfterLogin(result.role ?? "", next);
     } catch (e) {
       setStatusMsg(null);
       setErro(e instanceof Error ? e.message : "Erro inesperado.");

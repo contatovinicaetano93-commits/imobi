@@ -82,8 +82,8 @@ function checkCors(value) {
     return issues;
   }
   const origins = value.split(',').map((o) => o.trim()).filter(Boolean);
-  if (!origins.includes('https://imobi-web.vercel.app')) {
-    issues.push('CORS_ORIGIN deve incluir https://imobi-web.vercel.app');
+  if (!origins.includes('https://imobi-web-ten.vercel.app')) {
+    issues.push('CORS_ORIGIN deve incluir https://imobi-web-ten.vercel.app');
   }
   if (!origins.includes('http://localhost:3000')) {
     issues.push('CORS_ORIGIN deve incluir http://localhost:3000 (dev local)');

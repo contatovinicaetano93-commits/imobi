@@ -1,0 +1,49 @@
+import type { Jornada } from "@/lib/api";
+
+const ACCOUNT_PREFIXES = ["/dashboard/perfil", "/dashboard/notificacoes"];
+
+/** Rotas sempre permitidas (conta). */
+function isAccountPath(pathname: string): boolean {
+  return ACCOUNT_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+/**
+ * Usuário está na rota certa para o passo atual da jornada.
+ * Fora disso → redirect para jornada.href (app de banco).
+ */
+export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolean {
+  if (isAccountPath(pathname)) return true;
+
+  const href = jornada.href;
+  if (pathname === href || pathname.startsWith(`${href}/`)) return true;
+
+  switch (jornada.passoAtual) {
+    case "aguardando":
+      return pathname === "/dashboard/construtor";
+    case "acompanhar":
+    case "concluido":
+      return (
+        pathname === "/dashboard/construtor" ||
+        pathname.startsWith("/dashboard/credito")
+      );
+    case "credito":
+      return pathname.startsWith("/dashboard/simulador");
+    case "gestor_ok":
+      return pathname === "/dashboard/gestor";
+    default:
+      return false;
+  }
+}
+
+/** Páginas que mostram só o hero (hub), não a tela de trabalho. */
+export function isJornadaHubPath(pathname: string, jornada: Jornada): boolean {
+  if (jornada.perfil === "gestor") {
+    return pathname === "/dashboard/gestor" && jornada.passoAtual === "gestor_ok";
+  }
+  return (
+    pathname === "/dashboard/construtor" &&
+    (jornada.passoAtual === "aguardando" ||
+      jornada.passoAtual === "acompanhar" ||
+      jornada.passoAtual === "concluido")
+  );
+}

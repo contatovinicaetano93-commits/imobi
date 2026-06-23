@@ -9,6 +9,7 @@ import { fetchManagerDashboard } from "@/lib/fetch-manager-dashboard";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
 import { NextStepHero } from "@/components/dashboard/NextStepHero";
+import { JornadaError } from "@/components/dashboard/JornadaError";
 import { BETA_MVP_MODE } from "@/lib/beta-mvp";
 
 const GESTOR_PANELS = [
@@ -75,20 +76,42 @@ export default function GestorPage() {
   };
 
   useEffect(() => {
-    loadStats();
     if (BETA_MVP_MODE) {
-      jornadaApi.obter().then(setJornada).catch(() => setJornada(null));
+      setLoading(true);
+      jornadaApi
+        .obter()
+        .then(setJornada)
+        .catch(() => setJornada(null))
+        .finally(() => setLoading(false));
+      return;
     }
+    loadStats();
   }, []);
 
   const s = stats ?? ZERO_STATS;
 
-  if (BETA_MVP_MODE && jornada && !loading) {
-    return (
-      <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
-        <NextStepHero jornada={jornada} variant="gestor" />
-      </div>
-    );
+  if (BETA_MVP_MODE) {
+    if (loading) {
+      return (
+        <div className="flex min-h-[50vh] items-center justify-center p-8">
+          <p className="text-sm text-gray-500">Carregando seu próximo passo…</p>
+        </div>
+      );
+    }
+    if (!jornada) {
+      return (
+        <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
+          <JornadaError />
+        </div>
+      );
+    }
+    if (jornada) {
+      return (
+        <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
+          <NextStepHero jornada={jornada} variant="gestor" />
+        </div>
+      );
+    }
   }
 
   if (loading && !stats) {
