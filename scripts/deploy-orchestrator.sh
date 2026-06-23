@@ -103,7 +103,7 @@ TEST_EMAIL="test-$(date +%s)@imobi.test"
 TEST_PASSWORD="TestPass123!@"
 TEST_CPF=$(printf "%011d" $(( $(date +%s) % 100000000000 )))
 
-REGISTER_RESPONSE=$(curl -s -X POST "${API_URL}/api/v1/auth/registro" \
+REGISTER_RESPONSE=$(curl -s -X POST "${API_URL}/api/v1/auth/registrar" \
   -H 'Content-Type: application/json' \
   -d "{
     \"nome\": \"Test User\",
@@ -116,7 +116,7 @@ REGISTER_RESPONSE=$(curl -s -X POST "${API_URL}/api/v1/auth/registro" \
     \"consentidoKyc\": true
   }")
 
-if echo "$REGISTER_RESPONSE" | grep -q '"id"'; then
+if echo "$REGISTER_RESPONSE" | grep -q '"accessToken"'; then
   echo -e "${GREEN}✓${NC} Registration successful"
 else
   echo -e "${RED}✗${NC} Registration failed"

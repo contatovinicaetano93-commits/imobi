@@ -59,21 +59,30 @@ async function main() {
 
   for (const u of USUARIOS) {
     const passwordHash = await hash(u.senha, 12);
-    const usuario = await prisma.usuario.upsert({
+    const payload = {
+      nome: u.nome,
+      email: u.email,
+      cpf: u.cpf,
+      telefone: u.telefone,
+      passwordHash,
+      tipo: u.tipo as "ADMIN" | "GESTOR" | "ENGENHEIRO" | "COMERCIAL" | "TOMADOR",
+      kycStatus: "APROVADO" as const,
+      consentidoTermos: true,
+      consentidoPrivacy: true,
+      consentidoKyc: true,
+    };
+
+    const byEmail = await prisma.usuario.findUnique({ where: { email: u.email } });
+    const byCpf = await prisma.usuario.findUnique({ where: { cpf: u.cpf } });
+
+    if (byCpf && (!byEmail || byCpf.usuarioId !== byEmail.usuarioId)) {
+      await prisma.usuario.delete({ where: { usuarioId: byCpf.usuarioId } });
+    }
+
+    await prisma.usuario.upsert({
       where: { email: u.email },
-      update: { passwordHash, tipo: u.tipo as any, kycStatus: "APROVADO", nome: u.nome },
-      create: {
-        nome:         u.nome,
-        email:        u.email,
-        cpf:          u.cpf,
-        telefone:     u.telefone,
-        passwordHash,
-        tipo:         u.tipo as any,
-        kycStatus:    "APROVADO",
-        consentidoTermos:    true,
-        consentidoPrivacy:   true,
-        consentidoKyc:       true,
-      },
+      update: payload,
+      create: payload,
     });
     console.log(`  [${u.tipo.padEnd(11)}]  ${u.email}  /  ${u.senha}`);
   }

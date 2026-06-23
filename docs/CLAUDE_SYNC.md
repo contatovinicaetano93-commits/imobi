@@ -39,8 +39,11 @@ CI/CD:
 - GitHub Actions: quality gate + health check pós-merge (ci-cd.yml, deploy-api.yml)
 - Não duplicar deploy no CI
 
-Rotas canônicas (API-first): health `/api/v1/health`, metrics `/api/v1/metrics`, simulador `POST /api/v1/credito/simular`.
-Verificação: bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com
+Comandos locais:
+pnpm render:init
+pnpm render:key:check
+pnpm seed:staging:from-render
+pnpm test:e2e:staging
 
 Confirme que leu docs/DEPLOY_STACK.md e que vai trabalhar apenas em main.
 ```

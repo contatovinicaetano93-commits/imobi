@@ -38,11 +38,18 @@ Se falhar: cold start do Render (aguarde ~30s) ou `pnpm render:redeploy`.
 
 ---
 
-## STEP 2: Sincronizar env vars (5 min)
+## STEP 2: Secrets Render (5 min)
+
+```bash
+pnpm render:init          # cria/sanitiza .env.render.local (remove … inválido)
+# Edite .env.render.local → RENDER_API_KEY=rnd_SUA_CHAVE_REAL (dashboard Render)
+pnpm render:key:check     # deve mostrar OK
+pnpm seed:staging:from-render
+```
 
 Secrets locais (gitignored):
 
-- `.env.render.local` — API (Postgres, Redis, JWT, AWS, SendGrid)
+- `.env.render.local` — `RENDER_API_KEY` (mínimo para seed) + demais vars para `render:env:push`
 - `.env.vercel.local` — Web (`JWT_SECRET`, `NEXT_PUBLIC_API_URL`)
 
 ```bash
@@ -66,13 +73,37 @@ O orchestrator verifica health, roda smoke de auth e configura `apps/web/.env.lo
 
 ---
 
-## STEP 4: Deploy de código
+## STEP 4: Vercel — se web retorna 404
+
+No dashboard Vercel → projeto **`imobi-web`** → Settings → General:
+
+| Campo | Valor |
+|-------|-------|
+| Root Directory | `apps/web` |
+| Framework | Next.js |
+| Production Branch | `main` |
+| Build Command | *(deixar vazio — usa `apps/web/vercel.json`)* |
+
+Depois:
+
+```bash
+pnpm vercel:env:push
+# Redeploy: Deployments → ... → Redeploy (ou push em main)
+```
+
+Validar: `curl -s -o /dev/null -w "%{http_code}\n" https://imobi-web.vercel.app/login` → `200`
+
+---
+
+## STEP 5: Deploy de código
 
 | Onde | Como |
 |------|------|
-| **Render** | Push na branch conectada no dashboard (ou `pnpm render:redeploy`) |
-| **Vercel** | Push na branch do projeto `imobi-web` (auto-deploy) |
-| **CI** | GitHub Actions valida build (`ci-cd.yml`, `deploy-api.yml` = quality gate) |
+| **Render** | Push em `main` (auto-deploy) ou `pnpm render:redeploy` |
+| **Vercel** | Push em `main` no projeto `imobi-web` (auto-deploy) |
+| **CI** | GitHub Actions: quality gate + health gate (`ci-cd.yml`, `deploy-api.yml`) |
+
+**Sync com Claude:** [`docs/CLAUDE_SYNC.md`](docs/CLAUDE_SYNC.md)
 
 ---
 

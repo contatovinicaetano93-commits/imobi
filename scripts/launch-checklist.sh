@@ -89,11 +89,11 @@ TEST_PASSWORD="TestPass123!@"
 TEST_CPF=$(printf "%011d" $(( $(date +%s) % 100000000000 )))
 
 # Register
-REG=$(curl -s -X POST ${API_URL}/api/v1/auth/registro \
+REG=$(curl -s -X POST ${API_URL}/api/v1/auth/registrar \
   -H 'Content-Type: application/json' \
   -d "{\"nome\":\"Test\",\"email\":\"${TEST_EMAIL}\",\"cpf\":\"${TEST_CPF}\",\"telefone\":\"11999999999\",\"senha\":\"${TEST_PASSWORD}\",\"consentidoTermos\":true,\"consentidoPrivacy\":true,\"consentidoKyc\":true}")
 
-if echo "$REG" | grep -q '"id"'; then
+if echo "$REG" | grep -q '"accessToken"'; then
   echo -e "${GREEN}✓${NC} User registration"
   ((PASSED++))
 else

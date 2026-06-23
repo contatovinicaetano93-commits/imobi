@@ -81,7 +81,7 @@ TEST_CPF=$(printf "%011d" $(( $(date +%s) % 100000000000 )))
 
 echo "Testing auth flow with: $TEST_EMAIL"
 
-REGISTER_RESPONSE=$(curl -sf -X POST "${API_URL}/api/v1/auth/registro" \
+REGISTER_RESPONSE=$(curl -s -X POST "${API_URL}/api/v1/auth/registrar" \
   -H 'Content-Type: application/json' \
   -d "{
     \"nome\": \"Test User\",
@@ -94,7 +94,7 @@ REGISTER_RESPONSE=$(curl -sf -X POST "${API_URL}/api/v1/auth/registro" \
     \"consentidoKyc\": true
   }" 2>/dev/null || echo '{}')
 
-if echo "$REGISTER_RESPONSE" | grep -q '"id"'; then
+if echo "$REGISTER_RESPONSE" | grep -q '"accessToken"'; then
   echo -e "${GREEN}✓${NC} User registration successful"
   ((PASSED++))
 else
