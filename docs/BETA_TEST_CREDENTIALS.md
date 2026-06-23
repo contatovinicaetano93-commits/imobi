@@ -17,11 +17,14 @@ Copie `apps/e2e/.env.e2e.example` → `apps/e2e/.env.e2e` (gitignored) para E2E 
 
 ## Staging (Render + Vercel)
 
-1. Copie `.env.render.example` → `.env.render.local` com `DATABASE_URL` real do Render
-2. Rode `pnpm seed:staging` (ou `pnpm seed:staging -- --setup` se `SETUP_SECRET` estiver no Render)
-3. Valide: `pnpm test:e2e:staging`
+**Seed (desbloqueia E2E)** — só precisa de `RENDER_API_KEY` real:
 
-Não use placeholders como `postgresql://…` ou `SEU_SETUP_SECRET` no curl — são só exemplos na documentação.
+1. [Render → API Keys](https://dashboard.render.com/u/settings#api-keys) → Create
+2. `.env.render.local` → `RENDER_API_KEY=rnd_…` (sem caractere `…` unicode)
+3. `pnpm seed:staging:from-render`
+4. `pnpm test:e2e:staging`
+
+Deploy completo da API: preencher `.env.render.local` → `pnpm render:env:check` → `pnpm render:env:push`
 
 ## Stripe (test mode)
 

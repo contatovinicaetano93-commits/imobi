@@ -6,68 +6,41 @@
  *   pnpm render:env:push -- --service srv-d8hnpmflk1mc73fc1h3g  # imobi-api prod URL
  *   pnpm render:env:push -- --no-deploy
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  RENDER_ENV_PATH,
+  loadRenderEnvFile,
+  validateRenderCredentials,
+  hasPlaceholder,
+} from './render-env-utils.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const envPath = resolve(root, '.env.render.local');
+const envPath = RENDER_ENV_PATH;
 
-/** @returns {Record<string, string>} */
-function loadEnvFile(path) {
-  const env = {};
-  if (!existsSync(path)) return env;
-  const raw = readFileSync(path, 'utf8');
-  let key = '';
-  let value = '';
-  let inQuotes = false;
-
-  for (const line of raw.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-
-    if (!key) {
-      const eq = trimmed.indexOf('=');
-      if (eq < 1) continue;
-      key = trimmed.slice(0, eq).trim();
-      const rest = trimmed.slice(eq + 1);
-      if (rest.startsWith('"') && !rest.endsWith('"')) {
-        inQuotes = true;
-        value = rest.slice(1);
-      } else if (rest.startsWith('"') && rest.endsWith('"')) {
-        env[key] = rest.slice(1, -1).replace(/\\n/g, '\n');
-        key = '';
-        value = '';
-      } else {
-        env[key] = rest.trim();
-        key = '';
-      }
-      continue;
-    }
-
-    if (inQuotes) {
-      if (trimmed.endsWith('"')) {
-        value += (value ? '\n' : '') + trimmed.slice(0, -1);
-        env[key] = value.replace(/\\n/g, '\n');
-        key = '';
-        value = '';
-        inQuotes = false;
-      } else {
-        value += (value ? '\n' : '') + trimmed;
-      }
-    }
-  }
-  return env;
+if (!existsSync(envPath)) {
+  console.error('❌ .env.render.local ausente. cp .env.render.example .env.render.local');
+  process.exit(1);
 }
 
-const fileEnv = loadEnvFile(envPath);
+const fileEnv = loadRenderEnvFile(envPath);
+
+try {
+  validateRenderCredentials(fileEnv);
+} catch (e) {
+  console.error(`❌ ${e.message}`);
+  console.error('   Rode: pnpm render:env:check\n');
+  process.exit(1);
+}
 const args = process.argv.slice(2);
 const serviceIdx = args.indexOf('--service');
 const noDeploy = args.includes('--no-deploy');
 
-const token = process.env.RENDER_API_KEY ?? fileEnv.RENDER_API_KEY;
-if (!token) {
-  console.error('❌ RENDER_API_KEY ausente em .env.render.local');
+const token = (process.env.RENDER_API_KEY ?? fileEnv.RENDER_API_KEY ?? '').trim();
+if (hasPlaceholder(token)) {
+  console.error('❌ RENDER_API_KEY ainda é placeholder (ex.: rnd_… do exemplo).');
+  console.error('   Dashboard Render → Account Settings → API Keys\n');
   process.exit(1);
 }
 
