@@ -127,6 +127,16 @@
 - ✅ `CLAUDE.md` (full version) saved to local workspace
 - 📋 **Kit colaborativo 5/5 completo** — pronto para implementar prioridade A–E
 
+### 2026-06-22 — Cursor: Priority D complete (Property Search / Obras)
+
+- ✅ **Priority D** — Busca e filtros na listagem de obras (`/dashboard/obras`)
+- ✅ `components/dashboard/obras/` — `ObraCard`, `ObraFilters`, `ObrasMap`, `ObrasSearchClient`, `filter-obras`
+- ✅ Filtros client-side: busca, status, cidade/bairro, faixa de crédito
+- ✅ Modos de visualização: cards, lista e mapa (Leaflet / OpenStreetMap)
+- ✅ Clique no card/marcador → detalhe em `/dashboard/obras/[id]` (já existente)
+- ✅ `pnpm --filter @imbobi/web type-check` — 0 errors
+- 📋 **Next up**: Priority E (Mobile) — adiado; foco web: fluxo tomador KYC → obras → crédito
+
 ### 2026-06-22 — Cursor: Priority C complete (KYC upload)
 
 - ✅ **Priority C** — `KycDocumentUpload` com drag-drop, preview, barra de progresso e validação Zod
@@ -183,7 +193,7 @@ You are Claude's collaborative partner on the Imobi fintech platform.
 - ~~A) Fix Next.js SSR build issue on /404 and /500 pages~~ ✅ Done (2026-06-22)
 - ~~B) Implement responsive dashboard layout with Tailwind~~ ✅ Done (2026-06-22)
 - ~~C) Create KYC document upload component~~ ✅ Done (2026-06-22)
-- D) Build real estate property search interface
+- ~~D) Build real estate property search interface~~ ✅ Done (2026-06-22)
 - E) Set up mobile app navigation (React Native + Expo)
 
 **WORKFLOW:**

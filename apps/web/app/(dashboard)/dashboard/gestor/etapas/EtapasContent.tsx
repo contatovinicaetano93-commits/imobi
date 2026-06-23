@@ -42,11 +42,11 @@ export default function EtapasContent() {
 
   // Initialize filters from URL query params
   useEffect(() => {
-    const status = (searchParams.get("status") as FilterState["status"]) || "todas";
-    const dataInicio = searchParams.get("dataInicio") || "";
-    const dataFim = searchParams.get("dataFim") || "";
-    const obraType = searchParams.get("obraType") || "";
-    const priority = (searchParams.get("priority") as FilterState["priority"]) || "todas";
+    const status = (searchParams?.get("status") as FilterState["status"]) || "todas";
+    const dataInicio = searchParams?.get("dataInicio") || "";
+    const dataFim = searchParams?.get("dataFim") || "";
+    const obraType = searchParams?.get("obraType") || "";
+    const priority = (searchParams?.get("priority") as FilterState["priority"]) || "todas";
 
     setFilters({
       status,

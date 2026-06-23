@@ -53,7 +53,7 @@ export function usePanelSection(
   priority: PanelPriority,
   defaultOpenOverride?: boolean,
 ) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const fallback = defaultOpenOverride ?? defaultOpenForPriority(priority);
   const [open, setOpen] = useState(fallback);
 
@@ -94,7 +94,7 @@ export function usePanelSection(
 }
 
 export function usePanelToolbar(sections: { id: string; priority: PanelPriority }[]) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
 
   const expandAll = useCallback(() => {
     const state = readPageState(pathname);

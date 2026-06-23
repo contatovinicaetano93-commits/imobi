@@ -10,7 +10,7 @@ import { ConversionTimeline } from '@/components/dashboard/comercial/ConversionT
 
 export default function LeadDetailPage() {
   const params = useParams();
-  const id = params.id as string;
+  const id = String(params?.id ?? "");
   const [lead, setLead] = useState<LeadDetail | null>(null);
   const [loading, setLoading] = useState(true);
 

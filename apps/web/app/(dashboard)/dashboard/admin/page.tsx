@@ -9,6 +9,7 @@ import {
   Clock, Zap, ArrowRight, Target, Banknote, ChevronRight,
 } from "lucide-react";
 import { formatarBRL } from "@imbobi/core";
+import { TOMADOR_HOME } from "@/lib/tomador-flow";
 
 const NAVY  = "#0C1A3D";
 const ROYAL = "#1B4FD8";
@@ -25,8 +26,8 @@ const PANEL_HREF: Record<string, string> = {
   GESTOR:     "/dashboard/gestor",
   ENGENHEIRO: "/dashboard/engenheiro",
   COMERCIAL:  "/dashboard/comercial",
-  CONSTRUTOR: "/dashboard/construtor",
-  TOMADOR:    "/dashboard",
+  CONSTRUTOR: TOMADOR_HOME,
+  TOMADOR:    TOMADOR_HOME,
 };
 
 const DEMO = {
@@ -515,7 +516,7 @@ export default function AdminPage() {
             { label: "Gestor de Fundo", role: "GESTOR",     href: "/dashboard/gestor",     color: ROYAL,     bg: "rgba(27,79,216,0.07)" },
             { label: "Engenheiro", role: "ENGENHEIRO", href: "/dashboard/engenheiro", color: "#ea580c", bg: "rgba(234,88,12,0.07)"  },
             { label: "Comercial",  role: "COMERCIAL",  href: "/dashboard/comercial",  color: "#7c3aed", bg: "rgba(124,58,237,0.07)" },
-            { label: "Construtor", role: "TOMADOR",    href: "/dashboard/construtor", color: "#16a34a", bg: "rgba(22,163,74,0.07)"  },
+            { label: "Tomador", role: "TOMADOR",    href: TOMADOR_HOME, color: "#16a34a", bg: "rgba(22,163,74,0.07)"  },
           ].map(({ label, role, href, color, bg }) => (
             <a
               key={role}

@@ -12,7 +12,7 @@ const WA = "5511993455589";
 function RedefinirForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const token = searchParams.get("token") ?? "";
+  const token = searchParams?.get("token") ?? "";
 
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmar, setConfirmar] = useState("");

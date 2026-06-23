@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { obrasApi, fluxoApi, type FluxoStatus } from "@/lib/api";
 import { FlowGateBanner } from "@/components/FlowGateBanner";
 import { proximoPassoFluxo } from "@/lib/flow-gates";
+import { TOMADOR_HOME } from "@/lib/tomador-flow";
 
 type FormState = {
   nome: string;
@@ -25,6 +26,9 @@ type FormState = {
 
 export default function NovaObraPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const retornoInicio = searchParams?.get("retorno") === "inicio";
+  const voltarHref = retornoInicio ? TOMADOR_HOME : "/dashboard/obras";
   const [fluxo, setFluxo] = useState<FluxoStatus | null>(null);
 
   useEffect(() => {
@@ -134,12 +138,15 @@ export default function NovaObraPage() {
     <div className="max-w-2xl space-y-8">
       <div>
         <button
-          onClick={() => router.push("/dashboard/obras")}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition"
+          onClick={() => router.push(voltarHref)}
+          className="mb-4 flex items-center gap-1.5 text-sm text-gray-500 transition hover:text-gray-800"
           style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Jost', sans-serif" }}
         >
           <ArrowLeft className="w-4 h-4" /> Voltar
         </button>
+        {retornoInicio && (
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#1B4FD8]">Passo 2 de 4</p>
+        )}
         <h1 className="text-2xl font-bold text-gray-900">Nova Obra</h1>
         <p className="text-sm text-gray-500 mt-1">Cada nova obra exige documentos próprios e aprovação de comitê.</p>
       </div>
@@ -147,6 +154,7 @@ export default function NovaObraPage() {
       {gate && <FlowGateBanner {...gate} />}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <fieldset disabled={!!gate || loading} className="space-y-6 disabled:opacity-60">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
           <h2 className="text-lg font-semibold text-gray-900">Identificação</h2>
 
@@ -340,6 +348,7 @@ export default function NovaObraPage() {
             <p className="text-xs text-gray-400 mt-1">Distância máxima aceita para validação de evidências (20–500 m).</p>
           </div>
         </div>
+        </fieldset>
 
         {erro && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4">
@@ -356,7 +365,7 @@ export default function NovaObraPage() {
           </a>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !!gate}
             className="flex-1 text-white font-semibold py-3 rounded-xl disabled:opacity-50 transition-colors text-sm"
             style={{ background: "#1B4FD8" }}
           >

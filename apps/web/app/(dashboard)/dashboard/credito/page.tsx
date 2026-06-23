@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { creditoApi, type CreditoResumo } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
+import { TOMADOR_ROUTES, TOMADOR_HOME } from "@/lib/tomador-flow";
 
 export const dynamic = 'force-dynamic';
 
@@ -76,7 +77,7 @@ export default async function CreditoPage() {
             </p>
           </div>
           <Link
-            href="/dashboard/simulador"
+            href={TOMADOR_ROUTES.credito}
             className="mt-2 inline-flex items-center gap-2 bg-[#1B4FD8] hover:bg-blue-800 text-white text-sm font-semibold px-6 py-3 rounded-xl shadow-sm hover:shadow transition-all duration-200"
           >
             <BarChart3 className="w-4 h-4" />
@@ -101,7 +102,7 @@ export default async function CreditoPage() {
           </p>
         </div>
         <Link
-          href="/dashboard/credito/solicitar"
+          href={TOMADOR_ROUTES.creditoSolicitar()}
           className="ml-auto inline-flex items-center gap-2 bg-[#1B4FD8] hover:bg-blue-800 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all"
         >
           <CreditCard className="w-4 h-4" />

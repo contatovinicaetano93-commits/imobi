@@ -2445,7 +2445,7 @@ export default function ObraDetailPage({
   const searchParams = useSearchParams();
   const obraId = params.id;
 
-  const tabParam = searchParams.get("tab");
+  const tabParam = searchParams?.get("tab");
   const initialTab =
     tabParam === "etapas" || tabParam === "documentos" || tabParam === "financeiro" || tabParam === "historico"
       ? tabParam

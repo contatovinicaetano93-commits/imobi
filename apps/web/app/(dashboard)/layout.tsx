@@ -18,7 +18,7 @@ import { DashboardMobileBottomNav } from "@/components/dashboard/nav/DashboardMo
 const WA = "5511993455589";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const path = usePathname();
+  const path = usePathname() ?? "";
   const [mobileOpen, setMobileOpen] = useState(false);
   const { role, roleLoading, userName, userEmail, funcoesBloqueadas } = useDashboardAuth();
   const { theme, toggleTheme, ready: themeReady } = useDashboardTheme();

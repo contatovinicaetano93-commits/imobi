@@ -3,8 +3,10 @@ import { fileURLToPath } from "node:url";
 import { writeFileSync } from "node:fs";
 import { ensureAssets } from "./ensure-assets.mjs";
 import {
+  freeApiPort,
   freeMetroPorts,
   getLanIp,
+  resolveApiPort,
   loadEnvFile,
   spawnExpo,
   syncApiUrlToLan,
@@ -18,12 +20,14 @@ const port = process.env.EXPO_DEV_PORT ?? "8082";
 
 loadEnvFile(mobileRoot);
 ensureAssets();
+const apiPort = resolveApiPort(mobileRoot);
 freeMetroPorts([8081, 8082, 8083, 19000, 19001]);
+freeApiPort(apiPort);
 await new Promise((r) => setTimeout(r, 3000));
 
 const host = getLanIp();
 const apiUrl = syncApiUrlToLan(mobileRoot);
-ensureFirewallRules(process.env.API_PORT ?? "4001");
+ensureFirewallRules(apiPort);
 syncDevForceLogin(mobileRoot, true);
 const onHotspot = host.startsWith("172.20.10.");
 

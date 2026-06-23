@@ -4,6 +4,6 @@
   "entryFile": "main",
   "compilerOptions": {
     "outDir": "./dist",
-    "deleteOutDir": true
+    "deleteOutDir": false
   }
 }

@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
+export const runtime = "nodejs";
+
 const _base = process.env["NEXT_PUBLIC_API_URL"] ?? process.env["API_URL"] ?? "http://localhost:4000";
 const API = _base.endsWith("/api/v1") ? _base : `${_base}/api/v1`;
 
 export async function POST(req: NextRequest) {
   const token = (await cookies()).get("access_token")?.value;
+  if (!token) {
+    return NextResponse.json(
+      { message: "Sessão expirada — faça login novamente." },
+      { status: 401 },
+    );
+  }
+
   const formData = await req.formData();
 
   const res = await fetch(`${API}/kyc/upload-arquivo`, {
     method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: { Authorization: `Bearer ${token}` },
     body: formData,
     cache: "no-store",
   }).catch(() => null);

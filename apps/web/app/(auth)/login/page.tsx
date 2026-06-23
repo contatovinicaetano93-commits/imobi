@@ -35,7 +35,7 @@ function LoginForm() {
       if (!res.ok) throw new Error(json.message ?? "Credenciais inválidas");
 
       // Se há um `next` explícito na URL, honrá-lo (apenas caminhos internos)
-      const nextParam = searchParams.get("next");
+      const nextParam = searchParams?.get("next");
       if (nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")) {
         router.push(nextParam as Route);
         return;

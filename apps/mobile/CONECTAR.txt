@@ -1,2 +1,3 @@
-Safari (teste): http://172.20.10.7:8082/status
+Safari Metro: http://172.20.10.7:8082/status
+Safari API: http://172.20.10.7:4001/api/v1/health
 Expo Go: exp://172.20.10.7:8082

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { TOMADOR_HOME, TOMADOR_LEGACY_REDIRECTS, TOMADOR_ROUTES } from "./lib/tomador-flow";
 
 const PUBLIC_PATHS = [
   "/",
@@ -21,6 +22,7 @@ const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: "/dashboard/relatorios", roles: ["GESTOR", "ADMIN"] },
   { prefix: "/dashboard/engenheiro", roles: ["ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
   { prefix: "/dashboard/comercial",  roles: ["COMERCIAL", "PARCEIRO", "ADMIN"] },
+  { prefix: "/dashboard/inicio",     roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
   { prefix: "/dashboard/construtor", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
   { prefix: "/dashboard/credito",    roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
   { prefix: "/dashboard/obras",      roles: ["CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
@@ -47,6 +49,26 @@ async function verifyJwt(
     return payload as { role?: string; exp?: number };
   } catch {
     return null;
+  }
+}
+
+function roleHome(role: string | null): string {
+  switch (role) {
+    case "ADMIN":
+      return "/dashboard/admin";
+    case "GESTOR":
+      return "/dashboard/gestor";
+    case "ENGENHEIRO":
+    case "GESTOR_OBRA":
+      return "/dashboard/engenheiro";
+    case "COMERCIAL":
+    case "PARCEIRO":
+      return "/dashboard/comercial";
+    case "CONSTRUTOR":
+    case "TOMADOR":
+      return TOMADOR_HOME;
+    default:
+      return "/login";
   }
 }
 
@@ -86,6 +108,35 @@ export async function middleware(request: NextRequest) {
   }
 
   const role = normalizeRole((jwt as Record<string, unknown>).role as string ?? null);
+
+  const legacyTarget = TOMADOR_LEGACY_REDIRECTS[pathname];
+  if (legacyTarget && (role === "TOMADOR" || role === "CONSTRUTOR")) {
+    const url = request.nextUrl.clone();
+    url.pathname = typeof legacyTarget === "string" ? legacyTarget.split("?")[0] : legacyTarget;
+    return NextResponse.redirect(url);
+  }
+
+  if (pathname === "/dashboard/credito/solicitar") {
+    const url = request.nextUrl.clone();
+    url.pathname = TOMADOR_ROUTES.credito.split("?")[0];
+    url.searchParams.set("solicitar", "1");
+    const valor = request.nextUrl.searchParams.get("valor");
+    const prazo = request.nextUrl.searchParams.get("prazo");
+    if (valor) url.searchParams.set("valor", valor);
+    if (prazo) url.searchParams.set("prazo", prazo);
+    return NextResponse.redirect(url);
+  }
+
+  if (pathname === "/dashboard/credito" && (role === "TOMADOR" || role === "CONSTRUTOR")) {
+    const url = request.nextUrl.clone();
+    url.pathname = TOMADOR_ROUTES.creditoExtrato.split("?")[0];
+    url.search = "visao=extrato";
+    return NextResponse.redirect(url);
+  }
+
+  if (pathname === "/dashboard" || pathname === "/dashboard/") {
+    return NextResponse.redirect(new URL(roleHome(role), request.url));
+  }
 
   if (pathname === "/dashboard/fundos" || pathname.startsWith("/dashboard/fundos/")) {
     const url = request.nextUrl.clone();

@@ -27,10 +27,24 @@ export function loadEnvFile(mobileRoot) {
   }
 }
 
+/** Lê PORT de services/api/.env para alinhar mobile com a API local. */
+export function resolveApiPort(mobileRoot) {
+  const apiEnvPath = path.join(mobileRoot, "..", "..", "services", "api", ".env");
+  if (fs.existsSync(apiEnvPath)) {
+    for (const line of fs.readFileSync(apiEnvPath, "utf8").split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("PORT=")) continue;
+      const port = trimmed.slice(5).trim();
+      if (port) return port;
+    }
+  }
+  return process.env.API_PORT ?? process.env.PORT ?? "4001";
+}
+
 /** Keep API URL aligned with current Wi-Fi IP for physical devices. */
 export function syncApiUrlToLan(mobileRoot) {
   const lanIp = getLanIp();
-  const apiPort = process.env.API_PORT ?? "4001";
+  const apiPort = resolveApiPort(mobileRoot);
   const apiUrl = `http://${lanIp}:${apiPort}`;
   process.env.EXPO_PUBLIC_API_URL = apiUrl;
 
@@ -129,18 +143,42 @@ export function ensureFirewallRules(apiPort = "4001") {
   }
 }
 
+/** Mata processos presos na porta da API (evita EADDRINUSE + API zumbi). */
+export function freeApiPort(apiPort = "4001") {
+  freeMetroPorts([Number(apiPort)]);
+}
+
+function killListeningPidsOnPort(port) {
+  try {
+    const out = execSync(`netstat -ano | findstr ":${port} " | findstr LISTENING`, {
+      encoding: "utf8",
+      timeout: 8000,
+    });
+    const pids = new Set(
+      out
+        .split(/\r?\n/)
+        .map((line) => line.trim().split(/\s+/).pop())
+        .filter((pid) => pid && /^\d+$/.test(pid) && pid !== "0"),
+    );
+    for (const pid of pids) {
+      try {
+        execSync(`taskkill /F /PID ${pid}`, { stdio: "ignore", timeout: 5000 });
+      } catch {
+        // ignore
+      }
+    }
+  } catch {
+    // porta livre ou netstat indisponível
+  }
+}
+
 export function freeMetroPorts(ports = [8081, 8082, 8083, 19000, 19001]) {
   if (process.platform !== "win32") return;
-  const list = ports.join(",");
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      execSync(
-        `powershell -NoProfile -Command "$ports=@(${list}); foreach($p in $ports){ Get-NetTCPConnection -LocalPort $p -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } }; Get-Process ngrok -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue"`,
-        { stdio: "ignore" },
-      );
-    } catch {
-      // ignore
-    }
+  for (const port of ports) killListeningPidsOnPort(port);
+  try {
+    execSync("taskkill /F /IM ngrok.exe", { stdio: "ignore", timeout: 5000 });
+  } catch {
+    // ignore
   }
 }
 

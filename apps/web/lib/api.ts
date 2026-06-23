@@ -291,6 +291,7 @@ export function uploadKycArquivo(
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/proxy/kyc/upload-arquivo");
+    xhr.withCredentials = true;
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {
@@ -309,7 +310,11 @@ export function uploadKycArquivo(
         resolve(body as KycDocumento);
         return;
       }
-      reject(new ApiError(xhr.status, body.message ?? "Erro no upload do documento"));
+      const msg =
+        xhr.status === 401
+          ? "Sessão expirada — saia e entre novamente."
+          : body.message ?? "Erro no upload do documento";
+      reject(new ApiError(xhr.status, msg));
     };
 
     xhr.onerror = () => reject(new ApiError(0, "Falha de rede ao enviar documento"));

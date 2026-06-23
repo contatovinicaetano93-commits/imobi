@@ -34,7 +34,7 @@ export default function KycDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const { canAprovarKyc, isGestorFundoMonitor } = useUserRole();
 
-  const docId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const docId = Array.isArray(params?.id) ? params.id[0] : (params?.id ?? "");
 
   useEffect(() => {
     managerApi

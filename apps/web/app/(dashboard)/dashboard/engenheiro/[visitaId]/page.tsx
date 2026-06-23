@@ -51,7 +51,7 @@ export default function VisitDetailPage() {
   const [gpsError, setGpsError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const visitaId = Array.isArray(params.visitaId) ? params.visitaId[0] : params.visitaId;
+  const visitaId = Array.isArray(params?.visitaId) ? params.visitaId[0] : (params?.visitaId ?? "");
 
   useEffect(() => {
     Promise.all([

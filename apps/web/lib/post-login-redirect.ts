@@ -1,3 +1,5 @@
+import { TOMADOR_HOME } from "@/lib/tomador-flow";
+
 const ROLE_HOME: Record<string, string> = {
   ADMIN: "/dashboard/admin",
   GESTOR: "/dashboard/gestor",
@@ -6,8 +8,8 @@ const ROLE_HOME: Record<string, string> = {
   GESTOR_OBRA: "/dashboard/engenheiro",
   COMERCIAL: "/dashboard/comercial",
   PARCEIRO: "/dashboard/comercial",
-  TOMADOR: "/dashboard",
-  CONSTRUTOR: "/dashboard/construtor",
+  TOMADOR: TOMADOR_HOME,
+  CONSTRUTOR: TOMADOR_HOME,
 };
 
 export function redirectAfterLogin(role: string) {

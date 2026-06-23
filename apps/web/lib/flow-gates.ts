@@ -1,4 +1,5 @@
 import { fluxoApi, type FluxoStatus, type RequisitosObra } from "@/lib/api";
+import { TOMADOR_ROUTES } from "@/lib/tomador-flow";
 
 export type { FluxoStatus, RequisitosObra };
 
@@ -22,9 +23,9 @@ export function proximoPassoFluxo(status: FluxoStatus | null): {
   if (!status) return null;
   if (!status.kycUsuarioCompleto) {
     return {
-      href: "/dashboard/kyc",
+      href: TOMADOR_ROUTES.documentos,
       label: "Completar KYC",
-      mensagem: "Verifique sua identidade para acessar crédito e cadastrar obras.",
+      mensagem: "Envie seus documentos de identidade antes de cadastrar obras ou solicitar crédito.",
     };
   }
   return null;
@@ -38,7 +39,7 @@ export function proximoPassoObra(req: RequisitosObra | null, obraId: string): {
   if (!req) return null;
   if (!req.kycUsuarioOk) {
     return {
-      href: "/dashboard/kyc",
+      href: TOMADOR_ROUTES.documentos,
       label: "KYC",
       mensagem: "Complete a verificação de identidade.",
     };
