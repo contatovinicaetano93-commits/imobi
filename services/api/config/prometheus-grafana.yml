@@ -1,0 +1,59 @@
+# Prometheus Configuration for Imobi API
+# Scrapes Prometheus metrics from the /api/v1/metrics endpoint
+# And aggregates them for Grafana visualization
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'imobi-api-prod'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - 'alerts.yml'
+
+scrape_configs:
+  # Imobi API metrics
+  - job_name: 'imobi-api'
+    static_configs:
+      - targets: ['localhost:4000']
+    metrics_path: '/api/v1/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Imobi API health check
+  - job_name: 'imobi-health'
+    static_configs:
+      - targets: ['localhost:4000']
+    metrics_path: '/api/v1/health'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # PostgreSQL exporter (if running separately)
+  # Requires: docker run -d -p 9187:9187 prometheuscommunity/postgres-exporter
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['localhost:9187']
+    scrape_interval: 30s
+
+  # Redis exporter (if running separately)
+  # Requires: docker run -d -p 9121:9121 oliver006/redis_exporter
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['localhost:9121']
+    scrape_interval: 30s
+
+  # Node exporter for system metrics
+  # Requires: docker run -d -p 9100:9100 prom/node-exporter
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']
+    scrape_interval: 30s
