@@ -12,7 +12,7 @@ import { STAGING_API_URL, STAGING_WEB_URL } from './lib/staging-urls.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const e2eDir = resolve(root, 'apps/e2e');
-const extra = process.argv.slice(2);
+const extra = process.argv.slice(2).filter((a) => a !== '--');
 
 const env = {
   ...process.env,

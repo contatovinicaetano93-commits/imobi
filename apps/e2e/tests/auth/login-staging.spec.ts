@@ -16,7 +16,7 @@ test.describe('Login staging (API real)', () => {
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard/**', { timeout: 180_000 });
+    await page.waitForURL(/\/dashboard(\/|$)/, { timeout: 180_000 });
     await expect(page).toHaveURL(/\/dashboard/);
   });
 });

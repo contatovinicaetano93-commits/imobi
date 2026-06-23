@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { obrasApi } from "@/lib/api";
+import { obrasApi, jornadaApi } from "@/lib/api";
+import { BETA_MVP_MODE } from "@/lib/beta-mvp";
 
 type FormState = {
   nome: string;
@@ -41,6 +42,18 @@ export default function NovaObraPage() {
   const [loading, setLoading] = useState(false);
   const [localizando, setLocalizando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!BETA_MVP_MODE) return;
+    jornadaApi
+      .obter()
+      .then((j) => {
+        if (j.passoAtual !== "obra") {
+          router.replace(j.href as "/");
+        }
+      })
+      .catch(() => {});
+  }, [router]);
 
   function set(field: keyof FormState, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));

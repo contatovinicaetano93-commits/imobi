@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { JornadaService } from "../jornada/jornada.service";
 import { simularCredito } from "@imbobi/core";
 import type { SolicitacaoCreditoInput, SimulacaoCreditoInput } from "@imbobi/schemas";
 
 @Injectable()
 export class CreditoService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jornada: JornadaService,
+  ) {}
 
   simular(input: SimulacaoCreditoInput) {
     const TAXA_MENSAL = 0.0099;
@@ -13,6 +17,7 @@ export class CreditoService {
   }
 
   async solicitar(usuarioId: string, input: SolicitacaoCreditoInput) {
+    await this.jornada.assertPodeSolicitarCredito(usuarioId);
     return this.prisma.credito.create({
       data: {
         usuarioId,

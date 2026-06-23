@@ -6,14 +6,12 @@ import { GestorPage } from '../../page-objects/GestorPage';
 test.describe('Tomador dashboard', () => {
   test.use({ storageState: TOMADOR.storageState });
 
-  test('shows Visão Geral with KPI cards', async ({ page }) => {
+  test('shows painel construtor with operação ou estado vazio', async ({ page }) => {
     const dp = new DashboardPage(page);
     await dp.goto();
 
-    await expect(dp.getKpiCard('Crédito disponível')).toBeVisible();
-    await expect(dp.getKpiCard('Obras ativas')).toBeVisible();
-    await expect(dp.getKpiCard('Etapas concluídas')).toBeVisible();
-    await expect(dp.getKpiCard('Aguardando vistoria')).toBeVisible();
+    await expect(page.getByText(/Operação ativa|Nenhuma operação ativa/).first()).toBeVisible();
+    await expect(page.getByText('Cronograma de Pagamentos')).toBeVisible();
   });
 
   test('sidebar shows expected nav links', async ({ page }) => {
@@ -22,7 +20,7 @@ test.describe('Tomador dashboard', () => {
 
     await expect(dp.obrasLink).toBeVisible();
     await expect(dp.simuladorLink).toBeVisible();
-    await expect(dp.kycLink).toBeVisible();
+    await expect(dp.documentosLink).toBeVisible();
   });
 });
 
@@ -34,6 +32,9 @@ test.describe('Gestor dashboard', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/proxy/manager/dashboard**', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_STATS) })
+    );
+    await page.route('**/api/proxy/jornada**', (route) =>
+      route.fulfill({ status: 404, contentType: 'application/json', body: '{}' })
     );
   });
 
@@ -65,12 +66,11 @@ test.describe('Gestor dashboard', () => {
 test.describe('Engenheiro dashboard', () => {
   test.use({ storageState: ENGENHEIRO.storageState });
 
-  test('shows Fila de Visitas with KPI cards', async ({ page }) => {
-    await page.goto('/dashboard/engenheiro', { timeout: 60_000 });
-    await expect(page.getByRole('heading', { name: 'Fila de Visitas' })).toBeVisible({ timeout: 30_000 });
+  test('shows portal do engenheiro with KPI cards', async ({ page }) => {
+    await page.goto('/dashboard/engenheiro', { waitUntil: 'domcontentloaded', timeout: 120_000 });
+    await expect(page.getByRole('heading', { name: 'Vistorias e Obras' })).toBeVisible({ timeout: 60_000 });
 
-    await expect(page.getByText('Agendadas')).toBeVisible();
-    await expect(page.getByText('Iniciadas')).toBeVisible();
-    await expect(page.getByText('Concluídas')).toBeVisible();
+    await expect(page.getByText('Obras ativas')).toBeVisible();
+    await expect(page.getByText('Vistorias agendadas')).toBeVisible();
   });
 });

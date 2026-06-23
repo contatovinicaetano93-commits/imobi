@@ -7,16 +7,14 @@ import {
   HardHat, BarChart3, XCircle,
 } from "lucide-react";
 import {
-  creditoApi, obrasApi, kycApi, notificacoesApi,
+  creditoApi, obrasApi, kycApi, notificacoesApi, jornadaApi,
   type CreditoResumo, type ObraResumo, type KycStatus, type Notificacao,
 } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
-import {
-  TomadorJourneyWizard,
-  buildTomadorJourneySteps,
-} from "@/components/dashboard/TomadorJourneyWizard";
+import { NextStepHero } from "@/components/dashboard/NextStepHero";
+import { BETA_MVP_MODE } from "@/lib/beta-mvp";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Painel Construtor — IMOBI" };
@@ -56,6 +54,18 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default async function ConstrutorPage() {
+  const jornada = BETA_MVP_MODE
+    ? await jornadaApi.obter().catch(() => null)
+    : null;
+
+  if (BETA_MVP_MODE && jornada) {
+    return (
+      <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
+        <NextStepHero jornada={jornada} variant="tomador" />
+      </div>
+    );
+  }
+
   const [creditos, obras, kycStatus, notifs] = await Promise.all([
     creditoApi.meus().catch(() => [] as CreditoResumo[]),
     obrasApi.listar().catch(() => [] as ObraResumo[]),
@@ -125,17 +135,6 @@ export default async function ConstrutorPage() {
     { id: "contratos-documentos", priority: "secondary" as const },
   ];
 
-  const kycAprovado =
-    kycStatus?.status === "APROVADO" ||
-    ((kycStatus?.resumo?.aprovados ?? 0) > 0 && (kycStatus?.resumo?.pendentes ?? 0) === 0);
-
-  const journeySteps = buildTomadorJourneySteps({
-    kycAprovado,
-    temObra: obras.length > 0,
-    temCredito: creditos.length > 0,
-    temEtapaLiberada: etapasLiberadas.length > 0,
-  });
-
   return (
     <div className="flex flex-col gap-4 pb-10 max-w-2xl">
 
@@ -156,8 +155,6 @@ export default async function ConstrutorPage() {
           })}
         </div>
       )}
-
-      <TomadorJourneyWizard steps={journeySteps} />
 
       {/* ── Hero: operação de crédito ────────────────────────────────── */}
       {credito ? (

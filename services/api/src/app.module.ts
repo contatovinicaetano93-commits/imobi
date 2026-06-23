@@ -11,6 +11,7 @@ import { PrismaModule } from "./modules/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsuariosModule } from "./modules/usuarios/usuarios.module";
 import { CreditoModule } from "./modules/credito/credito.module";
+import { JornadaModule } from "./modules/jornada/jornada.module";
 import { ObrasModule } from "./modules/obras/obras.module";
 import { EtapasModule } from "./modules/etapas/etapas.module";
 import { EvidenciasModule } from "./modules/evidencias/evidencias.module";
@@ -92,6 +93,7 @@ const redisConfig = getRedisConfig();
     AuthModule,
     UsuariosModule,
     CreditoModule,
+    JornadaModule,
     ObrasModule,
     EtapasModule,
     EvidenciasModule,

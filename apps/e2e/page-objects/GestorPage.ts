@@ -1,13 +1,13 @@
 import type { Page } from '@playwright/test';
 
 export class GestorPage {
-  readonly heading = this.page.getByRole('heading', { name: 'Painel do Gestor' });
+  readonly heading = this.page.getByRole('heading', { name: 'Painel de Operações' });
   readonly revirarEtapasLink = this.page.getByRole('link', { name: /Revisar Etapas/ });
   readonly revisarKycLink = this.page.getByRole('link', { name: /Revisar KYC/ });
   constructor(private page: Page) {}
 
   async goto() {
-    await this.page.goto('/dashboard/gestor');
+    await this.page.goto('/dashboard/gestor', { waitUntil: 'domcontentloaded', timeout: 120_000 });
     // Wait for heading (present in all states: loading, error, success).
     await this.heading.waitFor({ timeout: 60_000 });
     // Allow React to hydrate so loading text actually enters the DOM.

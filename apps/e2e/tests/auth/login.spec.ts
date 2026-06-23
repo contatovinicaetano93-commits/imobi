@@ -45,7 +45,7 @@ test.describe('Login', () => {
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard/**', { timeout: 120_000 });
+    await page.waitForURL(/\/dashboard(\/|$)/, { timeout: 120_000 });
     await expect(page).toHaveURL(/\/dashboard/);
   });
 

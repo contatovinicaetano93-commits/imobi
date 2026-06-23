@@ -312,6 +312,24 @@ export const kycApi = {
   verificarKycCompleto: () => apiFetch<{ completo: boolean; documentos: KycDocumento[] }>("/kyc/verificar"),
 };
 
+export type Jornada = {
+  perfil: "tomador" | "gestor" | "outro";
+  passoAtual: string;
+  titulo: string;
+  descricao: string;
+  href: string;
+  concluido: boolean;
+  passosConcluidos: number;
+  totalPassos: number;
+  progressoPct: number;
+  bloqueado?: string;
+  fila?: { kyc: number; etapas: number };
+};
+
+export const jornadaApi = {
+  obter: () => apiFetch<Jornada>("/jornada"),
+};
+
 // ── Manager ───────────────────────────────────────────────────────────
 
 export type EtapaPendente = {

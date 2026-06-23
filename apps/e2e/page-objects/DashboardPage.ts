@@ -1,17 +1,19 @@
 import type { Page } from '@playwright/test';
 
 export class DashboardPage {
-  readonly heading = this.page.getByRole('heading', { name: 'Visão Geral' });
   readonly obrasLink = this.page.getByRole('link', { name: 'Minhas Obras' });
   readonly simuladorLink = this.page.getByRole('link', { name: 'Simulador' });
-  readonly kycLink = this.page.getByRole('link', { name: 'KYC' });
+  readonly documentosLink = this.page.getByRole('link', { name: 'Documentos' });
   readonly gestorLink = this.page.getByRole('link', { name: 'Painel do Gestor' });
 
   constructor(private page: Page) {}
 
   async goto() {
-    await this.page.goto('/dashboard');
-    await this.heading.waitFor({ timeout: 60_000 });
+    await this.page.goto('/dashboard/construtor', { waitUntil: 'domcontentloaded', timeout: 120_000 });
+    await this.page
+      .getByText(/Operação ativa|Nenhuma operação ativa/)
+      .first()
+      .waitFor({ timeout: 90_000 });
   }
 
   getKpiCard(label: string) {

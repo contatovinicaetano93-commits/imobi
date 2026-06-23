@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ManagerStats } from "@/lib/api";
+import type { ManagerStats, Jornada } from "@/lib/api";
+import { jornadaApi } from "@/lib/api";
 import Link from "next/link";
 import { ShieldCheck, AlertTriangle, Zap, Lightbulb } from "lucide-react";
 import { fetchManagerDashboard } from "@/lib/fetch-manager-dashboard";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
+import { NextStepHero } from "@/components/dashboard/NextStepHero";
+import { BETA_MVP_MODE } from "@/lib/beta-mvp";
 
 const GESTOR_PANELS = [
   { id: "acoes-rapidas", priority: "primary" as const },
@@ -50,6 +53,7 @@ function StatSkeleton() {
 
 export default function GestorPage() {
   const [stats, setStats] = useState<ManagerStats | null>(null);
+  const [jornada, setJornada] = useState<Jornada | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,9 +76,20 @@ export default function GestorPage() {
 
   useEffect(() => {
     loadStats();
+    if (BETA_MVP_MODE) {
+      jornadaApi.obter().then(setJornada).catch(() => setJornada(null));
+    }
   }, []);
 
   const s = stats ?? ZERO_STATS;
+
+  if (BETA_MVP_MODE && jornada && !loading) {
+    return (
+      <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
+        <NextStepHero jornada={jornada} variant="gestor" />
+      </div>
+    );
+  }
 
   if (loading && !stats) {
     return (

@@ -82,7 +82,8 @@ export function middleware(request: NextRequest) {
   }
 
   if (role && !isMvpRouteAllowed(pathname, role)) {
-    const home = ROLE_HOME[role] ?? "/dashboard/construtor";
+    const candidate = ROLE_HOME[role] ?? "/dashboard/construtor";
+    const home = isMvpRouteAllowed(candidate, role) ? candidate : "/dashboard/construtor";
     return NextResponse.redirect(new URL(home, request.url));
   }
 
