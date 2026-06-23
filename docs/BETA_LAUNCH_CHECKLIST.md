@@ -178,27 +178,26 @@
 # Merge to main
 git merge claude/imobi-mvp-fintech-status-jrr2ab
 
-# Deploy API
-npm run deploy:api
+# Deploy API (Render)
+pnpm render:env:push && pnpm render:redeploy
 
-# Deploy Frontend
-npm run deploy:web
+# Deploy Frontend (Vercel)
+pnpm vercel:env:push
 
 # Verify deployments
-curl https://api.imobi.com/health
-curl https://app.imobi.com/
+curl https://imobi-api-staging.onrender.com/api/v1/health
+curl https://imobi-web.vercel.app/
 ```
 
 **Step 2: Seed Test Data** (10 min)
 ```bash
-# Run seed script in production
-npm run db:seed:beta
+# Run seed script in staging
+pnpm seed:staging
 ```
 
 **Step 3: Send Welcome Emails** (5 min)
 ```bash
-# Trigger welcome emails
-npm run send:beta-welcome-emails
+# Manual via SendGrid or email service — no root script
 ```
 
 **Step 4: Announce Beta Launch** (5 min)

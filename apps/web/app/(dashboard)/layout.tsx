@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import "./layout.css";
 import { useEffect, useState } from "react";
 import { normalizeRole } from "@/lib/role-permissions";
+import { getNavRole, isAdminPreviewingPanel } from "@/lib/panel-navigation";
 import { ToastProvider } from "@/hooks/toast-context";
 import { Toaster } from "@/components/ui/toaster";
 import { SkipLink } from "@/components/SkipLink";
@@ -60,7 +61,7 @@ const NAV: NavItem[] = [
   { label: "Comitê",        href: "/dashboard/admin/comite",            icon: Vote,        roles: ["ADMIN"] },
   { label: "Usuários",      href: "/dashboard/admin/usuarios",          icon: User,        roles: ["ADMIN"] },
   { label: "Configurações", href: "/dashboard/admin/configuracoes",     icon: Settings,    roles: ["ADMIN"] },
-  { label: "Obras",         href: "/dashboard/obras",                   icon: HardHat,     roles: ["ADMIN"],                           funcao: "obras" },
+  { label: "Obras",         href: "/dashboard/admin/obras",             icon: HardHat,     roles: ["ADMIN"] },
   { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["ADMIN"],                           funcao: "fundos" },
   { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["ADMIN"],                           funcao: "relatorios" },
 ];
@@ -77,24 +78,6 @@ const ROLE_META: Record<string, { label: string; accent: string }> = {
   PARCEIRO:    { label: "Comercial",   accent: "#fbbf24" },
   ADMIN:       { label: "Admin",       accent: MINT },
 };
-
-// Resolve the nav panel to display based on current path.
-// Works for all roles: sidebar always mirrors the panel the user is navigating.
-function getNavRole(role: UserRole, path: string): UserRole {
-  const seg = path.split("/")[2] ?? "";
-
-  // Panel-root segments always determine sidebar context
-  if (seg === "comercial")  return "COMERCIAL";
-  if (seg === "gestor")     return "GESTOR";
-  if (seg === "engenheiro") return "ENGENHEIRO";
-  if (["construtor", "credito", "kyc", "score", "simulador", "obras", "comite"].includes(seg))
-    return role === "ENGENHEIRO" || role === "GESTOR_OBRA" ? role : "CONSTRUTOR";
-  if (seg === "admin")      return "ADMIN";
-  if (seg === "fundos" || seg === "relatorios") return role === "ADMIN" ? "ADMIN" : "GESTOR";
-
-  // Shared / unknown segment — fall back to actual role
-  return role;
-}
 
 function filterNav(role: UserRole, path: string, funcoesBloqueadas: string[]): NavItem[] {
   const navRole = getNavRole(role, path);
@@ -266,7 +249,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     href === "/dashboard" ? path === href : path.startsWith(href);
 
   const navRole = getNavRole(role, path);
-  const isPreviewingOtherPanel = role === "ADMIN" && navRole !== "ADMIN";
+  const isPreviewingOtherPanel = isAdminPreviewingPanel(role, path);
 
   const meta = role ? ROLE_META[role] : null;
   const navMeta = navRole ? ROLE_META[navRole] : meta;

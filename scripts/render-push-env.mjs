@@ -137,6 +137,10 @@ const env = {
   PAYMENT_PROVIDER: trim(fileEnv.PAYMENT_PROVIDER ?? 'console'),
 };
 
+if (trim(fileEnv.SETUP_SECRET)) {
+  env.SETUP_SECRET = trim(fileEnv.SETUP_SECRET);
+}
+
 async function api(path, opts = {}) {
   const res = await fetch(`https://api.render.com${path}`, {
     ...opts,

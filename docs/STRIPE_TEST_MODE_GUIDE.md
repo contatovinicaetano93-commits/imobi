@@ -42,7 +42,7 @@ In **API Keys** section:
 
 **Secret Key**:
 - Copy `sk_test_...` from "Secret key" section
-- Store in Railway/Render environment variables
+- Store in Render environment variables (dashboard ou `pnpm render:env:push`)
 
 **Publishable Key**:
 - Copy `pk_test_...` from "Publishable key" section
@@ -63,19 +63,14 @@ STRIPE_TEST_MODE=true
 STRIPE_API_VERSION=2023-10-16
 ```
 
-### 2.2 Configure in Railway/Render
+### 2.2 Configure in Render
 
-**For Railway**:
-1. Go to Your Project → Variables
-2. Add each environment variable
-3. Mark `STRIPE_SECRET_KEY` as "Private"
-4. Deploy changes
-
-**For Render**:
-1. Go to Service Settings → Environment
+1. Go to Service Settings → Environment (ou use `pnpm render:env:push` com `.env.render.local`)
 2. Add each variable
 3. Mark sensitive keys as private
-4. Redeploy service
+4. Redeploy service (`pnpm render:redeploy`)
+
+Stack canônica: `docs/DEPLOY_STACK.md` (Vercel + Render apenas).
 
 ### 2.3 Frontend Configuration
 
@@ -89,47 +84,19 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
 
 ## 3️⃣ TEST PAYMENT METHODS
 
-### 3.1 Success Scenarios
+**Não versionar números de cartão no repositório.** Use a tabela oficial de cartões de teste:
 
-| Test Card | Use Case | CVC | Expiry |
-|-----------|----------|-----|--------|
-| 4242 4242 4242 4242 | Successful payment | Any 3 digits | Any future date |
-| 4000 0002 5000 3155 | Visa (Success) | Any 3 digits | Any future date |
-| 5555 5555 5555 4444 | Mastercard (Success) | Any 3 digits | Any future date |
+https://stripe.com/docs/testing
 
-**Example Test Payment**:
-```
-Card: 4242 4242 4242 4242
-Expiry: 12/25
-CVC: 123
-Name: Test User
-```
+Cenários a validar manualmente:
 
-### 3.2 Decline Scenarios
+| Cenário | Onde no Stripe docs |
+|---------|---------------------|
+| Pagamento aprovado | Cards → Successful payments |
+| Pagamento recusado | Cards → Declined payments |
+| 3D Secure (SCA) | Cards → Authentication required |
 
-| Test Card | Decline Reason | Use Case |
-|-----------|----------------|----------|
-| 4000 0000 0000 0002 | Generic decline | Test decline handling |
-| 4000 0000 0000 9995 | Card declined | Insufficient funds |
-| 4000 0000 0000 0069 | Expired card | Card expiry logic |
-| 4000 0000 0000 0127 | Lost card | Card status |
-
-### 3.3 3D Secure (SCA) Testing
-
-| Test Card | Behavior |
-|-----------|----------|
-| 4000 0025 0000 3155 | Requires authentication |
-| 4000 0025 0000 9010 | Requires authentication (frictionless) |
-
-When testing 3D Secure:
-1. Payment goes to "requires_action" status
-2. Return customer to authentication page
-3. Complete authentication flow
-4. Payment processes as "succeeded"
-
-### 3.4 Webhook Simulation
-
-Test webhook events locally:
+Para webhook local, use `stripe listen` (abaixo).
 
 ```bash
 # Install Stripe CLI
@@ -529,9 +496,8 @@ function PaymentFormInner() {
 npm run dev:api
 npm run dev:web
 
-# 2. Log in as test user
-# Email: joao.silva@teste.imobi.com
-# Password: Beta123!@#
+# 2. Log in as test user (credenciais em apps/e2e/.env.e2e — ver docs/BETA_TEST_CREDENTIALS.md)
+# Email/senha: tomador@imobi.com.br após `pnpm seed:dev`
 
 # 3. Navigate to payment page
 # Visit: http://localhost:3001/dashboard/credito
@@ -546,10 +512,7 @@ Authorization: Bearer <jwt-token>
   "description": "Credit approval fee"
 }
 
-# 5. Fill payment form with test card
-# Card: 4242 4242 4242 4242
-# Expiry: 12/25
-# CVC: 123
+# 5. Fill payment form with a test card from https://stripe.com/docs/testing
 
 # 6. Submit and verify payment succeeded
 # Check backend logs for:
@@ -566,7 +529,9 @@ SELECT * FROM pagamentos WHERE stripePaymentId = 'pi_xxxx';
 describe('Payment Flow', () => {
   it('should create payment intent and process payment', async () => {
     // 1. Login
-    const token = await login('joao.silva@teste.imobi.com', 'Beta123!@#');
+    const email = process.env.E2E_TOMADOR_EMAIL!;
+    const password = process.env.E2E_TOMADOR_PASSWORD!;
+    const token = await login(email, password);
 
     // 2. Create payment intent
     const response = await fetch('/api/v1/pagamentos/payment-intent', {
@@ -585,11 +550,9 @@ describe('Payment Flow', () => {
     const { clientSecret, paymentIntentId } = await response.json();
     expect(clientSecret).toBeDefined();
 
-    // 3. Confirm payment with test card
+    // 3. Confirm payment with test card (use Stripe test PaymentMethod — see stripe.com/docs/testing)
     const stripeResponse = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: { number: '4242424242424242', exp_month: 12, exp_year: 25, cvc: '123' },
-      },
+      payment_method: process.env.STRIPE_TEST_PAYMENT_METHOD_ID!,
     });
 
     expect(stripeResponse.paymentIntent.status).toBe('succeeded');
@@ -644,7 +607,7 @@ SELECT status FROM pagamentos WHERE stripePaymentId = 'pi_xxxx';
 | `No such key: sk_test_...` | Verify API key in .env is correct |
 | `Webhook signature invalid` | Ensure `STRIPE_WEBHOOK_SECRET` matches CLI output |
 | `Invalid API Key` | Regenerate keys in Stripe dashboard |
-| `Test card declined` | Use `4000 0000 0000 0002` for decline test |
+| `Test card declined` | Use a decline test card from https://stripe.com/docs/testing |
 | `Client secret expired` | Payment intent valid for 15 minutes |
 
 ### 7.3 Debug Mode

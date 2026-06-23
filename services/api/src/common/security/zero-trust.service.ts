@@ -1,3 +1,5 @@
+import { createHmac } from 'crypto';
+
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
@@ -160,9 +162,7 @@ export class ZeroTrustService {
     signature: string,
     secret: string,
   ): boolean {
-    const crypto = require('crypto');
-    const hash = crypto
-      .createHmac('sha256', secret)
+    const hash = createHmac('sha256', secret)
       .update(JSON.stringify(body))
       .digest('hex');
     return hash === signature;
@@ -172,9 +172,7 @@ export class ZeroTrustService {
    * Generate request signature
    */
   generateRequestSignature(body: any, secret: string): string {
-    const crypto = require('crypto');
-    return crypto
-      .createHmac('sha256', secret)
+    return createHmac('sha256', secret)
       .update(JSON.stringify(body))
       .digest('hex');
   }

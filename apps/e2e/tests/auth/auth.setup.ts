@@ -7,6 +7,25 @@ const authDir = path.resolve(__dirname, '../../.auth');
 const NEST_API = process.env.API_URL ?? 'http://localhost:4000/api/v1';
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
 
+function cookieBaseFromUrl(baseUrl: string) {
+  const u = new URL(baseUrl);
+  return {
+    domain: u.hostname,
+    path: '/',
+    httpOnly: true,
+    secure: u.protocol === 'https:',
+    sameSite: 'Lax' as const,
+  };
+}
+
+async function assertApiReachable(): Promise<void> {
+  const healthUrl = NEST_API.replace(/\/api\/v1\/?$/, '') + '/api/v1/health';
+  const res = await fetch(healthUrl, { signal: AbortSignal.timeout(60_000) });
+  if (!res.ok) {
+    throw new Error(`API health failed (${res.status}): ${healthUrl}`);
+  }
+}
+
 // Bypasses the UI entirely: calls NestJS directly to get JWT, then writes the
 // Playwright storageState file with the cookie pre-set.  This avoids the
 // Next.js + NestJS cold-start chain (can exceed 5 min on WSL2 PostgreSQL).
@@ -24,7 +43,7 @@ async function saveAuthState(email: string, password: string, outFile: string): 
   const data = await res.json() as { accessToken: string; refreshToken?: string };
 
   const now = Math.floor(Date.now() / 1000);
-  const base = { domain: 'localhost', path: '/', httpOnly: true, secure: false, sameSite: 'Lax' as const };
+  const base = cookieBaseFromUrl(BASE_URL);
 
   await writeFile(outFile, JSON.stringify({
     cookies: [
@@ -48,6 +67,9 @@ setup.beforeAll(async () => {
 // add 3-8 minutes to the first test.  Running the browser warm-up concurrently
 // with the NestJS auth saves means the extra cost is near-zero.
 setup('auth:all', async ({ page }) => {
+  await assertApiReachable();
+
+  const cookieBase = cookieBaseFromUrl(BASE_URL);
   // Start /login warm-up immediately using the real browser so Next.js
   // compiles JS chunks.  waitUntil:'domcontentloaded' means we don't wait for
   // every resource — just enough to guarantee the chunk compilation kicked off.
@@ -67,11 +89,7 @@ setup('auth:all', async ({ page }) => {
   await page.context().addCookies([{
     name: 'access_token',
     value: tomadorToken,
-    domain: 'localhost',
-    path: '/',
-    httpOnly: true,
-    secure: false,
-    sameSite: 'Lax',
+    ...cookieBase,
   }]);
 
   await Promise.all([

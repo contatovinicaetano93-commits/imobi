@@ -447,6 +447,15 @@ function TabObras() {
 
   return (
     <div className="space-y-6">
+      <div style={{ ...card, padding: "1rem 1.25rem", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, border: "1px solid rgba(27,79,216,0.15)", background: "rgba(27,79,216,0.03)" }}>
+        <div>
+          <p style={{ ...j, fontSize: "0.82rem", fontWeight: 700, color: NAVY }}>Gestão operacional de obras</p>
+          <p style={{ ...j, fontSize: "0.72rem", color: "rgba(12,26,61,0.45)", marginTop: 4 }}>Homologação, SIPOC e portfólio completo com dados ao vivo.</p>
+        </div>
+        <a href="/dashboard/admin/obras" style={{ ...j, display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.78rem", fontWeight: 700, color: "white", background: ROYAL, padding: "0.5rem 1rem", borderRadius: 10, textDecoration: "none" }}>
+          Abrir gestão de obras <ArrowRight size={13} />
+        </a>
+      </div>
       <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
         <KpiCard label="No Prazo"   value={String(noPrazo)}   sub="obras" accent={MINT}     style={{ padding: "0.6rem 0.75rem" }} />
         <KpiCard label="Atrasadas"  value={String(atrasadas)} sub="obras" accent="#dc2626"  style={{ padding: "0.6rem 0.75rem" }} />
@@ -674,7 +683,7 @@ function TabOperacional({
             return (
               <a
                 key={o.id}
-                href={o.id.startsWith("demo-") ? undefined : `/dashboard/obras/${o.id}`}
+                href={o.id.startsWith("demo-") ? undefined : `/dashboard/obras/${o.id}?from=admin`}
                 style={{ display: "flex", alignItems: "center", gap: 12, padding: "0.85rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)", textDecoration: "none", cursor: o.id.startsWith("demo-") ? "default" : "pointer" }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>

@@ -41,8 +41,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma Client
-        run: pnpm --filter @imbobi/api run prisma:generate
+      - name: Build shared packages and generate Prisma client
+        run: |
+          pnpm --filter @imbobi/schemas build
+          pnpm --filter @imbobi/core build
+          pnpm db:generate
 
       - name: Type check
         run: pnpm type-check
@@ -51,7 +54,7 @@ jobs:
         run: pnpm --filter @imbobi/api lint
 
       - name: Build API
-        run: pnpm build --filter @imbobi/api
+        run: pnpm build:api
 
   security:
     name: Security Scan

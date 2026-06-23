@@ -169,7 +169,7 @@
 
 **Run With**:
 ```bash
-npm run db:seed:beta
+pnpm seed:beta
 ```
 
 ---
@@ -453,7 +453,7 @@ BETA_TEST_CREDENTIALS.md
 - [ ] Review STRIPE_TEST_MODE_GUIDE.md (if handling payments)
 - [ ] Secure BETA_TEST_CREDENTIALS.md (password manager)
 - [ ] Review BETA_LAUNCH_CHECKLIST.md for your timeline
-- [ ] Run seed script: `npm run db:seed:beta`
+- [ ] Run seed script: `pnpm seed:beta`
 - [ ] Implement backend services (Phase 1-4)
 - [ ] Implement frontend components (Phase 5-6)
 - [ ] Configure Stripe API keys

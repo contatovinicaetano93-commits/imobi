@@ -42,8 +42,8 @@ REDIS_PASSWORD=
 
 # JWT & Auth
 JWT_SECRET=<generate-random-256-bit-key>
-JWT_EXPIRY=15m
-REFRESH_TOKEN_EXPIRY=7d
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
 
 # Encryption
 ENCRYPTION_KEY=<generate-random-256-bit-key>

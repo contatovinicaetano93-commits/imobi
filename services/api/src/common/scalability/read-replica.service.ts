@@ -56,10 +56,11 @@ export class ReadReplicaService {
         // In production, would track actual connection counts
         return this.replicas[0];
       case 'round-robin':
-      default:
+      default: {
         const replica = this.replicas[this.currentReplicaIndex];
         this.currentReplicaIndex = (this.currentReplicaIndex + 1) % this.replicas.length;
         return replica;
+      }
     }
   }
 

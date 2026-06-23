@@ -24,7 +24,7 @@
 ### Step 1: Seed Test Data (2 min)
 ```bash
 cd /home/user/imobi
-pnpm db:seed:beta
+pnpm seed:beta
 ```
 
 **Output** 🎉:
@@ -35,51 +35,44 @@ pnpm db:seed:beta
 
 ### Step 2: Configure Stripe (3 min)
 ```bash
-# Add to Render environment variables:
-STRIPE_SECRET_KEY=sk_test_YOUR_KEY
-STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY
-STRIPE_WEBHOOK_SECRET=whsec_test_YOUR_KEY
+# Render dashboard (API) — nunca commitar chaves:
+STRIPE_SECRET_KEY=sk_test_…
+STRIPE_PUBLISHABLE_KEY=pk_test_…
+STRIPE_WEBHOOK_SECRET=whsec_…
 ```
+
+Cartões de teste: https://stripe.com/docs/testing (não versionar números no repo).
 
 ### Step 3: Deploy & Go Live (5 min)
 ```bash
-git add -A
-git commit -m "chore: beta launch infrastructure"
 git push origin claude/imobi-mvp-fintech-status-jrr2ab
-pnpm render:redeploy
+pnpm render:env:push && pnpm render:redeploy
 pnpm vercel:env:push
 bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com
 ```
 
----
-
-## 👥 Test Users (10 Ready to Use)
-
-All passwords: `Beta123!@#` (must change on first login)
-
-| User | Email | Role | Tier |
-|------|-------|------|------|
-| João | joao.silva@teste.imobi.com | TOMADOR | STANDARD |
-| Maria | maria.santos@teste.imobi.com | GESTOR_OBRA | POWER |
-| Pedro | pedro.costa@teste.imobi.com | ENGENHEIRO | STANDARD |
-| Ana | ana.oliveira@teste.imobi.com | COMERCIAL | POWER |
-| Carlos | carlos.mendes@teste.imobi.com | GESTOR_FUNDO | VIP |
-| Lucia | lucia.ferreira@teste.imobi.com | ADMIN | VIP |
-| Roberto | roberto.alves@teste.imobi.com | TOMADOR | STANDARD |
-| Fernanda | fernanda.lima@teste.imobi.com | GESTOR | POWER |
-| Gustavo | gustavo.rocha@teste.imobi.com | CONSTRUTOR | STANDARD |
-| Helena | helena.martins@teste.imobi.com | PARCEIRO | VIP |
+Ver `docs/DEPLOY_STACK.md`.
 
 ---
 
-## 💳 Stripe Test Cards
+## 👥 Usuários de teste (dev / E2E)
 
-**Success**: `4242 4242 4242 4242`  
-**Decline**: `4000 0000 0000 0002`  
-**3D Secure**: `4000 0025 0000 3155`
+**Senhas não ficam no git.** Rode `pnpm seed:dev` e use `apps/e2e/.env.e2e.example` como modelo.
 
-Expiry: Any future (e.g., 12/25)  
-CVC: Any 3 digits
+| Perfil | Email (após seed:dev) |
+|--------|------------------------|
+| Tomador | tomador@imobi.com.br |
+| Gestor | gestor@imobi.com.br |
+| Engenheiro | eng@imobi.com.br |
+| Admin | admin@imobi.com.br |
+
+Detalhes: `docs/BETA_TEST_CREDENTIALS.md`
+
+---
+
+## 💳 Stripe
+
+Use apenas a [documentação oficial de testes](https://stripe.com/docs/testing). Não commitar PAN/CVC de cartões de teste.
 
 ---
 
@@ -237,10 +230,10 @@ CVC: Any 3 digits
 - [ ] Brief support team
 
 ### Deploy
-- [ ] Run seed script: `pnpm db:seed:beta`
-- [ ] Push configured branch: `git push origin claude/imobi-mvp-fintech-status-jrr2ab`
-- [ ] Redeploy API on Render: `pnpm render:redeploy`
-- [ ] Sync web env on Vercel: `pnpm vercel:env:push`
+- [ ] Run seed script: `pnpm seed:beta` (staging: `pnpm seed:staging`)
+- [ ] Push branch: `git push origin claude/imobi-mvp-fintech-status-jrr2ab`
+- [ ] Deploy API: `pnpm render:env:push && pnpm render:redeploy`
+- [ ] Sync web env: `pnpm vercel:env:push`
 - [ ] Verify health: `bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com`
 
 ### Go Live

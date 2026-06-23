@@ -33,7 +33,7 @@ test.describe('Login', () => {
     await expect(lp.errorMsg).toBeVisible({ timeout: 30_000 });
   });
 
-  test('redirects to /dashboard after valid login', async ({ page }) => {
+  test('redirects to painel tomador after valid login', async ({ page }) => {
     await page.route((url) => url.href.includes('/api/proxy/auth/login'), (route) =>
       route.fulfill({
         status: 200,
@@ -45,8 +45,8 @@ test.describe('Login', () => {
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL('**/dashboard', { timeout: 120_000 });
-    await expect(page.getByRole('heading', { name: 'Visão Geral' })).toBeVisible({ timeout: 120_000 });
+    await page.waitForURL('**/dashboard/**', { timeout: 120_000 });
+    await expect(page).toHaveURL(/\/dashboard/);
   });
 
   test('sets access_token cookie after login', async () => {

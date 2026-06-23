@@ -40,26 +40,26 @@ pnpm db:generate
 ### Step 2: Start Services (1 min)
 
 ```bash
-# Terminal 1: Backend API
+# Terminal 1: Backend API (default port 4000)
 cd services/api
 pnpm dev
-# API running at http://localhost:3000
+# API running at http://localhost:4000
 
-# Terminal 2: Frontend
+# Terminal 2: Frontend (default port 3000)
 cd apps/web
 pnpm dev
-# Web running at http://localhost:3001
+# Web running at http://localhost:3000
 ```
 
 ### Step 3: Verify Everything Works (2 min)
 
 ```bash
 # Test API health
-curl http://localhost:3000/health
+curl http://localhost:4000/api/v1/health
 # Expected: {"status":"ok",...}
 
 # Test frontend loads
-open http://localhost:3001
+open http://localhost:3000
 # Should see login page
 
 # Run integration tests
@@ -74,7 +74,7 @@ pnpm test --testPathPattern=integration.test
 
 ```env
 NODE_ENV=development
-PORT=3000
+PORT=4000
 DATABASE_URL=postgresql://imobi_user:imobi_password@localhost:5432/imobi
 DATABASE_POOL_SIZE=10
 REDIS_HOST=localhost
@@ -91,7 +91,7 @@ SWAGGER_ENABLED=true
 ### Frontend (.env.local)
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:4000
 NEXT_PUBLIC_API_TIMEOUT=30000
 NEXT_PUBLIC_SENTRY_ENABLED=false
 ```
@@ -125,7 +125,7 @@ pnpm test:e2e          # Run E2E tests
 
 ```bash
 # Register
-curl -X POST http://localhost:3000/api/v1/auth/registro \
+curl -X POST http://localhost:4000/api/v1/auth/registro \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "Test User",
@@ -140,7 +140,7 @@ curl -X POST http://localhost:3000/api/v1/auth/registro \
   }'
 
 # Login (save accessToken from response)
-curl -X POST http://localhost:3000/api/v1/auth/login \
+curl -X POST http://localhost:4000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@localhost.test",
@@ -148,7 +148,7 @@ curl -X POST http://localhost:3000/api/v1/auth/login \
   }'
 
 # Call protected endpoint
-curl http://localhost:3000/api/v1/credito \
+curl http://localhost:4000/api/v1/credito \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -166,8 +166,9 @@ createuser imobi_user -P
 redis-cli ping          # Should return PONG
 brew services start redis  # macOS
 
-# Port already in use
-lsof -i :3000          # Find process
+# Port already in use (API: 4000, Web: 3000)
+lsof -i :4000          # Find API process
+lsof -i :3000          # Find web process
 kill -9 <PID>          # Kill it
 ```
 

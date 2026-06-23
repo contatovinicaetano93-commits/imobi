@@ -22,7 +22,7 @@ function calculatePasswordStrength(password: string): PasswordStrength {
   if (/[a-z]/.test(password)) score++;
   if (/[A-Z]/.test(password)) score++;
   if (/[0-9]/.test(password)) score++;
-  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++;
+  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?]/.test(password)) score++;
 
   const strengthMap: Record<number, PasswordStrength> = {
     0: { score: 0, label: "Muito fraca", color: "text-red-600" },

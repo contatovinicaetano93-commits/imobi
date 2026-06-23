@@ -38,10 +38,11 @@ if (!token) {
   process.exit(1);
 }
 
-const JWT_SECRET =
-  process.env.JWT_SECRET ??
-  fileEnv.JWT_SECRET ??
-  'aNsc0mF85zpxIe4x4RSS+fBlozx1wDrFb+B+U29QWwQy/ea8rguXy9sQNFgkbtgbNuoZ56VL0PEW1XZhhTmsLQ==';
+const JWT_SECRET = (process.env.JWT_SECRET ?? fileEnv.JWT_SECRET ?? '').trim();
+if (!JWT_SECRET) {
+  console.error('❌ JWT_SECRET ausente em .env.vercel.local (obrigatório — sem fallback no script)');
+  process.exit(1);
+}
 
 const NEXT_PUBLIC_API_URL =
   process.env.NEXT_PUBLIC_API_URL ??

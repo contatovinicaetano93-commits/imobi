@@ -1,6 +1,6 @@
 {
   "buildCommand": "next build",
-  "installCommand": "cd ../.. && pnpm install && rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile && rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom",
   "outputDirectory": ".next",
   "framework": "nextjs"
 }

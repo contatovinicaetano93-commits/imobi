@@ -60,7 +60,7 @@ Generates:
 
 **Run with**:
 ```bash
-npm run db:seed:beta
+pnpm seed:beta
 ```
 
 ### 4. Backend Services (Code)
@@ -108,7 +108,7 @@ npm run db:seed:beta
 10. **Helena Martins** (PARCEIRO) - Partner (VIP)
 
 **All Credentials**:
-- Password: `Beta123!@#` (must change on first login)
+- Password: `(stored in password manager — not in git)` (must change on first login)
 - Tier levels: STANDARD (3), POWER (3), VIP (4)
 - KYC Status: 9 approved, 1 pending
 - Valid for: 30 days from seeding
@@ -130,14 +130,13 @@ npm run db:seed:beta
 ### Payment Processing (Stripe)
 
 **Test Mode Configured**:
-- Secret Key: `sk_test_...` (in Railway/Render env)
+- Secret Key: `sk_test_...` (in Render env)
 - Publishable Key: `pk_test_...` (in frontend .env)
 - Webhook Secret: `whsec_test_...` (verified)
 
-**Test Payment Methods**:
-- ✅ Success: `4242 4242 4242 4242`
-- ❌ Decline: `4000 0000 0000 0002`
-- 🔐 3D Secure: `4000 0025 0000 3155`
+**Test Payment Methods** (ver https://stripe.com/docs/testing — não versionar PANs):
+
+- ✅ Success, ❌ Decline, 🔐 3D Secure: cartões listados na documentação oficial do Stripe
 
 **Flow**:
 1. User initiates payment
@@ -267,12 +266,12 @@ npx prisma db:push
 
 ### Step 2: Run Seed Script
 ```bash
-npm run db:seed:beta
+pnpm seed:beta
 ```
 
 **Output**:
 ```
-✅ Created: João Silva (joao.silva@teste.imobi.com)
+✅ Created: Tomador (tomador@imobi.com.br) via `pnpm seed:dev`
 ✅ Created: Maria Santos (maria.santos@teste.imobi.com)
 ...
 ✅ Created sample obra: Obra Beta de Teste - São Paulo
@@ -281,7 +280,7 @@ npm run db:seed:beta
 
 ### Step 3: Configure Stripe
 ```bash
-# Add to .env.vercel.local or Railway
+# Add to .env.vercel.local or .env.render.local (Render dashboard)
 STRIPE_SECRET_KEY=sk_test_YOUR_KEY
 STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY
 STRIPE_WEBHOOK_SECRET=whsec_test_YOUR_KEY
@@ -289,19 +288,19 @@ STRIPE_WEBHOOK_SECRET=whsec_test_YOUR_KEY
 
 ### Step 4: Deploy
 ```bash
-# Deploy API
-npm run deploy:api
+# Deploy API (Render)
+pnpm render:env:push && pnpm render:redeploy
 
-# Deploy Frontend
-npm run deploy:web
+# Deploy Frontend (Vercel — auto-deploy on push or dashboard)
+pnpm vercel:env:push
 
 # Verify
-curl https://api.imobi.com/health
+curl https://imobi-api-staging.onrender.com/api/v1/health
 ```
 
 ### Step 5: Send Welcome Emails
 ```bash
-npm run send:beta-welcome-emails
+# Manual: use SendGrid dashboard or email module — no npm script
 ```
 
 ---
@@ -481,7 +480,7 @@ npm run send:beta-welcome-emails
 ### Before Launch
 
 - [ ] Create Prisma migration for beta fields
-- [ ] Run seed script: `npm run db:seed:beta`
+- [ ] Run seed script: `pnpm seed:beta`
 - [ ] Update `.env` with Stripe keys
 - [ ] Deploy API with new endpoints
 - [ ] Deploy frontend with onboarding page

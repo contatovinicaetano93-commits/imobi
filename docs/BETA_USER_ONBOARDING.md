@@ -671,17 +671,16 @@ export class StripeWebhookController {
 ## Test Payment Methods
 
 ### Successful Payments
-- Card: 4242 4242 4242 4242
+- Card: (see https://stripe.com/docs/testing)
 - Expiry: Any future date (e.g., 12/25)
 - CVC: Any 3 digits (e.g., 123)
 
 ### Failed Payments
-- Card: 4000 0000 0000 0002
+- Card: (see https://stripe.com/docs/testing — decline card)
 - Will be declined with insufficient funds
 
 ### Requires Authentication
-- Card: 4000 0025 0000 3155
-- Will trigger 3D Secure
+- Use a 3D Secure test card from https://stripe.com/docs/testing
 
 ### Testing webhook locally
 ```bash
@@ -699,327 +698,35 @@ View all test payments at: https://dashboard.stripe.com/test/payments
 
 ---
 
-## 👥 PHASE 4: TEST DATA SEEDING (10 Beta Users)
+## 👥 PHASE 4: TEST DATA SEEDING
 
-### 4.1 Seed Script
+### 4.1 Seed script (fonte canônica)
 
-Create `services/api/prisma/seed-beta-users.ts`:
+Usuários de dev/E2E vêm de `services/api/src/seeds/dev-seed.ts` — **não** duplicar senhas ou emails legados em markdown.
 
-```typescript
-import { PrismaClient, UsuarioTipo, KycStatus, ObraStatus, EtapaStatus } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
-
-const prisma = new PrismaClient();
-
-interface BetaUserConfig {
-  nome: string;
-  email: string;
-  cpf: string;
-  telefone: string;
-  tipo: UsuarioTipo;
-  tier: 'STANDARD' | 'POWER' | 'VIP';
-  kycStatus: KycStatus;
-  contaBanco?: string;
-  contaPix?: string;
-}
-
-const BETA_USERS: BetaUserConfig[] = [
-  {
-    nome: 'João Silva (Tomador)',
-    email: 'joao.silva@teste.imobi.com',
-    cpf: '12345678901',
-    telefone: '11987654321',
-    tipo: 'TOMADOR',
-    tier: 'STANDARD',
-    kycStatus: 'APROVADO',
-    contaBanco: '123456',
-    contaPix: 'joao@teste.imobi.com',
-  },
-  {
-    nome: 'Maria Santos (Gestor Obra)',
-    email: 'maria.santos@teste.imobi.com',
-    cpf: '12345678902',
-    telefone: '11987654322',
-    tipo: 'GESTOR_OBRA',
-    tier: 'POWER',
-    kycStatus: 'APROVADO',
-  },
-  {
-    nome: 'Pedro Costa (Engenheiro)',
-    email: 'pedro.costa@teste.imobi.com',
-    cpf: '12345678903',
-    telefone: '11987654323',
-    tipo: 'ENGENHEIRO',
-    tier: 'STANDARD',
-    kycStatus: 'APROVADO',
-  },
-  {
-    nome: 'Ana Oliveira (Comercial)',
-    email: 'ana.oliveira@teste.imobi.com',
-    cpf: '12345678904',
-    telefone: '11987654324',
-    tipo: 'COMERCIAL',
-    tier: 'POWER',
-    kycStatus: 'APROVADO',
-  },
-  {
-    nome: 'Carlos Mendes (Gestor Fundo)',
-    email: 'carlos.mendes@teste.imobi.com',
-    cpf: '12345678905',
-    telefone: '11987654325',
-    tipo: 'GESTOR_FUNDO',
-    tier: 'VIP',
-    kycStatus: 'APROVADO',
-  },
-  {
-    nome: 'Lucia Ferreira (Admin)',
-    email: 'lucia.ferreira@teste.imobi.com',
-    cpf: '12345678906',
-    telefone: '11987654326',
-    tipo: 'ADMIN',
-    tier: 'VIP',
-    kycStatus: 'APROVADO',
-  },
-  {
-    nome: 'Roberto Alves (Tomador)',
-    email: 'roberto.alves@teste.imobi.com',
-    cpf: '12345678907',
-    telefone: '11987654327',
-    tipo: 'TOMADOR',
-    tier: 'STANDARD',
-    kycStatus: 'PENDENTE',
-  },
-  {
-    nome: 'Fernanda Lima (Gestor)',
-    email: 'fernanda.lima@teste.imobi.com',
-    cpf: '12345678908',
-    telefone: '11987654328',
-    tipo: 'GESTOR',
-    tier: 'POWER',
-    kycStatus: 'APROVADO',
-  },
-  {
-    nome: 'Gustavo Rocha (Construtor)',
-    email: 'gustavo.rocha@teste.imobi.com',
-    cpf: '12345678909',
-    telefone: '11987654329',
-    tipo: 'CONSTRUTOR',
-    tier: 'STANDARD',
-    kycStatus: 'APROVADO',
-  },
-  {
-    nome: 'Helena Martins (Parceiro)',
-    email: 'helena.martins@teste.imobi.com',
-    cpf: '12345678910',
-    telefone: '11987654330',
-    tipo: 'PARCEIRO',
-    tier: 'VIP',
-    kycStatus: 'APROVADO',
-  },
-];
-
-function generateInviteCode(): string {
-  return crypto.randomBytes(16).toString('hex').toUpperCase();
-}
-
-function hashPassword(password: string): string {
-  return bcrypt.hashSync(password, 10);
-}
-
-async function seedBetaUsers() {
-  console.log('🌱 Seeding beta users...');
-
-  for (const userConfig of BETA_USERS) {
-    const betaExpireEm = new Date();
-    betaExpireEm.setDate(betaExpireEm.getDate() + 30);
-
-    try {
-      const usuario = await prisma.usuario.upsert({
-        where: { email: userConfig.email },
-        update: {
-          betaTierLevel: userConfig.tier,
-          kycStatus: userConfig.kycStatus,
-        },
-        create: {
-          nome: userConfig.nome,
-          email: userConfig.email,
-          cpf: userConfig.cpf,
-          telefone: userConfig.telefone,
-          tipo: userConfig.tipo,
-          passwordHash: hashPassword('Beta123!@#'), // Default test password
-          betaTierLevel: userConfig.tier,
-          betaInviteCode: generateInviteCode(),
-          betaInvitedEm: new Date(),
-          betaExpireEm,
-          kycStatus: userConfig.kycStatus,
-          consentidoTermos: true,
-          consentidoPrivacy: true,
-          consentidoKyc: true,
-          consentidoMarketing: true,
-          contaBanco: userConfig.contaBanco || '999999',
-          contaAgencia: '0001',
-          contaNumero: '123456',
-          contaTitular: userConfig.nome,
-          contaPix: userConfig.contaPix || `${userConfig.email}`,
-          feedbackOptIn: true,
-        },
-      });
-
-      console.log(`✅ Created: ${usuario.nome} (${usuario.email})`);
-    } catch (error) {
-      console.error(`❌ Failed to create ${userConfig.nome}:`, error);
-    }
-  }
-}
-
-async function seedSampleObraAndCredito() {
-  console.log('🏗️ Seeding sample obras and créditos...');
-
-  // Get first tomador user
-  const tomador = await prisma.usuario.findFirst({
-    where: { tipo: 'TOMADOR' },
-  });
-
-  if (!tomador) {
-    console.log('⚠️ No tomador user found, skipping obras');
-    return;
-  }
-
-  // Create credit
-  const credito = await prisma.credito.create({
-    data: {
-      usuarioId: tomador.usuarioId,
-      valorAprovado: 500000,
-      valorLiberado: 0,
-      taxaMensal: 0.0099,
-      prazoMeses: 60,
-    },
-  });
-
-  console.log(`✅ Created credit: R$ ${credito.valorAprovado}`);
-
-  // Create obra
-  const obra = await prisma.obra.create({
-    data: {
-      creditoId: credito.creditoId,
-      usuarioId: tomador.usuarioId,
-      nome: 'Obra Beta de Teste',
-      endereco: 'Av. Paulista, 1000 - São Paulo, SP',
-      geoLatitude: -23.5505,
-      geoLongitude: -46.6333,
-      areaM2: 250,
-      tipo: 'RESIDENCIAL',
-      status: ObraStatus.AGUARDANDO_HOMOLOGACAO,
-    },
-  });
-
-  console.log(`✅ Created obra: ${obra.nome}`);
-
-  // Create etapas
-  const etapas = [
-    { nome: 'Fundação', ordem: 1, percentualObra: 10, valorLiberacao: 50000 },
-    { nome: 'Estrutura', ordem: 2, percentualObra: 25, valorLiberacao: 125000 },
-    { nome: 'Alvenaria', ordem: 3, percentualObra: 15, valorLiberacao: 75000 },
-    { nome: 'Acabamento', ordem: 4, percentualObra: 30, valorLiberacao: 150000 },
-    { nome: 'Finalização', ordem: 5, percentualObra: 20, valorLiberacao: 100000 },
-  ];
-
-  for (const etapaData of etapas) {
-    const etapa = await prisma.etapaObra.create({
-      data: {
-        obraId: obra.obraId,
-        ...etapaData,
-        status: EtapaStatus.PLANEJADA,
-      },
-    });
-
-    console.log(`  ✅ Created etapa: ${etapa.nome}`);
-  }
-}
-
-async function main() {
-  try {
-    await seedBetaUsers();
-    await seedSampleObraAndCredito();
-
-    console.log('\n✅ Beta seed completed successfully!');
-  } catch (error) {
-    console.error('❌ Seed failed:', error);
-    process.exit(1);
-  } finally {
-    await prisma.$disconnect();
-  }
-}
-
-main();
+```bash
+pnpm seed:dev
+# Staging (Render Postgres):
+# DATABASE_URL="postgresql://…" pnpm seed:dev
 ```
 
-### 4.2 Add to package.json scripts
+Credenciais e E2E: `docs/BETA_TEST_CREDENTIALS.md` e `apps/e2e/.env.e2e.example` (gitignored quando preenchido).
+
+### 4.2 package.json (raiz)
+
+Já configurado:
 
 ```json
 {
   "scripts": {
-    "db:seed": "ts-node services/api/prisma/seed.ts",
-    "db:seed:beta": "ts-node services/api/prisma/seed-beta-users.ts",
-    "db:reset": "prisma migrate reset",
-    "db:setup": "npm run db:migrate && npm run db:seed:beta"
+    "seed:dev": "pnpm --filter @imbobi/api seed:dev"
   }
 }
 ```
 
-### 4.3 Test User Credentials Documentation
+### 4.3 Documentação de credenciais
 
-**File**: `docs/BETA_TEST_CREDENTIALS.md` (git-ignored copy in `.env.beta`)
-
-```markdown
-# Beta Test User Credentials
-
-## ⚠️ SECURE DOCUMENT - DO NOT COMMIT
-
-**Generated**: June 23, 2026  
-**Valid Until**: July 23, 2026  
-**Expires In**: 30 days
-
-### Test Credentials Summary
-
-| User | Email | Role | Password | Status | Tier |
-|------|-------|------|----------|--------|------|
-| João Silva | joao.silva@teste.imobi.com | TOMADOR | Beta123!@# | KYC ✅ | STANDARD |
-| Maria Santos | maria.santos@teste.imobi.com | GESTOR_OBRA | Beta123!@# | KYC ✅ | POWER |
-| Pedro Costa | pedro.costa@teste.imobi.com | ENGENHEIRO | Beta123!@# | KYC ✅ | STANDARD |
-| Ana Oliveira | ana.oliveira@teste.imobi.com | COMERCIAL | Beta123!@# | KYC ✅ | POWER |
-| Carlos Mendes | carlos.mendes@teste.imobi.com | GESTOR_FUNDO | Beta123!@# | KYC ✅ | VIP |
-| Lucia Ferreira | lucia.ferreira@teste.imobi.com | ADMIN | Beta123!@# | KYC ✅ | VIP |
-| Roberto Alves | roberto.alves@teste.imobi.com | TOMADOR | Beta123!@# | KYC ⏳ | STANDARD |
-| Fernanda Lima | fernanda.lima@teste.imobi.com | GESTOR | Beta123!@# | KYC ✅ | POWER |
-| Gustavo Rocha | gustavo.rocha@teste.imobi.com | CONSTRUTOR | Beta123!@# | KYC ✅ | STANDARD |
-| Helena Martins | helena.martins@teste.imobi.com | PARCEIRO | Beta123!@# | KYC ✅ | VIP |
-
-### How to Use
-
-1. Go to https://app.imobi.com/login
-2. Enter email and password from table above
-3. Change password on first login
-4. Complete KYC if required
-5. Start testing!
-
-### Test Data Included
-
-- 1 Sample "Obra Beta de Teste" (only for João Silva)
-- 5 Construction Stages (Fundação → Finalização)
-- R$ 500,000 credit approved
-- Sample pipeline stages for comercial team
-
-### Stripe Test Cards
-
-**Success**: 4242 4242 4242 4242  
-**Fail**: 4000 0000 0000 0002  
-**3D Secure**: 4000 0025 0000 3155
-
-Expiry: Any future date (e.g., 12/25)  
-CVC: Any 3 digits (e.g., 123)
-```
+Ver `docs/BETA_TEST_CREDENTIALS.md` — sem senhas ou cartões Stripe no repositório.
 
 ---
 
@@ -1716,22 +1423,22 @@ pnpm db:generate
 psql $DATABASE_URL < services/api/prisma/migrations/xxx_add_beta_fields.sql
 
 # 3. Seed test users
-npm run db:seed:beta
+pnpm seed:beta
 
 # 4. Deploy updated API
-npm run build:api
+pnpm build:api
 git push origin claude/imobi-mvp-fintech-status-jrr2ab
+pnpm render:env:push && pnpm render:redeploy
 
 # 5. Deploy updated frontend
-npm run build:web
-vercel deploy apps/web
+pnpm --filter @imbobi/web build
+pnpm vercel:env:push
 
 # 6. Verify deployments
-curl https://api.imobi.com/health
-curl https://app.imobi.com/
+curl https://imobi-api-staging.onrender.com/api/v1/health
+curl https://imobi-web.vercel.app/
 
-# 7. Send test email
-npm run test:email:welcome
+# 7. Send test email (manual via SendGrid dashboard)
 
 # 8. Trigger launch!
 ```

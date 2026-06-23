@@ -25,7 +25,7 @@
 - **Database**: PostgreSQL staging unreachable (network/infrastructure)
 - **Redis**: Upstash Cloud connectivity pending
 - **Testing**: Full integration tests ready but blocked on DB access
-- **Deployment**: Ready for Vercel (web) + Railway (API)
+- **Deployment**: Ready for Vercel (web) + Render (API)
 
 ---
 
@@ -67,7 +67,7 @@
 | Cache Setup | Redis configuration | ⏳ Blocked |
 | Testing | Integration tests, E2E | ⏳ Blocked |
 | Monitoring | Sentry, New Relic setup | ⏳ Blocked |
-| Deployment | Blue-green to Railway | ⏳ Blocked |
+| Deployment | Blue-green to Render | ⏳ Blocked |
 
 **Unblocked by**: Fixing database/Redis connectivity
 
@@ -227,7 +227,7 @@ services/api/
    
 2. Get Redis connectivity
    - Use Upstash CLI, or
-   - Deploy to Render/Railway
+   - Deploy to Render
 
 3. Run full integration tests once DB available
 

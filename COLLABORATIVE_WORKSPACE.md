@@ -20,13 +20,22 @@
 - [x] .cursorrules development rules
 - [x] ARCHITECTURE_RESILIENCE_API_FIRST.md master guide
 
-### Phase 2: Build & Deployment Readiness 🔧 IN PROGRESS
-- [ ] Fix: Next.js SSR build error (pre-existing, non-blocking)
-- [ ] Build verification on local machine
+### Phase 2: Build & Deployment Readiness 🔧 IN PROGRESS (Cursor)
+- [x] Build verification on local machine (`pnpm --filter @imbobi/web build` ✅ jun/2026)
+- [x] Environment variables setup guide (`docs/DEPLOY_STACK.md`)
+- [x] Vercel deployment configuration (scripts `vercel:env:push`)
+- [x] Render API staging live + health `ok`
+- [x] E2E validation suite setup (`pnpm test:e2e:local` / `test:e2e:staging`)
+- [ ] Fix: Next.js SSR build error (pre-existing — build passou jun/2026; monitorar)
 - [ ] Production build optimization
-- [ ] Environment variables setup guide
-- [ ] Vercel deployment configuration
-- [ ] E2E validation suite setup
+- [ ] E2E staging full suite green — **bloqueado:** usuários seed ausentes no DB staging (401 login)
+
+### 2026-06-23 — Cursor: Fase 2 (paralelo ao Claude backend review)
+- ✅ Web production build OK
+- ✅ E2E scripts + seed users alinhados (`tomador@imobi.com.br`, etc.)
+- ✅ `auth.setup` com cookie domain dinâmico (localhost + Vercel)
+- ✅ Render staging `status: ok`
+- 🔧 Claude em paralelo: ZodPipe controllers, auth redirect layout, EtapasContent race, FK schema
 
 ### Phase 3: Core Features Implementation ✅ COMPLETE
 - [x] A. Resilience Implementation ✅ COMPLETE

@@ -37,8 +37,10 @@ const preflight = await fetch(`${env.API_URL}/auth/login`, {
 
 if (!preflight.ok) {
   console.error('\n❌ Staging: login tomador falhou — usuários de teste ausentes no banco Render.');
-  console.error('   Claude/backend: rodar seed ou GET /api/v1/setup?secret=SETUP_SECRET no staging.');
-  console.error('   Local: pnpm seed:dev (com DATABASE_URL do Render)\n');
+  console.error('   1. Crie .env.render.local (ver .env.render.example)');
+  console.error('   2. pnpm seed:staging   # DATABASE_URL do Render Postgres');
+  console.error('   ou: pnpm seed:staging -- --setup   # com SETUP_SECRET no Render');
+  console.error('   3. pnpm test:e2e:staging\n');
   process.exit(1);
 }
 

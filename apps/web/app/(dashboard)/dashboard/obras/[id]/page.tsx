@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import type { CSSProperties } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   Building2,
   MapPin,
@@ -29,6 +30,8 @@ import {
   Shield,
 } from "lucide-react";
 import { useToast } from "@/hooks/toast-context";
+import { getObrasListPath, getObraDetailBreadcrumbs } from "@/lib/panel-navigation";
+import { normalizeRole } from "@/lib/role-permissions";
 import "./obra-detail.css";
 
 // ─── Design tokens ──────────────────────────────────────────────────────────
@@ -2314,6 +2317,8 @@ export default function ObraDetailPage({
   params: { id: string };
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromAdmin = searchParams.get("from") === "admin";
   const obraId = params.id;
 
   const [tab, setTab] = useState<
@@ -2326,6 +2331,17 @@ export default function ObraDetailPage({
   const [loading, setLoading] = useState(true);
 
   const fetchObra = useCallback(async () => {
+    const listPath = (() => {
+      try {
+        const raw = sessionStorage.getItem("imobi_auth");
+        if (raw) {
+          const { d } = JSON.parse(raw);
+          if (d?.role) return getObrasListPath(d.role);
+        }
+      } catch { /* ignore */ }
+      return fromAdmin ? "/dashboard/admin/obras" : "/dashboard/obras";
+    })();
+
     try {
       const [obraData, progressoData] = await Promise.all([
         fetch(`/api/proxy/obras/${obraId}`).then((r) =>
@@ -2336,15 +2352,15 @@ export default function ObraDetailPage({
           .catch(() => 0),
       ]);
       if (!obraData) {
-        router.replace("/dashboard/obras");
+        router.replace(listPath as "/dashboard/obras");
         return;
       }
       setObra(obraData);
       setProgresso(progressoData ?? 0);
     } catch {
-      router.replace("/dashboard/obras");
+      router.replace(listPath as "/dashboard/obras");
     }
-  }, [obraId, router]);
+  }, [obraId, router, fromAdmin]);
 
   const fetchDocumentos = useCallback(async () => {
     try {
@@ -2432,6 +2448,9 @@ export default function ObraDetailPage({
 
   const obraNome = obra.nome ?? "Obra";
   const etapas = obra.etapas ?? [];
+  const effectiveRole = role ?? (fromAdmin ? "ADMIN" : null);
+  const obrasListPath = getObrasListPath(effectiveRole);
+  const breadcrumbs = getObraDetailBreadcrumbs(effectiveRole, obraNome);
 
   return (
     <div style={{ maxWidth: 960, ...j }}>
@@ -2442,8 +2461,36 @@ export default function ObraDetailPage({
         }
       `}</style>
 
+      {normalizeRole(effectiveRole) === "ADMIN" && (
+        <div
+          style={{
+            marginBottom: 16,
+            padding: "0.65rem 1rem",
+            borderRadius: 12,
+            background: "rgba(27,79,216,0.06)",
+            border: "1px solid rgba(27,79,216,0.15)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <p style={{ ...j, fontSize: 12, color: ROYAL, fontWeight: 600, margin: 0 }}>
+            Visualizando obra no contexto Admin — homologação e pagamentos no painel de gestão.
+          </p>
+          <Link
+            href={"/dashboard/admin/obras" as "/dashboard/obras"}
+            style={{ ...j, fontSize: 12, fontWeight: 700, color: ROYAL, textDecoration: "none" }}
+          >
+            ← Voltar à gestão Admin
+          </Link>
+        </div>
+      )}
+
       {/* Breadcrumb */}
-      <div
+      <nav
+        aria-label="Navegação"
         style={{
           display: "flex",
           alignItems: "center",
@@ -2451,31 +2498,33 @@ export default function ObraDetailPage({
           fontSize: 13,
           color: "#9CA3AF",
           marginBottom: 6,
+          flexWrap: "wrap",
           ...j,
         }}
       >
-        <a
-          href="/dashboard/obras"
-          style={{
-            color: "#9CA3AF",
-            textDecoration: "none",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.color = ROYAL)
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color = "#9CA3AF")
-          }
-        >
-          <Building2 size={13} />
-          Obras
-        </a>
-        <span>/</span>
-        <span style={{ color: NAVY, fontWeight: 600 }}>{obraNome}</span>
-      </div>
+        {breadcrumbs.map((item, i) => (
+          <span key={`${item.label}-${i}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {i > 0 && <span>/</span>}
+            {item.href ? (
+              <Link
+                href={item.href as "/dashboard/obras"}
+                style={{
+                  color: "#9CA3AF",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                {i === 0 && <Building2 size={13} />}
+                {item.label}
+              </Link>
+            ) : (
+              <span style={{ color: NAVY, fontWeight: 600 }}>{item.label}</span>
+            )}
+          </span>
+        ))}
+      </nav>
 
       {/* Page header */}
       <div
@@ -2507,7 +2556,7 @@ export default function ObraDetailPage({
           )}
         </div>
         <button
-          onClick={() => router.push("/dashboard/obras")}
+          onClick={() => router.push(obrasListPath as "/dashboard/obras")}
           style={{
             display: "inline-flex",
             alignItems: "center",

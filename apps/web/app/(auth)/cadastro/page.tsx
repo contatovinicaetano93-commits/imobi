@@ -52,12 +52,12 @@ function CadastroFallback() {
 function CadastroForm() {
   const searchParams = useSearchParams();
   const simuladorNext = useMemo(
-    () => (searchParams ? buildSimuladorRedirect(searchParams) : null),
+    () => buildSimuladorRedirect(searchParams),
     [searchParams],
   );
-  const simValor = searchParams?.get("valor");
-  const simFase = searchParams?.get("fase");
-  const simPrazo = searchParams?.get("prazo");
+  const simValor = searchParams.get("valor");
+  const simFase = searchParams.get("fase");
+  const simPrazo = searchParams.get("prazo");
 
   const [erro, setErro] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);

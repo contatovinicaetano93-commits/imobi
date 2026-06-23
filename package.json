@@ -17,12 +17,18 @@
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
+    "test:e2e:local": "node scripts/run-e2e-local.mjs",
+    "test:e2e:staging": "node scripts/run-e2e-staging.mjs",
+    "test:e2e:staging:login": "node scripts/run-e2e-staging.mjs tests/auth/login.spec.ts",
     "validate:schemas": "tsx scripts/validate-schema-sync.ts",
     "db:generate": "pnpm --filter @imbobi/api run prisma:generate",
     "db:migrate": "pnpm --filter @imbobi/api prisma migrate dev",
     "db:studio": "pnpm --filter @imbobi/api prisma studio",
     "db:seed:beta": "tsx services/api/prisma/seed-beta-users.ts",
     "seed:dev": "pnpm --filter @imbobi/api seed:dev",
+    "seed:beta": "pnpm --filter @imbobi/api exec tsx prisma/seed-beta-users.ts",
+    "seed:staging": "node scripts/seed-staging.mjs",
+    "render:env:check": "node scripts/render-env-check.mjs",
     "render:env:push": "node scripts/render-push-env.mjs",
     "render:env:verify": "node scripts/render-env-verify.mjs",
     "render:redeploy": "node scripts/render-redeploy.mjs",
@@ -44,9 +50,7 @@
   ],
   "pnpm": {
     "overrides": {
-      "fastify": "4.29.1",
-      "react": "^18.3.0",
-      "react-dom": "^18.3.0"
+      "fastify": "4.29.1"
     }
   }
 }

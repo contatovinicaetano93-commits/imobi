@@ -1,5 +1,5 @@
--- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS postgis;
+-- Enable required extensions (PostGIS optional on Railway vanilla Postgres — add template later for GPS)
+-- CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- CreateEnum
