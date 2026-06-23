@@ -2,14 +2,5 @@
   "$schema": "https://schema.railpack.com",
   "packages": {
     "node": "20"
-  },
-  "steps": {
-    "build": {
-      "inputs": [{ "step": "install" }],
-      "commands": ["pnpm run build:api"]
-    }
-  },
-  "deploy": {
-    "startCommand": "pnpm --filter @imbobi/api start"
   }
 }
