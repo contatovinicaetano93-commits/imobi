@@ -4,7 +4,7 @@ import { formatarCPF, formatarTelefone } from "@imbobi/core";
 import { PerfilForm } from "./perfil-form";
 import { PerfilAvatar } from "./perfil-avatar";
 import { PerfilContaBancaria } from "./perfil-conta-bancaria";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Lock, Building2, Bell } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -129,12 +129,33 @@ export default async function PerfilPage() {
         </div>
       </div>
 
-      {/* Segurança */}
+      {/* Segurança & Dados Bancários */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-base font-bold text-gray-900 mb-5">Segurança</h2>
-        <button className="w-full border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition-colors text-sm">
-          Alterar Senha
-        </button>
+        <h2 className="text-base font-bold text-gray-900 mb-5">Configurações</h2>
+        <div className="space-y-3">
+          {/* Alterar Senha */}
+          <a href="/dashboard/perfil/seguranca" className="block w-full px-4 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center gap-3">
+            <Lock className="w-4 h-4" />
+            <span>Alterar Senha</span>
+            <span className="ml-auto text-gray-400">→</span>
+          </a>
+
+          {/* Dados Bancários */}
+          {(usuario.tipo === "CONSTRUTOR" || usuario.tipo === "TOMADOR") && (
+            <a href="/dashboard/perfil/banco" className="block w-full px-4 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center gap-3">
+              <Building2 className="w-4 h-4" />
+              <span>Dados Bancários</span>
+              <span className="ml-auto text-gray-400">→</span>
+            </a>
+          )}
+
+          {/* Preferências de Notificações */}
+          <a href="/dashboard/notificacoes/preferencias" className="block w-full px-4 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center gap-3">
+            <Bell className="w-4 h-4" />
+            <span>Preferências de Notificações</span>
+            <span className="ml-auto text-gray-400">→</span>
+          </a>
+        </div>
       </div>
     </div>
   );
