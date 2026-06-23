@@ -9,7 +9,7 @@
  * Then set: OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
  */
 
-export function initializeTracing() {
+export async function initializeTracing() {
   const traceExporterUrl = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
 
   if (!traceExporterUrl) {
@@ -18,17 +18,35 @@ export function initializeTracing() {
   }
 
   try {
-    // Dynamic import to avoid hard dependency
-    const { NodeSDK } = require('@opentelemetry/sdk-node');
-    const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
-    const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
-    const { Resource } = require('@opentelemetry/resources');
-    const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
+    // Runtime-only imports — OTEL packages are optional (not in package.json)
+    const load = (specifier: string): Promise<Record<string, unknown>> =>
+      new Function("s", "return import(s)")(specifier) as Promise<Record<string, unknown>>;
+
+    const [sdkNode, autoInstr, otlpExporter, resources, semconv] = await Promise.all([
+      load("@opentelemetry/sdk-node"),
+      load("@opentelemetry/auto-instrumentations-node"),
+      load("@opentelemetry/exporter-trace-otlp-http"),
+      load("@opentelemetry/resources"),
+      load("@opentelemetry/semantic-conventions"),
+    ]);
+
+    const NodeSDK = sdkNode["NodeSDK"] as new (config: Record<string, unknown>) => {
+      start: () => void;
+    };
+    const getNodeAutoInstrumentations = autoInstr["getNodeAutoInstrumentations"] as () => unknown;
+    const OTLPTraceExporter = otlpExporter["OTLPTraceExporter"] as new (config: {
+      url: string;
+    }) => unknown;
+    const Resource = resources["Resource"] as new (attrs: Record<string, string>) => unknown;
+    const SemanticResourceAttributes = semconv["SemanticResourceAttributes"] as Record<
+      string,
+      string
+    >;
 
     const sdk = new NodeSDK({
       resource: new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: 'imobi-api',
-        [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.0',
+        [SemanticResourceAttributes.SERVICE_NAME]: "imobi-api",
+        [SemanticResourceAttributes.SERVICE_VERSION]: "1.0.0",
       }),
       instrumentations: [getNodeAutoInstrumentations()],
       traceExporter: new OTLPTraceExporter({

@@ -81,21 +81,39 @@ if (serviceId && !serviceId.startsWith('srv-')) {
   serviceId = `srv-${serviceId}`;
 }
 
+const PROD_SERVICE_ID = 'srv-d8hnpmflk1mc73fc1h3g';
+const PROD_APP_URL = 'https://imobi-api-efgg.onrender.com';
 const trim = (v) => (v ?? '').trim();
 
-const redisHost = trim(fileEnv.REDIS_HOST ?? 'red-d8fkm1a8qa3s73addtng');
-const redisPort = trim(fileEnv.REDIS_PORT ?? '6379');
-const redisPassword = trim(fileEnv.REDIS_PASSWORD ?? '');
-const redisUrlFromParts = redisPassword
-  ? `redis://:${encodeURIComponent(redisPassword)}@${redisHost}:${redisPort}`
-  : `redis://${redisHost}:${redisPort}`;
+/** @param {Record<string, string>} fileEnv */
+function resolveRedisUrl(fileEnv) {
+  const url = trim(fileEnv.REDIS_URL);
+  if (url) return url;
+
+  const host = trim(fileEnv.REDIS_HOST);
+  const port = trim(fileEnv.REDIS_PORT);
+  if (!host || !port) return '';
+
+  const password = trim(fileEnv.REDIS_PASSWORD ?? '');
+  return password
+    ? `redis://:${encodeURIComponent(password)}@${host}:${port}`
+    : `redis://${host}:${port}`;
+}
+
+const redisUrl = resolveRedisUrl(fileEnv);
+if (!redisUrl) {
+  console.error(
+    '❌ Redis ausente em .env.render.local — defina REDIS_URL ou REDIS_HOST + REDIS_PORT (sem ID hardcoded)',
+  );
+  process.exit(1);
+}
 
 const env = {
   NODE_ENV: 'production',
   PORT: '4000',
   DATABASE_URL: trim(fileEnv.DATABASE_URL),
   JWT_SECRET: trim(fileEnv.JWT_SECRET),
-  REDIS_URL: trim(fileEnv.REDIS_URL) || redisUrlFromParts,
+  REDIS_URL: redisUrl,
   APP_URL: trim(fileEnv.APP_URL ?? 'https://imobi-api-staging.onrender.com'),
   CORS_ORIGIN: trim(
     fileEnv.CORS_ORIGIN ??
@@ -200,6 +218,10 @@ console.log('=== Render env push (API) ===\n');
 const sid = await resolveServiceId();
 const service = await api(`/v1/services/${sid}`);
 console.log(`Serviço: ${service.name ?? service.service?.name} (${sid})\n`);
+
+if (sid === PROD_SERVICE_ID) {
+  env.APP_URL = PROD_APP_URL;
+}
 
 const keys = Object.keys(env).filter((k) => env[k] !== undefined && env[k] !== '');
 for (const key of keys) {

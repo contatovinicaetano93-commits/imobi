@@ -3,7 +3,7 @@
  * Aponta o serviço Render para a branch que compila e dispara deploy.
  *
  *   pnpm render:deploy:fix
- *   pnpm render:deploy:fix -- --branch claude/imobi-mvp-fintech-status-jrr2ab
+ *   pnpm render:deploy:fix -- --service srv-d8hnpmflk1mc73fc1h3g  # prod
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -31,11 +31,13 @@ function loadEnv() {
 const fileEnv = loadEnv();
 const args = process.argv.slice(2);
 const branchIdx = args.indexOf('--branch');
+const serviceIdx = args.indexOf('--service');
 const statusOnly = args.includes('--status');
 const branch = branchIdx >= 0 ? args[branchIdx + 1] : DEFAULT_BRANCH;
 
 const token = process.env.RENDER_API_KEY ?? fileEnv.RENDER_API_KEY;
 let sid = process.env.RENDER_SERVICE_ID ?? fileEnv.RENDER_SERVICE_ID ?? DEFAULT_SERVICE;
+if (serviceIdx >= 0) sid = args[serviceIdx + 1];
 if (!token) {
   console.error('❌ RENDER_API_KEY ausente em .env.render.local');
   process.exit(1);
