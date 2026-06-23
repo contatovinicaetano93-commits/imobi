@@ -13,11 +13,17 @@ on:
     paths:
       - 'services/api/**'
       - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.npmrc'
       - '.github/workflows/deploy-api.yml'
   pull_request:
     paths:
       - 'services/api/**'
       - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.npmrc'
   workflow_dispatch:
 
 concurrency:
