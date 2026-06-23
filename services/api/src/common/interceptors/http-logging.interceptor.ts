@@ -1,15 +1,14 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { StructuredLoggerService } from '../logging/structured-logger.service';
+import { tap, catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 import { PrometheusService } from '../observability/prometheus.service';
 
 @Injectable()
 export class HttpLoggingInterceptor implements NestInterceptor {
-  constructor(
-    private logger: StructuredLoggerService,
-    private prometheus: PrometheusService,
-  ) {}
+  private readonly logger = new Logger('HTTP');
+
+  constructor(private prometheus: PrometheusService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
@@ -18,44 +17,38 @@ export class HttpLoggingInterceptor implements NestInterceptor {
     const requestId = headers['x-request-id'] || `req-${Date.now()}`;
 
     return next.handle().pipe(
-      tap(
-        (data) => {
-          const response = context.switchToHttp().getResponse();
-          const duration = Date.now() - startTime;
+      tap((data) => {
+        const response = context.switchToHttp().getResponse();
+        const duration = Date.now() - startTime;
 
-          this.logger.log(`${method} ${url}`, {
-            requestId,
-            method,
-            url,
-            statusCode: response.statusCode,
-            duration,
-          });
+        this.logger.debug(
+          `${method} ${url} - ${response.statusCode} (${duration}ms)`,
+        );
 
-          this.prometheus.recordHttpRequest(
-            method,
-            url.split('?')[0],
-            response.statusCode,
-            duration,
-          );
-        },
-        (error) => {
-          const duration = Date.now() - startTime;
-          this.logger.error(`${method} ${url} failed`, {
-            requestId,
-            method,
-            url,
-            duration,
-            error: error instanceof Error ? error.message : String(error),
-          });
+        this.prometheus.recordHttpRequest(
+          method,
+          url.split('?')[0],
+          response.statusCode,
+          duration,
+        );
+      }),
+      catchError((error) => {
+        const duration = Date.now() - startTime;
+        const statusCode = error?.status || error?.statusCode || 500;
 
-          this.prometheus.recordHttpRequest(
-            method,
-            url.split('?')[0],
-            error.status || 500,
-            duration,
-          );
-        },
-      ),
+        this.logger.error(
+          `${method} ${url} - ${statusCode} (${duration}ms) - ${error?.message || 'Unknown error'}`,
+        );
+
+        this.prometheus.recordHttpRequest(
+          method,
+          url.split('?')[0],
+          statusCode,
+          duration,
+        );
+
+        return throwError(() => error);
+      }),
     );
   }
 }

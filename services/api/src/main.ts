@@ -27,8 +27,7 @@ async function bootstrap() {
     new FastifyAdapter(fastifyOptions)
   );
 
-  // TODO: Fix fastify version mismatch for multipart
-  // await app.register(fastifyMultipart, { limits: { fileSize: 10 * 1024 * 1024 } }); // 10 MB
+  await app.register(fastifyMultipart, { limits: { fileSize: 10 * 1024 * 1024 } }); // 10 MB
 
   // ThrottlerGuard is registered via AppModule providers
   app.useGlobalFilters(new HttpExceptionFilter());

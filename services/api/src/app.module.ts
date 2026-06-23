@@ -114,7 +114,7 @@ const redisConfig = getRedisConfig();
   ],
   controllers: [HealthController, MetricsController],
   providers: [
-    // PrometheusService - TODO: Fix dependency injection
+    PrometheusService,
     // TieredRateLimitService,
     // StructuredLoggerService,
     // ShardingService,
@@ -130,10 +130,10 @@ const redisConfig = getRedisConfig();
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
     },
-    // {
-    //   provide: APP_INTERCEPTOR,
-    //   useClass: HttpLoggingInterceptor,
-    // },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: HttpLoggingInterceptor,
+    },
     {
       provide: APP_GUARD,
       useFactory: (
