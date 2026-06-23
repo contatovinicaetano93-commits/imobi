@@ -29,25 +29,18 @@ const env = {
 
 console.log('E2E staging:', env.BASE_URL, '→', env.API_URL);
 
-const loginBody = JSON.stringify({ email: env.E2E_TOMADOR_EMAIL, senha: env.E2E_TOMADOR_PASSWORD });
-
-let preflight = null;
+const healthUrl = `${env.API_URL.replace(/\/api\/v1\/?$/, '')}/api/v1/health`;
+let health = null;
 for (let attempt = 1; attempt <= 5; attempt++) {
-  preflight = await fetch(`${env.API_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: loginBody,
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (preflight.status !== 429) break;
+  health = await fetch(healthUrl, { signal: AbortSignal.timeout(30_000) }).catch(() => null);
+  if (health?.ok) break;
   await new Promise((r) => setTimeout(r, 3000 * attempt));
 }
 
-if (!preflight?.ok) {
-  console.error('\n❌ Staging: login tomador falhou — usuários de teste ausentes no banco Render.');
-  console.error('   Seed (mais fácil): pnpm seed:staging:from-render');
-  console.error('   (só RENDER_API_KEY real em .env.render.local — ver Account Settings no Render)');
-  console.error('   Depois: pnpm test:e2e:staging\n');
+if (!health?.ok) {
+  console.error(`\n❌ Staging API indisponível: ${healthUrl} → HTTP ${health?.status ?? 'n/a'}`);
+  console.error('   Render pode estar acordando — aguarde 1–2 min e tente de novo.');
+  console.error('   Smoke: pnpm test:smoke -- --api-only\n');
   process.exit(1);
 }
 
@@ -63,7 +56,7 @@ if (!webProbe?.ok || webBody.includes('DEPLOYMENT_NOT_FOUND')) {
   process.exit(1);
 }
 
-console.log('✓ API login tomador OK');
+console.log('✓ API health OK');
 console.log(`✓ Web ${env.BASE_URL}/login → HTTP ${webProbe.status}`);
 
 const child = spawn(

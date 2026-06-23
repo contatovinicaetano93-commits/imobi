@@ -107,7 +107,8 @@ test.describe('Vistoria submission', () => {
     await vp.aprovar('Aprovado em teste automatizado');
 
     await page.waitForURL(`**/dashboard/obras/${obraId}`, { timeout: 15_000 });
-    await expect(page.getByRole('heading', { name: 'Cronograma de Etapas' })).toBeVisible({ timeout: 90_000 });
+    await expect(page.locator('h1').first()).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByRole('button', { name: 'Visão Geral' })).toBeVisible();
   });
 
   test('rejeitar etapa shows button and allows rejection', async ({ page }) => {

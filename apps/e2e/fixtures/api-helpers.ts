@@ -1,20 +1,34 @@
 const API_URL = process.env.API_URL ?? 'http://localhost:4000/api/v1';
 
 export async function loginViaApi(email: string, password: string): Promise<string> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha: password }),
-      signal: AbortSignal.timeout(10_000),
-    });
-  } catch {
-    throw new Error(`API unreachable at ${API_URL} — is the NestJS server running?`);
+  const retryable = new Set([429, 500, 502, 503, 504]);
+  let lastError = '';
+
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha: password }),
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch {
+      throw new Error(`API unreachable at ${API_URL} — is the NestJS server running?`);
+    }
+
+    if (retryable.has(res.status)) {
+      lastError = await res.text().catch(() => res.statusText);
+      await new Promise((r) => setTimeout(r, Math.min(60_000, 3_000 * attempt)));
+      continue;
+    }
+
+    if (!res.ok) throw new Error(`API login failed for ${email}: ${res.status} ${lastError}`);
+    const data = await res.json() as { accessToken: string };
+    return data.accessToken;
   }
-  if (!res.ok) throw new Error(`API login failed for ${email}: ${res.status}`);
-  const data = await res.json() as { accessToken: string };
-  return data.accessToken;
+
+  throw new Error(`API login failed for ${email} after retries: ${lastError}`);
 }
 
 interface EtapaResumo {

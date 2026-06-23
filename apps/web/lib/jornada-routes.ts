@@ -2,6 +2,10 @@ import type { Jornada } from "@/lib/api";
 
 const ACCOUNT_PREFIXES = ["/dashboard/perfil", "/dashboard/notificacoes"];
 
+function isObrasPath(pathname: string): boolean {
+  return pathname === "/dashboard/obras" || pathname.startsWith("/dashboard/obras/");
+}
+
 /** Rotas sempre permitidas (conta). */
 function isAccountPath(pathname: string): boolean {
   return ACCOUNT_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -16,6 +20,16 @@ export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolea
 
   const href = jornada.href;
   if (pathname === href || pathname.startsWith(`${href}/`)) return true;
+
+  // Após KYC, consultar obras (lista, detalhe, vistoria) não quebra o fluxo guiado.
+  if (isObrasPath(pathname) && jornada.passoAtual !== "kyc") {
+    return true;
+  }
+
+  // Gestor acessa obras para vistoria mesmo no fluxo guiado.
+  if (jornada.perfil === "gestor" && isObrasPath(pathname)) {
+    return true;
+  }
 
   switch (jornada.passoAtual) {
     case "aguardando":

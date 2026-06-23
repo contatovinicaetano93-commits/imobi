@@ -26,26 +26,44 @@ async function assertApiReachable(): Promise<void> {
   }
 }
 
+const RETRYABLE_LOGIN_STATUSES = new Set([429, 500, 502, 503, 504]);
+
+/** Per-status target delay; caller must enforce monotonic backoff across attempts. */
+function loginRetryDelayMs(status: number, attempt: number): number {
+  if (status === 429) return Math.min(60_000, 5_000 * attempt);
+  return Math.min(30_000, 2_000 * attempt);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // Bypasses the UI entirely: calls NestJS directly to get JWT, then writes the
 // Playwright storageState file with the cookie pre-set.  This avoids the
 // Next.js + NestJS cold-start chain (can exceed 5 min on WSL2 PostgreSQL).
 async function saveAuthState(email: string, password: string, outFile: string): Promise<string> {
   let lastError = '';
-  for (let attempt = 1; attempt <= 5; attempt++) {
+  let retryDelayMs = 0;
+  for (let attempt = 1; attempt <= 8; attempt++) {
     const res = await fetch(`${NEST_API}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, senha: password }),
       signal: AbortSignal.timeout(120_000),
     });
-    if (res.status === 429) {
+    if (RETRYABLE_LOGIN_STATUSES.has(res.status)) {
       lastError = await res.text().catch(() => res.statusText);
-      await new Promise((r) => setTimeout(r, 3000 * attempt));
+      retryDelayMs = Math.max(retryDelayMs, loginRetryDelayMs(res.status, attempt));
+      await sleep(retryDelayMs);
       continue;
     }
     if (!res.ok) {
       const body = await res.text().catch(() => res.statusText);
-      throw new Error(`NestJS login failed (${res.status}) for ${email}: ${body}`);
+      const hint =
+        res.status === 401
+          ? ' Verifique seed: pnpm seed:staging:from-render'
+          : '';
+      throw new Error(`NestJS login failed (${res.status}) for ${email}: ${body}${hint}`);
     }
     const data = await res.json() as { accessToken: string; refreshToken?: string };
 
@@ -62,7 +80,10 @@ async function saveAuthState(email: string, password: string, outFile: string): 
 
     return data.accessToken;
   }
-  throw new Error(`NestJS login rate-limited for ${email}: ${lastError}`);
+  throw new Error(
+    `NestJS login failed after retries for ${email} (last: ${lastError}). ` +
+      'Render pode estar com rate limit — aguarde 1 min e tente de novo.',
+  );
 }
 
 setup.beforeAll(async () => {
@@ -94,7 +115,9 @@ setup('auth:all', async ({ page }) => {
   }
 
   const tomadorToken = await saveAuthState(TOMADOR.email, TOMADOR.password, path.join(authDir, 'tomador.json'));
+  await sleep(2_000);
   await saveAuthState(GESTOR.email, GESTOR.password, path.join(authDir, 'gestor.json'));
+  await sleep(2_000);
   await saveAuthState(ENGENHEIRO.email, ENGENHEIRO.password, path.join(authDir, 'engenheiro.json'));
 
   // Warm up /dashboard with a real JWT cookie so the authenticated route's
