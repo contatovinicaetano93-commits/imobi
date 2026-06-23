@@ -9,6 +9,8 @@
   },
   "scripts": {
     "build": "turbo run build",
+    "build:api": "turbo run build --filter=@imbobi/api",
+    "start": "pnpm --filter @imbobi/api start",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
