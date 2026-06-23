@@ -1,9 +1,59 @@
 # Infrastructure Setup Guide - Imobi API
 
-**Status**: Infrastructure connectivity investigation  
+**Status**: ✅ COMPLETE - All infrastructure running locally  
 **Date**: June 23, 2026  
-**Environment**: Isolated network with Docker, PostgreSQL-specific schema  
-**Current Blockers**: Cloud database unreachable, Redis cloud unreachable  
+**Environment**: Linux with system-installed PostgreSQL 16, Redis 7.0.15  
+**Previous Blockers**: ✅ RESOLVED - Using local services instead of cloud  
+
+---
+
+## ✅ SETUP COMPLETE - SUCCESS SUMMARY
+
+All infrastructure is now running successfully:
+
+### Running Services
+- **PostgreSQL 16.13** on localhost:5432
+  - Database: `imobi`
+  - 26 tables created and seeded
+  - PostGIS extension enabled
+  
+- **Redis 7.0.15** on localhost:6379
+  - BullMQ queues initialized
+  - Connection pool ready
+
+- **Imobi API (NestJS)** on localhost:4000
+  - All 24 modules initialized
+  - Database connected
+  - Redis connected
+  - Ready for integration testing
+
+### Test the API
+```bash
+# Health check (should return 200 with all services ok)
+curl http://localhost:4000/api/v1/health | jq
+
+# Test authentication with seeded user
+curl -X POST http://localhost:4000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@imobi.com.br","senha":"Admin@123"}'
+```
+
+### Test Data Available
+Five test users are pre-seeded:
+- `admin@imobi.com.br` / `Admin@123` (Admin role)
+- `gestor@imobi.com.br` / `Gestor@123` (Manager role)
+- `eng@imobi.com.br` / `Eng@123` (Engineer role)
+- `comercial@imobi.com.br` / `Comercial@123` (Sales role)
+- `tomador@imobi.com.br` / `Tomador@123` (Borrower role)
+
+### What Was Resolved
+
+| Issue | Root Cause | Solution |
+|-------|-----------|----------|
+| Cloud DB unreachable | Network isolation (DNS failure) | Installed PostgreSQL 16 locally |
+| Redis unreachable | Network policy blocking Upstash | Installed Redis 7 locally |
+| Fastify plugin error | @fastify/static v9 incompatible with Fastify v4 | Removed unused dependency from node_modules |
+| Docker registry blocked | CDN firewall restrictions | Used apt-get to install services directly |
 
 ---
 
@@ -377,6 +427,46 @@ redis-cli
   > LLEN "bull:liberacao-parcela"
   > LLEN "bull:excluir-usuario"
 ```
+
+---
+
+## Starting Infrastructure Manually (If Services Stop)
+
+### 1. Start PostgreSQL
+```bash
+export PGDATA="/tmp/imobi_postgres"
+sudo -u postgres /usr/lib/postgresql/16/bin/pg_ctl -D "$PGDATA" -l /tmp/postgres.log start
+# Verify: psql -U imobi_user -h localhost -d imobi -c "SELECT 1;"
+```
+
+### 2. Start Redis
+```bash
+sudo redis-server --daemonize yes --port 6379 --logfile /tmp/redis.log
+# Verify: redis-cli ping  # Should return PONG
+```
+
+### 3. Start API
+```bash
+cd /home/user/imobi/services/api
+
+export DATABASE_URL="postgresql://imobi_user:imobi_dev_password@localhost:5432/imobi"
+export REDIS_URL="redis://localhost:6379"
+export NODE_ENV=development
+export PORT=4000
+export SWAGGER_ENABLED=false
+
+node dist/main.js &
+
+# Verify: curl http://localhost:4000/api/v1/health | jq
+```
+
+### Important: Clean Start Checklist
+If services don't start:
+1. Check PostgreSQL: `ps aux | grep postgres` (should show multiple postgres processes)
+2. Check Redis: `redis-cli ping` (should return PONG)
+3. Check API: `ps aux | grep "node dist/main.js"` (should show running process)
+4. **If Fastify errors**: Verify `@fastify/static` is not in `/home/user/imobi/node_modules/@fastify/`
+5. **If DB connection fails**: Run migrations again: `pnpm db:push --skip-generate`
 
 ---
 

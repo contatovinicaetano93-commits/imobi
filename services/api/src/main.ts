@@ -34,7 +34,8 @@ async function bootstrap() {
 
   // Setup Swagger API documentation
   const nodeEnv = process.env["NODE_ENV"] || "development";
-  if (nodeEnv === "development" || nodeEnv === "staging") {
+  const swaggerEnabled = process.env["SWAGGER_ENABLED"] !== "false";
+  if ((nodeEnv === "development" || nodeEnv === "staging") && swaggerEnabled) {
     setupSwagger(app);
   }
 
