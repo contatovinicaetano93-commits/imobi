@@ -1,26 +1,26 @@
-version: "3.8"
+version: '3.8'
 
 services:
   postgres:
-    image: postgis/postgis:15-3.3
-    container_name: imbobi_postgres
+    image: postgres:16-alpine
+    container_name: imobi-postgres-local
     environment:
-      POSTGRES_USER: imbobi
-      POSTGRES_PASSWORD: senha
-      POSTGRES_DB: imbobi_dev
+      POSTGRES_USER: imobi_user
+      POSTGRES_PASSWORD: imobi_secure_password_123
+      POSTGRES_DB: imobi_development
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U imbobi -d imbobi_dev"]
+      test: ["CMD-SHELL", "pg_isready -U imobi_user"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: imbobi_redis
+    container_name: imobi-redis-local
     ports:
       - "6379:6379"
     volumes:
@@ -31,24 +31,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Optional: LocalStack for S3 simulation (for local development)
-  # Uncomment to use local S3-compatible storage instead of AWS
-  # localstack:
-  #   image: localstack/localstack:latest
-  #   container_name: imbobi_localstack
-  #   environment:
-  #     SERVICES: s3
-  #     DEBUG: 1
-  #     DATA_DIR: /tmp/localstack/data
-  #   ports:
-  #     - "4566:4566"
-  #   volumes:
-  #     - "${TMPDIR}/localstack:/tmp/localstack"
-
 volumes:
   postgres_data:
   redis_data:
-
-networks:
-  default:
-    name: imbobi_network
