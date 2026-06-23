@@ -61,12 +61,15 @@ Se `"status":"error"` com `redis.host` terminando em `\n`, rode `pnpm render:env
 
 Após push em `main`, Vercel e Render disparam automaticamente (se configurados no dashboard).
 
-## GitHub Secrets (manter)
+## GitHub Secrets (opcional)
 
 | Secret | Uso |
 |--------|-----|
-| `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | CI deploy web |
-| `RENDER_API_KEY`, `RENDER_SERVICE_ID` | CI trigger Render |
+| `SLACK_WEBHOOK_URL` | Alertas do health gate no CI |
+| `VERCEL_TOKEN` | Apenas se usar `pnpm vercel:env:push` local |
+| `RENDER_API_KEY`, `RENDER_SERVICE_ID` | Apenas se usar `pnpm render:redeploy` local |
+
+Deploy de código: **auto-deploy** no push em `main` (Vercel + Render dashboards). CI não dispara deploy.
 
 **Remover se existirem (legado Railway):** `RAILWAY_TOKEN`, `RAILWAY_ENVIRONMENT_ID`, `RAILWAY_SERVICE_ID`
 
@@ -76,8 +79,20 @@ Após push em `main`, Vercel e Render disparam automaticamente (se configurados 
 - `scripts/deploy-api.sh` — AWS EC2, não usado
 - `PRODUCTION_INFRASTRUCTURE_GUIDE.md` — mistura Railway/AWS; usar este arquivo
 
+## Vercel (web) — config obrigatória
+
+Dashboard → projeto `imobi-web` → Settings → General:
+
+| Campo | Valor |
+|-------|-------|
+| Root Directory | `apps/web` |
+| Production Branch | `main` |
+
+Sem `apps/web` como root, o deploy retorna **404** (build não encontra as rotas Next.js).
+
 ## Checklist pós-push
 
 1. `curl` health staging → `ok`
-2. Login em https://imobi-web.vercel.app/login (tomador@imobi.com.br)
-3. Se API mudou JWT: `pnpm vercel:env:push` + redeploy Vercel
+2. `curl -s -o /dev/null -w "%{http_code}\n" https://imobi-web.vercel.app/login` → `200`
+3. Login em https://imobi-web.vercel.app/login (tomador@imobi.com.br)
+4. Se API mudou JWT: `pnpm vercel:env:push` + redeploy Vercel

@@ -1,33 +1,36 @@
+# CI quality gate + post-deploy health checks.
+# Deploy real: Vercel + Render auto-deploy na branch main (ver docs/DEPLOY_STACK.md).
+# Não duplicar deploy aqui — evita race conditions e URLs legadas.
+
 name: CI/CD Pipeline
 
 on:
   push:
     branches:
-      - develop
       - main
+      - develop
     tags:
       - 'v*'
   pull_request:
     branches:
-      - develop
       - main
+      - develop
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  STAGING_API_URL: https://imobi-api-staging.onrender.com
+  STAGING_WEB_URL: https://imobi-web.vercel.app
+
 jobs:
-  # ============================================
-  # STAGE 1: VALIDATION (Type-Check & Lint)
-  # ============================================
   validate:
     name: Validate Code
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: pnpm/action-setup@v2
         with:
@@ -53,9 +56,6 @@ jobs:
       - name: Validate Zod ↔ Prisma Schema Sync
         run: pnpm validate:schemas
 
-  # ============================================
-  # STAGE 2: BUILD
-  # ============================================
   build:
     name: Build Artifacts
     runs-on: ubuntu-latest
@@ -63,8 +63,6 @@ jobs:
     needs: validate
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: pnpm/action-setup@v2
         with:
@@ -81,20 +79,6 @@ jobs:
       - name: Build all packages
         run: pnpm build
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: build-artifacts-${{ github.run_id }}
-          path: |
-            apps/web/.next
-            apps/mobile/dist
-            services/api/dist
-          retention-days: 1
-
-  # ============================================
-  # STAGE 3: TESTS (E2E + Critical Flows)
-  # ============================================
   tests:
     name: E2E Tests
     runs-on: ubuntu-latest
@@ -107,7 +91,7 @@ jobs:
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
-          POSTGRES_DB: imbobi_test
+          POSTGRES_DB: imobi_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -128,8 +112,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: pnpm/action-setup@v2
         with:
@@ -146,192 +128,82 @@ jobs:
       - name: Generate Prisma Client
         run: pnpm db:generate
         env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/imbobi_test
+          DATABASE_URL: postgresql://test:test@localhost:5432/imobi_test
 
       - name: Run database migrations
         run: pnpm -F @imbobi/api exec prisma migrate deploy
         env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/imbobi_test
+          DATABASE_URL: postgresql://test:test@localhost:5432/imobi_test
         continue-on-error: true
 
       - name: Run E2E tests (Critical Flows)
         run: pnpm -F @imbobi/api test -- critical-flows.e2e.spec.ts
         env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/imbobi_test
+          DATABASE_URL: postgresql://test:test@localhost:5432/imobi_test
           REDIS_URL: redis://localhost:6379
           JWT_SECRET: test-secret-key
           NODE_ENV: test
 
-  # ============================================
-  # STAGE 4: STAGING DEPLOYMENT
-  # ============================================
-  deploy-staging:
-    name: Deploy to Staging
+  # Após merge em main: Vercel + Render já fazem deploy.
+  # Este job só valida que staging ficou saudável (gate resiliente).
+  staging-health-gate:
+    name: Staging Health Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [validate, build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Wait for Render cold start
+        run: sleep 45
 
-      - name: Deploy Frontend to Vercel (Staging)
-        uses: vercel/action@v6
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-comment: true
-
-      - name: Trigger Render Backend Deployment
+      - name: Check API health
         run: |
-          curl -X POST https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
+          set -e
+          for attempt in 1 2 3 4 5; do
+            BODY=$(curl -sf "${{ env.STAGING_API_URL }}/api/v1/health" || true)
+            if echo "$BODY" | grep -q '"status":"ok"'; then
+              echo "✅ API staging healthy (attempt $attempt)"
+              echo "$BODY"
+              exit 0
+            fi
+            echo "⏳ Attempt $attempt/5 — waiting 30s..."
+            sleep 30
+          done
+          echo "❌ API staging unhealthy after 5 attempts"
+          exit 1
+
+      - name: Check Web responds
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.STAGING_WEB_URL }}/login" || echo "000")
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Web staging responds HTTP 200 on /login"
+          else
+            echo "⚠️  Web /login returned HTTP $STATUS"
+            echo "→ Verifique Vercel: Root Directory = apps/web, branch = main"
+            echo "→ Rode: pnpm vercel:env:push && redeploy no dashboard"
+            exit 1
+          fi
+
+      - name: Notify Slack on failure
+        if: failure() && secrets.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "❌ Staging health gate failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Staging health gate failed*\n*API:* ${{ env.STAGING_API_URL }}\n*Web:* ${{ env.STAGING_WEB_URL }}\n*Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                  }
+                }
+              ]
+            }
         continue-on-error: true
 
-      - name: Notify Slack - Staging Deployed
-        uses: slackapi/slack-github-action@v1
-        if: success()
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "✅ Staging Deployment Successful",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Staging Deployment Complete*\n*Frontend:* https://imobi-staging.vercel.app\n*Backend:* https://imobi-api-staging.onrender.com\n*Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
-                  }
-                }
-              ]
-            }
-
-      - name: Notify Slack - Staging Failed
-        uses: slackapi/slack-github-action@v1
-        if: failure()
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "❌ Staging Deployment Failed",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Staging Deployment Failed*\n*Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>\n*View Logs:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click here>"
-                  }
-                }
-              ]
-            }
-
-  # ============================================
-  # STAGE 5: PRODUCTION DEPLOYMENT (Manual)
-  # ============================================
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Extract version from tag
-        id: version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Version: ${VERSION}"
-
-      - name: Deploy Frontend to Vercel (Production)
-        uses: vercel/action@v6
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-comment: true
-          production: true
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.0
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
-
-      - name: Terraform Plan
-        run: |
-          cd infrastructure/terraform
-          terraform init
-          terraform plan -var="version=${{ steps.version.outputs.version }}" -out=tfplan
-
-      - name: Terraform Apply
-        run: |
-          cd infrastructure/terraform
-          terraform apply -auto-approve tfplan
-        continue-on-error: true
-
-      - name: Post-Deployment Health Checks
-        run: |
-          echo "⏳ Waiting 30 seconds for services to stabilize..."
-          sleep 30
-
-          echo "🏥 Health Check: API"
-          curl -f https://api.imobi.com/health || echo "⚠️  API health check failed"
-
-          echo "🏥 Health Check: Web"
-          curl -f https://imobi.com/ || echo "⚠️  Web health check failed"
-
-      - name: Notify Slack - Production Deployed
-        uses: slackapi/slack-github-action@v1
-        if: success()
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "🚀 Production Deployment Successful",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Production Deployment Complete*\n*Version:* ${{ steps.version.outputs.version }}\n*Frontend:* https://imobi.com\n*Backend:* https://api.imobi.com\n*Status:* Monitor CloudWatch for 24 hours"
-                  }
-                }
-              ]
-            }
-
-      - name: Notify Slack - Production Failed
-        uses: slackapi/slack-github-action@v1
-        if: failure()
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "❌ Production Deployment Failed",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Production Deployment Failed*\n*Version:* ${{ steps.version.outputs.version }}\n*View Logs:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click here>\n*Action Required:* Investigate and rollback if needed"
-                  }
-                }
-              ]
-            }
-
-  # ============================================
-  # STAGE 6: SECURITY SCAN (Optional)
-  # ============================================
   security:
     name: Security Scan
     runs-on: ubuntu-latest
@@ -339,8 +211,6 @@ jobs:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: pnpm/action-setup@v2
         with:
@@ -358,27 +228,22 @@ jobs:
         run: pnpm audit --audit-level=moderate
         continue-on-error: true
 
-      - name: Check for secrets (pre-commit)
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-        continue-on-error: true
-
-  # ============================================
-  # FINAL: STATUS CHECK
-  # ============================================
   status:
     name: Workflow Status
     runs-on: ubuntu-latest
     if: always()
-    needs: [validate, build, tests]
+    needs: [validate, build, tests, staging-health-gate]
     steps:
       - name: Check workflow status
         run: |
-          if [ "${{ needs.validate.result }}" == "failure" ] || [ "${{ needs.build.result }}" == "failure" ]; then
-            echo "❌ Workflow failed"
+          if [ "${{ needs.validate.result }}" = "failure" ] || \
+             [ "${{ needs.build.result }}" = "failure" ] || \
+             [ "${{ needs.tests.result }}" = "failure" ]; then
+            echo "❌ Core CI jobs failed"
+            exit 1
+          fi
+          if [ "${{ needs.staging-health-gate.result }}" = "failure" ]; then
+            echo "❌ Staging health gate failed"
             exit 1
           fi
           echo "✅ Workflow passed all checks"

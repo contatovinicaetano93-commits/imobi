@@ -81,18 +81,23 @@ jobs:
         continue-on-error: true
 
   post-check:
-    name: Staging Health (informational)
+    name: Staging Health Gate
     needs: [test]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - name: Check Render staging health
+      - name: Check Render staging health (retry)
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            https://imobi-api-staging.onrender.com/api/v1/health || echo "000")
-          if [ "$STATUS" = "200" ]; then
-            echo "✅ Staging API healthy"
-          else
-            echo "⚠️ Staging health returned HTTP $STATUS (deploy via Render dashboard if needed)"
-          fi
-        continue-on-error: true
+          set -e
+          URL="https://imobi-api-staging.onrender.com/api/v1/health"
+          for attempt in 1 2 3 4 5; do
+            BODY=$(curl -sf "$URL" || true)
+            if echo "$BODY" | grep -q '"status":"ok"'; then
+              echo "✅ Staging API healthy (attempt $attempt)"
+              exit 0
+            fi
+            echo "⏳ Attempt $attempt/5..."
+            sleep 30
+          done
+          echo "❌ Staging API unhealthy"
+          exit 1

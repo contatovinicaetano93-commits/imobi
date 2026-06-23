@@ -25,9 +25,9 @@ Development:  http://localhost:3000/api/v1
 Staging:      https://staging-api.imobi.com/api/v1
 Production:   https://api.imobi.com/api/v1
 
-Documentation: /api/docs (Swagger UI)
-Metrics:       /metrics (Prometheus format)
-Health:        /health
+Documentation: /docs (Swagger UI, staging/dev only)
+Metrics:       /api/v1/metrics (Prometheus format)
+Health:        /api/v1/health
 ```
 
 ---

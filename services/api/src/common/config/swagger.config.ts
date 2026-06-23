@@ -15,8 +15,9 @@ export function setupSwagger(app: INestApplication) {
     .addTag('evidencias', 'Evidence & Proof')
     .addTag('vistoria', 'Property Inspection')
     .addTag('admin', 'Administrator Operations')
-    .addServer('http://localhost:3000', 'Development')
-    .addServer('https://api.imobi.com', 'Production')
+    .addServer('http://localhost:4000', 'Development')
+    .addServer('https://imobi-api-staging.onrender.com', 'Staging')
+    .addServer('https://imobi-api-efgg.onrender.com', 'Production')
     .addBearerAuth(
       {
         type: 'http',

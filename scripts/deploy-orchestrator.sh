@@ -1,10 +1,25 @@
 #!/bin/bash
 
 # Imobi MVP - Deployment Orchestrator (Vercel + Render)
-# Automates post-deploy verification and frontend wiring.
-# Usage: bash scripts/deploy-orchestrator.sh [api-url]
+# Usage: bash scripts/deploy-orchestrator.sh [--yes] [api-url]
 
 set -e
+
+YES=0
+if [ "${1:-}" = "--yes" ]; then
+  YES=1
+  shift
+fi
+
+confirm() {
+  local prompt="$1"
+  if [ "$YES" -eq 1 ]; then
+    return 0
+  fi
+  read -p "$prompt (y/n) " -n 1 -r
+  echo
+  [[ $REPLY =~ ^[Yy]$ ]]
+}
 
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
@@ -34,9 +49,7 @@ if curl -s -f "${API_URL}/api/v1/health" > /dev/null 2>&1; then
   echo -e "${GREEN}✓${NC} API is responding"
 else
   echo -e "${YELLOW}⚠️  API not yet responding (cold start or deploy in progress)${NC}"
-  read -p "Wait 30 seconds and retry? (y/n) " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
+  if confirm "Wait 30 seconds and retry?"; then
     sleep 30
     if ! curl -s -f "${API_URL}/api/v1/health" > /dev/null 2>&1; then
       echo -e "${RED}✗ API still not responding.${NC}"
@@ -55,9 +68,7 @@ echo -e "\n${BLUE}⏳ Phase 2: Database migrations${NC}"
 echo -e "${YELLOW}If schema changed:${NC}"
 echo "  Render Shell → cd services/api && npx prisma migrate deploy"
 echo ""
-read -p "Migrations up to date? (y/n) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+if ! confirm "Migrations up to date?"; then
   echo "Run migrations on Render, then re-run this script."
   exit 1
 fi
@@ -90,13 +101,14 @@ echo -e "${BLUE}🧪 Auth smoke test${NC}"
 
 TEST_EMAIL="test-$(date +%s)@imobi.test"
 TEST_PASSWORD="TestPass123!@"
+TEST_CPF=$(printf "%011d" $(( $(date +%s) % 100000000000 )))
 
 REGISTER_RESPONSE=$(curl -s -X POST "${API_URL}/api/v1/auth/registro" \
   -H 'Content-Type: application/json' \
   -d "{
     \"nome\": \"Test User\",
     \"email\": \"${TEST_EMAIL}\",
-    \"cpf\": \"12345678900\",
+    \"cpf\": \"${TEST_CPF}\",
     \"telefone\": \"11999999999\",
     \"senha\": \"${TEST_PASSWORD}\",
     \"consentidoTermos\": true,
