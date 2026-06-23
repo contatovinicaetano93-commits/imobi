@@ -9,7 +9,11 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "build:api": "turbo run build --filter=@imbobi/api",
+    "start": "pnpm --filter @imbobi/api start",
+    "dev": "turbo run dev --filter=@imbobi/web --filter=@imbobi/api",
+    "dev:stack": "turbo run dev --filter=@imbobi/web --filter=@imbobi/api",
+    "dev:all": "turbo run dev",
     "dev:api": "pnpm --filter @imbobi/api dev",
     "dev:web": "pnpm --filter @imbobi/web dev",
     "dev:device": "pnpm --filter @imbobi/mobile dev:device",
@@ -50,7 +54,9 @@
   ],
   "pnpm": {
     "overrides": {
-      "fastify": "4.29.1"
+      "fastify": "4.29.1",
+      "react": "18.3.1",
+      "react-dom": "18.3.1"
     }
   }
 }

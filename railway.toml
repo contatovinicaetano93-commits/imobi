@@ -1,0 +1,9 @@
+[build]
+builder = "RAILPACK"
+buildCommand = "pnpm run build:api"
+watchPatterns = ["services/api/**", "packages/**"]
+
+[deploy]
+startCommand = "pnpm --filter @imbobi/api start"
+healthcheckPath = "/api/v1/health"
+restartPolicyType = "ON_FAILURE"
