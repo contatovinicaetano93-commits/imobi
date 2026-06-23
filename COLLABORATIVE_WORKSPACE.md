@@ -2,7 +2,38 @@
 
 **Status**: Production Ready (Soft Launch Phase)  
 **Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
-**Team**: Claude (Backend/Architecture) + Cursor (Frontend/UI)
+**Team**: Claude (Backend/Architecture) + Cursor (Frontend/UI)  
+**Última sync**: 2026-06-23 — Cursor
+
+---
+
+## 🔄 SYNC STATUS — leia primeiro (Claude ↔ Cursor)
+
+| Campo | Valor |
+|-------|--------|
+| **Agente ativo** | Cursor (Fase 2 — deploy + E2E) |
+| **Gargalo atual** | `.env.render.local` com placeholders (`rnd_…`, `CHANGE_ME`) — seed staging não rodou |
+| **Próximo passo humano** | Render → API Keys → colar `RENDER_API_KEY` real → `pnpm seed:staging:from-render` |
+| **API staging** | https://imobi-api-staging.onrender.com — health `ok` |
+| **Web** | https://imobi-web.vercel.app |
+| **E2E staging** | ❌ 401 login (DB sem usuários seed) |
+
+**Claude (paralelo, backend)** — marcar `[x]` quando concluir:
+- [ ] ZodPipe nos 6 controllers
+- [ ] Auth expirado → redirect `/login` no layout
+- [ ] Race `EtapasContent.tsx`
+- [ ] FK/cascade DueDiligence / LeadActivity (Prisma)
+- [ ] Remover senhas hardcoded de `setup.controller.ts`
+
+**Cursor (última entrega no repo)** — 2026-06-23:
+- [x] `pnpm seed:staging:from-render` (busca DATABASE_URL via Render API)
+- [x] `pnpm render:env:check` + `.env.render.example` sem unicode `…`
+- [x] `seed:dev` via `tsx` (fix `ts-node` ENOENT)
+- [x] `test:e2e:staging` no `package.json`
+- [x] CI: schemas → core → `db:generate` → `build:api`
+- [x] Docs: credenciais fora do git; `DEPLOYMENT_BUILD_NOTES` só Vercel+Render
+
+**Regra de sync**: ao terminar um bloco do roadmap abaixo, marque `[x]`, adicione linha em **Recent Activity** e faça commit `docs: sync roadmap step N` na branch compartilhada.
 
 ---
 
@@ -28,13 +59,86 @@
 - [x] E2E validation suite setup (`pnpm test:e2e:local` / `test:e2e:staging`)
 - [ ] Fix: Next.js SSR build error (pre-existing — build passou jun/2026; monitorar)
 - [ ] Production build optimization
-- [ ] E2E staging full suite green — **bloqueado:** usuários seed ausentes no DB staging (401 login)
+- [ ] E2E staging full suite green — **bloqueado:** `.env.render.local` placeholder; rodar `pnpm seed:staging:from-render`
 
-### 2026-06-23 — Cursor: Fase 2 (paralelo ao Claude backend review)
+---
+
+## 🗺️ ROADMAP 50 STEPS — Soft Launch
+
+Legenda: `[x]` feito · `[ ]` pendente · `(Claude)` backend · `(Cursor)` frontend/ops · `(Você)` ação manual
+
+### Bloco A — Desbloquear staging (1–10)
+- [ ] 1. (Você) Criar API Key no Render → Account Settings → API Keys
+- [ ] 2. (Você) Colar `RENDER_API_KEY=rnd_…` real em `.env.render.local` (sem `…` unicode)
+- [ ] 3. (Você) `pnpm seed:staging:from-render`
+- [ ] 4. (Você) Confirmar usuários seed (`tomador@imobi.com.br`, etc.)
+- [ ] 5. (Você) `pnpm test:e2e:staging`
+- [ ] 6. (Você) Se 401: testar login via `curl` na API staging
+- [ ] 7. (Você) Se JWT divergir: alinhar Render ↔ Vercel
+- [ ] 8. (Você) Preencher restante do `.env.render.local` (Redis, JWT, AWS, Firebase)
+- [ ] 9. (Você) `pnpm render:env:check` até passar
+- [ ] 10. (Você) `pnpm render:env:push` + `pnpm render:env:verify`
+
+### Bloco B — Alinhar Vercel + Render (11–18)
+- [ ] 11. (Cursor) Confirmar `NEXT_PUBLIC_API_URL` = staging no Vercel
+- [ ] 12. (Você) `pnpm vercel:env:push`
+- [ ] 13. (Você) `JWT_SECRET` idêntico Render + Vercel
+- [ ] 14. (Você) Redeploy Vercel
+- [x] 15. Health staging `curl …/health` → `ok`
+- [ ] 16. (Você) Login manual em https://imobi-web.vercel.app/login
+- [ ] 17. (Cursor) Confirmar branch Render = `claude/imobi-mvp-fintech-status-jrr2ab`
+- [ ] 18. (Cursor) Commit/push scripts seed + env check (se ainda não no remoto)
+
+### Bloco C — CI e qualidade (19–25)
+- [x] 19. Workflow API Quality Check (schemas → prisma → build)
+- [ ] 20. (Cursor) CI verde no push da branch
+- [ ] 21. (Cursor) `pnpm type-check` local 0 erros
+- [ ] 22. (Cursor) `pnpm lint` local 0 erros
+- [x] 23. `pnpm build:api` + web build OK local
+- [ ] 24. (Cursor) `pnpm test:e2e:local`
+- [ ] 25. (Cursor) Atualizar este arquivo com resultado E2E staging
+
+### Bloco D — Backend Claude + integração (26–35)
+- [ ] 26. (Claude) ZodPipe nos 6 controllers
+- [ ] 27. (Claude) Redirect `/login` token expirado
+- [ ] 28. (Claude) Fix race `EtapasContent.tsx`
+- [ ] 29. (Claude) FK/cascade Prisma DueDiligence / LeadActivity
+- [ ] 30. (Claude) `setup.controller.ts` sem senhas no código
+- [ ] 31. (Cursor) Testar fluxo obras no staging
+- [ ] 32. (Cursor) Testar fluxo crédito/simulador staging
+- [ ] 33. (Cursor) Testar KYC upload (se flag ativa)
+- [ ] 34. (Cursor) E2E: login → dashboard → obra
+- [ ] 35. (Cursor) Expandir `test:e2e:staging` (3–5 specs)
+
+### Bloco E — Frontend CURSOR_PROMPT (36–42)
+- [ ] 36. (Cursor) Dashboard layout responsivo + menu por role
+- [ ] 37. (Cursor) Theme switcher light/dark
+- [ ] 38. (Cursor) Cadastro + validação Zod E2E
+- [ ] 39. (Cursor) Lista obras (empty/loading/error)
+- [ ] 40. (Cursor) Simulador crédito → API staging
+- [ ] 41. (Cursor) Fix mobile nav animation jank
+- [ ] 42. (Cursor) Smoke a11y auth/dashboard
+
+### Bloco F — Prod + hardening (43–50)
+- [ ] 43. (Equipe) Merge branch estável → `main` (após E2E verde)
+- [ ] 44. (Você) Render prod `imobi-api-efgg` na branch estável
+- [ ] 45. (Você) `pnpm render:env:push` prod (`srv-d8hnpmflk1mc73fc1h3g`)
+- [ ] 46. (Você) Domínio custom + CORS + `APP_URL`
+- [ ] 47. (Equipe) Rotacionar secrets expostos em chat/docs
+- [ ] 48. (Cursor) Sentry web + API staging validado
+- [ ] 49. (Equipe) `docs/PRE_LAUNCH_CHECKLIST.md` itens críticos
+- [ ] 50. (Equipe) Go/no-go: E2E verde + login manual + health → **soft launch**
+
+---
+
+### 2026-06-23 — Cursor: Fase 2 (deploy scripts + roadmap)
 - ✅ Web production build OK
 - ✅ E2E scripts + seed users alinhados (`tomador@imobi.com.br`, etc.)
 - ✅ `auth.setup` com cookie domain dinâmico (localhost + Vercel)
 - ✅ Render staging `status: ok`
+- ✅ Roadmap 50 steps + SYNC STATUS neste arquivo
+- ✅ Scripts: `seed:staging:from-render`, `render:env:check`, `seed:dev` (tsx)
+- 🔧 Bloqueado: usuário precisa `RENDER_API_KEY` real em `.env.render.local`
 - 🔧 Claude em paralelo: ZodPipe controllers, auth redirect layout, EtapasContent race, FK schema
 
 ### Phase 3: Core Features Implementation ✅ COMPLETE
@@ -102,15 +206,22 @@
    - Testing & quality assurance
 
 ### Communication Protocol
-- **Workspace Location**: `/home/user/imobi/COLLABORATIVE_WORKSPACE.md` (this file)
-- **Reference Docs**: `CLAUDE.md`, `.cursorrules`, `ARCHITECTURE_RESILIENCE_API_FIRST.md`
-- **Progress Tracking**: Update checkboxes in Phase sections above
-- **Status Updates**: Add dated entries in "Recent Activity" section below
-- **Blockers**: Document in "Known Issues" section
+- **Workspace Location**: `COLLABORATIVE_WORKSPACE.md` (raiz do repo — **fonte única do roadmap**)
+- **Guia paralelo**: `docs/COLLABORATIVE_WORKSPACE.md` (workflow git; não duplicar checkboxes)
+- **Reference Docs**: `CLAUDE.md`, `.cursorrules`, `docs/DEPLOY_STACK.md`
+- **Progress Tracking**: Marcar checkboxes no **ROADMAP 50 STEPS** + **SYNC STATUS**
+- **Status Updates**: Entrada datada abaixo do roadmap ou em **Recent Activity**
+- **Blockers**: Atualizar tabela em **SYNC STATUS** + linha no roadmap
 
 ---
 
 ## 📝 RECENT ACTIVITY
+
+### 2026-06-23 — Roadmap 50 steps + sync Claude/Cursor
+- ✅ `COLLABORATIVE_WORKSPACE.md`: SYNC STATUS + ROADMAP 50 STEPS (soft launch)
+- ✅ Cursor: scripts deploy/seed (`seed:staging:from-render`, `render:env:check`)
+- ⏳ Aguardando: Thaise colar `RENDER_API_KEY` → seed staging → E2E verde
+- ⏳ Claude: backend fixes (ver checklist SYNC STATUS)
 
 ### 2026-06-22 — Phase 1 Complete, Phase 3A Started
 - ✅ Created collaborative infrastructure (CLAUDE.md, .cursorrules)
