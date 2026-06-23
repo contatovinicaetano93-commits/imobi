@@ -1,0 +1,4 @@
+{
+  "build": "pnpm build && pnpm --filter @imbobi/api run prisma:generate",
+  "start": "pnpm --filter @imbobi/api start"
+}
