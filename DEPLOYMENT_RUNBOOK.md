@@ -69,7 +69,7 @@ Deploy backend to Railway/AWS with zero downtime.
 
 ```bash
 # Railway Deployment
-git push origin claude/imobi-mvp-fintech-status-jrr2ab
+git push origin main
 
 # Watch: https://railway.app/projects/[project-id]
 # Expected: Build succeeds in 5-8 minutes

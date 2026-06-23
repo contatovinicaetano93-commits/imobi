@@ -61,30 +61,29 @@ Claude                          Cursor
 ### Branch Strategy
 
 ```
-main
-├─ claude/imobi-mvp-fintech-status-jrr2ab  (shared development)
-├─ claude/feature-x                         (Claude features)
-├─ cursor/feature-y                         (Cursor features)
-└─ deploy/production                        (ready to ship)
+main                          (canônica — deploy Vercel + Render)
+├─ feature/*                  (PR → main)
+├─ claude/*                   (legado agentes — não usar para deploy)
+└─ deploy/production          (tags v* para prod manual)
 ```
 
 ### Collaboration
 
-**Never merge to `main` directly** - use `claude/imobi-mvp-fintech-status-jrr2ab`
+**Fluxo:** feature branch → PR → `main`. Deploy automático em push para `main`.
 
 **Daily workflow:**
 ```bash
 # Claude: commit and push
 git add services/api/src/...
 git commit -m "feat: Implement obras CRUD endpoints"
-git push origin claude/imobi-mvp-fintech-status-jrr2ab
+git push origin main
 
 # Cursor: pull latest
-git pull origin claude/imobi-mvp-fintech-status-jrr2ab
+git pull origin main
 # Implement frontend to match API
 git add apps/web/...
 git commit -m "feat: Create obras list page with API integration"
-git push origin claude/imobi-mvp-fintech-status-jrr2ab
+git push origin main
 ```
 
 **Conflict resolution:**
@@ -425,7 +424,7 @@ curl https://imobi-api-xyz.railway.app/health
 ### "Type mismatch between frontend and API"
 ```bash
 # Update @imbobi/schemas (both pull)
-git pull origin claude/imobi-mvp-fintech-status-jrr2ab
+git pull origin main
 
 # Regenerate Prisma types
 pnpm db:generate

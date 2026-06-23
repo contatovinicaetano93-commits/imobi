@@ -9,7 +9,7 @@ Use this prompt with Cursor IDE for frontend development in parallel with Claude
 You're building the frontend for **Imobi**, a fintech platform for real estate credit. The backend API is being built by Claude simultaneously. Your job is to create a polished, production-ready Next.js frontend.
 
 **Repository**: contatovinicaetano93-commits/imobi  
-**Branch**: claude/imobi-mvp-fintech-status-jrr2ab  
+**Branch**: main  
 **Deployment**: Vercel  
 
 ---

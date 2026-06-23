@@ -9,7 +9,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const DEFAULT_BRANCH = 'claude/imobi-mvp-fintech-status-jrr2ab';
+const DEFAULT_BRANCH = 'main';
 const DEFAULT_SERVICE = 'srv-d8fl07h9rddc73ajs7ag';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');

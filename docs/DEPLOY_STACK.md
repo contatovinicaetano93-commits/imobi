@@ -50,12 +50,16 @@ Se `"status":"error"` com `redis.host` terminando em `\n`, rode `pnpm render:env
 
 ## Branch vs deploy
 
-| Onde | Branch típica |
-|------|----------------|
-| Render / Vercel (auto-deploy) | conferir no dashboard (pode ser `main` ou branch Claude) |
-| Dev local Cursor | `sync/mac-migration-2026-06` ou feature branches |
+| Onde | Branch |
+|------|--------|
+| **GitHub (canônica)** | `main` |
+| Render / Vercel (auto-deploy) | `main` |
+| Feature work | `feature/*` → PR → `main` |
+| Produção (futuro) | tag `v*` (manual) |
 
-Antes de deploy, alinhar branch no GitHub com o serviço Render/Vercel.
+**Não usar para deploy:** branches `claude/*` (legado de agentes).
+
+Após push em `main`, Vercel e Render disparam automaticamente (se configurados no dashboard).
 
 ## GitHub Secrets (manter)
 

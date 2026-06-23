@@ -31,12 +31,15 @@ bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com
 
 Secrets locais: `.env.vercel.local`, `.env.render.local` (gitignored).
 
+**Branch canônica:** `main` — Vercel + Render fazem auto-deploy nesta branch.
+
 ## Proibido (não sugerir nem reativar)
 
 - Railway (`railway.toml`, `docs/legacy/RAILWAY_*.md`, `RAILWAY_*` secrets)
 - `scripts/deploy-api.sh` (AWS EC2)
 - Workflow `.github/workflows/deploy-api.yml` (legado Railway — desativado)
 - Criar novos guias ou scripts que mencionem Railway como opção ativa
+- Usar branches `claude/*` como branch de deploy (legado)
 
 ## Ao tocar em CI/CD ou scripts de deploy
 

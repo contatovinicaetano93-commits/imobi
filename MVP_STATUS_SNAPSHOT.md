@@ -1,7 +1,7 @@
 # 📊 Imobi MVP Status Snapshot
 
 **Date**: June 22, 2026  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Overall Progress**: 75% Complete
 
 ---
@@ -255,6 +255,6 @@ Hour 48 (Day 3)
 
 ---
 
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Ready to Deploy**: ✅ YES  
 **Estimated Launch**: 48 hours from Railway setup

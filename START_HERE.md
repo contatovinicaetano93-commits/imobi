@@ -17,6 +17,16 @@ Railway e AWS EC2 estão **bloqueados** (legado em `docs/legacy/`).
 
 ---
 
+## STEP 0: Branch canônica
+
+Todo deploy usa **`main`**. Após merge, Vercel e Render disparam automaticamente.
+
+```bash
+git checkout main && git pull origin main
+```
+
+---
+
 ## STEP 1: Verificar API (2 min)
 
 ```bash

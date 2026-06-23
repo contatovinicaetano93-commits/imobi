@@ -36,7 +36,7 @@ railway init
 # 2. Click "New Project"
 # 3. Select "Deploy from GitHub"
 # 4. Authorize GitHub & select repo: contatovinicaetano93-commits/imobi
-# 5. Select branch: claude/imobi-mvp-fintech-status-jrr2ab
+# 5. Select branch: main
 ```
 
 ### Step 2: Add PostgreSQL Database
@@ -445,7 +445,7 @@ railway rollback
 
 # Option 2: Redeploy known good commit
 git checkout <working-commit-hash>
-git push origin claude/imobi-mvp-fintech-status-jrr2ab
+git push origin main
 # Railway auto-deploys on push
 
 # Option 3: Manual service restart

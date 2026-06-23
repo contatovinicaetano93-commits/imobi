@@ -20,7 +20,7 @@
    Go to https://railway.app
    New Project → Deploy from GitHub
    Select: contatovinicaetano93-commits/imobi
-   Branch: claude/imobi-mvp-fintech-status-jrr2ab
+   Branch: main
    ```
 
 2. **Add PostgreSQL Database** (3 min)
@@ -77,7 +77,7 @@
 In Railway → New → GitHub Repo
 - Name: imobi-api
 - Repo: contatovinicaetano93-commits/imobi
-- Branch: claude/imobi-mvp-fintech-status-jrr2ab
+- Branch: main
 - Root: services/api
 - Build: pnpm install --frozen-lockfile && pnpm build --filter @imbobi/api
 - Start: node dist/main.js
@@ -343,7 +343,7 @@ If critical issues discovered:
 ```bash
 # Fix issue in code
 git commit -m "hotfix: ..."
-git push origin claude/imobi-mvp-fintech-status-jrr2ab
+git push origin main
 # Railway auto-redeploys
 ```
 
@@ -357,7 +357,7 @@ imobi-api → Deployments → Click previous build → "Redeploy"
 ```bash
 # Revert commit
 git revert <commit-hash>
-git push origin claude/imobi-mvp-fintech-status-jrr2ab
+git push origin main
 # Wait for redeploy
 ```
 

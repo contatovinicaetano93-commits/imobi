@@ -41,7 +41,7 @@ docker build -f services/api/Dockerfile -t imobi-api:prod .
 
 ### Render (API)
 
-1. Push na branch `claude/imobi-mvp-fintech-status-jrr2ab` (ou configurada no dashboard)
+1. Push na branch `main` (ou configurada no dashboard)
 2. Env: `pnpm render:env:push` (secrets em `.env.render.local`, gitignored)
 3. Health: `curl -s https://imobi-api-staging.onrender.com/api/v1/health`
 

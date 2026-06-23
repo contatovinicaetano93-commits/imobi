@@ -30,4 +30,4 @@ Beta Setup:             ✅ Ready
 
 Deployment timestamp: 2026-06-23 17:41:00 UTC
 Triggered by: Claude Code Agent (autonomous deployment)
-Branch: `claude/imobi-mvp-fintech-status-jrr2ab`
+Branch: `main`

@@ -16,7 +16,7 @@
 1. Go to https://railway.app
 2. New Project → Deploy from GitHub
 3. Select: contatovinicaetano93-commits/imobi
-4. Branch: claude/imobi-mvp-fintech-status-jrr2ab
+4. Branch: main
 5. Add PostgreSQL database
 6. Add Redis cache
 7. Configure 8 environment variables (see .env.example)

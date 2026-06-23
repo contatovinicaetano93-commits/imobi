@@ -1,7 +1,7 @@
 # Deployment Automation — Phase 3F
 
 **Status**: Production-Ready Strategies Provided  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Date**: June 2026
 
 ---
@@ -599,7 +599,7 @@ name: CI/CD
 
 on:
   push:
-    branches: [main, claude/imobi-mvp-*]
+    branches: [main]
   pull_request:
     branches: [main]
 

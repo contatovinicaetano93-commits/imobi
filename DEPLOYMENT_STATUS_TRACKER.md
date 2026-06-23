@@ -1,7 +1,7 @@
 # 📊 DEPLOYMENT STATUS TRACKER
 
 **Last Updated**: June 22, 2026 - 23:45 UTC  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Status**: 🟢 **WAITING FOR MANUAL RAILWAY SETUP**
 
 ---
@@ -295,7 +295,7 @@ Before starting Phase 1:
 ---
 
 **Status**: 🟢 **GO FOR RAILWAY SETUP**  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Commits**: All pushed and ready  
 
 🚀 Ready to deploy!

@@ -27,7 +27,7 @@ You should:
 5. Pick ONE priority to implement
 6. Follow type-safe patterns exactly
 7. Update progress tracker when done
-8. Commit to: claude/imobi-mvp-fintech-status-jrr2ab
+8. Commit to: main
 
 Let's build this together.
 ```
@@ -206,7 +206,7 @@ If all green ✅, you're ready to start developing.
 4. **Commit** (5 min)
    - `git add <files>`
    - `git commit -m "feat: [Feature name]"`
-   - `git push origin claude/imobi-mvp-fintech-status-jrr2ab`
+   - `git push origin main`
    - Update COLLABORATIVE_WORKSPACE.md progress
 
 ### Command Reference
@@ -233,7 +233,7 @@ pnpm db:generate
 git status
 git add <files>
 git commit -m "feat: Description"
-git push origin claude/imobi-mvp-fintech-status-jrr2ab
+git push origin main
 ```
 
 ---
@@ -386,7 +386,7 @@ pnpm dev
 ```bash
 git add apps/web/app/(dashboard)/dashboard/kyc/_components/DocumentUpload.tsx
 git commit -m "feat: Add document upload component with drag-drop support"
-git push origin claude/imobi-mvp-fintech-status-jrr2ab
+git push origin main
 ```
 
 ### Step 7: Update Progress (2 min)

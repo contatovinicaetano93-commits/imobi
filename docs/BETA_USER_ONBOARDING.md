@@ -1427,7 +1427,7 @@ pnpm seed:beta
 
 # 4. Deploy updated API
 pnpm build:api
-git push origin claude/imobi-mvp-fintech-status-jrr2ab
+git push origin main
 pnpm render:env:push && pnpm render:redeploy
 
 # 5. Deploy updated frontend

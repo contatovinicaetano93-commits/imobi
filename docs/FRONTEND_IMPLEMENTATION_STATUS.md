@@ -2,7 +2,7 @@
 
 **Date**: June 23, 2026  
 **Status**: ✅ **95% COMPLETE** — Ready for production testing  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`
+**Branch**: `main`
 
 ---
 
@@ -519,7 +519,7 @@ apps/web/app/(dashboard)/
 - **Frontend**: `apps/web/`
 - **Documentation**: `docs/`
 - **API Base**: `http://localhost:4000/api/v1`
-- **Git Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`
+- **Git Branch**: `main`
 
 ### Documentation Files
 - `FRONTEND_IMPLEMENTATION_PLAN.md` — Original plan (41-80)
@@ -557,7 +557,7 @@ The Imobi web frontend is **production-ready** with:
 ---
 
 **Completed By**: Claude Haiku 4.5 (AI Assistant)  
-**Session**: claude/imobi-mvp-fintech-status-jrr2ab  
+**Session**: main  
 **Date**: June 23, 2026  
 **Time**: ~3 hours  
 **Next Review**: June 24, 2026

@@ -2,7 +2,7 @@
 
 **Status**: ✅ **GO** - All systems ready for production deployment  
 **Date**: June 22, 2026  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Timeline**: 75 minutes to live
 
 ---
@@ -409,7 +409,7 @@ Before clicking "Deploy" on Railway:
 ---
 
 **Prepared By**: Claude (DevOps/Backend)  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Status**: Ready for launch  
 **Confidence**: HIGH
 

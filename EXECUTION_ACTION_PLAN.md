@@ -163,7 +163,7 @@ pnpm test --testPathPattern=integration.test
 3. Click "New Project"
 4. Select "Deploy from GitHub"
 5. Authorize GitHub & select: `contatovinicaetano93-commits/imobi`
-6. Select branch: `claude/imobi-mvp-fintech-status-jrr2ab`
+6. Select branch: `main`
 7. Click Deploy
 
 **Add PostgreSQL Database**:

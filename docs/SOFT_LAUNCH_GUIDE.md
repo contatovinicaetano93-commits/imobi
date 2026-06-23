@@ -16,7 +16,7 @@
 # Option A: Railway (Recommended for NestJS)
 1. Create Railway project
 2. Connect GitHub repo (contatovinicaetano93-commits/imobi)
-3. Set deployment branch: claude/imobi-mvp-fintech-status-jrr2ab
+3. Set deployment branch: main
 4. Add PostgreSQL plugin
 5. Add Redis plugin
 6. Configure environment variables:
@@ -220,7 +220,7 @@ name: Deploy Imobi API
 on:
   push:
     branches:
-      - claude/imobi-mvp-fintech-status-jrr2ab
+      - main
     paths:
       - 'services/api/**'
       - 'packages/**'
@@ -263,7 +263,7 @@ jobs:
   deploy:
     needs: [test, security]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/claude/imobi-mvp-fintech-status-jrr2ab'
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       - name: Deploy to Railway
@@ -279,7 +279,7 @@ jobs:
 # Enable auto-deploy on Railway:
 1. Project Settings → Deployments
 2. "Deploy on push" → Enable
-3. Branch: claude/imobi-mvp-fintech-status-jrr2ab
+3. Branch: main
 4. Auto-rollback: Enable (on health check failure)
 ```
 

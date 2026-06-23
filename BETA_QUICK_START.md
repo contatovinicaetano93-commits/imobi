@@ -45,7 +45,7 @@ Cartões de teste: https://stripe.com/docs/testing (não versionar números no r
 
 ### Step 3: Deploy & Go Live (5 min)
 ```bash
-git push origin claude/imobi-mvp-fintech-status-jrr2ab
+git push origin main
 pnpm render:env:push && pnpm render:redeploy
 pnpm vercel:env:push
 bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com
@@ -231,7 +231,7 @@ Use apenas a [documentação oficial de testes](https://stripe.com/docs/testing)
 
 ### Deploy
 - [ ] Run seed script: `pnpm seed:beta` (staging: `pnpm seed:staging`)
-- [ ] Push branch: `git push origin claude/imobi-mvp-fintech-status-jrr2ab`
+- [ ] Push branch: `git push origin main`
 - [ ] Deploy API: `pnpm render:env:push && pnpm render:redeploy`
 - [ ] Sync web env: `pnpm vercel:env:push`
 - [ ] Verify health: `bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com`

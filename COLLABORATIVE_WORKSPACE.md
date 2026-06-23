@@ -1,7 +1,7 @@
 # 🚀 Imobi MVP — Collaborative Development Workspace
 
 **Status**: Production Ready (Soft Launch Phase)  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Team**: Claude (Backend/Architecture) + Cursor (Frontend/UI)  
 **Última sync**: 2026-06-23 — Cursor
 
@@ -91,7 +91,7 @@ Legenda: `[x]` feito · `[ ]` pendente · `(Claude)` backend · `(Cursor)` front
 - [ ] 14. (Você) Redeploy Vercel
 - [x] 15. Health staging `curl …/health` → `ok`
 - [ ] 16. (Você) Login manual em https://imobi-web.vercel.app/login
-- [ ] 17. (Cursor) Confirmar branch Render = `claude/imobi-mvp-fintech-status-jrr2ab`
+- [ ] 17. (Cursor) Confirmar branch Render = `main`
 - [x] 18. (Cursor) Commit/push scripts seed + env check + web proxy/nav
 
 ### Bloco C — CI e qualidade (19–25)
@@ -504,7 +504,7 @@ WORKFLOW:
 3. Check .cursorrules for code patterns
 4. Implement feature following type-safe patterns
 5. Update COLLABORATIVE_WORKSPACE.md with progress
-6. Commit to branch: claude/imobi-mvp-fintech-status-jrr2ab
+6. Commit to branch: main
 
 COMMANDS YOU'LL USE:
 pnpm install          # Dependencies
@@ -566,7 +566,7 @@ A: Document it in the "Known Issues" section with:
 - Next steps to resolve
 
 **Q: Should I create a new branch?**  
-A: NO. Always push to: `claude/imobi-mvp-fintech-status-jrr2ab`
+A: NO. Always push to: `main`
 
 **Q: Do I need to run `pnpm install` first?**  
 A: Yes, once at the start: `cd /home/user/imobi && pnpm install`

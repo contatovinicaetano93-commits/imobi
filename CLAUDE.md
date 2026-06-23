@@ -1,7 +1,7 @@
 # 🏛️ Imobi — Guia Completo do Projeto
 
 **Status**: MVP Fintech Resiliente, Escalável, API First  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Última atualização**: Junho 2026
 
 ---
@@ -401,4 +401,4 @@ redis-cli ping
 
 **Última atualização**: Junho 2026  
 **Responsável**: Claude + Cursor (trabalho colaborativo)  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`
+**Branch**: `main`

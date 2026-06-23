@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-06-23 15:15 UTC  
 **Overall Status**: 🟢 BACKEND COMPLETE | 🟡 FRONTEND READY TO START | 🔴 INFRASTRUCTURE PENDING  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`
+**Branch**: `main`
 
 ---
 
@@ -352,15 +352,15 @@ e0a0f33 - chore(deps): add @fastify/static dependency
 33ef227 - docs(frontend): add comprehensive implementation plan
 ```
 
-### Branch: `claude/imobi-mvp-fintech-status-jrr2ab`
+### Branch: `main`
 
 ```bash
 # To sync your local work:
 git fetch origin
-git pull origin claude/imobi-mvp-fintech-status-jrr2ab
+git pull origin main
 
 # To push your changes:
-git push -u origin claude/imobi-mvp-fintech-status-jrr2ab
+git push -u origin main
 ```
 
 ---
@@ -462,7 +462,7 @@ CURRENT_STATUS.md - This file (executive summary)
 ---
 
 **Project**: Imobi MVP Fintech  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Status**: 🟢 Backend Ready | 🟡 Frontend Ready | 🔴 Infrastructure Pending  
 **Timeline**: 2-3 weeks to MVP launch  
 **Team**: Claude (backend) + Cursor (frontend) + DevOps (infrastructure)

@@ -3,7 +3,7 @@
 > **⚠️ DEPRECADO (jun/2026):** Imobi não usa Railway. Stack oficial: **Vercel + Render** — ver [`DEPLOY_STACK.md`](./DEPLOY_STACK.md).
 
 **Status**: Ready for deployment  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Estimated Time**: 15-20 minutes
 
 ---
@@ -17,7 +17,7 @@
 # 3. Click "New Project"
 # 4. Select "Deploy from GitHub"
 # 5. Connect GitHub account & select: contatovinicaetano93-commits/imobi
-# 6. Select branch: claude/imobi-mvp-fintech-status-jrr2ab
+# 6. Select branch: main
 # 7. Click "Deploy"
 ```
 
@@ -104,7 +104,7 @@ Save these values — you'll need them in the next step.
 3. Configure:
    - **Name**: `imobi-api`
    - **Repo**: `contatovinicaetano93-commits/imobi`
-   - **Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`
+   - **Branch**: `main`
    - **Root Directory**: `services/api`
    - **Build Command**: `pnpm install --frozen-lockfile && pnpm build --filter @imbobi/api`
    - **Start Command**: `node dist/main.js`

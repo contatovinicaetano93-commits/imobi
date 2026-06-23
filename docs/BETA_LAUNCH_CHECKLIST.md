@@ -176,7 +176,7 @@
 **Step 1: Deploy** (15 min)
 ```bash
 # Merge to main
-git merge claude/imobi-mvp-fintech-status-jrr2ab
+git merge main
 
 # Deploy API (Render)
 pnpm render:env:push && pnpm render:redeploy

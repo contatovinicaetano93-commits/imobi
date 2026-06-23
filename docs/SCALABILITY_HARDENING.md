@@ -1,7 +1,7 @@
 # Scalability Hardening — Phase 3D
 
 **Status**: Production-Ready Patterns Provided  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Date**: June 2026
 
 ---

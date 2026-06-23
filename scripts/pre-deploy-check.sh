@@ -79,7 +79,7 @@ check "Deploy stack guide exists" "test -f docs/DEPLOY_STACK.md"
 echo -e "\n${BLUE}🔀 Git${NC}"
 check "All changes committed" "git diff --quiet"
 check "No untracked files" "test -z \"\$(git ls-files --others --exclude-standard)\""
-check "On correct branch" "test \"\$(git rev-parse --abbrev-ref HEAD)\" = \"claude/imobi-mvp-fintech-status-jrr2ab\""
+check "On correct branch" "test \"\$(git rev-parse --abbrev-ref HEAD)\" = \"main\""
 
 # Infrastructure
 echo -e "\n${BLUE}⚙️  Infrastructure${NC}"

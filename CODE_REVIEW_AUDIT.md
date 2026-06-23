@@ -2,7 +2,7 @@
 
 **Data**: 22 de junho de 2026  
 **Revisor**: Claude (automático)  
-**Branch**: `claude/imobi-mvp-fintech-status-jrr2ab`  
+**Branch**: `main`  
 **Status**: ✅ APPROVED FOR SOFT LAUNCH
 
 ---
