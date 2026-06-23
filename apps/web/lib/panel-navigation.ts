@@ -24,12 +24,50 @@ const SHARED_SEGMENTS = new Set([
   'perfil',
 ]);
 
+/** Itens de conta — renderizados por último na sidebar */
+export const ACCOUNT_NAV_HREFS = new Set([
+  '/dashboard/notificacoes',
+  '/dashboard/perfil',
+]);
+
 export type PanelId = AppRole;
 
 export type BreadcrumbItem = {
   label: string;
   href?: string;
 };
+
+export type NavHrefItem = { href: string };
+
+/**
+ * Resolve o único item ativo da sidebar (maior prefixo correspondente).
+ * Evita marcar "Visão Geral" e "Comitê" ao mesmo tempo em /dashboard/admin/comite.
+ */
+export function getActiveNavHref(
+  path: string,
+  navRole: AppRole | null,
+  items: NavHrefItem[],
+): string | null {
+  const normalized = path.split('?')[0] ?? path;
+
+  if (navRole === 'ADMIN' && /^\/dashboard\/obras\/[^/]+/.test(normalized)) {
+    const adminObras = items.find((i) => i.href === '/dashboard/admin/obras');
+    if (adminObras) return adminObras.href;
+  }
+
+  let best: string | null = null;
+  for (const item of items) {
+    const { href } = item;
+    const matches =
+      href === '/dashboard'
+        ? normalized === href
+        : normalized === href || normalized.startsWith(`${href}/`);
+    if (matches && (!best || href.length > best.length)) {
+      best = href;
+    }
+  }
+  return best;
+}
 
 /** Segmento principal após /dashboard */
 export function getDashboardSegment(path: string): string {

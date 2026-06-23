@@ -1,8 +1,9 @@
-/** URL base da API — efgg é a produção atual na Vercel; staging como fallback. */
-export const PRODUCTION_API_URL = 'https://imobi-api-efgg.onrender.com';
+/** Staging — API canônica (ver docs/DEPLOY_STACK.md). */
 export const STAGING_API_URL = 'https://imobi-api-staging.onrender.com';
+/** Prod alternativa no Render (pode estar pausada). */
+export const PRODUCTION_API_URL = 'https://imobi-api-efgg.onrender.com';
 
-const API_CANDIDATES = [PRODUCTION_API_URL, STAGING_API_URL];
+const API_CANDIDATES = [STAGING_API_URL, PRODUCTION_API_URL];
 
 function isUsableApiUrl(url: string): boolean {
   const u = url.toLowerCase();
@@ -16,7 +17,7 @@ export function getApiBaseUrl(): string {
   }
 
   if (process.env['VERCEL'] || process.env['NODE_ENV'] === 'production') {
-    return PRODUCTION_API_URL;
+    return STAGING_API_URL;
   }
 
   return 'http://localhost:4000';

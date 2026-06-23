@@ -49,19 +49,25 @@ jobs:
           docker --version
           docker-compose --version || docker compose version
 
+          if docker compose version >/dev/null 2>&1; then
+            DC="docker compose"
+          else
+            DC="docker-compose"
+          fi
+
           echo "Starting services with docker-compose..."
-          docker-compose -f docker-compose.test.yml up -d || docker compose -f docker-compose.test.yml up -d
+          $DC -f docker-compose.test.yml up -d
 
           echo "⏳ Waiting for services to be ready..."
           sleep 5
 
-          docker-compose -f docker-compose.test.yml ps || docker compose -f docker-compose.test.yml ps
+          $DC -f docker-compose.test.yml ps
 
           echo "Testing PostgreSQL connectivity..."
           max_attempts=60
           for attempt in $(seq 1 $max_attempts); do
             echo "Attempt $attempt/$max_attempts..."
-            docker-compose -f docker-compose.test.yml exec -T postgres pg_isready -U postgres && {
+            $DC -f docker-compose.test.yml exec -T postgres pg_isready -U postgres && {
               echo "✅ PostgreSQL is ready"
               break
             } || true
@@ -88,15 +94,19 @@ jobs:
           REDIS_URL: redis://localhost:6379
           NODE_ENV: test
           JWT_SECRET: test-jwt-secret-key-for-testing-purposes-only
-          CORS_ORIGINS: http://localhost:3000,http://localhost:3001
+          CORS_ORIGIN: http://localhost:3000,http://localhost:3001
           API_PORT: 4000
-        run: cd services/api && npm test -- --forceExit --detectOpenHandles --verbose 2>&1 | tee test-output.log
+        run: cd services/api && pnpm test -- --forceExit --detectOpenHandles --verbose 2>&1 | tee test-output.log
 
       - name: Cleanup services
         if: always()
         run: |
           echo "🧹 Stopping docker-compose services..."
-          docker-compose -f docker-compose.test.yml down || true
+          if docker compose version >/dev/null 2>&1; then
+            docker compose -f docker-compose.test.yml down || true
+          else
+            docker-compose -f docker-compose.test.yml down || true
+          fi
 
       - name: Upload coverage reports
         if: always()

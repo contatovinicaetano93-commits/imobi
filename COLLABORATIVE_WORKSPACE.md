@@ -12,8 +12,8 @@
 | Campo | Valor |
 |-------|--------|
 | **Agente ativo** | Cursor (Fase 2 — deploy + E2E) |
-| **Gargalo atual** | `.env.render.local` com placeholders (`rnd_…`, `CHANGE_ME`) — seed staging não rodou |
-| **Próximo passo humano** | Render → API Keys → colar `RENDER_API_KEY` real → `pnpm seed:staging:from-render` |
+| **Gargalo atual** | `.env.render.local` — colar `RENDER_API_KEY` real → `pnpm seed:staging:from-render` |
+| **Próximo passo humano** | Render → API Keys → seed → `pnpm test:e2e:staging` |
 | **API staging** | https://imobi-api-staging.onrender.com — health `ok` |
 | **Web** | https://imobi-web.vercel.app |
 | **E2E staging** | ❌ 401 login (DB sem usuários seed) |
@@ -25,7 +25,12 @@
 - [ ] FK/cascade DueDiligence / LeadActivity (Prisma)
 - [ ] Remover senhas hardcoded de `setup.controller.ts`
 
-**Cursor (última entrega no repo)** — 2026-06-23:
+**Cursor (última entrega no repo)** — 2026-06-23 (b):
+- [x] API proxy com `fetchApiWithRetry` + wake Render cold start
+- [x] Nav dashboard: seção Conta + `getActiveNavHref` (admin obras/perfil)
+- [x] CI e2e: `CORS_ORIGIN`, docker compose v2, `pnpm test`
+
+**Cursor (entrega anterior)** — 2026-06-23 (a):
 - [x] `pnpm seed:staging:from-render` (busca DATABASE_URL via Render API)
 - [x] `pnpm render:env:check` + `.env.render.example` sem unicode `…`
 - [x] `seed:dev` via `tsx` (fix `ts-node` ENOENT)
@@ -87,7 +92,7 @@ Legenda: `[x]` feito · `[ ]` pendente · `(Claude)` backend · `(Cursor)` front
 - [x] 15. Health staging `curl …/health` → `ok`
 - [ ] 16. (Você) Login manual em https://imobi-web.vercel.app/login
 - [ ] 17. (Cursor) Confirmar branch Render = `claude/imobi-mvp-fintech-status-jrr2ab`
-- [ ] 18. (Cursor) Commit/push scripts seed + env check (se ainda não no remoto)
+- [x] 18. (Cursor) Commit/push scripts seed + env check + web proxy/nav
 
 ### Bloco C — CI e qualidade (19–25)
 - [x] 19. Workflow API Quality Check (schemas → prisma → build)
@@ -216,6 +221,12 @@ Legenda: `[x]` feito · `[ ]` pendente · `(Claude)` backend · `(Cursor)` front
 ---
 
 ## 📝 RECENT ACTIVITY
+
+### 2026-06-23 — Cursor: web proxy retry + nav + CI e2e
+- ✅ Proxy `/api/proxy/*` usa `fetchApiWithRetry` (cold start Render)
+- ✅ Nav: seção Conta, active link correto em rotas admin aninhadas
+- ✅ CI e2e-tests: CORS_ORIGIN, docker compose v2, pnpm test
+- ⏳ Push remoto + seed staging (steps 1–5) aguardando `RENDER_API_KEY`
 
 ### 2026-06-23 — Roadmap 50 steps + sync Claude/Cursor
 - ✅ `COLLABORATIVE_WORKSPACE.md`: SYNC STATUS + ROADMAP 50 STEPS (soft launch)

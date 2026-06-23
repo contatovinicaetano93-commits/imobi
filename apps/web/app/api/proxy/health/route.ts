@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getApiV1Url } from '@/lib/api-base';
-
-const API = getApiV1Url();
+import { fetchApiWithRetry } from '@/lib/fetch-api-with-retry';
 
 export const maxDuration = 30;
 
 export async function GET() {
-  const res = await fetch(`${API}/health`, {
-    cache: 'no-store',
-    signal: AbortSignal.timeout(25_000),
-  }).catch(() => null);
+  const res = await fetchApiWithRetry({
+    path: '/health',
+    wakeFirst: true,
+    maxAttemptsPerApi: 3,
+  });
 
   if (!res) {
     return NextResponse.json({ ok: false, message: 'API offline ou demorou para responder' }, { status: 503 });

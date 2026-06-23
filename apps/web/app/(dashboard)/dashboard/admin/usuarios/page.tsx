@@ -394,7 +394,11 @@ export default function UsuariosAdminPage() {
       )}
       {apiErro && (
         <p style={{ ...jost, fontSize: "0.8rem", color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "0.75rem 1rem" }}>
-          {apiErro} — faça login como <strong>admin@imobi.com.br</strong> e redeploy a API no Render.
+          {apiErro}
+          <span style={{ display: "block", marginTop: 6, color: "rgba(12,26,61,0.55)" }}>
+            A API no Render pode estar acordando (aguarde ~1 min e recarregue) ou indisponível.
+            Se persistir: confirme <code style={{ fontSize: "0.75rem" }}>NEXT_PUBLIC_API_URL</code> apontando para staging e rode <code style={{ fontSize: "0.75rem" }}>pnpm vercel:env:push</code>.
+          </span>
         </p>
       )}
       {erroAcao && (

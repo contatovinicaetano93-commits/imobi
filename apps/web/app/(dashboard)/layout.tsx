@@ -6,7 +6,12 @@ import { usePathname, useRouter } from "next/navigation";
 import "./layout.css";
 import { useEffect, useState } from "react";
 import { normalizeRole } from "@/lib/role-permissions";
-import { getNavRole, isAdminPreviewingPanel } from "@/lib/panel-navigation";
+import {
+  ACCOUNT_NAV_HREFS,
+  getActiveNavHref,
+  getNavRole,
+  isAdminPreviewingPanel,
+} from "@/lib/panel-navigation";
 import { ToastProvider } from "@/hooks/toast-context";
 import { Toaster } from "@/components/ui/toaster";
 import { SkipLink } from "@/components/SkipLink";
@@ -54,8 +59,6 @@ const NAV: NavItem[] = [
   { label: "Simulador",     href: "/dashboard/comercial/simulador",      icon: Calculator,  roles: ["COMERCIAL","PARCEIRO"] },
   { label: "Materiais",     href: "/dashboard/comercial/materiais",      icon: FileText,    roles: ["COMERCIAL","PARCEIRO"] },
   { label: "Ranking",       href: "/dashboard/comercial/ranking",        icon: TrendingUp,  roles: ["COMERCIAL","PARCEIRO"] },
-  { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], funcao: "notificacoes" },
-  { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null] },
   { label: "Visão Geral",   href: "/dashboard/admin",                   icon: LayoutDashboard, roles: ["ADMIN"],     section: "admin" },
   { label: "Pipeline",      href: "/dashboard/admin/pipeline",          icon: Banknote,    roles: ["ADMIN"] },
   { label: "Comitê",        href: "/dashboard/admin/comite",            icon: Vote,        roles: ["ADMIN"] },
@@ -64,9 +67,11 @@ const NAV: NavItem[] = [
   { label: "Obras",         href: "/dashboard/admin/obras",             icon: HardHat,     roles: ["ADMIN"] },
   { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["ADMIN"],                           funcao: "fundos" },
   { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["ADMIN"],                           funcao: "relatorios" },
+  { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], funcao: "notificacoes", section: "conta" },
+  { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], section: "conta" },
 ];
 
-const SECTION_LABELS: Record<string, string> = { geral: "Geral", operacional: "Operacional", admin: "Admin" };
+const SECTION_LABELS: Record<string, string> = { geral: "Geral", operacional: "Operacional", admin: "Admin", conta: "Conta" };
 
 const ROLE_META: Record<string, { label: string; accent: string }> = {
   CONSTRUTOR:  { label: "Construtor",  accent: MINT },
@@ -81,11 +86,14 @@ const ROLE_META: Record<string, { label: string; accent: string }> = {
 
 function filterNav(role: UserRole, path: string, funcoesBloqueadas: string[]): NavItem[] {
   const navRole = getNavRole(role, path);
-  return NAV.filter((item) => {
+  const filtered = NAV.filter((item) => {
     if (!item.roles.includes(navRole)) return false;
     if (navRole !== "ADMIN" && item.funcao && funcoesBloqueadas.includes(item.funcao)) return false;
     return true;
   });
+  const main = filtered.filter((item) => !ACCOUNT_NAV_HREFS.has(item.href));
+  const account = filtered.filter((item) => ACCOUNT_NAV_HREFS.has(item.href));
+  return [...main, ...account];
 }
 
 // Returns the parent path for a back button, or null if at root level.
@@ -244,11 +252,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // Close drawer on route change
   useEffect(() => { setMobileOpen(false); }, [path]);
 
-  const visibleNav = filterNav(role, path, funcoesBloqueadas);
-  const isActive = (href: string) =>
-    href === "/dashboard" ? path === href : path.startsWith(href);
-
   const navRole = getNavRole(role, path);
+  const visibleNav = filterNav(role, path, funcoesBloqueadas);
+  const activeHref = getActiveNavHref(path, navRole, visibleNav);
+  const isActive = (href: string) => href === activeHref;
   const isPreviewingOtherPanel = isAdminPreviewingPanel(role, path);
 
   const meta = role ? ROLE_META[role] : null;

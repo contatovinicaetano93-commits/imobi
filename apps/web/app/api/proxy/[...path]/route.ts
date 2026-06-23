@@ -1,30 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getApiV1Url } from '@/lib/api-base';
-
-const API = getApiV1Url();
+import { fetchApiWithRetry } from '@/lib/fetch-api-with-retry';
 
 async function proxy(req: NextRequest, pathParts: string[], method: string) {
   const token = (await cookies()).get('access_token')?.value;
   const qs = req.nextUrl.search;
-  const url = `${API}/${pathParts.join('/')}${qs}`;
+  const path = `/${pathParts.join('/')}${qs}`;
 
-  const init: RequestInit = {
+  let body: string | undefined;
+  if (method !== 'GET' && method !== 'HEAD') {
+    const raw = await req.text();
+    if (raw) body = raw;
+  }
+
+  const res = await fetchApiWithRetry({
+    path,
     method,
+    body,
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    cache: 'no-store',
-  };
+    wakeFirst: true,
+  });
 
-  if (method !== 'GET' && method !== 'HEAD') {
-    const body = await req.text();
-    if (body) (init as any).body = body;
+  if (!res) {
+    return NextResponse.json(
+      { message: 'API indisponível no momento. Aguarde alguns segundos e tente novamente.' },
+      { status: 503 },
+    );
   }
-
-  const res = await fetch(url, init).catch(() => null);
-  if (!res) return NextResponse.json({ message: `API inacessível (${url})` }, { status: 503 });
 
   const text = await res.text();
   return new NextResponse(text || null, {

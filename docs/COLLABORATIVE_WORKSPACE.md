@@ -1,5 +1,7 @@
 # 🤝 COLLABORATIVE WORKSPACE SETUP
 
+> **Tracker vivo (roadmap + sync):** use `COLLABORATIVE_WORKSPACE.md` na **raiz do repo** — este arquivo é só guia de workflow git/paralelo.
+
 Complete guide for parallel development between Claude (backend) and Cursor (frontend).
 
 ---
