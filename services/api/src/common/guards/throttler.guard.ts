@@ -3,15 +3,26 @@ import { Reflector } from "@nestjs/core";
 import { ThrottlerGuard } from "@nestjs/throttler";
 import type { ThrottlerModuleOptions, ThrottlerStorage } from "@nestjs/throttler";
 
+const MONITORING_CONTROLLER_NAMES = new Set(["HealthController", "MetricsController"]);
+
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
   protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
     if (await super.shouldSkip(context)) return true;
 
-    const req = context.switchToHttp().getRequest<{ url?: string; raw?: { url?: string } }>();
-    const path = req.url ?? req.raw?.url ?? "";
-    // Render / uptime monitors batem /health a cada poucos segundos — nunca limitar
-    if (path.includes("/health")) return true;
+    if (MONITORING_CONTROLLER_NAMES.has(context.getClass()?.name ?? "")) {
+      return true;
+    }
+
+    const req = context.switchToHttp().getRequest<{
+      url?: string;
+      raw?: { url?: string };
+      routeOptions?: { url?: string };
+      routerPath?: string;
+    }>();
+    const path = req.url ?? req.raw?.url ?? req.routeOptions?.url ?? req.routerPath ?? "";
+    // Render / uptime monitors hit /health and /metrics every few seconds — never limit
+    if (path.includes("/health") || path.includes("/metrics")) return true;
 
     return false;
   }

@@ -2,6 +2,7 @@ import { Controller, Get, Logger, Inject } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { getRedisConfig, validateRedisConfig } from "./config";
+import { SKIP_ALL_THROTTLES } from "./guards/throttler.constants";
 import type { Cache } from "cache-manager";
 
 interface HealthCheck {
@@ -13,7 +14,7 @@ interface HealthCheck {
   database: { configured: boolean };
 }
 
-@SkipThrottle()
+@SkipThrottle(SKIP_ALL_THROTTLES)
 @Controller("health")
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);
@@ -91,6 +92,10 @@ export class HealthController {
         process.env["AWS_ACCESS_KEY_ID"] &&
         process.env["AWS_SECRET_ACCESS_KEY"]
       );
+    }
+
+    if (provider_lower === "console") {
+      return true;
     }
 
     // SMTP
