@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   dossiesApi,
   type ChecklistTemplateResponse,
@@ -16,6 +16,8 @@ import {
   Send,
   Building2,
   Loader2,
+  Upload,
+  Paperclip,
 } from "lucide-react";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
 import { useToast } from "@/hooks/toast-context";
@@ -49,6 +51,9 @@ export default function ViabilidadePage() {
   const [nome, setNome] = useState("");
   const [percentual, setPercentual] = useState("");
   const [dataBase, setDataBase] = useState("");
+  const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingUploadItemId = useRef<string | null>(null);
 
   const carregar = useCallback(async () => {
     setError(null);
@@ -139,6 +144,45 @@ export default function ViabilidadePage() {
     }
   };
 
+  const handleAnexarClick = (itemId: string) => {
+    pendingUploadItemId.current = itemId;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const itemId = pendingUploadItemId.current;
+    e.target.value = "";
+    pendingUploadItemId.current = null;
+    if (!file || !itemId || !dossie || dossie.status !== "RASCUNHO") return;
+
+    setUploadingItemId(itemId);
+    try {
+      const fd = new FormData();
+      fd.append("arquivo", file);
+      fd.append("tipo", "OUTROS");
+      fd.append("nome", file.name);
+      fd.append("descricao", `Dossiê viabilidade — item ${itemId}`);
+
+      const res = await fetch("/api/proxy/documentos", { method: "POST", body: fd });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        throw new Error(body.message ?? "Erro ao enviar arquivo.");
+      }
+      const doc = (await res.json()) as { documentoId: string };
+
+      const atualizado = await dossiesApi.atualizar(dossie.id, {
+        checklistItens: [{ itemId, status: "ENVIADO", documentoId: doc.documentoId }],
+      });
+      setDossie(atualizado);
+      success("Documento anexado ao checklist.");
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : "Erro ao anexar documento");
+    } finally {
+      setUploadingItemId(null);
+    }
+  };
+
   const handleSalvarCampos = async () => {
     if (!dossie || dossie.status !== "RASCUNHO") return;
     setSaving(true);
@@ -193,6 +237,13 @@ export default function ViabilidadePage() {
 
   return (
     <div className="max-w-3xl space-y-6">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.xlsx,.xls,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        className="hidden"
+        onChange={(e) => void handleFileSelected(e)}
+      />
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">
           Dossiê de viabilidade
@@ -338,23 +389,42 @@ export default function ViabilidadePage() {
                     <div className="flex shrink-0 gap-1">
                       <button
                         type="button"
-                        disabled={saving}
+                        disabled={saving || uploadingItemId === item.itemId}
+                        onClick={() => handleAnexarClick(item.itemId)}
+                        className="inline-flex items-center gap-1 rounded-lg bg-[#1B4FD8] px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+                      >
+                        {uploadingItemId === item.itemId ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Upload className="h-3 w-3" />
+                        )}
+                        Anexar
+                      </button>
+                      <button
+                        type="button"
+                        disabled={saving || uploadingItemId !== null}
                         onClick={() => void handleMarcarItem(item.itemId, "ENVIADO")}
-                        className="rounded-lg bg-[#1B4FD8] px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+                        className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                       >
                         Marcar enviado
                       </button>
                       {!item.obrigatorio && (
                         <button
                           type="button"
-                          disabled={saving}
+                          disabled={saving || uploadingItemId !== null}
                           onClick={() => void handleMarcarItem(item.itemId, "NA")}
-                          className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                          className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                         >
                           N/A
                         </button>
                       )}
                     </div>
+                  )}
+                  {item.documentoId && item.status !== "PENDENTE" && (
+                    <span className="inline-flex shrink-0 items-center gap-1 text-xs text-green-700">
+                      <Paperclip className="h-3 w-3" />
+                      Anexo
+                    </span>
                   )}
                 </div>
               ))}
@@ -417,7 +487,7 @@ export default function ViabilidadePage() {
         <p className="mb-2 text-sm font-semibold text-[#1B4FD8]">Como funciona</p>
         <ul className="space-y-1.5 text-sm text-gray-600">
           <li>· Escolha o estágio (novo, em andamento ou entrada tardia)</li>
-          <li>· Marque cada documento como enviado após anexar/guardar offline</li>
+          <li>· Anexe PDF ou planilha em cada item ou marque como enviado se já tiver no arquivo</li>
           <li>· Aprovação libera o cadastro da obra na jornada</li>
         </ul>
       </div>

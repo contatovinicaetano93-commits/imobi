@@ -873,6 +873,7 @@ export const dossiesApi = {
       checklistItens?: Array<{
         itemId: string;
         status?: DossieChecklistItemStatus;
+        documentoId?: string | null;
         observacao?: string | null;
       }>;
     },

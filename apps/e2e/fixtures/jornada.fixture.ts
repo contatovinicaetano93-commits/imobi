@@ -9,8 +9,21 @@ export const MOCK_JORNADA_KYC = {
   href: '/dashboard/kyc',
   concluido: false,
   passosConcluidos: 0,
-  totalPassos: 5,
+  totalPassos: 6,
   progressoPct: 0,
+};
+
+/** Cliente no passo viabilidade (após KYC). */
+export const MOCK_JORNADA_VIABILIDADE = {
+  perfil: 'tomador',
+  passoAtual: 'viabilidade',
+  titulo: 'Dossiê de viabilidade',
+  descricao: 'Checklist de crédito antes de cadastrar a obra.',
+  href: '/dashboard/viabilidade',
+  concluido: false,
+  passosConcluidos: 1,
+  totalPassos: 6,
+  progressoPct: 17,
 };
 
 /** Tomador com obra e crédito — pode navegar obras e crédito. */
@@ -21,8 +34,8 @@ export const MOCK_JORNADA_ACOMPANHAR = {
   descricao: 'Veja parcelas, extrato e progresso da obra.',
   href: '/dashboard/credito',
   concluido: true,
-  passosConcluidos: 5,
-  totalPassos: 5,
+  passosConcluidos: 6,
+  totalPassos: 6,
   progressoPct: 100,
 };
 
