@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentação deploy
+    url: https://github.com/contatovinicaetano93-commits/imobi/blob/main/docs/DEPLOY_STACK.md
+    about: URLs staging, Render e Vercel
+  - name: Convites beta (local)
+    url: https://github.com/contatovinicaetano93-commits/imobi#readme
+    about: Rode `pnpm beta:invite` no repo

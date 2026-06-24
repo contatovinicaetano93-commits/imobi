@@ -1,0 +1,45 @@
+name: Checklist semanal — Beta ops
+description: Rotina semanal de smoke, E2E e saúde do staging
+title: "[ops] Checklist semanal beta — "
+labels: ["beta", "ops"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Checklist semanal (staging)
+        Marque ao concluir. Comandos: `pnpm check:staging` · `pnpm test:e2e:staging`
+  - type: checkboxes
+    id: smoke
+    attributes:
+      label: Smoke & API
+      options:
+        - label: "`pnpm check:staging` — 9/9 OK"
+        - label: "API health staging + prod HTTP 200"
+        - label: "Web `/login` HTTP 200"
+  - type: checkboxes
+    id: e2e
+    attributes:
+      label: E2E
+      options:
+        - label: "`pnpm test:e2e:staging` — 39/39 OK"
+        - label: "CI GitHub verde em `main`"
+  - type: checkboxes
+    id: beta
+    attributes:
+      label: Beta usuários
+      options:
+        - label: "Gestor revisou fila KYC"
+        - label: "Pelo menos 1 tomador beta ativo na semana"
+        - label: "Bugs P0 abertos = 0"
+  - type: checkboxes
+    id: secrets
+    attributes:
+      label: Segurança / ops
+      options:
+        - label: "Nenhum secret commitado"
+        - label: "Render cold start aceitável (<2 min)"
+  - type: textarea
+    id: notas
+    attributes:
+      label: Notas da semana
+      placeholder: "Bloqueios, decisões, próxima semana"

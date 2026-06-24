@@ -1,0 +1,66 @@
+name: Bug Beta (staging)
+description: Problema encontrado por tomador, gestor ou equipe no soft launch
+title: "[beta] "
+labels: ["beta", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Reporte de bug do **beta staging** (web ou mobile). Priorize P0 = bloqueia fluxo KYC/obra/crédito.
+  - type: dropdown
+    id: prioridade
+    attributes:
+      label: Prioridade
+      options:
+        - P0 — bloqueia fluxo
+        - P1 — workaround difícil
+        - P2 — cosmético / depois do beta
+    validations:
+      required: true
+  - type: dropdown
+    id: perfil
+    attributes:
+      label: Perfil
+      options:
+        - Tomador / construtor
+        - Gestor
+        - Engenheiro
+        - Comercial / admin
+        - Mobile
+        - Outro
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL ou tela
+      placeholder: "https://imobi-web-ten.vercel.app/dashboard/kyc"
+  - type: textarea
+    id: passos
+    attributes:
+      label: Passos para reproduzir
+      placeholder: "1. Login como...\n2. Clicar em...\n3. Erro aparece"
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Comportamento esperado
+    validations:
+      required: true
+  - type: textarea
+    id: atual
+    attributes:
+      label: Comportamento atual
+    validations:
+      required: true
+  - type: input
+    id: ambiente
+    attributes:
+      label: Ambiente
+      value: "Web staging + API imobi-api-staging.onrender.com"
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshot / console / notas
+      description: Cole logs ou links de imagem
