@@ -11,21 +11,21 @@ export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
   @Post("registrar")
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ auth: { limit: 10, ttl: 60000 } })
   registrar(@Body(new ZodPipe(CadastroUsuarioSchema)) body: CadastroUsuarioInput) {
     return this.auth.registrar(body);
   }
 
   @Post("login")
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   login(@Body(new ZodPipe(LoginSchema)) body: LoginInput) {
     return this.auth.login(body);
   }
 
   @Post("renovar")
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ auth: { limit: 10, ttl: 60000 } })
   renovar(@Body("refreshToken") token: string) {
     return this.auth.renovarToken(token);
   }
@@ -39,14 +39,14 @@ export class AuthController {
 
   @Post("esqueceu-senha")
   @HttpCode(200)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   esqueceuSenha(@Body(new ZodPipe(EsqueceuSenhaSchema)) body: EsqueceuSenhaInput) {
     return this.auth.esqueceuSenha(body.email);
   }
 
   @Post("redefinir-senha")
   @HttpCode(200)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   redefinirSenha(@Body(new ZodPipe(RedefinirSenhaSchema)) body: RedefinirSenhaInput) {
     return this.auth.redefinirSenha(body.token, body.novaSenha);
   }

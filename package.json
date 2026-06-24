@@ -27,6 +27,7 @@
     "test:jornada": "pnpm --filter @imbobi/web exec tsx lib/jornada-steps.test.ts && pnpm --filter @imbobi/web exec tsx lib/jornada-routes.test.ts && pnpm --filter @imbobi/web exec tsx lib/beta-mvp.test.ts",
     "test:jornada:api": "pnpm --filter @imbobi/api test -- jornada.service.spec.ts",
     "test:kyc:api": "pnpm --filter @imbobi/api test -- kyc.service.spec.ts",
+    "test:auth:login-throttle": "pnpm --filter @imbobi/api test -- auth-login.throttle.spec.ts",
     "check:staging": "node scripts/test-smoke.mjs",
     "check:staging:local": "node scripts/test-smoke.mjs -- --local",
     "validate:schemas": "tsx scripts/validate-schema-sync.ts",

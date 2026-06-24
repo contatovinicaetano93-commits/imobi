@@ -1,9 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger, Inject } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import type { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { StorageService } from "../storage/storage.service";
+import { invalidateJornadaCache } from "../jornada/jornada-cache";
 
 const KYC_TIPOS = new Set(["RG_FRENTE", "RG_VERSO", "SELFIE", "COMPROVANTE"]);
 const KYC_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
@@ -20,6 +23,7 @@ export class KycService {
     private readonly email: EmailService,
     private readonly pushNotificacoes: PushNotificacoesService,
     private readonly storage: StorageService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
   private assertStorageConfigured() {
@@ -104,6 +108,7 @@ export class KycService {
     const doc = await this.prisma.kycDocumento.create({
       data: { usuarioId, tipo, url: key, status: "PENDENTE" },
     });
+    await invalidateJornadaCache(this.cache, usuarioId);
     return this.enrichDocumento(doc);
   }
 
@@ -204,6 +209,7 @@ export class KycService {
       this.logger.warn(`Failed to send KYC approval email: ${error}`);
     }
 
+    await invalidateJornadaCache(this.cache, documento.usuarioId);
     return atualizado;
   }
 
@@ -268,6 +274,7 @@ export class KycService {
       this.logger.warn(`Failed to send KYC rejection email: ${error}`);
     }
 
+    await invalidateJornadaCache(this.cache, documento.usuarioId);
     return atualizado;
   }
 

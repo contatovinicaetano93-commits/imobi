@@ -1,12 +1,18 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import type { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 import type { CriarObraInput } from "@imbobi/schemas";
 import { ETAPAS_PADRAO } from "./etapas-padrao";
+import { invalidateJornadaCache } from "../jornada/jornada-cache";
 
 @Injectable()
 export class ObrasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+  ) {}
 
   async criar(usuarioId: string, input: CriarObraInput) {
     return this.prisma.$transaction(async (tx) => {
@@ -46,6 +52,9 @@ export class ObrasService {
         where: { obraId: obra.obraId },
         include: { etapas: { orderBy: { ordem: "asc" } } },
       });
+    }).then(async (result) => {
+      if (result) await invalidateJornadaCache(this.cache, usuarioId);
+      return result;
     });
   }
 

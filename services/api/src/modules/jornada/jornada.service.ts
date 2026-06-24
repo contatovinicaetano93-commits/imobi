@@ -1,8 +1,15 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { Injectable, BadRequestException, Inject } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import type { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
 import { KycService } from "../kyc/kyc.service";
 import { ManagerService } from "../manager/manager.service";
 import { isManagerRole } from "../../common/constants/manager-roles";
+import {
+  JORNADA_CACHE_TTL_MS,
+  JORNADA_GESTOR_CACHE_KEY,
+  jornadaUsuarioCacheKey,
+} from "./jornada-cache";
 
 const TOMADOR_PASSOS = ["kyc", "obra", "credito", "aguardando", "acompanhar"] as const;
 
@@ -41,9 +48,23 @@ export class JornadaService {
     private readonly prisma: PrismaService,
     private readonly kyc: KycService,
     private readonly manager: ManagerService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
   async obter(usuarioId: string, role: string): Promise<JornadaResponse> {
+    const cacheKey = isManagerRole(role)
+      ? JORNADA_GESTOR_CACHE_KEY
+      : jornadaUsuarioCacheKey(usuarioId);
+
+    const cached = await this.cache.get<JornadaResponse>(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.computeObter(usuarioId, role);
+    await this.cache.set(cacheKey, result, JORNADA_CACHE_TTL_MS);
+    return result;
+  }
+
+  private async computeObter(usuarioId: string, role: string): Promise<JornadaResponse> {
     if (isManagerRole(role)) {
       return this.obterGestor();
     }

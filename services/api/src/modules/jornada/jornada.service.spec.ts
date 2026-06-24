@@ -1,9 +1,11 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BadRequestException } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { JornadaService } from "./jornada.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { KycService } from "../kyc/kyc.service";
 import { ManagerService } from "../manager/manager.service";
+import { JORNADA_CACHE_TTL_MS, jornadaUsuarioCacheKey } from "./jornada-cache";
 
 describe("JornadaService", () => {
   let service: JornadaService;
@@ -22,6 +24,12 @@ describe("JornadaService", () => {
     obterEstatisticas: jest.fn(),
   };
 
+  const cache = {
+    get: jest.fn().mockResolvedValue(undefined),
+    set: jest.fn().mockResolvedValue(undefined),
+    del: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -29,6 +37,7 @@ describe("JornadaService", () => {
         { provide: PrismaService, useValue: prisma },
         { provide: KycService, useValue: kyc },
         { provide: ManagerService, useValue: manager },
+        { provide: CACHE_MANAGER, useValue: cache },
       ],
     }).compile();
 
@@ -117,6 +126,44 @@ describe("JornadaService", () => {
       expect(j.passoAtual).toBe("acompanhar");
       expect(j.concluido).toBe(true);
       expect(j.progressoPct).toBe(100);
+    });
+  });
+
+  describe("cache", () => {
+    it("reutiliza resposta em cache para tomador", async () => {
+      const cached = {
+        perfil: "tomador" as const,
+        passoAtual: "kyc" as const,
+        titulo: "cached",
+        descricao: "",
+        href: "/dashboard/kyc",
+        concluido: false,
+        passosConcluidos: 0,
+        totalPassos: 5,
+        progressoPct: 0,
+      };
+      cache.get.mockResolvedValueOnce(cached);
+
+      const j = await service.obter("t1", "TOMADOR");
+
+      expect(j.titulo).toBe("cached");
+      expect(kyc.obterStatus).not.toHaveBeenCalled();
+    });
+
+    it("grava no cache após calcular", async () => {
+      kyc.obterStatus.mockResolvedValue({ status: "PENDENTE", documentos: [] });
+      prisma.obra.count.mockResolvedValue(0);
+      prisma.credito.findMany.mockResolvedValue([]);
+      prisma.etapaObra.count.mockResolvedValue(0);
+      cache.get.mockResolvedValueOnce(undefined);
+
+      await service.obter("t1", "TOMADOR");
+
+      expect(cache.set).toHaveBeenCalledWith(
+        jornadaUsuarioCacheKey("t1"),
+        expect.objectContaining({ passoAtual: "kyc" }),
+        JORNADA_CACHE_TTL_MS,
+      );
     });
   });
 
