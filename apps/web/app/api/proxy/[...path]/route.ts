@@ -21,7 +21,8 @@ async function proxy(req: NextRequest, pathParts: string[], method: string) {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    wakeFirst: true,
+    // Jornada é chamada em toda navegação — não acordar API a cada GET (evita 429).
+    wakeFirst: method === 'GET' && pathParts[0] === 'jornada' ? false : true,
   });
 
   if (!res) {

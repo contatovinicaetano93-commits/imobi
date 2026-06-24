@@ -1,8 +1,11 @@
+import { SkipThrottle } from "@nestjs/throttler";
 import { Controller, Get, UseGuards } from "@nestjs/common";
 import { JornadaService } from "./jornada.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { SKIP_ALL_THROTTLES } from "../../common/guards/throttler.constants";
 
+@SkipThrottle(SKIP_ALL_THROTTLES)
 @UseGuards(JwtAuthGuard)
 @Controller("jornada")
 export class JornadaController {

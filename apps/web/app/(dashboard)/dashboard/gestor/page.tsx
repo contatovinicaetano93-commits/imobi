@@ -1,17 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ManagerStats, Jornada } from "@/lib/api";
-import { obterJornadaResiliente, mensagemErroJornada } from "@/lib/jornada-fetch";
+import type { ManagerStats } from "@/lib/api";
 import Link from "next/link";
 import { ShieldCheck, AlertTriangle, Zap, Lightbulb } from "lucide-react";
 import { fetchManagerDashboard } from "@/lib/fetch-manager-dashboard";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
-import { NextStepHero } from "@/components/dashboard/NextStepHero";
-import { JornadaError } from "@/components/dashboard/JornadaError";
-import { GuidedFlowShell } from "@/components/dashboard/GuidedFlowShell";
 import { BETA_MVP_MODE } from "@/lib/beta-mvp";
+import { GestorMvpHub } from "./GestorMvpHub";
 
 const GESTOR_PANELS = [
   { id: "acoes-rapidas", priority: "primary" as const },
@@ -55,10 +52,8 @@ function StatSkeleton() {
 
 export default function GestorPage() {
   const [stats, setStats] = useState<ManagerStats | null>(null);
-  const [jornada, setJornada] = useState<Jornada | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [jornadaErro, setJornadaErro] = useState<string | null>(null);
 
   const loadStats = () => {
     setLoading(true);
@@ -78,45 +73,14 @@ export default function GestorPage() {
   };
 
   useEffect(() => {
-    if (BETA_MVP_MODE) {
-      setLoading(true);
-      setJornadaErro(null);
-      obterJornadaResiliente()
-        .then(setJornada)
-        .catch((err) => {
-          setJornada(null);
-          setJornadaErro(mensagemErroJornada(err));
-        })
-        .finally(() => setLoading(false));
-      return;
-    }
+    if (BETA_MVP_MODE) return;
     loadStats();
   }, []);
 
   const s = stats ?? ZERO_STATS;
 
   if (BETA_MVP_MODE) {
-    if (loading) {
-      return (
-        <div className="flex min-h-[50vh] items-center justify-center p-8">
-          <p className="text-sm text-gray-500">Carregando seu próximo passo…</p>
-        </div>
-      );
-    }
-    if (!jornada) {
-      return (
-        <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
-          <JornadaError message={jornadaErro ?? undefined} />
-        </div>
-      );
-    }
-    if (jornada) {
-      return (
-        <GuidedFlowShell variant="gestor" hideStepRail>
-          <NextStepHero jornada={jornada} variant="gestor" />
-        </GuidedFlowShell>
-      );
-    }
+    return <GestorMvpHub />;
   }
 
   if (loading && !stats) {

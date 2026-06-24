@@ -6,10 +6,12 @@ const NAVY = "#0C1A3D";
 
 type Props = {
   message?: string;
+  onRetry?: () => void;
 };
 
 export function JornadaError({
   message = "Não foi possível carregar seu próximo passo. A API pode estar acordando — aguarde e tente de novo.",
+  onRetry,
 }: Props) {
   return (
     <div className="flex min-h-[60vh] items-center justify-center p-6">
@@ -18,7 +20,7 @@ export function JornadaError({
         <p className="mt-2 text-sm text-gray-600">{message}</p>
         <button
           type="button"
-          onClick={() => window.location.reload()}
+          onClick={() => (onRetry ? onRetry() : window.location.reload())}
           className="mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white"
           style={{ background: NAVY }}
         >

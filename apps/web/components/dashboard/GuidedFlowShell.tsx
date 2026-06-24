@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Jornada } from "@/lib/api";
-import { obterJornadaResiliente, mensagemErroJornada } from "@/lib/jornada-fetch";
 import { getStepsForJornada, getPassoIndex, getPassoNumero } from "@/lib/jornada-steps";
+import { useJornada } from "@/hooks/jornada-context";
 import { JornadaError } from "./JornadaError";
 
 const NAVY = "#0C1A3D";
@@ -14,9 +13,7 @@ const ROYAL = "#1B4FD8";
 type Props = {
   variant: "tomador" | "gestor";
   children: React.ReactNode;
-  /** Oculta trilha de passos (ex.: hub hero já mostra progresso). */
   hideStepRail?: boolean;
-  /** Título contextual acima do conteúdo. */
   pageTitle?: string;
   pageSubtitle?: string;
 };
@@ -96,16 +93,7 @@ export function GuidedFlowShell({
   pageTitle,
   pageSubtitle,
 }: Props) {
-  const [jornada, setJornada] = useState<Jornada | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    obterJornadaResiliente()
-      .then(setJornada)
-      .catch((err) => setError(mensagemErroJornada(err)))
-      .finally(() => setLoading(false));
-  }, []);
+  const { jornada, loading, error, refresh } = useJornada();
 
   if (loading) {
     return (
@@ -118,7 +106,10 @@ export function GuidedFlowShell({
   if (error || !jornada) {
     return (
       <div className="guided-shell flex min-h-[calc(100vh-52px)] items-start justify-center p-6 pt-10">
-        <JornadaError message={error ?? undefined} />
+        <JornadaError
+          message={error ?? undefined}
+          onRetry={() => void refresh()}
+        />
       </div>
     );
   }
@@ -161,7 +152,7 @@ export function GuidedFlowShell({
         </header>
 
         {(pageTitle || pageSubtitle) && (
-          <div className="mt-6 mb-2">
+          <div className="mb-2 mt-6">
             {pageTitle && (
               <h1
                 className="text-2xl font-bold tracking-tight text-[#0C1A3D] sm:text-3xl"

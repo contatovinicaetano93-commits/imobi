@@ -14,6 +14,7 @@ import {
 } from "@/lib/panel-navigation";
 import { isMvpNavHref, BETA_MVP_MODE } from "@/lib/beta-mvp";
 import { JornadaGuard } from "@/components/dashboard/JornadaGuard";
+import { JornadaProvider } from "@/hooks/jornada-context";
 import { ToastProvider } from "@/hooks/toast-context";
 import { Toaster } from "@/components/ui/toaster";
 import { SkipLink } from "@/components/SkipLink";
@@ -276,6 +277,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     role != null &&
     (role === "TOMADOR" || role === "CONSTRUTOR" || role === "GESTOR");
 
+  const jornadaEnabled =
+    mvpGuided &&
+    (role === "TOMADOR" || role === "CONSTRUTOR" || role === "GESTOR" || role === "GESTOR_FUNDO");
+
   const userFooter = (compact = false) => (
     <div>
       {navMeta && (
@@ -371,6 +376,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <ToastProvider>
     <SkipLink />
+    <JornadaProvider enabled={jornadaEnabled}>
     <JornadaGuard role={role}>
     <div className="dash-root" style={{ display: "flex", minHeight: "100vh", background: "#EEF3FF", fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
 
@@ -539,6 +545,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <Toaster />
     </div>
     </JornadaGuard>
+    </JornadaProvider>
     </ToastProvider>
   );
 }

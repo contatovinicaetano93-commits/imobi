@@ -10,14 +10,11 @@ import {
   creditoApi, obrasApi, kycApi, notificacoesApi,
   type CreditoResumo, type ObraResumo, type KycStatus, type Notificacao,
 } from "@/lib/api";
-import { obterJornadaResiliente, mensagemErroJornada } from "@/lib/jornada-fetch";
 import { formatarBRL } from "@imbobi/core";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
-import { NextStepHero } from "@/components/dashboard/NextStepHero";
-import { JornadaError } from "@/components/dashboard/JornadaError";
-import { GuidedFlowShell } from "@/components/dashboard/GuidedFlowShell";
 import { BETA_MVP_MODE } from "@/lib/beta-mvp";
+import { TomadorMvpHub } from "./TomadorMvpHub";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Painel Construtor — IMOBI" };
@@ -58,25 +55,7 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 
 export default async function ConstrutorPage() {
   if (BETA_MVP_MODE) {
-    let jornada = null;
-    let jornadaErro: string | undefined;
-    try {
-      jornada = await obterJornadaResiliente();
-    } catch (err) {
-      jornadaErro = mensagemErroJornada(err);
-    }
-    if (!jornada) {
-      return (
-        <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
-          <JornadaError message={jornadaErro} />
-        </div>
-      );
-    }
-    return (
-      <GuidedFlowShell variant="tomador" hideStepRail>
-        <NextStepHero jornada={jornada} variant="tomador" />
-      </GuidedFlowShell>
-    );
+    return <TomadorMvpHub />;
   }
 
   const [creditos, obras, kycStatus, notifs] = await Promise.all([
