@@ -57,6 +57,7 @@ export class DocumentosController {
       fields["obraId"],
       fields["descricao"],
       fields["vencimento"],
+      originalName,
     );
   }
 

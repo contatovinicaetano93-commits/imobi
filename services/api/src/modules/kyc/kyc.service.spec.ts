@@ -24,6 +24,7 @@ describe("KycService", () => {
 
   const storage = {
     useS3: jest.fn().mockReturnValue(false),
+    assertStorageAvailable: jest.fn(),
     isLocalKey: jest.fn((key: string) => key.startsWith("local:kyc/")),
     uploadKycDocument: jest.fn().mockResolvedValue({
       key: "local:kyc/u1/RG_FRENTE/abc.jpg",

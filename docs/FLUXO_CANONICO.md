@@ -20,10 +20,11 @@ Simular → Cadastro → Login → GET /api/v1/jornada → href do passo atual
 | Ordem | Passo | Rota |
 |-------|-------|------|
 | 1 | KYC | `/dashboard/kyc` |
-| 2 | Obra | `/dashboard/obras/nova` |
-| 3 | Crédito | `/dashboard/credito/solicitar` |
-| 4 | Aguardar gestor | `/dashboard/construtor` (hero) |
-| 5 | Acompanhar | `/dashboard/construtor` + crédito |
+| 2 | Viabilidade (dossiê) | `/dashboard/viabilidade` |
+| 3 | Obra | `/dashboard/obras/nova` |
+| 4 | Crédito | `/dashboard/credito/solicitar` |
+| 5 | Aguardar gestor | `/dashboard/construtor` (hero) |
+| 6 | Acompanhar | `/dashboard/construtor` + crédito |
 
 ## Jornada do gestor
 
@@ -43,7 +44,22 @@ Simular → Cadastro → Login → GET /api/v1/jornada → href do passo atual
 
 ## Módulos ativos no beta
 
-auth, kyc, obras, etapas, credito, manager, jornada
+auth, kyc, dossies (viabilidade), obras, etapas, credito, manager, jornada, documentos
+
+## Glossário de domínio (Imobi ≠ catálogo de produtos)
+
+| Termo na UI | No banco / API | Observação |
+|-------------|----------------|------------|
+| Cliente | `Usuario` (TOMADOR / CONSTRUTOR) | Não é módulo de CRM genérico |
+| Empreendimento / obra | `Obra` + `DueDiligence` | Equivalente operacional a “produto” de crédito |
+| Documentos do fluxo | `KycDocumento`, `Documento`, checklist dossiê | Metadados no Postgres; binário S3/disco |
+| Lead comercial | `Lead` | Schema pronto; UI congelada no beta |
+
+## Persistência e “tempo real”
+
+- **Fonte de verdade:** PostgreSQL (metadados) + S3 ou disco local (arquivos).
+- **Atualização de painéis:** request/response + invalidação de cache de jornada (TTL 30s). Não há WebSocket/SSE no MVP.
+- **Admin:** busca por tela (usuários, pipeline); busca global unificada — épico P1.
 
 ## Congelado (UI oculta)
 

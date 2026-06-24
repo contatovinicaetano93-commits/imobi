@@ -26,14 +26,6 @@ export class KycService {
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
-  private assertStorageConfigured() {
-    if (!this.storage.useS3() && process.env.NODE_ENV === "production") {
-      throw new BadRequestException(
-        "Armazenamento S3 obrigatório em produção (ENABLE_S3_STORAGE=true).",
-      );
-    }
-  }
-
   async resolveDocumentUrl(stored: string): Promise<string> {
     if (!stored) return stored;
     if (stored.startsWith("http://") || stored.startsWith("https://")) return stored;
@@ -98,7 +90,7 @@ export class KycService {
     if (buffer.length > KYC_MAX_BYTES) {
       throw new BadRequestException("Arquivo muito grande. Máximo 10 MB.");
     }
-    this.assertStorageConfigured();
+    this.storage.assertStorageAvailable();
 
     const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
     if (!usuario) throw new NotFoundException("Usuário não encontrado");
