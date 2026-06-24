@@ -298,7 +298,7 @@ export type KycStatus = {
   usuarioId: string;
   status: string;
   documentos: KycDocumento[];
-  resumo: { pendentes: number; aprovados: number; rejeitados: number };
+  resumo: { pendentes: number; aprovados: number; rejeitados: number; totalTipos?: number };
 };
 
 export const kycApi = {

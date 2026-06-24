@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Clock } from "lucide-react";
 import type { Jornada } from "@/lib/api";
+import { getPassoNumero } from "@/lib/jornada-steps";
 
 const NAVY = "#0C1A3D";
 const MINT = "#4ADE80";
@@ -15,10 +16,11 @@ type Props = {
 export function NextStepHero({ jornada, variant = "tomador" }: Props) {
   const accent = variant === "gestor" ? "#7c3aed" : ROYAL;
   const waiting = jornada.passoAtual === "aguardando" || jornada.bloqueado;
+  const passoNumero = getPassoNumero(jornada);
 
   return (
     <section
-      className="mx-auto flex max-w-lg flex-col gap-5"
+      className="mx-auto flex w-full max-w-lg flex-col gap-5"
       aria-label="Próximo passo"
     >
       <div
@@ -47,7 +49,11 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
             <div className="mt-6">
               <div className="mb-2 flex justify-between text-xs text-white/50">
                 <span>
-                  {jornada.passosConcluidos} de {jornada.totalPassos} etapas
+                  {jornada.concluido
+                    ? `${jornada.totalPassos} de ${jornada.totalPassos} etapas`
+                    : waiting
+                      ? `Passo ${passoNumero} em andamento`
+                      : `${jornada.passosConcluidos} de ${jornada.totalPassos} concluídas`}
                 </span>
                 <span>{jornada.progressoPct}%</span>
               </div>
@@ -98,7 +104,7 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
 
       {!jornada.concluido && (
         <p className="text-center text-xs text-gray-400">
-          Passo {jornada.passosConcluidos + 1} de {jornada.totalPassos || 1}
+          Passo {passoNumero} de {jornada.totalPassos || 1}
           <span style={{ color: accent }}> · </span>
           Siga na ordem para liberar seu crédito
         </p>

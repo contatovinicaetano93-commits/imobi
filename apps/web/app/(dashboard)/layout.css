@@ -6,7 +6,11 @@
 .dash-main {
   padding: 1rem;
   overflow-x: hidden;
-  /* clearance for fixed WhatsApp FAB on mobile */
+  padding-bottom: 88px;
+}
+
+.dash-main--guided {
+  padding: 0;
   padding-bottom: 88px;
 }
 

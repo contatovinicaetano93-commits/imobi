@@ -16,6 +16,7 @@ import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
 import { NextStepHero } from "@/components/dashboard/NextStepHero";
 import { JornadaError } from "@/components/dashboard/JornadaError";
+import { GuidedFlowShell } from "@/components/dashboard/GuidedFlowShell";
 import { BETA_MVP_MODE } from "@/lib/beta-mvp";
 
 export const dynamic = "force-dynamic";
@@ -72,9 +73,9 @@ export default async function ConstrutorPage() {
       );
     }
     return (
-      <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
+      <GuidedFlowShell variant="tomador" hideStepRail>
         <NextStepHero jornada={jornada} variant="tomador" />
-      </div>
+      </GuidedFlowShell>
     );
   }
 

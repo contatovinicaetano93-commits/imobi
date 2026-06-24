@@ -10,6 +10,7 @@ import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
 import { NextStepHero } from "@/components/dashboard/NextStepHero";
 import { JornadaError } from "@/components/dashboard/JornadaError";
+import { GuidedFlowShell } from "@/components/dashboard/GuidedFlowShell";
 import { BETA_MVP_MODE } from "@/lib/beta-mvp";
 
 const GESTOR_PANELS = [
@@ -111,9 +112,9 @@ export default function GestorPage() {
     }
     if (jornada) {
       return (
-        <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
+        <GuidedFlowShell variant="gestor" hideStepRail>
           <NextStepHero jornada={jornada} variant="gestor" />
-        </div>
+        </GuidedFlowShell>
       );
     }
   }

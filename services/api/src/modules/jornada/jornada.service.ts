@@ -4,6 +4,12 @@ import { KycService } from "../kyc/kyc.service";
 import { ManagerService } from "../manager/manager.service";
 import { isManagerRole } from "../../common/constants/manager-roles";
 
+const TOMADOR_PASSOS = ["kyc", "obra", "credito", "aguardando", "acompanhar"] as const;
+
+function jornadaConcluida(passo: JornadaPassoId): boolean {
+  return passo === "acompanhar" || passo === "concluido";
+}
+
 export type JornadaPassoId =
   | "kyc"
   | "obra"
@@ -79,7 +85,7 @@ export class JornadaService {
     };
     const filaKyc = stats.filaKyc ?? 0;
     const filaEtapas = stats.filaAprovacoes ?? 0;
-    const total = filaKyc + filaEtapas;
+    const totalPassos = 3;
 
     if (filaKyc > 0) {
       return {
@@ -90,8 +96,8 @@ export class JornadaService {
         href: "/dashboard/gestor/kyc",
         concluido: false,
         passosConcluidos: 0,
-        totalPassos: total,
-        progressoPct: total === 0 ? 100 : 0,
+        totalPassos,
+        progressoPct: 10,
         fila: { kyc: filaKyc, etapas: filaEtapas },
       };
     }
@@ -104,8 +110,8 @@ export class JornadaService {
         descricao: `${filaEtapas} etapa(s) aguardando liberação`,
         href: "/dashboard/gestor/etapas",
         concluido: false,
-        passosConcluidos: filaKyc > 0 ? 1 : 0,
-        totalPassos: total,
+        passosConcluidos: 1,
+        totalPassos,
         progressoPct: 50,
         fila: { kyc: filaKyc, etapas: filaEtapas },
       };
@@ -118,11 +124,26 @@ export class JornadaService {
       descricao: "Nenhuma pendência no momento. Bom trabalho!",
       href: "/dashboard/gestor",
       concluido: true,
-      passosConcluidos: 1,
-      totalPassos: 1,
+      passosConcluidos: totalPassos,
+      totalPassos,
       progressoPct: 100,
       fila: { kyc: 0, etapas: 0 },
     };
+  }
+
+  private tomadorProgresso(passoAtual: JornadaPassoId, aguardandoAnalise = false) {
+    const totalPassos = TOMADOR_PASSOS.length;
+    const idx = TOMADOR_PASSOS.indexOf(passoAtual as (typeof TOMADOR_PASSOS)[number]);
+    const passoIdx = idx >= 0 ? idx : 0;
+    const passosConcluidos = jornadaConcluida(passoAtual)
+      ? totalPassos
+      : passoIdx;
+    const progressoPct = jornadaConcluida(passoAtual)
+      ? 100
+      : aguardandoAnalise
+        ? Math.round(((passoIdx + 0.5) / totalPassos) * 100)
+        : Math.round((passoIdx / totalPassos) * 100);
+    return { passosConcluidos, totalPassos, progressoPct, passoNumero: passoIdx + 1 };
   }
 
   private async obterTomador(usuarioId: string): Promise<JornadaResponse> {
@@ -148,20 +169,9 @@ export class JornadaService {
     const temCredito = creditos.length > 0;
     const temLiberacao = creditos.some((c) => c.liberacoes.length > 0) || etapasLiberadas > 0;
 
-    const steps = [
-      { id: "kyc" as const, done: kycAprovado },
-      { id: "obra" as const, done: temObra },
-      { id: "credito" as const, done: temCredito },
-      { id: "aguardando" as const, done: temLiberacao },
-      { id: "acompanhar" as const, done: temLiberacao && temCredito },
-    ];
-
-    const passosConcluidos = steps.filter((s) => s.done).length;
-    const totalPassos = steps.length;
-    const progressoPct = Math.round((passosConcluidos / totalPassos) * 100);
-
     if (!kycAprovado) {
       const aguardando = kycStatus.status === "ENVIADO";
+      const prog = this.tomadorProgresso("kyc", aguardando);
       return {
         perfil: "tomador",
         passoAtual: "kyc",
@@ -173,14 +183,13 @@ export class JornadaService {
             : "RG, comprovante e selfie para liberar o crédito.",
         href: "/dashboard/kyc",
         concluido: false,
-        passosConcluidos,
-        totalPassos,
-        progressoPct,
+        ...prog,
         bloqueado: aguardando ? "credito" : undefined,
       };
     }
 
     if (!temObra) {
+      const prog = this.tomadorProgresso("obra");
       return {
         perfil: "tomador",
         passoAtual: "obra",
@@ -188,13 +197,12 @@ export class JornadaService {
         descricao: "Informe endereço, etapas e valor do projeto.",
         href: "/dashboard/obras/nova",
         concluido: false,
-        passosConcluidos,
-        totalPassos,
-        progressoPct,
+        ...prog,
       };
     }
 
     if (!temCredito) {
+      const prog = this.tomadorProgresso("credito");
       return {
         perfil: "tomador",
         passoAtual: "credito",
@@ -202,13 +210,12 @@ export class JornadaService {
         descricao: "Simule e envie o pedido vinculado à sua obra.",
         href: "/dashboard/credito/solicitar",
         concluido: false,
-        passosConcluidos,
-        totalPassos,
-        progressoPct,
+        ...prog,
       };
     }
 
     if (!temLiberacao) {
+      const prog = this.tomadorProgresso("aguardando", true);
       return {
         perfil: "tomador",
         passoAtual: "aguardando",
@@ -216,12 +223,11 @@ export class JornadaService {
         descricao: "Seu pedido está com o gestor. Acompanhe por aqui.",
         href: "/dashboard/construtor",
         concluido: false,
-        passosConcluidos,
-        totalPassos,
-        progressoPct,
+        ...prog,
       };
     }
 
+    const prog = this.tomadorProgresso("acompanhar");
     return {
       perfil: "tomador",
       passoAtual: "acompanhar",
@@ -229,8 +235,8 @@ export class JornadaService {
       descricao: "Veja parcelas, extrato e progresso da obra.",
       href: "/dashboard/credito",
       concluido: true,
-      passosConcluidos,
-      totalPassos,
+      passosConcluidos: prog.totalPassos,
+      totalPassos: prog.totalPassos,
       progressoPct: 100,
     };
   }

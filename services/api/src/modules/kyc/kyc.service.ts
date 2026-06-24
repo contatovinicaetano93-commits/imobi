@@ -35,30 +35,41 @@ export class KycService {
   }
 
   async obterStatus(usuarioId: string) {
-    const documentos = await this.prisma.kycDocumento.findMany({
+    const raw = await this.prisma.kycDocumento.findMany({
       where: { usuarioId },
+      orderBy: { criadoEm: "desc" },
     });
+
+    // Um registro por tipo (último envio) — evita contadores inflados por reenvios.
+    const porTipo = new Map<string, (typeof raw)[0]>();
+    for (const doc of raw) {
+      if (!porTipo.has(doc.tipo)) porTipo.set(doc.tipo, doc);
+    }
+    const documentos = Array.from(porTipo.values());
 
     const pendentes = documentos.filter((d) => d.status === "PENDENTE").length;
     const aprovados = documentos.filter((d) => d.status === "APROVADO").length;
     const rejeitados = documentos.filter((d) => d.status === "REJEITADO").length;
+    const totalTipos = 4;
 
     let status: string;
     if (documentos.length === 0) {
       status = "NENHUM";
     } else if (rejeitados > 0) {
       status = "REJEITADO";
-    } else if (aprovados > 0 && pendentes === 0) {
+    } else if (aprovados >= totalTipos && pendentes === 0) {
       status = "APROVADO";
-    } else {
+    } else if (documentos.some((d) => d.status !== "PENDENTE" || d.url)) {
       status = "ENVIADO";
+    } else {
+      status = "NENHUM";
     }
 
     return {
       usuarioId,
       status,
       documentos,
-      resumo: { pendentes, aprovados, rejeitados },
+      resumo: { pendentes, aprovados, rejeitados, totalTipos },
     };
   }
 

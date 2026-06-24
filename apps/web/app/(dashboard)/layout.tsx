@@ -507,7 +507,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Main */}
-      <main id="main-content" className="dash-main" style={{ flex: 1, overflowX: "hidden" }}>
+      <main
+        id="main-content"
+        className={mvpGuided ? "dash-main dash-main--guided" : "dash-main"}
+        style={{ flex: 1, overflowX: "hidden" }}
+      >
         <div style={{ height: 52 }} className="dash-spacer" />
         {children}
       </main>
