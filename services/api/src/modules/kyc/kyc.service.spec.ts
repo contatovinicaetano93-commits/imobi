@@ -1,5 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BadRequestException } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { KycService } from "./kyc.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
@@ -32,6 +33,10 @@ describe("KycService", () => {
     getSignedUrl: jest.fn(),
   };
 
+  const cache = {
+    del: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -41,6 +46,7 @@ describe("KycService", () => {
         { provide: EmailService, useValue: {} },
         { provide: PushNotificacoesService, useValue: { enviarPush: jest.fn() } },
         { provide: StorageService, useValue: storage },
+        { provide: CACHE_MANAGER, useValue: cache },
       ],
     }).compile();
 
@@ -94,6 +100,7 @@ describe("KycService", () => {
 
       expect(storage.uploadKycDocument).toHaveBeenCalled();
       expect(doc.url).toContain("/arquivo");
+      expect(cache.del).toHaveBeenCalled();
     });
   });
 
