@@ -1,10 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { TOMADOR } from '../../fixtures/auth.fixture';
+import { mockJornada, MOCK_JORNADA_ACOMPANHAR } from '../../fixtures/jornada.fixture';
 
 test.use({ storageState: TOMADOR.storageState });
 
 test.describe('Estudo de Viabilidade', () => {
   test.beforeEach(async ({ page }) => {
+    await mockJornada(page, { ...MOCK_JORNADA_ACOMPANHAR, passoAtual: 'credito', href: '/dashboard/simulador' });
     await page.goto('/dashboard/simulador', { waitUntil: 'domcontentloaded', timeout: 120_000 });
     await expect(page.getByRole('heading', { name: 'Estudo de Viabilidade' })).toBeVisible({
       timeout: 60_000,

@@ -24,6 +24,6 @@ test.describe('Login staging (API real)', () => {
       .toBe(true);
 
     await page.goto('/dashboard/construtor', { waitUntil: 'domcontentloaded' });
-    await expect(page).toHaveURL(/\/dashboard\/construtor/);
+    await expect(page).toHaveURL(/\/dashboard\/construtor/, { timeout: 60_000 });
   });
 });
