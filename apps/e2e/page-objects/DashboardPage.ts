@@ -5,7 +5,7 @@ export class DashboardPage {
   /** NextStepHero / JornadaHeroStrip — section, não o link do wizard KYC */
   readonly hero = this.page.getByRole('region', { name: 'Próximo passo' });
   readonly jornadaError = this.page.getByText('Conexão com o servidor');
-  readonly fullPanel = this.page.getByText(/Nenhuma operação ativa|Operação ativa/);
+  readonly fullPanel = this.page.locator('#panel-content-operacao-ativa');
   /** Tomador no passo KYC (staging real) — GuidedFlowShell */
   readonly kycGuided = this.page.getByRole('heading', { name: /Verificação de identidade/i });
   readonly guidedJourney = this.page.getByRole('navigation', { name: 'Etapas da jornada' });

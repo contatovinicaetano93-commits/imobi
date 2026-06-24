@@ -40,6 +40,7 @@
     "seed:staging:obra": "node scripts/seed-staging-obra-from-render.mjs",
     "seed:staging:beta-tomadores": "node scripts/seed-beta-tomadores-staging.mjs",
     "beta:invite": "node scripts/beta-invite.mjs",
+    "beta:invite:whatsapp": "node scripts/beta-invite.mjs --whatsapp",
     "render:init": "node scripts/render-init-local.mjs",
     "render:env:check": "node scripts/render-env-check.mjs",
     "render:key:check": "node scripts/render-key-check.mjs",
