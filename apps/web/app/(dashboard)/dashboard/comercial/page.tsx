@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { formatarBRL } from "@imbobi/core";
 import type { ParceiroResumo, OperacaoIndicada, ContatoMailing } from "@/lib/api";
+import { PanelSection } from "@/components/dashboard/PanelSection";
+import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
 
 const ZERO_RESUMO: ParceiroResumo = {
   comissoesAReceber: 0,
@@ -151,10 +153,30 @@ export default function ParceiroComercialPage() {
     setAdicionando(false);
   }
 
+  const comercialPanels = [
+    { id: "resumo-portal", priority: "primary" as const },
+    { id: "link-indicacao", priority: "primary" as const },
+    { id: "kpis-comissao", priority: "primary" as const },
+    { id: "operacoes-indicadas", priority: "primary" as const },
+    { id: "mailing-contatos", priority: "secondary" as const },
+    { id: "privacidade", priority: "secondary" as const },
+  ];
+
+  const resumoSummary = `${rs.operacoesAtivas} operações ativas · ${formatarBRL(rs.comissoesAReceber)} a receber`;
+
   return (
-    <div className="space-y-8 max-w-6xl">
-      {/* Hero comercial - âmbar/dourado */}
-      <div style={{ background: "linear-gradient(135deg, #78350f 0%, #92400e 100%)", borderRadius: 16, padding: "1.5rem", marginBottom: "1.5rem", color: "white" }}>
+    <div className="space-y-6 max-w-6xl p-4 sm:p-6">
+      <PanelToolbar sections={comercialPanels} />
+
+      <PanelSection
+        id="resumo-portal"
+        title="Portal Comercial"
+        icon={<Star className="w-4 h-4 text-[#d97706]" />}
+        priority="primary"
+        summary={resumoSummary}
+      >
+      <div className="space-y-4">
+      <div style={{ background: "linear-gradient(135deg, #78350f 0%, #92400e 100%)", borderRadius: 16, padding: "1.5rem", color: "white" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
           <div style={{ background: "#d9770622", border: "1px solid #d9770644", borderRadius: 8, padding: "0.4rem" }}>
             <Star size={18} color="#d97706" />
@@ -171,8 +193,7 @@ export default function ParceiroComercialPage() {
         </div>
       </div>
 
-      {/* Pipeline de leads */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-2">
+      <div className="bg-gray-50 rounded-2xl border border-gray-100 p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-[#d97706]" />
           Pipeline de leads
@@ -197,8 +218,16 @@ export default function ParceiroComercialPage() {
           ))}
         </div>
       </div>
+      </div>
+      </PanelSection>
 
-      {/* Link de indicação */}
+      <PanelSection
+        id="link-indicacao"
+        title="Link de indicação"
+        icon={<Link2 className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        summary={rs.codigoIndicacao ? `Código ${rs.codigoIndicacao}` : "Aguardando código"}
+      >
       <div className="bg-[#1B4FD8] rounded-2xl p-5 sm:p-6 text-white flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-blue-200 mb-1 flex items-center gap-1.5">
@@ -224,9 +253,16 @@ export default function ParceiroComercialPage() {
           {copied ? "Copiado!" : "Copiar link"}
         </button>
       </div>
+      </PanelSection>
 
-      {/* KPIs de comissão */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <PanelSection
+        id="kpis-comissao"
+        title="Comissões e performance"
+        icon={<Banknote className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        summary={`${formatarBRL(rs.comissoesAReceber)} a receber · ${rs.taxaAprovacao}% aprovação`}
+      >
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-1">
         {resumo === null
           ? Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
@@ -257,14 +293,17 @@ export default function ParceiroComercialPage() {
             ))
         }
       </div>
+      </PanelSection>
 
-      {/* Operações indicadas */}
-      <section aria-labelledby="operacoes-title">
-        <h2 id="operacoes-title" className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-[#1B4FD8]" />
-          Operações indicadas
-        </h2>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <PanelSection
+        id="operacoes-indicadas"
+        title="Operações indicadas"
+        icon={<TrendingUp className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        summary={`${(operacoes ?? []).length} operações`}
+        badge={(operacoes ?? []).length || undefined}
+      >
+        <div className="overflow-hidden rounded-xl border border-gray-100">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -306,15 +345,17 @@ export default function ParceiroComercialPage() {
             </table>
           </div>
         </div>
-      </section>
+      </PanelSection>
 
-      {/* Mailing */}
-      <section aria-labelledby="mailing-title">
-        <div className="flex items-center justify-between mb-4">
-          <h2 id="mailing-title" className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <Mail className="w-4 h-4 text-[#1B4FD8]" />
-            Mailing de contatos
-          </h2>
+      <PanelSection
+        id="mailing-contatos"
+        title="Mailing de contatos"
+        icon={<Mail className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="secondary"
+        summary={`${(mailing ?? []).length} contatos`}
+        badge={(mailing ?? []).length || undefined}
+      >
+        <div className="flex items-center justify-end gap-2 mb-4">
           <div className="flex items-center gap-2">
             <button
               onClick={exportarMailingCsv}
@@ -394,10 +435,16 @@ export default function ParceiroComercialPage() {
             </button>
           </form>
         </div>
-      </section>
+      </PanelSection>
 
-      {/* Nota de privacidade */}
-      <div className="flex items-start gap-3 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <PanelSection
+        id="privacidade"
+        title="Transparência e privacidade"
+        icon={<ShieldCheck className="w-4 h-4 text-[#16a34a]" />}
+        priority="secondary"
+        summary="LGPD — dados limitados ao essencial"
+      >
+      <div className="flex items-start gap-3 p-1">
         <ShieldCheck className="w-5 h-5 text-[#16a34a] shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-semibold text-gray-900">Transparência e privacidade</p>
@@ -407,6 +454,7 @@ export default function ParceiroComercialPage() {
           </p>
         </div>
       </div>
+      </PanelSection>
     </div>
   );
 }

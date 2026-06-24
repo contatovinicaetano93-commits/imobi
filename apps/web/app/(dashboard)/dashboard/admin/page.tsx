@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import {
   Users, Building2, ShieldCheck, Settings,
@@ -11,6 +11,9 @@ import {
 import { formatarBRL } from "@imbobi/core";
 
 import { AdminSipocPanel } from "./_components/AdminSipocPanel";
+import { PanelSection } from "@/components/dashboard/PanelSection";
+import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
+import { ADMIN_GLOBAL_PANELS, ADMIN_TAB_PANELS } from "./_components/admin-panel-config";
 
 const NAVY  = "#0C1A3D";
 const ROYAL = "#1B4FD8";
@@ -172,9 +175,14 @@ function TabPortfolio({ overview }: { overview: ApiOverview | null }) {
 
   return (
     <div className="space-y-6">
-      {/* Carteira */}
-      <div style={card}>
-        <SectionHeader title="Carteira Ativa" icon={<TrendingUp size={14} color={MINT} />} />
+      <PanelSection
+        id="admin-carteira"
+        title="Carteira Ativa"
+        icon={<TrendingUp className="w-4 h-4 text-[#4ADE80]" />}
+        priority="primary"
+        summary={formatarBRL(creditoAprovado)}
+        flush
+      >
         <div style={{ padding: "1.25rem" }} className="space-y-4">
           <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 }}>
             <div>
@@ -202,19 +210,32 @@ function TabPortfolio({ overview }: { overview: ApiOverview | null }) {
             </div>
           </div>
         </div>
-      </div>
+      </PanelSection>
 
-      {/* Taxa + Spread */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <PanelSection
+        id="admin-portfolio-kpis"
+        title="Indicadores de carteira"
+        icon={<BarChart3 className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        summary={`${obrasAtivas} operações · taxa ${p.taxaMediaPonderada.toFixed(2)}% a.m.`}
+        flush
+      >
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 sm:p-5">
         <KpiCard label="Taxa Méd. Ponderada" value={`${p.taxaMediaPonderada.toFixed(2)}% a.m.`} sub={`meta: ${p.taxaMeta}% a.m.`} accent={p.taxaMediaPonderada >= p.taxaMeta ? MINT : "#f59e0b"} delta={((p.taxaMediaPonderada - p.taxaMeta) / p.taxaMeta) * 100} />
         <KpiCard label="Spread Efetivo" value={`${p.spreadEfetivo.toFixed(2)}%`} sub="sobre CDI" accent={ROYAL} />
         <KpiCard label="Ticket Méd./Operação" value={formatarBRL(p.ticketMedioPorOperacao)} sub={`${obrasAtivas} operações ativas`} accent={NAVY} />
         <KpiCard label="Ticket Méd./Incorporadora" value={formatarBRL(p.ticketMedioPorIncorporadora)} sub="por tomador" accent={NAVY} />
       </div>
+      </PanelSection>
 
-      {/* Receita */}
-      <div style={card}>
-        <SectionHeader title="Receita — Realizado vs Projetado" icon={<Banknote size={14} color={ROYAL} />} />
+      <PanelSection
+        id="admin-receita"
+        title="Receita — Realizado vs Projetado"
+        icon={<Banknote className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        summary={formatarBRL(receitaTotal)}
+        flush
+      >
         <div style={{ padding: "1.25rem" }} className="space-y-3">
           {[
             { label: "Juros acruados (mensal)",        val: p.receitaJuros,         pct: Math.round((p.receitaJuros / p.receitaProjetada) * 100) },
@@ -237,10 +258,17 @@ function TabPortfolio({ overview }: { overview: ApiOverview | null }) {
             </div>
           </div>
         </div>
-      </div>
+      </PanelSection>
 
-      {/* EBITDA */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <PanelSection
+        id="admin-ebitda"
+        title="EBITDA e resumo"
+        icon={<BarChart3 className="w-4 h-4 text-[#0C1A3D]" />}
+        priority="secondary"
+        summary={`EBITDA ${formatarBRL(p.ebitdaRealizado)} · margem ${ebitdaPct.toFixed(1)}%`}
+        flush
+      >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 sm:p-5">
         <div style={card}>
           <SectionHeader title="EBITDA Mensal" icon={<BarChart3 size={14} color={NAVY} />} />
           <div style={{ padding: "1.25rem" }} className="space-y-3">
@@ -272,6 +300,7 @@ function TabPortfolio({ overview }: { overview: ApiOverview | null }) {
           ))}
         </div>
       </div>
+      </PanelSection>
     </div>
   );
 }
@@ -282,17 +311,30 @@ function TabRisco() {
 
   return (
     <div className="space-y-6">
-      {/* KPIs rápidos */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <PanelSection
+        id="admin-risco-kpis"
+        title="Indicadores de risco"
+        icon={<AlertCircle className="w-4 h-4 text-[#dc2626]" />}
+        priority="primary"
+        summary={`Inadimplência ${formatarBRL(inadimTotalValor)} · LTV ${r.ltvMedio}%`}
+        flush
+      >
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 sm:p-5">
         <KpiCard label="Inadimplência Total" value={formatarBRL(inadimTotalValor)} sub={`${r.inadimplencia.reduce((s, i) => s + i.pct, 0).toFixed(2)}% da carteira`} accent="#f59e0b" />
         <KpiCard label="PDD Provisionada"    value={formatarBRL(r.pdd)}            sub="provisão p/ devedores duvidosos" accent="#dc2626" />
         <KpiCard label="LTV Médio"           value={`${r.ltvMedio}%`}              sub="loan-to-value da carteira"      accent={r.ltvMedio > 80 ? "#dc2626" : ROYAL} />
         <KpiCard label="Cobertura Garantias" value={`${r.coberturaGarantias}%`}    sub="valor garantia / saldo devedor" accent={MINT} />
       </div>
+      </PanelSection>
 
-      {/* Inadimplência aging */}
-      <div style={card}>
-        <SectionHeader title="Inadimplência por Aging" icon={<Clock size={14} color="#f59e0b" />} />
+      <PanelSection
+        id="admin-inadimplencia"
+        title="Inadimplência por Aging"
+        icon={<Clock className="w-4 h-4 text-[#f59e0b]" />}
+        priority="primary"
+        summary={formatarBRL(inadimTotalValor)}
+        flush
+      >
         <div style={{ padding: "1.25rem" }} className="space-y-3">
           {r.inadimplencia.map(({ aging, valor, pct }) => (
             <div key={aging}>
@@ -307,12 +349,17 @@ function TabRisco() {
             </div>
           ))}
         </div>
-      </div>
+      </PanelSection>
 
-      {/* Concentração */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div style={card}>
-          <SectionHeader title="Concentração por Tomador" icon={<Users size={14} color={ROYAL} />} />
+        <PanelSection
+          id="admin-concentracao"
+          title="Concentração por Tomador"
+          icon={<Users className="w-4 h-4 text-[#1B4FD8]" />}
+          priority="primary"
+          summary={`${r.concentracao.length} tomadores`}
+          flush
+        >
           <div>
             {r.concentracao.map(({ nome, valor, pct }) => (
               <div key={nome} style={{ padding: "0.75rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.04)" }}>
@@ -328,10 +375,16 @@ function TabRisco() {
               </div>
             ))}
           </div>
-        </div>
+        </PanelSection>
 
-        <div style={card}>
-          <SectionHeader title="Alertas de Risco" icon={<AlertCircle size={14} color="#dc2626" />} />
+        <PanelSection
+          id="admin-alertas-risco"
+          title="Alertas de Risco"
+          icon={<AlertCircle className="w-4 h-4 text-[#dc2626]" />}
+          priority="secondary"
+          summary={`${r.watchlist} em watchlist · ${r.covenantsViolados} covenants`}
+          flush
+        >
           <div style={{ padding: "1.25rem" }} className="space-y-3">
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.75rem 1rem", borderRadius: 10, background: r.watchlist > 0 ? "#fef2f2" : "rgba(74,222,128,0.08)", border: `1px solid ${r.watchlist > 0 ? "#fecaca" : "rgba(74,222,128,0.25)"}` }}>
               <span style={{ ...j, fontSize: "0.82rem", fontWeight: 600, color: NAVY }}>Operações em Watchlist</span>
@@ -359,7 +412,7 @@ function TabRisco() {
               ))}
             </div>
           </div>
-        </div>
+        </PanelSection>
       </div>
     </div>
   );
@@ -371,16 +424,30 @@ function TabPipeline() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <PanelSection
+        id="admin-pipeline-kpis"
+        title="Indicadores de pipeline"
+        icon={<Target className="w-4 h-4 text-[#4ADE80]" />}
+        priority="primary"
+        summary={formatarBRL(pl.pipelineTotal)}
+        flush
+      >
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 sm:p-5">
         <KpiCard label="Pipeline Total"    value={formatarBRL(pl.pipelineTotal)} sub={`${pl.incorporadorasAtivas} incorporadoras`} accent={MINT} />
         <KpiCard label="Taxa de Conversão" value={`${pl.taxaConversao}%`}        sub="lead → desembolso"                          accent={ROYAL} />
         <KpiCard label="Ciclo Médio"       value={`${pl.cicloMedioDias} dias`}   sub="da originação ao desembolso"                accent={NAVY} />
         <KpiCard label="Leads Ativos"      value={String(pl.funil[0].qtde)}      sub={formatarBRL(pl.funil[0].valor)}             accent={NAVY} />
       </div>
+      </PanelSection>
 
-      {/* Funil */}
-      <div style={card}>
-        <SectionHeader title="Funil de Originação" icon={<Target size={14} color={ROYAL} />} />
+      <PanelSection
+        id="admin-funil"
+        title="Funil de Originação"
+        icon={<Target className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        summary={`${pl.funil[0].qtde} leads · conversão ${pl.taxaConversao}%`}
+        flush
+      >
         <div style={{ padding: "1.25rem" }} className="space-y-2">
           {pl.funil.map(({ etapa, qtde, valor }, i) => {
             const widthPct = maxQtde > 0 ? Math.round((qtde / maxQtde) * 100) : 0;
@@ -408,11 +475,16 @@ function TabPipeline() {
             );
           })}
         </div>
-      </div>
+      </PanelSection>
 
-      {/* Incorporadoras pipeline */}
-      <div style={card}>
-        <SectionHeader title="Pipeline Ativo por Incorporadora" icon={<Building2 size={14} color={NAVY} />} />
+      <PanelSection
+        id="admin-incorporadoras"
+        title="Pipeline Ativo por Incorporadora"
+        icon={<Building2 className="w-4 h-4 text-[#0C1A3D]" />}
+        priority="secondary"
+        summary={`${pl.incorporadorasAtivas} incorporadoras ativas`}
+        flush
+      >
         <div style={{ padding: "1.25rem" }}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {["Construtora Alpha", "Incorporadora Beta", "Grupo Gama", "Delta Empreend.", "Constru-Tech", "INCO Ltda.", "Projetur", "Sólida Eng."].map((nome, i) => {
@@ -428,7 +500,7 @@ function TabPipeline() {
             })}
           </div>
         </div>
-      </div>
+      </PanelSection>
     </div>
   );
 }
@@ -447,7 +519,15 @@ function TabObras() {
 
   return (
     <div className="space-y-6">
-      <div style={{ ...card, padding: "1rem 1.25rem", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, border: "1px solid rgba(27,79,216,0.15)", background: "rgba(27,79,216,0.03)" }}>
+      <PanelSection
+        id="admin-obras-cta"
+        title="Gestão operacional de obras"
+        icon={<Building2 className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        summary="Homologação, SIPOC e portfólio completo"
+        flush
+      >
+      <div style={{ padding: "1rem 1.25rem", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, border: "1px solid rgba(27,79,216,0.15)", background: "rgba(27,79,216,0.03)", borderRadius: 12 }}>
         <div>
           <p style={{ ...j, fontSize: "0.82rem", fontWeight: 700, color: NAVY }}>Gestão operacional de obras</p>
           <p style={{ ...j, fontSize: "0.72rem", color: "rgba(12,26,61,0.45)", marginTop: 4 }}>Homologação, SIPOC e portfólio completo com dados ao vivo.</p>
@@ -456,15 +536,31 @@ function TabObras() {
           Abrir gestão de obras <ArrowRight size={13} />
         </a>
       </div>
-      <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
+      </PanelSection>
+
+      <PanelSection
+        id="admin-obras-kpis"
+        title="Status das obras"
+        icon={<BarChart3 className="w-4 h-4 text-[#4ADE80]" />}
+        priority="primary"
+        summary={`${noPrazo} no prazo · ${atrasadas} atrasadas`}
+        flush
+      >
+      <div className="grid grid-cols-3 sm:grid-cols-3 gap-3 p-4 sm:p-5">
         <KpiCard label="No Prazo"   value={String(noPrazo)}   sub="obras" accent={MINT}     style={{ padding: "0.6rem 0.75rem" }} />
         <KpiCard label="Atrasadas"  value={String(atrasadas)} sub="obras" accent="#dc2626"  style={{ padding: "0.6rem 0.75rem" }} />
         <KpiCard label="Adiantadas" value={String(adiantadas)}sub="obras" accent={ROYAL}    style={{ padding: "0.6rem 0.75rem" }} />
       </div>
+      </PanelSection>
 
-      {/* Tabela obras */}
-      <div style={card}>
-        <SectionHeader title="% Físico vs % Financeiro por Obra" icon={<Building2 size={14} color={NAVY} />} />
+      <PanelSection
+        id="admin-obras-tabela"
+        title="% Físico vs % Financeiro por Obra"
+        icon={<Building2 className="w-4 h-4 text-[#0C1A3D]" />}
+        priority="primary"
+        summary={`${obras.length} obras monitoradas`}
+        flush
+      >
         <div>
           {obras.map((o) => {
             const st = STATUS_STYLE[o.status];
@@ -507,11 +603,16 @@ function TabObras() {
             );
           })}
         </div>
-      </div>
+      </PanelSection>
 
-      {/* Cronograma 30/60/90 dias */}
-      <div style={card}>
-        <SectionHeader title="Cronograma de Liberações" icon={<Clock size={14} color={MINT} />} />
+      <PanelSection
+        id="admin-cronograma"
+        title="Cronograma de Liberações"
+        icon={<Clock className="w-4 h-4 text-[#4ADE80]" />}
+        priority="secondary"
+        summary="Próximos 30/60/90 dias"
+        flush
+      >
         <div style={{ padding: "1.25rem" }}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
@@ -540,7 +641,7 @@ function TabObras() {
             ))}
           </div>
         </div>
-      </div>
+      </PanelSection>
     </div>
   );
 }
@@ -562,11 +663,27 @@ function TabOperacional({
 
   return (
     <div className="space-y-6">
-      <AdminSipocPanel />
+      <PanelSection
+        id="admin-sipoc"
+        title="SIPOC — Homologação e liberações"
+        icon={<Zap className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="critical"
+        summary="Obras em homologação e pagamentos pendentes"
+        flush
+      >
+        <AdminSipocPanel />
+      </PanelSection>
 
-      {/* Aprovações pendentes */}
-      <div style={card}>
-        <SectionHeader title="Aprovações Pendentes" icon={<ShieldCheck size={14} color="#f59e0b" />} />
+      <PanelSection
+        id="admin-aprovacoes"
+        title="Aprovações Pendentes"
+        icon={<ShieldCheck className="w-4 h-4 text-[#f59e0b]" />}
+        priority="critical"
+        summary={`${op.aprovacoes.length} pendências`}
+        badge={op.aprovacoes.length || undefined}
+        urgency={op.aprovacoes.length > 0 ? "warning" : "none"}
+        flush
+      >
         {op.aprovacoes.length === 0 ? (
           <p style={{ ...j, padding: "2rem", textAlign: "center", fontSize: "0.82rem", color: "rgba(12,26,61,0.3)" }}>Nenhuma pendência</p>
         ) : (
@@ -587,12 +704,17 @@ function TabOperacional({
             })}
           </div>
         )}
-      </div>
+      </PanelSection>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* KYC / Onboarding */}
-        <div style={card}>
-          <SectionHeader title="Onboarding / KYC" icon={<FileCheck2 size={14} color={ROYAL} />} />
+        <PanelSection
+          id="admin-kyc"
+          title="Onboarding / KYC"
+          icon={<FileCheck2 className="w-4 h-4 text-[#1B4FD8]" />}
+          priority="primary"
+          summary={`${op.kyc.length} em análise`}
+          flush
+        >
           <div>
             {op.kyc.map(({ nome, email, etapa, dias }) => (
               <div key={email} style={{ padding: "0.8rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
@@ -607,11 +729,16 @@ function TabOperacional({
               </div>
             ))}
           </div>
-        </div>
+        </PanelSection>
 
-        {/* Documentos vencendo */}
-        <div style={card}>
-          <SectionHeader title="Documentos — Alerta de Vencimento" icon={<AlertTriangle size={14} color="#f59e0b" />} />
+        <PanelSection
+          id="admin-documentos"
+          title="Documentos — Alerta de Vencimento"
+          icon={<AlertTriangle className="w-4 h-4 text-[#f59e0b]" />}
+          priority="primary"
+          summary={`${op.documentosVencendo.length} documentos`}
+          flush
+        >
           <div>
             {op.documentosVencendo.map(({ doc, obra, venc }) => {
               const diasParaVencer = Math.ceil((new Date(venc).getTime() - Date.now()) / 86_400_000);
@@ -630,13 +757,18 @@ function TabOperacional({
               );
             })}
           </div>
-        </div>
+        </PanelSection>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Trilha de auditoria */}
-        <div style={card}>
-          <SectionHeader title="Trilha de Auditoria" icon={<Activity size={14} color={NAVY} />} />
+        <PanelSection
+          id="admin-auditoria"
+          title="Trilha de Auditoria"
+          icon={<Activity className="w-4 h-4 text-[#0C1A3D]" />}
+          priority="secondary"
+          summary={`${op.auditoria.length} eventos recentes`}
+          flush
+        >
           <div>
             {op.auditoria.map(({ acao, usuario, desc, data }, i) => (
               <div key={i} style={{ display: "flex", gap: 10, padding: "0.75rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)" }}>
@@ -649,11 +781,16 @@ function TabOperacional({
               </div>
             ))}
           </div>
-        </div>
+        </PanelSection>
 
-        {/* Logs de integração */}
-        <div style={card}>
-          <SectionHeader title="Logs de Integração" icon={<Zap size={14} color={ROYAL} />} />
+        <PanelSection
+          id="admin-logs"
+          title="Logs de Integração"
+          icon={<Zap className="w-4 h-4 text-[#1B4FD8]" />}
+          priority="secondary"
+          summary={`${op.logs.length} serviços monitorados`}
+          flush
+        >
           <div style={{ padding: "1rem 1.25rem" }} className="space-y-2">
             {op.logs.map(({ servico, status, exec, msg }) => (
               <div key={servico} style={{ display: "flex", alignItems: "center", gap: 10, padding: "0.6rem 0.85rem", borderRadius: 10, background: status === "OK" ? "rgba(74,222,128,0.06)" : "#fffbeb", border: `1px solid ${status === "OK" ? "rgba(74,222,128,0.2)" : "#fde68a"}` }}>
@@ -666,12 +803,17 @@ function TabOperacional({
               </div>
             ))}
           </div>
-        </div>
+        </PanelSection>
       </div>
 
-      {/* Obras recentes */}
-      <div style={card}>
-        <SectionHeader title="Obras Recentes" icon={<Building2 size={14} color={NAVY} />} />
+      <PanelSection
+        id="admin-obras-recentes"
+        title="Obras Recentes"
+        icon={<Building2 className="w-4 h-4 text-[#0C1A3D]" />}
+        priority="primary"
+        summary={`${(obras && obras.length > 0 ? obras : DEMO.obras.slice(0, 5)).length} obras`}
+        flush
+      >
         <div>
           {(obras && obras.length > 0 ? obras : DEMO.obras.slice(0, 5).map((o, i) => ({ id: `demo-${i}`, nome: o.nome, status: o.status, tomador: "Incorporadora Demo" }))).map((o) => {
             const statusMap: Record<string, { color: string; bg: string; label: string }> = {
@@ -696,12 +838,17 @@ function TabOperacional({
             );
           })}
         </div>
-      </div>
+      </PanelSection>
 
-      {/* Atividades recentes */}
       {atividades && atividades.length > 0 && (
-        <div style={card}>
-          <SectionHeader title="Atividades Recentes" icon={<Activity size={14} color={MINT} />} />
+        <PanelSection
+          id="admin-atividades"
+          title="Atividades Recentes"
+          icon={<Activity className="w-4 h-4 text-[#4ADE80]" />}
+          priority="secondary"
+          summary={`${atividades.length} atividades`}
+          flush
+        >
           <div>
             {atividades.map((a) => (
               <div key={a.id} style={{ display: "flex", gap: 10, padding: "0.75rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.05)" }}>
@@ -714,20 +861,21 @@ function TabOperacional({
               </div>
             ))}
           </div>
-        </div>
+        </PanelSection>
       )}
 
-      {/* Credenciais de teste */}
-      <div style={{ ...card, border: "1px solid rgba(251,191,36,0.35)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0.85rem 1.25rem", background: "rgba(254,243,199,0.6)", borderBottom: "1px solid rgba(251,191,36,0.25)" }}>
-          <AlertTriangle size={14} color="#92400e" />
-          <div>
-            <p style={{ ...j, fontSize: "0.8rem", fontWeight: 700, color: "#92400e" }}>Credenciais de Teste — ambiente DEV</p>
-            <p style={{ ...j, fontSize: "0.68rem", color: "#b45309" }}>Não usar em produção.</p>
-          </div>
-        </div>
+      <PanelSection
+        id="admin-credenciais"
+        title="Credenciais de Teste — ambiente DEV"
+        icon={<AlertTriangle className="w-4 h-4 text-[#92400e]" />}
+        priority="secondary"
+        summary="Não usar em produção"
+        flush
+      >
+      <div style={{ background: "rgba(254,243,199,0.4)", borderBottom: "1px solid rgba(251,191,36,0.25)" }}>
         <CredenciaisTable />
       </div>
+      </PanelSection>
     </div>
   );
 }
@@ -816,8 +964,13 @@ export default function AdminPage() {
       .catch(() => { /* silently fallback */ });
   }, []);
 
+  const toolbarSections = useMemo(
+    () => [...ADMIN_GLOBAL_PANELS, ...(ADMIN_TAB_PANELS[tab] ?? [])],
+    [tab],
+  );
+
   return (
-    <div style={{ ...j, maxWidth: 1100 }} className="space-y-6">
+    <div style={{ ...j, maxWidth: 1100 }} className="space-y-6 p-4 sm:p-6">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -850,13 +1003,16 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Acesso Rápido a Painéis */}
-      <div style={{ ...card, border: "1px solid rgba(27,79,216,0.12)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0.75rem 1.25rem", borderBottom: "1px solid rgba(12,26,61,0.06)", background: "rgba(27,79,216,0.03)" }}>
-          <Zap size={13} color={ROYAL} />
-          <span style={{ ...j, fontSize: "0.78rem", fontWeight: 700, color: NAVY }}>Acesso Rápido a Painéis</span>
-          <span style={{ ...j, fontSize: "0.68rem", color: "rgba(12,26,61,0.35)", marginLeft: 4 }}>abre em nova aba</span>
-        </div>
+      <PanelToolbar sections={toolbarSections} />
+
+      <PanelSection
+        id="acesso-paineis"
+        title="Acesso Rápido a Painéis"
+        icon={<Zap className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        summary="Admin, Fundo, Engenheiro, Comercial, Construtor"
+        flush
+      >
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "0.85rem 1.25rem" }}>
           {[
             { label: "Admin",      role: "ADMIN",      href: "/dashboard/admin",      color: NAVY,      bg: "rgba(12,26,61,0.06)"  },
@@ -882,7 +1038,7 @@ export default function AdminPage() {
             </a>
           ))}
         </div>
-      </div>
+      </PanelSection>
 
       {/* Tab Nav */}
       <div style={{ display: "flex", gap: 4, borderBottom: "1px solid rgba(12,26,61,0.08)", overflowX: "auto" }}>

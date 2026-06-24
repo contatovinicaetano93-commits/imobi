@@ -64,16 +64,29 @@ export default async function EngenheiroPortalPage() {
   const licencasPriority = licencasAtencao > 0 ? ("critical" as const) : ("primary" as const);
 
   const engenheiroPanels = [
+    { id: "resumo-portal", priority: "primary" as const },
     { id: "fila-visitas", priority: "critical" as const },
     { id: "obras-responsabilidade", priority: "primary" as const },
     { id: "licencas", priority: licencasPriority },
     { id: "etapas-projeto", priority: "secondary" as const },
   ];
 
+  const resumoSummary = `${financeiro.length} obras · ${agendadas.length} visitas agendadas · ${formatarBRL(totalExecutado)} executado`;
+
   return (
-    <div className="space-y-6 max-w-6xl">
-      {/* Hero engenheiro - laranja */}
-      <div style={{ background: "linear-gradient(135deg, #431407 0%, #7c2d12 100%)", borderRadius: 16, padding: "1.5rem", marginBottom: "1.5rem", color: "white" }}>
+    <div className="space-y-6 max-w-6xl p-4 sm:p-6">
+      <PanelToolbar sections={engenheiroPanels} />
+
+      <PanelSection
+        id="resumo-portal"
+        title="Portal do Engenheiro"
+        icon={<Wrench className="w-4 h-4 text-[#ea580c]" />}
+        priority="primary"
+        summary={resumoSummary}
+        badge={agendadas.length > 0 ? agendadas.length : undefined}
+      >
+      <div className="space-y-4">
+      <div style={{ background: "linear-gradient(135deg, #431407 0%, #7c2d12 100%)", borderRadius: 16, padding: "1.5rem", color: "white" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
           <div style={{ background: "#ea580c22", border: "1px solid #ea580c44", borderRadius: 8, padding: "0.4rem" }}>
             <Wrench size={18} color="#ea580c" />
@@ -124,10 +137,9 @@ export default async function EngenheiroPortalPage() {
           </div>
         ))}
       </div>
+      </div>
+      </PanelSection>
 
-      <PanelToolbar sections={engenheiroPanels} />
-
-      {/* Fila de visitas — prioridade operacional */}
       <PanelSection
         id="fila-visitas"
         title="Fila de visitas"
