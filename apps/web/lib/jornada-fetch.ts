@@ -1,10 +1,26 @@
 import { jornadaApi, ApiError, type Jornada } from "@/lib/api";
 
-const MAX_ATTEMPTS = 4;
-const BASE_DELAY_MS = 2000;
+const MAX_ATTEMPTS = 3;
+const BASE_DELAY_MS = 1500;
+const REQUEST_TIMEOUT_MS = 20_000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("Jornada request timeout")), ms);
+    promise
+      .then((v) => {
+        clearTimeout(timer);
+        resolve(v);
+      })
+      .catch((e) => {
+        clearTimeout(timer);
+        reject(e);
+      });
+  });
 }
 
 /**
@@ -16,7 +32,7 @@ export async function obterJornadaResiliente(): Promise<Jornada> {
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      return await jornadaApi.obter();
+      return await withTimeout(jornadaApi.obter(), REQUEST_TIMEOUT_MS);
     } catch (error) {
       lastError = error;
       if (error instanceof ApiError && error.status === 404) {

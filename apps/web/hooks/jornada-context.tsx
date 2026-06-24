@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -14,7 +15,10 @@ import { obterJornadaResiliente, mensagemErroJornada } from "@/lib/jornada-fetch
 
 type JornadaContextValue = {
   jornada: Jornada | null;
+  /** Primeira carga — sem dados ainda */
   loading: boolean;
+  /** Revalidação em background — mantém hero visível */
+  refreshing: boolean;
   error: string | null;
   refresh: () => Promise<void>;
 };
@@ -23,74 +27,121 @@ const JornadaContext = createContext<JornadaContextValue | null>(null);
 
 const JORNADA_CACHE_MS = 30_000;
 
-/** Uma requisição em voo por aba — evita 429 por chamadas duplicadas. */
-let inflight: Promise<Jornada> | null = null;
-let cachedJornada: Jornada | null = null;
-let cachedAt = 0;
+type CacheEntry = {
+  scope: string;
+  jornada: Jornada;
+  at: number;
+};
 
-function fetchJornadaDeduped(force = false): Promise<Jornada> {
-  const now = Date.now();
-  if (!force && cachedJornada && now - cachedAt < JORNADA_CACHE_MS) {
-    return Promise.resolve(cachedJornada);
+let cache: CacheEntry | null = null;
+let inflight: { scope: string; promise: Promise<Jornada> } | null = null;
+
+function resetModuleCache() {
+  cache = null;
+  inflight = null;
+}
+
+function fetchJornadaDeduped(scope: string, force = false): Promise<Jornada> {
+  if (cache && cache.scope !== scope) {
+    resetModuleCache();
   }
-  if (!force && inflight) {
-    return inflight;
+
+  const now = Date.now();
+  if (!force && cache?.scope === scope && now - cache.at < JORNADA_CACHE_MS) {
+    return Promise.resolve(cache.jornada);
+  }
+
+  if (!force && inflight?.scope === scope) {
+    return inflight.promise;
   }
 
   const request = obterJornadaResiliente()
     .then((data) => {
-      cachedJornada = data;
-      cachedAt = Date.now();
+      cache = { scope, jornada: data, at: Date.now() };
       return data;
     })
     .finally(() => {
-      if (inflight === request) {
+      if (inflight?.promise === request) {
         inflight = null;
       }
     });
 
-  inflight = request;
+  inflight = { scope, promise: request };
   return request;
 }
 
 type ProviderProps = {
   enabled: boolean;
+  /** Isola cache por usuário (email ou role) — evita vazamento entre contas na mesma aba */
+  scopeKey: string | null;
   children: ReactNode;
 };
 
-export function JornadaProvider({ enabled, children }: ProviderProps) {
+export function JornadaProvider({ enabled, scopeKey, children }: ProviderProps) {
   const [jornada, setJornada] = useState<Jornada | null>(null);
   const [loading, setLoading] = useState(enabled);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const jornadaRef = useRef<Jornada | null>(null);
+  jornadaRef.current = jornada;
 
-  const load = useCallback(async (force = false) => {
-    if (!enabled) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchJornadaDeduped(force);
-      setJornada(data);
-    } catch (err) {
-      setJornada(null);
-      setError(mensagemErroJornada(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [enabled]);
+  const load = useCallback(
+    async (force = false) => {
+      if (!enabled || !scopeKey) return;
+
+      setError(null);
+      const hasCached =
+        !force &&
+        cache?.scope === scopeKey &&
+        Date.now() - cache.at < JORNADA_CACHE_MS;
+
+      if (force && jornadaRef.current) {
+        setRefreshing(true);
+      } else if (!hasCached && !jornadaRef.current) {
+        setLoading(true);
+      }
+
+      try {
+        const data = await fetchJornadaDeduped(scopeKey, force);
+        setJornada(data);
+      } catch (err) {
+        if (!jornadaRef.current) {
+          setJornada(null);
+        }
+        setError(mensagemErroJornada(err));
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [enabled, scopeKey],
+  );
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !scopeKey) {
       setJornada(null);
       setError(null);
       setLoading(false);
+      setRefreshing(false);
       return;
     }
+
+    if (cache?.scope !== scopeKey) {
+      setJornada(null);
+    }
+
     void load();
-  }, [enabled, load]);
+  }, [enabled, scopeKey, load]);
 
   const value = useMemo(
-    () => ({ jornada, loading, error, refresh: () => load(true) }),
-    [jornada, loading, error, load],
+    () => ({
+      jornada,
+      loading,
+      refreshing,
+      error,
+      refresh: () => load(true),
+    }),
+    [jornada, loading, refreshing, error, load],
   );
 
   return (

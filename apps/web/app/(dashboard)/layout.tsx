@@ -372,7 +372,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <ToastProvider>
     <SkipLink />
-    <JornadaProvider enabled={jornadaEnabled}>
+    <JornadaProvider enabled={jornadaEnabled} scopeKey={jornadaEnabled ? (userEmail ?? role) : null}>
     <JornadaGuard role={role}>
     <div className="dash-root" style={{ display: "flex", minHeight: "100vh", background: "#EEF3FF", fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
 
