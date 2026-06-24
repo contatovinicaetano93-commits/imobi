@@ -59,6 +59,9 @@ jobs:
       - name: Jornada routes & steps regression
         run: pnpm test:jornada
 
+      - name: Jornada service unit tests
+        run: pnpm test:jornada:api
+
       - name: Validate Zod ↔ Prisma Schema Sync
         run: pnpm validate:schemas
 

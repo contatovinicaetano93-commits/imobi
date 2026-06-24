@@ -33,18 +33,24 @@ function fetchJornadaDeduped(force = false): Promise<Jornada> {
   if (!force && cachedJornada && now - cachedAt < JORNADA_CACHE_MS) {
     return Promise.resolve(cachedJornada);
   }
-  if (!inflight) {
-    inflight = obterJornadaResiliente()
-      .then((data) => {
-        cachedJornada = data;
-        cachedAt = Date.now();
-        return data;
-      })
-      .finally(() => {
-        inflight = null;
-      });
+  if (!force && inflight) {
+    return inflight;
   }
-  return inflight;
+
+  const request = obterJornadaResiliente()
+    .then((data) => {
+      cachedJornada = data;
+      cachedAt = Date.now();
+      return data;
+    })
+    .finally(() => {
+      if (inflight === request) {
+        inflight = null;
+      }
+    });
+
+  inflight = request;
+  return request;
 }
 
 type ProviderProps = {
