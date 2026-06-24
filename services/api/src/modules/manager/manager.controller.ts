@@ -40,7 +40,7 @@ export class ManagerController {
 
   @Get("dashboard")
 
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle({ manager: { limit: 20, ttl: 60000 } })
 
   async dashboard(@UsuarioAtual() u: IUsuario) {
 
@@ -52,7 +52,7 @@ export class ManagerController {
 
   @Get("carteira")
 
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle({ manager: { limit: 20, ttl: 60000 } })
 
   async carteira(@UsuarioAtual() u: IUsuario) {
 
@@ -64,7 +64,7 @@ export class ManagerController {
 
   @Get("etapas-pendentes")
 
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle({ manager: { limit: 20, ttl: 60000 } })
 
   @UseInterceptors(CacheInterceptor)
 
@@ -108,7 +108,7 @@ export class ManagerController {
 
   @Get("kyc-pendentes")
 
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle({ manager: { limit: 20, ttl: 60000 } })
 
   @UseInterceptors(CacheInterceptor)
 

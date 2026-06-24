@@ -1,6 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException, Inject } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import type { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
 import { JornadaService } from "../jornada/jornada.service";
+import { invalidateJornadaCache } from "../jornada/jornada-cache";
 import { simularCredito } from "@imbobi/core";
 import type { SolicitacaoCreditoInput, SimulacaoCreditoInput } from "@imbobi/schemas";
 
@@ -9,6 +12,7 @@ export class CreditoService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jornada: JornadaService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
   simular(input: SimulacaoCreditoInput) {
@@ -18,7 +22,7 @@ export class CreditoService {
 
   async solicitar(usuarioId: string, input: SolicitacaoCreditoInput) {
     await this.jornada.assertPodeSolicitarCredito(usuarioId);
-    return this.prisma.credito.create({
+    const credito = await this.prisma.credito.create({
       data: {
         usuarioId,
         valorAprovado: input.valorSolicitado,
@@ -27,6 +31,8 @@ export class CreditoService {
         prazoMeses: input.prazoMeses,
       },
     });
+    await invalidateJornadaCache(this.cache, usuarioId);
+    return credito;
   }
 
   async buscarPorUsuario(usuarioId: string) {

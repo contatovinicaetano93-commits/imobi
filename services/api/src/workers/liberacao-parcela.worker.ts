@@ -1,10 +1,13 @@
 import { Processor, Process, OnQueueFailed, OnQueueCompleted } from "@nestjs/bull";
 import { Job } from "bull";
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, Inject } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import type { Cache } from "cache-manager";
 import { PrismaService } from "../modules/prisma/prisma.service";
 import { NotificacoesService } from "../modules/notificacoes/notificacoes.service";
 import { EmailService } from "../modules/email/email.service";
 import { PushNotificacoesService } from "../modules/push-notificacoes/push-notificacoes.service";
+import { invalidateJornadaCache } from "../modules/jornada/jornada-cache";
 import { QUEUE_LIBERACAO, type LiberacaoJob } from "../common/constants";
 
 @Injectable()
@@ -16,7 +19,8 @@ export class LiberacaoParcelaWorker {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
   @Process()
@@ -59,6 +63,8 @@ export class LiberacaoParcelaWorker {
       });
 
       if (!processed) return;
+
+      await invalidateJornadaCache(this.cache, credito.usuarioId);
 
       // Notifica usuário sobre liberação bem-sucedida
       const obra = credito.obras?.[0];

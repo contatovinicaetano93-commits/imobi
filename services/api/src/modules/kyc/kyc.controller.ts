@@ -17,7 +17,7 @@ export class KycController {
   constructor(private readonly kyc: KycService) {}
 
   @Post("upload")
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ upload: { limit: 5, ttl: 60000 } })
   async uploadDocumento(@UsuarioAtual() u: IUsuario, @Req() req: FastifyRequest) {
     if (!req.isMultipart()) {
       throw new BadRequestException(

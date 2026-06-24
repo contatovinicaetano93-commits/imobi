@@ -16,7 +16,7 @@ export class EvidenciasController {
   constructor(private readonly evidencias: EvidenciasService) {}
 
   @Post()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ upload: { limit: 5, ttl: 60000 } })
   async upload(
     @UsuarioAtual() u: IUsuario,
     @Req() req: FastifyRequest,

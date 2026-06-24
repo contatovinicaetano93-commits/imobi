@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, Inject } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import type { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
+import { invalidateJornadaCache } from "../jornada/jornada-cache";
 import type { VotoDecisao, SolicitacaoStatus, ComiteStatus } from "@prisma/client";
 
 @Injectable()
 export class ComiteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+  ) {}
 
   // ── Construtor: submeter solicitação ──────────────────────────────
 
@@ -148,6 +154,7 @@ export class ComiteService {
           dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
         },
       });
+      await invalidateJornadaCache(this.cache, s.usuarioId);
     }
   }
 
