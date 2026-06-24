@@ -3,24 +3,49 @@ import { GESTOR, TOMADOR } from '../../fixtures/auth.fixture';
 import { VistoriaPage } from '../../page-objects/VistoriaPage';
 import { loginViaApi, findEtapaWithStatus, readAccessTokenFromStorage } from '../../fixtures/api-helpers';
 import { mockJornada, MOCK_JORNADA_GESTOR_OBRAS } from '../../fixtures/jornada.fixture';
+import { STAGING_OBRA_VISTORIA } from '../../fixtures/staging-seed.fixture';
 
 test.use({ storageState: GESTOR.storageState });
 
-async function getVistoriaIds(): Promise<{ obraId: string; etapaId: string } | null> {
-  try {
-    const token =
-      readAccessTokenFromStorage(TOMADOR.storageState) ??
-      (await loginViaApi(TOMADOR.email, TOMADOR.password));
-    const result = await findEtapaWithStatus('AGUARDANDO_VISTORIA', token);
-    if (!result) return null;
-    const { obra, etapa } = result;
-    return {
-      obraId: (obra as { obraId?: string; id?: string }).obraId ?? (obra as { id?: string }).id ?? '',
-      etapaId: (etapa as { etapaId?: string; id?: string }).etapaId ?? (etapa as { id?: string }).id ?? '',
-    };
-  } catch {
-    return null;
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function getVistoriaIds(): Promise<{ obraId: string; etapaId: string }> {
+  const fallback = {
+    obraId: STAGING_OBRA_VISTORIA.obraId,
+    etapaId: STAGING_OBRA_VISTORIA.etapaId,
+  };
+
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      const token = readAccessTokenFromStorage(TOMADOR.storageState);
+      if (!token && attempt < 4) {
+        await sleep(2_000 * attempt);
+        continue;
+      }
+      const accessToken =
+        token ?? (await loginViaApi(TOMADOR.email, TOMADOR.password));
+      const result = await findEtapaWithStatus('AGUARDANDO_VISTORIA', accessToken);
+      if (result) {
+        const { obra, etapa } = result;
+        const obraId =
+          (obra as { obraId?: string; id?: string }).obraId ??
+          (obra as { id?: string }).id ??
+          '';
+        const etapaId =
+          (etapa as { etapaId?: string; id?: string }).etapaId ??
+          (etapa as { id?: string }).id ??
+          '';
+        if (obraId && etapaId) return { obraId, etapaId };
+      }
+    } catch {
+      /* rate limit / cold start — retry ou fallback */
+    }
+    if (attempt < 4) await sleep(2_000 * attempt);
   }
+
+  return fallback;
 }
 
 function fakeObra(obraId: string, etapaId: string) {
@@ -76,27 +101,22 @@ async function mockObraAndEvidencias(page: import('@playwright/test').Page, obra
 }
 
 test.describe('Vistoria submission', () => {
-  let sharedIds: { obraId: string; etapaId: string } | null = null;
+  let sharedIds: { obraId: string; etapaId: string };
 
   test.beforeAll(async () => {
     sharedIds = await getVistoriaIds();
   });
 
   test.beforeEach(async ({ page }) => {
-    if (sharedIds) {
-      const { obraId, etapaId } = sharedIds;
-      await mockJornada(page, {
-        ...MOCK_JORNADA_GESTOR_OBRAS,
-        href: `/dashboard/obras/${obraId}/vistoria/${etapaId}`,
-      });
-      await mockObraAndEvidencias(page, obraId, etapaId);
-    } else {
-      await mockJornada(page, MOCK_JORNADA_GESTOR_OBRAS);
-    }
+    const { obraId, etapaId } = sharedIds;
+    await mockJornada(page, {
+      ...MOCK_JORNADA_GESTOR_OBRAS,
+      href: `/dashboard/obras/${obraId}/vistoria/${etapaId}`,
+    });
+    await mockObraAndEvidencias(page, obraId, etapaId);
   });
 
   test('vistoria page renders correctly', async ({ page }) => {
-    if (!sharedIds) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
     const { obraId, etapaId } = sharedIds;
 
     const vp = new VistoriaPage(page);
@@ -111,7 +131,6 @@ test.describe('Vistoria submission', () => {
   });
 
   test('breadcrumb shows Obras link', async ({ page }) => {
-    if (!sharedIds) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
     const { obraId, etapaId } = sharedIds;
 
     const vp = new VistoriaPage(page);
@@ -122,7 +141,6 @@ test.describe('Vistoria submission', () => {
   });
 
   test('aprovar etapa redirects to obra detail', async ({ page }) => {
-    if (!sharedIds) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
     const { obraId, etapaId } = sharedIds;
 
     await page.route(`**/api/etapas/${etapaId}/validar`, (route) =>
@@ -139,7 +157,6 @@ test.describe('Vistoria submission', () => {
   });
 
   test('rejeitar etapa shows button and allows rejection', async ({ page }) => {
-    if (!sharedIds) { test.skip(true, 'No AGUARDANDO_VISTORIA etapa in seed data'); return; }
     const { obraId, etapaId } = sharedIds;
 
     await page.route(`**/api/etapas/${etapaId}/validar`, (route) =>
