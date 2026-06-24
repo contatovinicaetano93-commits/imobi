@@ -71,5 +71,6 @@ for (const t of TOMADORES) {
   }
 }
 
-console.log("Gestor (aprovar KYC): gestor@imobi.com.br / Gestor@123");
-console.log(`Painel gestor: ${WEB}/dashboard/gestor/kyc\n`);
+console.log("Gestor (acompanhar fila): gestor@imobi.com.br / Gestor@123");
+console.log("Admin (aprovar KYC): admin@imobi.com.br / Admin@123");
+console.log(`Fila KYC: ${WEB}/dashboard/gestor/kyc\n`);

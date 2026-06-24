@@ -18,10 +18,10 @@ Tracker da **Fase 1 — Soft launch beta** (passos 1–50). Marque cada item ao 
 
 ## Fluxo KYC (6–10)
 
-- [ ] 6. Gestor aprova/rejeita 1º documento KYC
+- [ ] 6. Admin aprova/rejeita 1º documento KYC (`admin@imobi.com.br` → `/dashboard/gestor/kyc`)
 - [ ] 7. Validar notificação ao tomador (se ativa)
 - [ ] 8. Tomador completa 4 documentos KYC
-- [ ] 9. Gestor aprova KYC completo
+- [ ] 9. Admin aprova KYC completo
 - [ ] 10. Tomador vê jornada avançar para "obra"
 
 ## Obra e crédito (11–17)

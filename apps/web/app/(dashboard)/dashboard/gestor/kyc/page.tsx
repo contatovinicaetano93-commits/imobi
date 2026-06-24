@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
+  CheckCircle,
   ChevronLeft,
   ChevronRight,
   Eye,
@@ -10,12 +11,15 @@ import {
   Search,
   User,
   X,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { managerApi, type KycPendente } from "@/lib/api";
 import { GestorSubpageHeader } from "@/app/(dashboard)/_components/gestor/GestorSubpageHeader";
 import { ManagerListBanner } from "@/app/(dashboard)/_components/gestor/ManagerListBanner";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/toast-context";
 
 function getInitials(nome: string): string {
   return nome
@@ -50,6 +54,67 @@ type TipoFilter = "TODOS" | "RG" | "SELFIE" | "COMPROVANTE";
 
 function KycListSkeleton() {
   return <PageSkeleton variant="list" count={3} showHeader={false} />;
+}
+
+function RejectModal({
+  doc,
+  onConfirm,
+  onCancel,
+}: {
+  doc: KycPendente;
+  onConfirm: (docId: string, motivo: string) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [motivo, setMotivo] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleConfirm = async () => {
+    if (!motivo.trim()) return;
+    setSubmitting(true);
+    await onConfirm(doc.kycDocumentoId, motivo.trim());
+    setSubmitting(false);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={(e) => e.target === e.currentTarget && onCancel()}
+    >
+      <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+        <h2 className="text-lg font-bold text-gray-900 mb-2">Motivo da rejeição</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Documento de <span className="font-medium">{doc.usuario.nome}</span>
+        </p>
+        <textarea
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value)}
+          placeholder="Ex: documento ilegível, expirado..."
+          rows={4}
+          className="w-full p-3 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
+          disabled={submitting}
+          autoFocus
+        />
+        <div className="flex gap-3 mt-4">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={submitting}
+            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={!motivo.trim() || submitting}
+            className="flex-1 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
+          >
+            {submitting ? "Rejeitando..." : "Confirmar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function PreviewModal({
@@ -111,9 +176,15 @@ function PreviewModal({
 function DocCard({
   doc,
   onPreview,
+  canApprove,
+  onApprove,
+  onRejectClick,
 }: {
   doc: KycPendente;
   onPreview: (doc: KycPendente) => void;
+  canApprove: boolean;
+  onApprove: (id: string) => void;
+  onRejectClick: (doc: KycPendente) => void;
 }) {
   const diffH = Math.floor(
     (Date.now() - new Date(doc.criadoEm).getTime()) / 3600000
@@ -193,6 +264,26 @@ function DocCard({
           >
             Detalhe
           </Link>
+          {canApprove && (
+            <>
+              <button
+                type="button"
+                onClick={() => onApprove(doc.kycDocumentoId)}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <CheckCircle className="w-3.5 h-3.5" />
+                Aprovar
+              </button>
+              <button
+                type="button"
+                onClick={() => onRejectClick(doc)}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                Rejeitar
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -202,6 +293,10 @@ function DocCard({
 const PAGE_SIZE = 5;
 
 export default function KycPage() {
+  const { user } = useAuth();
+  const { success, error: toastError } = useToast();
+  const canApprove = user?.role === "ADMIN";
+
   const [docs, setDocs] = useState<KycPendente[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -210,6 +305,7 @@ export default function KycPage() {
   const [tipoFilter, setTipoFilter] = useState<TipoFilter>("TODOS");
   const [page, setPage] = useState(0);
   const [previewDoc, setPreviewDoc] = useState<KycPendente | null>(null);
+  const [rejectDoc, setRejectDoc] = useState<KycPendente | null>(null);
 
   const loadDocs = useCallback(async () => {
     setLoading(true);
@@ -256,6 +352,27 @@ export default function KycPage() {
         ? "bg-yellow-100 text-yellow-800"
         : "bg-green-100 text-green-800";
 
+  const handleApprove = async (docId: string) => {
+    try {
+      await managerApi.aprovarKyc(docId);
+      setDocs((prev) => prev.filter((d) => d.kycDocumentoId !== docId));
+      success("Documento KYC aprovado.");
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : "Erro ao aprovar");
+    }
+  };
+
+  const handleRejectConfirm = async (docId: string, motivo: string) => {
+    setRejectDoc(null);
+    try {
+      await managerApi.rejeitarKyc(docId, motivo);
+      setDocs((prev) => prev.filter((d) => d.kycDocumentoId !== docId));
+      success("Documento KYC rejeitado.");
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : "Erro ao rejeitar");
+    }
+  };
+
   return (
     <div className="space-y-6 pb-8">
       {loadError && (
@@ -268,8 +385,12 @@ export default function KycPage() {
       )}
 
       <GestorSubpageHeader
-        title="Acompanhamento de KYC"
-        subtitle="Visualize documentos na fila — aprovação é feita pelo Admin"
+        title={canApprove ? "Aprovação de KYC" : "Acompanhamento de KYC"}
+        subtitle={
+          canApprove
+            ? "Analise e aprove documentos na fila (perfil Admin)"
+            : "Visualize documentos na fila — aprovação é feita pelo Admin"
+        }
         onRefresh={loadDocs}
         refreshing={loading}
         badge={
@@ -281,9 +402,11 @@ export default function KycPage() {
         }
       />
 
-      <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-        Como gestor do fundo, você acompanha a fila de KYC sem poder aprovar ou rejeitar documentos.
-      </p>
+      {!canApprove && (
+        <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+          Como gestor do fundo, você acompanha a fila de KYC sem poder aprovar ou rejeitar documentos.
+        </p>
+      )}
 
       <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-wrap gap-3">
         <div className="flex-1 min-w-52 relative">
@@ -333,7 +456,14 @@ export default function KycPage() {
             {filtered.length} documento{filtered.length !== 1 ? "s" : ""} na fila
           </p>
           {pageDocs.map((doc) => (
-            <DocCard key={doc.kycDocumentoId} doc={doc} onPreview={setPreviewDoc} />
+            <DocCard
+              key={doc.kycDocumentoId}
+              doc={doc}
+              onPreview={setPreviewDoc}
+              canApprove={canApprove}
+              onApprove={handleApprove}
+              onRejectClick={setRejectDoc}
+            />
           ))}
         </div>
       )}
@@ -366,6 +496,14 @@ export default function KycPage() {
 
       {previewDoc && (
         <PreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
+      )}
+
+      {rejectDoc && (
+        <RejectModal
+          doc={rejectDoc}
+          onConfirm={handleRejectConfirm}
+          onCancel={() => setRejectDoc(null)}
+        />
       )}
     </div>
   );
