@@ -272,14 +272,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const parentPath = getParentPath(path);
 
-  const mvpGuided =
+  const jornadaEnabled =
     BETA_MVP_MODE &&
     role != null &&
     (role === "TOMADOR" || role === "CONSTRUTOR" || role === "GESTOR");
-
-  const jornadaEnabled =
-    mvpGuided &&
-    (role === "TOMADOR" || role === "CONSTRUTOR" || role === "GESTOR" || role === "GESTOR_FUNDO");
 
   const userFooter = (compact = false) => (
     <div>
@@ -380,8 +376,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <JornadaGuard role={role}>
     <div className="dash-root" style={{ display: "flex", minHeight: "100vh", background: "#EEF3FF", fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
 
-      {/* Sidebar desktop — oculto no MVP guiado */}
-      {!mvpGuided && (
+      {/* Sidebar desktop */}
       <aside
         className="dash-sidebar"
         style={{
@@ -394,36 +389,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       >
         {sidebarContent()}
       </aside>
-      )}
 
-      {/* Mobile header — simplificado no MVP */}
-      {mvpGuided ? (
-        <div
-          className="dash-mhidden"
-          style={{
-            position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-            height: 52, background: NAVY,
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "0 1rem",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
-          }}
-        >
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none" }}>
-            <Logo size={20} />
-            <span style={{ color: "white", fontWeight: 800, fontSize: "1rem", letterSpacing: "0.04em", fontFamily: "'Barlow Condensed', sans-serif" }}>IMOBI</span>
-          </Link>
-          <button
-            onClick={async () => {
-              await fetch("/api/auth/session", { method: "DELETE" });
-              window.location.href = "/login";
-            }}
-            aria-label="Sair"
-            style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)", padding: 8 }}
-          >
-            <LogOut size={18} />
-          </button>
-        </div>
-      ) : (
+      {/* Mobile header */}
       <>
       <div
         className="dash-mhidden"
@@ -510,12 +477,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </>
       )}
       </>
-      )}
 
       {/* Main */}
       <main
         id="main-content"
-        className={mvpGuided ? "dash-main dash-main--guided" : "dash-main"}
+        className="dash-main"
         style={{ flex: 1, overflowX: "hidden" }}
       >
         <div style={{ height: 52 }} className="dash-spacer" />

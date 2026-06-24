@@ -15,19 +15,9 @@ export async function redirectAfterLogin(role: string, next?: string | null): Pr
   }
 
   if (BETA_MVP_MODE && GUIDED_ROLES.has(role)) {
-    try {
-      const res = await fetch("/api/proxy/jornada", { credentials: "include" });
-      if (res.ok) {
-        const j = (await res.json()) as { href?: string };
-        const href = j.href;
-        if (href) {
-          setTimeout(() => window.location.assign(href), 100);
-          return;
-        }
-      }
-    } catch {
-      /* fallback abaixo */
-    }
+    const dest = ROLE_HOME[role] ?? "/dashboard";
+    setTimeout(() => window.location.assign(dest), 100);
+    return;
   }
 
   const dest = ROLE_HOME[role] ?? "/dashboard";

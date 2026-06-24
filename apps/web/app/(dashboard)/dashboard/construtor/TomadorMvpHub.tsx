@@ -2,7 +2,6 @@
 
 import { NextStepHero } from "@/components/dashboard/NextStepHero";
 import { JornadaError } from "@/components/dashboard/JornadaError";
-import { GuidedFlowShell } from "@/components/dashboard/GuidedFlowShell";
 import { useJornada } from "@/hooks/jornada-context";
 
 export function TomadorMvpHub() {
@@ -10,7 +9,7 @@ export function TomadorMvpHub() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center p-8">
+      <div className="flex min-h-[40vh] items-center justify-center p-8">
         <p className="text-sm text-gray-500">Carregando seu próximo passo…</p>
       </div>
     );
@@ -18,15 +17,15 @@ export function TomadorMvpHub() {
 
   if (!jornada) {
     return (
-      <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
+      <div className="p-4 sm:p-6">
         <JornadaError message={error ?? undefined} onRetry={() => void refresh()} />
       </div>
     );
   }
 
   return (
-    <GuidedFlowShell variant="tomador" hideStepRail>
+    <div className="p-4 sm:p-6">
       <NextStepHero jornada={jornada} variant="tomador" />
-    </GuidedFlowShell>
+    </div>
   );
 }

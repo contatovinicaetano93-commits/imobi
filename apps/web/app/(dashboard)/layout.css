@@ -9,11 +9,6 @@
   padding-bottom: 88px;
 }
 
-.dash-main--guided {
-  padding: 0;
-  padding-bottom: 88px;
-}
-
 @media (min-width: 768px) {
   .dash-sidebar  { display: flex !important; }
   .dash-mhidden  { display: none !important; }

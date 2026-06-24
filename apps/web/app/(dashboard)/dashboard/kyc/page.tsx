@@ -5,8 +5,6 @@ import { kycApi, type KycStatus, type KycDocumento } from "@/lib/api";
 import { FileText, CheckCircle2, XCircle, Clock, Upload, AlertCircle, ShieldCheck } from "lucide-react";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
 import { useToast } from "@/hooks/toast-context";
-import { GuidedFlowShell } from "@/components/dashboard/GuidedFlowShell";
-import { BETA_MVP_MODE } from "@/lib/beta-mvp";
 
 const BADGE: Record<string, { label: string; cls: string }> = {
   PENDENTE:       { label: "Pendente",       cls: "bg-yellow-100 text-yellow-800" },
@@ -175,23 +173,13 @@ export default function KycPage() {
     </div>
   );
 
-  if (BETA_MVP_MODE) {
-    return (
-      <GuidedFlowShell
-        variant="tomador"
-        pageTitle="Verificação de identidade"
-        pageSubtitle="Envie os 4 documentos abaixo. É o primeiro passo para liberar seu crédito."
-      >
-        {content}
-      </GuidedFlowShell>
-    );
-  }
-
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Verificação de Identidade</h1>
-        <p className="mt-1 text-sm text-gray-500">Envie seus documentos para desbloquear o crédito.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Verificação de identidade</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Envie os 4 documentos abaixo. É o primeiro passo para liberar seu crédito.
+        </p>
       </div>
       {content}
     </div>

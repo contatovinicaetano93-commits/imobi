@@ -15,7 +15,9 @@ type Props = {
 /** Um único passo — estilo app de banco. */
 export function NextStepHero({ jornada, variant = "tomador" }: Props) {
   const accent = variant === "gestor" ? "#7c3aed" : ROYAL;
-  const waiting = jornada.passoAtual === "aguardando" || jornada.bloqueado;
+  const waiting =
+    jornada.passoAtual === "aguardando" ||
+    (jornada.bloqueado != null && jornada.passoAtual !== "kyc" && jornada.passoAtual !== "gestor_kyc");
   const passoNumero = getPassoNumero(jornada);
 
   return (
@@ -106,7 +108,9 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
         <p className="text-center text-xs text-gray-400">
           Passo {passoNumero} de {jornada.totalPassos || 1}
           <span style={{ color: accent }}> · </span>
-          Siga na ordem para liberar seu crédito
+          {variant === "gestor"
+            ? "Siga a fila operacional na ordem"
+            : "Siga na ordem para liberar seu crédito"}
         </p>
       )}
     </section>

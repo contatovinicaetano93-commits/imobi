@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { BETA_MVP_MODE } from "@/lib/beta-mvp";
-import { isJornadaPathAllowed } from "@/lib/jornada-routes";
+import { isJornadaHubPath } from "@/lib/jornada-routes";
 import { useJornadaOptional } from "@/hooks/jornada-context";
 
 const GUIDED_ROLES = new Set(["TOMADOR", "CONSTRUTOR", "GESTOR", "GESTOR_FUNDO"]);
@@ -14,12 +14,11 @@ type Props = {
 };
 
 /**
- * MVP: redireciona para jornada.href se o usuário abrir rota fora do passo atual.
- * Erro de jornada é exibido pelas páginas (GuidedFlowShell), não aqui.
+ * MVP meio-termo: não força redirect — sidebar livre.
+ * Só revalida jornada ao voltar ao hub (construtor/gestor).
  */
 export function JornadaGuard({ role, children }: Props) {
   const pathname = usePathname();
-  const router = useRouter();
   const jornadaCtx = useJornadaOptional();
 
   const guided =
@@ -27,12 +26,9 @@ export function JornadaGuard({ role, children }: Props) {
 
   useEffect(() => {
     if (!guided || !jornadaCtx?.jornada) return;
-
-    const j = jornadaCtx.jornada;
-    if (!isJornadaPathAllowed(pathname, j)) {
-      router.replace(j.href as "/");
-    }
-  }, [guided, jornadaCtx?.jornada, pathname, router]);
+    if (!isJornadaHubPath(pathname, jornadaCtx.jornada)) return;
+    void jornadaCtx.refresh();
+  }, [guided, pathname, jornadaCtx?.jornada, jornadaCtx?.refresh]);
 
   return <>{children}</>;
 }

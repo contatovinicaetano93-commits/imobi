@@ -62,15 +62,13 @@ export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolea
   }
 }
 
-/** Páginas que mostram só o hero (hub), não a tela de trabalho. */
+/** Hub do perfil — hero com próximo passo (meio-termo: sidebar livre). */
 export function isJornadaHubPath(pathname: string, jornada: Jornada): boolean {
   if (jornada.perfil === "gestor") {
-    return pathname === "/dashboard/gestor" && jornada.passoAtual === "gestor_ok";
+    return pathname === "/dashboard/gestor";
   }
-  return (
-    pathname === "/dashboard/construtor" &&
-    (jornada.passoAtual === "aguardando" ||
-      jornada.passoAtual === "acompanhar" ||
-      jornada.passoAtual === "concluido")
-  );
+  if (jornada.perfil === "tomador") {
+    return pathname === "/dashboard/construtor";
+  }
+  return false;
 }
