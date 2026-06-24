@@ -53,6 +53,12 @@ jobs:
       - name: ESLint & Format Check
         run: pnpm lint
 
+      - name: Panel navigation regression
+        run: pnpm test:panel-nav
+
+      - name: Jornada routes & steps regression
+        run: pnpm test:jornada
+
       - name: Validate Zod ↔ Prisma Schema Sync
         run: pnpm validate:schemas
 

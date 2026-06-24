@@ -56,12 +56,29 @@ export default function EtapasContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    let cancelled = false;
+
     setLoading(true);
     managerApi
       .listarEtapasPendentes(limit, offset, filters)
-      .then(setData)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      .then((result) => {
+        if (!cancelled) {
+          setData(result);
+          setError(null);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Erro ao carregar etapas");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [offset, filters]);
 
   if (loading) {

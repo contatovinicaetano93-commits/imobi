@@ -131,6 +131,9 @@ async function main() {
   console.log("\n  IDs:");
   console.log(`    obraId:    ${obra.obraId}`);
   console.log(`    creditoId: ${credito.creditoId}`);
+  console.log('\n  E2E fixture (apps/e2e/fixtures/staging-seed.fixture.ts):');
+  console.log(`    obraId:  '${obra.obraId}'`);
+  console.log(`    etapaId: '${(await prisma.etapaObra.findFirst({ where: { obraId: obra.obraId, ordem: 2 } }))?.etapaId ?? "?"}'`);
   console.log('\n  Login: tomador@imobi.com.br / Tomador@123');
   console.log('  Web:   /dashboard/construtor · /dashboard/obras');
   console.log('  E2E:   etapa "Estrutura" em AGUARDANDO_VISTORIA (vistoria-submission.spec.ts)');

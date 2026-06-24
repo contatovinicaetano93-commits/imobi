@@ -112,9 +112,9 @@ setup('auth:all', async ({ page }) => {
   }
 
   const tomadorToken = await saveAuthState(TOMADOR.email, TOMADOR.password, path.join(authDir, 'tomador.json'));
-  await sleep(2_000);
+  await sleep(3_000);
   await saveAuthState(GESTOR.email, GESTOR.password, path.join(authDir, 'gestor.json'));
-  await sleep(2_000);
+  await sleep(3_000);
   await saveAuthState(ENGENHEIRO.email, ENGENHEIRO.password, path.join(authDir, 'engenheiro.json'));
 
   // Warm up /dashboard with a real JWT cookie so the authenticated route's

@@ -24,6 +24,7 @@
     "test:smoke:local": "node scripts/test-smoke.mjs -- --local",
     "test:smoke:api": "node scripts/test-smoke.mjs -- --api-only",
     "test:panel-nav": "pnpm --filter @imbobi/web exec tsx lib/panel-navigation.test.ts",
+    "test:jornada": "pnpm --filter @imbobi/web exec tsx lib/jornada-steps.test.ts && pnpm --filter @imbobi/web exec tsx lib/jornada-routes.test.ts",
     "check:staging": "node scripts/test-smoke.mjs",
     "check:staging:local": "node scripts/test-smoke.mjs -- --local",
     "validate:schemas": "tsx scripts/validate-schema-sync.ts",

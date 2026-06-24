@@ -21,14 +21,28 @@ type JornadaContextValue = {
 
 const JornadaContext = createContext<JornadaContextValue | null>(null);
 
+const JORNADA_CACHE_MS = 30_000;
+
 /** Uma requisição em voo por aba — evita 429 por chamadas duplicadas. */
 let inflight: Promise<Jornada> | null = null;
+let cachedJornada: Jornada | null = null;
+let cachedAt = 0;
 
-function fetchJornadaDeduped(): Promise<Jornada> {
+function fetchJornadaDeduped(force = false): Promise<Jornada> {
+  const now = Date.now();
+  if (!force && cachedJornada && now - cachedAt < JORNADA_CACHE_MS) {
+    return Promise.resolve(cachedJornada);
+  }
   if (!inflight) {
-    inflight = obterJornadaResiliente().finally(() => {
-      inflight = null;
-    });
+    inflight = obterJornadaResiliente()
+      .then((data) => {
+        cachedJornada = data;
+        cachedAt = Date.now();
+        return data;
+      })
+      .finally(() => {
+        inflight = null;
+      });
   }
   return inflight;
 }
@@ -43,12 +57,12 @@ export function JornadaProvider({ enabled, children }: ProviderProps) {
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     if (!enabled) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchJornadaDeduped();
+      const data = await fetchJornadaDeduped(force);
       setJornada(data);
     } catch (err) {
       setJornada(null);
@@ -69,7 +83,7 @@ export function JornadaProvider({ enabled, children }: ProviderProps) {
   }, [enabled, load]);
 
   const value = useMemo(
-    () => ({ jornada, loading, error, refresh: load }),
+    () => ({ jornada, loading, error, refresh: () => load(true) }),
     [jornada, loading, error, load],
   );
 

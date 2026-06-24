@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TOMADOR } from '../../fixtures/auth.fixture';
+import { mockJornada, MOCK_JORNADA_KYC } from '../../fixtures/jornada.fixture';
 import { KycPage } from '../../page-objects/KycPage';
 
 const EMPTY_KYC_STATUS = {
@@ -13,6 +14,7 @@ test.use({ storageState: TOMADOR.storageState });
 
 test.describe('KYC flow', () => {
   test.beforeEach(async ({ page }) => {
+    await mockJornada(page, MOCK_JORNADA_KYC);
     await page.route('**/api/proxy/kyc/status**', (route) =>
       route.fulfill({
         status: 200,

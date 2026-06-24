@@ -1,9 +1,9 @@
 import type { Page } from '@playwright/test';
 
 export class KycPage {
-  readonly heading = this.page.getByRole('heading', { name: 'Verificação de Identidade' });
-  readonly progressSection = this.page.getByRole('heading', { name: 'Progresso' });
-  readonly documentosSection = this.page.getByRole('heading', { name: 'Documentos' });
+  readonly heading = this.page.getByRole('heading', { name: /Verificação de [Ii]dentidade/i });
+  readonly progressSection = this.page.getByText('Progresso', { exact: true }).first();
+  readonly documentosSection = this.page.getByRole('heading', { name: 'Documentos obrigatórios' });
   readonly enviarBtn = this.page.getByRole('button', { name: /^Enviar$/ });
 
   constructor(private page: Page) {}
