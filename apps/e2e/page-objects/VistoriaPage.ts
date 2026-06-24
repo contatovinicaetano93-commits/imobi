@@ -11,7 +11,17 @@ export class VistoriaPage {
   constructor(private page: Page) {}
 
   async goto(obraId: string, etapaId: string) {
-    await this.page.goto(`/dashboard/obras/${obraId}/vistoria/${etapaId}`);
+    const path = `/dashboard/obras/${obraId}/vistoria/${etapaId}`;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const jornadaReady = this.page.waitForResponse(
+        (r) => r.url().includes('/api/proxy/jornada') && r.ok(),
+        { timeout: 30_000 },
+      );
+      await this.page.goto(path, { waitUntil: 'domcontentloaded' });
+      await jornadaReady.catch(() => undefined);
+      if (this.page.url().includes('/vistoria/')) break;
+      await this.page.waitForTimeout(1_500);
+    }
     await this.aguardandoBadge.waitFor({ timeout: 60_000 });
   }
 
