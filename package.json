@@ -74,6 +74,7 @@
   "pnpm": {
     "overrides": {
       "fastify": "4.29.1",
+      "@fastify/static": "7.0.4",
       "react": "^18.3.0",
       "react-dom": "^18.3.0"
     }
