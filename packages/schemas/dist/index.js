@@ -20,3 +20,5 @@ __exportStar(require("./obra.schema"), exports);
 __exportStar(require("./evidencia.schema"), exports);
 __exportStar(require("./comercial.schema"), exports);
 __exportStar(require("./notificacao.schema"), exports);
+__exportStar(require("./dossie-viabilidade.schema"), exports);
+__exportStar(require("./dossie-checklist-template"), exports);

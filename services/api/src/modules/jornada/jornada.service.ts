@@ -4,6 +4,7 @@ import type { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
 import { KycService } from "../kyc/kyc.service";
 import { ManagerService } from "../manager/manager.service";
+import { DossiesService } from "../dossies/dossies.service";
 import { isManagerRole } from "../../common/constants/manager-roles";
 import {
   JORNADA_CACHE_TTL_MS,
@@ -11,7 +12,7 @@ import {
   jornadaUsuarioCacheKey,
 } from "./jornada-cache";
 
-const TOMADOR_PASSOS = ["kyc", "obra", "credito", "aguardando", "acompanhar"] as const;
+const TOMADOR_PASSOS = ["kyc", "viabilidade", "obra", "credito", "aguardando", "acompanhar"] as const;
 
 function jornadaConcluida(passo: JornadaPassoId): boolean {
   return passo === "acompanhar" || passo === "concluido";
@@ -19,6 +20,7 @@ function jornadaConcluida(passo: JornadaPassoId): boolean {
 
 export type JornadaPassoId =
   | "kyc"
+  | "viabilidade"
   | "obra"
   | "credito"
   | "aguardando"
@@ -48,6 +50,7 @@ export class JornadaService {
     private readonly prisma: PrismaService,
     private readonly kyc: KycService,
     private readonly manager: ManagerService,
+    private readonly dossies: DossiesService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
@@ -168,8 +171,17 @@ export class JornadaService {
   }
 
   private async obterTomador(usuarioId: string): Promise<JornadaResponse> {
-    const [kycStatus, obrasCount, creditos, etapasLiberadas] = await Promise.all([
+    const [kycStatus, dossieAprovado, dossieEmAnalise, obrasCount, creditos, etapasLiberadas] =
+      await Promise.all([
       this.kyc.obterStatus(usuarioId),
+      this.dossies.temDossieAprovado(usuarioId),
+      this.prisma.dueDiligence.findFirst({
+        where: {
+          usuarioId,
+          status: { in: ["ENVIADO", "EM_ANALISE"] },
+        },
+        select: { id: true },
+      }),
       this.prisma.obra.count({ where: { usuarioId } }),
       this.prisma.credito.findMany({
         where: { usuarioId },
@@ -205,7 +217,24 @@ export class JornadaService {
         href: "/dashboard/kyc",
         concluido: false,
         ...prog,
-        bloqueado: aguardando ? "credito" : undefined,
+        bloqueado: aguardando ? "viabilidade" : undefined,
+      };
+    }
+
+    if (!dossieAprovado) {
+      const aguardando = Boolean(dossieEmAnalise);
+      const prog = this.tomadorProgresso("viabilidade", aguardando);
+      return {
+        perfil: "tomador",
+        passoAtual: "viabilidade",
+        titulo: aguardando ? "Dossiê em análise" : "Montar dossiê de viabilidade",
+        descricao: aguardando
+          ? "Seu dossiê está com o time IMOBI. Você será notificado quando aprovado."
+          : "Checklist de documentos e Ficha do Empreendimento antes de cadastrar a obra.",
+        href: "/dashboard/viabilidade",
+        concluido: false,
+        ...prog,
+        bloqueado: aguardando ? "obra" : undefined,
       };
     }
 

@@ -1,0 +1,217 @@
+{
+    "$schema": "imoibi/analise-credito-checklist/v1",
+    "versao": "2026-06",
+    "formatoAceito": ["PDF", "XLSX", "XLS"],
+    "dataBaseObrigatoria": true,
+    "estagiosEntrada": [
+        {
+            "id": "NOVO",
+            "label": "Empreendimento novo (pré-obra ou lançamento)",
+            "descricao": "Obra ainda não iniciada ou em fase inicial de projeto/licenciamento. Usar checklist Novo + Ficha Excel completa.",
+            "checklistPdf": "Empreendimento - Novo.pdf",
+            "percentualObraMin": 0,
+            "percentualObraMax": 0
+        },
+        {
+            "id": "EM_ANDAMENTO",
+            "label": "Obra em andamento",
+            "descricao": "Obra já iniciada, com medição, custos incorridos e cronograma realizado. Usar checklist Em Andamento + Ficha Excel.",
+            "checklistPdf": "Empreendimento - Em Andamento.pdf",
+            "percentualObraMin": 1,
+            "percentualObraMax": 99
+        },
+        {
+            "id": "ENTRADA_TARDIA",
+            "label": "Entrada em etapa avançada",
+            "descricao": "Crédito solicitado com obra já avançada (ex.: estrutura, acabamento). Exige checklist Em Andamento + evidências reforçadas de execução e saldo para conclusão.",
+            "checklistPdf": "Empreendimento - Em Andamento.pdf",
+            "percentualObraMin": 30,
+            "percentualObraMax": 95,
+            "itensReforcados": ["11", "12", "13", "14", "20", "21", "22"]
+        }
+    ],
+    "blocos": [
+        {
+            "id": "terreno",
+            "ordem": 1,
+            "titulo": "Terreno",
+            "itens": [
+                { "id": "1", "titulo": "Matrícula do imóvel (máx. 30 dias)", "obrigatorio": true, "estagios": ["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                { "id": "2", "titulo": "Certidão negativa de ônus, alienações e gravames", "obrigatorio": true, "estagios": ["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                { "id": "3", "titulo": "Instrumento de compra, permuta ou aquisição do terreno", "obrigatorio": true, "estagios": ["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                { "id": "4", "titulo": "Laudo de avaliação do terreno (mercado ou técnico)", "obrigatorio": true, "estagios": ["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                { "id": "5", "titulo": "Zoneamento, índices construtivos, recuos e restrições legais", "obrigatorio": true, "estagios": ["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"] }
+            ]
+        },
+        {
+            "id": "projeto",
+            "ordem": 2,
+            "titulo": "Projeto e engenharia",
+            "itens": [
+                { "id": "6", "titulo": "Relação de unidades (status, m², valor venda/estoque)", "obrigatorio": true, "estagios": ["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"], "planilhaAba": "Tabela de Unidades" },
+                { "id": "7", "titulo": "Projeto aprovado (plantas e cortes)", "obrigatorio": true, "estagios": ["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                { "id": "8", "titulo": "Especificações de acabamentos e padrão construtivo", "obrigatorio": true, "estagios": ["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                { "id": "9", "titulo": "Book comercial + apresentação da incorporadora", "obrigatorio": true, "estagios": ["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                {
+                    "id": "10",
+                    "titulo": "Cronograma físico-financeiro",
+                    "obrigatorio": true,
+                    "estagios": ["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"],
+                    "variantePorEstagio": {
+                        "NOVO": "Cronograma previsto (etapas, prazos e curva de desembolso planejada)",
+                        "EM_ANDAMENTO": "Cronograma atualizado (% executado, custos incorridos/a incorrer, curva até conclusão)",
+                        "ENTRADA_TARDIA": "Cronograma atualizado + comparativo planejado x realizado"
+                    }
+                },
+                { "id": "11", "titulo": "% obra executado medido por terceiro independente", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                { "id": "12", "titulo": "Status da obra, riscos, desvios de prazo e orçamento", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                { "id": "13", "titulo": "Comparativo planejado x realizado e novo prazo de entrega", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                { "id": "14", "titulo": "Custo original, custo atualizado e saldo para conclusão", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"], "planilhaCampos": ["Orçamento Original", "Orçamento Atual", "Custos Incorridos", "Custos a Incorrer"] }
+            ]
+        },
+        {
+            "id": "comercial_financeiro",
+            "ordem": 3,
+            "titulo": "Comercial e financeiro",
+            "itens": [
+                {
+                    "id": "11_novo",
+                    "titulo": "Acordo sobre unidades permutadas (não concorrência, se houver)",
+                    "obrigatorio": false,
+                    "estagios": ["NOVO"],
+                    "numeroPdfNovo": 11
+                },
+                {
+                    "id": "12_novo",
+                    "titulo": "Fluxo mensal, necessidade de capital, ponto de equilíbrio e cenários (pessimista/base/otimista)",
+                    "obrigatorio": true,
+                    "estagios": ["NOVO"],
+                    "numeroPdfNovo": 12
+                },
+                {
+                    "id": "15_andamento",
+                    "titulo": "Acordo formal sobre permutas (não concorrência com estoque)",
+                    "obrigatorio": false,
+                    "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"],
+                    "numeroPdfAndamento": 15
+                },
+                { "id": "16_andamento", "titulo": "Fluxo mensal, capital, ponto de equilíbrio e cenários", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"], "numeroPdfAndamento": 16 },
+                { "id": "17_andamento", "titulo": "Quantidade de unidades vendidas e em estoque (data-base)", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"], "planilhaCampos": ["Nº de unidades - Venda a prazo", "Nº de unidades - Estoque"] },
+                { "id": "18_andamento", "titulo": "Carteira ativa, inadimplência e distratos", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"], "planilhaAbas": ["Parcelas dos Clientes", "Distratos"] },
+                { "id": "19_andamento", "titulo": "Vendas brutas menos cancelamentos (velocidade real)", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                { "id": "20_andamento", "titulo": "Planilha: terreno, obra realizada/restante, vendas, financiamento e capital adicional", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                { "id": "21_andamento", "titulo": "Saldo de caixa, aplicações e dívidas da SPE", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"] },
+                { "id": "22_andamento", "titulo": "Posição com bancos, fornecedores, tributos e ações trabalhistas", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"] }
+            ]
+        },
+        {
+            "id": "licenciamento",
+            "ordem": 4,
+            "titulo": "Licenciamento",
+            "itens": [
+                { "id": "13_novo", "titulo": "Alvará válido para início da obra", "obrigatorio": true, "estagios": ["NOVO"], "numeroPdfNovo": 13 },
+                { "id": "14_novo", "titulo": "Licenças LP/LI quando exigíveis", "obrigatorio": false, "estagios": ["NOVO"], "numeroPdfNovo": 14 },
+                { "id": "23_andamento", "titulo": "Alvará válido para início da obra", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"], "numeroPdfAndamento": 23 },
+                { "id": "24_andamento", "titulo": "Licenças LP/LI quando exigíveis", "obrigatorio": false, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"], "numeroPdfAndamento": 24 }
+            ]
+        },
+        {
+            "id": "evef_carteira",
+            "ordem": 5,
+            "titulo": "Carteira de recebíveis e EVEF",
+            "itens": [
+                {
+                    "id": "15_novo_evef",
+                    "titulo": "Posição analítica da carteira (contrato, unidade, parcelas, vencimento x pagamento, amortização)",
+                    "obrigatorio": true,
+                    "estagios": ["NOVO"],
+                    "numeroPdfNovo": 15,
+                    "planilhaAbas": ["Parcelas dos Clientes", "Tabela de Unidades"]
+                },
+                {
+                    "id": "25_andamento_evef",
+                    "titulo": "Posição analítica da carteira (contrato, unidade, parcelas, vencimento x pagamento, amortização)",
+                    "obrigatorio": true,
+                    "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"],
+                    "numeroPdfAndamento": 25,
+                    "planilhaAbas": ["Parcelas dos Clientes", "Tabela de Unidades"]
+                },
+                {
+                    "id": "ficha_viabilidade",
+                    "titulo": "Ficha do Empreendimento e Viabilidade (Excel)",
+                    "obrigatorio": true,
+                    "estagios": ["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"],
+                    "planilhaAbas": ["Ficha do Empreendimento"]
+                }
+            ]
+        },
+        {
+            "id": "demonstracoes_financeiras",
+            "ordem": 6,
+            "titulo": "Demonstrações financeiras",
+            "somenteEstagio": "NOVO",
+            "itens": [
+                {
+                    "id": "16_novo",
+                    "titulo": "Balanço e DRE dos últimos 3 exercícios da incorporadora (assinados por contador)",
+                    "obrigatorio": true,
+                    "estagios": ["NOVO"],
+                    "numeroPdfNovo": 16
+                }
+            ]
+        },
+        {
+            "id": "organograma_historico",
+            "ordem": 7,
+            "titulo": "Organograma societário e histórico do incorporador",
+            "somenteEstagio": "NOVO",
+            "itens": [
+                { "id": "17_novo", "titulo": "Estrutura societária do grupo e posição da SPE", "obrigatorio": true, "estagios": ["NOVO"], "numeroPdfNovo": 17 },
+                { "id": "18_novo", "titulo": "Obras entregues, atrasos, distratos e processos judiciais relevantes", "obrigatorio": true, "estagios": ["NOVO"], "numeroPdfNovo": 18, "planilhaAbas": ["Obras em Andamento (Grupo)", "Obras Concluídas (Grupo)", "Landbank (Grupo)"] }
+            ]
+        }
+    ],
+    "planilhaExcel": {
+        "arquivo": "Ficha do Empreendimento e Viabilidade IMOBI.xlsx",
+        "abas": [
+            {
+                "nome": "Ficha do Empreendimento",
+                "proposito": "Cadastro do empreendimento + DRE simplificada do EVEF no empreendimento",
+                "camposPrincipais": [
+                    "Nome do Empreendimento", "Nome da SPE", "CNPJ da SPE", "Sócios da SPE",
+                    "Localização", "Tipo (incorporação/loteamento)", "Patrimônio de Afetação",
+                    "Áreas e valores do terreno", "Datas (lançamento, início, término, habite-se)",
+                    "VGV e composição de unidades", "Características de recebimento (% entrada/obras/chaves)",
+                    "Orçamento e cronograma físico-financeiro realizado", "Empresa controladora"
+                ]
+            },
+            {
+                "nome": "Tabela de Unidades",
+                "proposito": "Estoque comercial unitário + projeção mensal de recebíveis por unidade",
+                "colunas": ["Nº Contrato", "Empreendimento", "N° Unidade", "Área (m²)", "Cliente", "CPF/CNPJ", "Data Venda", "Valor", "Status", "Indexador", "Taxa", "Sistema amortização", "colunas mensais de fluxo"]
+            },
+            {
+                "nome": "Parcelas dos Clientes",
+                "proposito": "Carteira analítica (item EVEF)",
+                "colunas": ["Nº Contrato", "Nº Unidade", "Cliente", "Nº Parcela", "Vencimento", "Pagamento", "Valor Parcela", "Valor Recebido"]
+            },
+            {
+                "nome": "Distratos",
+                "proposito": "Histórico de cancelamentos",
+                "colunas": ["Nº Contrato", "Lote", "Cliente", "Data Venda", "Data Distrato", "Recebido", "Restituído", "Motivo"]
+            },
+            {
+                "nome": "Obras em Andamento (Grupo)",
+                "proposito": "Portfólio do incorporador — obras ativas (due diligence de grupo)"
+            },
+            {
+                "nome": "Obras Concluídas (Grupo)",
+                "proposito": "Track record de entregas"
+            },
+            {
+                "nome": "Landbank (Grupo)",
+                "proposito": "Terrenos e estoque futuro do grupo"
+            }
+        ]
+    }
+}

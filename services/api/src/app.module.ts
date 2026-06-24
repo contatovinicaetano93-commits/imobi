@@ -28,6 +28,7 @@ import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notific
 import { VistoriaModule } from "./modules/vistoria/vistoria.module";
 import { SetupModule } from "./modules/setup/setup.module";
 import { DueDiligenceModule } from "./modules/due-diligence/due-diligence.module";
+import { DossiesModule } from "./modules/dossies/dossies.module";
 import { DocumentosModule } from "./modules/documentos/documentos.module";
 import { ComiteModule } from "./modules/comite/comite.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
@@ -110,6 +111,7 @@ const redisConfig = getRedisConfig();
     VistoriaModule,
     SetupModule,
     DueDiligenceModule,
+    DossiesModule,
     DocumentosModule,
     ComiteModule,
   ],

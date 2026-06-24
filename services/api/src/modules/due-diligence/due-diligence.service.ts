@@ -29,6 +29,7 @@ export class DueDiligenceService {
   async criar(gestorId: string, dto: CriarDueDiligenceDto) {
     return this.prisma.dueDiligence.create({
       data: {
+        usuarioId: gestorId,
         gestorId,
         nomeEmpreendimento: dto.nomeEmpreendimento,
         tipologia: dto.tipologia ?? null,
@@ -50,7 +51,7 @@ export class DueDiligenceService {
 
   async listar(gestorId: string) {
     return this.prisma.dueDiligence.findMany({
-      where: { gestorId },
+      where: { OR: [{ gestorId }, { usuarioId: gestorId }] },
       orderBy: { criadoEm: "desc" },
       select: {
         id: true,
@@ -68,7 +69,7 @@ export class DueDiligenceService {
   async buscar(id: string, gestorId: string, isAdmin: boolean) {
     const dd = await this.prisma.dueDiligence.findUnique({ where: { id } });
     if (!dd) throw new NotFoundException("Due diligence não encontrada");
-    if (!isAdmin && dd.gestorId !== gestorId) {
+    if (!isAdmin && dd.gestorId !== gestorId && dd.usuarioId !== gestorId) {
       throw new ForbiddenException("Acesso negado");
     }
     return dd;

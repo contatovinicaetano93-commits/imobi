@@ -10,19 +10,19 @@ export declare const EnderecoSchema: z.ZodObject<{
     uf: z.ZodString;
     cep: z.ZodString;
 }, "strip", z.ZodTypeAny, {
+    cidade: string;
+    uf: string;
     logradouro: string;
     numero: string;
     bairro: string;
-    cidade: string;
-    uf: string;
     cep: string;
     complemento?: string | undefined;
 }, {
+    cidade: string;
+    uf: string;
     logradouro: string;
     numero: string;
     bairro: string;
-    cidade: string;
-    uf: string;
     cep: string;
     complemento?: string | undefined;
 }>;
@@ -50,19 +50,19 @@ export declare const CriarObraSchema: z.ZodObject<{
         uf: z.ZodString;
         cep: z.ZodString;
     }, "strip", z.ZodTypeAny, {
+        cidade: string;
+        uf: string;
         logradouro: string;
         numero: string;
         bairro: string;
-        cidade: string;
-        uf: string;
         cep: string;
         complemento?: string | undefined;
     }, {
+        cidade: string;
+        uf: string;
         logradouro: string;
         numero: string;
         bairro: string;
-        cidade: string;
-        uf: string;
         cep: string;
         complemento?: string | undefined;
     }>;
@@ -86,11 +86,11 @@ export declare const CriarObraSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     nome: string;
     endereco: {
+        cidade: string;
+        uf: string;
         logradouro: string;
         numero: string;
         bairro: string;
-        cidade: string;
-        uf: string;
         cep: string;
         complemento?: string | undefined;
     };
@@ -106,11 +106,11 @@ export declare const CriarObraSchema: z.ZodObject<{
 }, {
     nome: string;
     endereco: {
+        cidade: string;
+        uf: string;
         logradouro: string;
         numero: string;
         bairro: string;
-        cidade: string;
-        uf: string;
         cep: string;
         complemento?: string | undefined;
     };

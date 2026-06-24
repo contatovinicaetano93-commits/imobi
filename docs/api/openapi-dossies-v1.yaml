@@ -1,0 +1,396 @@
+openapi: 3.0.3
+info:
+  title: Imobi API — Dossiês de Viabilidade
+  version: 1.0.0
+  description: |
+    Módulo de dossiê de viabilidade (análise de crédito).
+    Tomador cria e envia; gestor acompanha (leitura); admin valida status.
+
+servers:
+  - url: https://imobi-api-staging.onrender.com/api/v1
+    description: Staging
+  - url: https://imobi-api-efgg.onrender.com/api/v1
+    description: Produção
+
+tags:
+  - name: dossies
+    description: Dossiê de viabilidade do empreendimento
+
+paths:
+  /dossies/checklist-template:
+    get:
+      tags: [dossies]
+      summary: Template de checklist por estágio da obra
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: estagio
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/EstagioObraDossie'
+      responses:
+        '200':
+          description: Metadados do estágio e itens aplicáveis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistTemplateResponse'
+
+  /dossies:
+    get:
+      tags: [dossies]
+      summary: Listar dossiês
+      description: Tomador vê os próprios; gestor/admin vê todos.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista resumida
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DossieResumo'
+
+    post:
+      tags: [dossies]
+      summary: Criar dossiê em rascunho
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarDossieRequest'
+      responses:
+        '201':
+          description: Dossiê criado com checklist seed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DossieDetalhe'
+
+  /dossies/{id}:
+    get:
+      tags: [dossies]
+      summary: Detalhe do dossiê
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DossieId'
+      responses:
+        '200':
+          description: Dossiê com checklist e obra vinculada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DossieDetalhe'
+
+    patch:
+      tags: [dossies]
+      summary: Atualizar rascunho
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DossieId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarDossieRequest'
+      responses:
+        '200':
+          description: Dossiê atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DossieDetalhe'
+
+  /dossies/{id}/enviar:
+    post:
+      tags: [dossies]
+      summary: Enviar dossiê para análise
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DossieId'
+      responses:
+        '200':
+          description: Status ENVIADO
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DossieDetalhe'
+        '400':
+          description: Checklist incompleto ou validação de estágio
+
+  /dossies/{id}/status:
+    patch:
+      tags: [dossies]
+      summary: Atualizar status (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DossieId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarDossieStatusRequest'
+      responses:
+        '200':
+          description: Status atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DossieDetalhe'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    DossieId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    EstagioObraDossie:
+      type: string
+      enum: [NOVO, EM_ANDAMENTO, ENTRADA_TARDIA]
+
+    DossieStatus:
+      type: string
+      enum: [RASCUNHO, ENVIADO, EM_ANALISE, APROVADO, REPROVADO]
+
+    DossieChecklistItemStatus:
+      type: string
+      enum: [PENDENTE, ENVIADO, APROVADO, REPROVADO, NA]
+
+    CriarDossieRequest:
+      type: object
+      required: [estagioObra, nomeEmpreendimento]
+      properties:
+        estagioObra:
+          $ref: '#/components/schemas/EstagioObraDossie'
+        nomeEmpreendimento:
+          type: string
+          minLength: 3
+          maxLength: 255
+        percentualFisico:
+          type: number
+          minimum: 0
+          maximum: 100
+        dataBase:
+          type: string
+          format: date-time
+        obraId:
+          type: string
+          format: uuid
+
+    AtualizarDossieRequest:
+      type: object
+      properties:
+        nomeEmpreendimento:
+          type: string
+        tipologia:
+          type: string
+          nullable: true
+        endereco:
+          type: string
+          nullable: true
+        cidade:
+          type: string
+          nullable: true
+        uf:
+          type: string
+          minLength: 2
+          maxLength: 2
+          nullable: true
+        totalUnidades:
+          type: integer
+          nullable: true
+        areaTotal:
+          type: number
+          nullable: true
+        dataEntregaPrevista:
+          type: string
+          format: date-time
+          nullable: true
+        nomeIncorporadora:
+          type: string
+          nullable: true
+        cnpjIncorporadora:
+          type: string
+          nullable: true
+        percentualFisico:
+          type: number
+          nullable: true
+        dataBase:
+          type: string
+          format: date-time
+          nullable: true
+        obraId:
+          type: string
+          format: uuid
+          nullable: true
+        ficha:
+          type: object
+          additionalProperties: true
+        checklistItens:
+          type: array
+          items:
+            type: object
+            required: [itemId]
+            properties:
+              itemId:
+                type: string
+              status:
+                $ref: '#/components/schemas/DossieChecklistItemStatus'
+              documentoId:
+                type: string
+                format: uuid
+                nullable: true
+              observacao:
+                type: string
+                nullable: true
+
+    AtualizarDossieStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/DossieStatus'
+        observacaoAdmin:
+          type: string
+          maxLength: 2000
+
+    DossieResumo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nomeEmpreendimento:
+          type: string
+        estagioObra:
+          $ref: '#/components/schemas/EstagioObraDossie'
+        status:
+          $ref: '#/components/schemas/DossieStatus'
+        percentualFisico:
+          type: number
+          nullable: true
+        dataBase:
+          type: string
+          format: date-time
+          nullable: true
+        obraId:
+          type: string
+          format: uuid
+          nullable: true
+        criadoEm:
+          type: string
+          format: date-time
+        atualizadoEm:
+          type: string
+          format: date-time
+        enviadoEm:
+          type: string
+          format: date-time
+          nullable: true
+
+    DossieChecklistItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        itemId:
+          type: string
+        titulo:
+          type: string
+        obrigatorio:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/DossieChecklistItemStatus'
+        documentoId:
+          type: string
+          format: uuid
+          nullable: true
+        observacao:
+          type: string
+          nullable: true
+
+    DossieDetalhe:
+      allOf:
+        - $ref: '#/components/schemas/DossieResumo'
+        - type: object
+          properties:
+            tipologia:
+              type: string
+              nullable: true
+            endereco:
+              type: string
+              nullable: true
+            cidade:
+              type: string
+              nullable: true
+            uf:
+              type: string
+              nullable: true
+            payload:
+              type: object
+            checklistItens:
+              type: array
+              items:
+                $ref: '#/components/schemas/DossieChecklistItem'
+            obra:
+              type: object
+              nullable: true
+              properties:
+                obraId:
+                  type: string
+                  format: uuid
+                nome:
+                  type: string
+                status:
+                  type: string
+
+    ChecklistTemplateResponse:
+      type: object
+      properties:
+        estagio:
+          $ref: '#/components/schemas/EstagioObraDossie'
+        meta:
+          type: object
+        itens:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: string
+              titulo:
+                type: string
+              obrigatorio:
+                type: boolean
+              blocoId:
+                type: string
+              blocoTitulo:
+                type: string
+        estagiosDisponiveis:
+          type: array
+          items:
+            type: object

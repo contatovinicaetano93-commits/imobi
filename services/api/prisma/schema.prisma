@@ -53,7 +53,9 @@ model Usuario {
   kycAuditLogs  KycAuditLog[] @relation("KycAuditLogs")
   leadsGerenciados Lead[] @relation("LeadUsuarios")
   mailingContatos MailingContato[]
-  dueDiligences   DueDiligence[]
+  dossiesTomador  DueDiligence[] @relation("DossieTomador")
+  dossiesGestor   DueDiligence[] @relation("DossieGestor")
+  dossieAuditLogs DossieAuditLog[]
   documentos      Documento[]
   solicitacoes    SolicitacaoCredito[]
   votosComite     VotoComite[]
@@ -176,6 +178,7 @@ model Obra {
   evidencias          EvidenciaEtapa[]
   leads               Lead[]
   documentos          Documento[]
+  dossies             DueDiligence[]
 
   @@index([usuarioId])
   @@index([creditoId])
@@ -544,8 +547,15 @@ enum MailingStatus {
 
 model DueDiligence {
   id                    String   @id @default(uuid())
-  gestor                Usuario  @relation(fields: [gestorId], references: [usuarioId])
-  gestorId              String
+  usuario               Usuario  @relation("DossieTomador", fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  usuarioId             String
+  gestor                Usuario? @relation("DossieGestor", fields: [gestorId], references: [usuarioId], onDelete: SetNull)
+  gestorId              String?
+  obra                  Obra?    @relation(fields: [obraId], references: [obraId], onDelete: SetNull)
+  obraId                String?
+  estagioObra           EstagioObraDossie?
+  percentualFisico      Float?
+  dataBase              DateTime?
   nomeEmpreendimento    String
   tipologia             String?
   endereco              String?
@@ -560,13 +570,66 @@ model DueDiligence {
   totalCarteira         Float?
   totalAReceber         Float?
   estruturaSocietaria   String?
-  payload               Json
+  payload               Json     @default("{}")
   status                DueDiligenceStatus @default(RASCUNHO)
+  observacaoAdmin       String?
+  enviadoEm             DateTime?
   criadoEm              DateTime @default(now())
   atualizadoEm          DateTime @updatedAt
 
+  checklistItens        DossieChecklistItem[]
+  auditLogs             DossieAuditLog[]
+
+  @@index([usuarioId])
   @@index([gestorId])
+  @@index([obraId])
   @@index([status])
+}
+
+model DossieChecklistItem {
+  id            String                    @id @default(uuid())
+  dossieId      String
+  dossie        DueDiligence              @relation(fields: [dossieId], references: [id], onDelete: Cascade)
+  itemId        String
+  titulo        String
+  obrigatorio   Boolean                   @default(true)
+  status        DossieChecklistItemStatus @default(PENDENTE)
+  documentoId   String?
+  observacao    String?
+  criadoEm      DateTime                  @default(now())
+  atualizadoEm  DateTime                  @updatedAt
+
+  @@unique([dossieId, itemId])
+  @@index([dossieId])
+  @@index([status])
+}
+
+model DossieAuditLog {
+  id          String       @id @default(uuid())
+  dossieId    String
+  dossie      DueDiligence @relation(fields: [dossieId], references: [id], onDelete: Cascade)
+  usuarioId   String
+  usuario     Usuario      @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  acao        String
+  detalhes    Json?
+  criadoEm    DateTime     @default(now())
+
+  @@index([dossieId])
+  @@index([usuarioId])
+}
+
+enum EstagioObraDossie {
+  NOVO
+  EM_ANDAMENTO
+  ENTRADA_TARDIA
+}
+
+enum DossieChecklistItemStatus {
+  PENDENTE
+  ENVIADO
+  APROVADO
+  REPROVADO
+  NA
 }
 
 enum DueDiligenceStatus {

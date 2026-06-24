@@ -215,10 +215,11 @@ export function getObraDetailBreadcrumbs(
 
 /** Passos SIPOC — fluxo operacional (fonte única para guias de painel) */
 export const SIPOC_OBRAS_FLOW = [
+  { step: 0, label: 'Viabilidade', actor: 'Incorporador', desc: 'Dossiê de crédito: checklist + Ficha do Empreendimento' },
   { step: 1, label: 'Cadastro', actor: 'Cliente', desc: 'Obra criada com documentos e etapas' },
   { step: 2, label: 'Homologação', actor: 'Admin IMOBI', desc: 'Validação e entrada no pipe ativo' },
   { step: 3, label: 'Vistoria', actor: 'Engenheiro', desc: 'Aprovação técnica por etapa' },
-  { step: 4, label: 'Liberação', actor: 'Gestor do Fundo', desc: 'Comitê e liberação de crédito' },
+  { step: 4, label: 'Comitê', actor: 'Gestor do Fundo', desc: 'Acompanhamento e decisão de crédito (somente leitura)' },
   { step: 5, label: 'Pagamento', actor: 'Admin IMOBI', desc: 'Transferência manual e confirmação' },
 ] as const;
 

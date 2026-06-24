@@ -4,3 +4,5 @@ export * from "./obra.schema";
 export * from "./evidencia.schema";
 export * from "./comercial.schema";
 export * from "./notificacao.schema";
+export * from "./dossie-viabilidade.schema";
+export * from "./dossie-checklist-template";

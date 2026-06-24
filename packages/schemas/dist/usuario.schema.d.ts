@@ -133,7 +133,7 @@ export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
     email?: string | undefined;
     telefone?: string | undefined;
     novaSenha?: string | undefined;
-    kycStatus?: "PENDENTE" | "EM_VERIFICACAO" | "APROVADO" | "REJEITADO" | undefined;
+    kycStatus?: "APROVADO" | "PENDENTE" | "EM_VERIFICACAO" | "REJEITADO" | undefined;
     bloqueado?: boolean | undefined;
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }, {
@@ -142,7 +142,7 @@ export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
     email?: string | undefined;
     telefone?: string | undefined;
     novaSenha?: string | undefined;
-    kycStatus?: "PENDENTE" | "EM_VERIFICACAO" | "APROVADO" | "REJEITADO" | undefined;
+    kycStatus?: "APROVADO" | "PENDENTE" | "EM_VERIFICACAO" | "REJEITADO" | undefined;
     bloqueado?: boolean | undefined;
     funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
 }>;

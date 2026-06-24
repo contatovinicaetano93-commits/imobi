@@ -5,6 +5,7 @@ import { JornadaService } from "./jornada.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { KycService } from "../kyc/kyc.service";
 import { ManagerService } from "../manager/manager.service";
+import { DossiesService } from "../dossies/dossies.service";
 import { JORNADA_CACHE_TTL_MS, jornadaUsuarioCacheKey } from "./jornada-cache";
 
 describe("JornadaService", () => {
@@ -14,6 +15,7 @@ describe("JornadaService", () => {
     obra: { count: jest.fn() },
     credito: { findMany: jest.fn() },
     etapaObra: { count: jest.fn() },
+    dueDiligence: { findFirst: jest.fn() },
   };
 
   const kyc = {
@@ -22,6 +24,10 @@ describe("JornadaService", () => {
 
   const manager = {
     obterEstatisticas: jest.fn(),
+  };
+
+  const dossies = {
+    temDossieAprovado: jest.fn(),
   };
 
   const cache = {
@@ -37,6 +43,7 @@ describe("JornadaService", () => {
         { provide: PrismaService, useValue: prisma },
         { provide: KycService, useValue: kyc },
         { provide: ManagerService, useValue: manager },
+        { provide: DossiesService, useValue: dossies },
         { provide: CACHE_MANAGER, useValue: cache },
       ],
     }).compile();
@@ -83,6 +90,8 @@ describe("JornadaService", () => {
       prisma.obra.count.mockResolvedValue(0);
       prisma.credito.findMany.mockResolvedValue([]);
       prisma.etapaObra.count.mockResolvedValue(0);
+      prisma.dueDiligence.findFirst.mockResolvedValue(null);
+      dossies.temDossieAprovado.mockResolvedValue(true);
     });
 
     it("retorna passo KYC quando não aprovado", async () => {
@@ -95,7 +104,17 @@ describe("JornadaService", () => {
       expect(j.concluido).toBe(false);
     });
 
-    it("retorna obra após KYC aprovado", async () => {
+    it("retorna viabilidade após KYC aprovado sem dossiê", async () => {
+      kyc.obterStatus.mockResolvedValue({ status: "APROVADO", documentos: [] });
+      dossies.temDossieAprovado.mockResolvedValue(false);
+
+      const j = await service.obter(userId, "TOMADOR");
+
+      expect(j.passoAtual).toBe("viabilidade");
+      expect(j.href).toBe("/dashboard/viabilidade");
+    });
+
+    it("retorna obra após KYC e dossiê aprovados", async () => {
       kyc.obterStatus.mockResolvedValue({ status: "APROVADO", documentos: [] });
 
       const j = await service.obter(userId, "TOMADOR");
@@ -139,7 +158,7 @@ describe("JornadaService", () => {
         href: "/dashboard/kyc",
         concluido: false,
         passosConcluidos: 0,
-        totalPassos: 5,
+        totalPassos: 6,
         progressoPct: 0,
       };
       cache.get.mockResolvedValueOnce(cached);
