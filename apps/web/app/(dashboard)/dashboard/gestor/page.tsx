@@ -6,11 +6,12 @@ import Link from "next/link";
 import { ShieldCheck, AlertTriangle, Zap, Lightbulb } from "lucide-react";
 import { fetchManagerDashboard } from "@/lib/fetch-manager-dashboard";
 import { PanelSection } from "@/components/dashboard/PanelSection";
-import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
+import { PanelToolbar, JORNADA_PANEL_ID } from "@/components/dashboard/PanelToolbar";
 import { BETA_MVP_MODE, mvpSafeHref } from "@/lib/beta-mvp";
 import { JornadaHeroStrip } from "@/components/dashboard/JornadaHeroStrip";
 
-const GESTOR_PANELS = [
+const GESTOR_PANELS_BASE = [
+  { id: "resumo-fila", priority: "primary" as const },
   { id: "acoes-rapidas", priority: "primary" as const },
   { id: "dicas", priority: "secondary" as const },
 ];
@@ -81,6 +82,10 @@ export default function GestorPage() {
   const kycHref = "/dashboard/gestor/kyc";
   const obrasHref = mvpSafeHref("/dashboard/obras", "GESTOR");
   const creditosHref = BETA_MVP_MODE ? etapasHref : "/dashboard/credito";
+  const gestorPanels = BETA_MVP_MODE
+    ? [{ id: JORNADA_PANEL_ID, priority: "primary" as const }, ...GESTOR_PANELS_BASE]
+    : GESTOR_PANELS_BASE;
+  const filaTotal = s.filaAprovacoes + s.filaKyc;
 
   if (loading && !stats) {
     return (
@@ -102,6 +107,8 @@ export default function GestorPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 p-4 sm:p-6">
+      <PanelToolbar sections={gestorPanels} />
+
       {BETA_MVP_MODE && <JornadaHeroStrip variant="gestor" />}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -115,7 +122,16 @@ export default function GestorPage() {
           </button>
         </div>
       )}
-      {/* Hero gestor — roxo */}
+      <PanelSection
+        id="resumo-fila"
+        title="Painel de Operações"
+        icon={<ShieldCheck className="w-4 h-4 text-violet-600" />}
+        priority="primary"
+        badge={filaTotal > 0 ? filaTotal : undefined}
+        summary={`${filaTotal} ${filaTotal === 1 ? "item pendente" : "itens pendentes"} · ${s.creditosAtivos} créditos · ${s.obrasAtivas} obras`}
+        urgency={filaTotal > 10 ? "critical" : filaTotal > 0 ? "warning" : "none"}
+      >
+      <div className="space-y-4">
       <div style={{ background: "linear-gradient(135deg, #3b0764 0%, #4c1d95 100%)", borderRadius: 16, padding: "1.5rem 2rem", color: "white" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
           <div>
@@ -163,8 +179,8 @@ export default function GestorPage() {
           href={obrasHref}
         />
       </div>
-
-      <PanelToolbar sections={GESTOR_PANELS} />
+      </div>
+      </PanelSection>
 
       <div className="space-y-4">
         <PanelSection

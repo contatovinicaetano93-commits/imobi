@@ -12,7 +12,7 @@ import {
 } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { PanelSection } from "@/components/dashboard/PanelSection";
-import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
+import { PanelToolbar, JORNADA_PANEL_ID } from "@/components/dashboard/PanelToolbar";
 import { BETA_MVP_MODE } from "@/lib/beta-mvp";
 import { JornadaHeroStrip } from "@/components/dashboard/JornadaHeroStrip";
 
@@ -113,6 +113,9 @@ export default async function ConstrutorPage() {
   const kycPriority = docsRejeitados > 0 ? ("critical" as const) : docsPendentes > 0 ? ("primary" as const) : ("secondary" as const);
 
   const construtorPanels = [
+    ...(BETA_MVP_MODE ? [{ id: JORNADA_PANEL_ID, priority: "primary" as const }] : []),
+    ...(alertas.length > 0 ? [{ id: "alertas", priority: "critical" as const }] : []),
+    { id: "operacao-ativa", priority: "primary" as const },
     { id: "cronograma-pagamentos", priority: "primary" as const },
     { id: "cronograma-liberacoes", priority: liberacoesPriority },
     { id: "medicao-obra", priority: "secondary" as const },
@@ -123,29 +126,50 @@ export default async function ConstrutorPage() {
     { id: "contratos-documentos", priority: "secondary" as const },
   ];
 
+  const operacaoSummary = credito
+    ? `${credito.obras?.[0]?.nome ?? "Crédito IMOBI"} · ${formatarBRL(valorLiberado)} devedor`
+    : "Nenhuma operação ativa";
+
   return (
     <div className="flex flex-col gap-4 pb-10 max-w-2xl p-4 sm:p-6">
+      <PanelToolbar sections={construtorPanels} />
+
       {BETA_MVP_MODE && <JornadaHeroStrip variant="tomador" />}
 
-      {/* ── Alertas ─────────────────────────────────────────────────── */}
       {alertas.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {alertas.map((a, i) => {
-            const bg = a.tipo === "error" ? "bg-red-50 border-red-200 text-red-700" : a.tipo === "warn" ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-blue-50 border-blue-200 text-blue-700";
-            const Icon = a.tipo === "error" ? XCircle : a.tipo === "warn" ? AlertTriangle : Bell;
-            return (
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              <Link key={i} href={a.href as any} className={`flex items-center gap-2.5 border rounded-xl px-3.5 py-2.5 text-xs font-medium transition hover:opacity-80 ${bg}`}>
-                <Icon className="w-3.5 h-3.5 shrink-0" />
-                {a.msg}
-                <ChevronRight className="w-3.5 h-3.5 ml-auto shrink-0" />
-              </Link>
-            );
-          })}
-        </div>
+        <PanelSection
+          id="alertas"
+          title="Alertas"
+          icon={<AlertTriangle className="w-4 h-4 text-amber-500" />}
+          priority="critical"
+          badge={alertas.length}
+          summary={`${alertas.length} pendência(s) para revisar`}
+          urgency="warning"
+        >
+          <div className="flex flex-col gap-2">
+            {alertas.map((a, i) => {
+              const bg = a.tipo === "error" ? "bg-red-50 border-red-200 text-red-700" : a.tipo === "warn" ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-blue-50 border-blue-200 text-blue-700";
+              const Icon = a.tipo === "error" ? XCircle : a.tipo === "warn" ? AlertTriangle : Bell;
+              return (
+                <Link key={i} href={a.href as any} className={`flex items-center gap-2.5 border rounded-xl px-3.5 py-2.5 text-xs font-medium transition hover:opacity-80 ${bg}`}>
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  {a.msg}
+                  <ChevronRight className="w-3.5 h-3.5 ml-auto shrink-0" />
+                </Link>
+              );
+            })}
+          </div>
+        </PanelSection>
       )}
 
-      {/* ── Hero: operação de crédito ────────────────────────────────── */}
+      <PanelSection
+        id="operacao-ativa"
+        title={credito ? "Operação ativa" : "Crédito"}
+        icon={<CreditCard className="w-4 h-4" />}
+        priority="primary"
+        summary={operacaoSummary}
+        href={credito ? "/dashboard/credito" : undefined}
+      >
       {credito ? (
         <div style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #1a2f5e 100%)`, borderRadius: 20, padding: "1.5rem 1.75rem", color: "white" }}>
           <div className="flex items-start justify-between gap-3 mb-4">
@@ -195,8 +219,7 @@ export default async function ConstrutorPage() {
           </Link>
         </Card>
       )}
-
-      <PanelToolbar sections={construtorPanels} />
+      </PanelSection>
 
       {/* ── Cronograma de pagamentos ─────────────────────────────────── */}
       <PanelSection

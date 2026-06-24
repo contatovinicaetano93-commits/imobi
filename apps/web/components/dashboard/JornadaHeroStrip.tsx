@@ -2,41 +2,44 @@
 
 import { NextStepHero } from "@/components/dashboard/NextStepHero";
 import { JornadaError } from "@/components/dashboard/JornadaError";
+import { PanelSection } from "@/components/dashboard/PanelSection";
+import { JORNADA_PANEL_ID } from "@/components/dashboard/PanelToolbar";
 import { useJornada } from "@/hooks/jornada-context";
 
 type Props = {
   variant: "tomador" | "gestor";
 };
 
-/** Faixa de próximo passo no topo do painel — não bloqueia o restante do dashboard. */
+/** Próximo passo — colapsável como os demais quadros do painel. */
 export function JornadaHeroStrip({ variant }: Props) {
   const { jornada, loading, refreshing, error, refresh } = useJornada();
 
-  if (loading && !jornada) {
-    return (
-      <div className="mb-4 rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm">
-        <p className="text-sm text-gray-500">Carregando seu próximo passo…</p>
-      </div>
-    );
-  }
-
-  if (!jornada) {
-    return (
-      <div className="mb-4">
-        <JornadaError message={error ?? undefined} onRetry={() => void refresh()} />
-      </div>
-    );
-  }
+  const summary = loading
+    ? "Carregando…"
+    : jornada?.titulo ?? (error ? "Erro ao carregar" : "—");
 
   return (
-    <div className="relative mb-6">
-      {refreshing && (
-        <div
-          className="pointer-events-none absolute inset-0 z-10 rounded-3xl bg-white/40"
-          aria-hidden
-        />
+    <PanelSection
+      id={JORNADA_PANEL_ID}
+      title="Seu próximo passo"
+      priority="primary"
+      summary={summary}
+      badge={
+        jornada && !jornada.concluido && jornada.totalPassos > 0
+          ? `${jornada.progressoPct}%`
+          : undefined
+      }
+      urgency={error ? "critical" : "none"}
+    >
+      {loading && !jornada ? (
+        <p className="py-6 text-center text-sm text-gray-500">Carregando seu próximo passo…</p>
+      ) : !jornada ? (
+        <JornadaError message={error ?? undefined} onRetry={() => void refresh()} />
+      ) : (
+        <div className={refreshing ? "pointer-events-none opacity-60 transition-opacity" : ""}>
+          <NextStepHero jornada={jornada} variant={variant} />
+        </div>
       )}
-      <NextStepHero jornada={jornada} variant={variant} />
-    </div>
+    </PanelSection>
   );
 }

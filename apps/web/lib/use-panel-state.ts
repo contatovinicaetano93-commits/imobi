@@ -112,5 +112,12 @@ export function usePanelToolbar(sections: { id: string; priority: PanelPriority 
     window.dispatchEvent(new CustomEvent(PANEL_STATE_EVENT, { detail: { pathname } }));
   }, [pathname, sections]);
 
-  return { expandAll, collapseSecondary };
+  const collapseAll = useCallback(() => {
+    const state = readPageState(pathname);
+    for (const s of sections) state[s.id] = false;
+    writePageState(pathname, state);
+    window.dispatchEvent(new CustomEvent(PANEL_STATE_EVENT, { detail: { pathname } }));
+  }, [pathname, sections]);
+
+  return { expandAll, collapseSecondary, collapseAll };
 }
