@@ -119,6 +119,11 @@ console.log("\n3/4 Schema + Prisma client...");
 run("pnpm db:generate");
 // db push evita ordem lexicográfica quebrada das pastas 10_* vs 1_* em banco novo
 runDb("pnpm --filter @imbobi/api exec prisma db push --schema prisma/schema.prisma --accept-data-loss");
+try {
+  runDb("node scripts/db-baseline.mjs");
+} catch {
+  console.log("(baseline opcional — rode pnpm db:baseline se migrate deploy falhar com P3005)");
+}
 
 console.log("\n4/4 Seed de usuários de dev...");
 runDb("pnpm seed:dev");
