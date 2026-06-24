@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { ChevronLeft, RefreshCw } from "lucide-react";
+import { getPanelHome } from "@/lib/panel-navigation";
 
 type Props = {
   title: string;
   subtitle?: string;
+  backHref?: string;
+  backLabel?: string;
   onRefresh?: () => void;
   refreshing?: boolean;
   badge?: React.ReactNode;
@@ -14,19 +17,22 @@ type Props = {
 export function GestorSubpageHeader({
   title,
   subtitle,
+  backHref,
+  backLabel = "Painel do Fundo",
   onRefresh,
   refreshing,
   badge,
 }: Props) {
+  const home = backHref ?? getPanelHome("GESTOR");
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
         <Link
-          href="/dashboard/gestor"
+          href={home as "/dashboard/gestor"}
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-2 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
-          Painel do Fundo
+          {backLabel}
         </Link>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold text-gray-900">{title}</h1>

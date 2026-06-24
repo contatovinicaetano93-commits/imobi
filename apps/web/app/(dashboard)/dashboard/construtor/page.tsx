@@ -7,9 +7,10 @@ import {
   HardHat, BarChart3, XCircle,
 } from "lucide-react";
 import {
-  creditoApi, obrasApi, kycApi, notificacoesApi, jornadaApi,
+  creditoApi, obrasApi, kycApi, notificacoesApi,
   type CreditoResumo, type ObraResumo, type KycStatus, type Notificacao,
 } from "@/lib/api";
+import { obterJornadaResiliente, mensagemErroJornada } from "@/lib/jornada-fetch";
 import { formatarBRL } from "@imbobi/core";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
@@ -56,11 +57,17 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 
 export default async function ConstrutorPage() {
   if (BETA_MVP_MODE) {
-    const jornada = await jornadaApi.obter().catch(() => null);
+    let jornada = null;
+    let jornadaErro: string | undefined;
+    try {
+      jornada = await obterJornadaResiliente();
+    } catch (err) {
+      jornadaErro = mensagemErroJornada(err);
+    }
     if (!jornada) {
       return (
         <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
-          <JornadaError />
+          <JornadaError message={jornadaErro} />
         </div>
       );
     }

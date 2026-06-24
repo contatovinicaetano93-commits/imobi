@@ -71,7 +71,29 @@ async function checkApiHealth() {
   console.log(`✓ API health OK (${url})`);
 }
 
-console.log('Smoke tests — Imobi');
+async function checkJornadaRoute() {
+  const url = `${API_BASE.replace(/\/$/, '')}/api/v1/jornada`;
+  let res;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+  } catch (err) {
+    console.error(`❌ /jornada inacessível: ${url}`);
+    console.error(`   ${err instanceof Error ? err.message : String(err)}`);
+    process.exit(1);
+  }
+  if (res.status === 404) {
+    console.error(`❌ GET /api/v1/jornada → 404 (API staging desatualizada)`);
+    console.error('   Rode: pnpm render:redeploy:staging');
+    console.error('   Aguarde 3–5 min e repita: pnpm check:staging\n');
+    process.exit(1);
+  }
+  if (res.status === 401 || res.status === 403) {
+    console.log(`✓ Rota /jornada registrada (HTTP ${res.status})`);
+    return;
+  }
+  console.log(`✓ Rota /jornada responde (HTTP ${res.status})`);
+}
+
 console.log(`API: ${API_BASE}`);
 console.log(`Web: ${WEB_BASE}`);
 
@@ -81,6 +103,7 @@ if (local) {
 }
 
 await checkApiHealth();
+await checkJornadaRoute();
 run('bash', ['scripts/post-deploy-verification.sh', API_BASE]);
 if (!apiOnly) {
   await checkWeb();

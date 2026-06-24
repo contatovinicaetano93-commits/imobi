@@ -23,6 +23,7 @@
     "test:smoke": "node scripts/test-smoke.mjs",
     "test:smoke:local": "node scripts/test-smoke.mjs -- --local",
     "test:smoke:api": "node scripts/test-smoke.mjs -- --api-only",
+    "test:panel-nav": "pnpm --filter @imbobi/web exec tsx lib/panel-navigation.test.ts",
     "check:staging": "node scripts/test-smoke.mjs",
     "check:staging:local": "node scripts/test-smoke.mjs -- --local",
     "validate:schemas": "tsx scripts/validate-schema-sync.ts",
@@ -41,6 +42,7 @@
     "render:env:push": "node scripts/render-push-env.mjs",
     "render:env:verify": "node scripts/render-env-verify.mjs",
     "render:redeploy": "node scripts/render-redeploy.mjs",
+    "render:redeploy:staging": "RENDER_SERVICE_ID=srv-d8fl07h9rddc73ajs7ag node scripts/render-redeploy.mjs",
     "render:deploy:fix": "node scripts/render-deploy-fix.mjs",
     "vercel:env:push": "node scripts/vercel-push-env.mjs"
   },

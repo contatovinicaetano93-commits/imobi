@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ManagerStats, Jornada } from "@/lib/api";
-import { jornadaApi } from "@/lib/api";
+import { obterJornadaResiliente, mensagemErroJornada } from "@/lib/jornada-fetch";
 import Link from "next/link";
 import { ShieldCheck, AlertTriangle, Zap, Lightbulb } from "lucide-react";
 import { fetchManagerDashboard } from "@/lib/fetch-manager-dashboard";
@@ -57,6 +57,7 @@ export default function GestorPage() {
   const [jornada, setJornada] = useState<Jornada | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [jornadaErro, setJornadaErro] = useState<string | null>(null);
 
   const loadStats = () => {
     setLoading(true);
@@ -78,10 +79,13 @@ export default function GestorPage() {
   useEffect(() => {
     if (BETA_MVP_MODE) {
       setLoading(true);
-      jornadaApi
-        .obter()
+      setJornadaErro(null);
+      obterJornadaResiliente()
         .then(setJornada)
-        .catch(() => setJornada(null))
+        .catch((err) => {
+          setJornada(null);
+          setJornadaErro(mensagemErroJornada(err));
+        })
         .finally(() => setLoading(false));
       return;
     }
@@ -101,7 +105,7 @@ export default function GestorPage() {
     if (!jornada) {
       return (
         <div className="flex min-h-[70vh] items-start justify-center p-4 pt-8 sm:p-6">
-          <JornadaError />
+          <JornadaError message={jornadaErro ?? undefined} />
         </div>
       );
     }
