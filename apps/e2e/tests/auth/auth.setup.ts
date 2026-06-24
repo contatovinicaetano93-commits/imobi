@@ -28,7 +28,6 @@ async function assertApiReachable(): Promise<void> {
 
 const RETRYABLE_LOGIN_STATUSES = new Set([429, 500, 502, 503, 504]);
 
-/** Per-status target delay; caller must enforce monotonic backoff across attempts. */
 function loginRetryDelayMs(status: number, attempt: number): number {
   if (status === 429) return Math.min(60_000, 5_000 * attempt);
   return Math.min(30_000, 2_000 * attempt);
@@ -43,7 +42,6 @@ function sleep(ms: number): Promise<void> {
 // Next.js + NestJS cold-start chain (can exceed 5 min on WSL2 PostgreSQL).
 async function saveAuthState(email: string, password: string, outFile: string): Promise<string> {
   let lastError = '';
-  let retryDelayMs = 0;
   for (let attempt = 1; attempt <= 8; attempt++) {
     const res = await fetch(`${NEST_API}/auth/login`, {
       method: 'POST',
@@ -53,8 +51,7 @@ async function saveAuthState(email: string, password: string, outFile: string): 
     });
     if (RETRYABLE_LOGIN_STATUSES.has(res.status)) {
       lastError = await res.text().catch(() => res.statusText);
-      retryDelayMs = Math.max(retryDelayMs, loginRetryDelayMs(res.status, attempt));
-      await sleep(retryDelayMs);
+      await sleep(loginRetryDelayMs(res.status, attempt));
       continue;
     }
     if (!res.ok) {

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import "./layout.css";
 import { useEffect, useState } from "react";
-import { normalizeRole } from "@/lib/role-permissions";
+import { normalizeRole, CLIENTE_BETA_LABEL } from "@/lib/role-permissions";
 import {
   ACCOUNT_NAV_HREFS,
   getActiveNavHref,
@@ -76,8 +76,8 @@ const NAV: NavItem[] = [
 const SECTION_LABELS: Record<string, string> = { geral: "Geral", operacional: "Operacional", admin: "Admin", conta: "Conta" };
 
 const ROLE_META: Record<string, { label: string; accent: string }> = {
-  CONSTRUTOR:  { label: "Construtor",  accent: MINT },
-  TOMADOR:     { label: "Construtor",  accent: MINT },
+  CONSTRUTOR:  { label: CLIENTE_BETA_LABEL, accent: MINT },
+  TOMADOR:     { label: CLIENTE_BETA_LABEL, accent: MINT },
   GESTOR:      { label: "Gestor do Fundo", accent: "#a78bfa" },
   ENGENHEIRO:  { label: "Engenheiro",  accent: "#fb923c" },
   GESTOR_OBRA: { label: "Engenheiro",  accent: "#fb923c" },

@@ -566,7 +566,7 @@ function TabGeralContent({
         </div>
       )}
 
-      {/* Tomador - só para roles com acesso */}
+      {/* Cliente — só para roles com acesso */}
       {obra.usuario &&
         role &&
         ["ADMIN", "GESTOR", "ENGENHEIRO"].includes(role) && (
@@ -590,7 +590,7 @@ function TabGeralContent({
                 <User size={18} color="#7C3AED" />
               </div>
               <h3 style={{ fontWeight: 700, color: NAVY, fontSize: 16, ...j }}>
-                Tomador
+                Cliente
               </h3>
             </div>
             <div

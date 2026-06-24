@@ -172,7 +172,7 @@ if [ $FAILED -eq 0 ]; then
   echo -e "\n${GREEN}✨ All checks passed! API is production-ready.${NC}"
   echo -e "\n${BLUE}Next steps:${NC}"
   echo "1. pnpm vercel:env:push  (NEXT_PUBLIC_API_URL=${API_URL})"
-  echo "2. Validar web: curl -s -o /dev/null -w '%{http_code}\n' https://imobi-web.vercel.app/login"
+  echo "2. Validar web: curl -s -o /dev/null -w '%{http_code}\n' https://imobi-web-ten.vercel.app/login"
   echo "3. Monitor Sentry + UptimeRobot"
   exit 0
 else

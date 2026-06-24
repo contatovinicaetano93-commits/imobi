@@ -24,6 +24,9 @@ export function normalizeRole(role: string | null | undefined): AppRole | null {
   return role as AppRole;
 }
 
+/** Rótulo único no MVP — TOMADOR e CONSTRUTOR são o mesmo perfil (role legado vs canônico). */
+export const CLIENTE_BETA_LABEL = 'Cliente';
+
 export const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Administrador',
   GESTOR: 'Gestor do Fundo',
@@ -32,8 +35,8 @@ export const ROLE_LABELS: Record<string, string> = {
   GESTOR_OBRA: 'Gestor de Obra',
   COMERCIAL: 'Comercial',
   PARCEIRO: 'Parceiro',
-  CONSTRUTOR: 'Construtor',
-  TOMADOR: 'Tomador',
+  CONSTRUTOR: CLIENTE_BETA_LABEL,
+  TOMADOR: CLIENTE_BETA_LABEL,
 };
 
 /** Home após login */

@@ -9,7 +9,9 @@
 | Web | https://imobi-web-ten.vercel.app |
 | API staging | https://imobi-api-staging.onrender.com |
 
-## Jornada do tomador
+## Jornada do cliente (role `TOMADOR` / `CONSTRUTOR`)
+
+Na interface, o perfil aparece como **Cliente** (mesmo role no backend).
 
 ```
 Simular → Cadastro → Login → GET /api/v1/jornada → href do passo atual

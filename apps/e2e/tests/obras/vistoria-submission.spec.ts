@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { GESTOR, TOMADOR } from '../../fixtures/auth.fixture';
 import { VistoriaPage } from '../../page-objects/VistoriaPage';
 import { loginViaApi, findEtapaWithStatus } from '../../fixtures/api-helpers';
+import { mockJornada, MOCK_JORNADA_GESTOR_OBRAS } from '../../fixtures/jornada.fixture';
 
 test.use({ storageState: GESTOR.storageState });
 
@@ -61,6 +62,10 @@ test.describe('Vistoria submission', () => {
 
   test.beforeAll(async () => {
     sharedIds = await getVistoriaIds();
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await mockJornada(page, MOCK_JORNADA_GESTOR_OBRAS);
   });
 
   test('vistoria page renders correctly', async ({ page }) => {

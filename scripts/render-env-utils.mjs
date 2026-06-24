@@ -105,9 +105,16 @@ export function assertDatabaseUrl(url) {
 
 /** @param {Record<string, string>} fileEnv */
 export function validateRenderCredentials(fileEnv) {
-  assertAsciiSecret(fileEnv.RENDER_API_KEY, 'RENDER_API_KEY');
-  if (!fileEnv.RENDER_API_KEY.startsWith('rnd_')) {
-    throw new Error('RENDER_API_KEY deve começar com rnd_ (API key do Render)');
+  const key = (fileEnv.RENDER_API_KEY ?? '').trim();
+  assertAsciiSecret(key, 'RENDER_API_KEY');
+  if (hasPlaceholder(key)) {
+    throw new Error(
+      'RENDER_API_KEY ainda é placeholder (ex.: rnd_… ou CHANGE_ME). ' +
+        'Render → Account Settings → API Keys → cole a chave completa.',
+    );
+  }
+  if (!key.startsWith('rnd_') || key.length < 20) {
+    throw new Error('RENDER_API_KEY deve começar com rnd_ e ter ~20+ caracteres (API key do Render)');
   }
 }
 
@@ -115,11 +122,14 @@ export function validateRenderCredentials(fileEnv) {
 export function createRenderApi(token) {
   assertAsciiSecret(token, 'RENDER_API_KEY');
 
-  async function api(path) {
+  async function api(path, opts = {}) {
     const res = await fetch(`https://api.render.com${path}`, {
+      ...opts,
       headers: {
         Authorization: `Bearer ${token.trim()}`,
         Accept: 'application/json',
+        ...(opts.body ? { 'Content-Type': 'application/json' } : {}),
+        ...opts.headers,
       },
     });
     const text = await res.text();
@@ -130,7 +140,7 @@ export function createRenderApi(token) {
       body = text;
     }
     if (!res.ok) {
-      throw new Error(`${res.status} ${path}`);
+      throw new Error(`${res.status} ${path}: ${typeof body === 'string' ? body : JSON.stringify(body)}`);
     }
     return body;
   }

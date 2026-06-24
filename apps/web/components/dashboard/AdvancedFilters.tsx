@@ -105,16 +105,16 @@ export function AdvancedFilters({ filters: initialFilters, onFilter, onReset }: 
           {/* Search Box */}
           <div className="mb-3 sm:mb-4">
             <label htmlFor="search-term" className="text-xs sm:text-sm font-medium text-gray-700 block mb-2">
-              Buscar por Obra ou Tomador
+              Buscar por Obra ou Cliente
             </label>
             <input
               id="search-term"
               type="text"
-              placeholder="Digite nome da obra ou tomador..."
+              placeholder="Digite nome da obra ou cliente..."
               value={filters.searchTerm || ""}
               onChange={(e) => handleFilterChange("searchTerm", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-10"
-              aria-label="Buscar por obra ou tomador"
+              aria-label="Buscar por obra ou cliente"
             />
           </div>
 

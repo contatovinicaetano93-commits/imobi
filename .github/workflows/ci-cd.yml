@@ -22,7 +22,7 @@ concurrency:
 
 env:
   STAGING_API_URL: https://imobi-api-staging.onrender.com
-  STAGING_WEB_URL: https://imobi-web.vercel.app
+  STAGING_WEB_URL: https://imobi-web-ten.vercel.app
 
 jobs:
   validate:

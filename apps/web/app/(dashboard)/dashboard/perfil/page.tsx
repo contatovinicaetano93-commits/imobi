@@ -18,8 +18,8 @@ const KYC_STATUS_MAP: Record<string, { label: string; cor: string; icone: string
 };
 
 const USER_TYPE_MAP: Record<string, string> = {
-  TOMADOR:     "Tomador de Crédito",
-  CONSTRUTOR:  "Construtor",
+  TOMADOR:     "Cliente",
+  CONSTRUTOR:  "Cliente",
   GESTOR:      "Gestor de Fundo",
   GESTOR_OBRA: "Gestor de Obra",
   GESTOR_FUNDO:"Gestor de Fundo",

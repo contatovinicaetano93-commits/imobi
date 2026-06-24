@@ -121,7 +121,7 @@ export default function EtapaDetailPage() {
                 <span className="font-medium text-gray-900">{etapa.obra.endereco}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Tomador</span>
+                <span className="text-gray-600">Cliente</span>
                 <span className="font-medium text-gray-900">{etapa.obra.usuario.nome}</span>
               </div>
               <div className="flex justify-between">

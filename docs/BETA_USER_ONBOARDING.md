@@ -1436,7 +1436,7 @@ pnpm vercel:env:push
 
 # 6. Verify deployments
 curl https://imobi-api-staging.onrender.com/api/v1/health
-curl https://imobi-web.vercel.app/
+curl https://imobi-web-ten.vercel.app/
 
 # 7. Send test email (manual via SendGrid dashboard)
 

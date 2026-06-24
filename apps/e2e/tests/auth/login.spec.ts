@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import { test, expect } from '@playwright/test';
 import { LoginPage } from '../../page-objects/LoginPage';
 import { TOMADOR } from '../../fixtures/auth.fixture';
+import { mockJornada, MOCK_JORNADA_KYC } from '../../fixtures/jornada.fixture';
 
 const MOCK_LOGIN_OK = JSON.stringify({ ok: true, role: 'CONSTRUTOR' });
 
@@ -56,7 +57,8 @@ test.describe('Login', () => {
     await expect(lp.errorMsg).toBeVisible({ timeout: 30_000 });
   });
 
-  test('redirects to construtor after valid login', async ({ page }) => {
+  test('redirects to próximo passo da jornada after valid login', async ({ page }) => {
+    await mockJornada(page, MOCK_JORNADA_KYC);
     await page.route((url) => url.href.includes('/api/proxy/auth/login'), async (route) => {
       await page.context().addCookies(tomadorCookies());
       await route.fulfill({
@@ -68,8 +70,8 @@ test.describe('Login', () => {
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL(/\/dashboard\/construtor/, { timeout: 120_000 });
-    await expect(page).toHaveURL(/\/dashboard\/construtor/);
+    await page.waitForURL(/\/dashboard\/kyc/, { timeout: 120_000 });
+    await expect(page).toHaveURL(/\/dashboard\/kyc/);
   });
 
   test('sets access_token cookie after login', async () => {
@@ -80,6 +82,7 @@ test.describe('Login', () => {
   });
 
   test('logout clears session and redirects to /login', async ({ page }) => {
+    await mockJornada(page, MOCK_JORNADA_KYC);
     await page.route((url) => url.href.includes('/api/proxy/auth/login'), async (route) => {
       await page.context().addCookies(tomadorCookies());
       await route.fulfill({
@@ -91,7 +94,7 @@ test.describe('Login', () => {
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
-    await page.waitForURL(/\/dashboard\/construtor/, { timeout: 60_000 });
+    await page.waitForURL(/\/dashboard\/kyc/, { timeout: 60_000 });
 
     await page.evaluate(async () => {
       await fetch('/api/auth/session', { method: 'DELETE' });

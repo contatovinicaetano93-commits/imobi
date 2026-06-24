@@ -14,6 +14,7 @@ import {
   loadRenderEnvFile,
   validateRenderCredentials,
   hasPlaceholder,
+  createRenderApi,
 } from './render-env-utils.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -38,11 +39,6 @@ const serviceIdx = args.indexOf('--service');
 const noDeploy = args.includes('--no-deploy');
 
 const token = (process.env.RENDER_API_KEY ?? fileEnv.RENDER_API_KEY ?? '').trim();
-if (hasPlaceholder(token)) {
-  console.error('❌ RENDER_API_KEY ainda é placeholder (ex.: rnd_… do exemplo).');
-  console.error('   Dashboard Render → Account Settings → API Keys\n');
-  process.exit(1);
-}
 
 let serviceId =
   (serviceIdx >= 0 ? args[serviceIdx + 1] : null) ??
@@ -114,27 +110,17 @@ if (trim(fileEnv.SETUP_SECRET)) {
   env.SETUP_SECRET = trim(fileEnv.SETUP_SECRET);
 }
 
+let renderApi;
+try {
+  renderApi = createRenderApi(token);
+} catch (e) {
+  console.error(`❌ ${e.message}`);
+  console.error('   Rode: pnpm render:init → cole RENDER_API_KEY real → pnpm render:key:check\n');
+  process.exit(1);
+}
+
 async function api(path, opts = {}) {
-  const res = await fetch(`https://api.render.com${path}`, {
-    ...opts,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...opts.headers,
-    },
-  });
-  const text = await res.text();
-  let body;
-  try {
-    body = JSON.parse(text);
-  } catch {
-    body = text;
-  }
-  if (!res.ok) {
-    throw new Error(`${res.status} ${path}: ${typeof body === 'string' ? body : JSON.stringify(body)}`);
-  }
-  return body;
+  return renderApi.api(path, opts);
 }
 
 async function resolveServiceId() {
@@ -143,24 +129,10 @@ async function resolveServiceId() {
       await api(`/v1/services/${serviceId}`);
       return serviceId;
     } catch {
-      console.warn(`⚠️  Service ${serviceId} não encontrado — listando...`);
+      console.warn(`⚠️  Service ${serviceId} não encontrado — buscando imobi-api-staging…`);
     }
   }
-
-  const list = await api('/v1/services?limit=50');
-  const services = (list ?? [])
-    .map((row) => row.service ?? row)
-    .filter(Boolean);
-
-  const match =
-    services.find((s) => s.name === 'imobi-api-staging') ??
-    services.find((s) => s.name === 'imobi-api') ??
-    services.find((s) => s.name?.includes('imobi'));
-  if (!match) {
-    console.error('❌ Serviço imobi não encontrado. Serviços:', services.map((s) => s.name).join(', '));
-    process.exit(1);
-  }
-  return match.id;
+  return renderApi.resolveStagingServiceId(serviceId);
 }
 
 async function deleteEnvVar(sid, key) {
