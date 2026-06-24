@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 import { managerApi, type KycPendente, type KycAuditEntry } from "@/lib/api";
 import { ApprovalAuditTrail } from "@/components/dashboard/ApprovalAuditTrail";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
-import { useToast } from "@/hooks/toast-context";
 import Image from "next/image";
+import { Eye } from "lucide-react";
 
 function getTipoLabel(tipo: string): string {
   const tipos: Record<string, string> = {
@@ -23,17 +24,12 @@ function formatDate(date: string) {
 
 export default function KycDetailPage() {
   const params = useParams();
-  const router = useRouter();
-  const { success, error: toastError } = useToast();
   const [doc, setDoc] = useState<KycPendente | null>(null);
   const [auditLogs, setAuditLogs] = useState<KycAuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [auditLoading, setAuditLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [auditError, setAuditError] = useState<string | null>(null);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [showRejectionForm, setShowRejectionForm] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
 
   const docId = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -67,37 +63,6 @@ export default function KycDetailPage() {
       .finally(() => setAuditLoading(false));
   }, [docId]);
 
-  const handleApprove = async () => {
-    if (!doc) return;
-    setSubmitting(true);
-    try {
-      await managerApi.aprovarKyc(docId);
-      success("Documento KYC aprovado.");
-      router.push("/dashboard/gestor/kyc");
-    } catch (err) {
-      toastError(err instanceof Error ? err.message : "Erro desconhecido");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleReject = async () => {
-    if (!rejectionReason.trim()) {
-      toastError("Forneça um motivo para a rejeição");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await managerApi.rejeitarKyc(docId, rejectionReason);
-      success("Documento KYC rejeitado.");
-      router.push("/dashboard/gestor/kyc");
-    } catch (err) {
-      toastError(err instanceof Error ? err.message : "Erro desconhecido");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   if (loading) {
     return <PageSkeleton variant="detail" />;
   }
@@ -115,17 +80,24 @@ export default function KycDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{doc.usuario.nome}</h1>
           <p className="text-gray-500 text-sm mt-1">{getTipoLabel(doc.tipo)}</p>
+          <p className="text-xs text-blue-700 mt-2 font-medium">
+            Visualização somente leitura — aprovação de KYC é feita pelo Admin.
+          </p>
         </div>
+        <Link
+          href="/dashboard/gestor/kyc"
+          className="text-[#1B4FD8] hover:text-blue-700 text-sm font-semibold shrink-0"
+        >
+          ← Voltar
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Informações do usuário e imagem */}
         <div className="md:col-span-2 space-y-6">
-          {/* Usuário */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
             <h2 className="font-bold text-gray-900 mb-4">Informações do Usuário</h2>
             <div className="space-y-3">
@@ -158,7 +130,6 @@ export default function KycDetailPage() {
             </div>
           </div>
 
-          {/* Documento */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
             <h2 className="font-bold text-gray-900 mb-4">{getTipoLabel(doc.tipo)}</h2>
             <div className="space-y-4">
@@ -177,67 +148,27 @@ export default function KycDetailPage() {
           </div>
         </div>
 
-        {/* Painel de ações */}
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="font-bold text-gray-900 mb-4">Decisão</h2>
-            <div className="space-y-3">
-              <div className="bg-purple-50 rounded-lg p-3 text-sm text-purple-900">
+            <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Eye className="w-4 h-4 text-violet-600" />
+              Acompanhamento
+            </h2>
+            <div className="space-y-3 text-sm text-gray-600">
+              <div className="bg-purple-50 rounded-lg p-3 text-purple-900">
                 <span className="font-semibold">Tipo:</span> {getTipoLabel(doc.tipo)}
               </div>
-
-              <div className="pt-4 border-t border-gray-100 space-y-3">
-                <button
-                  onClick={handleApprove}
-                  disabled={submitting}
-                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
-                >
-                  ✓ Aprovar Documento
-                </button>
-
-                {!showRejectionForm ? (
-                  <button
-                    onClick={() => setShowRejectionForm(true)}
-                    className="w-full bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-3 rounded-lg transition-colors"
-                  >
-                    ✕ Rejeitar
-                  </button>
-                ) : (
-                  <div className="space-y-2">
-                    <textarea
-                      value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
-                      placeholder="Motivo da rejeição (p.ex: documento ilegível, expirado, etc)"
-                      className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                      rows={3}
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleReject}
-                        disabled={submitting}
-                        className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white font-semibold py-2 rounded-lg transition-colors text-sm"
-                      >
-                        Confirmar
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowRejectionForm(false);
-                          setRejectionReason("");
-                        }}
-                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 rounded-lg transition-colors text-sm"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <p>
+                Como gestor do fundo, você monitora a fila de documentos sem poder aprovar ou rejeitar.
+              </p>
+              <p className="text-xs text-gray-500">
+                Escale inconsistências ao time Admin pelo canal interno.
+              </p>
             </div>
           </div>
 
-          {/* Dicas */}
           <div className="bg-blue-50 rounded-2xl border border-blue-100 p-4">
-            <h3 className="font-semibold text-blue-900 mb-2">Critérios</h3>
+            <h3 className="font-semibold text-blue-900 mb-2">Checklist de referência</h3>
             <div className="space-y-1 text-sm text-blue-800">
               <p>☐ Documento legível</p>
               <p>☐ Dentro da validade</p>
@@ -248,7 +179,6 @@ export default function KycDetailPage() {
         </div>
       </div>
 
-      {/* Audit Trail */}
       <ApprovalAuditTrail
         auditLogs={auditLogs}
         loading={auditLoading}

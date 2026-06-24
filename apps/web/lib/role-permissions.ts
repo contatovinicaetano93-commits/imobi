@@ -1,7 +1,8 @@
 /**
  * Licenças e permissões por perfil (web).
  *
- * GESTOR — Gestor do Fundo (único gestor do projeto).
+ * GESTOR — Gestor do Fundo: acompanha pipe (KYC, etapas, carteira) em modo leitura.
+ * Aprovações ficam com Admin (KYC) e Engenheiro (etapas/vistoria).
  * GESTOR_FUNDO no JWT/banco é alias legado → normalizado para GESTOR.
  */
 

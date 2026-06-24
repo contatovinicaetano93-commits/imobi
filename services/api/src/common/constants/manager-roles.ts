@@ -22,5 +22,7 @@ export function isManagerRole(tipo: string | null | undefined): boolean {
 /** Roles com acesso ao módulo manager (painel do gestor do fundo). */
 export const MANAGER_ROLES = ["GESTOR", "ADMIN"] as const;
 
+/** Gestor do fundo: leitura do pipe (KYC, etapas, carteira). */
 export const MANAGER_READ_ROLES = MANAGER_ROLES;
-export const MANAGER_WRITE_ROLES = MANAGER_ROLES;
+/** Aprovação KYC via /manager — somente Admin. */
+export const MANAGER_WRITE_ROLES = ["ADMIN"] as const;

@@ -14,7 +14,7 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 
 import { Roles } from "../../common/decorators/roles.decorator";
 
-import { MANAGER_ROLES } from "../../common/constants/manager-roles";
+import { MANAGER_ROLES, MANAGER_WRITE_ROLES } from "../../common/constants/manager-roles";
 
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
@@ -151,6 +151,7 @@ export class ManagerController {
 
 
   @Patch("kyc/:id/aprovar")
+  @Roles(...MANAGER_WRITE_ROLES)
 
   async aprovarKyc(@UsuarioAtual() u: IUsuario, @Param("id") id: string) {
 
@@ -161,6 +162,7 @@ export class ManagerController {
 
 
   @Patch("kyc/:id/rejeitar")
+  @Roles(...MANAGER_WRITE_ROLES)
 
   async rejeitarKyc(
 

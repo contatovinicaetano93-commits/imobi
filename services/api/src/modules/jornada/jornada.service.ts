@@ -91,8 +91,8 @@ export class JornadaService {
       return {
         perfil: "gestor",
         passoAtual: "gestor_kyc",
-        titulo: "Analisar documentos KYC",
-        descricao: `${filaKyc} documento(s) aguardando sua análise`,
+        titulo: "Acompanhar fila KYC",
+        descricao: `${filaKyc} documento(s) na fila — visualização somente leitura`,
         href: "/dashboard/gestor/kyc",
         concluido: false,
         passosConcluidos: 0,
@@ -106,8 +106,8 @@ export class JornadaService {
       return {
         perfil: "gestor",
         passoAtual: "gestor_etapas",
-        titulo: "Aprovar etapas da obra",
-        descricao: `${filaEtapas} etapa(s) aguardando liberação`,
+        titulo: "Acompanhar etapas da obra",
+        descricao: `${filaEtapas} etapa(s) no pipe — liberação pelo engenheiro e financeiro`,
         href: "/dashboard/gestor/etapas",
         concluido: false,
         passosConcluidos: 1,

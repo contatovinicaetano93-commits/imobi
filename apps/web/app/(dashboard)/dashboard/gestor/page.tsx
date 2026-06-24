@@ -141,27 +141,27 @@ export default function GestorPage() {
             </div>
             <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0 0 0.4rem" }}>Painel de Operações</h1>
             <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.65)", margin: 0 }}>
-              {s.filaAprovacoes + s.filaKyc} {s.filaAprovacoes + s.filaKyc === 1 ? "item pendente" : "itens pendentes"} de análise
+              {s.filaAprovacoes + s.filaKyc} {s.filaAprovacoes + s.filaKyc === 1 ? "item para acompanhar" : "itens para acompanhar"}
             </p>
           </div>
         </div>
         {(s.filaAprovacoes > 10 || s.filaKyc > 10) && (
           <div style={{ marginTop: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "0.5rem 0.75rem" }}>
             <AlertTriangle size={14} color="#f87171" />
-            <p style={{ fontSize: "0.75rem", color: "#fca5a5", margin: 0 }}>Fila crítica — mais de 10 itens aguardando aprovação</p>
+            <p style={{ fontSize: "0.75rem", color: "#fca5a5", margin: 0 }}>Fila elevada — mais de 10 itens aguardando no pipe</p>
           </div>
         )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <StatCard
-          label="Etapas Pendentes"
+          label="Etapas em fila"
           value={s.filaAprovacoes}
           color={s.filaAprovacoes > 10 ? "red" : s.filaAprovacoes > 5 ? "yellow" : "green"}
           href={etapasHref}
         />
         <StatCard
-          label="KYC Pendentes"
+          label="KYC na fila"
           value={s.filaKyc}
           color={s.filaKyc > 10 ? "red" : s.filaKyc > 5 ? "yellow" : "green"}
           href={kycHref}
@@ -196,9 +196,9 @@ export default function GestorPage() {
             <Link
               href="/dashboard/gestor/etapas"
               className="flex items-center justify-between p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-12 sm:min-h-auto"
-              aria-label={`Revisar Etapas com ${s.filaAprovacoes} itens pendentes`}
+              aria-label={`Visualizar etapas — ${s.filaAprovacoes} na fila`}
             >
-              <span className="font-medium text-xs sm:text-sm text-blue-900">Revisar Etapas</span>
+              <span className="font-medium text-xs sm:text-sm text-blue-900">Visualizar Etapas</span>
               <span className="text-xs sm:text-sm bg-blue-200 text-blue-900 px-2 py-1 rounded font-semibold">
                 {s.filaAprovacoes}
               </span>
@@ -206,9 +206,9 @@ export default function GestorPage() {
             <Link
               href="/dashboard/gestor/kyc"
               className="flex items-center justify-between p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 min-h-12 sm:min-h-auto"
-              aria-label={`Revisar KYC com ${s.filaKyc} itens pendentes`}
+              aria-label={`Visualizar KYC — ${s.filaKyc} na fila`}
             >
-              <span className="font-medium text-xs sm:text-sm text-purple-900">Revisar KYC</span>
+              <span className="font-medium text-xs sm:text-sm text-purple-900">Visualizar KYC</span>
               <span className="text-xs sm:text-sm bg-purple-200 text-purple-900 px-2 py-1 rounded font-semibold">
                 {s.filaKyc}
               </span>
@@ -231,13 +231,13 @@ export default function GestorPage() {
           title="Dicas"
           icon={<Lightbulb className="w-4 h-4 text-amber-500" />}
           priority="secondary"
-          summary="Boas práticas de revisão"
+          summary="Acompanhamento do pipe — sem ações de aprovação"
         >
           <div className="space-y-2 text-xs sm:text-sm text-gray-600">
             <p>• Priorize itens na fila vermelha ({`>`} 24h)</p>
-            <p>• Revise com atenção à geolocalização</p>
-            <p>• Documente motivos de rejeição</p>
-            <p>• Valide completude de KYC antes de aprovar</p>
+            <p>• Revise evidências e geolocalização antes de escalar ao Admin</p>
+            <p>• Aprovação de KYC e liberação de etapas são feitas pelo Admin e Engenheiro</p>
+            <p>• Use o painel apenas para monitorar saúde das operações</p>
           </div>
         </PanelSection>
       </div>

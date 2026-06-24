@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
-  CheckCircle,
   ChevronLeft,
   ChevronRight,
   Eye,
@@ -11,16 +10,12 @@ import {
   Search,
   User,
   X,
-  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { managerApi, type KycPendente } from "@/lib/api";
-import { KycBatchActions } from "@/components/dashboard/KycBatchActions";
 import { GestorSubpageHeader } from "@/app/(dashboard)/_components/gestor/GestorSubpageHeader";
 import { ManagerListBanner } from "@/app/(dashboard)/_components/gestor/ManagerListBanner";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
-
-// ── Helpers ────────────────────────────────────────────────────────────
 
 function getInitials(nome: string): string {
   return nome
@@ -51,132 +46,17 @@ function getTipoLabel(tipo: string): string {
   return map[tipo] ?? tipo;
 }
 
-// ── Types ──────────────────────────────────────────────────────────────
-
-type DocStatus = "PENDENTE" | "EM_VERIFICACAO" | "APROVADO" | "REJEITADO";
-
-type DocWithStatus = KycPendente & {
-  _localStatus: DocStatus;
-};
-
 type TipoFilter = "TODOS" | "RG" | "SELFIE" | "COMPROVANTE";
-type StatusFilter = "TODOS" | "PENDENTE" | "EM_VERIFICACAO";
-
-// ── Skeleton ───────────────────────────────────────────────────────────
 
 function KycListSkeleton() {
   return <PageSkeleton variant="list" count={3} showHeader={false} />;
 }
 
-// ── Status Badge ───────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: DocStatus }) {
-  const cfg: Record<DocStatus, { label: string; className: string }> = {
-    PENDENTE: {
-      label: "Pendente",
-      className: "bg-yellow-100 text-yellow-800",
-    },
-    EM_VERIFICACAO: {
-      label: "Em verificação",
-      className: "bg-blue-100 text-blue-800",
-    },
-    APROVADO: {
-      label: "Aprovado",
-      className: "bg-green-100 text-green-800",
-    },
-    REJEITADO: {
-      label: "Rejeitado",
-      className: "bg-red-100 text-red-800",
-    },
-  };
-  const c = cfg[status];
-  return (
-    <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${c.className}`}>
-      {c.label}
-    </span>
-  );
-}
-
-// ── Reject Modal ───────────────────────────────────────────────────────
-
-function RejectModal({
-  docId,
-  nomeUsuario,
-  onConfirm,
-  onCancel,
-}: {
-  docId: string;
-  nomeUsuario: string;
-  onConfirm: (docId: string, motivo: string) => Promise<void>;
-  onCancel: () => void;
-}) {
-  const [motivo, setMotivo] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleConfirm = async () => {
-    if (!motivo.trim()) return;
-    setSubmitting(true);
-    await onConfirm(docId, motivo.trim());
-    setSubmitting(false);
-  };
-
-  return (
-    <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-      onClick={(e) => e.target === e.currentTarget && onCancel()}
-    >
-      <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">Motivo da rejeição</h2>
-          <button
-            onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label="Fechar"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <p className="text-sm text-gray-600 mb-4">
-          Informe o motivo para rejeitar o documento de{" "}
-          <span className="font-medium text-gray-900">{nomeUsuario}</span>.
-        </p>
-        <textarea
-          value={motivo}
-          onChange={(e) => setMotivo(e.target.value)}
-          placeholder="Ex: Documento ilegível, foto fora de foco, dados divergentes..."
-          rows={4}
-          className="w-full p-3 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-          disabled={submitting}
-          autoFocus
-        />
-        <div className="flex gap-3 mt-4">
-          <button
-            onClick={onCancel}
-            disabled={submitting}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={!motivo.trim() || submitting}
-            className="flex-1 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-          >
-            {submitting ? "Rejeitando..." : "Confirmar rejeição"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Preview Modal ──────────────────────────────────────────────────────
-
 function PreviewModal({
   doc,
   onClose,
 }: {
-  doc: DocWithStatus;
+  doc: KycPendente;
   onClose: () => void;
 }) {
   return (
@@ -187,9 +67,7 @@ function PreviewModal({
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
           <div>
-            <h2 className="text-base font-bold text-gray-900">
-              {getTipoLabel(doc.tipo)}
-            </h2>
+            <h2 className="text-base font-bold text-gray-900">{getTipoLabel(doc.tipo)}</h2>
             <p className="text-sm text-gray-500">{doc.usuario.nome}</p>
           </div>
           <button
@@ -211,7 +89,13 @@ function PreviewModal({
             }}
           />
         </div>
-        <div className="p-4 border-t border-gray-100 flex justify-end">
+        <div className="p-4 border-t border-gray-100 flex justify-end gap-2">
+          <Link
+            href={`/dashboard/gestor/kyc/${doc.kycDocumentoId}`}
+            className="px-4 py-2 bg-[#1B4FD8] text-white text-sm font-medium rounded-lg hover:bg-blue-800 transition-colors"
+          >
+            Abrir detalhe
+          </Link>
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
@@ -224,64 +108,28 @@ function PreviewModal({
   );
 }
 
-// ── Document Card ──────────────────────────────────────────────────────
-
 function DocCard({
   doc,
-  isSelected,
-  onSelect,
-  onApprove,
-  onRejectClick,
   onPreview,
 }: {
-  doc: DocWithStatus;
-  isSelected: boolean;
-  onSelect: (id: string) => void;
-  onApprove: (id: string) => void;
-  onRejectClick: (doc: DocWithStatus) => void;
-  onPreview: (doc: DocWithStatus) => void;
+  doc: KycPendente;
+  onPreview: (doc: KycPendente) => void;
 }) {
   const diffH = Math.floor(
     (Date.now() - new Date(doc.criadoEm).getTime()) / 3600000
   );
   const urgente = diffH >= 48;
   const alerta = diffH >= 24 && diffH < 48;
-  const isResolved =
-    doc._localStatus === "APROVADO" || doc._localStatus === "REJEITADO";
 
   return (
-    <div
-      className={`bg-white rounded-2xl border shadow-sm p-5 transition-all ${
-        isSelected
-          ? "border-blue-300 bg-blue-50/40"
-          : isResolved
-            ? "border-gray-100 opacity-60"
-            : "border-gray-100 hover:shadow-md"
-      }`}
-    >
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 transition-all hover:shadow-md">
       <div className="flex items-start gap-4">
-        {/* Checkbox */}
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => onSelect(doc.kycDocumentoId)}
-          className="w-4 h-4 mt-1 rounded border-gray-300 text-blue-600 cursor-pointer shrink-0"
-          disabled={isResolved}
-          aria-label={`Selecionar documento de ${doc.usuario.nome}`}
-        />
-
-        {/* Urgency strip */}
         <div
           className={`w-1 self-stretch rounded-full shrink-0 ${
-            urgente
-              ? "bg-red-500"
-              : alerta
-                ? "bg-yellow-400"
-                : "bg-green-400"
+            urgente ? "bg-red-500" : alerta ? "bg-yellow-400" : "bg-green-400"
           }`}
         />
 
-        {/* Avatar */}
         <div
           className={`w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
             urgente
@@ -294,16 +142,15 @@ function DocCard({
           {getInitials(doc.usuario.nome)}
         </div>
 
-        {/* Info */}
         <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <p className="font-semibold text-gray-900 leading-tight">
-                {doc.usuario.nome}
-              </p>
+              <p className="font-semibold text-gray-900 leading-tight">{doc.usuario.nome}</p>
               <p className="text-xs text-gray-500">{doc.usuario.email}</p>
             </div>
-            <StatusBadge status={doc._localStatus} />
+            <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-yellow-100 text-yellow-800">
+              Pendente
+            </span>
           </div>
 
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
@@ -317,11 +164,7 @@ function DocCard({
             </span>
             <span
               className={`font-medium ${
-                urgente
-                  ? "text-red-600"
-                  : alerta
-                    ? "text-yellow-600"
-                    : "text-gray-500"
+                urgente ? "text-red-600" : alerta ? "text-yellow-600" : "text-gray-500"
               }`}
             >
               {tempoRelativo(doc.criadoEm)}
@@ -336,88 +179,44 @@ function DocCard({
           )}
         </div>
 
-        {/* Actions */}
-        {!isResolved ? (
-          <div className="shrink-0 flex items-center gap-2 flex-wrap justify-end">
-            <button
-              onClick={() => onPreview(doc)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              Ver documento
-            </button>
-            <button
-              onClick={() => onApprove(doc.kycDocumentoId)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <CheckCircle className="w-3.5 h-3.5" />
-              Aprovar
-            </button>
-            <button
-              onClick={() => onRejectClick(doc)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              <XCircle className="w-3.5 h-3.5" />
-              Rejeitar
-            </button>
-          </div>
-        ) : (
-          <div className="shrink-0">
-            <Link
-              href={`/dashboard/gestor/kyc/${doc.kycDocumentoId}`}
-              className="text-xs text-blue-600 hover:underline"
-            >
-              Ver detalhe
-            </Link>
-          </div>
-        )}
+        <div className="shrink-0 flex items-center gap-2 flex-wrap justify-end">
+          <button
+            onClick={() => onPreview(doc)}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Ver documento
+          </button>
+          <Link
+            href={`/dashboard/gestor/kyc/${doc.kycDocumentoId}`}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-[#1B4FD8] text-white rounded-lg hover:bg-blue-800 transition-colors"
+          >
+            Detalhe
+          </Link>
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Page ───────────────────────────────────────────────────────────────
-
 const PAGE_SIZE = 5;
 
 export default function KycPage() {
-  const [docs, setDocs] = useState<DocWithStatus[]>([]);
+  const [docs, setDocs] = useState<KycPendente[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [tipoFilter, setTipoFilter] = useState<TipoFilter>("TODOS");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("TODOS");
   const [page, setPage] = useState(0);
-
-  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
-  const [previewDoc, setPreviewDoc] = useState<DocWithStatus | null>(null);
-  const [rejectDoc, setRejectDoc] = useState<DocWithStatus | null>(null);
-
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const showSuccess = useCallback((msg: string) => {
-    setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(null), 4000);
-  }, []);
-
-  const showError = useCallback((msg: string) => {
-    setErrorMsg(msg);
-    setTimeout(() => setErrorMsg(null), 5000);
-  }, []);
+  const [previewDoc, setPreviewDoc] = useState<KycPendente | null>(null);
 
   const loadDocs = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
       const result = await managerApi.listarKycPendentes(100, 0);
-      setDocs(
-        result.documentos.map((d) => ({
-          ...d,
-          _localStatus: "PENDENTE" as DocStatus,
-        }))
-      );
+      setDocs(result.documentos);
     } catch {
       setDocs([]);
       setLoadError("Não foi possível carregar documentos KYC da API.");
@@ -430,13 +229,9 @@ export default function KycPage() {
     loadDocs();
   }, [loadDocs]);
 
-  // Reset page when filters change
   useEffect(() => {
     setPage(0);
-    setSelectedDocs([]);
-  }, [searchQuery, tipoFilter, statusFilter]);
-
-  // ── Filtering ──────────────────────────────────────────────────────
+  }, [searchQuery, tipoFilter]);
 
   const filtered = docs.filter((doc) => {
     const q = searchQuery.toLowerCase();
@@ -445,129 +240,14 @@ export default function KycPage() {
       doc.usuario.nome.toLowerCase().includes(q) ||
       doc.usuario.email.toLowerCase().includes(q) ||
       doc.usuario.cpf.includes(q);
-
     const matchTipo = tipoFilter === "TODOS" || doc.tipo === tipoFilter;
-
-    const matchStatus =
-      statusFilter === "TODOS" || doc._localStatus === statusFilter;
-
-    return matchSearch && matchTipo && matchStatus;
+    return matchSearch && matchTipo;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
-  const pageDocs = filtered.slice(
-    safePage * PAGE_SIZE,
-    (safePage + 1) * PAGE_SIZE
-  );
-
-  const pendingCount = docs.filter(
-    (d) => d._localStatus === "PENDENTE" || d._localStatus === "EM_VERIFICACAO"
-  ).length;
-
-  // ── Individual actions ─────────────────────────────────────────────
-
-  const handleApprove = useCallback(async (docId: string) => {
-    setDocs((prev) =>
-      prev.map((d) =>
-        d.kycDocumentoId === docId ? { ...d, _localStatus: "APROVADO" as DocStatus } : d
-      )
-    );
-    setSelectedDocs((prev) => prev.filter((id) => id !== docId));
-    try {
-      await managerApi.aprovarKyc(docId);
-      showSuccess("Documento aprovado com sucesso.");
-    } catch {
-      setDocs((prev) =>
-        prev.map((d) =>
-          d.kycDocumentoId === docId
-            ? { ...d, _localStatus: "PENDENTE" as DocStatus }
-            : d
-        )
-      );
-      showError("Erro ao aprovar documento. Tente novamente.");
-    }
-  }, [showSuccess, showError]);
-
-  const handleRejectConfirm = useCallback(
-    async (docId: string, motivo: string) => {
-      setRejectDoc(null);
-      // Optimistic update
-      setDocs((prev) =>
-        prev.map((d) =>
-          d.kycDocumentoId === docId
-            ? { ...d, _localStatus: "REJEITADO" as DocStatus }
-            : d
-        )
-      );
-      setSelectedDocs((prev) => prev.filter((id) => id !== docId));
-      try {
-        await managerApi.rejeitarKyc(docId, motivo);
-        showSuccess("Documento rejeitado.");
-      } catch {
-        // Rollback on real API failure
-        setDocs((prev) =>
-          prev.map((d) =>
-            d.kycDocumentoId === docId
-              ? { ...d, _localStatus: "PENDENTE" as DocStatus }
-              : d
-          )
-        );
-        showError("Erro ao rejeitar documento. Tente novamente.");
-      }
-    },
-    [showSuccess, showError]
-  );
-
-  // ── Batch actions callbacks ────────────────────────────────────────
-
-  const handleBulkSuccess = useCallback(() => {
-    setDocs((prev) =>
-      prev.map((d) =>
-        selectedDocs.includes(d.kycDocumentoId)
-          ? { ...d, _localStatus: "APROVADO" as DocStatus }
-          : d
-      )
-    );
-    showSuccess(`${selectedDocs.length} documento(s) aprovado(s) com sucesso!`);
-    setSelectedDocs([]);
-  }, [selectedDocs, showSuccess]);
-
-  const handleBulkError = useCallback(
-    (msg: string) => {
-      showError(msg);
-    },
-    [showError]
-  );
-
-  // ── Selection helpers ──────────────────────────────────────────────
-
-  const activePageDocIds = pageDocs
-    .filter((d) => d._localStatus !== "APROVADO" && d._localStatus !== "REJEITADO")
-    .map((d) => d.kycDocumentoId);
-
-  const allPageSelected =
-    activePageDocIds.length > 0 &&
-    activePageDocIds.every((id) => selectedDocs.includes(id));
-
-  const handleToggleAll = () => {
-    if (allPageSelected) {
-      setSelectedDocs((prev) => prev.filter((id) => !activePageDocIds.includes(id)));
-    } else {
-      setSelectedDocs((prev) => [
-        ...prev,
-        ...activePageDocIds.filter((id) => !prev.includes(id)),
-      ]);
-    }
-  };
-
-  const handleSelectDoc = (id: string) => {
-    setSelectedDocs((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  };
-
-  // ── Urgency badge ──────────────────────────────────────────────────
+  const pageDocs = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+  const pendingCount = docs.length;
 
   const badgeColor =
     pendingCount > 10
@@ -576,37 +256,8 @@ export default function KycPage() {
         ? "bg-yellow-100 text-yellow-800"
         : "bg-green-100 text-green-800";
 
-  // ── Render ─────────────────────────────────────────────────────────
-
   return (
-    <div className="space-y-6 pb-32">
-      {/* Toast messages */}
-      {successMsg && (
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center justify-between">
-          <p className="text-green-800 text-sm font-medium">{successMsg}</p>
-          <button
-            onClick={() => setSuccessMsg(null)}
-            className="text-green-500 hover:text-green-700"
-            aria-label="Fechar notificação"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-      {errorMsg && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center justify-between">
-          <p className="text-red-800 text-sm font-medium">{errorMsg}</p>
-          <button
-            onClick={() => setErrorMsg(null)}
-            className="text-red-500 hover:text-red-700"
-            aria-label="Fechar erro"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Header */}
+    <div className="space-y-6 pb-8">
       {loadError && (
         <ManagerListBanner
           variant="error"
@@ -617,22 +268,24 @@ export default function KycPage() {
       )}
 
       <GestorSubpageHeader
-        title="Análise de KYC"
-        subtitle="Analise e aprove ou rejeite documentos enviados pelos usuários"
+        title="Acompanhamento de KYC"
+        subtitle="Visualize documentos na fila — aprovação é feita pelo Admin"
         onRefresh={loadDocs}
         refreshing={loading}
         badge={
           !loading ? (
             <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}`}>
-              {pendingCount} pendente{pendingCount !== 1 ? "s" : ""}
+              {pendingCount} na fila
             </span>
           ) : undefined
         }
       />
 
-      {/* Filters */}
+      <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+        Como gestor do fundo, você acompanha a fila de KYC sem poder aprovar ou rejeitar documentos.
+      </p>
+
       <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-wrap gap-3">
-        {/* Search */}
         <div className="flex-1 min-w-52 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -644,7 +297,6 @@ export default function KycPage() {
           />
         </div>
 
-        {/* Tipo filter */}
         <select
           value={tipoFilter}
           onChange={(e) => setTipoFilter(e.target.value as TipoFilter)}
@@ -655,20 +307,8 @@ export default function KycPage() {
           <option value="SELFIE">Selfie</option>
           <option value="COMPROVANTE">Comprovante</option>
         </select>
-
-        {/* Status filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-        >
-          <option value="TODOS">Todos os status</option>
-          <option value="PENDENTE">Pendente</option>
-          <option value="EM_VERIFICACAO">Em verificação</option>
-        </select>
       </div>
 
-      {/* Content */}
       {loading ? (
         <KycListSkeleton />
       ) : filtered.length === 0 ? (
@@ -677,73 +317,27 @@ export default function KycPage() {
             <Search className="w-7 h-7 text-gray-400" />
           </div>
           <p className="text-gray-700 font-semibold text-base mb-1">
-            {searchQuery || tipoFilter !== "TODOS" || statusFilter !== "TODOS"
+            {searchQuery || tipoFilter !== "TODOS"
               ? "Nenhum documento encontrado"
-              : "Nenhum documento KYC pendente"}
+              : "Nenhum documento KYC na fila"}
           </p>
           <p className="text-gray-500 text-sm">
-            {searchQuery || tipoFilter !== "TODOS" || statusFilter !== "TODOS"
+            {searchQuery || tipoFilter !== "TODOS"
               ? "Tente ajustar os filtros para encontrar o que procura."
-              : "Todos os documentos foram analisados."}
+              : "A fila está zerada no momento."}
           </p>
-          {(searchQuery || tipoFilter !== "TODOS" || statusFilter !== "TODOS") && (
-            <button
-              onClick={() => {
-                setSearchQuery("");
-                setTipoFilter("TODOS");
-                setStatusFilter("TODOS");
-              }}
-              className="mt-4 text-sm text-blue-600 hover:underline font-medium"
-            >
-              Limpar filtros
-            </button>
-          )}
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Select-all toolbar */}
-          <div className="bg-white rounded-2xl border border-gray-100 px-5 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={allPageSelected}
-                onChange={handleToggleAll}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer"
-                title="Selecionar todos desta página"
-                aria-label="Selecionar todos os documentos desta página"
-              />
-              <span className="text-sm text-gray-600">
-                {selectedDocs.length === 0
-                  ? `${filtered.length} documento${filtered.length !== 1 ? "s" : ""}`
-                  : `${selectedDocs.length} selecionado${selectedDocs.length !== 1 ? "s" : ""} de ${filtered.length}`}
-              </span>
-            </div>
-            {selectedDocs.length > 0 && (
-              <button
-                onClick={() => setSelectedDocs([])}
-                className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                Limpar seleção
-              </button>
-            )}
-          </div>
-
-          {/* Document cards */}
+          <p className="text-sm text-gray-500">
+            {filtered.length} documento{filtered.length !== 1 ? "s" : ""} na fila
+          </p>
           {pageDocs.map((doc) => (
-            <DocCard
-              key={doc.kycDocumentoId}
-              doc={doc}
-              isSelected={selectedDocs.includes(doc.kycDocumentoId)}
-              onSelect={handleSelectDoc}
-              onApprove={handleApprove}
-              onRejectClick={setRejectDoc}
-              onPreview={setPreviewDoc}
-            />
+            <DocCard key={doc.kycDocumentoId} doc={doc} onPreview={setPreviewDoc} />
           ))}
         </div>
       )}
 
-      {/* Pagination */}
       {!loading && totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-sm text-gray-500">
@@ -770,27 +364,8 @@ export default function KycPage() {
         </div>
       )}
 
-      {/* Batch actions (fixed bottom bar) */}
-      <KycBatchActions
-        selectedDocs={selectedDocs}
-        onSuccess={handleBulkSuccess}
-        onError={handleBulkError}
-        isDisabled={loading}
-      />
-
-      {/* Preview modal */}
       {previewDoc && (
         <PreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
-      )}
-
-      {/* Reject modal */}
-      {rejectDoc && (
-        <RejectModal
-          docId={rejectDoc.kycDocumentoId}
-          nomeUsuario={rejectDoc.usuario.nome}
-          onConfirm={handleRejectConfirm}
-          onCancel={() => setRejectDoc(null)}
-        />
       )}
     </div>
   );

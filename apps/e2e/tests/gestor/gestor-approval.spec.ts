@@ -5,8 +5,8 @@ import { GestorPage } from '../../page-objects/GestorPage';
 const MOCK_JORNADA_GESTOR_KYC = {
   perfil: 'gestor',
   passoAtual: 'gestor_kyc',
-  titulo: 'Analisar documentos KYC',
-  descricao: '2 documento(s) aguardando sua análise',
+  titulo: 'Acompanhar fila KYC',
+  descricao: '2 documento(s) na fila — visualização somente leitura',
   href: '/dashboard/gestor/kyc',
   concluido: false,
   passosConcluidos: 0,
