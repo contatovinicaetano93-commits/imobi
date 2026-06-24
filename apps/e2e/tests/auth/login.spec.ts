@@ -4,8 +4,6 @@ import { LoginPage } from '../../page-objects/LoginPage';
 import { TOMADOR } from '../../fixtures/auth.fixture';
 import { mockJornada, MOCK_JORNADA_KYC } from '../../fixtures/jornada.fixture';
 
-const MOCK_LOGIN_OK = JSON.stringify({ ok: true, role: 'CONSTRUTOR' });
-
 function tomadorCookies() {
   const state = JSON.parse(readFileSync(TOMADOR.storageState, 'utf-8')) as {
     cookies: Array<{
@@ -59,14 +57,19 @@ test.describe('Login', () => {
 
   test('redirects to próximo passo da jornada after valid login', async ({ page }) => {
     await mockJornada(page, MOCK_JORNADA_KYC);
-    await page.route((url) => url.href.includes('/api/proxy/auth/login'), async (route) => {
+    const fulfillLogin = async (route: import('@playwright/test').Route) => {
       await page.context().addCookies(tomadorCookies());
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: MOCK_LOGIN_OK,
+        body: JSON.stringify({ ok: true, role: 'CONSTRUTOR', nome: 'Cliente Tomador', email: TOMADOR.email }),
       });
-    });
+    };
+    await page.route((url) => url.href.includes('/web-api/auth/login'), fulfillLogin);
+    await page.route((url) => url.href.includes('/api/proxy/auth/login'), fulfillLogin);
+    await page.route('**/web-api/auth/session', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) }),
+    );
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);
@@ -83,14 +86,19 @@ test.describe('Login', () => {
 
   test('logout clears session and redirects to /login', async ({ page }) => {
     await mockJornada(page, MOCK_JORNADA_KYC);
-    await page.route((url) => url.href.includes('/api/proxy/auth/login'), async (route) => {
+    const fulfillLogin = async (route: import('@playwright/test').Route) => {
       await page.context().addCookies(tomadorCookies());
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: MOCK_LOGIN_OK,
+        body: JSON.stringify({ ok: true, role: 'CONSTRUTOR', nome: 'Cliente Tomador', email: TOMADOR.email }),
       });
-    });
+    };
+    await page.route((url) => url.href.includes('/web-api/auth/login'), fulfillLogin);
+    await page.route((url) => url.href.includes('/api/proxy/auth/login'), fulfillLogin);
+    await page.route('**/web-api/auth/session', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) }),
+    );
     const lp = new LoginPage(page);
     await lp.goto();
     await lp.login(TOMADOR.email, TOMADOR.password);

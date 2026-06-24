@@ -102,9 +102,17 @@ else
   ((FAILED++))
 fi
 
-LOGIN_RESPONSE=$(curl -sf -X POST "${API_URL}/api/v1/auth/login" \
-  -H 'Content-Type: application/json' \
-  -d "{\"email\": \"${TEST_EMAIL}\", \"senha\": \"${TEST_PASSWORD}\"}" 2>/dev/null || echo '{}')
+LOGIN_RESPONSE='{}'
+for attempt in 1 2 3 4 5; do
+  LOGIN_RESPONSE=$(curl -s -X POST "${API_URL}/api/v1/auth/login" \
+    -H 'Content-Type: application/json' \
+    -d "{\"email\": \"${TEST_EMAIL}\", \"senha\": \"${TEST_PASSWORD}\"}" 2>/dev/null || echo '{}')
+
+  if echo "$LOGIN_RESPONSE" | grep -q '"accessToken"'; then
+    break
+  fi
+  sleep $((attempt * 2))
+done
 
 if echo "$LOGIN_RESPONSE" | grep -q '"accessToken"'; then
   echo -e "${GREEN}✓${NC} User login successful"
