@@ -2,6 +2,7 @@
 /**
  * Marca todas as migrations como aplicadas em um banco já provisionado (ex.: db push).
  * Resolve Prisma P3005 ("database schema is not empty") antes de migrate deploy.
+ * P3008 (já aplicada) é ignorado silenciosamente.
  *
  *   pnpm db:baseline
  *   DATABASE_URL=... pnpm db:baseline
@@ -40,14 +41,6 @@ function resolveDatabaseUrl() {
 const databaseUrl = resolveDatabaseUrl();
 const deployEnv = databaseUrl ? { DATABASE_URL: databaseUrl } : {};
 
-function run(cmd) {
-  execSync(cmd, {
-    cwd: root,
-    stdio: "inherit",
-    env: { ...process.env, ...deployEnv },
-  });
-}
-
 function listMigrations() {
   if (!existsSync(migrationsDir)) {
     throw new Error(`Pasta de migrations não encontrada: ${migrationsDir}`);
@@ -58,26 +51,56 @@ function listMigrations() {
     .sort();
 }
 
+function markApplied(name) {
+  const cmd =
+    `pnpm --filter @imbobi/api exec prisma migrate resolve --applied "${name}" --schema prisma/schema.prisma`;
+  try {
+    execSync(cmd, {
+      cwd: root,
+      env: { ...process.env, ...deployEnv },
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    return "applied";
+  } catch (err) {
+    const out = `${err.stdout ?? ""}${err.stderr ?? ""}${err.message ?? ""}`;
+    if (out.includes("P3008") || out.includes("already recorded as applied")) {
+      return "skipped";
+    }
+    process.stderr.write(out);
+    throw err;
+  }
+}
+
 const migrations = listMigrations();
 if (migrations.length === 0) {
   console.error("Nenhuma migration encontrada.");
   process.exit(1);
 }
 
-const dbUrl = databaseUrl;
-const host = dbUrl.includes("@") ? dbUrl.split("@")[1]?.split("/")[0] : "default";
+const host = databaseUrl.includes("@")
+  ? databaseUrl.split("@")[1]?.split("/")[0]
+  : "(services/api/.env)";
 console.log(`── Baseline Prisma (${migrations.length} migrations) ──`);
-console.log(`DATABASE: ${host || "(services/api/.env)"}\n`);
+console.log(`DATABASE: ${host}\n`);
+
+let applied = 0;
+let skipped = 0;
 
 for (const name of migrations) {
-  console.log(`→ resolve --applied ${name}`);
-  try {
-    run(
-      `pnpm --filter @imbobi/api exec prisma migrate resolve --applied "${name}" --schema prisma/schema.prisma`,
-    );
-  } catch {
-    // Já marcada — segue
+  const result = markApplied(name);
+  if (result === "applied") {
+    console.log(`  ✓ ${name}`);
+    applied += 1;
+  } else {
+    console.log(`  ↷ ${name} (já registrada)`);
+    skipped += 1;
   }
 }
 
-console.log("\n✅ Baseline concluído. Agora: pnpm db:migrate:deploy\n");
+console.log(`\n✅ Baseline OK — ${applied} marcada(s), ${skipped} já existente(s).`);
+if (applied > 0) {
+  console.log("   Próximo passo: pnpm db:migrate:deploy\n");
+} else {
+  console.log("   Nada pendente. Use: pnpm db:migrate:deploy\n");
+}
