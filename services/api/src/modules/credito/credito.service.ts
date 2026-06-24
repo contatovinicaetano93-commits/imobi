@@ -4,7 +4,7 @@ import type { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
 import { JornadaService } from "../jornada/jornada.service";
 import { invalidateJornadaCache } from "../jornada/jornada-cache";
-import { simularCredito } from "@imbobi/core";
+import { gerarCronogramaPagamento, resumirCronograma, simularCredito } from "@imbobi/core";
 import type { SolicitacaoCreditoInput, SimulacaoCreditoInput } from "@imbobi/schemas";
 
 @Injectable()
@@ -78,18 +78,46 @@ export class CreditoService {
     });
     if (!credito) throw new NotFoundException("Crédito não encontrado.");
     if (credito.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
+
+    const valorAprovado = Number(credito.valorAprovado);
+    const valorLiberado = Number(credito.valorLiberado);
+    const taxaMensal = Number(credito.taxaMensal);
+    const valorPrincipal = valorLiberado > 0 ? valorLiberado : valorAprovado;
+
+    const parcelasPagas: Record<number, string> = {};
+    credito.liberacoes
+      .filter((lib) => lib.status === "CONCLUIDA" && lib.processadoEm)
+      .forEach((lib, index) => {
+        parcelasPagas[index + 1] = lib.processadoEm!.toISOString().slice(0, 10);
+      });
+
+    const cronograma = gerarCronogramaPagamento({
+      valorPrincipal,
+      taxaMensalDecimal: taxaMensal,
+      prazoMeses: credito.prazoMeses,
+      dataInicio: credito.criadoEm ?? undefined,
+      parcelasPagas: Object.keys(parcelasPagas).length > 0 ? parcelasPagas : undefined,
+    });
+
+    const resumo = resumirCronograma(cronograma);
+
     return {
       creditoId: credito.creditoId,
-      valorAprovado: credito.valorAprovado,
-      valorLiberado: credito.valorLiberado,
-      taxaMensal: credito.taxaMensal,
+      valorSolicitado: valorAprovado,
+      valorAprovado,
+      valorLiberado,
+      taxaMensal,
       prazoMeses: credito.prazoMeses,
       status: credito.status,
+      criadoEm: credito.criadoEm.toISOString(),
+      cronograma,
+      resumo,
       liberacoes: credito.liberacoes.map((lib) => ({
         liberacaoId: lib.liberacaoId,
-        valor: lib.valor,
+        valor: Number(lib.valor),
         status: lib.status === "FALHA" ? "FALHOU" : lib.status,
         criadoEm: lib.criadoEm.toISOString(),
+        processadoEm: lib.processadoEm?.toISOString(),
         motivo: lib.motivo ?? undefined,
       })),
     };

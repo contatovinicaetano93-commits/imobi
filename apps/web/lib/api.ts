@@ -118,6 +118,45 @@ export type CreditoResumo = {
   liberacoes?: { id: string; valor: number; status: string; processadoEm?: string }[];
 };
 
+export type CreditoExtratoParcela = {
+  parcela: number;
+  dataVencimento: string;
+  saldoInicial: number;
+  juros: number;
+  amortizacao: number;
+  pagamento: number;
+  saldoDevedor: number;
+  dataPagamento?: string;
+  status: "PAGO" | "PENDENTE" | "ATRASADO";
+};
+
+export type CreditoExtrato = {
+  creditoId: string;
+  valorSolicitado: number;
+  valorAprovado: number;
+  valorLiberado: number;
+  taxaMensal: number;
+  prazoMeses: number;
+  status: string;
+  criadoEm: string;
+  cronograma: CreditoExtratoParcela[];
+  resumo: {
+    totalPago: number;
+    totalPendente: number;
+    totalJuros: number;
+    parcelasPagas: number;
+    parcelasPendentes: number;
+  };
+  liberacoes: {
+    liberacaoId: string;
+    valor: number;
+    status: string;
+    criadoEm: string;
+    processadoEm?: string;
+    motivo?: string;
+  }[];
+};
+
 export type CreditoSolicitarPayload = {
   valorSolicitado: number;
   prazoMeses: number;
@@ -151,7 +190,7 @@ export type CreditoSolicitacao = {
 
 export const creditoApi = {
   meus: () => apiFetch<CreditoResumo[]>("/credito/meus"),
-  extrato: (id: string) => apiFetch<CreditoResumo>(`/credito/${id}/extrato`),
+  extrato: (id: string) => apiFetch<CreditoExtrato>(`/credito/${id}/extrato`),
   simular: (data: CreditoSimulacaoPayload) =>
     apiFetch<CreditoSimulacao>("/credito/simular", {
       method: "POST",

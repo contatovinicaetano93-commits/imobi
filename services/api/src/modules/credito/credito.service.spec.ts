@@ -1,4 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
+import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { CreditoService } from "./credito.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -9,7 +10,10 @@ describe("CreditoService", () => {
   let service: CreditoService;
 
   const prisma = {
-    credito: { create: jest.fn() },
+    credito: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+    },
   };
 
   const jornada = {
@@ -47,6 +51,57 @@ describe("CreditoService", () => {
       expect(jornada.assertPodeSolicitarCredito).toHaveBeenCalledWith(usuarioId);
       expect(cache.del).toHaveBeenCalledWith("jornada:gestor");
       expect(cache.del).toHaveBeenCalledWith(jornadaUsuarioCacheKey(usuarioId));
+    });
+  });
+
+  describe("extrato", () => {
+    const creditoBase = {
+      creditoId: "c1",
+      usuarioId: "u1",
+      valorAprovado: 100_000,
+      valorLiberado: 50_000,
+      taxaMensal: 0.0099,
+      prazoMeses: 12,
+      status: "ATIVO",
+      criadoEm: new Date("2026-01-15T10:00:00Z"),
+      liberacoes: [
+        {
+          liberacaoId: "l1",
+          valor: 25_000,
+          status: "CONCLUIDA",
+          criadoEm: new Date("2026-02-01"),
+          processadoEm: new Date("2026-02-01"),
+          motivo: null,
+        },
+      ],
+    };
+
+    it("retorna cronograma e campos do extrato", async () => {
+      prisma.credito.findUnique.mockResolvedValue(creditoBase);
+
+      const extrato = await service.extrato("c1", "u1");
+
+      expect(extrato.creditoId).toBe("c1");
+      expect(extrato.valorSolicitado).toBe(100_000);
+      expect(extrato.cronograma).toHaveLength(12);
+      expect(extrato.resumo.parcelasPagas).toBe(1);
+      expect(extrato.criadoEm).toBeDefined();
+    });
+
+    it("nega acesso a outro usuário", async () => {
+      prisma.credito.findUnique.mockResolvedValue(creditoBase);
+
+      await expect(service.extrato("c1", "outro")).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+    });
+
+    it("404 quando crédito não existe", async () => {
+      prisma.credito.findUnique.mockResolvedValue(null);
+
+      await expect(service.extrato("x", "u1")).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 });

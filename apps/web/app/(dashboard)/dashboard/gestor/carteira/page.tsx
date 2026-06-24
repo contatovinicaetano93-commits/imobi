@@ -284,7 +284,7 @@ export default function CarteiraPage() {
                 )}
 
                 <a
-                  href={`/dashboard/credito/${credito.id}`}
+                  href={`/dashboard/credito/${credito.id}/extrato`}
                   className="mt-3 inline-block text-sm font-semibold text-[#1B4FD8] hover:underline"
                 >
                   Ver extrato →

@@ -9,46 +9,35 @@ import {
   ArrowRight,
   Building2,
   BarChart3,
+  FileText,
 } from "lucide-react";
+import { gerarCronogramaPagamento, resumirCronograma, formatarBRL } from "@imbobi/core";
 import { creditoApi, type CreditoResumo } from "@/lib/api";
-import { formatarBRL } from "@imbobi/core";
 import { EmptyState } from "@/app/(dashboard)/_components/EmptyState";
+import { CronogramaTable } from "@/components/credito/CronogramaTable";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Crédito — imbobi" };
 
-function gerarCalendarioPagamento(
-  valorAprovado: number,
-  valorLiberado: number,
-  taxaMensal: number,
-  prazoMeses: number,
-  dataAprovacao?: string
-) {
-  const calendário = [];
-  const dataInicial = dataAprovacao ? new Date(dataAprovacao) : new Date();
-  let saldoDevedor = valorLiberado;
+function cronogramaDoCredito(credito: CreditoResumo) {
+  const valorPrincipal =
+    credito.valorLiberado > 0 ? credito.valorLiberado : credito.valorAprovado;
 
-  for (let i = 1; i <= prazoMeses; i++) {
-    const dataPagamento = new Date(dataInicial);
-    dataPagamento.setMonth(dataPagamento.getMonth() + i);
-
-    const juros = saldoDevedor * taxaMensal;
-    const parcelaPrincipal = valorLiberado / prazoMeses;
-    const parcelaTotal = parcelaPrincipal + juros;
-    saldoDevedor -= parcelaPrincipal;
-
-    calendário.push({
-      parcela: i,
-      dataPagamento,
-      principal: parcelaPrincipal,
-      juros,
-      total: parcelaTotal,
-      saldoDevedor: Math.max(0, saldoDevedor),
+  const parcelasPagas: Record<number, string> = {};
+  credito.liberacoes
+    ?.filter((lib) => lib.status === "CONCLUIDA" && lib.processadoEm)
+    .forEach((lib, index) => {
+      parcelasPagas[index + 1] = lib.processadoEm!.slice(0, 10);
     });
-  }
 
-  return calendário;
+  return gerarCronogramaPagamento({
+    valorPrincipal,
+    taxaMensalDecimal: credito.taxaMensal,
+    prazoMeses: credito.prazoMeses,
+    dataInicio: credito.dataAprovacao,
+    parcelasPagas: Object.keys(parcelasPagas).length > 0 ? parcelasPagas : undefined,
+  });
 }
 
 export default async function CreditoPage() {
@@ -78,7 +67,6 @@ export default async function CreditoPage() {
 
   return (
     <div className="max-w-4xl space-y-8">
-      {/* Page Header */}
       <div className="flex items-center gap-3">
         <div className="p-2.5 bg-blue-50 rounded-xl">
           <CreditCard className="w-6 h-6 text-[#1B4FD8]" />
@@ -86,7 +74,8 @@ export default async function CreditoPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Crédito</h1>
           <p className="text-sm text-gray-500">
-            {creditos.length} crédito{creditos.length !== 1 ? "s" : ""} encontrado{creditos.length !== 1 ? "s" : ""}
+            {creditos.length} crédito{creditos.length !== 1 ? "s" : ""} encontrado
+            {creditos.length !== 1 ? "s" : ""}
           </p>
         </div>
         <Link
@@ -99,83 +88,81 @@ export default async function CreditoPage() {
       </div>
 
       {creditos.map((credito) => {
-        const calendário = gerarCalendarioPagamento(
-          credito.valorAprovado,
-          credito.valorLiberado,
-          credito.taxaMensal,
-          credito.prazoMeses,
-          credito.dataAprovacao
-        );
-
-        const totalJuros = calendário.reduce((sum, p) => sum + p.juros, 0);
-        const totalPago = calendário.reduce((sum, p) => sum + p.total, 0);
-        const pctLiberado = credito.valorAprovado > 0
-          ? Math.round((credito.valorLiberado / credito.valorAprovado) * 100)
-          : 0;
+        const cronograma = cronogramaDoCredito(credito);
+        const resumo = resumirCronograma(cronograma);
+        const pctLiberado =
+          credito.valorAprovado > 0
+            ? Math.round((credito.valorLiberado / credito.valorAprovado) * 100)
+            : 0;
 
         return (
           <div key={credito.id} className="space-y-6">
-            {/* Credit Summary Card */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="h-1.5 w-full bg-[#1B4FD8]" />
               <div className="p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-blue-50 rounded-xl shrink-0">
-                      <Wallet className="w-4 h-4 text-[#1B4FD8]" />
+                <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 flex-1">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-blue-50 rounded-xl shrink-0">
+                        <Wallet className="w-4 h-4 text-[#1B4FD8]" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
+                          Aprovado
+                        </p>
+                        <p className="text-xl font-bold text-[#1B4FD8]">
+                          {formatarBRL(credito.valorAprovado)}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
-                        Aprovado
-                      </p>
-                      <p className="text-xl font-bold text-[#1B4FD8]">
-                        {formatarBRL(credito.valorAprovado)}
-                      </p>
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-green-50 rounded-xl shrink-0">
+                        <TrendingDown className="w-4 h-4 text-[#16a34a]" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
+                          Liberado
+                        </p>
+                        <p className="text-xl font-bold text-[#16a34a]">
+                          {formatarBRL(credito.valorLiberado)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-gray-50 rounded-xl shrink-0">
+                        <Percent className="w-4 h-4 text-gray-500" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
+                          Taxa Mensal
+                        </p>
+                        <p className="text-xl font-bold text-gray-900">
+                          {(credito.taxaMensal * 100).toFixed(2)}%
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-gray-50 rounded-xl shrink-0">
+                        <Calendar className="w-4 h-4 text-gray-500" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
+                          Prazo
+                        </p>
+                        <p className="text-xl font-bold text-gray-900">{credito.prazoMeses}x</p>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-green-50 rounded-xl shrink-0">
-                      <TrendingDown className="w-4 h-4 text-[#16a34a]" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
-                        Liberado
-                      </p>
-                      <p className="text-xl font-bold text-[#16a34a]">
-                        {formatarBRL(credito.valorLiberado)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-gray-50 rounded-xl shrink-0">
-                      <Percent className="w-4 h-4 text-gray-500" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
-                        Taxa Mensal
-                      </p>
-                      <p className="text-xl font-bold text-gray-900">
-                        {(credito.taxaMensal * 100).toFixed(2)}%
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-gray-50 rounded-xl shrink-0">
-                      <Calendar className="w-4 h-4 text-gray-500" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
-                        Prazo
-                      </p>
-                      <p className="text-xl font-bold text-gray-900">
-                        {credito.prazoMeses}x
-                      </p>
-                    </div>
-                  </div>
+                  <Link
+                    href={`/dashboard/credito/${credito.id}/extrato`}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-[#1B4FD8] hover:text-blue-800 border border-blue-100 bg-blue-50 px-4 py-2 rounded-xl transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Extrato completo
+                  </Link>
                 </div>
 
-                {/* Liberation Progress */}
-                <div className="mt-6 pt-5 border-t border-gray-50">
+                <div className="pt-2 border-t border-gray-50">
                   <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
                     <span className="font-semibold">Valor liberado</span>
                     <span className="font-bold text-gray-700">{pctLiberado}%</span>
@@ -190,7 +177,6 @@ export default async function CreditoPage() {
               </div>
             </div>
 
-            {/* Cost Breakdown */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-3">
@@ -201,9 +187,7 @@ export default async function CreditoPage() {
                     Total em Juros
                   </p>
                 </div>
-                <p className="text-2xl font-bold text-red-600">
-                  {formatarBRL(totalJuros)}
-                </p>
+                <p className="text-2xl font-bold text-red-600">{formatarBRL(resumo.totalJuros)}</p>
               </div>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-3">
@@ -215,7 +199,7 @@ export default async function CreditoPage() {
                   </p>
                 </div>
                 <p className="text-2xl font-bold text-[#1B4FD8]">
-                  {formatarBRL(totalPago)}
+                  {formatarBRL(resumo.totalPago + resumo.totalPendente)}
                 </p>
               </div>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -228,79 +212,38 @@ export default async function CreditoPage() {
                   </p>
                 </div>
                 <p className="text-2xl font-bold text-gray-900">
-                  {credito.valorLiberado > 0
-                    ? ((totalJuros / credito.valorLiberado) * 100).toFixed(1)
-                    : "0.0"}%
+                  {(credito.valorLiberado || credito.valorAprovado) > 0
+                    ? (
+                        (resumo.totalJuros / (credito.valorLiberado || credito.valorAprovado)) *
+                        100
+                      ).toFixed(1)
+                    : "0.0"}
+                  %
                 </p>
               </div>
             </div>
 
-            {/* Payment Schedule */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
-                <div className="p-2 bg-gray-50 rounded-xl">
-                  <Calendar className="w-4 h-4 text-gray-500" />
+            <div
+              id="parcelas"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden scroll-mt-24"
+            >
+              <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gray-50 rounded-xl">
+                    <Calendar className="w-4 h-4 text-gray-500" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Calendário de Pagamento</h3>
                 </div>
-                <h3 className="font-semibold text-gray-900">Calendário de Pagamento</h3>
+                <Link
+                  href={`/dashboard/credito/${credito.id}/extrato`}
+                  className="text-sm font-semibold text-[#1B4FD8] hover:underline"
+                >
+                  Ver extrato →
+                </Link>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100">
-                      <th className="text-left py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Parcela
-                      </th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Vencimento
-                      </th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Principal
-                      </th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Juros
-                      </th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Total
-                      </th>
-                      <th className="text-right py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Saldo Devedor
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {calendário.map((p, idx) => (
-                      <tr
-                        key={p.parcela}
-                        className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? "" : "bg-gray-50/30"}`}
-                      >
-                        <td className="py-3 px-5">
-                          <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-50 text-[#1B4FD8] text-xs font-bold rounded-lg">
-                            {p.parcela}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-gray-600">
-                          {p.dataPagamento.toLocaleDateString("pt-BR")}
-                        </td>
-                        <td className="py-3 px-4 text-right text-gray-600">
-                          {formatarBRL(p.principal)}
-                        </td>
-                        <td className="py-3 px-4 text-right text-red-500 font-medium">
-                          {formatarBRL(p.juros)}
-                        </td>
-                        <td className="py-3 px-4 text-right font-semibold text-gray-900">
-                          {formatarBRL(p.total)}
-                        </td>
-                        <td className="py-3 px-5 text-right text-gray-500">
-                          {formatarBRL(p.saldoDevedor)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <CronogramaTable cronograma={cronograma} compact />
             </div>
 
-            {/* Related Works */}
             {credito.obras && credito.obras.length > 0 && (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
