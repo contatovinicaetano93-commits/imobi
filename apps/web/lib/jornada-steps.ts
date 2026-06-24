@@ -8,6 +8,7 @@ export type JornadaStepDef = {
 
 export const TOMADOR_STEPS: JornadaStepDef[] = [
   { id: "kyc", label: "Documentos", shortLabel: "KYC" },
+  { id: "viabilidade", label: "Viabilidade", shortLabel: "Dossiê" },
   { id: "obra", label: "Obra", shortLabel: "Obra" },
   { id: "credito", label: "Crédito", shortLabel: "Crédito" },
   { id: "aguardando", label: "Análise", shortLabel: "Análise" },

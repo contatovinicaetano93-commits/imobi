@@ -776,6 +776,120 @@ export const notificacoesApi = {
     apiFetch(`/notificacoes/${id}`, { method: "DELETE" }),
 };
 
+// ── Dossiê de viabilidade ─────────────────────────────────────────────
+
+export type EstagioObraDossie = "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA";
+export type DossieStatus =
+  | "RASCUNHO"
+  | "ENVIADO"
+  | "EM_ANALISE"
+  | "APROVADO"
+  | "REPROVADO";
+export type DossieChecklistItemStatus =
+  | "PENDENTE"
+  | "ENVIADO"
+  | "APROVADO"
+  | "REPROVADO"
+  | "NA";
+
+export type DossieChecklistItem = {
+  id: string;
+  itemId: string;
+  titulo: string;
+  obrigatorio: boolean;
+  status: DossieChecklistItemStatus;
+  documentoId?: string | null;
+  observacao?: string | null;
+};
+
+export type DossieResumo = {
+  id: string;
+  nomeEmpreendimento: string;
+  estagioObra: EstagioObraDossie | null;
+  status: DossieStatus;
+  percentualFisico?: number | null;
+  dataBase?: string | null;
+  obraId?: string | null;
+  criadoEm: string;
+  atualizadoEm: string;
+  enviadoEm?: string | null;
+};
+
+export type DossieDetalhe = DossieResumo & {
+  tipologia?: string | null;
+  endereco?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  observacaoAdmin?: string | null;
+  checklistItens: DossieChecklistItem[];
+  obra?: { obraId: string; nome: string; status: string } | null;
+};
+
+export type ChecklistTemplateResponse = {
+  estagio: EstagioObraDossie;
+  meta?: {
+    id: EstagioObraDossie;
+    label: string;
+    descricao: string;
+    checklistPdf: string;
+    percentualObraMin: number;
+    percentualObraMax: number;
+  };
+  itens: Array<{
+    itemId: string;
+    titulo: string;
+    obrigatorio: boolean;
+    blocoId: string;
+    blocoTitulo: string;
+  }>;
+  estagiosDisponiveis: Array<{
+    id: EstagioObraDossie;
+    label: string;
+    descricao: string;
+  }>;
+};
+
+export type CriarDossiePayload = {
+  estagioObra: EstagioObraDossie;
+  nomeEmpreendimento: string;
+  percentualFisico?: number;
+  dataBase?: string;
+  obraId?: string;
+};
+
+export const dossiesApi = {
+  checklistTemplate: (estagio: EstagioObraDossie) =>
+    apiFetch<ChecklistTemplateResponse>(`/dossies/checklist-template?estagio=${estagio}`),
+  listar: () => apiFetch<DossieResumo[]>("/dossies"),
+  buscar: (id: string) => apiFetch<DossieDetalhe>(`/dossies/${id}`),
+  criar: (data: CriarDossiePayload) =>
+    apiFetch<DossieDetalhe>("/dossies", { method: "POST", body: JSON.stringify(data) }),
+  atualizar: (
+    id: string,
+    data: {
+      nomeEmpreendimento?: string;
+      percentualFisico?: number | null;
+      dataBase?: string | null;
+      checklistItens?: Array<{
+        itemId: string;
+        status?: DossieChecklistItemStatus;
+        observacao?: string | null;
+      }>;
+    },
+  ) =>
+    apiFetch<DossieDetalhe>(`/dossies/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  enviar: (id: string) =>
+    apiFetch<DossieDetalhe>(`/dossies/${id}/enviar`, { method: "POST" }),
+  atualizarStatus: (id: string, status: DossieStatus, observacaoAdmin?: string) =>
+    apiFetch<DossieDetalhe>(`/dossies/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, observacaoAdmin }),
+    }),
+};
+
 // ── Comitê Digital ────────────────────────────────────────────────────
 
 export type SolicitacaoStatus = "PENDENTE" | "EM_COMITE" | "APROVADA" | "AJUSTADA" | "REPROVADA" | "CANCELADA";

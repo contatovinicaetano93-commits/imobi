@@ -23,6 +23,14 @@ assert.equal(isJornadaPathAllowed('/dashboard/kyc', tomadorKyc), true);
 assert.equal(isJornadaPathAllowed('/dashboard/simulador', tomadorKyc), false);
 assert.equal(isJornadaPathAllowed('/dashboard/perfil', tomadorKyc), true);
 
+const tomadorViabilidade = j({
+  perfil: 'tomador',
+  passoAtual: 'viabilidade',
+  href: '/dashboard/viabilidade',
+});
+assert.equal(isJornadaPathAllowed('/dashboard/viabilidade', tomadorViabilidade), true);
+assert.equal(isJornadaPathAllowed('/dashboard/obras', tomadorViabilidade), false);
+
 const tomadorObra = j({
   perfil: 'tomador',
   passoAtual: 'obra',

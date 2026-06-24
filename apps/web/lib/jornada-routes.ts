@@ -21,8 +21,9 @@ export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolea
   const href = jornada.href;
   if (pathname === href || pathname.startsWith(`${href}/`)) return true;
 
-  // Após KYC, consultar obras (lista, detalhe, vistoria) não quebra o fluxo guiado.
-  if (isObrasPath(pathname) && jornada.passoAtual !== "kyc") {
+  // Após KYC/viabilidade, consultar obras (lista, detalhe, vistoria) não quebra o fluxo guiado.
+  const bloqueiaObras = jornada.passoAtual === "kyc" || jornada.passoAtual === "viabilidade";
+  if (isObrasPath(pathname) && !bloqueiaObras) {
     return true;
   }
 
@@ -34,6 +35,8 @@ export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolea
   switch (jornada.passoAtual) {
     case "kyc":
       return pathname.startsWith("/dashboard/kyc");
+    case "viabilidade":
+      return pathname.startsWith("/dashboard/viabilidade");
     case "obra":
       return isObrasPath(pathname);
     case "aguardando":

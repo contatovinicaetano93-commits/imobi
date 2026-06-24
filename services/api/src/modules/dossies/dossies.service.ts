@@ -3,7 +3,10 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Inject,
 } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import type { Cache } from "cache-manager";
 import {
   DueDiligenceStatus,
   DossieChecklistItemStatus,
@@ -23,6 +26,7 @@ import type {
 } from "@imbobi/schemas";
 import { PrismaService } from "../prisma/prisma.service";
 import { isManagerRole } from "../../common/constants/manager-roles";
+import { invalidateJornadaCache } from "../jornada/jornada-cache";
 
 const DOSSIE_INCLUDE = {
   checklistItens: { orderBy: { itemId: "asc" as const } },
@@ -46,7 +50,10 @@ const DOSSIE_LIST_SELECT = {
 
 @Injectable()
 export class DossiesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+  ) {}
 
   checklistTemplate(estagio: EstagioObraDossieSchema) {
     const meta = getEstagioMeta(estagio);
@@ -260,6 +267,7 @@ export class DossiesService {
       });
 
       await this.registrarAudit(tx, id, usuarioId, "ENVIADO");
+      await invalidateJornadaCache(this.cache, dossie.usuarioId);
       return enviado;
     });
   }
@@ -299,6 +307,7 @@ export class DossiesService {
         observacaoAdmin: dto.observacaoAdmin,
       });
 
+      await invalidateJornadaCache(this.cache, dossie.usuarioId);
       return atualizado;
     });
   }
