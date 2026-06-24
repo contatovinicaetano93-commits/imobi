@@ -7,7 +7,7 @@ const EMPTY_KYC_STATUS = {
   usuarioId: 'e2e-tomador',
   status: 'PENDENTE',
   documentos: [],
-  resumo: { pendentes: 4, aprovados: 0, rejeitados: 0 },
+  resumo: { pendentes: 4, aprovados: 0, rejeitados: 0, totalTipos: 4 },
 };
 
 test.use({ storageState: TOMADOR.storageState });
@@ -45,21 +45,27 @@ test.describe('KYC flow', () => {
   test('Enviar button triggers upload and shows Enviando state', async ({ page }) => {
     const kp = new KycPage(page);
 
-    let resolveUpload!: () => void;
-    const uploadPromise = new Promise<void>((resolve) => {
-      resolveUpload = resolve;
+    await page.route('**/api/proxy/kyc/upload**', async (route) => {
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          kycDocumentoId: 'e2e-doc-1',
+          tipo: 'RG_FRENTE',
+          status: 'PENDENTE',
+          url: '/api/v1/kyc/documentos/e2e-doc-1/arquivo',
+        }),
+      });
     });
 
-    await page.route('**/api/proxy/kyc/**', async (route) => {
-      await uploadPromise;
-      await route.continue();
+    await kp.enviarBtn.first().click();
+    await page.locator('input[type="file"]').setInputFiles({
+      name: 'rg-frente.jpg',
+      mimeType: 'image/jpeg',
+      buffer: Buffer.from('fake-jpeg'),
     });
 
-    const clickPromise = kp.enviarBtn.first().click();
     await expect(page.getByRole('button', { name: /Enviando/ }).first()).toBeVisible({ timeout: 15_000 });
-
-    resolveUpload();
-    await clickPromise;
   });
 
   test('documents list shows empty or uploaded state', async ({ page }) => {

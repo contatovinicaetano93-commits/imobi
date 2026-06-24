@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { kycApi, type KycStatus, type KycDocumento } from "@/lib/api";
 import { FileText, CheckCircle2, XCircle, Clock, Upload, AlertCircle, ShieldCheck } from "lucide-react";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
@@ -22,6 +22,8 @@ const DOC_TIPOS = [
 
 export default function KycPage() {
   const { success, error: toastError } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingTipo, setPendingTipo] = useState<string | null>(null);
   const [status, setStatus] = useState<KycStatus | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,12 +41,20 @@ export default function KycPage() {
     }
   };
 
-  const handleUpload = async (tipo: string) => {
+  const handleUploadClick = (tipo: string) => {
+    setPendingTipo(tipo);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const tipo = pendingTipo;
+    if (!file || !tipo) return;
+
     setUploading(tipo);
     setError(null);
     try {
-      const mockUrl = `https://s3.example.com/kyc/${tipo}-${Date.now()}.jpg`;
-      await kycApi.uploadDocumento(tipo, mockUrl);
+      await kycApi.uploadDocumentoArquivo(file, tipo);
       await loadStatus();
       success("Documento enviado com sucesso.");
     } catch (err) {
@@ -52,6 +62,8 @@ export default function KycPage() {
       setError(msg);
       toastError(msg);
     } finally {
+      e.target.value = "";
+      setPendingTipo(null);
       setUploading(null);
     }
   };
@@ -74,6 +86,13 @@ export default function KycPage() {
 
   const content = (
     <div className="space-y-5">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,application/pdf"
+        className="hidden"
+        onChange={handleFileChange}
+      />
       {error && (
         <div className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
           <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
@@ -145,7 +164,7 @@ export default function KycPage() {
                   )}
                   {(!doc || doc.status === "REJEITADO") && (
                     <button
-                      onClick={() => handleUpload(tipo)}
+                      onClick={() => handleUploadClick(tipo)}
                       disabled={!!uploading}
                       style={{ background: "#1B4FD8" }}
                       className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"

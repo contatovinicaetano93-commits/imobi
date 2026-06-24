@@ -79,10 +79,24 @@ export const kycApi = {
       const token = await getToken();
       return apiClient.get<KycStatus>("/kyc/status", token ?? undefined);
     }),
-  uploadDocumento: (tipo: string, url: string) =>
+  uploadDocumentoArquivo: (tipo: string, uri: string, mimeType = "image/jpeg") =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.post("/kyc/upload", { tipo, url }, token ?? undefined);
+      const apiUrl = process.env["EXPO_PUBLIC_API_URL"] ?? "";
+      const ext = mimeType.split("/")[1]?.split("+")[0] ?? "jpg";
+      const form = new FormData();
+      form.append("tipo", tipo);
+      form.append("file", { uri, name: `kyc-${tipo}.${ext}`, type: mimeType } as never);
+      const res = await fetch(`${apiUrl}/api/v1/kyc/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token ?? ""}` },
+        body: form,
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        throw new ApiError(res.status, body.message ?? "Falha no upload do documento");
+      }
+      return res.json() as Promise<KycDocumento>;
     }),
 };
 
@@ -91,6 +105,7 @@ export type KycDocumento = {
   status: string;
   url?: string;
   criadoEm?: string;
+  motivo_rejeicao?: string;
 };
 
 export type KycStatus = {

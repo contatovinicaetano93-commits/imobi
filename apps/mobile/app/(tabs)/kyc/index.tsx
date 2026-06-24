@@ -9,6 +9,7 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as ImagePicker from "expo-image-picker";
 import { kycApi, type KycStatus } from "../../../lib/api";
 
 const DOC_TIPOS = [
@@ -48,10 +49,27 @@ export default function KycScreen() {
   }, [load]);
 
   const handleUpload = async (tipo: string) => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert("Permissão necessária", "Permita acesso à galeria para enviar documentos.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.85,
+      allowsEditing: false,
+    });
+    if (result.canceled || !result.assets[0]) return;
+
+    const asset = result.assets[0];
     setUploading(tipo);
     try {
-      const mockUrl = `https://s3.example.com/kyc/${tipo}-${Date.now()}.jpg`;
-      await kycApi.uploadDocumento(tipo, mockUrl);
+      await kycApi.uploadDocumentoArquivo(
+        tipo,
+        asset.uri,
+        asset.mimeType ?? "image/jpeg",
+      );
       await load();
       Alert.alert("Enviado", "Documento enviado para análise.");
     } catch (e) {
@@ -78,51 +96,48 @@ export default function KycScreen() {
           <View style={styles.errorBox}>
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity onPress={() => void load()}>
-              <Text style={styles.retry}>Tentar novamente</Text>
+              <Text style={styles.retryText}>Tentar novamente</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {!loading && status && (
+        {!loading && (
           <>
             <View style={styles.progressCard}>
-              <Text style={styles.progressTitle}>Progresso</Text>
-              <Text style={styles.progressCount}>
+              <Text style={styles.progressLabel}>
                 {aprovados}/{total} aprovados
               </Text>
-              <View style={styles.progressTrack}>
-                <View
-                  style={[styles.progressFill, { width: `${Math.round((aprovados / total) * 100)}%` }]}
-                />
-              </View>
             </View>
 
-            <Text style={styles.sectionTitle}>Documentos obrigatórios</Text>
             {DOC_TIPOS.map(({ tipo, label }) => {
               const doc = docMap[tipo];
               const badge = doc ? BADGE[doc.status] ?? BADGE.PENDENTE : null;
               const isUploading = uploading === tipo;
+              const canUpload = !doc || doc.status === "REJEITADO";
 
               return (
                 <View key={tipo} style={styles.docRow}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.docLabel}>{label}</Text>
-                    {doc && badge && (
-                      <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-                        <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
-                      </View>
+                    {doc?.motivo_rejeicao && (
+                      <Text style={styles.rejectReason}>Motivo: {doc.motivo_rejeicao}</Text>
                     )}
                   </View>
-                  {!doc && (
+                  {badge && (
+                    <View style={[styles.badge, { backgroundColor: badge.bg }]}>
+                      <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
+                    </View>
+                  )}
+                  {canUpload && (
                     <TouchableOpacity
-                      style={styles.sendBtn}
+                      style={[styles.uploadBtn, isUploading && styles.uploadBtnDisabled]}
                       onPress={() => void handleUpload(tipo)}
-                      disabled={isUploading}
+                      disabled={!!uploading}
                     >
                       {isUploading ? (
                         <ActivityIndicator color="#fff" size="small" />
                       ) : (
-                        <Text style={styles.sendBtnText}>Enviar</Text>
+                        <Text style={styles.uploadBtnText}>Enviar</Text>
                       )}
                     </TouchableOpacity>
                   )}
@@ -137,61 +152,48 @@ export default function KycScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff" },
+  safe: { flex: 1, backgroundColor: "#f9fafb" },
   container: { padding: 20, paddingBottom: 40 },
-  title: { fontSize: 24, fontWeight: "800", color: "#0C1A3D" },
-  subtitle: { fontSize: 14, color: "#6b7280", marginTop: 6, marginBottom: 20 },
+  title: { fontSize: 22, fontWeight: "700", color: "#111827" },
+  subtitle: { fontSize: 14, color: "#6b7280", marginTop: 4, marginBottom: 16 },
   errorBox: {
-    backgroundColor: "#fef2f2",
+    backgroundColor: "#fee2e2",
     borderRadius: 12,
     padding: 16,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: "#fecaca",
+    marginBottom: 16,
   },
-  errorText: { color: "#b91c1c" },
-  retry: { color: "#1B4FD8", fontWeight: "600", marginTop: 8 },
+  errorText: { color: "#991b1b", fontSize: 14 },
+  retryText: { color: "#1B4FD8", fontWeight: "600", marginTop: 8 },
   progressCard: {
     backgroundColor: "#EEF3FF",
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  progressTitle: { fontWeight: "700", color: "#0C1A3D", fontSize: 16 },
-  progressCount: { color: "#1B4FD8", fontWeight: "700", marginTop: 4 },
-  progressTrack: {
-    height: 8,
-    backgroundColor: "#fff",
-    borderRadius: 999,
-    marginTop: 12,
-    overflow: "hidden",
-  },
-  progressFill: { height: "100%", backgroundColor: "#4ADE80", borderRadius: 999 },
-  sectionTitle: { fontSize: 16, fontWeight: "700", color: "#111827", marginBottom: 12 },
+  progressLabel: { fontSize: 14, fontWeight: "600", color: "#1B4FD8" },
   docRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
-    gap: 12,
+    gap: 8,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#f3f4f6",
   },
-  docLabel: { fontSize: 15, fontWeight: "600", color: "#111827" },
-  badge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginTop: 4,
-  },
-  badgeText: { fontSize: 11, fontWeight: "700" },
-  sendBtn: {
+  docLabel: { fontSize: 14, fontWeight: "600", color: "#111827" },
+  rejectReason: { fontSize: 12, color: "#b91c1c", marginTop: 4 },
+  badge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  badgeText: { fontSize: 11, fontWeight: "600" },
+  uploadBtn: {
     backgroundColor: "#1B4FD8",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
     borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     minWidth: 72,
     alignItems: "center",
   },
-  sendBtnText: { color: "#fff", fontWeight: "700", fontSize: 13 },
+  uploadBtnDisabled: { opacity: 0.6 },
+  uploadBtnText: { color: "#fff", fontSize: 12, fontWeight: "600" },
 });

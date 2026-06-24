@@ -20,6 +20,7 @@ import { ManagerListBanner } from "@/app/(dashboard)/_components/gestor/ManagerL
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/toast-context";
+import { resolveKycDocumentUrl } from "@/lib/kyc-document-url";
 
 function getInitials(nome: string): string {
   return nome
@@ -43,6 +44,8 @@ function tempoRelativo(dateStr: string): string {
 
 function getTipoLabel(tipo: string): string {
   const map: Record<string, string> = {
+    RG_FRENTE: "RG — Frente",
+    RG_VERSO: "RG — Verso",
     RG: "RG / CNH",
     SELFIE: "Selfie",
     COMPROVANTE: "Comprovante de Endereço",
@@ -50,7 +53,7 @@ function getTipoLabel(tipo: string): string {
   return map[tipo] ?? tipo;
 }
 
-type TipoFilter = "TODOS" | "RG" | "SELFIE" | "COMPROVANTE";
+type TipoFilter = "TODOS" | "RG_FRENTE" | "RG_VERSO" | "SELFIE" | "COMPROVANTE";
 
 function KycListSkeleton() {
   return <PageSkeleton variant="list" count={3} showHeader={false} />;
@@ -145,7 +148,7 @@ function PreviewModal({
         </div>
         <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-gray-50">
           <img
-            src={doc.url}
+            src={resolveKycDocumentUrl(doc)}
             alt={`Documento ${getTipoLabel(doc.tipo)} de ${doc.usuario.nome}`}
             className="max-w-full max-h-full object-contain rounded-lg shadow"
             onError={(e) => {
@@ -426,7 +429,8 @@ export default function KycPage() {
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
         >
           <option value="TODOS">Todos os tipos</option>
-          <option value="RG">RG / CNH</option>
+          <option value="RG_FRENTE">RG — Frente</option>
+          <option value="RG_VERSO">RG — Verso</option>
           <option value="SELFIE">Selfie</option>
           <option value="COMPROVANTE">Comprovante</option>
         </select>

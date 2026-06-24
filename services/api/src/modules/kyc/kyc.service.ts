@@ -3,7 +3,12 @@ import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
-import { KycDocumentoStatus } from "@prisma/client";
+import { StorageService } from "../storage/storage.service";
+
+const KYC_TIPOS = new Set(["RG_FRENTE", "RG_VERSO", "SELFIE", "COMPROVANTE"]);
+const KYC_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+const KYC_MAX_BYTES = 10 * 1024 * 1024;
+const KYC_SIGNED_URL_TTL = 14400;
 
 @Injectable()
 export class KycService {
@@ -13,25 +18,101 @@ export class KycService {
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
     private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService
+    private readonly pushNotificacoes: PushNotificacoesService,
+    private readonly storage: StorageService,
   ) {}
 
+  private assertStorageConfigured() {
+    if (!this.storage.useS3() && process.env.NODE_ENV === "production") {
+      throw new BadRequestException(
+        "Armazenamento S3 obrigatório em produção (ENABLE_S3_STORAGE=true).",
+      );
+    }
+  }
+
+  async resolveDocumentUrl(stored: string): Promise<string> {
+    if (!stored) return stored;
+    if (stored.startsWith("http://") || stored.startsWith("https://")) return stored;
+    try {
+      return await this.storage.getSignedUrl(stored, KYC_SIGNED_URL_TTL);
+    } catch {
+      return stored;
+    }
+  }
+
+  async enrichDocumento<T extends { url: string; kycDocumentoId?: string }>(doc: T): Promise<T> {
+    if (this.storage.isLocalKey(doc.url) && doc.kycDocumentoId) {
+      return {
+        ...doc,
+        url: `/api/v1/kyc/documentos/${doc.kycDocumentoId}/arquivo`,
+      };
+    }
+    return { ...doc, url: await this.resolveDocumentUrl(doc.url) };
+  }
+
+  async enrichDocumentos<T extends { url: string }>(docs: T[]): Promise<T[]> {
+    return Promise.all(docs.map((d) => this.enrichDocumento(d)));
+  }
+
+  async enrichKycListResponse<T extends { documentos: { url: string }[] }>(result: T): Promise<T> {
+    return {
+      ...result,
+      documentos: await this.enrichDocumentos(result.documentos),
+    };
+  }
+
+  /** @deprecated Use uploadDocumentoArquivo (multipart). Rejeita URLs mock. */
   async uploadDocumento(usuarioId: string, tipo: string, url: string) {
+    if (!url || url.includes("example.com")) {
+      throw new BadRequestException(
+        "URL mock não permitida. Envie o arquivo via upload (multipart/form-data).",
+      );
+    }
     const usuario = await this.prisma.usuario.findUnique({
       where: { usuarioId },
     });
     if (!usuario) throw new NotFoundException("Usuário não encontrado");
 
-    return this.prisma.kycDocumento.create({
+    const doc = await this.prisma.kycDocumento.create({
       data: { usuarioId, tipo, url, status: "PENDENTE" },
     });
+    return this.enrichDocumento(doc);
+  }
+
+  async uploadDocumentoArquivo(
+    usuarioId: string,
+    tipo: string,
+    buffer: Buffer,
+    mimeType: string,
+  ) {
+    if (!KYC_TIPOS.has(tipo)) {
+      throw new BadRequestException("Tipo de documento inválido.");
+    }
+    if (!KYC_MIMES.has(mimeType)) {
+      throw new BadRequestException("Formato inválido. Use JPEG, PNG, WebP ou PDF.");
+    }
+    if (buffer.length > KYC_MAX_BYTES) {
+      throw new BadRequestException("Arquivo muito grande. Máximo 10 MB.");
+    }
+    this.assertStorageConfigured();
+
+    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
+    if (!usuario) throw new NotFoundException("Usuário não encontrado");
+
+    const { key } = await this.storage.uploadKycDocument(buffer, mimeType, usuarioId, tipo);
+
+    const doc = await this.prisma.kycDocumento.create({
+      data: { usuarioId, tipo, url: key, status: "PENDENTE" },
+    });
+    return this.enrichDocumento(doc);
   }
 
   async listarDocumentos(usuarioId: string) {
-    return this.prisma.kycDocumento.findMany({
+    const docs = await this.prisma.kycDocumento.findMany({
       where: { usuarioId },
       orderBy: { criadoEm: "desc" },
     });
+    return this.enrichDocumentos(docs);
   }
 
   async obterStatus(usuarioId: string) {
@@ -68,7 +149,7 @@ export class KycService {
     return {
       usuarioId,
       status,
-      documentos,
+      documentos: await this.enrichDocumentos(documentos),
       resumo: { pendentes, aprovados, rejeitados, totalTipos },
     };
   }
@@ -191,21 +272,30 @@ export class KycService {
   }
 
   async listarPendentes() {
-    return this.prisma.kycDocumento.findMany({
+    const docs = await this.prisma.kycDocumento.findMany({
       where: { status: "PENDENTE" },
       include: { usuario: { select: { nome: true, email: true, cpf: true } } },
       orderBy: { criadoEm: "asc" },
     });
+    return this.enrichDocumentos(docs);
   }
 
   async verificarKycCompleto(usuarioId: string) {
-    const documentos = await this.prisma.kycDocumento.findMany({
-      where: { usuarioId, status: "APROVADO" },
+    const raw = await this.prisma.kycDocumento.findMany({
+      where: { usuarioId },
+      orderBy: { criadoEm: "desc" },
     });
 
-    const tiposRequeridos = ["RG", "Selfie"];
-    const tiposPresentes = documentos.map((d) => d.tipo);
-    const completo = tiposRequeridos.every((tipo) => tiposPresentes.includes(tipo));
+    const porTipo = new Map<string, (typeof raw)[0]>();
+    for (const doc of raw) {
+      if (!porTipo.has(doc.tipo)) porTipo.set(doc.tipo, doc);
+    }
+
+    const tiposRequeridos = Array.from(KYC_TIPOS);
+    const completo = tiposRequeridos.every((tipo) => {
+      const doc = porTipo.get(tipo);
+      return doc?.status === "APROVADO";
+    });
 
     if (completo) {
       await this.prisma.usuario.update({
@@ -214,6 +304,22 @@ export class KycService {
       });
     }
 
-    return { completo, documentos };
+    return { completo, documentos: Array.from(porTipo.values()) };
+  }
+
+  async obterArquivoDocumento(kycDocumentoId: string, usuarioId: string, isManager: boolean) {
+    const doc = await this.prisma.kycDocumento.findUnique({
+      where: { kycDocumentoId },
+    });
+    if (!doc) throw new NotFoundException("Documento não encontrado");
+    if (doc.usuarioId !== usuarioId && !isManager) {
+      throw new ForbiddenException("Sem permissão para este documento.");
+    }
+    if (!this.storage.isLocalKey(doc.url)) {
+      const signed = await this.resolveDocumentUrl(doc.url);
+      return { redirectUrl: signed };
+    }
+    const { buffer, mimeType } = await this.storage.readLocalFile(doc.url);
+    return { buffer, mimeType };
   }
 }

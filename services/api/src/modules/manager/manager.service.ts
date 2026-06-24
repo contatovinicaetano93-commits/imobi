@@ -2,6 +2,7 @@ import { Injectable, ForbiddenException, Inject } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
+import { KycService } from "../kyc/kyc.service";
 import { ETAPA_STATUS_MAP } from "../../common/constants";
 import { isManagerRole } from "../../common/constants/manager-roles";
 
@@ -37,6 +38,7 @@ const CACHE_KEYS = {
 export class ManagerService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly kyc: KycService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
@@ -180,8 +182,8 @@ export class ManagerService {
 
   async listarKycPendentes(limit = 20, offset = 0) {
     const cacheKey = CACHE_KEYS.KYC_PENDENTES(limit, offset);
-    const cached = await this.cacheManager.get(cacheKey);
-    if (cached) return cached;
+    const cached = await this.cacheManager.get<{ documentos: { url: string }[]; total: number }>(cacheKey);
+    if (cached) return this.kyc.enrichKycListResponse(cached);
 
     const [documentos, total] = await Promise.all([
       this.prisma.kycDocumento.findMany({
@@ -209,7 +211,7 @@ export class ManagerService {
     const result = { documentos, total };
     // Cache TTL: 120 seconds (matches controller CacheTTL decorator)
     await this.cacheManager.set(cacheKey, result, 120000);
-    return result;
+    return this.kyc.enrichKycListResponse(result);
   }
 
   async obterEtapaDetalhe(etapaId: string) {
@@ -246,7 +248,7 @@ export class ManagerService {
   }
 
   async obterKycDetalhe(kycDocumentoId: string) {
-    return this.prisma.kycDocumento.findUnique({
+    const doc = await this.prisma.kycDocumento.findUnique({
       where: { kycDocumentoId },
       include: {
         usuario: {
@@ -261,6 +263,8 @@ export class ManagerService {
         },
       },
     });
+    if (!doc) return null;
+    return this.kyc.enrichDocumento(doc);
   }
 
   async obterEstatisticas() {

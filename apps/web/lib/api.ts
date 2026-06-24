@@ -302,6 +302,22 @@ export type KycStatus = {
 };
 
 export const kycApi = {
+  uploadDocumentoArquivo: async (file: File, tipo: string): Promise<KycDocumento> => {
+    const form = new FormData();
+    form.append("tipo", tipo);
+    form.append("file", file);
+    const res = await fetch("/api/proxy/kyc/upload", {
+      method: "POST",
+      body: form,
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { message?: string };
+      throw new ApiError(res.status, body.message ?? "Falha no upload do documento");
+    }
+    return res.json() as Promise<KycDocumento>;
+  },
+  /** @deprecated Use uploadDocumentoArquivo */
   uploadDocumento: (tipo: string, url: string) =>
     apiFetch<KycDocumento>("/kyc/upload", {
       method: "POST",

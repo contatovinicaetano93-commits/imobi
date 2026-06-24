@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/toast-context";
 import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
+import { resolveKycDocumentUrl } from "@/lib/kyc-document-url";
 
 function getTipoLabel(tipo: string): string {
   const tipos: Record<string, string> = {
@@ -178,7 +179,7 @@ export default function KycDetailPage() {
             <div className="space-y-4">
               <div className="relative w-full bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: "4/3" }}>
                 <Image
-                  src={doc.url}
+                  src={resolveKycDocumentUrl(doc)}
                   alt={`Documento ${getTipoLabel(doc.tipo)}`}
                   fill
                   className="object-cover"

@@ -39,6 +39,10 @@ Thumbs.db
 npm-debug.log*
 pnpm-debug.log*
 
+# Local KYC uploads (ENABLE_S3_STORAGE=false)
+services/api/uploads/
+uploads/
+
 # Test coverage
 coverage/
 
