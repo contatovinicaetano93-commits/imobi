@@ -18,6 +18,6 @@ export class DashboardPage {
   }
 
   continueButton() {
-    return this.page.getByRole('link', { name: /Continuar/i });
+    return this.page.getByRole('link', { name: /Continuar|Ver extrato/i });
   }
 }

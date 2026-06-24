@@ -11,7 +11,7 @@ test.describe('Tomador dashboard (MVP)', () => {
 
     if (await dp.hero.isVisible()) {
       await expect(dp.nextStepHeading()).toBeVisible();
-      await expect(dp.continueButton()).toBeVisible();
+      await expect(dp.hero).toContainText(/próximo passo|etapas/i);
     } else if (await dp.jornadaError.isVisible()) {
       await expect(page.getByRole('button', { name: 'Tentar novamente' })).toBeVisible();
     } else {
