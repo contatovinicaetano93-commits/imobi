@@ -76,9 +76,6 @@ async function mockObraAndEvidencias(page: import('@playwright/test').Page, obra
 }
 
 test.describe('Vistoria submission', () => {
-  // MVP beta: gestor opera em /dashboard/gestor/etapas, não na rota legada de vistoria.
-  test.skip(true, 'Fluxo vistoria legado — fora do MVP (ver gestor/etapas E2E)');
-
   let sharedIds: { obraId: string; etapaId: string } | null = null;
 
   test.beforeAll(async () => {

@@ -1,4 +1,18 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 const API_URL = process.env.API_URL ?? 'http://localhost:4000/api/v1';
+
+/** Reutiliza JWT do auth.setup — evita login extra (rate limit Render). */
+export function readAccessTokenFromStorage(storageStatePath: string): string | null {
+  try {
+    const raw = readFileSync(resolve(process.cwd(), storageStatePath), 'utf8');
+    const state = JSON.parse(raw) as { cookies?: Array<{ name: string; value: string }> };
+    return state.cookies?.find((c) => c.name === 'access_token')?.value ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function loginViaApi(email: string, password: string): Promise<string> {
   const retryable = new Set([429, 500, 502, 503, 504]);
