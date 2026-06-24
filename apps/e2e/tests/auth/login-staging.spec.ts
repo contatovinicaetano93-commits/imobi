@@ -20,11 +20,11 @@ test.describe('Login staging (API real)', () => {
     await expect
       .poll(async () => (await page.context().cookies()).some((c) => c.name === 'access_token'), {
         timeout: 180_000,
+        intervals: [2_000, 5_000, 10_000],
       })
       .toBe(true);
 
-    await page.goto('/dashboard/construtor', { waitUntil: 'domcontentloaded' });
-    await expect(page).toHaveURL(/\/dashboard\/(construtor|kyc|credito|obras|simulador)/, {
+    await page.waitForURL(/\/dashboard\/(construtor|kyc|obras|credito|simulador)/, {
       timeout: 60_000,
     });
   });

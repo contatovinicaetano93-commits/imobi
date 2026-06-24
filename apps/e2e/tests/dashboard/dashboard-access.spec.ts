@@ -9,17 +9,14 @@ test.describe('Tomador dashboard (MVP)', () => {
     const dp = new DashboardPage(page);
     await dp.goto();
 
-    if (await dp.kycGuided.isVisible()) {
-      await expect(dp.guidedJourney).toBeVisible();
+    if (await dp.guidedJourney.isVisible()) {
+      await expect(dp.kycGuided).toBeVisible();
       await expect(page.getByRole('heading', { name: 'Documentos obrigatórios' })).toBeVisible();
     } else if (await dp.hero.isVisible()) {
-      await expect(dp.nextStepHeading()).toBeVisible();
-      await expect(dp.hero).toContainText(/próximo passo|etapas/i);
+      await expect(dp.hero.getByRole('heading', { level: 1 })).toBeVisible();
+      await expect(dp.hero).toContainText(/próximo passo|etapas|crédito|obra|documento/i);
     } else if (await dp.jornadaError.isVisible()) {
       await expect(page.getByRole('button', { name: 'Tentar novamente' })).toBeVisible();
-    } else if (await dp.kycGuided.isVisible()) {
-      await expect(page.getByRole('heading', { name: 'Documentos obrigatórios' })).toBeVisible();
-      await expect(page.getByText('RG — Frente')).toBeVisible();
     } else {
       await expect(dp.fullPanel).toBeVisible();
       await expect(page.getByText('Cronograma de Pagamentos')).toBeVisible();

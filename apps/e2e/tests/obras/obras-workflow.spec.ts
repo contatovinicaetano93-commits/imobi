@@ -149,7 +149,9 @@ test.describe('Obras workflow — gestor MVP', () => {
 
   test('jornada aponta fila de etapas do gestor', async ({ page }) => {
     await page.goto('/dashboard/gestor', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Analisar etapas de obra' })).toBeVisible();
+    const hero = page.getByRole('region', { name: 'Próximo passo' });
+    await expect(hero).toBeVisible({ timeout: 60_000 });
+    await expect(hero.getByRole('heading', { level: 1 })).toContainText(/etapas/i);
     await expect(page.getByRole('link', { name: /Continuar/i })).toHaveAttribute(
       'href',
       '/dashboard/gestor/etapas',

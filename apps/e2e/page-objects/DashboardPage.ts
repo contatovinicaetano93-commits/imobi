@@ -2,7 +2,8 @@ import type { Page } from '@playwright/test';
 
 /** Page object — painel construtor (MVP jornada, erro ou painel completo). */
 export class DashboardPage {
-  readonly hero = this.page.getByLabel('Próximo passo');
+  /** NextStepHero / JornadaHeroStrip — section, não o link do wizard KYC */
+  readonly hero = this.page.getByRole('region', { name: 'Próximo passo' });
   readonly jornadaError = this.page.getByText('Conexão com o servidor');
   readonly fullPanel = this.page.getByText(/Nenhuma operação ativa|Operação ativa/);
   /** Tomador no passo KYC (staging real) — GuidedFlowShell */
