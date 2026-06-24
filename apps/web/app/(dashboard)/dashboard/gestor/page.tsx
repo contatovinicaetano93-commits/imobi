@@ -7,8 +7,8 @@ import { ShieldCheck, AlertTriangle, Zap, Lightbulb } from "lucide-react";
 import { fetchManagerDashboard } from "@/lib/fetch-manager-dashboard";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
-import { BETA_MVP_MODE } from "@/lib/beta-mvp";
-import { GestorMvpHub } from "./GestorMvpHub";
+import { BETA_MVP_MODE, mvpSafeHref } from "@/lib/beta-mvp";
+import { JornadaHeroStrip } from "@/components/dashboard/JornadaHeroStrip";
 
 const GESTOR_PANELS = [
   { id: "acoes-rapidas", priority: "primary" as const },
@@ -73,15 +73,14 @@ export default function GestorPage() {
   };
 
   useEffect(() => {
-    if (BETA_MVP_MODE) return;
     loadStats();
   }, []);
 
   const s = stats ?? ZERO_STATS;
-
-  if (BETA_MVP_MODE) {
-    return <GestorMvpHub />;
-  }
+  const etapasHref = "/dashboard/gestor/etapas";
+  const kycHref = "/dashboard/gestor/kyc";
+  const obrasHref = mvpSafeHref("/dashboard/obras", "GESTOR");
+  const creditosHref = BETA_MVP_MODE ? etapasHref : "/dashboard/credito";
 
   if (loading && !stats) {
     return (
@@ -102,7 +101,8 @@ export default function GestorPage() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-6 sm:space-y-8 p-4 sm:p-6">
+      {BETA_MVP_MODE && <JornadaHeroStrip variant="gestor" />}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-sm text-red-700 font-medium">{error}</p>
@@ -142,25 +142,25 @@ export default function GestorPage() {
           label="Etapas Pendentes"
           value={s.filaAprovacoes}
           color={s.filaAprovacoes > 10 ? "red" : s.filaAprovacoes > 5 ? "yellow" : "green"}
-          href="/dashboard/gestor/etapas"
+          href={etapasHref}
         />
         <StatCard
           label="KYC Pendentes"
           value={s.filaKyc}
           color={s.filaKyc > 10 ? "red" : s.filaKyc > 5 ? "yellow" : "green"}
-          href="/dashboard/gestor/kyc"
+          href={kycHref}
         />
         <StatCard
           label="Créditos Ativos"
           value={s.creditosAtivos}
           color="green"
-          href="/dashboard/credito"
+          href={creditosHref}
         />
         <StatCard
           label="Obras em Execução"
           value={s.obrasAtivas}
           color="green"
-          href="/dashboard/obras"
+          href={obrasHref}
         />
       </div>
 
@@ -197,6 +197,7 @@ export default function GestorPage() {
                 {s.filaKyc}
               </span>
             </Link>
+            {!BETA_MVP_MODE && (
             <Link
               href="/dashboard/gestor/due-diligence/nova"
               className="flex items-center justify-between p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 min-h-12 sm:min-h-auto"
@@ -205,6 +206,7 @@ export default function GestorPage() {
               <span className="font-medium text-xs sm:text-sm text-green-900">Nova Análise de Empreendimento</span>
               <span className="text-xs text-green-700 font-semibold">Due Diligence</span>
             </Link>
+            )}
           </div>
         </PanelSection>
 

@@ -21,6 +21,24 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
+        name="inicio/index"
+        options={{
+          title: "Início",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="compass" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="kyc/index"
+        options={{
+          title: "KYC",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="shield-checkmark" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="obras/index"
         options={{
           title: "Obras",
@@ -37,6 +55,10 @@ export default function TabLayout() {
             <Ionicons name="calculator" size={size} color={color} />
           ),
         }}
+      />
+      <Tabs.Screen
+        name="obras/[id]"
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="perfil/index"

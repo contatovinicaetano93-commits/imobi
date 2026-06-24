@@ -9,6 +9,7 @@ import {
   isBiometryAvailable,
   setBiometryEnabled,
 } from "../../lib/biometry";
+import { resolvePostLoginRoute } from "../../lib/jornada";
 import { registerForPushNotifications } from "../../lib/push-notifications";
 
 async function offerBiometrySetup() {
@@ -44,7 +45,8 @@ export default function LoginScreen() {
       await SecureStore.setItemAsync("refreshToken", res.refreshToken);
       void registerForPushNotifications();
       await offerBiometrySetup();
-      router.replace("/(tabs)/obras");
+      const dest = await resolvePostLoginRoute();
+      router.replace(dest as never);
     } catch (e: unknown) {
       Alert.alert("Erro de autenticação", e instanceof Error ? e.message : "E-mail ou senha inválidos.");
     }

@@ -1,8 +1,18 @@
+import { ROLE_HOME } from "@/lib/role-permissions";
+
 /**
  * Modo beta MVP — menu reduzido + rotas bloqueadas fora do fluxo guiado.
  * Desligar: NEXT_PUBLIC_BETA_MVP_MODE=false
  */
 export const BETA_MVP_MODE = process.env.NEXT_PUBLIC_BETA_MVP_MODE !== "false";
+
+/** Evita link para rota bloqueada no MVP (middleware redireciona e “pisca” o painel). */
+export function mvpSafeHref(href: string, role: string | null): string {
+  if (!BETA_MVP_MODE || !role) return href;
+  const path = href.split("?")[0] ?? href;
+  if (isMvpRouteAllowed(path, role)) return href;
+  return ROLE_HOME[role] ?? "/dashboard";
+}
 
 /** Rotas públicas (marketing + auth) — sempre acessíveis */
 export const MVP_PUBLIC_PREFIXES = [

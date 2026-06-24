@@ -73,6 +73,33 @@ export const scoreApi = {
     }),
 };
 
+export const kycApi = {
+  obterStatus: () =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.get<KycStatus>("/kyc/status", token ?? undefined);
+    }),
+  uploadDocumento: (tipo: string, url: string) =>
+    callApi(async () => {
+      const token = await getToken();
+      return apiClient.post("/kyc/upload", { tipo, url }, token ?? undefined);
+    }),
+};
+
+export type KycDocumento = {
+  tipo: string;
+  status: string;
+  url?: string;
+  criadoEm?: string;
+};
+
+export type KycStatus = {
+  usuarioId: string;
+  status: string;
+  documentos: KycDocumento[];
+  resumo: { pendentes: number; aprovados: number; rejeitados: number; totalTipos?: number };
+};
+
 export const authApi = {
   logout: (refreshToken: string) =>
     callApi(async () => {

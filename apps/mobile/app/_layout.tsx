@@ -73,7 +73,7 @@ function RootLayout() {
     const onWelcome = !segments[0] || segments[0] === "index";
 
     if (isSignedIn && (inAuthGroup || onWelcome)) {
-      router.replace("/(tabs)/obras");
+      router.replace("/(tabs)/inicio");
     } else if (!isSignedIn && inTabsGroup) {
       router.replace("/");
     }

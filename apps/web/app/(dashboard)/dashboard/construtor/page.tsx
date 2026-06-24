@@ -14,7 +14,7 @@ import { formatarBRL } from "@imbobi/core";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
 import { BETA_MVP_MODE } from "@/lib/beta-mvp";
-import { TomadorMvpHub } from "./TomadorMvpHub";
+import { JornadaHeroStrip } from "@/components/dashboard/JornadaHeroStrip";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Painel Construtor — IMOBI" };
@@ -54,10 +54,6 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default async function ConstrutorPage() {
-  if (BETA_MVP_MODE) {
-    return <TomadorMvpHub />;
-  }
-
   const [creditos, obras, kycStatus, notifs] = await Promise.all([
     creditoApi.meus().catch(() => [] as CreditoResumo[]),
     obrasApi.listar().catch(() => [] as ObraResumo[]),
@@ -128,7 +124,8 @@ export default async function ConstrutorPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-4 pb-10 max-w-2xl">
+    <div className="flex flex-col gap-4 pb-10 max-w-2xl p-4 sm:p-6">
+      {BETA_MVP_MODE && <JornadaHeroStrip variant="tomador" />}
 
       {/* ── Alertas ─────────────────────────────────────────────────── */}
       {alertas.length > 0 && (
