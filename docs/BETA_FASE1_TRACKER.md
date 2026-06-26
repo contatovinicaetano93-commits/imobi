@@ -6,6 +6,9 @@ Tracker da **Fase 1 — Soft launch beta** (passos 1–50). Marque cada item ao 
 
 **Comandos:** `pnpm beta:invite` · `pnpm check:staging` · `pnpm test:e2e:staging`
 
+**Rotas Admin (aprovação):** KYC → `/dashboard/admin/kyc` · Vistorias (monitor) → `/dashboard/admin/vistorias`  
+**Gestor de fundo (somente leitura / KPIs):** `/dashboard/gestor` · KYC acompanhamento → `/dashboard/gestor/kyc`
+
 ---
 
 ## Convites e primeiros logins (1–5)
@@ -18,26 +21,26 @@ Tracker da **Fase 1 — Soft launch beta** (passos 1–50). Marque cada item ao 
 
 ## Fluxo KYC (6–10)
 
-- [ ] 6. Admin aprova/rejeita 1º documento KYC (`admin@imobi.com.br` → `/dashboard/gestor/kyc`)
+- [ ] 6. Admin aprova/rejeita 1º documento KYC (`admin@imobi.com.br` → `/dashboard/admin/kyc`)
 - [ ] 7. Validar notificação ao tomador (se ativa)
 - [ ] 8. Tomador completa 4 documentos KYC
 - [ ] 9. Admin aprova KYC completo
-- [ ] 10. Tomador vê jornada avançar para "obra"
+- [ ] 10. Tomador vê jornada avançar para "viabilidade" (próximo passo após KYC completo)
 
 ## Obra e crédito (11–17)
 
 - [ ] 11. Cadastrar 1ª obra real (beta)
-- [ ] 12. Gestor vê obra na fila
+- [ ] 12. Gestor vê KPIs / fila em leitura (`/dashboard/gestor` — sem aprovar)
 - [ ] 13. Solicitar crédito vinculado à obra
 - [ ] 14. Simulador → pedido de crédito
-- [ ] 15. Gestor analisa etapa "Estrutura"
-- [ ] 16. Engenheiro/vistoria em staging
+- [ ] 15. Admin monitora vistorias (`/dashboard/admin/vistorias`); execução no **Engenheiro**
+- [ ] 16. Engenheiro: vistoria em `/dashboard/engenheiro/vistoria`
 - [ ] 17. Aprovar etapa e ver redirect
 
 ## Ops e qualidade (18–29)
 
-- [ ] 18. Checklist diário smoke (`pnpm check:staging`)
-- [ ] 19. E2E completo semanal (`pnpm test:e2e:staging`)
+- [x] 18. Checklist diário smoke (`pnpm check:staging`) — 26/06/2026: 9/9 OK
+- [x] 19. E2E completo semanal (`pnpm test:e2e:staging`) — 26/06/2026: 43/43 OK
 - [ ] 20. Monitorar CI no GitHub
 - [ ] 21. Monitorar cold start Render
 - [ ] 22. Documentar bugs beta em issues (template **Bug Beta**)
@@ -54,7 +57,7 @@ Tracker da **Fase 1 — Soft launch beta** (passos 1–50). Marque cada item ao 
 - [ ] 30. Testar cadastro novo usuário (`/cadastro`)
 - [ ] 31. Testar esqueci senha
 - [ ] 32. Testar logout em todos os perfis
-- [ ] 33. Gestor: fila KYC zerada → etapas
+- [ ] 33. Gestor: fila KYC (leitura) → etapas (leitura) em `/dashboard/gestor`
 - [ ] 34. Gestor: fila etapas zerada → "fila zerada"
 - [ ] 35. Tomador: estado "aguardando análise"
 - [ ] 36. Tomador: estado "acompanhar" com crédito ativo
@@ -72,6 +75,6 @@ Tracker da **Fase 1 — Soft launch beta** (passos 1–50). Marque cada item ao 
 - [ ] 45. Medir taxa de abandono no passo KYC
 - [ ] 46. Decidir se amplia beta (+5 tomadores)
 - [ ] 47. `pnpm seed:staging:beta-tomadores` para mais contas
-- [ ] 48. Treinar gestor no painel (`/dashboard/gestor`)
-- [ ] 49. Treinar engenheiro em vistoria
+- [ ] 48. Treinar gestor no painel (`/dashboard/gestor` — só KPIs, sem aprovar)
+- [ ] 49. Treinar engenheiro em vistoria (`/dashboard/engenheiro/vistoria`)
 - [ ] 50. **Gate:** 3 tomadores completaram KYC → obra OU crédito solicitado
