@@ -69,6 +69,7 @@ const NAV: NavItem[] = [
   { label: "Usuários",      href: "/dashboard/admin/usuarios",          icon: User,        roles: ["ADMIN"] },
   { label: "Configurações", href: "/dashboard/admin/configuracoes",     icon: Settings,    roles: ["ADMIN"] },
   { label: "Obras",         href: "/dashboard/admin/obras",             icon: HardHat,     roles: ["ADMIN"] },
+  { label: "Vistorias",     href: "/dashboard/admin/vistorias",         icon: MapPin,      roles: ["ADMIN"] },
   { label: "KYC",           href: "/dashboard/admin/kyc",              icon: FileCheck2,  roles: ["ADMIN"] },
   { label: "Viabilidade",   href: "/dashboard/admin/viabilidade",       icon: FileText,    roles: ["ADMIN"] },
   { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["ADMIN"],                           funcao: "fundos" },

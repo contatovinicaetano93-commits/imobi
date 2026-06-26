@@ -8,6 +8,8 @@ const NAV = {
   admin: [
     { href: '/dashboard/admin' },
     { href: '/dashboard/admin/obras' },
+    { href: '/dashboard/admin/kyc' },
+    { href: '/dashboard/admin/vistorias' },
     { href: '/dashboard/admin/comite' },
     { href: '/dashboard/fundos' },
   ],
@@ -65,6 +67,8 @@ expectNavRole('TOMADOR', '/dashboard/credito/solicitar', 'TOMADOR');
 expectNavRole('ADMIN', '/dashboard/construtor', 'CONSTRUTOR');
 
 expectActive('ADMIN', '/dashboard/admin/comite', NAV.admin, '/dashboard/admin/comite');
+expectActive('ADMIN', '/dashboard/admin/kyc/abc', NAV.admin, '/dashboard/admin/kyc');
+expectActive('ADMIN', '/dashboard/admin/vistorias', NAV.admin, '/dashboard/admin/vistorias');
 expectActive('ADMIN', '/dashboard/obras/xyz', NAV.admin, '/dashboard/admin/obras');
 expectActive('GESTOR', '/dashboard/gestor/kyc/1', NAV.gestor, '/dashboard/gestor/kyc');
 expectActive('GESTOR', '/dashboard/obras/xyz', NAV.gestor, '/dashboard/gestor/etapas');

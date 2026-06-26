@@ -23,7 +23,7 @@ const ITENS = [
   {
     key: "etapasAguardandoVistoria" as const,
     label: "Vistorias",
-    href: "/dashboard/gestor/etapas",
+    href: "/dashboard/admin/vistorias",
   },
   {
     key: "liberacoesAguardandoPagamento" as const,

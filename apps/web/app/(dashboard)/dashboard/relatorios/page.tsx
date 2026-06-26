@@ -250,18 +250,18 @@ export default function RelatoriosPage() {
 
       <div className="flex flex-wrap gap-3">
         <Link
-          href="/dashboard/gestor/kyc"
+          href="/dashboard/admin/kyc"
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-50 text-purple-800 text-sm font-semibold rounded-lg hover:bg-purple-100 transition-colors"
         >
           <ShieldCheck size={14} />
           Revisar KYC ({kycPendentes})
         </Link>
         <Link
-          href="/dashboard/gestor/etapas"
+          href="/dashboard/admin/vistorias"
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-800 text-sm font-semibold rounded-lg hover:bg-blue-100 transition-colors"
         >
           <FileCheck2 size={14} />
-          Monitorar etapas ({ov.etapasPendentes})
+          Monitorar vistorias ({ov.etapasPendentes})
         </Link>
         <Link
           href="/dashboard/obras"

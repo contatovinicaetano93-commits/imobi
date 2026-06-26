@@ -713,6 +713,7 @@ function TabOperacional({
           icon={<FileCheck2 className="w-4 h-4 text-[#1B4FD8]" />}
           priority="primary"
           summary={`${op.kyc.length} em análise`}
+          href="/dashboard/admin/kyc"
           flush
         >
           <div>
