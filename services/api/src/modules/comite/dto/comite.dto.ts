@@ -18,7 +18,7 @@ export const ParecerComiteSchema = z.object({
 });
 
 export const VotarComiteSchema = z.object({
-  voto: z.enum(["APROVADO", "REPROVADO", "PENDENTE"]),
+  voto: z.enum(["APROVAR", "AJUSTAR", "REPROVAR"]),
   justificativa: z.string().max(2000).optional(),
   condicoes: z.string().max(2000).optional(),
 });

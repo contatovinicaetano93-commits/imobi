@@ -5,7 +5,6 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual } from "../../common/decorators/usuario-atual.decorator";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
-import type { VotoDecisao } from "@prisma/client";
 import { SolicitarComiteSchema, ParecerComiteSchema, VotarComiteSchema, type SolicitarComiteDto, type ParecerComiteDto, type VotarComiteDto } from "./dto/comite.dto";
 
 @Controller("comite")
@@ -53,7 +52,7 @@ export class ComiteController {
     @UsuarioAtual() user: UsuarioAtual,
     @Body(new ZodPipe(VotarComiteSchema)) body: VotarComiteDto,
   ) {
-    return this.comiteService.votar(comiteId, user.id, body.voto as VotoDecisao, body.justificativa, body.condicoes);
+    return this.comiteService.votar(comiteId, user.id, body.voto, body.justificativa, body.condicoes);
   }
 
   // ── Leitura: listar comitês (Admin + Fundo) ───────────────────────

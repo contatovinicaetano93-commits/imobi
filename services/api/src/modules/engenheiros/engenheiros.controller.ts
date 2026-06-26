@@ -1,8 +1,9 @@
-import { Controller, Get, Patch, Param, Body, UseGuards, Req } from "@nestjs/common";
+import { Controller, Get, Patch, Param, Body, UseGuards } from "@nestjs/common";
 import { EngenheirosService } from "./engenheiros.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
+import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 
 @Controller("engenheiros")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -11,45 +12,45 @@ export class EngenheirosController {
   constructor(private readonly engenheirosService: EngenheirosService) {}
 
   @Get("visitas")
-  listarVisitas(@Req() req: any) {
-    return this.engenheirosService.listarVisitas(req.user.id);
+  listarVisitas(@UsuarioAtual() user: IUsuario) {
+    return this.engenheirosService.listarVisitas(user.id);
   }
 
   @Get("visitas/:visitaId")
-  obterVisita(@Req() req: any, @Param("visitaId") visitaId: string) {
-    return this.engenheirosService.obterVisita(visitaId, req.user.id);
+  obterVisita(@UsuarioAtual() user: IUsuario, @Param("visitaId") visitaId: string) {
+    return this.engenheirosService.obterVisita(visitaId, user.id, user.tipo);
   }
 
   @Patch("visitas/:visitaId")
   atualizarVisita(
-    @Req() req: any,
+    @UsuarioAtual() user: IUsuario,
     @Param("visitaId") visitaId: string,
     @Body() body: { status?: string; dataAgendada?: string; observacoes?: string }
   ) {
-    return this.engenheirosService.atualizarVisita(req.user.id, visitaId, body);
+    return this.engenheirosService.atualizarVisita(user.id, user.tipo, visitaId, body);
   }
 
   @Patch("visitas/:visitaId/aprovar")
   aprovarVistoria(
-    @Req() req: any,
+    @UsuarioAtual() user: IUsuario,
     @Param("visitaId") visitaId: string,
     @Body("observacao") observacao?: string,
   ) {
-    return this.engenheirosService.aprovarVistoria(req.user.id, visitaId, observacao);
+    return this.engenheirosService.aprovarVistoria(user.id, visitaId, observacao);
   }
 
   @Patch("visitas/:visitaId/rejeitar")
   rejeitarVistoria(
-    @Req() req: any,
+    @UsuarioAtual() user: IUsuario,
     @Param("visitaId") visitaId: string,
     @Body("motivo") motivo: string,
   ) {
-    return this.engenheirosService.rejeitarVistoria(req.user.id, visitaId, motivo);
+    return this.engenheirosService.rejeitarVistoria(user.id, visitaId, motivo);
   }
 
   @Get("financeiro")
-  financeiro(@Req() req: any) {
-    return this.engenheirosService.financeiro(req.user.id);
+  financeiro(@UsuarioAtual() user: IUsuario) {
+    return this.engenheirosService.financeiro(user.id);
   }
 
   @Get("licencas")

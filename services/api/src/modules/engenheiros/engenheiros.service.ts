@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { EtapasService } from "../etapas/etapas.service";
-import type { EtapaStatus } from "@prisma/client";
+import type { EtapaObra, EtapaStatus, EvidenciaEtapa, Obra } from "@prisma/client";
 
 export interface ObraFinanceiro {
   obraId: string;
@@ -16,17 +16,24 @@ export interface ObraFinanceiro {
 
 @Injectable()
 export class EngenheirosService {
+  private static readonly VISITA_ETAPA_STATUSES: EtapaStatus[] = [
+    "AGUARDANDO_VISTORIA",
+    "EM_EXECUCAO",
+    "CONCLUIDA",
+    "REPROVADA",
+  ];
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly etapas: EtapasService,
   ) {}
 
-  async listarVisitas(usuarioId: string) {
+  async listarVisitas(_usuarioId: string) {
     // Visitas = etapas AGUARDANDO_VISTORIA ou recentemente concluídas, de obras do sistema
     // O engenheiro vê etapas que precisam de vistoria presencial
     const etapas = await this.prisma.etapaObra.findMany({
       where: {
-        status: { in: ["AGUARDANDO_VISTORIA", "CONCLUIDA", "REPROVADA"] },
+        status: { in: EngenheirosService.VISITA_ETAPA_STATUSES },
       },
       include: {
         obra: { select: { obraId: true, nome: true, endereco: true } },
@@ -38,12 +45,7 @@ export class EngenheirosService {
 
     return etapas.map((e) => ({
       visitaId: e.etapaId,
-      status:
-        e.status === "AGUARDANDO_VISTORIA"
-          ? "AGENDADA"
-          : e.status === "CONCLUIDA"
-          ? "CONCLUIDA"
-          : "REPROVADA",
+      status: this.mapEtapaStatus(e.status),
       etapaId: e.etapaId,
       etapaNome: e.nome,
       obraId: e.obra.obraId,
@@ -55,22 +57,23 @@ export class EngenheirosService {
     }));
   }
 
-  async obterVisita(visitaId: string, engenheiroId: string) {
-    const etapa = await this.prisma.etapaObra.findUnique({
-      where: { etapaId: visitaId },
-      include: {
-        obra: { select: { obraId: true, nome: true, endereco: true } },
-        evidencias: {
-          select: { evidenciaId: true, fotoUrl: true, validada: true, criadoEm: true },
-        },
-      },
-    });
-    if (!etapa) throw new NotFoundException("Visita não encontrada.");
-    const visitas = await this.listarVisitas(engenheiroId);
-    if (!visitas.some((v) => v.visitaId === visitaId)) throw new ForbiddenException("Acesso negado.");
+  private mapEtapaStatus(status: EtapaStatus): string {
+    if (status === "AGUARDANDO_VISTORIA") return "AGENDADA";
+    if (status === "EM_EXECUCAO") return "INICIADA";
+    if (status === "REPROVADA") return "REPROVADA";
+    if (status === "CONCLUIDA") return "CONCLUIDA";
+    return status;
+  }
+
+  private formatVisita(
+    etapa: EtapaObra & {
+      obra: Pick<Obra, "obraId" | "nome" | "endereco">;
+      evidencias: Pick<EvidenciaEtapa, "evidenciaId" | "fotoUrl" | "validada" | "criadoEm">[];
+    },
+  ) {
     return {
       visitaId: etapa.etapaId,
-      status: etapa.status === "AGUARDANDO_VISTORIA" ? "AGENDADA" : etapa.status === "REPROVADA" ? "REPROVADA" : "CONCLUIDA",
+      status: this.mapEtapaStatus(etapa.status),
       etapaId: etapa.etapaId,
       etapaNome: etapa.nome,
       obraId: etapa.obra.obraId,
@@ -82,18 +85,42 @@ export class EngenheirosService {
     };
   }
 
-  async atualizarVisita(
-    usuarioId: string,
-    visitaId: string,
-    data: { status?: string; dataAgendada?: string; observacoes?: string }
-  ) {
+  private async assertAcessoVisita(visitaId: string, usuarioId: string, tipo: string) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId: visitaId },
+      include: {
+        obra: { select: { obraId: true, nome: true, endereco: true } },
+        evidencias: {
+          select: { evidenciaId: true, fotoUrl: true, validada: true, criadoEm: true },
+        },
+      },
     });
     if (!etapa) throw new NotFoundException("Visita não encontrada.");
 
-    const usuario = await this.prisma.usuario.findUnique({ where: { usuarioId } });
-    if (!usuario) throw new ForbiddenException("Usuário não encontrado.");
+    if (tipo === "ADMIN") {
+      return etapa;
+    }
+
+    const visitas = await this.listarVisitas(usuarioId);
+    if (!visitas.some((v) => v.visitaId === visitaId)) {
+      throw new ForbiddenException("Acesso negado.");
+    }
+
+    return etapa;
+  }
+
+  async obterVisita(visitaId: string, usuarioId: string, tipo: string) {
+    const etapa = await this.assertAcessoVisita(visitaId, usuarioId, tipo);
+    return this.formatVisita(etapa);
+  }
+
+  async atualizarVisita(
+    usuarioId: string,
+    tipo: string,
+    visitaId: string,
+    data: { status?: string; dataAgendada?: string; observacoes?: string }
+  ) {
+    await this.assertAcessoVisita(visitaId, usuarioId, tipo);
 
     const statusMap: Record<string, string> = {
       INICIADA: "EM_EXECUCAO",
@@ -101,12 +128,25 @@ export class EngenheirosService {
 
     const newStatus = data.status ? statusMap[data.status] : undefined;
 
-    await this.prisma.etapaObra.update({
-      where: { etapaId: visitaId },
-      data: { ...(newStatus ? { status: newStatus as EtapaStatus } : {}) },
-    });
+    if (newStatus) {
+      await this.prisma.etapaObra.update({
+        where: { etapaId: visitaId },
+        data: { status: newStatus as EtapaStatus },
+      });
+    }
 
-    return this.obterVisita(visitaId, usuarioId);
+    const etapa = await this.prisma.etapaObra.findUnique({
+      where: { etapaId: visitaId },
+      include: {
+        obra: { select: { obraId: true, nome: true, endereco: true } },
+        evidencias: {
+          select: { evidenciaId: true, fotoUrl: true, validada: true, criadoEm: true },
+        },
+      },
+    });
+    if (!etapa) throw new NotFoundException("Visita não encontrada.");
+
+    return this.formatVisita(etapa);
   }
 
   async aprovarVistoria(engenheiroId: string, visitaId: string, observacao?: string) {
