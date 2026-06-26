@@ -122,7 +122,14 @@ export function getNavRole(role: AppRole | null, path: string): AppRole | null {
 
   if (seg === 'admin') return 'ADMIN';
   if (seg === 'comercial') return 'COMERCIAL';
-  if (seg === 'gestor') return 'GESTOR';
+  if (seg === 'gestor') {
+    if (r === 'ADMIN') {
+      const sub = path.split('/').filter(Boolean)[2];
+      if (sub === 'kyc' || sub === 'etapas') return 'ADMIN';
+      return 'GESTOR';
+    }
+    return 'GESTOR';
+  }
   if (seg === 'engenheiro') {
     return r === 'GESTOR_OBRA' ? 'GESTOR_OBRA' : 'ENGENHEIRO';
   }
@@ -132,7 +139,6 @@ export function getNavRole(role: AppRole | null, path: string): AppRole | null {
     if (CONSTRUTOR_PANEL_SEGMENTS.has(seg)) return 'CONSTRUTOR';
     if (seg === 'engenheiro') return 'ENGENHEIRO';
     if (seg === 'comercial') return 'COMERCIAL';
-    if (seg === 'gestor') return 'GESTOR';
     return 'ADMIN';
   }
 

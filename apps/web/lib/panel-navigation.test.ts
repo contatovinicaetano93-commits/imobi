@@ -65,6 +65,9 @@ expectNavRole('ENGENHEIRO', '/dashboard/comite', 'ENGENHEIRO');
 expectNavRole('COMERCIAL', '/dashboard/simulador', 'COMERCIAL');
 expectNavRole('TOMADOR', '/dashboard/credito/solicitar', 'TOMADOR');
 expectNavRole('ADMIN', '/dashboard/construtor', 'CONSTRUTOR');
+expectNavRole('ADMIN', '/dashboard/gestor', 'GESTOR');
+expectNavRole('ADMIN', '/dashboard/gestor/kyc', 'ADMIN');
+expectNavRole('ADMIN', '/dashboard/gestor/etapas', 'ADMIN');
 
 expectActive('ADMIN', '/dashboard/admin/comite', NAV.admin, '/dashboard/admin/comite');
 expectActive('ADMIN', '/dashboard/admin/kyc/abc', NAV.admin, '/dashboard/admin/kyc');

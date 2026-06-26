@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { managerApi, type KycPendente } from "@/lib/api";
+import { AdminSubpageHeader } from "@/app/(dashboard)/_components/admin/AdminSubpageHeader";
 import { GestorSubpageHeader } from "@/app/(dashboard)/_components/gestor/GestorSubpageHeader";
 import { ManagerListBanner } from "@/app/(dashboard)/_components/gestor/ManagerListBanner";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
@@ -390,25 +391,37 @@ export function KycFilaClient({ context }: { context: KycFilaContext }) {
         />
       )}
 
-      <GestorSubpageHeader
-        title={canApprove ? "Fila KYC — Aprovação" : "KYC — acompanhamento (somente leitura)"}
-        subtitle={
-          canApprove
-            ? "Analise e aprove documentos pendentes no Centro de Comando"
-            : "KPIs operacionais do fundo — sem aprovação nem participação no processo"
-        }
-        backHref={context === "admin" ? "/dashboard/admin" : "/dashboard/gestor"}
-        backLabel={context === "admin" ? "Centro de Comando" : "Painel do Fundo"}
-        onRefresh={loadDocs}
-        refreshing={loading}
-        badge={
-          !loading ? (
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}`}>
-              {pendingCount} na fila
-            </span>
-          ) : undefined
-        }
-      />
+      {context === "admin" ? (
+        <AdminSubpageHeader
+          title="Fila KYC — Aprovação"
+          subtitle="Analise e aprove documentos pendentes no Centro de Comando"
+          onRefresh={loadDocs}
+          refreshing={loading}
+          badge={
+            !loading ? (
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}`}>
+                {pendingCount} na fila
+              </span>
+            ) : undefined
+          }
+        />
+      ) : (
+        <GestorSubpageHeader
+          title="KYC — acompanhamento (somente leitura)"
+          subtitle="KPIs operacionais do fundo — sem aprovação nem participação no processo"
+          backHref="/dashboard/gestor"
+          backLabel="Painel do Fundo"
+          onRefresh={loadDocs}
+          refreshing={loading}
+          badge={
+            !loading ? (
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badgeColor}`}>
+                {pendingCount} na fila
+              </span>
+            ) : undefined
+          }
+        />
+      )}
 
       {!canApprove && (
         <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">

@@ -75,6 +75,17 @@ export function middleware(request: NextRequest) {
 
   const role = jwt.role ?? normalizeRole(request.cookies.get("session_role")?.value) ?? null;
 
+  // Admin opera KYC/vistorias no Centro de Comando — nunca nas filas do gestor de fundo (somente leitura).
+  if (role === "ADMIN") {
+    if (pathname === "/dashboard/gestor/kyc" || pathname.startsWith("/dashboard/gestor/kyc/")) {
+      const dest = pathname.replace("/dashboard/gestor/kyc", "/dashboard/admin/kyc");
+      return NextResponse.redirect(new URL(dest, request.url));
+    }
+    if (pathname === "/dashboard/gestor/etapas" || pathname.startsWith("/dashboard/gestor/etapas")) {
+      return NextResponse.redirect(new URL("/dashboard/admin/vistorias", request.url));
+    }
+  }
+
   const rule = ROLE_RULES.find((r) => pathname === r.prefix || pathname.startsWith(r.prefix + "/"));
   if (rule && (!role || !rule.roles.includes(role))) {
     const home = role ? (ROLE_HOME[role] ?? "/dashboard") : "/dashboard";
