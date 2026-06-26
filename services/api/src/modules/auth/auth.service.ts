@@ -164,7 +164,10 @@ export class AuthService {
       },
       { expiresIn: "8h" }
     );
-    const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
+    const refreshToken = this.jwt.sign(
+      { sub: usuarioId, type: "refresh", jti: crypto.randomUUID() },
+      { expiresIn: "7d" },
+    );
 
     await this.prisma.sessaoToken.create({
       data: {

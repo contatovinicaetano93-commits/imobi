@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, GoneException } from "@nestjs/common";
 import { DueDiligenceService, CriarDueDiligenceDto, AtualizarStatusDto } from "./due-diligence.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -11,8 +11,10 @@ export class DueDiligenceController {
   constructor(private readonly service: DueDiligenceService) {}
 
   @Post()
-  criar(@UsuarioAtual() u: IUsuario, @Body() body: CriarDueDiligenceDto) {
-    return this.service.criar(u.id, body);
+  criar() {
+    throw new GoneException(
+      "Endpoint legado. Use POST /api/v1/dossies — fluxo de viabilidade do tomador.",
+    );
   }
 
   @Get()

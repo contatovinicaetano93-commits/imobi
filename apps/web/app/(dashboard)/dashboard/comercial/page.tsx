@@ -19,7 +19,8 @@ import {
 import { formatarBRL } from "@imbobi/core";
 import type { ParceiroResumo, OperacaoIndicada, ContatoMailing } from "@/lib/api";
 import { PanelSection } from "@/components/dashboard/PanelSection";
-import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
+import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
+import { COMERCIAL_TABS } from "./_components/comercial-panel-config";
 
 const ZERO_RESUMO: ParceiroResumo = {
   comissoesAReceber: 0,
@@ -153,21 +154,14 @@ export default function ParceiroComercialPage() {
     setAdicionando(false);
   }
 
-  const comercialPanels = [
-    { id: "resumo-portal", priority: "primary" as const },
-    { id: "link-indicacao", priority: "primary" as const },
-    { id: "kpis-comissao", priority: "primary" as const },
-    { id: "operacoes-indicadas", priority: "primary" as const },
-    { id: "mailing-contatos", priority: "secondary" as const },
-    { id: "privacidade", priority: "secondary" as const },
-  ];
-
   const resumoSummary = `${rs.operacoesAtivas} operações ativas · ${formatarBRL(rs.comissoesAReceber)} a receber`;
 
   return (
-    <div className="space-y-6 max-w-6xl p-4 sm:p-6">
-      <PanelToolbar sections={comercialPanels} />
-
+    <DashboardPanelShell
+      tabs={COMERCIAL_TABS}
+      maxWidth="lg"
+      tabContent={{
+        resumo: (
       <PanelSection
         id="resumo-portal"
         title="Portal Comercial"
@@ -220,7 +214,9 @@ export default function ParceiroComercialPage() {
       </div>
       </div>
       </PanelSection>
-
+        ),
+        indicacao: (
+          <>
       <PanelSection
         id="link-indicacao"
         title="Link de indicação"
@@ -294,7 +290,9 @@ export default function ParceiroComercialPage() {
         }
       </div>
       </PanelSection>
-
+          </>
+        ),
+        operacoes: (
       <PanelSection
         id="operacoes-indicadas"
         title="Operações indicadas"
@@ -346,7 +344,9 @@ export default function ParceiroComercialPage() {
           </div>
         </div>
       </PanelSection>
-
+        ),
+        contatos: (
+          <>
       <PanelSection
         id="mailing-contatos"
         title="Mailing de contatos"
@@ -455,6 +455,9 @@ export default function ParceiroComercialPage() {
         </div>
       </div>
       </PanelSection>
-    </div>
+          </>
+        ),
+      }}
+    />
   );
 }

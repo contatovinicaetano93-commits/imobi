@@ -13,6 +13,8 @@ import { formatarBRL } from "@imbobi/core";
 import { AdminSipocPanel } from "./_components/AdminSipocPanel";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
+import { PanelTabs } from "@/components/dashboard/PanelTabs";
+import { PanelStack } from "@/components/dashboard/PanelStack";
 import { ADMIN_GLOBAL_PANELS, ADMIN_TAB_PANELS } from "./_components/admin-panel-config";
 
 const NAVY  = "#0C1A3D";
@@ -1041,34 +1043,19 @@ export default function AdminPage() {
         </div>
       </PanelSection>
 
-      {/* Tab Nav */}
-      <div style={{ display: "flex", gap: 4, borderBottom: "1px solid rgba(12,26,61,0.08)", overflowX: "auto" }}>
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            style={{
-              ...j, display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "0.75rem 1rem", fontSize: "0.8rem", fontWeight: tab === id ? 700 : 500,
-              color: tab === id ? NAVY : "rgba(12,26,61,0.42)",
-              background: "none", border: "none", cursor: "pointer",
-              borderBottom: `2px solid ${tab === id ? MINT : "transparent"}`,
-              marginBottom: -1, whiteSpace: "nowrap", flexShrink: 0,
-              transition: "all 0.12s",
-            }}
-          >
-            <Icon size={13} />
-            {label}
-          </button>
-        ))}
-      </div>
+      <PanelTabs
+        tabs={[...TABS]}
+        active={tab}
+        onChange={(id) => setTab(id as TabId)}
+      />
 
-      {/* Tab Content */}
+      <PanelStack>
       {tab === "portfolio"   && <TabPortfolio overview={overview} />}
       {tab === "risco"       && <TabRisco />}
       {tab === "pipeline"    && <TabPipeline />}
       {tab === "obras"       && <TabObras />}
       {tab === "operacional" && <TabOperacional atividades={atividades} obras={obras} />}
+      </PanelStack>
     </div>
   );
 }

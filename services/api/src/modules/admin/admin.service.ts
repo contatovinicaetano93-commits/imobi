@@ -413,6 +413,16 @@ export class AdminService {
       throw new BadRequestException("Obra não está aguardando homologação.");
     }
 
+    const dossieAprovado = await this.prisma.dueDiligence.findFirst({
+      where: { usuarioId: obra.usuarioId, status: "APROVADO" },
+      select: { id: true },
+    });
+    if (!dossieAprovado) {
+      throw new BadRequestException(
+        "Tomador não possui dossiê de viabilidade aprovado (SIPOC passo 0).",
+      );
+    }
+
     await this.prisma.obra.update({
       where: { obraId },
       data: { status: "EM_EXECUCAO" },

@@ -6,15 +6,10 @@ import Link from "next/link";
 import { ShieldCheck, AlertTriangle, Zap, Lightbulb } from "lucide-react";
 import { fetchManagerDashboard } from "@/lib/fetch-manager-dashboard";
 import { PanelSection } from "@/components/dashboard/PanelSection";
-import { PanelToolbar, JORNADA_PANEL_ID } from "@/components/dashboard/PanelToolbar";
+import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
 import { BETA_MVP_MODE, mvpSafeHref } from "@/lib/beta-mvp";
 import { JornadaHeroStrip } from "@/components/dashboard/JornadaHeroStrip";
-
-const GESTOR_PANELS_BASE = [
-  { id: "resumo-fila", priority: "primary" as const },
-  { id: "acoes-rapidas", priority: "primary" as const },
-  { id: "dicas", priority: "secondary" as const },
-];
+import { buildGestorTabs } from "./_components/gestor-panel-config";
 
 const ZERO_STATS: ManagerStats = {
   filaAprovacoes: 0,
@@ -82,9 +77,7 @@ export default function GestorPage() {
   const kycHref = "/dashboard/gestor/kyc";
   const obrasHref = mvpSafeHref("/dashboard/obras", "GESTOR");
   const creditosHref = BETA_MVP_MODE ? etapasHref : "/dashboard/credito";
-  const gestorPanels = BETA_MVP_MODE
-    ? [{ id: JORNADA_PANEL_ID, priority: "primary" as const }, ...GESTOR_PANELS_BASE]
-    : GESTOR_PANELS_BASE;
+  const gestorTabs = buildGestorTabs(BETA_MVP_MODE);
   const filaTotal = s.filaAprovacoes + s.filaKyc;
 
   if (loading && !stats) {
@@ -106,23 +99,28 @@ export default function GestorPage() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 p-4 sm:p-6">
-      <PanelToolbar sections={gestorPanels} />
-
-      {BETA_MVP_MODE && <JornadaHeroStrip variant="gestor" />}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <p className="text-sm text-red-700 font-medium">{error}</p>
-          <button
-            type="button"
-            onClick={loadStats}
-            className="text-sm font-semibold text-red-700 underline shrink-0"
-          >
-            Tentar novamente
-          </button>
-        </div>
-      )}
-      <PanelSection
+    <DashboardPanelShell
+      tabs={gestorTabs}
+      maxWidth="lg"
+      beforeTabs={
+        error ? (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <p className="text-sm text-red-700 font-medium">{error}</p>
+            <button
+              type="button"
+              onClick={loadStats}
+              className="text-sm font-semibold text-red-700 underline shrink-0"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : undefined
+      }
+      tabContent={{
+        operacoes: (
+          <>
+            {BETA_MVP_MODE && <JornadaHeroStrip variant="gestor" />}
+            <PanelSection
         id="resumo-fila"
         title="Painel de Operações"
         icon={<ShieldCheck className="w-4 h-4 text-violet-600" />}
@@ -181,8 +179,10 @@ export default function GestorPage() {
       </div>
       </div>
       </PanelSection>
-
-      <div className="space-y-4">
+          </>
+        ),
+        acoes: (
+          <>
         <PanelSection
           id="acoes-rapidas"
           title="Ações Rápidas"
@@ -240,7 +240,9 @@ export default function GestorPage() {
             <p>• Use o painel apenas para monitorar saúde das operações</p>
           </div>
         </PanelSection>
-      </div>
-    </div>
+          </>
+        ),
+      }}
+    />
   );
 }

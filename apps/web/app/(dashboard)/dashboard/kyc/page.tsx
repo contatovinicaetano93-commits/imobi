@@ -5,6 +5,14 @@ import { kycApi, type KycStatus, type KycDocumento } from "@/lib/api";
 import { FileText, CheckCircle2, XCircle, Clock, Upload, AlertCircle, ShieldCheck } from "lucide-react";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
 import { useToast } from "@/hooks/toast-context";
+import { PanelSection } from "@/components/dashboard/PanelSection";
+import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
+
+const KYC_PANELS = [
+  { id: "kyc-progresso", priority: "primary" as const },
+  { id: "kyc-documentos", priority: "primary" as const },
+  { id: "kyc-como-funciona", priority: "secondary" as const },
+];
 
 const BADGE: Record<string, { label: string; cls: string }> = {
   PENDENTE:       { label: "Pendente",       cls: "bg-yellow-100 text-yellow-800" },
@@ -85,7 +93,7 @@ export default function KycPage() {
   const pct = Math.round((aprovados / total) * 100);
 
   const content = (
-    <div className="space-y-5">
+    <>
       <input
         ref={fileInputRef}
         type="file"
@@ -100,13 +108,17 @@ export default function KycPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="border-b border-gray-50 bg-[#EEF3FF] px-6 py-4">
+      <PanelSection
+        id="kyc-progresso"
+        title="Progresso da verificação"
+        icon={<ShieldCheck className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        summary={`${aprovados}/${total} documentos aprovados`}
+        badge={`${pct}%`}
+      >
+      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
+        <div className="border-b border-gray-50 bg-[#EEF3FF] px-5 py-4">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-[#1B4FD8]" />
-              <h2 className="font-semibold text-[#0C1A3D]">Progresso</h2>
-            </div>
             <span className="text-sm font-bold text-[#1B4FD8]">{aprovados}/{total} aprovados</span>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/80">
@@ -127,12 +139,17 @@ export default function KycPage() {
           ))}
         </div>
       </div>
+      </PanelSection>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="flex items-center gap-3 border-b border-gray-50 px-6 py-4">
-          <FileText className="h-4 w-4 text-gray-400" />
-          <h2 className="font-semibold text-gray-900">Documentos obrigatórios</h2>
-        </div>
+      <PanelSection
+        id="kyc-documentos"
+        title="Documentos obrigatórios"
+        icon={<FileText className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        summary={`${pendentes} pendente(s) · ${rejeitados} rejeitado(s)`}
+        urgency={rejeitados > 0 ? "critical" : pendentes > 0 ? "warning" : "none"}
+      >
+      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
         <div className="divide-y divide-gray-50">
           {DOC_TIPOS.map(({ tipo, label, desc }) => {
             const doc: KycDocumento | undefined = docMap[tipo];
@@ -179,9 +196,16 @@ export default function KycPage() {
           })}
         </div>
       </div>
+      </PanelSection>
 
-      <div className="rounded-2xl border border-blue-100 bg-[#EEF3FF] p-5">
-        <p className="mb-2 text-sm font-semibold text-[#1B4FD8]">Como funciona</p>
+      <PanelSection
+        id="kyc-como-funciona"
+        title="Como funciona"
+        icon={<ShieldCheck className="w-4 h-4 text-[#16a34a]" />}
+        priority="secondary"
+        summary="Prazo de análise, notificações e reenvio"
+      >
+      <div className="rounded-xl border border-blue-100 bg-[#EEF3FF] p-5">
         <ul className="space-y-1.5 text-sm text-gray-600">
           <li>· Documentos analisados em até 24 horas</li>
           <li>· Você receberá uma notificação ao concluir</li>
@@ -189,11 +213,13 @@ export default function KycPage() {
           <li>· Aprovação completa libera o cadastro da obra</li>
         </ul>
       </div>
-    </div>
+      </PanelSection>
+    </>
   );
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <DashboardPanelShell panels={KYC_PANELS} maxWidth="sm" content={
+      <>
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">Verificação de identidade</h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -201,6 +227,7 @@ export default function KycPage() {
         </p>
       </div>
       {content}
-    </div>
+      </>
+    } />
   );
 }

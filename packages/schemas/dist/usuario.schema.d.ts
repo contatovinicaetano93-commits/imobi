@@ -42,6 +42,13 @@ export declare const LoginSchema: z.ZodObject<{
     email: string;
     senha: string;
 }>;
+export declare const RefreshTokenBodySchema: z.ZodObject<{
+    refreshToken: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    refreshToken: string;
+}, {
+    refreshToken: string;
+}>;
 export declare const EsqueceuSenhaSchema: z.ZodObject<{
     email: z.ZodString;
 }, "strip", z.ZodTypeAny, {
@@ -150,6 +157,7 @@ export type TipoUsuario = z.infer<typeof TipoUsuarioEnum>;
 export type KycStatus = z.infer<typeof KycStatusEnum>;
 export type CadastroUsuarioInput = z.infer<typeof CadastroUsuarioSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
+export type RefreshTokenBodyInput = z.infer<typeof RefreshTokenBodySchema>;
 export type UpdateUsuarioInput = z.infer<typeof UpdateUsuarioSchema>;
 export type UpdatePerfilUsuarioInput = z.infer<typeof UpdatePerfilUsuarioSchema>;
 export type EsqueceuSenhaInput = z.infer<typeof EsqueceuSenhaSchema>;

@@ -12,9 +12,10 @@ import {
 } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { PanelSection } from "@/components/dashboard/PanelSection";
-import { PanelToolbar, JORNADA_PANEL_ID } from "@/components/dashboard/PanelToolbar";
+import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
 import { BETA_MVP_MODE } from "@/lib/beta-mvp";
 import { JornadaHeroStrip } from "@/components/dashboard/JornadaHeroStrip";
+import { buildConstrutorTabs } from "./_components/construtor-panel-config";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Painel Construtor — IMOBI" };
@@ -112,28 +113,25 @@ export default async function ConstrutorPage() {
   const liberacoesPriority = etapasPendentes.length > 0 ? ("critical" as const) : ("primary" as const);
   const kycPriority = docsRejeitados > 0 ? ("critical" as const) : docsPendentes > 0 ? ("primary" as const) : ("secondary" as const);
 
-  const construtorPanels = [
-    ...(BETA_MVP_MODE ? [{ id: JORNADA_PANEL_ID, priority: "primary" as const }] : []),
-    ...(alertas.length > 0 ? [{ id: "alertas", priority: "critical" as const }] : []),
-    { id: "operacao-ativa", priority: "primary" as const },
-    { id: "cronograma-pagamentos", priority: "primary" as const },
-    { id: "cronograma-liberacoes", priority: liberacoesPriority },
-    { id: "medicao-obra", priority: "secondary" as const },
-    { id: "documentos-kyc", priority: kycPriority },
-    { id: "extrato-operacao", priority: "secondary" as const },
-    { id: "solicitacoes", priority: "primary" as const },
-    ...(notifs.length > 0 ? [{ id: "notificacoes", priority: "primary" as const }] : []),
-    { id: "contratos-documentos", priority: "secondary" as const },
-  ];
+  const construtorTabs = buildConstrutorTabs({
+    mvpMode: BETA_MVP_MODE,
+    hasAlertas: alertas.length > 0,
+    hasNotifs: notifs.length > 0,
+    liberacoesPriority,
+    kycPriority,
+  });
 
   const operacaoSummary = credito
     ? `${credito.obras?.[0]?.nome ?? "Crédito IMOBI"} · ${formatarBRL(valorLiberado)} devedor`
     : "Nenhuma operação ativa";
 
   return (
-    <div className="flex flex-col gap-4 pb-10 max-w-2xl p-4 sm:p-6">
-      <PanelToolbar sections={construtorPanels} />
-
+    <DashboardPanelShell
+      tabs={construtorTabs}
+      maxWidth="sm"
+      tabContent={{
+        operacao: (
+          <>
       {BETA_MVP_MODE && <JornadaHeroStrip variant="tomador" />}
 
       {alertas.length > 0 && (
@@ -220,8 +218,10 @@ export default async function ConstrutorPage() {
         </Card>
       )}
       </PanelSection>
-
-      {/* ── Cronograma de pagamentos ─────────────────────────────────── */}
+          </>
+        ),
+        cronograma: (
+          <>
       <PanelSection
         flush
         id="cronograma-pagamentos"
@@ -417,8 +417,10 @@ export default async function ConstrutorPage() {
           </Card>
         )}
       </PanelSection>
-
-      {/* ── Upload de documentos ──────────────────────────────────────── */}
+          </>
+        ),
+        documentos: (
+          <>
       <PanelSection
         flush
         id="documentos-kyc"
@@ -537,8 +539,10 @@ export default async function ConstrutorPage() {
           </Card>
         )}
       </PanelSection>
-
-      {/* ── Solicitações ──────────────────────────────────────────────── */}
+          </>
+        ),
+        solicitacoes: (
+          <>
       <PanelSection
         id="solicitacoes"
         title="Solicitações"
@@ -642,7 +646,9 @@ export default async function ConstrutorPage() {
           </div>
         </Card>
       </PanelSection>
-
-    </div>
+          </>
+        ),
+      }}
+    />
   );
 }

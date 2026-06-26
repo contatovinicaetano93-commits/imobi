@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AtualizarUsuarioAdminSchema = exports.FuncaoPainelEnum = exports.FUNCOES_PAINEL = exports.ContaBancariaEmpresaSchema = exports.UpdatePerfilUsuarioSchema = exports.UpdateUsuarioSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
+exports.AtualizarUsuarioAdminSchema = exports.FuncaoPainelEnum = exports.FUNCOES_PAINEL = exports.ContaBancariaEmpresaSchema = exports.UpdatePerfilUsuarioSchema = exports.UpdateUsuarioSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.RefreshTokenBodySchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
 const zod_1 = require("zod");
 exports.TipoUsuarioEnum = zod_1.z.enum([
     "TOMADOR",
@@ -41,6 +41,9 @@ exports.CadastroUsuarioSchema = zod_1.z.object({
 exports.LoginSchema = zod_1.z.object({
     email: zod_1.z.string().email(),
     senha: zod_1.z.string().min(1),
+});
+exports.RefreshTokenBodySchema = zod_1.z.object({
+    refreshToken: zod_1.z.string().min(1, "Token de atualização obrigatório"),
 });
 exports.EsqueceuSenhaSchema = zod_1.z.object({
     email: zod_1.z.string().email(),

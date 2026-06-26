@@ -10,7 +10,8 @@ import {
 import { formatarBRL } from "@imbobi/core";
 import { DynamicVisitQueueClient } from "./_components/DynamicVisitQueueClient";
 import { PanelSection } from "@/components/dashboard/PanelSection";
-import { PanelToolbar } from "@/components/dashboard/PanelToolbar";
+import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
+import { ENGENHEIRO_TABS } from "./_components/engenheiro-panel-config";
 import {
   Wallet,
   Package,
@@ -63,20 +64,14 @@ export default async function EngenheiroPortalPage() {
 
   const licencasPriority = licencasAtencao > 0 ? ("critical" as const) : ("primary" as const);
 
-  const engenheiroPanels = [
-    { id: "resumo-portal", priority: "primary" as const },
-    { id: "fila-visitas", priority: "critical" as const },
-    { id: "obras-responsabilidade", priority: "primary" as const },
-    { id: "licencas", priority: licencasPriority },
-    { id: "etapas-projeto", priority: "secondary" as const },
-  ];
-
   const resumoSummary = `${financeiro.length} obras · ${agendadas.length} visitas agendadas · ${formatarBRL(totalExecutado)} executado`;
 
   return (
-    <div className="space-y-6 max-w-6xl p-4 sm:p-6">
-      <PanelToolbar sections={engenheiroPanels} />
-
+    <DashboardPanelShell
+      tabs={ENGENHEIRO_TABS}
+      maxWidth="lg"
+      tabContent={{
+        resumo: (
       <PanelSection
         id="resumo-portal"
         title="Portal do Engenheiro"
@@ -139,7 +134,8 @@ export default async function EngenheiroPortalPage() {
       </div>
       </div>
       </PanelSection>
-
+        ),
+        visitas: (
       <PanelSection
         id="fila-visitas"
         title="Fila de visitas"
@@ -151,8 +147,9 @@ export default async function EngenheiroPortalPage() {
       >
         <DynamicVisitQueueClient visits={visitas} />
       </PanelSection>
-
-      {/* Obras — detalhamento financeiro */}
+        ),
+        obras: (
+          <>
       <PanelSection
         id="obras-responsabilidade"
         title="Obras sob responsabilidade"
@@ -195,12 +192,33 @@ export default async function EngenheiroPortalPage() {
         </div>
       </PanelSection>
 
-      {/* Licenças */}
+      <PanelSection
+        id="etapas-projeto"
+        title="Etapas do projeto"
+        icon={<CalendarClock className="w-4 h-4 text-[#ea580c]" />}
+        priority="secondary"
+        summary={financeiro.length > 0 ? "Cronograma por obra" : "Nenhuma obra atribuída"}
+      >
+        {financeiro.length === 0 ? (
+          <div className="rounded-xl border border-gray-100 bg-gray-50 p-10 text-center">
+            <HardHat className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+            <p className="text-sm font-medium text-gray-500">Nenhuma obra atribuída</p>
+            <p className="text-xs text-gray-400 mt-1">As etapas aparecem quando uma obra for vinculada ao seu perfil.</p>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-gray-100 bg-gray-50 p-5 text-center">
+            <p className="text-sm text-gray-500">Selecione uma obra para ver o cronograma de etapas.</p>
+          </div>
+        )}
+      </PanelSection>
+          </>
+        ),
+        licencas: (
       <PanelSection
         id="licencas"
         title="Licenças e regularização"
         icon={<ShieldCheck className="w-4 h-4 text-[#ea580c]" />}
-        priority={licencasAtencao > 0 ? "critical" : "primary"}
+        priority={licencasPriority}
         badge={licencasAtencao > 0 ? licencasAtencao : licencas.length}
         summary={licencasAtencao > 0 ? `${licencasAtencao} exigindo atenção` : `${licencas.length} licença(s)`}
         urgency={licencasAtencao > 0 ? "warning" : "none"}
@@ -244,27 +262,8 @@ export default async function EngenheiroPortalPage() {
           ))}
         </div>
       </PanelSection>
-
-      {/* Etapas por obra */}
-      <PanelSection
-        id="etapas-projeto"
-        title="Etapas do projeto"
-        icon={<CalendarClock className="w-4 h-4 text-[#ea580c]" />}
-        priority="secondary"
-        summary={financeiro.length > 0 ? "Cronograma por obra" : "Nenhuma obra atribuída"}
-      >
-        {financeiro.length === 0 ? (
-          <div className="rounded-xl border border-gray-100 bg-gray-50 p-10 text-center">
-            <HardHat className="w-8 h-8 text-gray-200 mx-auto mb-3" />
-            <p className="text-sm font-medium text-gray-500">Nenhuma obra atribuída</p>
-            <p className="text-xs text-gray-400 mt-1">As etapas aparecem quando uma obra for vinculada ao seu perfil.</p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-gray-100 bg-gray-50 p-5 text-center">
-            <p className="text-sm text-gray-500">Selecione uma obra para ver o cronograma de etapas.</p>
-          </div>
-        )}
-      </PanelSection>
-    </div>
+        ),
+      }}
+    />
   );
 }

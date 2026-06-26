@@ -197,10 +197,39 @@ describe("JornadaService", () => {
 
     it("bloqueia sem obra", async () => {
       kyc.obterStatus.mockResolvedValue({ status: "APROVADO" });
+      dossies.temDossieAprovado.mockResolvedValue(true);
       prisma.obra.count.mockResolvedValue(0);
 
       await expect(service.assertPodeSolicitarCredito("t1")).rejects.toThrow(
         /Cadastre uma obra/,
+      );
+    });
+
+    it("bloqueia sem dossiê aprovado", async () => {
+      kyc.obterStatus.mockResolvedValue({ status: "APROVADO" });
+      dossies.temDossieAprovado.mockResolvedValue(false);
+
+      await expect(service.assertPodeSolicitarCredito("t1")).rejects.toThrow(
+        /dossiê de viabilidade/,
+      );
+    });
+  });
+
+  describe("assertPodeCadastrarObra", () => {
+    it("bloqueia sem KYC aprovado", async () => {
+      kyc.obterStatus.mockResolvedValue({ status: "PENDENTE" });
+
+      await expect(service.assertPodeCadastrarObra("t1")).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+
+    it("bloqueia sem dossiê aprovado", async () => {
+      kyc.obterStatus.mockResolvedValue({ status: "APROVADO" });
+      dossies.temDossieAprovado.mockResolvedValue(false);
+
+      await expect(service.assertPodeCadastrarObra("t1")).rejects.toThrow(
+        /dossiê de viabilidade/,
       );
     });
   });

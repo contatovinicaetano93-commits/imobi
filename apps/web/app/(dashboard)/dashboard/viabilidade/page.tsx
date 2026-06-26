@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   dossiesApi,
   type ChecklistTemplateResponse,
@@ -21,6 +22,8 @@ import {
 } from "lucide-react";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
 import { useToast } from "@/hooks/toast-context";
+import { PanelSection } from "@/components/dashboard/PanelSection";
+import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
   RASCUNHO: { label: "Rascunho", cls: "bg-gray-100 text-gray-700" },
@@ -235,8 +238,19 @@ export default function ViabilidadePage() {
       ? Math.round((concluidos.length / obrigatorios.length) * 100)
       : 0;
 
+  const viabilidadePanels = !dossie
+    ? [{ id: "viabilidade-novo", priority: "primary" as const }]
+    : [
+        { id: "viabilidade-status", priority: "primary" as const },
+        { id: "viabilidade-checklist", priority: "primary" as const },
+      ];
+
   return (
-    <div className="max-w-3xl space-y-6">
+    <DashboardPanelShell
+      panels={viabilidadePanels}
+      maxWidth="md"
+      content={
+        <>
       <input
         ref={fileInputRef}
         type="file"
@@ -261,8 +275,14 @@ export default function ViabilidadePage() {
       )}
 
       {!dossie && template && (
-        <div className="space-y-5 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="font-semibold text-gray-900">Novo dossiê</h2>
+        <PanelSection
+          id="viabilidade-novo"
+          title="Novo dossiê"
+          icon={<FileText className="w-4 h-4 text-[#1B4FD8]" />}
+          priority="primary"
+          summary="Selecione o estágio e cadastre o empreendimento"
+        >
+        <div className="space-y-5">
           <p className="text-sm text-gray-500">Selecione o estágio do empreendimento:</p>
           <div className="grid gap-3 sm:grid-cols-3">
             {template.estagiosDisponiveis.map((e) => (
@@ -324,11 +344,20 @@ export default function ViabilidadePage() {
             Criar dossiê
           </button>
         </div>
+        </PanelSection>
       )}
 
       {dossie && (
         <>
-          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <PanelSection
+            id="viabilidade-status"
+            title={dossie.nomeEmpreendimento}
+            icon={<Building2 className="w-4 h-4 text-[#1B4FD8]" />}
+            priority="primary"
+            summary={`${STATUS_BADGE[dossie.status]?.label ?? dossie.status} · ${pct}% do checklist`}
+            badge={pct < 100 ? `${pct}%` : undefined}
+          >
+          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
             <div className="border-b border-gray-50 bg-[#EEF3FF] px-6 py-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -361,12 +390,16 @@ export default function ViabilidadePage() {
               </div>
             )}
           </div>
+          </PanelSection>
 
-          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-            <div className="flex items-center gap-3 border-b border-gray-50 px-6 py-4">
-              <Building2 className="h-4 w-4 text-gray-400" />
-              <h3 className="font-semibold text-gray-900">Checklist de documentos</h3>
-            </div>
+          <PanelSection
+            id="viabilidade-checklist"
+            title="Checklist de documentos"
+            icon={<Building2 className="w-4 h-4 text-[#1B4FD8]" />}
+            priority="primary"
+            summary={`${concluidos.length}/${obrigatorios.length} itens obrigatórios`}
+          >
+          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
             <div className="divide-y divide-gray-50">
               {itens.map((item) => (
                 <div key={item.id} className="flex items-center gap-4 px-6 py-4">
@@ -463,11 +496,19 @@ export default function ViabilidadePage() {
           )}
 
           {dossie.status === "APROVADO" && (
-            <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 p-5">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <p className="text-sm text-green-800">
-                Dossiê aprovado. Você já pode cadastrar sua obra no próximo passo.
-              </p>
+            <div className="flex flex-col gap-3 rounded-2xl border border-green-200 bg-green-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
+                <p className="text-sm text-green-800">
+                  Dossiê aprovado. Cadastre sua obra no próximo passo do fluxo.
+                </p>
+              </div>
+              <Link
+                href="/dashboard/obras/nova"
+                className="inline-flex shrink-0 items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+              >
+                Cadastrar obra
+              </Link>
             </div>
           )}
 
@@ -479,6 +520,7 @@ export default function ViabilidadePage() {
               </p>
             </div>
           )}
+          </PanelSection>
         </>
       )}
 
@@ -496,6 +538,8 @@ export default function ViabilidadePage() {
           <li>· Aprovação libera o cadastro da obra na jornada</li>
         </ul>
       </div>
-    </div>
+        </>
+      }
+    />
   );
 }

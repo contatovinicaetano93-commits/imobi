@@ -8,6 +8,7 @@ const MONITORING_CONTROLLER_NAMES = new Set(["HealthController", "MetricsControl
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
   protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
+    if (process.env.NODE_ENV === "test") return true;
     if (await super.shouldSkip(context)) return true;
 
     if (MONITORING_CONTROLLER_NAMES.has(context.getClass()?.name ?? "")) {

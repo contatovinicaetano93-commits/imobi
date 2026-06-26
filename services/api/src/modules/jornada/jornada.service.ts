@@ -87,18 +87,38 @@ export class JornadaService {
     };
   }
 
-  async assertPodeSolicitarCredito(usuarioId: string): Promise<void> {
-    const kyc = await this.kyc.obterStatus(usuarioId);
-    if (kyc.status !== "APROVADO") {
+  async assertPodeCadastrarObra(usuarioId: string): Promise<void> {
+    await this.assertKycAprovado(usuarioId);
+    const dossieAprovado = await this.dossies.temDossieAprovado(usuarioId);
+    if (!dossieAprovado) {
       throw new BadRequestException(
-        kyc.status === "ENVIADO"
-          ? "Documentos em análise. Aguarde aprovação do KYC antes de solicitar crédito."
-          : "Complete e envie seus documentos (KYC) antes de solicitar crédito.",
+        "Complete e obtenha aprovação do dossiê de viabilidade antes de cadastrar uma obra.",
+      );
+    }
+  }
+
+  async assertPodeSolicitarCredito(usuarioId: string): Promise<void> {
+    await this.assertKycAprovado(usuarioId);
+    const dossieAprovado = await this.dossies.temDossieAprovado(usuarioId);
+    if (!dossieAprovado) {
+      throw new BadRequestException(
+        "Obtenha aprovação do dossiê de viabilidade antes de solicitar crédito.",
       );
     }
     const obras = await this.prisma.obra.count({ where: { usuarioId } });
     if (obras === 0) {
       throw new BadRequestException("Cadastre uma obra antes de solicitar crédito.");
+    }
+  }
+
+  private async assertKycAprovado(usuarioId: string): Promise<void> {
+    const kyc = await this.kyc.obterStatus(usuarioId);
+    if (kyc.status !== "APROVADO") {
+      throw new BadRequestException(
+        kyc.status === "ENVIADO"
+          ? "Documentos em análise. Aguarde aprovação do KYC antes de continuar."
+          : "Complete e envie seus documentos (KYC) antes de continuar.",
+      );
     }
   }
 

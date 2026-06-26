@@ -16,7 +16,7 @@ export function AdminFlowGuide({ activeStep }: Props) {
       <p className="text-xs font-bold uppercase tracking-wider text-[#1B4FD8] mb-3">
         Fluxo SIPOC — liberação guiada
       </p>
-      <ol className="grid gap-2 sm:grid-cols-5 sm:gap-3">
+      <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 sm:gap-3">
         {ADMIN_OBRAS_FLOW.map(({ step, label, actor, desc }) => {
           const isActive = activeStep === step;
           return (

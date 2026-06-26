@@ -1,10 +1,10 @@
 import { Controller, Post, Body, HttpCode, UseGuards } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
-import { CadastroUsuarioSchema, LoginSchema, EsqueceuSenhaSchema, RedefinirSenhaSchema } from "@imbobi/schemas";
+import { CadastroUsuarioSchema, LoginSchema, EsqueceuSenhaSchema, RedefinirSenhaSchema, RefreshTokenBodySchema } from "@imbobi/schemas";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-import type { CadastroUsuarioInput, LoginInput, EsqueceuSenhaInput, RedefinirSenhaInput } from "@imbobi/schemas";
+import type { CadastroUsuarioInput, LoginInput, EsqueceuSenhaInput, RedefinirSenhaInput, RefreshTokenBodyInput } from "@imbobi/schemas";
 
 @Controller("auth")
 export class AuthController {
@@ -26,15 +26,15 @@ export class AuthController {
   @Post("renovar")
   @HttpCode(200)
   @Throttle({ auth: { limit: 10, ttl: 60000 } })
-  renovar(@Body("refreshToken") token: string) {
-    return this.auth.renovarToken(token);
+  renovar(@Body(new ZodPipe(RefreshTokenBodySchema)) body: RefreshTokenBodyInput) {
+    return this.auth.renovarToken(body.refreshToken);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post("logout")
   @HttpCode(204)
-  logout(@Body("refreshToken") token: string) {
-    return this.auth.revogarToken(token);
+  logout(@Body(new ZodPipe(RefreshTokenBodySchema)) body: RefreshTokenBodyInput) {
+    return this.auth.revogarToken(body.refreshToken);
   }
 
   @Post("esqueceu-senha")

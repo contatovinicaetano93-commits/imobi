@@ -98,8 +98,9 @@ export function AdminSipocPanel() {
       <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
         <p className="text-sm text-blue-900 font-semibold">Fluxo SIPOC — liberação manual</p>
         <p className="text-xs text-blue-800 mt-1">
-          Construtor cadastra obra → Admin homologa → Engenheiro aprova vistoria → pagamento manual na conta
-          cadastrada → confirmação pelo financeiro IMOBI (WhatsApp +5511993455589).
+          Viabilidade (dossiê aprovado) → Construtor cadastra obra → Admin homologa → Engenheiro
+          aprova vistoria → pagamento manual na conta cadastrada → confirmação pelo financeiro IMOBI
+          (WhatsApp +5511993455589).
         </p>
       </div>
 

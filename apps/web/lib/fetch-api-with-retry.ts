@@ -10,7 +10,7 @@ async function wakeApi(api: string): Promise<void> {
 export type FetchApiWithRetryOptions = {
   path: string;
   method?: string;
-  body?: string;
+  body?: string | FormData;
   headers?: Record<string, string>;
   maxAttemptsPerApi?: number;
   wakeFirst?: boolean;
@@ -34,11 +34,13 @@ export async function fetchApiWithRetry({
     if (wakeFirst) await wakeApi(api);
 
     for (let attempt = 0; attempt < maxAttemptsPerApi; attempt++) {
+      const hasBody =
+        body !== undefined && method !== "GET" && method !== "HEAD";
       const res = await fetch(`${api}${normalizedPath}`, {
         method,
         headers,
-        body: body && method !== 'GET' && method !== 'HEAD' ? body : undefined,
-        cache: 'no-store',
+        body: hasBody ? body : undefined,
+        cache: "no-store",
         signal: AbortSignal.timeout(30_000),
       }).catch(() => null);
 

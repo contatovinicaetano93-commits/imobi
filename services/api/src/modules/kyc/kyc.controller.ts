@@ -10,6 +10,9 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { MANAGER_ROLES, MANAGER_WRITE_ROLES } from "../../common/constants/manager-roles";
 import { isManagerRole } from "../../common/constants/manager-roles";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { KycRejeitarDocumentoSchema } from "@imbobi/schemas";
+import type { KycRejeitarDocumentoInput } from "@imbobi/schemas";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
 
 @UseGuards(JwtAuthGuard)
 @Controller("kyc")
@@ -98,7 +101,7 @@ export class KycController {
   async rejeitarDocumento(
     @UsuarioAtual() u: IUsuario,
     @Param("id") id: string,
-    @Body() body: { motivo: string }
+    @Body(new ZodPipe(KycRejeitarDocumentoSchema)) body: KycRejeitarDocumentoInput,
   ) {
     return this.kyc.rejeitarDocumento(id, u.id, body.motivo);
   }

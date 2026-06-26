@@ -6,7 +6,7 @@
 import { resolve } from "path";
 
 if (process.env.NODE_ENV !== "production") {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
   const { config } = require("dotenv") as typeof import("dotenv");
   const apiRoot = resolve(__dirname, "..");
   config({ path: resolve(apiRoot, ".env") });

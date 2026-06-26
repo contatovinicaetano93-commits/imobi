@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { dossiesApi, type DossieResumo, type DossieStatus } from "@/lib/api";
 import { useAdminFilasOnChange } from "@/hooks/use-admin-filas-poll";
-import { CheckCircle2, XCircle, Clock, Loader2, FileText } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Loader2, FileText, ChevronRight } from "lucide-react";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
 import { useToast } from "@/hooks/toast-context";
 
@@ -103,16 +104,29 @@ export default function AdminViabilidadePage() {
                 key={d.id}
                 className="flex flex-wrap items-center justify-between gap-4 px-6 py-4"
               >
-                <div className="flex min-w-0 items-start gap-3">
+                <div className="flex min-w-0 items-start gap-3 flex-1">
                   <FileText className="mt-0.5 h-5 w-5 shrink-0 text-[#1B4FD8]" />
                   <div>
-                    <p className="font-semibold text-gray-900">{d.nomeEmpreendimento}</p>
+                    <Link
+                      href={`/dashboard/admin/viabilidade/${d.id}`}
+                      className="font-semibold text-gray-900 hover:text-[#1B4FD8] hover:underline"
+                    >
+                      {d.nomeEmpreendimento}
+                    </Link>
                     <p className="text-xs text-gray-500">
                       {d.estagioObra?.replace(/_/g, " ")} · {d.status} ·{" "}
                       {new Date(d.criadoEm).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                 </div>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/dashboard/admin/viabilidade/${d.id}`}
+                    className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                  >
+                    Revisar
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
                 {(d.status === "ENVIADO" || d.status === "EM_ANALISE") && (
                   <div className="flex gap-2">
                     <button
@@ -139,6 +153,7 @@ export default function AdminViabilidadePage() {
                     </button>
                   </div>
                 )}
+                </div>
               </div>
             ))
           )}

@@ -1,12 +1,13 @@
 import { BETA_MVP_MODE } from "@/lib/beta-mvp";
 import { ROLE_HOME } from "@/lib/role-permissions";
+import { obterJornadaResiliente } from "@/lib/jornada-fetch";
 
 export { ROLE_HOME };
 
 const GUIDED_ROLES = new Set(["TOMADOR", "CONSTRUTOR", "GESTOR", "GESTOR_FUNDO"]);
 
 /**
- * Navegação completa após login — em MVP vai direto ao passo da jornada.
+ * Navegação após login — em MVP vai ao passo atual da jornada.
  */
 export async function redirectAfterLogin(role: string, next?: string | null): Promise<void> {
   if (next && next.startsWith("/") && !next.startsWith("//")) {
@@ -15,9 +16,13 @@ export async function redirectAfterLogin(role: string, next?: string | null): Pr
   }
 
   if (BETA_MVP_MODE && GUIDED_ROLES.has(role)) {
-    const dest = ROLE_HOME[role] ?? "/dashboard";
-    setTimeout(() => window.location.assign(dest), 100);
-    return;
+    try {
+      const jornada = await obterJornadaResiliente();
+      setTimeout(() => window.location.assign(jornada.href), 100);
+      return;
+    } catch {
+      // API indisponível — fallback abaixo
+    }
   }
 
   const dest = ROLE_HOME[role] ?? "/dashboard";

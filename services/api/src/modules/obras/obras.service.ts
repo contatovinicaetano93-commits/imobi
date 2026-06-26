@@ -6,15 +6,19 @@ import { Prisma } from "@prisma/client";
 import type { CriarObraInput } from "@imbobi/schemas";
 import { ETAPAS_PADRAO } from "./etapas-padrao";
 import { invalidateJornadaCache } from "../jornada/jornada-cache";
+import { JornadaService } from "../jornada/jornada.service";
 
 @Injectable()
 export class ObrasService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly jornada: JornadaService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
   async criar(usuarioId: string, input: CriarObraInput) {
+    await this.jornada.assertPodeCadastrarObra(usuarioId);
+
     return this.prisma.$transaction(async (tx) => {
       if (input.geo != null) {
         const gpsValidation = await tx.$queryRaw<Array<{ valid: boolean }>>(

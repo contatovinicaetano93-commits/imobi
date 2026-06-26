@@ -36,10 +36,13 @@ Simular → Cadastro → Login → GET /api/v1/jornada → href do passo atual
 
 ## Comportamento técnico
 
-- **Login:** `redirectAfterLogin()` busca `/api/proxy/jornada` e navega para `jornada.href`.
-- **Guard:** `JornadaGuard` redireciona rotas fora do passo atual (conta/perfil sempre liberado).
+- **Login:** `redirectAfterLogin()` busca `/api/proxy/jornada` e navega para `jornada.href` (passo atual da API).
+- **Guard:** `JornadaGuard` redireciona rotas fora do passo atual (`isJornadaPathAllowed`); conta/perfil sempre liberados.
+- **Gates API:** criar obra exige KYC aprovado + dossiê `APROVADO`; solicitar crédito exige obra cadastrada (SIPOC passo 0–3).
+- **Legado:** `POST /due-diligence` retorna **410 Gone** — usar `/api/v1/dossies`.
 - **Hub:** `/dashboard/construtor` e `/dashboard/gestor` mostram só `NextStepHero` quando é passo de espera/conclusão.
 - **Fail-closed:** se `/jornada` falha, `JornadaError` com retry — não cai no painel antigo.
+- **Upload proxy:** rotas `/api/proxy/documentos` e `/api/proxy/kyc/upload` usam `fetchApiWithRetry` (wake Render + retry).
 - **MVP mode:** `NEXT_PUBLIC_BETA_MVP_MODE` default `true` (setar `false` para menu completo).
 
 ## Módulos ativos no beta

@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getApiV1Url } from "@/lib/api-base";
-
-const API = getApiV1Url();
+import { fetchApiWithRetry } from "@/lib/fetch-api-with-retry";
 
 export async function POST(req: NextRequest) {
   const token = (await cookies()).get("access_token")?.value;
   const formData = await req.formData();
 
-  const res = await fetch(`${API}/kyc/upload`, {
+  const res = await fetchApiWithRetry({
+    path: "/kyc/upload",
     method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,
-    cache: "no-store",
-  }).catch(() => null);
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    wakeFirst: true,
+  });
 
   if (!res) {
     return NextResponse.json({ message: "API inacessível" }, { status: 503 });

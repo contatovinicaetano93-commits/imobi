@@ -44,6 +44,10 @@ export const LoginSchema = z.object({
   senha: z.string().min(1),
 });
 
+export const RefreshTokenBodySchema = z.object({
+  refreshToken: z.string().min(1, "Token de atualização obrigatório"),
+});
+
 export const EsqueceuSenhaSchema = z.object({
   email: z.string().email(),
 });
@@ -125,6 +129,7 @@ export type TipoUsuario = z.infer<typeof TipoUsuarioEnum>;
 export type KycStatus = z.infer<typeof KycStatusEnum>;
 export type CadastroUsuarioInput = z.infer<typeof CadastroUsuarioSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
+export type RefreshTokenBodyInput = z.infer<typeof RefreshTokenBodySchema>;
 export type UpdateUsuarioInput = z.infer<typeof UpdateUsuarioSchema>;
 export type UpdatePerfilUsuarioInput = z.infer<typeof UpdatePerfilUsuarioSchema>;
 export type EsqueceuSenhaInput = z.infer<typeof EsqueceuSenhaSchema>;

@@ -4,16 +4,28 @@
 **Target**: 2-3 weeks to production  
 **Team**: Claude (Backend), Cursor (Frontend), DevOps Team
 
+> **Stack canônica (2026):** API no **Render**, web no **Vercel**. Ver [`docs/DEPLOY_STACK.md`](./DEPLOY_STACK.md). Railway e AWS EC2 estão **desativados** — seções abaixo que citam Railway são legado histórico.
+
 ---
 
 ## 📋 SOFT LAUNCH CHECKLIST
 
 ### Phase 1: DEPLOYMENT SETUP (Week 1)
 
-#### 1.1 Backend Deployment (Railway/Render)
+#### 1.1 Backend Deployment (Render — canônico)
 
 ```bash
-# Option A: Railway (Recommended for NestJS)
+# Render Web Service (NestJS) — ver docs/DEPLOY_STACK.md
+pnpm render:env:push
+pnpm render:redeploy
+bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com
+```
+
+<details>
+<summary>Legado: Railway (desativado — não usar)</summary>
+
+```bash
+# Option A: Railway (legado — NÃO usar em produção)
 1. Create Railway project
 2. Connect GitHub repo (contatovinicaetano93-commits/imobi)
 3. Set deployment branch: main
@@ -67,6 +79,8 @@ SENDGRID_API_KEY=
 SLACK_WEBHOOK_URL=
 ```
 
+</details>
+
 #### 1.2 Frontend Deployment (Vercel)
 
 ```bash
@@ -89,7 +103,7 @@ NEXT_PUBLIC_SENTRY_DSN=<same-as-backend>
 #### 1.3 Database Setup
 
 ```bash
-# Run migrations in Railway/Render PostgreSQL
+# Run migrations in Render PostgreSQL (staging/prod)
 psql $DATABASE_URL < services/api/prisma/migrations/*
 
 # Seed with test data
