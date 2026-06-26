@@ -38,6 +38,7 @@ model Usuario {
   contaNumero             String?
   contaPix                String?
   contaTitular            String?
+  telegramChatId      String?   @unique
   deletadoEm          DateTime?
   criadoEm            DateTime  @default(now())
   atualizadoEm  DateTime  @updatedAt
