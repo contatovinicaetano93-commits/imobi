@@ -12,8 +12,8 @@ test.describe('Admin KYC routing (sem painel gestor)', () => {
   test('admin em /dashboard/gestor/kyc redireciona para /dashboard/admin/kyc', async ({ page }) => {
     await page.goto('/dashboard/gestor/kyc', { waitUntil: 'domcontentloaded' });
     await page.waitForURL(/\/dashboard\/admin\/kyc/, { timeout: 30_000 });
-    await expect(page.getByText('Centro de Comando')).toBeVisible();
-    await expect(page.getByText('Fila KYC — Aprovação')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Centro de Comando' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Fila KYC — Aprovação' })).toBeVisible();
   });
 
   test('admin em /dashboard/gestor/etapas redireciona para /dashboard/admin/vistorias', async ({
