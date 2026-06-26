@@ -4,7 +4,8 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual } from "../../common/decorators/usuario-atual.decorator";
-import type { VotoDecisao } from "@prisma/client";
+import { ZodPipe } from "../../common/pipes/zod.pipe";
+import { SolicitarComiteSchema, ParecerComiteSchema, VotarComiteSchema, type SolicitarComiteDto, type ParecerComiteDto, type VotarComiteDto } from "./dto/comite.dto";
 
 @Controller("comite")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -17,18 +18,7 @@ export class ComiteController {
   @Roles("CONSTRUTOR", "TOMADOR")
   solicitar(
     @UsuarioAtual() user: UsuarioAtual,
-    @Body() body: {
-      valorSolicitado: number;
-      prazoMeses: number;
-      taxaMensal: number;
-      finalidade: string;
-      garantias?: string;
-      observacoes?: string;
-      obraId?: string;
-      vgv?: number;
-      custoObra?: number;
-      ltv?: number;
-    },
+    @Body(new ZodPipe(SolicitarComiteSchema)) body: SolicitarComiteDto,
   ) {
     return this.comiteService.submeterSolicitacao(user.id, body);
   }
@@ -48,7 +38,7 @@ export class ComiteController {
   parecer(
     @Param("comiteId") comiteId: string,
     @UsuarioAtual() user: UsuarioAtual,
-    @Body() body: { parecerTecnico: string },
+    @Body(new ZodPipe(ParecerComiteSchema)) body: ParecerComiteDto,
   ) {
     return this.comiteService.submeterParecer(comiteId, user.id, body.parecerTecnico);
   }
@@ -60,9 +50,9 @@ export class ComiteController {
   votar(
     @Param("comiteId") comiteId: string,
     @UsuarioAtual() user: UsuarioAtual,
-    @Body() body: { voto: VotoDecisao; justificativa?: string; condicoes?: string },
+    @Body(new ZodPipe(VotarComiteSchema)) body: VotarComiteDto,
   ) {
-    return this.comiteService.votar(comiteId, user.id, body.voto, body.justificativa, body.condicoes);
+    return this.comiteService.votar(comiteId, user.id, body.voto as VotoDecisao, body.justificativa, body.condicoes);
   }
 
   // ── Leitura: listar comitês (Admin + Fundo) ───────────────────────

@@ -35,7 +35,7 @@ export const usuariosApi = {
   atualizarPerfil: (data: UpdatePerfilUsuarioInput) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.patch<UsuarioPerfil>("/usuarios/me", data, token ?? undefined);
+      return apiClient.patch<UsuarioPerfil>("/api/v1/usuarios/meu-perfil", data, token ?? undefined);
     }),
 };
 

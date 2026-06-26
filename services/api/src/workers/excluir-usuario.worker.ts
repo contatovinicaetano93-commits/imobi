@@ -41,8 +41,12 @@ export class ExcluirUsuarioWorker {
       }
 
       // Verify that the user was actually marked for deletion 30+ days ago
+      if (!usuario.deletadoEm) {
+        this.logger.warn(`Usuário ${usuarioId} não está marcado para deleção - ignorando`);
+        return;
+      }
       const agora = new Date();
-      const diasDesdeDelecao = (agora.getTime() - usuario.deletadoEm!.getTime()) / (1000 * 60 * 60 * 24);
+      const diasDesdeDelecao = (agora.getTime() - usuario.deletadoEm.getTime()) / (1000 * 60 * 60 * 24);
 
       if (diasDesdeDelecao < 30) {
         this.logger.warn(
@@ -72,6 +76,11 @@ export class ExcluirUsuarioWorker {
 
         // 4. Delete score history
         await tx.scoreHistorico.deleteMany({
+          where: { usuarioId },
+        });
+
+        // 4b. Delete documentos (FK Restrict — must delete before usuario)
+        await tx.documento.deleteMany({
           where: { usuarioId },
         });
 

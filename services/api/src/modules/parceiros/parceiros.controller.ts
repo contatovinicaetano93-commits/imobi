@@ -13,12 +13,8 @@ import {
   UsuarioAtual,
   type UsuarioAtual as IUsuario,
 } from '../../common/decorators/usuario-atual.decorator';
-
-interface AdicionarMailingDto {
-  nome: string;
-  email: string;
-  telefone?: string;
-}
+import { ZodPipe } from '../../common/pipes/zod.pipe';
+import { AdicionarMailingSchema, type AdicionarMailingDto } from './dto/parceiros.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('COMERCIAL', 'PARCEIRO', 'ADMIN')
@@ -44,7 +40,7 @@ export class ParceirosController {
   @Post('mailing')
   adicionarMailing(
     @UsuarioAtual() u: IUsuario,
-    @Body() body: AdicionarMailingDto,
+    @Body(new ZodPipe(AdicionarMailingSchema)) body: AdicionarMailingDto,
   ) {
     return this.parceirosService.adicionarMailing(u.id, body);
   }

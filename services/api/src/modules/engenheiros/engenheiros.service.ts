@@ -55,7 +55,7 @@ export class EngenheirosService {
     }));
   }
 
-  async obterVisita(visitaId: string) {
+  async obterVisita(visitaId: string, engenheiroId: string) {
     const etapa = await this.prisma.etapaObra.findUnique({
       where: { etapaId: visitaId },
       include: {
@@ -66,6 +66,8 @@ export class EngenheirosService {
       },
     });
     if (!etapa) throw new NotFoundException("Visita não encontrada.");
+    const visitas = await this.listarVisitas(engenheiroId);
+    if (!visitas.some((v) => v.visitaId === visitaId)) throw new ForbiddenException("Acesso negado.");
     return {
       visitaId: etapa.etapaId,
       status: etapa.status === "AGUARDANDO_VISTORIA" ? "AGENDADA" : etapa.status === "REPROVADA" ? "REPROVADA" : "CONCLUIDA",

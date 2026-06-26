@@ -48,6 +48,7 @@ export class SetupController {
         email: u.email,
         acesso: rotaParaTipoSetup(u.tipo),
       })),
+      aviso: "Senha definida via SETUP_DEFAULT_PASSWORD — troque após o primeiro acesso.",
     };
   }
 }

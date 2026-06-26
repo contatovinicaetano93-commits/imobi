@@ -72,6 +72,9 @@ function loadSeedData(): any {
  * Clear all tables in correct order (respecting foreign keys)
  */
 async function clearDatabase(): Promise<void> {
+  if (process.env["NODE_ENV"] === "production") {
+    throw new Error("clearDatabase() blocked in production environment.");
+  }
   console.log("Clearing database...");
 
   try {

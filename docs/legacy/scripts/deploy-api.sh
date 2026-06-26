@@ -40,7 +40,7 @@ ssh -i "$SSH_KEY" ubuntu@"$API_IP" << 'EOF'
 cd /opt/imobi
 pnpm install --frozen-lockfile
 pnpm build
-npx prisma migrate deploy || true
+npx prisma migrate deploy
 EOF
 
 # Restart API service
@@ -56,7 +56,7 @@ EOF
 # Verify deployment
 echo "✅ Verifying deployment..."
 sleep 3
-ssh -i "$SSH_KEY" ubuntu@"$API_IP" "curl -s http://localhost:3001/health || echo 'API not yet ready'"
+ssh -i "$SSH_KEY" ubuntu@"$API_IP" "curl -s http://localhost:4000/api/v1/health || echo 'API not yet ready'"
 
 echo ""
 echo "✨ Deployment complete!"

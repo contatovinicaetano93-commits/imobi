@@ -38,7 +38,7 @@ export default function LoginScreen() {
   const onSubmit = async (data: LoginInput) => {
     try {
       const res = await apiClient.post<{ accessToken: string; refreshToken: string }>(
-        "/auth/login",
+        "/api/v1/auth/login",
         data
       );
       await SecureStore.setItemAsync("accessToken", res.accessToken);

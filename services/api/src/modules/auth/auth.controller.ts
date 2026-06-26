@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, UseGuards } from "@nestjs/common";
+import { Controller, Post, Body, HttpCode, UseGuards, BadRequestException } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { CadastroUsuarioSchema, LoginSchema, EsqueceuSenhaSchema, RedefinirSenhaSchema, RefreshTokenBodySchema } from "@imbobi/schemas";

@@ -16,8 +16,8 @@ export class EngenheirosController {
   }
 
   @Get("visitas/:visitaId")
-  obterVisita(@Param("visitaId") visitaId: string) {
-    return this.engenheirosService.obterVisita(visitaId);
+  obterVisita(@Req() req: any, @Param("visitaId") visitaId: string) {
+    return this.engenheirosService.obterVisita(visitaId, req.user.id);
   }
 
   @Patch("visitas/:visitaId")

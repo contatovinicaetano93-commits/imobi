@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, HttpCode } from "@nestjs/common";
-import { AdminService, CriarUsuarioAdminDto } from "./admin.service";
+import { AdminService } from "./admin.service";
+import type { CriarUsuarioAdminDto } from "./admin.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -7,6 +8,7 @@ import { UsuarioAtual } from "../../common/decorators/usuario-atual.decorator";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { AtualizarUsuarioAdminSchema } from "@imbobi/schemas";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
+import { CriarUsuarioAdminSchema, type CriarUsuarioAdminSchemaDto } from "./dto/criar-usuario-admin.dto";
 
 @Controller("admin")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -52,8 +54,8 @@ export class AdminController {
   }
 
   @Post("usuarios")
-  criarUsuario(@Body() body: CriarUsuarioAdminDto) {
-    return this.adminService.criarUsuario(body);
+  criarUsuario(@Body(new ZodPipe(CriarUsuarioAdminSchema)) body: CriarUsuarioAdminSchemaDto) {
+    return this.adminService.criarUsuario(body as CriarUsuarioAdminDto);
   }
 
   @Get("obras")

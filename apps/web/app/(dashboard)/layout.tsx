@@ -235,10 +235,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           setFuncoesBloqueadas(Array.isArray(d.funcoesBloqueadas) ? d.funcoesBloqueadas : []);
         } else {
           try { sessionStorage.removeItem("imobi_auth"); } catch { /* ignore */ }
-          setRole(null);
-          setUserName(null);
-          setUserEmail(null);
-          setFuncoesBloqueadas([]);
+          window.location.replace("/login");
+          return;
         }
         setRoleLoading(false);
       });

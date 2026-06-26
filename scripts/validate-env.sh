@@ -15,7 +15,7 @@ ERRORS=0
 
 check() {
   VAR=$1
-  VAL=$(eval echo "\$$VAR")
+  VAL=$(printenv "$VAR")
   if [ -z "$VAL" ]; then
     echo "MISSING: $VAR"
     ERRORS=$((ERRORS + 1))

@@ -11,8 +11,8 @@ export class EtapasController {
   constructor(private readonly etapas: EtapasService) {}
 
   @Get("obra/:obraId")
-  listar(@Param("obraId") obraId: string) {
-    return this.etapas.listarPorObra(obraId);
+  listar(@Param("obraId") obraId: string, @UsuarioAtual() u: IUsuario) {
+    return this.etapas.listarPorObra(obraId, u.id, u.tipo);
   }
 
   @UseGuards(RolesGuard)
@@ -37,6 +37,8 @@ export class EtapasController {
     return this.etapas.rejeitar(u.id, id, motivo);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles("CONSTRUTOR", "TOMADOR", "ENGENHEIRO", "GESTOR", "ADMIN")
   @Patch(":id/status")
   status(@Param("id") id: string, @Body("status") status: string, @UsuarioAtual() u: IUsuario) {
     return this.etapas.atualizarStatus(id, status, u.id, u.tipo);

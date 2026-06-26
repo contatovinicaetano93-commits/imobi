@@ -12,6 +12,8 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from '../../common/decorators/usuario-atual.decorator';
+import { ZodPipe } from '../../common/pipes/zod.pipe';
+import { CriarLeadSchema, CriarAtividadeSchema, type CriarLeadDto, type CriarAtividadeDto } from './dto/comercial.dto';
 
 @Controller('comercial')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -57,7 +59,7 @@ export class ComercialController {
   }
 
   @Post('leads')
-  async createLead(@UsuarioAtual() u: IUsuario, @Body() data: any) {
+  async createLead(@UsuarioAtual() u: IUsuario, @Body(new ZodPipe(CriarLeadSchema)) data: CriarLeadDto) {
     return this.comercialService.criarLead(u.id, data);
   }
 
@@ -74,7 +76,7 @@ export class ComercialController {
   @Post('leads/:leadId/atividades')
   async addActivity(
     @Param('leadId') leadId: string,
-    @Body() data: any,
+    @Body(new ZodPipe(CriarAtividadeSchema)) data: CriarAtividadeDto,
     @UsuarioAtual() u: IUsuario
   ) {
     return this.comercialService.adicionarAtividade(leadId, u.id, data);

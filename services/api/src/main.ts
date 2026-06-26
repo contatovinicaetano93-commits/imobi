@@ -19,7 +19,7 @@ async function bootstrap() {
 
   const fastifyOptions: any = {
     logger: process.env["NODE_ENV"] !== "production",
-    trust: true, // Trust proxy headers from Render load balancer
+    trustProxy: true,
     bodyLimit: 104857600, // 100MB for file uploads
   };
 
