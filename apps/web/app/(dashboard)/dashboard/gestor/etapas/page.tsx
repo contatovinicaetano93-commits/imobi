@@ -10,6 +10,7 @@ import { AdvancedFilters, type FilterState } from "@/components/dashboard/Advanc
 import { GestorSubpageHeader } from "@/app/(dashboard)/_components/gestor/GestorSubpageHeader";
 import { ManagerListBanner } from "@/app/(dashboard)/_components/gestor/ManagerListBanner";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
+import { useRedirectAdminFromGestorRoute } from "@/hooks/useRedirectAdminFromGestorRoute";
 import Link from "next/link";
 
 function brl(v: number) {
@@ -25,6 +26,7 @@ function hoursAgo(date: string): number {
 }
 
 function EtapasContent() {
+  const redirecting = useRedirectAdminFromGestorRoute("/dashboard/admin/vistorias");
   const router = useRouter();
   const searchParams = useSearchParams();
   const [data, setData] = useState<{ etapas: EtapaPendente[]; total: number } | null>(null);
@@ -83,6 +85,10 @@ function EtapasContent() {
   useEffect(() => {
     loadEtapas();
   }, [offset, filters]);
+
+  if (redirecting) {
+    return <PageSkeleton variant="timeline" count={3} showHeader={false} />;
+  }
 
   if (loading && !data) {
     return (

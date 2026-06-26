@@ -66,10 +66,23 @@ async function saveAuthState(email: string, password: string, outFile: string): 
 
     const now = Math.floor(Date.now() / 1000);
     const base = cookieBaseFromUrl(BASE_URL);
+    const role =
+      (() => {
+        try {
+          const part = data.accessToken.split('.')[1];
+          if (!part) return null;
+          const json = Buffer.from(part.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString();
+          const payload = JSON.parse(json) as { role?: string; tipo?: string };
+          return payload.role ?? payload.tipo ?? null;
+        } catch {
+          return null;
+        }
+      })() ?? undefined;
 
     await writeFile(outFile, JSON.stringify({
       cookies: [
         { ...base, name: 'access_token',  value: data.accessToken,              expires: now + 8 * 3600 },
+        ...(role ? [{ ...base, name: 'session_role', value: role, expires: now + 8 * 3600 }] : []),
         ...(data.refreshToken ? [{ ...base, name: 'refresh_token', value: data.refreshToken, expires: now + 7 * 24 * 3600 }] : []),
       ],
       origins: [],

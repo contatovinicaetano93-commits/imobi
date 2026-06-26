@@ -45,6 +45,56 @@ export async function loginViaApi(email: string, password: string): Promise<stri
   throw new Error(`API login failed for ${email} after retries: ${lastError}`);
 }
 
+export function decodeRoleFromAccessToken(token: string): string | null {
+  try {
+    const part = token.split('.')[1];
+    if (!part) return null;
+    const json = Buffer.from(part.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString();
+    const payload = JSON.parse(json) as { role?: string; tipo?: string };
+    return payload.role ?? payload.tipo ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Cookies httpOnly como no login web — middleware lê access_token + session_role. */
+export async function seedAuthCookies(
+  context: import('@playwright/test').BrowserContext,
+  email: string,
+  password: string,
+): Promise<void> {
+  const token = await loginViaApi(email, password);
+  const role = decodeRoleFromAccessToken(token);
+  if (!role) throw new Error(`JWT sem role para ${email}`);
+
+  const base = process.env.BASE_URL ?? 'http://localhost:3000';
+  const u = new URL(base);
+  const expires = Math.floor(Date.now() / 1000) + 8 * 3600;
+
+  await context.addCookies([
+    {
+      name: 'access_token',
+      value: token,
+      domain: u.hostname,
+      path: '/',
+      httpOnly: true,
+      secure: u.protocol === 'https:',
+      sameSite: 'Lax',
+      expires,
+    },
+    {
+      name: 'session_role',
+      value: role,
+      domain: u.hostname,
+      path: '/',
+      httpOnly: true,
+      secure: u.protocol === 'https:',
+      sameSite: 'Lax',
+      expires,
+    },
+  ]);
+}
+
 interface EtapaResumo {
   etapaId: string;
   nome: string;

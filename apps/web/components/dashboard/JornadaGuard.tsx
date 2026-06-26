@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import type { Route } from "next";
 import { BETA_MVP_MODE } from "@/lib/beta-mvp";
+import { isJornadaPathAllowed } from "@/lib/jornada-routes";
 import { useJornadaOptional } from "@/hooks/jornada-context";
 
 const GUIDED_ROLES = new Set(["TOMADOR", "CONSTRUTOR", "GESTOR", "GESTOR_FUNDO"]);
@@ -14,15 +16,16 @@ type Props = {
 };
 
 /**
- * MVP: não força redirect. Revalida jornada só ao voltar ao hub vindo de outra rota.
+ * MVP guiado: redireciona rotas fora do passo atual (conta/perfil sempre liberado).
+ * Revalida jornada ao voltar ao hub.
  */
 export function JornadaGuard({ role, children }: Props) {
   const pathname = usePathname();
+  const router = useRouter();
   const jornadaCtx = useJornadaOptional();
   const prevPathRef = useRef(pathname);
 
-  const guided =
-    BETA_MVP_MODE && role != null && GUIDED_ROLES.has(role);
+  const guided = BETA_MVP_MODE && role != null && GUIDED_ROLES.has(role);
 
   useEffect(() => {
     if (!guided || !jornadaCtx) return;
@@ -35,6 +38,14 @@ export function JornadaGuard({ role, children }: Props) {
       void jornadaCtx.refresh();
     }
   }, [guided, pathname, jornadaCtx]);
+
+  useEffect(() => {
+    if (!guided || !jornadaCtx?.jornada || jornadaCtx.loading) return;
+
+    if (!isJornadaPathAllowed(pathname, jornadaCtx.jornada)) {
+      router.replace(jornadaCtx.jornada.href as Route);
+    }
+  }, [guided, pathname, jornadaCtx, router]);
 
   return <>{children}</>;
 }

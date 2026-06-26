@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { decodeJwtPayload } from "@/lib/decode-jwt-payload";
 import { ROLE_HOME, normalizeRole } from "@/lib/role-permissions";
+import { resolveRequestRole } from "@/lib/resolve-request-role";
 import { isMvpRouteAllowed } from "@/lib/beta-mvp";
 
 const PUBLIC_PATHS = [
@@ -33,6 +34,7 @@ const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: "/dashboard/credito",    roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
   { prefix: "/dashboard/obras",      roles: ["CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
   { prefix: "/dashboard/kyc",        roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
+  { prefix: "/dashboard/viabilidade", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
   { prefix: "/dashboard/score",      roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
   { prefix: "/dashboard/simulador",  roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
   { prefix: "/dashboard/comite",     roles: ["CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
@@ -73,7 +75,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const role = jwt.role ?? normalizeRole(request.cookies.get("session_role")?.value) ?? null;
+  const role = resolveRequestRole(request, token);
 
   // Admin opera KYC/vistorias no Centro de Comando — nunca nas filas do gestor de fundo (somente leitura).
   if (role === "ADMIN") {
