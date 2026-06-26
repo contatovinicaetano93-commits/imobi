@@ -16,8 +16,8 @@ type Props = {
 };
 
 /**
- * MVP guiado: redireciona rotas fora do passo atual (conta/perfil sempre liberado).
- * Revalida jornada ao voltar ao hub.
+ * MVP guiado: revalida jornada ao voltar ao hub.
+ * Tomador/gestor navegam livremente pela sidebar (rotas MVP); middleware bloqueia o resto.
  */
 export function JornadaGuard({ role, children }: Props) {
   const pathname = usePathname();

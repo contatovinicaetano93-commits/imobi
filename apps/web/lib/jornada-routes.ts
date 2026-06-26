@@ -1,4 +1,5 @@
 import type { Jornada } from "@/lib/api";
+import { isMvpRouteAllowed } from "@/lib/beta-mvp";
 
 const ACCOUNT_PREFIXES = ["/dashboard/perfil", "/dashboard/notificacoes"];
 
@@ -12,11 +13,19 @@ function isAccountPath(pathname: string): boolean {
 }
 
 /**
- * Usuário está na rota certa para o passo atual da jornada.
- * Fora disso → redirect para jornada.href (app de banco).
+ * Rotas permitidas no fluxo guiado.
+ * Tomador/gestor: sidebar livre dentro do MVP (middleware bloqueia o resto).
+ * Redirect para jornada.href só em perfis sem navegação MVP relaxada.
  */
 export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolean {
   if (isAccountPath(pathname)) return true;
+
+  if (jornada.perfil === "tomador") {
+    return isMvpRouteAllowed(pathname, "TOMADOR");
+  }
+  if (jornada.perfil === "gestor") {
+    return isMvpRouteAllowed(pathname, "GESTOR");
+  }
 
   const href = jornada.href;
   if (pathname === href || pathname.startsWith(`${href}/`)) return true;

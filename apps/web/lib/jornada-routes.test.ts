@@ -20,8 +20,10 @@ const tomadorKyc = j({
   href: '/dashboard/kyc',
 });
 assert.equal(isJornadaPathAllowed('/dashboard/kyc', tomadorKyc), true);
-assert.equal(isJornadaPathAllowed('/dashboard/simulador', tomadorKyc), false);
+assert.equal(isJornadaPathAllowed('/dashboard/simulador', tomadorKyc), true);
+assert.equal(isJornadaPathAllowed('/dashboard/construtor', tomadorKyc), true);
 assert.equal(isJornadaPathAllowed('/dashboard/perfil', tomadorKyc), true);
+assert.equal(isJornadaPathAllowed('/dashboard/score', tomadorKyc), false);
 
 const tomadorViabilidade = j({
   perfil: 'tomador',
@@ -29,7 +31,7 @@ const tomadorViabilidade = j({
   href: '/dashboard/viabilidade',
 });
 assert.equal(isJornadaPathAllowed('/dashboard/viabilidade', tomadorViabilidade), true);
-assert.equal(isJornadaPathAllowed('/dashboard/obras', tomadorViabilidade), false);
+assert.equal(isJornadaPathAllowed('/dashboard/obras', tomadorViabilidade), true);
 
 const tomadorObra = j({
   perfil: 'tomador',
