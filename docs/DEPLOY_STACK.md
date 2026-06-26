@@ -59,7 +59,42 @@ Se `"status":"error"` com `redis.host` terminando em `\n`, rode `pnpm render:env
 
 **Não usar para deploy:** branches `claude/*` (legado de agentes).
 
-Após push em `main`, Vercel e Render disparam automaticamente (se configurados no dashboard).
+Após push em `main`, Vercel e **imobi-api-staging** disparam automaticamente. **imobi-api** (prod) é deploy manual — ver seção abaixo.
+
+## Render — pipeline minutes e auto-deploy
+
+O workspace Render tem cota mensal de **pipeline minutes** (build/deploy). Ao esgotar ou atingir o **spend limit**, novos builds são bloqueados (Manual Deploy e auto-deploy param; a API em execução continua na versão anterior).
+
+### Tempos médios observados (jun/2026)
+
+| Serviço | Runtime | ~minutos/deploy |
+|---------|---------|-----------------|
+| `imobi-api-staging` | Node | **~3,6 min** |
+| `imobi-api` (prod) | Docker | **~1,2 min** |
+
+Cada push em `main` com auto-deploy nos **dois** serviços consome ~**5 min**. No plano Hobby (~500 min/mês), isso dá ~100 pushes/mês.
+
+### Política vigente (não atrapalha o negócio)
+
+| Serviço | Auto-deploy em `main` | Por quê |
+|---------|----------------------|---------|
+| **imobi-api-staging** | **Sim** | É a API que o Vercel usa (`NEXT_PUBLIC_API_URL` / fallback em `apps/web/lib/api-base.ts`) |
+| **imobi-api** (prod) | **Não** (manual) | URL alternativa / reserva; usuários do app **não** dependem dela hoje |
+
+Desligar auto-deploy só na prod **não quebra** login, dashboard, assistente nem fluxos de crédito — o web em https://imobi-web-ten.vercel.app fala com **staging**.
+
+### Quando usar prod manual
+
+- Release formal (tag `v*`) ou cutover futuro para domínio/API dedicada
+- Testar paridade Docker antes de promover
+- Comando: Render → `imobi-api` → **Manual Deploy**, ou `RENDER_SERVICE_ID=srv-d8hnpmflk1mc73fc1h3g pnpm render:redeploy`
+
+### Se builds bloquearem de novo
+
+1. Render → **Billing** → uso de pipeline minutes
+2. Aumentar **monthly spend limit** (com cartão) ou aguardar reset do ciclo
+3. Validar local antes do push: `pnpm build --filter=@imbobi/api`
+4. Evitar vários pushes pequenos no mesmo dia; agrupar commits
 
 ## GitHub Secrets (opcional)
 
@@ -69,7 +104,7 @@ Após push em `main`, Vercel e Render disparam automaticamente (se configurados 
 | `VERCEL_TOKEN` | Apenas se usar `pnpm vercel:env:push` local |
 | `RENDER_API_KEY`, `RENDER_SERVICE_ID` | Apenas se usar `pnpm render:redeploy` local |
 
-Deploy de código: **auto-deploy** no push em `main` (Vercel + Render dashboards). CI não dispara deploy.
+Deploy de código: **auto-deploy** no push em `main` (Vercel + **imobi-api-staging**). **imobi-api** prod: manual.
 
 **Remover se existirem (legado Railway):** `RAILWAY_TOKEN`, `RAILWAY_ENVIRONMENT_ID`, `RAILWAY_SERVICE_ID`
 
