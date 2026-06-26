@@ -2,12 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Building2, ArrowRight, ChevronRight } from "lucide-react";
+import { Building2, ArrowRight, Workflow, Link2 } from "lucide-react";
 import { adminApi, type AdminObraResumo } from "@/lib/api";
 import { AdminSubpageHeader } from "@/app/(dashboard)/_components/admin/AdminSubpageHeader";
 import { AdminFlowGuide } from "@/app/(dashboard)/_components/admin/AdminFlowGuide";
 import { AdminSipocPanel } from "../_components/AdminSipocPanel";
 import { EmptyState } from "@/app/(dashboard)/_components/EmptyState";
+import { PanelSection } from "@/components/dashboard/PanelSection";
+import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
+
+const ADMIN_OBRAS_PANELS = [
+  { id: "obras-sipoc", priority: "primary" as const },
+  { id: "obras-portfolio", priority: "primary" as const },
+  { id: "obras-atalhos", priority: "secondary" as const },
+];
 
 const STATUS_LABEL: Record<string, string> = {
   AGUARDANDO_HOMOLOGACAO: "Aguardando homologação",
@@ -72,7 +80,11 @@ export default function AdminObrasPage() {
       : obras;
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <DashboardPanelShell
+      panels={ADMIN_OBRAS_PANELS}
+      maxWidth="lg"
+      content={
+        <>
       <AdminSubpageHeader
         title="Gestão de Obras"
         subtitle="Homologação, acompanhamento do portfólio e pagamentos manuais — tudo no contexto Admin."
@@ -87,41 +99,52 @@ export default function AdminObrasPage() {
         }
       />
 
-      <AdminFlowGuide activeStep={2} />
+      <PanelSection
+        id="obras-sipoc"
+        title="Fluxo SIPOC e liberações"
+        icon={<Workflow className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        summary="Homologação, vistoria e pagamento manual"
+      >
+        <div className="space-y-4">
+          <AdminFlowGuide activeStep={2} />
+          <AdminSipocPanel />
+        </div>
+      </PanelSection>
 
-      <AdminSipocPanel />
-
+      <PanelSection
+        id="obras-portfolio"
+        title="Portfólio completo"
+        icon={<Building2 className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        badge={obras.length || undefined}
+        summary={
+          loading
+            ? "Carregando…"
+            : `${obras.length} obra${obras.length !== 1 ? "s" : ""} na plataforma`
+        }
+      >
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">Portfólio completo</h2>
-            <p className="text-sm text-gray-500">
-              {loading
-                ? "Carregando…"
-                : `${obras.length} obra${obras.length !== 1 ? "s" : ""} na plataforma`}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {(
-              [
-                { id: "todas" as const, label: "Todas" },
-                { id: "homologacao" as const, label: `Homologação (${pendentesHomologacao.length})` },
-              ] as const
-            ).map(({ id, label }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setFilter(id)}
-                className={`text-xs font-semibold px-3 py-2 rounded-lg transition-colors ${
-                  filter === id
-                    ? "bg-[#0C1A3D] text-white"
-                    : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              { id: "todas" as const, label: "Todas" },
+              { id: "homologacao" as const, label: `Homologação (${pendentesHomologacao.length})` },
+            ] as const
+          ).map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setFilter(id)}
+              className={`text-xs font-semibold px-3 py-2 rounded-lg transition-colors ${
+                filter === id
+                  ? "bg-[#0C1A3D] text-white"
+                  : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {loading ? (
@@ -187,10 +210,16 @@ export default function AdminObrasPage() {
           </div>
         )}
       </div>
+      </PanelSection>
 
-      <div className="rounded-xl border border-gray-100 bg-white p-4 flex flex-wrap items-center gap-3 text-sm text-gray-500">
-        <span className="font-semibold text-gray-700">Atalhos Admin</span>
-        <ChevronRight className="w-3 h-3 text-gray-300" />
+      <PanelSection
+        id="obras-atalhos"
+        title="Atalhos Admin"
+        icon={<Link2 className="w-4 h-4 text-gray-500" />}
+        priority="secondary"
+        summary="Pipeline, comitê e fundos"
+      >
+      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
         <Link href="/dashboard/admin/pipeline" className="text-[#1B4FD8] font-semibold hover:underline">
           Pipeline comercial
         </Link>
@@ -201,6 +230,9 @@ export default function AdminObrasPage() {
           Fundos
         </Link>
       </div>
-    </div>
+      </PanelSection>
+        </>
+      }
+    />
   );
 }

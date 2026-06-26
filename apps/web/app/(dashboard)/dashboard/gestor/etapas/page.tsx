@@ -11,7 +11,16 @@ import { GestorSubpageHeader } from "@/app/(dashboard)/_components/gestor/Gestor
 import { ManagerListBanner } from "@/app/(dashboard)/_components/gestor/ManagerListBanner";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
 import { useRedirectAdminFromGestorRoute } from "@/hooks/useRedirectAdminFromGestorRoute";
+import { PanelSection } from "@/components/dashboard/PanelSection";
+import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
+import { Filter, List, Info } from "lucide-react";
 import Link from "next/link";
+
+const ETAPAS_PANELS = [
+  { id: "etapas-info", priority: "secondary" as const },
+  { id: "etapas-filtros", priority: "secondary" as const },
+  { id: "etapas-lista", priority: "primary" as const },
+];
 
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -118,16 +127,21 @@ function EtapasContent() {
   const filteredEtapas = data.etapas;
 
   return (
-    <div className="space-y-6">
-      {loadError && (
-        <ManagerListBanner
-          variant="error"
-          message={loadError}
-          onRetry={loadEtapas}
-          retrying={loading}
-        />
-      )}
-
+    <DashboardPanelShell
+      panels={ETAPAS_PANELS}
+      maxWidth="lg"
+      beforeTabs={
+        loadError ? (
+          <ManagerListBanner
+            variant="error"
+            message={loadError}
+            onRetry={loadEtapas}
+            retrying={loading}
+          />
+        ) : undefined
+      }
+      content={
+        <>
       <GestorSubpageHeader
         title="Monitoramento de operações"
         subtitle={`${data.total} operação${data.total !== 1 ? "ões" : ""} no pipe — visualização somente leitura`}
@@ -135,23 +149,37 @@ function EtapasContent() {
         refreshing={loading}
       />
 
-      <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-        Como gestor do fundo, você acompanha saúde, pontos fortes e fracos das operações.
-        Liberações são feitas pelo engenheiro (vistoria) e pelo financeiro IMOBI (pagamento manual).
-      </p>
-
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
           <p className="text-red-800 text-sm font-medium">{error}</p>
         </div>
       )}
 
+      <PanelSection
+        id="etapas-info"
+        title="Como funciona"
+        icon={<Info className="w-4 h-4 text-blue-600" />}
+        priority="secondary"
+        summary="Somente leitura — liberações pelo engenheiro e financeiro"
+      >
+        <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+          Como gestor do fundo, você acompanha saúde, pontos fortes e fracos das operações.
+          Liberações são feitas pelo engenheiro (vistoria) e pelo financeiro IMOBI (pagamento manual).
+        </p>
+      </PanelSection>
+
+      <PanelSection
+        id="etapas-filtros"
+        title="Filtros avançados"
+        icon={<Filter className="w-4 h-4 text-gray-500" />}
+        priority="secondary"
+        summary="Status, datas, prioridade e busca"
+      >
       <AdvancedFilters
         filters={filters}
         onFilter={(newFilters: FilterState) => {
           setFilters(newFilters);
           setOffset(0);
-          // Update URL query params
           const params = new URLSearchParams();
           if (newFilters.status && newFilters.status !== "todas") {
             params.set("status", newFilters.status);
@@ -177,13 +205,21 @@ function EtapasContent() {
         onReset={() => {
           setFilters({ status: "todas", dataInicio: "", dataFim: "", obraType: "", priority: "todas", searchTerm: "" });
           setOffset(0);
-          // Clear URL query params
           router.push("?");
         }}
       />
+      </PanelSection>
 
+      <PanelSection
+        id="etapas-lista"
+        title="Operações no pipe"
+        icon={<List className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        badge={filteredEtapas.length || undefined}
+        summary={`${filteredEtapas.length} etapa(s) · página ${currentPage}/${pages || 1}`}
+      >
       {filteredEtapas.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+        <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
           <p className="text-4xl mb-4">🎉</p>
           <p className="text-gray-500">
             {data.etapas.length === 0
@@ -262,9 +298,8 @@ function EtapasContent() {
         </div>
       )}
 
-      {/* Paginação */}
       {pages > 1 && (
-        <div className="flex items-center justify-between pt-4">
+        <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-50">
           <div className="text-sm text-gray-500">
             Página {currentPage} de {pages}
           </div>
@@ -286,7 +321,10 @@ function EtapasContent() {
           </div>
         </div>
       )}
-    </div>
+      </PanelSection>
+        </>
+      }
+    />
   );
 }
 

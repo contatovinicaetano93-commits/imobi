@@ -22,6 +22,9 @@ import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
 import { useToast } from "@/hooks/toast-context";
 import { resolveKycDocumentUrl } from "@/lib/kyc-document-url";
 import { kycDetailHref, type KycFilaContext } from "./kyc-fila-types";
+import { PanelSection } from "@/components/dashboard/PanelSection";
+import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
+import type { DashboardPanelDef } from "@/components/dashboard/DashboardPanelShell";
 
 function getInitials(nome: string): string {
   return nome
@@ -380,17 +383,28 @@ export function KycFilaClient({ context }: { context: KycFilaContext }) {
     }
   };
 
-  return (
-    <div className="space-y-6 pb-8">
-      {loadError && (
-        <ManagerListBanner
-          variant="error"
-          message={loadError}
-          onRetry={loadDocs}
-          retrying={loading}
-        />
-      )}
+  const kycPanels: DashboardPanelDef[] = [
+    ...(!canApprove ? [{ id: "kyc-orientacao", priority: "secondary" as const }] : []),
+    { id: "kyc-filtros", priority: "secondary" },
+    { id: "kyc-lista", priority: "primary" },
+  ];
 
+  return (
+    <DashboardPanelShell
+      panels={kycPanels}
+      maxWidth="lg"
+      beforeTabs={
+        loadError ? (
+          <ManagerListBanner
+            variant="error"
+            message={loadError}
+            onRetry={loadDocs}
+            retrying={loading}
+          />
+        ) : undefined
+      }
+      content={
+        <>
       {context === "admin" ? (
         <AdminSubpageHeader
           title="Fila KYC — Aprovação"
@@ -424,13 +438,28 @@ export function KycFilaClient({ context }: { context: KycFilaContext }) {
       )}
 
       {!canApprove && (
-        <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-          Como gestor do fundo, você visualiza indicadores e filas para acompanhar a operação.
-          Aprovações de KYC são exclusivas do Administrador IMOBI.
-        </p>
+        <PanelSection
+          id="kyc-orientacao"
+          title="Orientações"
+          icon={<AlertTriangle className="w-4 h-4 text-blue-600" />}
+          priority="secondary"
+          summary="Visualização somente leitura — aprovação é do Admin"
+        >
+          <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+            Como gestor do fundo, você visualiza indicadores e filas para acompanhar a operação.
+            Aprovações de KYC são exclusivas do Administrador IMOBI.
+          </p>
+        </PanelSection>
       )}
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-wrap gap-3">
+      <PanelSection
+        id="kyc-filtros"
+        title="Busca e filtros"
+        icon={<Search className="w-4 h-4 text-gray-500" />}
+        priority="secondary"
+        summary={searchQuery || tipoFilter !== "TODOS" ? "Filtros ativos" : "Todos os documentos"}
+      >
+      <div className="flex flex-wrap gap-3">
         <div className="flex-1 min-w-52 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -454,11 +483,21 @@ export function KycFilaClient({ context }: { context: KycFilaContext }) {
           <option value="COMPROVANTE">Comprovante</option>
         </select>
       </div>
+      </PanelSection>
 
+      <PanelSection
+        id="kyc-lista"
+        title="Documentos na fila"
+        icon={<FileText className="w-4 h-4 text-[#1B4FD8]" />}
+        priority="primary"
+        badge={pendingCount > 0 ? pendingCount : undefined}
+        summary={`${filtered.length} documento(s) · página ${safePage + 1}/${totalPages}`}
+        urgency={pendingCount > 10 ? "warning" : "none"}
+      >
       {loading ? (
         <KycListSkeleton />
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-14 text-center">
+        <div className="rounded-xl border border-gray-100 p-14 text-center">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Search className="w-7 h-7 text-gray-400" />
           </div>
@@ -475,9 +514,6 @@ export function KycFilaClient({ context }: { context: KycFilaContext }) {
         </div>
       ) : (
         <div className="space-y-4">
-          <p className="text-sm text-gray-500">
-            {filtered.length} documento{filtered.length !== 1 ? "s" : ""} na fila
-          </p>
           {pageDocs.map((doc) => (
             <DocCard
               key={doc.kycDocumentoId}
@@ -493,7 +529,7 @@ export function KycFilaClient({ context }: { context: KycFilaContext }) {
       )}
 
       {!loading && totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-50">
           <p className="text-sm text-gray-500">
             Página {safePage + 1} de {totalPages}
           </p>
@@ -517,6 +553,7 @@ export function KycFilaClient({ context }: { context: KycFilaContext }) {
           </div>
         </div>
       )}
+      </PanelSection>
 
       {previewDoc && (
         <PreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} context={context} />
@@ -529,6 +566,8 @@ export function KycFilaClient({ context }: { context: KycFilaContext }) {
           onCancel={() => setRejectDoc(null)}
         />
       )}
-    </div>
+        </>
+      }
+    />
   );
 }
