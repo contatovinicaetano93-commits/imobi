@@ -32,6 +32,20 @@ export class AdminController {
     return this.adminService.atividades(parsedLimit);
   }
 
+  @Get("filas")
+  filas() {
+    return this.adminService.filas();
+  }
+
+  @Get("search")
+  buscar(
+    @Query("q") q: string = "",
+    @Query("limit") limit: string = "20",
+  ) {
+    const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 50);
+    return this.adminService.buscar(q, parsedLimit);
+  }
+
   @Get("usuarios")
   listarUsuarios() {
     return this.adminService.listarUsuarios();

@@ -26,6 +26,7 @@
     "test:panel-nav": "pnpm --filter @imbobi/web exec tsx lib/panel-navigation.test.ts",
     "test:jornada": "pnpm --filter @imbobi/web exec tsx lib/jornada-steps.test.ts && pnpm --filter @imbobi/web exec tsx lib/jornada-routes.test.ts && pnpm --filter @imbobi/web exec tsx lib/beta-mvp.test.ts",
     "test:jornada:api": "pnpm --filter @imbobi/api test -- jornada.service.spec.ts",
+    "test:admin:api": "pnpm --filter @imbobi/api test -- admin.service.spec.ts",
     "test:kyc:api": "pnpm --filter @imbobi/api test -- kyc.service.spec.ts",
     "test:auth:login-throttle": "pnpm --filter @imbobi/api test -- auth-login.throttle.spec.ts",
     "test:credito:api": "pnpm --filter @imbobi/api test -- credito.service.spec.ts",

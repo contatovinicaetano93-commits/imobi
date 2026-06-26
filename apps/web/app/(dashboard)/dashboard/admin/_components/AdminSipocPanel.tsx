@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { adminApi, type AdminObraResumo, type LiberacaoAguardandoPagamento } from "@/lib/api";
+import { useAdminFilasOnChange } from "@/hooks/use-admin-filas-poll";
 import { formatarBRL } from "@imbobi/core";
 import { useToast } from "@/hooks/toast-context";
 import { Building2, Banknote, CheckCircle2, XCircle } from "lucide-react";
@@ -18,21 +19,26 @@ export function AdminSipocPanel() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [refs, setRefs] = useState<Record<string, string>>({});
 
-  const recarregar = () =>
-    Promise.all([
-      adminApi.listarObras(100),
-      adminApi.listarLiberacoesAguardandoPagamento(),
-    ])
-      .then(([obrasData, libData]) => {
-        setObras(obrasData);
-        setLiberacoes(libData);
-      })
-      .catch((err) => toastError(err instanceof Error ? err.message : "Erro ao carregar SIPOC"))
-      .finally(() => setLoading(false));
+  const recarregar = useCallback(
+    () =>
+      Promise.all([
+        adminApi.listarObras(100),
+        adminApi.listarLiberacoesAguardandoPagamento(),
+      ])
+        .then(([obrasData, libData]) => {
+          setObras(obrasData);
+          setLiberacoes(libData);
+        })
+        .catch((err) => toastError(err instanceof Error ? err.message : "Erro ao carregar SIPOC"))
+        .finally(() => setLoading(false)),
+    [toastError],
+  );
 
   useEffect(() => {
-    recarregar();
-  }, []);
+    void recarregar();
+  }, [recarregar]);
+
+  useAdminFilasOnChange(() => void recarregar());
 
   const obrasHomologacao = obras.filter((o) =>
     o.status === "AGUARDANDO_HOMOLOGACAO" || o.status === "PLANEJAMENTO"

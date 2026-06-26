@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { dossiesApi, type DossieResumo, type DossieStatus } from "@/lib/api";
+import { useAdminFilasOnChange } from "@/hooks/use-admin-filas-poll";
 import { CheckCircle2, XCircle, Clock, Loader2, FileText } from "lucide-react";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
 import { useToast } from "@/hooks/toast-context";
@@ -34,6 +35,8 @@ export default function AdminViabilidadePage() {
   useEffect(() => {
     void carregar();
   }, [carregar]);
+
+  useAdminFilasOnChange(carregar);
 
   const aprovar = async (id: string, statusAtual: DossieStatus) => {
     setProcessando(id);

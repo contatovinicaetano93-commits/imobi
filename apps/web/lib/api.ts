@@ -702,6 +702,33 @@ export type AdminObraResumo = {
   tomador?: string;
 };
 
+export type AdminSearchTipo = "usuario" | "obra" | "dossie" | "documento";
+
+export type AdminSearchHit = {
+  tipo: AdminSearchTipo;
+  id: string;
+  titulo: string;
+  subtitulo?: string;
+  status?: string;
+  href: string;
+  criadoEm: string;
+};
+
+export type AdminSearchResponse = {
+  q: string;
+  total: number;
+  resultados: AdminSearchHit[];
+};
+
+export type AdminFilasResponse = {
+  kycPendentes: number;
+  viabilidadePendentes: number;
+  obrasAguardandoHomologacao: number;
+  liberacoesAguardandoPagamento: number;
+  etapasAguardandoVistoria: number;
+  atualizadoEm: string;
+};
+
 export type LiberacaoAguardandoPagamento = {
   liberacaoId: string;
   etapaId: string | null;
@@ -723,6 +750,11 @@ export type LiberacaoAguardandoPagamento = {
 export const adminApi = {
   overview: () => apiFetch<AdminOverview>("/admin/overview"),
   metricas: () => apiFetch<AdminMetricas>("/admin/metricas"),
+  filas: () => apiFetch<AdminFilasResponse>("/admin/filas"),
+  buscar: (q: string, limit = 20) =>
+    apiFetch<AdminSearchResponse>(
+      `/admin/search?q=${encodeURIComponent(q)}&limit=${limit}`,
+    ),
   atividades: (limit?: number) =>
     apiFetch<AtividadeRecente[]>(`/admin/atividades${limit ? `?limit=${limit}` : ""}`),
   listarObras: (limit = 50) =>

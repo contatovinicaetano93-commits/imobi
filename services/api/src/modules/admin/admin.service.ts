@@ -51,6 +51,33 @@ export interface Atividade {
   criadoEm: string;
 }
 
+export type AdminSearchTipo = "usuario" | "obra" | "dossie" | "documento";
+
+export interface AdminSearchHit {
+  tipo: AdminSearchTipo;
+  id: string;
+  titulo: string;
+  subtitulo?: string;
+  status?: string;
+  href: string;
+  criadoEm: string;
+}
+
+export interface AdminSearchResponse {
+  q: string;
+  total: number;
+  resultados: AdminSearchHit[];
+}
+
+export interface AdminFilasResponse {
+  kycPendentes: number;
+  viabilidadePendentes: number;
+  obrasAguardandoHomologacao: number;
+  liberacoesAguardandoPagamento: number;
+  etapasAguardandoVistoria: number;
+  atualizadoEm: string;
+}
+
 @Injectable()
 export class AdminService {
   constructor(
@@ -527,5 +554,140 @@ export class AdminService {
       valor: lib.valor,
       referenciaPagamento,
     };
+  }
+
+  async filas(): Promise<AdminFilasResponse> {
+    const [
+      kycPendentes,
+      viabilidadePendentes,
+      obrasAguardandoHomologacao,
+      liberacoesAguardandoPagamento,
+      etapasAguardandoVistoria,
+    ] = await Promise.all([
+      this.prisma.kycDocumento.count({ where: { status: "PENDENTE" } }),
+      this.prisma.dueDiligence.count({
+        where: { status: { in: ["ENVIADO", "EM_ANALISE"] } },
+      }),
+      this.prisma.obra.count({ where: { status: "AGUARDANDO_HOMOLOGACAO" } }),
+      this.prisma.liberacaoParcela.count({ where: { status: "AGUARDANDO_PAGAMENTO" } }),
+      this.prisma.etapaObra.count({ where: { status: "AGUARDANDO_VISTORIA" } }),
+    ]);
+
+    return {
+      kycPendentes,
+      viabilidadePendentes,
+      obrasAguardandoHomologacao,
+      liberacoesAguardandoPagamento,
+      etapasAguardandoVistoria,
+      atualizadoEm: new Date().toISOString(),
+    };
+  }
+
+  async buscar(q: string, limit = 20): Promise<AdminSearchResponse> {
+    const term = q.trim();
+    if (term.length < 2) {
+      return { q: term, total: 0, resultados: [] };
+    }
+
+    const perTipo = Math.min(Math.max(Math.floor(limit / 4), 3), 10);
+    const contains = { contains: term, mode: "insensitive" as const };
+
+    const [usuarios, obras, dossies, documentos] = await Promise.all([
+      this.prisma.usuario.findMany({
+        where: {
+          deletadoEm: null,
+          OR: [{ nome: contains }, { email: contains }],
+        },
+        take: perTipo,
+        orderBy: { criadoEm: "desc" },
+        select: { usuarioId: true, nome: true, email: true, tipo: true, criadoEm: true },
+      }),
+      this.prisma.obra.findMany({
+        where: {
+          OR: [{ nome: contains }, { endereco: contains }],
+        },
+        take: perTipo,
+        orderBy: { criadoEm: "desc" },
+        select: {
+          obraId: true,
+          nome: true,
+          status: true,
+          endereco: true,
+          criadoEm: true,
+          usuario: { select: { nome: true } },
+        },
+      }),
+      this.prisma.dueDiligence.findMany({
+        where: { nomeEmpreendimento: contains },
+        take: perTipo,
+        orderBy: { criadoEm: "desc" },
+        select: {
+          id: true,
+          nomeEmpreendimento: true,
+          status: true,
+          estagioObra: true,
+          criadoEm: true,
+          usuario: { select: { nome: true } },
+        },
+      }),
+      this.prisma.documento.findMany({
+        where: {
+          OR: [{ nome: contains }, { descricao: contains }],
+        },
+        take: perTipo,
+        orderBy: { criadoEm: "desc" },
+        select: {
+          documentoId: true,
+          nome: true,
+          tipo: true,
+          obraId: true,
+          criadoEm: true,
+          usuario: { select: { nome: true } },
+        },
+      }),
+    ]);
+
+    const resultados: AdminSearchHit[] = [
+      ...usuarios.map((u) => ({
+        tipo: "usuario" as const,
+        id: u.usuarioId,
+        titulo: u.nome,
+        subtitulo: u.email,
+        status: u.tipo,
+        href: "/dashboard/admin/usuarios",
+        criadoEm: u.criadoEm.toISOString(),
+      })),
+      ...obras.map((o) => ({
+        tipo: "obra" as const,
+        id: o.obraId,
+        titulo: o.nome,
+        subtitulo: o.usuario?.nome ?? o.endereco,
+        status: o.status,
+        href: `/dashboard/obras/${o.obraId}`,
+        criadoEm: o.criadoEm.toISOString(),
+      })),
+      ...dossies.map((d) => ({
+        tipo: "dossie" as const,
+        id: d.id,
+        titulo: d.nomeEmpreendimento,
+        subtitulo: d.usuario?.nome,
+        status: d.status,
+        href: "/dashboard/admin/viabilidade",
+        criadoEm: d.criadoEm.toISOString(),
+      })),
+      ...documentos.map((doc) => ({
+        tipo: "documento" as const,
+        id: doc.documentoId,
+        titulo: doc.nome,
+        subtitulo: doc.usuario?.nome ?? doc.tipo,
+        status: doc.tipo,
+        href: doc.obraId ? `/dashboard/obras/${doc.obraId}` : "/dashboard/admin",
+        criadoEm: doc.criadoEm.toISOString(),
+      })),
+    ]
+      .sort((a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime())
+      .slice(0, limit);
+
+    return { q: term, total: resultados.length, resultados };
   }
 }
