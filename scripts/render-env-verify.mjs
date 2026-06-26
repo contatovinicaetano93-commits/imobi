@@ -229,6 +229,22 @@ allIssues.push(...checkCors(vars.CORS_ORIGIN?.value));
 
 if (!vars.DATABASE_URL?.value?.trim()) {
   allIssues.push('DATABASE_URL ausente');
+} else {
+  const renderDb = vars.DATABASE_URL.value.trim();
+  const localDb = fileEnv.DATABASE_URL?.trim() ?? '';
+  if (localDb) {
+    try {
+      const renderHost = new URL(renderDb).hostname;
+      const localHost = new URL(localDb).hostname;
+      if (renderHost !== localHost) {
+        allIssues.push(
+          `DATABASE_URL no Render (${renderHost}) ≠ .env.render.local (${localHost}) — rode pnpm render:env:push`,
+        );
+      }
+    } catch {
+      allIssues.push('DATABASE_URL malformada no Render ou em .env.render.local');
+    }
+  }
 }
 if (!vars.JWT_SECRET?.value?.trim()) {
   allIssues.push('JWT_SECRET ausente');
