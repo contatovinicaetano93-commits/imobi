@@ -8,3 +8,4 @@ export * from "./dossie-viabilidade.schema";
 export * from "./dossie-checklist-template";
 export * from "./kyc.schema";
 export * from "./jornada.schema";
+export * from "./assistente.schema";

@@ -31,6 +31,7 @@ import { DueDiligenceModule } from "./modules/due-diligence/due-diligence.module
 import { DossiesModule } from "./modules/dossies/dossies.module";
 import { DocumentosModule } from "./modules/documentos/documentos.module";
 import { ComiteModule } from "./modules/comite/comite.module";
+import { AssistenteModule } from "./modules/assistente/assistente.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker, QUEUE_EXCLUIR_USUARIO } from "./workers/excluir-usuario.worker";
 import { QUEUE_LIBERACAO } from "./common/constants";
@@ -114,6 +115,7 @@ const redisConfig = getRedisConfig();
     DossiesModule,
     DocumentosModule,
     ComiteModule,
+    AssistenteModule,
   ],
   controllers: [HealthController, MetricsController],
   providers: [

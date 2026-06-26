@@ -17,6 +17,7 @@ import { JornadaGuard } from "@/components/dashboard/JornadaGuard";
 import { JornadaProvider } from "@/hooks/jornada-context";
 import { ToastProvider } from "@/hooks/toast-context";
 import { Toaster } from "@/components/ui/toaster";
+import { ImobiAssistant } from "@/components/dashboard/ImobiAssistant";
 import { SkipLink } from "@/components/SkipLink";
 import {
   Home, HardHat, CreditCard, Calculator, Star, FileCheck2, Bell, User,
@@ -490,7 +491,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
 
-      {/* WhatsApp */}
+      {/* Assistente IA + WhatsApp */}
+      <ImobiAssistant />
       <a
         href={`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20IMOBI.`}
         target="_blank"

@@ -37,6 +37,7 @@ try {
 const args = process.argv.slice(2);
 const serviceIdx = args.indexOf('--service');
 const noDeploy = args.includes('--no-deploy');
+const alsoProd = args.includes('--also-prod');
 
 const token = (process.env.RENDER_API_KEY ?? fileEnv.RENDER_API_KEY ?? '').trim();
 
@@ -105,6 +106,11 @@ const env = {
   DISABLE_IN_PROCESS_WORKERS: trim(fileEnv.DISABLE_IN_PROCESS_WORKERS ?? 'true'),
   PAYMENT_PROVIDER: trim(fileEnv.PAYMENT_PROVIDER ?? 'console'),
 };
+
+const openaiKey = trim(fileEnv.OPENAI_API_KEY ?? '');
+if (openaiKey) {
+  env.OPENAI_API_KEY = openaiKey;
+}
 
 if (trim(fileEnv.SETUP_SECRET)) {
   env.SETUP_SECRET = trim(fileEnv.SETUP_SECRET);
@@ -196,6 +202,17 @@ if (!noDeploy) {
   console.log('\n→ Disparando redeploy...');
   await deploy(sid);
   console.log('✅ Redeploy iniciado.');
+}
+
+if (alsoProd && openaiKey && sid !== PROD_SERVICE_ID) {
+  console.log('\n=== OPENAI_API_KEY → produção (imobi-api) ===\n');
+  await upsertEnvVar(PROD_SERVICE_ID, 'OPENAI_API_KEY', openaiKey);
+  console.log('  OPENAI_API_KEY = *** ok');
+  if (!noDeploy) {
+    console.log('\n→ Redeploy produção...');
+    await deploy(PROD_SERVICE_ID);
+    console.log('✅ Redeploy prod iniciado.');
+  }
 }
 
 console.log(`\n→ Health: curl ${env.APP_URL}/api/v1/health`);

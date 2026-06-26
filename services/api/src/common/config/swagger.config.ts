@@ -15,6 +15,7 @@ export function setupSwagger(app: INestApplication) {
     .addTag('evidencias', 'Evidence & Proof')
     .addTag('vistoria', 'Property Inspection')
     .addTag('admin', 'Administrator Operations')
+    .addTag('assistente', 'AI Assistant (in-app help)')
     .addServer('http://localhost:4000', 'Development')
     .addServer('https://imobi-api-staging.onrender.com', 'Staging')
     .addServer('https://imobi-api-efgg.onrender.com', 'Production')
