@@ -47,9 +47,13 @@ export class StorageService {
   }
 
   assertStorageAvailable(): void {
-    if (!this.useS3() && process.env.NODE_ENV === "production") {
+    if (
+      !this.useS3() &&
+      process.env.NODE_ENV === "production" &&
+      process.env["ENABLE_S3_STORAGE"] === "true"
+    ) {
       throw new BadRequestException(
-        "Armazenamento de arquivos indisponível. Configure ENABLE_S3_STORAGE e credenciais AWS no servidor.",
+        "Armazenamento de arquivos indisponível. Configure as credenciais AWS no servidor.",
       );
     }
   }
