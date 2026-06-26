@@ -6,9 +6,10 @@ import {
   Param,
   UseGuards,
   Req,
+  Res,
   BadRequestException,
 } from "@nestjs/common";
-import type { FastifyRequest } from "fastify";
+import type { FastifyRequest, FastifyReply } from "fastify";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
 import { DocumentosService } from "./documentos.service";
@@ -73,6 +74,23 @@ export class DocumentosController {
   @Get("meus")
   async listarMeus(@UsuarioAtual() user: IUsuario) {
     return this.svc.listarPorUsuario(user.id);
+  }
+
+  @Get(":id/arquivo")
+  async obterArquivo(
+    @Param("id") id: string,
+    @UsuarioAtual() user: IUsuario,
+    @Res() res: FastifyReply,
+  ) {
+    const result = await this.svc.obterArquivo(id, user.id, user.tipo);
+    if ("redirectUrl" in result) {
+      return res.redirect(302, result.redirectUrl);
+    }
+    const { buffer, mimeType } = result;
+    return res
+      .header("Content-Type", mimeType ?? "application/octet-stream")
+      .header("Cache-Control", "private, max-age=3600")
+      .send(buffer);
   }
 
   @Delete(":id")

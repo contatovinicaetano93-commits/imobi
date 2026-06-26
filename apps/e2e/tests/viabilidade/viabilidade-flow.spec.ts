@@ -99,7 +99,7 @@ test.describe('Viabilidade flow', () => {
     });
 
     const anexarBtn = page.getByRole('button', { name: 'Anexar' }).first();
-    test.skip(!(await anexarBtn.isVisible()), 'UI com upload ainda não deployada');
+    await expect(anexarBtn).toBeVisible();
     await anexarBtn.click();
     await page.locator('input[type="file"]').setInputFiles({
       name: 'matricula.pdf',
@@ -108,7 +108,7 @@ test.describe('Viabilidade flow', () => {
     });
 
     await expect(page.getByText('ENVIADO').first()).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText('Anexo').first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Ver anexo' }).first()).toBeVisible();
   });
 
   test('empty list shows new dossie form', async ({ page }) => {

@@ -9,6 +9,7 @@ import {
 import { DocumentoTipo } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
+import { isManagerRole } from "../../common/constants/manager-roles";
 
 const DOCUMENTO_MIMES = new Set([
   "application/pdf",
@@ -122,5 +123,42 @@ export class DocumentosService {
     if (!isAdmin && doc.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
     await this.storage.delete(doc.url).catch(() => null);
     return this.prisma.documento.delete({ where: { documentoId } });
+  }
+
+  async obterArquivo(
+    documentoId: string,
+    usuarioId: string,
+    role: string,
+  ): Promise<{ buffer: Buffer; mimeType: string } | { redirectUrl: string }> {
+    const doc = await this.prisma.documento.findUnique({
+      where: { documentoId },
+      include: { obra: { select: { usuarioId: true } } },
+    });
+    if (!doc) throw new NotFoundException("Documento não encontrado.");
+
+    const isManager = isManagerRole(role);
+    const isAdmin = role === "ADMIN";
+    const ownsDoc = doc.usuarioId === usuarioId;
+    const ownsObra = doc.obra?.usuarioId === usuarioId;
+
+    if (!isAdmin && !isManager && !ownsDoc && !ownsObra) {
+      throw new ForbiddenException("Sem permissão para este documento.");
+    }
+
+    if (this.storage.isLocalKey(doc.url)) {
+      const { buffer, mimeType } = await this.storage.readLocalFile(doc.url);
+      return { buffer, mimeType: doc.mimeType || mimeType };
+    }
+
+    try {
+      const signed = await this.storage.getSignedUrl(doc.url, 3600);
+      return { redirectUrl: signed };
+    } catch (error) {
+      this.logger.error("documento download failed", {
+        documentoId,
+        error: error instanceof Error ? error.message : error,
+      });
+      throw new ServiceUnavailableException("Não foi possível abrir o arquivo.");
+    }
   }
 }

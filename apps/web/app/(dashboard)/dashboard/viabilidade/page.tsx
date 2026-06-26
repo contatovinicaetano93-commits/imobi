@@ -421,10 +421,15 @@ export default function ViabilidadePage() {
                     </div>
                   )}
                   {item.documentoId && item.status !== "PENDENTE" && (
-                    <span className="inline-flex shrink-0 items-center gap-1 text-xs text-green-700">
+                    <a
+                      href={`/api/proxy/documentos/${item.documentoId}/arquivo`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#1B4FD8] hover:underline"
+                    >
                       <Paperclip className="h-3 w-3" />
-                      Anexo
-                    </span>
+                      Ver anexo
+                    </a>
                   )}
                 </div>
               ))}

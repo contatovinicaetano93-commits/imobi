@@ -23,6 +23,14 @@ const CRITICAL = [
   'REDIS_PASSWORD',
 ];
 
+const S3_KEYS = [
+  'ENABLE_S3_STORAGE',
+  'AWS_ACCESS_KEY_ID',
+  'AWS_SECRET_ACCESS_KEY',
+  'AWS_S3_BUCKET',
+  'AWS_S3_REGION',
+];
+
 function loadEnvFile(path) {
   const env = {};
   if (!existsSync(path)) return env;
@@ -88,6 +96,61 @@ function checkCors(value) {
   if (!origins.includes('http://localhost:3000')) {
     issues.push('CORS_ORIGIN deve incluir http://localhost:3000 (dev local)');
   }
+  return issues;
+}
+
+/** @param {Record<string, { value?: string }>} vars */
+async function checkS3(vars) {
+  const issues = [];
+  if (vars.ENABLE_S3_STORAGE?.value?.trim() !== 'true') {
+    issues.push('ENABLE_S3_STORAGE não é true — upload de documentos falha em produção');
+    return issues;
+  }
+
+  for (const key of S3_KEYS) {
+    if (!vars[key]?.value?.trim()) {
+      issues.push(`${key} ausente no Render`);
+    }
+  }
+  if (issues.length) return issues;
+
+  const bucket = vars.AWS_S3_BUCKET.value.trim();
+  const region = (vars.AWS_S3_REGION?.value ?? vars.AWS_REGION?.value ?? 'sa-east-1').trim();
+
+  try {
+    const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3');
+    const client = new S3Client({
+      region,
+      credentials: {
+        accessKeyId: vars.AWS_ACCESS_KEY_ID.value.trim(),
+        secretAccessKey: vars.AWS_SECRET_ACCESS_KEY.value.trim(),
+      },
+    });
+    const probeKey = `documentos/_healthcheck/${Date.now()}.txt`;
+    await client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: probeKey,
+        Body: Buffer.from('imobi-s3-healthcheck'),
+        ContentType: 'text/plain',
+      }),
+    );
+    console.log(`  S3 PutObject (${bucket} / ${region}) ✓`);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes('NoSuchBucket') || msg.includes('does not exist')) {
+      issues.push(
+        `Bucket S3 "${bucket}" não existe em ${region} — crie no console AWS ou corrija AWS_S3_BUCKET`,
+      );
+    } else if (msg.includes('AccessDenied') || msg.includes('not authorized')) {
+      issues.push(
+        `IAM sem permissão s3:PutObject no bucket "${bucket}" — ajuste política do usuário imobi-api-prod`,
+      );
+    } else {
+      issues.push(`S3 inacessível: ${msg.slice(0, 120)}`);
+    }
+  }
+
   return issues;
 }
 
@@ -178,6 +241,8 @@ if (localJwt && renderJwt && localJwt !== renderJwt) {
 } else if (localJwt && renderJwt) {
   console.log('  JWT alinhado com .env.vercel.local ✓');
 }
+
+allIssues.push(...(await checkS3(vars)));
 
 if (allIssues.length) {
   console.log('Problemas:\n');
