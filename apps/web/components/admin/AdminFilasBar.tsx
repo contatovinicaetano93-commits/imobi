@@ -8,7 +8,7 @@ const ITENS = [
   {
     key: "kycPendentes" as const,
     label: "KYC",
-    href: "/dashboard/gestor/kyc",
+    href: "/dashboard/admin/kyc",
   },
   {
     key: "viabilidadePendentes" as const,
