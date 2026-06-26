@@ -27,7 +27,7 @@
             "checklistPdf": "Empreendimento - Em Andamento.pdf",
             "percentualObraMin": 30,
             "percentualObraMax": 95,
-            "itensReforcados": ["11", "12", "13", "14", "20", "21", "22"]
+            "itensReforcados": ["11", "12", "13", "14", "20_andamento", "21_andamento", "22_andamento"]
         }
     ],
     "blocos": [
