@@ -4,6 +4,7 @@ import type { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
 import { invalidateJornadaCache } from "../jornada/jornada-cache";
 import type { VotoDecisao, SolicitacaoStatus, ComiteStatus } from "@prisma/client";
+import type { SolicitarComiteDto } from "./dto/comite.dto";
 
 @Injectable()
 export class ComiteService {
@@ -14,18 +15,7 @@ export class ComiteService {
 
   // ── Construtor: submeter solicitação ──────────────────────────────
 
-  async submeterSolicitacao(usuarioId: string, body: {
-    valorSolicitado: number;
-    prazoMeses: number;
-    taxaMensal: number;
-    finalidade: string;
-    garantias?: string;
-    observacoes?: string;
-    obraId?: string;
-    vgv?: number;
-    custoObra?: number;
-    ltv?: number;
-  }) {
+  async submeterSolicitacao(usuarioId: string, body: SolicitarComiteDto) {
     const rating = this.calcularRating(body.ltv ?? 0);
 
     const solicitacao = await this.prisma.solicitacaoCredito.create({

@@ -5,6 +5,7 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UsuarioAtual } from "../../common/decorators/usuario-atual.decorator";
 import { ZodPipe } from "../../common/pipes/zod.pipe";
+import type { VotoDecisao } from "@prisma/client";
 import { SolicitarComiteSchema, ParecerComiteSchema, VotarComiteSchema, type SolicitarComiteDto, type ParecerComiteDto, type VotarComiteDto } from "./dto/comite.dto";
 
 @Controller("comite")

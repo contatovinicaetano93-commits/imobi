@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { ParceiroResumo, OperacaoIndicada, ContatoMailing } from './parceiros.types';
+import type { AdicionarMailingDto } from './dto/parceiros.dto';
 
 // Taxa de comissão padrão para parceiros (5%)
 const PERCENTUAL_COMISSAO_PADRAO = 5;
@@ -135,7 +136,7 @@ export class ParceirosService {
 
   async adicionarMailing(
     usuarioId: string,
-    data: { nome: string; email: string; telefone?: string },
+    data: AdicionarMailingDto,
   ): Promise<ContatoMailing> {
     if (!data.nome?.trim()) {
       throw new BadRequestException('nome é obrigatório');

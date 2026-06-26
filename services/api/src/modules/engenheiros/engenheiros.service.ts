@@ -106,7 +106,7 @@ export class EngenheirosService {
       data: { ...(newStatus ? { status: newStatus as EtapaStatus } : {}) },
     });
 
-    return this.obterVisita(visitaId);
+    return this.obterVisita(visitaId, usuarioId);
   }
 
   async aprovarVistoria(engenheiroId: string, visitaId: string, observacao?: string) {
