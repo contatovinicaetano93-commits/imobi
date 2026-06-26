@@ -36,11 +36,6 @@ export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolea
     return true;
   }
 
-  // Gestor acessa obras para vistoria mesmo no fluxo guiado.
-  if (jornada.perfil === "gestor" && isObrasPath(pathname)) {
-    return true;
-  }
-
   switch (jornada.passoAtual) {
     case "kyc":
       return pathname.startsWith("/dashboard/kyc");
