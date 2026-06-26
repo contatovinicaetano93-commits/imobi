@@ -32,6 +32,9 @@ import {
 import { useToast } from "@/hooks/toast-context";
 import { getObrasListPath, getObraDetailBreadcrumbs } from "@/lib/panel-navigation";
 import { normalizeRole } from "@/lib/role-permissions";
+import { PanelSection } from "@/components/dashboard/PanelSection";
+import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
+import type { DashboardTabConfig } from "@/components/dashboard/DashboardPanelShell";
 import "./obra-detail.css";
 
 // ─── Design tokens ──────────────────────────────────────────────────────────
@@ -2311,6 +2314,15 @@ function TabHistoricoContent({
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
+
+const OBRA_TABS: DashboardTabConfig[] = [
+  { id: "geral", label: "Visão Geral", panels: [{ id: "obra-geral", priority: "primary" }] },
+  { id: "etapas", label: "Etapas", panels: [{ id: "obra-etapas", priority: "primary" }] },
+  { id: "documentos", label: "Documentos", panels: [{ id: "obra-documentos", priority: "primary" }] },
+  { id: "financeiro", label: "Financeiro", panels: [{ id: "obra-financeiro", priority: "primary" }] },
+  { id: "historico", label: "Histórico", panels: [{ id: "obra-historico", priority: "secondary" }] },
+];
+
 export default function ObraDetailPage({
   params,
 }: {
@@ -2321,9 +2333,6 @@ export default function ObraDetailPage({
   const fromAdmin = searchParams.get("from") === "admin";
   const obraId = params.id;
 
-  const [tab, setTab] = useState<
-    "geral" | "etapas" | "documentos" | "financeiro" | "historico"
-  >("geral");
   const [obra, setObra] = useState<Obra | null>(null);
   const [progresso, setProgresso] = useState<number>(0);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
@@ -2398,17 +2407,9 @@ export default function ObraDetailPage({
     Promise.all([fetchObra(), fetchRole(), fetchDocumentos()]).finally(() => setLoading(false));
   }, [fetchObra, fetchRole, fetchDocumentos]);
 
-  const tabs = [
-    { key: "geral" as const, label: "Visão Geral" },
-    { key: "etapas" as const, label: "Etapas" },
-    { key: "documentos" as const, label: "Documentos" },
-    { key: "financeiro" as const, label: "Financeiro" },
-    { key: "historico" as const, label: "Histórico" },
-  ];
-
   if (loading) {
     return (
-      <div style={{ maxWidth: 960, ...j }}>
+      <div className="p-4 sm:p-6" style={{ maxWidth: 960, ...j }}>
         <div style={{ marginBottom: 24 }}>
           <Skeleton h={12} w="180px" />
           <div style={{ marginTop: 10 }}>
@@ -2451,195 +2452,216 @@ export default function ObraDetailPage({
   const effectiveRole = role ?? (fromAdmin ? "ADMIN" : null);
   const obrasListPath = getObrasListPath(effectiveRole);
   const breadcrumbs = getObraDetailBreadcrumbs(effectiveRole, obraNome);
+  const etapasPendentesVistoria = etapas.filter((e) => e.status === "AGUARDANDO_VISTORIA").length;
 
   return (
-    <div style={{ maxWidth: 960, ...j }}>
-      <style>{`
-        @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
+    <DashboardPanelShell
+      tabs={OBRA_TABS}
+      defaultTab="geral"
+      maxWidth="xl"
+      beforeTabs={
+        <div style={{ maxWidth: 960, ...j }} className="px-4 sm:px-6 pt-4 sm:pt-6">
+          <style>{`
+            @keyframes shimmer {
+              0% { background-position: 200% 0; }
+              100% { background-position: -200% 0; }
+            }
+          `}</style>
 
-      {normalizeRole(effectiveRole) === "ADMIN" && (
-        <div
-          style={{
-            marginBottom: 16,
-            padding: "0.65rem 1rem",
-            borderRadius: 12,
-            background: "rgba(27,79,216,0.06)",
-            border: "1px solid rgba(27,79,216,0.15)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
-        >
-          <p style={{ ...j, fontSize: 12, color: ROYAL, fontWeight: 600, margin: 0 }}>
-            Visualizando obra no contexto Admin — homologação e pagamentos no painel de gestão.
-          </p>
-          <Link
-            href={"/dashboard/admin/obras" as "/dashboard/obras"}
-            style={{ ...j, fontSize: 12, fontWeight: 700, color: ROYAL, textDecoration: "none" }}
-          >
-            ← Voltar à gestão Admin
-          </Link>
-        </div>
-      )}
-
-      {/* Breadcrumb */}
-      <nav
-        aria-label="Navegação"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          fontSize: 13,
-          color: "#9CA3AF",
-          marginBottom: 6,
-          flexWrap: "wrap",
-          ...j,
-        }}
-      >
-        {breadcrumbs.map((item, i) => (
-          <span key={`${item.label}-${i}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {i > 0 && <span>/</span>}
-            {item.href ? (
+          {normalizeRole(effectiveRole) === "ADMIN" && (
+            <div
+              style={{
+                marginBottom: 16,
+                padding: "0.65rem 1rem",
+                borderRadius: 12,
+                background: "rgba(27,79,216,0.06)",
+                border: "1px solid rgba(27,79,216,0.15)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <p style={{ ...j, fontSize: 12, color: ROYAL, fontWeight: 600, margin: 0 }}>
+                Visualizando obra no contexto Admin — homologação e pagamentos no painel de gestão.
+              </p>
               <Link
-                href={item.href as "/dashboard/obras"}
-                style={{
-                  color: "#9CA3AF",
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
+                href={"/dashboard/admin/obras" as "/dashboard/obras"}
+                style={{ ...j, fontSize: 12, fontWeight: 700, color: ROYAL, textDecoration: "none" }}
               >
-                {i === 0 && <Building2 size={13} />}
-                {item.label}
+                ← Voltar à gestão Admin
               </Link>
-            ) : (
-              <span style={{ color: NAVY, fontWeight: 600 }}>{item.label}</span>
-            )}
-          </span>
-        ))}
-      </nav>
+            </div>
+          )}
 
-      {/* Page header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: 16,
-          marginBottom: 24,
-          flexWrap: "wrap",
-        }}
-      >
-        <div>
-          <h1
+          <nav
+            aria-label="Navegação"
             style={{
-              fontSize: 28,
-              color: NAVY,
-              margin: 0,
-              lineHeight: 1.1,
-              ...bc,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 13,
+              color: "#9CA3AF",
+              marginBottom: 6,
+              flexWrap: "wrap",
+              ...j,
             }}
           >
-            {obraNome}
-          </h1>
-          {obra.tipo && (
-            <p style={{ fontSize: 13, color: "#9CA3AF", marginTop: 4, ...j }}>
-              {obra.tipo}
-            </p>
-          )}
-        </div>
-        <button
-          onClick={() => router.push(obrasListPath as "/dashboard/obras")}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            border: "1px solid rgba(12,26,61,0.15)",
-            background: "white",
-            color: NAVY,
-            fontWeight: 600,
-            fontSize: 13,
-            padding: "8px 16px",
-            borderRadius: 10,
-            cursor: "pointer",
-            ...j,
-          }}
-        >
-          <ChevronLeft size={15} />
-          Voltar
-        </button>
-      </div>
+            {breadcrumbs.map((item, i) => (
+              <span key={`${item.label}-${i}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                {i > 0 && <span>/</span>}
+                {item.href ? (
+                  <Link
+                    href={item.href as "/dashboard/obras"}
+                    style={{
+                      color: "#9CA3AF",
+                      textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    {i === 0 && <Building2 size={13} />}
+                    {item.label}
+                  </Link>
+                ) : (
+                  <span style={{ color: NAVY, fontWeight: 600 }}>{item.label}</span>
+                )}
+              </span>
+            ))}
+          </nav>
 
-      {/* Tabs nav */}
-      <div
-        className="obra-tab-bar"
-        style={{
-          display: "flex",
-          gap: 0,
-          borderBottom: "2px solid #F3F4F6",
-          marginBottom: 24,
-          overflowX: "auto",
-        }}
-      >
-        {tabs.map((t) => {
-          const isActive = tab === t.key;
-          return (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 16,
+              marginBottom: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <h1
+                style={{
+                  fontSize: 28,
+                  color: NAVY,
+                  margin: 0,
+                  lineHeight: 1.1,
+                  ...bc,
+                }}
+              >
+                {obraNome}
+              </h1>
+              {obra.tipo && (
+                <p style={{ fontSize: 13, color: "#9CA3AF", marginTop: 4, ...j }}>
+                  {obra.tipo}
+                </p>
+              )}
+            </div>
             <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
+              onClick={() => router.push(obrasListPath as "/dashboard/obras")}
               style={{
-                padding: "10px 20px",
-                border: "none",
-                background: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                border: "1px solid rgba(12,26,61,0.15)",
+                background: "white",
+                color: NAVY,
+                fontWeight: 600,
+                fontSize: 13,
+                padding: "8px 16px",
+                borderRadius: 10,
                 cursor: "pointer",
-                fontWeight: isActive ? 700 : 500,
-                fontSize: 14,
-                color: isActive ? NAVY : "#9CA3AF",
-                borderBottom: `2px solid ${isActive ? MINT : "transparent"}`,
-                marginBottom: -2,
-                whiteSpace: "nowrap",
-                transition: "color 0.15s",
                 ...j,
               }}
             >
-              {t.label}
+              <ChevronLeft size={15} />
+              Voltar
             </button>
-          );
-        })}
-      </div>
-
-      {/* Tab content */}
-      {tab === "geral" && (
-        <TabGeralContent obra={obra} progresso={progresso} role={role} />
-      )}
-      {tab === "etapas" && (
-        <TabEtapasContent
-          obra={obra}
-          role={role}
-          obraId={obraId}
-          onRefresh={fetchObra}
-        />
-      )}
-      {tab === "documentos" && (
-        <TabDocumentosContent
-          documentos={documentos}
-          obraId={obraId}
-          onRefresh={fetchDocumentos}
-        />
-      )}
-      {tab === "financeiro" && (
-        <TabFinanceiroContent obra={obra} role={role} />
-      )}
-      {tab === "historico" && (
-        <TabHistoricoContent obraId={obraId} etapas={etapas} />
-      )}
-    </div>
+          </div>
+        </div>
+      }
+      tabContent={{
+        geral: (
+          <div style={{ maxWidth: 960, ...j }} className="px-4 sm:px-6">
+            <PanelSection
+              id="obra-geral"
+              title="Visão geral"
+              icon={<Building2 className="w-4 h-4 text-[#1B4FD8]" />}
+              priority="primary"
+              summary={`${progresso}% concluído · ${OBRA_STATUS[obra.status]?.label ?? obra.status}`}
+            >
+              <TabGeralContent obra={obra} progresso={progresso} role={role} />
+            </PanelSection>
+          </div>
+        ),
+        etapas: (
+          <div style={{ maxWidth: 960, ...j }} className="px-4 sm:px-6">
+            <PanelSection
+              id="obra-etapas"
+              title="Etapas da obra"
+              icon={<Activity className="w-4 h-4 text-[#1B4FD8]" />}
+              priority="primary"
+              badge={etapas.length || undefined}
+              summary={`${etapas.length} etapa(s)${etapasPendentesVistoria > 0 ? ` · ${etapasPendentesVistoria} aguardando vistoria` : ""}`}
+              urgency={etapasPendentesVistoria > 0 ? "warning" : "none"}
+            >
+              <TabEtapasContent
+                obra={obra}
+                role={role}
+                obraId={obraId}
+                onRefresh={fetchObra}
+              />
+            </PanelSection>
+          </div>
+        ),
+        documentos: (
+          <div style={{ maxWidth: 960, ...j }} className="px-4 sm:px-6">
+            <PanelSection
+              id="obra-documentos"
+              title="Documentos"
+              icon={<FileText className="w-4 h-4 text-[#1B4FD8]" />}
+              priority="primary"
+              badge={documentos.length || undefined}
+              summary={`${documentos.length} documento(s) anexado(s)`}
+            >
+              <TabDocumentosContent
+                documentos={documentos}
+                obraId={obraId}
+                onRefresh={fetchDocumentos}
+              />
+            </PanelSection>
+          </div>
+        ),
+        financeiro: (
+          <div style={{ maxWidth: 960, ...j }} className="px-4 sm:px-6">
+            <PanelSection
+              id="obra-financeiro"
+              title="Financeiro"
+              icon={<Banknote className="w-4 h-4 text-[#1B4FD8]" />}
+              priority="primary"
+              summary={obra.credito ? "Crédito vinculado" : "Sem crédito vinculado"}
+            >
+              <TabFinanceiroContent obra={obra} role={role} />
+            </PanelSection>
+          </div>
+        ),
+        historico: (
+          <div style={{ maxWidth: 960, ...j }} className="px-4 sm:px-6">
+            <PanelSection
+              id="obra-historico"
+              title="Histórico"
+              icon={<Clock className="w-4 h-4 text-gray-500" />}
+              priority="secondary"
+              summary="Aprovações, documentos e movimentações"
+            >
+              <TabHistoricoContent obraId={obraId} etapas={etapas} />
+            </PanelSection>
+          </div>
+        ),
+      }}
+    />
   );
 }
