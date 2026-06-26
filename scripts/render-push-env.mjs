@@ -92,7 +92,7 @@ const env = {
   AWS_REGION: trim(fileEnv.AWS_REGION ?? fileEnv.AWS_S3_REGION ?? 'sa-east-1'),
   AWS_ACCESS_KEY_ID: trim(fileEnv.AWS_ACCESS_KEY_ID),
   AWS_SECRET_ACCESS_KEY: trim(fileEnv.AWS_SECRET_ACCESS_KEY),
-  AWS_S3_BUCKET: trim(fileEnv.AWS_S3_BUCKET ?? 'imobi-evidencias-prod'),
+  AWS_S3_BUCKET: trim(fileEnv.AWS_S3_BUCKET ?? 'imobi-evidencias-prod-047556738507-sa-east-1-an'),
   AWS_S3_REGION: trim(fileEnv.AWS_S3_REGION ?? 'sa-east-1'),
   ENABLE_S3_STORAGE: trim(fileEnv.ENABLE_S3_STORAGE ?? 'true'),
   FIREBASE_PROJECT_ID: trim(fileEnv.FIREBASE_PROJECT_ID ?? 'imobi-staging'),

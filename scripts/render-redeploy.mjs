@@ -21,8 +21,13 @@ function loadEnv() {
 }
 
 const { RENDER_API_KEY, RENDER_SERVICE_ID } = loadEnv();
+const args = process.argv.slice(2);
+const serviceIdx = args.indexOf('--service');
 const token = process.env.RENDER_API_KEY ?? RENDER_API_KEY;
-let sid = process.env.RENDER_SERVICE_ID ?? RENDER_SERVICE_ID;
+let sid =
+  (serviceIdx >= 0 ? args[serviceIdx + 1] : null) ??
+  process.env.RENDER_SERVICE_ID ??
+  RENDER_SERVICE_ID;
 if (!token || !sid) {
   console.error('❌ RENDER_API_KEY e RENDER_SERVICE_ID em .env.render.local');
   process.exit(1);
