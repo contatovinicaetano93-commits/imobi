@@ -5,7 +5,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   return [
     { url: base, lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: `${base}/simulador`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${base}/envie-seu-projeto`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${base}/quem-somos`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/como-funciona`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${base}/contato`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },

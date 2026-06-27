@@ -1,0 +1,311 @@
+.esp-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 40%);
+  color: #0f172a;
+}
+
+.esp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem;
+}
+
+.esp-logo {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+.esp-main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+}
+
+.esp-hero {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.esp-kicker {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.esp-hero h1 {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.75rem;
+}
+
+.esp-sub {
+  color: #64748b;
+  font-size: 1rem;
+  line-height: 1.55;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.esp-steps {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.esp-step {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+}
+
+.esp-step span {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  font-size: 0.7rem;
+}
+
+.esp-step.active {
+  color: #1d4ed8;
+  background: #eef2ff;
+}
+
+.esp-step.active span {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.esp-step.done {
+  color: #16a34a;
+}
+
+.esp-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+}
+
+.esp-card h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+}
+
+.esp-muted {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.esp-tipo-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.esp-tipo {
+  text-align: left;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.esp-tipo strong {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+  color: #0f172a;
+}
+
+.esp-tipo span {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.esp-tipo.selected {
+  border-color: #1d4ed8;
+  background: #eef2ff;
+}
+
+.esp-form label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+.esp-form input,
+.esp-form textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.9rem;
+}
+
+.esp-row {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .esp-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.esp-bloco {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.esp-bloco h3 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin: 0 0 0.75rem;
+}
+
+.esp-upload {
+  display: block;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.esp-upload span {
+  display: block;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.35rem;
+}
+
+.esp-upload input {
+  font-size: 0.75rem;
+}
+
+.esp-upload em {
+  display: block;
+  margin-top: 0.35rem;
+  color: #16a34a;
+  font-style: normal;
+  font-size: 0.72rem;
+}
+
+.esp-upload-highlight {
+  border-color: #93c5fd;
+  background: #f8fafc;
+  margin-bottom: 1rem;
+}
+
+.esp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+.esp-btn-ghost {
+  background: transparent;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.65rem 1.1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: #475569;
+}
+
+.esp-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.esp-footnote {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.esp-footnote a {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.esp-success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+}
+
+.esp-card-center {
+  text-align: center;
+  max-width: 480px;
+}
+
+.esp-success-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 1.5rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.esp-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: #64748b;
+  font-size: 0.875rem;
+}

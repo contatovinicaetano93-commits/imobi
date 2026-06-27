@@ -42,7 +42,7 @@ export default function ContatoPage() {
 
           <div className="inst-contact-card">
             <h2>Já decidiu?</h2>
-            <p>Crie sua conta e continue de onde parou no simulador.</p>
+            <p>Crie sua conta e continue de onde parou no envio do projeto.</p>
             <Link href="/cadastro" className="btn-ghost">Criar conta →</Link>
           </div>
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Fragment } from "react";
 import { useRouter } from "next/navigation";
+import type { Route } from "next";
 import { redirectAfterLogin } from "@/lib/post-login-redirect";
 import { wakeStagingApi } from "@/lib/wake-staging-api";
 import { loginWithRetry } from "@/lib/login-with-retry";
@@ -128,7 +129,7 @@ export default function LandingPage() {
       <nav className={`landing-nav${scrolled ? " scrolled" : ""}`}>
         <a className="logo" href="#"><LogoIcon /><span className="logo-name">IMOBI</span></a>
         <ul className="nav-links">
-          <li><a href="/simulador">Simular</a></li>
+          <li><a href="/envie-seu-projeto">Envie seu projeto</a></li>
           <li><a href="#vantagens">Vantagens</a></li>
           <li><a href="#como">Processo</a></li>
           <li><a href="#modalidades">Modalidades</a></li>
@@ -136,7 +137,7 @@ export default function LandingPage() {
         </ul>
         <div className="nav-actions">
           <button className="btn-login" onClick={() => setModalOpen(true)}>Entrar</button>
-          <button className="btn-cta"   onClick={() => router.push("/simulador")}>Simular crédito</button>
+          <button className="btn-cta"   onClick={() => router.push("/envie-seu-projeto" as Route)}>Envie seu projeto</button>
         </div>
         {isMobile && (
           <div className="nav-mobile-auth">
@@ -228,9 +229,9 @@ export default function LandingPage() {
               <span className="h1-line">SUA OBRA</span>
               <span className="h1-line h1-accent">EM DIAS.</span>
             </h1>
-            <p className="hero-sub">Crédito ágil e desburocratizado para sua obra. Simule em minutos, documentação simplificada e aprovação em tempo recorde — com liberação por etapa e transparência total.</p>
+            <p className="hero-sub">Crédito ágil para sua obra. Envie a documentação do empreendimento, nossa equipe analisa a viabilidade e estrutura a operação — com liberação por etapa e transparência total.</p>
             <div className="hero-actions">
-              <button className="btn-hero-primary" onClick={() => router.push("/simulador")}>Simular crédito agora</button>
+              <button className="btn-hero-primary" onClick={() => router.push("/envie-seu-projeto" as Route)}>Envie seu projeto</button>
               <button className="btn-hero-ghost"   onClick={() => scrollTo("como")}>Ver o processo →</button>
             </div>
             <div className="hero-strip">
@@ -424,7 +425,7 @@ export default function LandingPage() {
             <p className="cta-sub">Aprovação em tempo recorde. Análise desburocratizada e gratuita, sem compromisso.</p>
           </div>
           <div className="cta-actions reveal d3">
-            <button className="btn-hero-primary" onClick={() => router.push("/simulador")}>Simular crédito agora</button>
+            <button className="btn-hero-primary" onClick={() => router.push("/envie-seu-projeto" as Route)}>Envie seu projeto</button>
             <button className="btn-hero-ghost cta-ghost-light" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
             <a className="cta-wa" href={`https://wa.me/${WA}?text=Olá!%20Gostaria%20de%20estruturar%20um%20projeto%20com%20a%20IMOBI.`} target="_blank" rel="noopener noreferrer">
               <WaIcon size={18} color="rgba(255,255,255,0.75)" /> Falar no WhatsApp
@@ -439,7 +440,7 @@ export default function LandingPage() {
           <div className="footer-top">
             <a className="logo footer-logo" href="#"><LogoIcon /><span className="logo-name">IMOBI</span></a>
             <div className="footer-links">
-              <a href="/simulador">Simular</a>
+              <a href="/envie-seu-projeto">Envie seu projeto</a>
               <a href="/quem-somos">Quem somos</a>
               <a href="/como-funciona">Como funciona</a>
               <a href="/contato">Contato</a>

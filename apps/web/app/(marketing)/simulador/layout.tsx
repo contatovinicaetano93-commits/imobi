@@ -2,20 +2,20 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "Simulador de crédito — IMOBI",
-  description: "Descubra em 2 minutos quanto sua obra pode financiar. Estimativa preliminar sem compromisso.",
+  title: "Envie seu Projeto — IMOBI",
+  description: "Envie a documentação do empreendimento. Nossa equipe analisa a viabilidade e estrutura a operação de crédito.",
   openGraph: {
-    title: "Simulador de crédito — IMOBI",
-    description: "Simule crédito de obra em 2 minutos.",
+    title: "Envie seu Projeto — IMOBI",
+    description: "Documentação do empreendimento + análise de viabilidade.",
     type: "website",
-    url: "https://imobi-web-ten.vercel.app/simulador",
+    url: "https://imobi-web-ten.vercel.app/envie-seu-projeto",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Simulador de crédito — IMOBI",
-    description: "Simule crédito de obra em 2 minutos.",
+    title: "Envie seu Projeto — IMOBI",
+    description: "Documentação do empreendimento + análise de viabilidade.",
   },
-  alternates: { canonical: "https://imobi-web-ten.vercel.app/simulador" },
+  alternates: { canonical: "https://imobi-web-ten.vercel.app/envie-seu-projeto" },
 };
 
 export default function SimuladorLayout({ children }: { children: ReactNode }) {

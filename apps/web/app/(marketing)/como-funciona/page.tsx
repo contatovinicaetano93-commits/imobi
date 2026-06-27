@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import type { Route } from 'next';
 import '../landing.css';
 
 export const metadata: Metadata = {
@@ -12,11 +13,11 @@ export const metadata: Metadata = {
 };
 
 const STEPS = [
-  { n: 1, title: 'Simule', desc: 'Use o simulador público e veja quanto sua obra pode financiar em minutos.' },
-  { n: 2, title: 'Cadastre-se', desc: 'Crie sua conta, envie documentos KYC e vincule a obra com geolocalização.' },
-  { n: 3, title: 'Comitê digital', desc: 'Análise de crédito e due diligence com parecer do gestor do fundo.' },
+  { n: 1, title: 'Envie seu projeto', desc: 'Documentação do empreendimento (obra nova, em andamento ou crédito ponte) + Ficha de Viabilidade.' },
+  { n: 2, title: 'Análise IMOBI', desc: 'Due diligence técnica e financeira — simulação e estruturação do crédito após aprovação documental.' },
+  { n: 3, title: 'Cadastro e KYC', desc: 'Crie sua conta, formalize a operação e vincule a obra com geolocalização.' },
   { n: 4, title: 'Execute e comprove', desc: 'Avance etapas, envie fotos com GPS validado no canteiro.' },
-  { n: 5, title: 'Liberação', desc: 'Parcelas liberadas automaticamente após aprovação das evidências.' },
+  { n: 5, title: 'Liberação', desc: 'Parcelas liberadas após aprovação das evidências de cada fase.' },
 ];
 
 export default function ComoFuncionaPage() {
@@ -34,7 +35,7 @@ export default function ComoFuncionaPage() {
       <main className="inst-page">
         <div className="inst-inner">
           <p className="inst-eyebrow">Como funciona</p>
-          <h1>Do simulador à liberação, em cinco passos</h1>
+          <h1>Da documentação à liberação, em cinco passos</h1>
 
           <ol className="inst-steps">
             {STEPS.map((s) => (
@@ -49,7 +50,7 @@ export default function ComoFuncionaPage() {
           </ol>
 
           <div className="inst-actions">
-            <Link href="/simulador" className="btn-primary">Começar simulação</Link>
+            <Link href={"/envie-seu-projeto" as Route} className="btn-primary">Enviar projeto</Link>
             <Link href="/" className="btn-ghost">← Voltar</Link>
           </div>
         </div>

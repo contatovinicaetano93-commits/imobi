@@ -21,7 +21,7 @@ export default function QuemSomosPage() {
           <span className="logo-name">IMOBI</span>
         </Link>
         <div className="nav-actions">
-          <Link href="/simulador" className="btn-primary">Simular crédito</Link>
+          <Link href={"/envie-seu-projeto" as Route} className="btn-primary">Enviar projeto</Link>
         </div>
       </nav>
 
@@ -53,7 +53,7 @@ export default function QuemSomosPage() {
           </section>
 
           <div className="inst-actions">
-            <Link href="/simulador" className="btn-primary">Simular em 2 minutos</Link>
+            <Link href={"/envie-seu-projeto" as Route} className="btn-primary">Enviar documentação</Link>
             <Link href={"/contato" as Route} className="btn-ghost">Falar com a equipe</Link>
           </div>
         </div>

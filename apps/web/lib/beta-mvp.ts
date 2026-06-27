@@ -24,6 +24,7 @@ export const MVP_PUBLIC_PREFIXES = [
   "/termos",
   "/privacy-policy",
   "/simulador",
+  "/envie-seu-projeto",
   "/quem-somos",
   "/como-funciona",
   "/contato",
@@ -35,8 +36,8 @@ export const MVP_TOMADOR_PREFIXES = [
   "/dashboard/obras",
   "/dashboard/kyc",
   "/dashboard/viabilidade",
+  "/dashboard/proposta-credito",
   "/dashboard/credito",
-  "/dashboard/simulador",
   "/dashboard/perfil",
   "/dashboard/notificacoes",
 ] as const;
@@ -54,8 +55,8 @@ const MVP_NAV_TOMADOR = new Set([
   "/dashboard/obras",
   "/dashboard/kyc",
   "/dashboard/viabilidade",
+  "/dashboard/proposta-credito",
   "/dashboard/credito",
-  "/dashboard/simulador",
   "/dashboard/perfil",
   "/dashboard/notificacoes",
 ]);
