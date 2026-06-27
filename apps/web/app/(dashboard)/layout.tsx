@@ -22,7 +22,7 @@ import { SkipLink } from "@/components/SkipLink";
 import {
   Home, HardHat, CreditCard, Calculator, Star, FileCheck2, Bell, User,
   ShieldCheck, BarChart3, Banknote, Settings, LogOut,
-  ChevronRight, Building2, ArrowLeft, Vote, LayoutDashboard, MapPin, TrendingUp, FileText, type LucideIcon,
+  ChevronRight, Building2, ArrowLeft, Vote, LayoutDashboard, MapPin, TrendingUp, FileText, Inbox, type LucideIcon,
 } from "lucide-react";
 
 type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "GESTOR_OBRA" | "TOMADOR" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | null;
@@ -71,6 +71,7 @@ const NAV: NavItem[] = [
   { label: "Obras",         href: "/dashboard/admin/obras",             icon: HardHat,     roles: ["ADMIN"] },
   { label: "Vistorias",     href: "/dashboard/admin/vistorias",         icon: MapPin,      roles: ["ADMIN"] },
   { label: "KYC",           href: "/dashboard/admin/kyc",              icon: FileCheck2,  roles: ["ADMIN"] },
+  { label: "Propostas",     href: "/dashboard/admin/propostas",        icon: Inbox,       roles: ["ADMIN"] },
   { label: "Viabilidade",   href: "/dashboard/admin/viabilidade",       icon: FileText,    roles: ["ADMIN"] },
   { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["ADMIN"],                           funcao: "fundos" },
   { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["ADMIN"],                           funcao: "relatorios" },

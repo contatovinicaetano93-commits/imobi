@@ -53,6 +53,7 @@ const ACTIVE_NAV_OVERRIDES: NavOverride[] = [
   { pattern: /^\/dashboard\/simulador/, navRole: 'TOMADOR', targetHref: '/dashboard/proposta-credito' },
   { pattern: /^\/dashboard\/simulador/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/proposta-credito' },
   { pattern: /^\/dashboard\/admin\/kyc/, navRole: 'ADMIN', targetHref: '/dashboard/admin/kyc' },
+  { pattern: /^\/dashboard\/admin\/propostas/, navRole: 'ADMIN', targetHref: '/dashboard/admin/propostas' },
   { pattern: /^\/dashboard\/admin\/vistorias/, navRole: 'ADMIN', targetHref: '/dashboard/admin/vistorias' },
   { pattern: /^\/dashboard\/admin\/viabilidade/, navRole: 'ADMIN', targetHref: '/dashboard/admin/viabilidade' },
   { pattern: /^\/dashboard\/gestor\/kyc/, navRole: 'GESTOR', targetHref: '/dashboard/gestor/kyc' },

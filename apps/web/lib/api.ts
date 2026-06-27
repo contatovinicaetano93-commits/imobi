@@ -723,6 +723,7 @@ export type AdminSearchResponse = {
 export type AdminFilasResponse = {
   kycPendentes: number;
   viabilidadePendentes: number;
+  propostasPublicasPendentes: number;
   obrasAguardandoHomologacao: number;
   liberacoesAguardandoPagamento: number;
   etapasAguardandoVistoria: number;
@@ -901,6 +902,19 @@ export type CriarDossiePayload = {
   narrativa?: string;
 };
 
+export type PropostaAdminResumo = {
+  id: string;
+  tipoCredito: TipoCreditoProposta;
+  nomeEmpreendimento: string;
+  nomeContato: string;
+  email: string;
+  telefone: string;
+  empresa: string | null;
+  status: string;
+  usuarioId: string | null;
+  criadoEm: string;
+};
+
 export const propostasApi = {
   checklistTemplate: (tipo: TipoCreditoProposta) =>
     fetch(`/api/proxy/propostas/checklist-template?tipo=${tipo}`).then(async (res) => {
@@ -918,6 +932,7 @@ export const propostasApi = {
       }
       return res.json() as Promise<{ id: string; status: string; mensagem: string }>;
     }),
+  listarAdmin: () => apiFetch<PropostaAdminResumo[]>("/propostas"),
 };
 
 export const dossiesApi = {

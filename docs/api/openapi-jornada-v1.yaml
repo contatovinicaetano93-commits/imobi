@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+  title: Imobi API — Jornada do usuário
+  version: 1.0.0
+  description: |
+    Estado guiado do funil (tomador/gestor) usado pelo dashboard e mobile.
+    Cache Redis por usuário; invalidado em KYC, dossiê, obra e crédito.
+
+servers:
+  - url: https://imobi-api-staging.onrender.com/api/v1
+    description: Staging
+
+tags:
+  - name: jornada
+    description: Passo atual e progresso do funil
+
+paths:
+  /jornada:
+    get:
+      tags: [jornada]
+      summary: Obter jornada do usuário autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Estado da jornada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JornadaResponse'
+        '401':
+          description: Não autenticado
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    JornadaPassoId:
+      type: string
+      enum:
+        - kyc
+        - viabilidade
+        - obra
+        - credito
+        - aguardando
+        - acompanhar
+        - concluido
+        - gestor_kyc
+        - gestor_etapas
+        - gestor_ok
+
+    JornadaResponse:
+      type: object
+      required:
+        - perfil
+        - passoAtual
+        - titulo
+        - descricao
+        - href
+        - concluido
+        - passosConcluidos
+        - totalPassos
+        - progressoPct
+      properties:
+        perfil:
+          type: string
+          enum: [tomador, gestor, outro]
+        passoAtual:
+          $ref: '#/components/schemas/JornadaPassoId'
+        titulo:
+          type: string
+        descricao:
+          type: string
+        href:
+          type: string
+          description: Rota sugerida no dashboard
+        concluido:
+          type: boolean
+        passosConcluidos:
+          type: integer
+        totalPassos:
+          type: integer
+        progressoPct:
+          type: number
+          format: float
+        bloqueado:
+          type: string
+          nullable: true
+        fila:
+          type: object
+          nullable: true
+          properties:
+            kyc:
+              type: integer
+            etapas:
+              type: integer

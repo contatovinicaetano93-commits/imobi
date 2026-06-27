@@ -1,4 +1,5 @@
 export const QUEUE_LIBERACAO = "liberacao-parcela";
+export const QUEUE_PROPOSTA_NOTIFY = "proposta-notify";
 
 export interface LiberacaoJob {
   creditoId: string;

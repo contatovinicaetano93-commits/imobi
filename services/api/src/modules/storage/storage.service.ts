@@ -85,6 +85,24 @@ export class StorageService {
     return { url: key, key };
   }
 
+  async readBuffer(key: string, fallbackMime?: string): Promise<{ buffer: Buffer; mimeType: string }> {
+    if (this.isLocalKey(key)) {
+      const local = await this.readLocalFile(key);
+      return { buffer: local.buffer, mimeType: fallbackMime ?? local.mimeType };
+    }
+    const res = await this.s3.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    const body = res.Body;
+    if (!body) throw new Error("Empty object body");
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of body as AsyncIterable<Uint8Array>) {
+      chunks.push(chunk);
+    }
+    return {
+      buffer: Buffer.concat(chunks),
+      mimeType: fallbackMime ?? res.ContentType ?? "application/octet-stream",
+    };
+  }
+
   async readLocalFile(key: string): Promise<{ buffer: Buffer; mimeType: string }> {
     if (!this.isLocalKey(key)) {
       throw new Error("Not a local storage key");

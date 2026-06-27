@@ -12,6 +12,7 @@ import {
 } from "@prisma/client";
 import { DossiesService } from "./dossies.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { StorageService } from "../storage/storage.service";
 
 describe("DossiesService", () => {
   let service: DossiesService;
@@ -73,6 +74,7 @@ describe("DossiesService", () => {
       providers: [
         DossiesService,
         { provide: PrismaService, useValue: prisma },
+        { provide: StorageService, useValue: { assertStorageAvailable: jest.fn() } },
         { provide: CACHE_MANAGER, useValue: cache },
       ],
     }).compile();

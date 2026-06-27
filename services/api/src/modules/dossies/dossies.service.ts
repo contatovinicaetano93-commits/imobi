@@ -4,12 +4,14 @@ import {
   ForbiddenException,
   BadRequestException,
   Inject,
+  Logger,
 } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import type { Cache } from "cache-manager";
 import {
   DueDiligenceStatus,
   DossieChecklistItemStatus,
+  DocumentoTipo,
   EstagioObraDossie,
   Prisma,
   TipoCreditoProposta,
@@ -32,6 +34,7 @@ import type {
   TipoCreditoProposta as TipoCreditoPropostaSchema,
 } from "@imbobi/schemas";
 import { PrismaService } from "../prisma/prisma.service";
+import { StorageService } from "../storage/storage.service";
 import { isManagerRole } from "../../common/constants/manager-roles";
 import { invalidateJornadaCache } from "../jornada/jornada-cache";
 
@@ -55,10 +58,21 @@ const DOSSIE_LIST_SELECT = {
   enviadoEm: true,
 } satisfies Prisma.DueDiligenceSelect;
 
+export interface PropostaArquivoImport {
+  itemId: string;
+  nome: string;
+  storageKey: string;
+  mimeType: string;
+  tamanhoBytes: number;
+}
+
 @Injectable()
 export class DossiesService {
+  private readonly logger = new Logger(DossiesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
@@ -140,6 +154,7 @@ export class DossiesService {
       percentualFisico: number | null;
       dataBase: Date | null;
       narrativa: string | null;
+      arquivos?: PropostaArquivoImport[];
     },
   ) {
     const existente = await this.prisma.dueDiligence.findFirst({
@@ -189,9 +204,58 @@ export class DossiesService {
         tipoCredito: proposta.tipoCredito,
       });
 
+      if (proposta.arquivos?.length) {
+        await this.copiarArquivosProposta(tx, usuarioId, dossie.id, proposta.arquivos);
+      }
+
       await invalidateJornadaCache(this.cache, usuarioId);
       return dossie;
     });
+  }
+
+  private async copiarArquivosProposta(
+    tx: Prisma.TransactionClient,
+    usuarioId: string,
+    dossieId: string,
+    arquivos: PropostaArquivoImport[],
+  ) {
+    this.storage.assertStorageAvailable();
+
+    for (const arq of arquivos) {
+      try {
+        const { buffer, mimeType } = await this.storage.readBuffer(arq.storageKey, arq.mimeType);
+        const { key } = await this.storage.uploadDocumento(
+          buffer,
+          mimeType,
+          usuarioId,
+          undefined,
+          arq.nome,
+        );
+        const doc = await tx.documento.create({
+          data: {
+            usuarioId,
+            tipo: DocumentoTipo.OUTROS,
+            nome: arq.nome,
+            url: key,
+            mimeType,
+            tamanhoBytes: arq.tamanhoBytes,
+            descricao: `Importado da proposta pública (${arq.itemId})`,
+          },
+        });
+        await tx.dossieChecklistItem.updateMany({
+          where: { dossieId, itemId: arq.itemId },
+          data: {
+            documentoId: doc.documentoId,
+            status: DossieChecklistItemStatus.ENVIADO,
+          },
+        });
+      } catch (error) {
+        this.logger.warn(
+          `Falha ao copiar arquivo ${arq.itemId} da proposta para dossiê ${dossieId}`,
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
   }
 
   async listar(usuarioId: string, role: string) {

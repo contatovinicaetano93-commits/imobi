@@ -10,6 +10,7 @@ describe("AdminService", () => {
   const prisma = {
     kycDocumento: { count: jest.fn() },
     dueDiligence: { count: jest.fn(), findMany: jest.fn() },
+    propostaCredito: { count: jest.fn() },
     obra: { count: jest.fn(), findMany: jest.fn() },
     liberacaoParcela: { count: jest.fn() },
     etapaObra: { count: jest.fn() },
@@ -35,6 +36,7 @@ describe("AdminService", () => {
     it("returns queue counts", async () => {
       prisma.kycDocumento.count.mockResolvedValue(3);
       prisma.dueDiligence.count.mockResolvedValue(2);
+      prisma.propostaCredito.count.mockResolvedValue(6);
       prisma.obra.count.mockResolvedValue(1);
       prisma.liberacaoParcela.count.mockResolvedValue(4);
       prisma.etapaObra.count.mockResolvedValue(5);
@@ -43,6 +45,7 @@ describe("AdminService", () => {
 
       expect(result.kycPendentes).toBe(3);
       expect(result.viabilidadePendentes).toBe(2);
+      expect(result.propostasPublicasPendentes).toBe(6);
       expect(result.obrasAguardandoHomologacao).toBe(1);
       expect(result.liberacoesAguardandoPagamento).toBe(4);
       expect(result.etapasAguardandoVistoria).toBe(5);

@@ -35,7 +35,8 @@ import { ComiteModule } from "./modules/comite/comite.module";
 import { AssistenteModule } from "./modules/assistente/assistente.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker, QUEUE_EXCLUIR_USUARIO } from "./workers/excluir-usuario.worker";
-import { QUEUE_LIBERACAO } from "./common/constants";
+import { PropostaNotifyWorker } from "./workers/proposta-notify.worker";
+import { QUEUE_LIBERACAO, QUEUE_PROPOSTA_NOTIFY } from "./common/constants";
 import { HealthController } from "./common/health.controller";
 import { getRedisConfig } from "./common/config";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
@@ -81,6 +82,7 @@ const redisConfig = getRedisConfig();
     }),
     BullModule.registerQueue({ name: QUEUE_LIBERACAO }),
     BullModule.registerQueue({ name: QUEUE_EXCLUIR_USUARIO }),
+    BullModule.registerQueue({ name: QUEUE_PROPOSTA_NOTIFY }),
     BullModule.forRoot({
       redis: {
         host: redisConfig.host,
@@ -133,6 +135,7 @@ const redisConfig = getRedisConfig();
     // EncryptionService,
     LiberacaoParcelaWorker,
     ExcluirUsuarioWorker,
+    PropostaNotifyWorker,
     {
       provide: APP_INTERCEPTOR,
       useClass: HttpLoggingInterceptor,

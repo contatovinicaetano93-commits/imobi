@@ -3,6 +3,8 @@ import {
   BadRequestException,
   Logger,
 } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bull";
+import type { Queue } from "bull";
 import { PropostaCreditoStatus, TipoCreditoProposta } from "@prisma/client";
 import {
   EnviarPropostaPublicaSchema,
@@ -13,8 +15,9 @@ import {
 import type { TipoCreditoProposta as TipoCreditoPropostaSchema } from "@imbobi/schemas";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
-import { EmailService } from "../email/email.service";
 import { DossiesService } from "../dossies/dossies.service";
+import { QUEUE_PROPOSTA_NOTIFY } from "../../common/constants";
+import type { PropostaNotifyJob } from "../../workers/proposta-notify.worker";
 
 const PROPOSTA_MIMES = new Set([
   "application/pdf",
@@ -38,8 +41,8 @@ export class PropostasService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
-    private readonly email: EmailService,
     private readonly dossies: DossiesService,
+    @InjectQueue(QUEUE_PROPOSTA_NOTIFY) private readonly notifyQueue: Queue<PropostaNotifyJob>,
   ) {}
 
   checklistTemplate(tipo: TipoCreditoPropostaSchema) {
@@ -95,6 +98,7 @@ export class PropostasService {
     if (!maisRecente) return;
 
     try {
+      const arquivos = parsePropostaArquivos(maisRecente.arquivos);
       await this.dossies.importarPropostaPublica(usuarioId, {
         id: maisRecente.id,
         tipoCredito: maisRecente.tipoCredito,
@@ -102,6 +106,7 @@ export class PropostasService {
         percentualFisico: maisRecente.percentualFisico,
         dataBase: maisRecente.dataBase,
         narrativa: maisRecente.narrativa,
+        arquivos,
       });
       this.logger.log(`Proposta ${maisRecente.id} vinculada ao usuário ${usuarioId}`);
     } catch (error) {
@@ -196,7 +201,7 @@ export class PropostasService {
       data: { arquivos: arquivos as unknown as object },
     });
 
-    void this.notificarEquipe(atualizada, arquivos.length);
+    void this.enqueueNotificacao(atualizada, arquivos.length);
 
     return {
       id: atualizada.id,
@@ -206,7 +211,7 @@ export class PropostasService {
     };
   }
 
-  private async notificarEquipe(
+  private enqueueNotificacao(
     proposta: {
       id: string;
       tipoCredito: TipoCreditoProposta;
@@ -218,38 +223,45 @@ export class PropostasService {
     },
     totalArquivos: number,
   ) {
-    const destino =
-      process.env["IMOBI_PROPOSTA_NOTIFY_EMAIL"] ??
-      process.env["ADMIN_NOTIFY_EMAIL"] ??
-      null;
+    const tipoLabel =
+      getTipoCreditoMeta(proposta.tipoCredito as TipoCreditoPropostaSchema)?.label ??
+      proposta.tipoCredito;
 
-    const tipoLabel = getTipoCreditoMeta(proposta.tipoCredito as TipoCreditoPropostaSchema)?.label
-      ?? proposta.tipoCredito;
-
-    const html = `
-      <h2>Nova proposta de crédito — ${proposta.nomeEmpreendimento}</h2>
-      <p><strong>Tipo:</strong> ${tipoLabel}</p>
-      <p><strong>Contato:</strong> ${proposta.nomeContato} · ${proposta.email} · ${proposta.telefone}</p>
-      ${proposta.empresa ? `<p><strong>Empresa:</strong> ${proposta.empresa}</p>` : ""}
-      <p><strong>Arquivos:</strong> ${totalArquivos}</p>
-      <p><strong>ID:</strong> ${proposta.id}</p>
-    `;
-
-    if (destino) {
-      try {
-        await this.email.enviarEmail({
-          to: destino,
-          subject: `[IMOBI] Nova proposta — ${proposta.nomeEmpreendimento}`,
-          html,
-        });
-      } catch (error) {
+    void this.notifyQueue
+      .add(
+        "notificar-equipe",
+        {
+          propostaId: proposta.id,
+          tipoCredito: proposta.tipoCredito,
+          tipoLabel,
+          nomeEmpreendimento: proposta.nomeEmpreendimento,
+          nomeContato: proposta.nomeContato,
+          email: proposta.email,
+          telefone: proposta.telefone,
+          empresa: proposta.empresa,
+          totalArquivos,
+        },
+        {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 1000 },
+        },
+      )
+      .catch((error) => {
         this.logger.error(
-          `Falha ao enviar e-mail da proposta ${proposta.id}`,
+          `Falha ao enfileirar e-mail da proposta ${proposta.id}`,
           error instanceof Error ? error.stack : error,
         );
-      }
-    } else {
-      this.logger.log(`Proposta ${proposta.id} recebida (${totalArquivos} arquivos) — IMOBI_PROPOSTA_NOTIFY_EMAIL não configurado`);
-    }
+      });
   }
+}
+
+function parsePropostaArquivos(raw: unknown): PropostaArquivoMeta[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (item): item is PropostaArquivoMeta =>
+      typeof item === "object" &&
+      item !== null &&
+      typeof (item as PropostaArquivoMeta).itemId === "string" &&
+      typeof (item as PropostaArquivoMeta).storageKey === "string",
+  );
 }

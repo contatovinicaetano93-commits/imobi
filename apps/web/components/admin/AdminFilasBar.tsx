@@ -11,6 +11,11 @@ const ITENS = [
     href: "/dashboard/admin/kyc",
   },
   {
+    key: "propostasPublicasPendentes" as const,
+    label: "Propostas",
+    href: "/dashboard/admin/propostas",
+  },
+  {
     key: "viabilidadePendentes" as const,
     label: "Viabilidade",
     href: "/dashboard/admin/viabilidade",
@@ -39,6 +44,7 @@ export function AdminFilasBar() {
 
   const total =
     filas.kycPendentes +
+    filas.propostasPublicasPendentes +
     filas.viabilidadePendentes +
     filas.obrasAguardandoHomologacao +
     filas.liberacoesAguardandoPagamento +

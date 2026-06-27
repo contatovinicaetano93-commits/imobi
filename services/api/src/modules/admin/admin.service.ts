@@ -72,6 +72,7 @@ export interface AdminSearchResponse {
 export interface AdminFilasResponse {
   kycPendentes: number;
   viabilidadePendentes: number;
+  propostasPublicasPendentes: number;
   obrasAguardandoHomologacao: number;
   liberacoesAguardandoPagamento: number;
   etapasAguardandoVistoria: number;
@@ -570,6 +571,7 @@ export class AdminService {
     const [
       kycPendentes,
       viabilidadePendentes,
+      propostasPublicasPendentes,
       obrasAguardandoHomologacao,
       liberacoesAguardandoPagamento,
       etapasAguardandoVistoria,
@@ -577,6 +579,9 @@ export class AdminService {
       this.prisma.kycDocumento.count({ where: { status: "PENDENTE" } }),
       this.prisma.dueDiligence.count({
         where: { status: { in: ["ENVIADO", "EM_ANALISE"] } },
+      }),
+      this.prisma.propostaCredito.count({
+        where: { status: { in: ["RECEBIDA", "EM_ANALISE"] } },
       }),
       this.prisma.obra.count({ where: { status: "AGUARDANDO_HOMOLOGACAO" } }),
       this.prisma.liberacaoParcela.count({ where: { status: "AGUARDANDO_PAGAMENTO" } }),
@@ -586,6 +591,7 @@ export class AdminService {
     return {
       kycPendentes,
       viabilidadePendentes,
+      propostasPublicasPendentes,
       obrasAguardandoHomologacao,
       liberacoesAguardandoPagamento,
       etapasAguardandoVistoria,

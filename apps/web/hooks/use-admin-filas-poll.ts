@@ -35,6 +35,7 @@ export function useAdminFilasPoll(
       if (cancelled || !data) return;
       const sig = [
         data.kycPendentes,
+        data.propostasPublicasPendentes,
         data.viabilidadePendentes,
         data.obrasAguardandoHomologacao,
         data.liberacoesAguardandoPagamento,
@@ -73,6 +74,7 @@ export function useAdminFilasOnChange(
         if (cancelled) return;
         const sig = [
           data.kycPendentes,
+          data.propostasPublicasPendentes,
           data.viabilidadePendentes,
           data.obrasAguardandoHomologacao,
           data.liberacoesAguardandoPagamento,
