@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import type { Route } from "next";
 import {
   CreditCard,
   TrendingDown,
@@ -58,8 +59,8 @@ export default async function CreditoPage() {
         <EmptyState
           icon={CreditCard}
           title="Nenhum crédito ativo"
-          description="Você ainda não tem créditos aprovados. Use o simulador para calcular o melhor crédito."
-          action={{ label: "Simular Crédito", href: "/dashboard/simulador", icon: BarChart3 }}
+          description="Você ainda não tem créditos aprovados. Envie a documentação do empreendimento para iniciar a análise."
+          action={{ label: "Enviar projeto", href: "/dashboard/proposta-credito" as Route, icon: BarChart3 }}
         />
       </div>
     );

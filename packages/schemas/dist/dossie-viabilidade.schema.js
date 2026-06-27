@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChecklistTemplateQuerySchema = exports.AtualizarDossieStatusSchema = exports.AtualizarDossieSchema = exports.AtualizarDossieChecklistItemSchema = exports.CriarDossieSchema = exports.DossieChecklistItemStatusEnum = exports.DossieStatusEnum = exports.EstagioObraDossieEnum = void 0;
 const zod_1 = require("zod");
+const proposta_credito_schema_1 = require("./proposta-credito.schema");
 exports.EstagioObraDossieEnum = zod_1.z.enum(["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"]);
 exports.DossieStatusEnum = zod_1.z.enum([
     "RASCUNHO",
@@ -18,12 +19,14 @@ exports.DossieChecklistItemStatusEnum = zod_1.z.enum([
     "NA",
 ]);
 exports.CriarDossieSchema = zod_1.z.object({
-    estagioObra: exports.EstagioObraDossieEnum,
+    tipoCredito: proposta_credito_schema_1.TipoCreditoPropostaEnum.optional(),
+    estagioObra: exports.EstagioObraDossieEnum.optional(),
     nomeEmpreendimento: zod_1.z.string().min(3, "Nome mínimo 3 caracteres").max(255),
     percentualFisico: zod_1.z.number().min(0).max(100).optional(),
     dataBase: zod_1.z.coerce.date().optional(),
     obraId: zod_1.z.string().uuid().optional(),
-});
+    narrativa: zod_1.z.string().max(5000).optional(),
+}).refine((data) => data.tipoCredito != null || data.estagioObra != null, { message: "Informe tipoCredito ou estagioObra" });
 exports.AtualizarDossieChecklistItemSchema = zod_1.z.object({
     itemId: zod_1.z.string().min(1).max(64),
     status: exports.DossieChecklistItemStatusEnum.optional(),
@@ -60,5 +63,6 @@ exports.AtualizarDossieStatusSchema = zod_1.z.object({
     observacaoAdmin: zod_1.z.string().max(2000).optional(),
 });
 exports.ChecklistTemplateQuerySchema = zod_1.z.object({
-    estagio: exports.EstagioObraDossieEnum,
-});
+    estagio: exports.EstagioObraDossieEnum.optional(),
+    tipo: proposta_credito_schema_1.TipoCreditoPropostaEnum.optional(),
+}).refine((data) => data.estagio != null || data.tipo != null, { message: "Informe estagio ou tipo" });

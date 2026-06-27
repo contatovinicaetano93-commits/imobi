@@ -1,12 +1,22 @@
 import { useEffect, useState } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, LogBox, DeviceEventEmitter } from "react-native";
+
+LogBox.ignoreAllLogs();
+
+if (__DEV__) {
+  // The Expo dev-client network inspector opens in "Inspect" mode by default,
+  // which places a full-screen touch interceptor. Emit the toggle event to
+  // close it shortly after the JS runtime starts.
+  setTimeout(() => DeviceEventEmitter.emit('toggleElementInspector'), 800);
+}
 import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useRouter, useSegments } from "expo-router";
-import { setOnUnauthorized } from "../lib/api";
+import { setOnUnauthorized, setOnSignedIn } from "../lib/api";
 import { initMobileSentry, Sentry } from "../lib/sentry";
 import { authenticateWithBiometry, isBiometryEnabled } from "../lib/biometry";
 import { registerForPushNotifications, addNotificationListeners } from "../lib/push-notifications";
+import { resolvePostLoginRoute } from "../lib/jornada";
 import { NetworkStatusBanner } from "../hooks/use-network-status";
 
 initMobileSentry();
@@ -24,6 +34,9 @@ function RootLayout() {
   useEffect(() => {
     setOnUnauthorized(() => {
       setIsSignedIn(false);
+    });
+    setOnSignedIn(() => {
+      setIsSignedIn(true);
     });
   }, []);
 
@@ -73,7 +86,9 @@ function RootLayout() {
     const onWelcome = !segments[0] || segments[0] === "index";
 
     if (isSignedIn && (inAuthGroup || onWelcome)) {
-      router.replace("/(tabs)/inicio");
+      void resolvePostLoginRoute().then((dest) => {
+        router.replace(dest as never);
+      });
     } else if (!isSignedIn && inTabsGroup) {
       router.replace("/");
     }

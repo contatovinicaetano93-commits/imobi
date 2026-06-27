@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   "/redefinir-senha",
   "/termos",
   "/privacy-policy",
+  "/simulador",
   "/envie-seu-projeto",
   "/quem-somos",
   "/como-funciona",
@@ -77,6 +78,14 @@ export function middleware(request: NextRequest) {
   }
 
   const role = resolveRequestRole(request, token);
+
+  // Legado: simulador interno redireciona para proposta de crédito (antes do gate MVP).
+  if (
+    pathname === "/dashboard/simulador" ||
+    pathname.startsWith("/dashboard/simulador/")
+  ) {
+    return NextResponse.redirect(new URL("/dashboard/proposta-credito", request.url));
+  }
 
   // Admin opera KYC/vistorias no Centro de Comando — nunca nas filas do gestor de fundo (somente leitura).
   if (role === "ADMIN") {

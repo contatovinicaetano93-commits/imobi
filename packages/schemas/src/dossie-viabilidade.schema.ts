@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TipoCreditoPropostaEnum } from "./proposta-credito.schema";
 
 export const EstagioObraDossieEnum = z.enum(["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"]);
 export const DossieStatusEnum = z.enum([
@@ -17,12 +18,17 @@ export const DossieChecklistItemStatusEnum = z.enum([
 ]);
 
 export const CriarDossieSchema = z.object({
-  estagioObra: EstagioObraDossieEnum,
+  tipoCredito: TipoCreditoPropostaEnum.optional(),
+  estagioObra: EstagioObraDossieEnum.optional(),
   nomeEmpreendimento: z.string().min(3, "Nome mínimo 3 caracteres").max(255),
   percentualFisico: z.number().min(0).max(100).optional(),
   dataBase: z.coerce.date().optional(),
   obraId: z.string().uuid().optional(),
-});
+  narrativa: z.string().max(5000).optional(),
+}).refine(
+  (data) => data.tipoCredito != null || data.estagioObra != null,
+  { message: "Informe tipoCredito ou estagioObra" },
+);
 
 export const AtualizarDossieChecklistItemSchema = z.object({
   itemId: z.string().min(1).max(64),
@@ -63,8 +69,12 @@ export const AtualizarDossieStatusSchema = z.object({
 });
 
 export const ChecklistTemplateQuerySchema = z.object({
-  estagio: EstagioObraDossieEnum,
-});
+  estagio: EstagioObraDossieEnum.optional(),
+  tipo: TipoCreditoPropostaEnum.optional(),
+}).refine(
+  (data) => data.estagio != null || data.tipo != null,
+  { message: "Informe estagio ou tipo" },
+);
 
 export type EstagioObraDossie = z.infer<typeof EstagioObraDossieEnum>;
 export type DossieStatus = z.infer<typeof DossieStatusEnum>;

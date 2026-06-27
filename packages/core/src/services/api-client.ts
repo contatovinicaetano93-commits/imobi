@@ -3,7 +3,11 @@ const _base =
     ? (process.env["NEXT_PUBLIC_API_URL"] ?? process.env["EXPO_PUBLIC_API_URL"] ?? "http://localhost:4000")
     : "http://localhost:4000";
 
-const BASE_URL = _base.endsWith("/api/v1") ? _base : `${_base}/api/v1`;
+export function getApiBaseUrl(): string {
+  return _base.endsWith("/api/v1") ? _base : `${_base}/api/v1`;
+}
+
+const BASE_URL = getApiBaseUrl();
 
 interface RequestOptions extends RequestInit {
   token?: string;

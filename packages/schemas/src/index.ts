@@ -6,6 +6,7 @@ export * from "./comercial.schema";
 export * from "./notificacao.schema";
 export * from "./dossie-viabilidade.schema";
 export * from "./dossie-checklist-template";
+export * from "./proposta-credito.schema";
 export * from "./kyc.schema";
 export * from "./jornada.schema";
 export * from "./assistente.schema";

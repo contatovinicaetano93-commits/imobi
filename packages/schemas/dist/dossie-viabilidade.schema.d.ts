@@ -2,24 +2,46 @@ import { z } from "zod";
 export declare const EstagioObraDossieEnum: z.ZodEnum<["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"]>;
 export declare const DossieStatusEnum: z.ZodEnum<["RASCUNHO", "ENVIADO", "EM_ANALISE", "APROVADO", "REPROVADO"]>;
 export declare const DossieChecklistItemStatusEnum: z.ZodEnum<["PENDENTE", "ENVIADO", "APROVADO", "REPROVADO", "NA"]>;
-export declare const CriarDossieSchema: z.ZodObject<{
-    estagioObra: z.ZodEnum<["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"]>;
+export declare const CriarDossieSchema: z.ZodEffects<z.ZodObject<{
+    tipoCredito: z.ZodOptional<z.ZodEnum<["OBRA_NOVA", "OBRA_EM_ANDAMENTO", "CREDITO_PONTE"]>>;
+    estagioObra: z.ZodOptional<z.ZodEnum<["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"]>>;
     nomeEmpreendimento: z.ZodString;
     percentualFisico: z.ZodOptional<z.ZodNumber>;
     dataBase: z.ZodOptional<z.ZodDate>;
     obraId: z.ZodOptional<z.ZodString>;
+    narrativa: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    estagioObra: "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA";
     nomeEmpreendimento: string;
     obraId?: string | undefined;
-    percentualFisico?: number | undefined;
+    tipoCredito?: "OBRA_NOVA" | "OBRA_EM_ANDAMENTO" | "CREDITO_PONTE" | undefined;
+    narrativa?: string | undefined;
     dataBase?: Date | undefined;
+    percentualFisico?: number | undefined;
+    estagioObra?: "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA" | undefined;
 }, {
-    estagioObra: "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA";
     nomeEmpreendimento: string;
     obraId?: string | undefined;
-    percentualFisico?: number | undefined;
+    tipoCredito?: "OBRA_NOVA" | "OBRA_EM_ANDAMENTO" | "CREDITO_PONTE" | undefined;
+    narrativa?: string | undefined;
     dataBase?: Date | undefined;
+    percentualFisico?: number | undefined;
+    estagioObra?: "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA" | undefined;
+}>, {
+    nomeEmpreendimento: string;
+    obraId?: string | undefined;
+    tipoCredito?: "OBRA_NOVA" | "OBRA_EM_ANDAMENTO" | "CREDITO_PONTE" | undefined;
+    narrativa?: string | undefined;
+    dataBase?: Date | undefined;
+    percentualFisico?: number | undefined;
+    estagioObra?: "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA" | undefined;
+}, {
+    nomeEmpreendimento: string;
+    obraId?: string | undefined;
+    tipoCredito?: "OBRA_NOVA" | "OBRA_EM_ANDAMENTO" | "CREDITO_PONTE" | undefined;
+    narrativa?: string | undefined;
+    dataBase?: Date | undefined;
+    percentualFisico?: number | undefined;
+    estagioObra?: "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA" | undefined;
 }>;
 export declare const AtualizarDossieChecklistItemSchema: z.ZodObject<{
     itemId: z.ZodString;
@@ -75,8 +97,8 @@ export declare const AtualizarDossieSchema: z.ZodEffects<z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     obraId?: string | null | undefined;
     nomeEmpreendimento?: string | undefined;
-    percentualFisico?: number | null | undefined;
     dataBase?: Date | null | undefined;
+    percentualFisico?: number | null | undefined;
     tipologia?: string | null | undefined;
     endereco?: string | null | undefined;
     cidade?: string | null | undefined;
@@ -100,8 +122,8 @@ export declare const AtualizarDossieSchema: z.ZodEffects<z.ZodObject<{
 }, {
     obraId?: string | null | undefined;
     nomeEmpreendimento?: string | undefined;
-    percentualFisico?: number | null | undefined;
     dataBase?: Date | null | undefined;
+    percentualFisico?: number | null | undefined;
     tipologia?: string | null | undefined;
     endereco?: string | null | undefined;
     cidade?: string | null | undefined;
@@ -125,8 +147,8 @@ export declare const AtualizarDossieSchema: z.ZodEffects<z.ZodObject<{
 }>, {
     obraId?: string | null | undefined;
     nomeEmpreendimento?: string | undefined;
-    percentualFisico?: number | null | undefined;
     dataBase?: Date | null | undefined;
+    percentualFisico?: number | null | undefined;
     tipologia?: string | null | undefined;
     endereco?: string | null | undefined;
     cidade?: string | null | undefined;
@@ -150,8 +172,8 @@ export declare const AtualizarDossieSchema: z.ZodEffects<z.ZodObject<{
 }, {
     obraId?: string | null | undefined;
     nomeEmpreendimento?: string | undefined;
-    percentualFisico?: number | null | undefined;
     dataBase?: Date | null | undefined;
+    percentualFisico?: number | null | undefined;
     tipologia?: string | null | undefined;
     endereco?: string | null | undefined;
     cidade?: string | null | undefined;
@@ -177,18 +199,27 @@ export declare const AtualizarDossieStatusSchema: z.ZodObject<{
     status: z.ZodEnum<["RASCUNHO", "ENVIADO", "EM_ANALISE", "APROVADO", "REPROVADO"]>;
     observacaoAdmin: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    status: "RASCUNHO" | "ENVIADO" | "EM_ANALISE" | "APROVADO" | "REPROVADO";
+    status: "EM_ANALISE" | "RASCUNHO" | "ENVIADO" | "APROVADO" | "REPROVADO";
     observacaoAdmin?: string | undefined;
 }, {
-    status: "RASCUNHO" | "ENVIADO" | "EM_ANALISE" | "APROVADO" | "REPROVADO";
+    status: "EM_ANALISE" | "RASCUNHO" | "ENVIADO" | "APROVADO" | "REPROVADO";
     observacaoAdmin?: string | undefined;
 }>;
-export declare const ChecklistTemplateQuerySchema: z.ZodObject<{
-    estagio: z.ZodEnum<["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"]>;
+export declare const ChecklistTemplateQuerySchema: z.ZodEffects<z.ZodObject<{
+    estagio: z.ZodOptional<z.ZodEnum<["NOVO", "EM_ANDAMENTO", "ENTRADA_TARDIA"]>>;
+    tipo: z.ZodOptional<z.ZodEnum<["OBRA_NOVA", "OBRA_EM_ANDAMENTO", "CREDITO_PONTE"]>>;
 }, "strip", z.ZodTypeAny, {
-    estagio: "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA";
+    tipo?: "OBRA_NOVA" | "OBRA_EM_ANDAMENTO" | "CREDITO_PONTE" | undefined;
+    estagio?: "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA" | undefined;
 }, {
-    estagio: "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA";
+    tipo?: "OBRA_NOVA" | "OBRA_EM_ANDAMENTO" | "CREDITO_PONTE" | undefined;
+    estagio?: "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA" | undefined;
+}>, {
+    tipo?: "OBRA_NOVA" | "OBRA_EM_ANDAMENTO" | "CREDITO_PONTE" | undefined;
+    estagio?: "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA" | undefined;
+}, {
+    tipo?: "OBRA_NOVA" | "OBRA_EM_ANDAMENTO" | "CREDITO_PONTE" | undefined;
+    estagio?: "NOVO" | "EM_ANDAMENTO" | "ENTRADA_TARDIA" | undefined;
 }>;
 export type EstagioObraDossie = z.infer<typeof EstagioObraDossieEnum>;
 export type DossieStatus = z.infer<typeof DossieStatusEnum>;

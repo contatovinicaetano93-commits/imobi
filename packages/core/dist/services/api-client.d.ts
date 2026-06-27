@@ -1,3 +1,4 @@
+export declare function getApiBaseUrl(): string;
 declare class ApiError extends Error {
     status: number;
     code?: string | undefined;

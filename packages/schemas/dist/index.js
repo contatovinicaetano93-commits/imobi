@@ -22,6 +22,7 @@ __exportStar(require("./comercial.schema"), exports);
 __exportStar(require("./notificacao.schema"), exports);
 __exportStar(require("./dossie-viabilidade.schema"), exports);
 __exportStar(require("./dossie-checklist-template"), exports);
+__exportStar(require("./proposta-credito.schema"), exports);
 __exportStar(require("./kyc.schema"), exports);
 __exportStar(require("./jornada.schema"), exports);
 __exportStar(require("./assistente.schema"), exports);

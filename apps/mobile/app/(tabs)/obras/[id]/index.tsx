@@ -6,6 +6,18 @@ import { formatarBRL } from "@imbobi/core";
 import { obrasApi, type ObraDetalhe } from "../../../../lib/api";
 import { cacheObraDetail, getCachedObraDetail } from "../../../../lib/offline-cache";
 
+const ETAPA_DESCRICAO: Record<string, string> = {
+  "Fundação":                "Fotos de escavação, sapatas e blocos de fundação concluídos.",
+  "Estrutura":               "Fotos de pilares, vigas e lajes executados.",
+  "Alvenaria":               "Fotos do levantamento de paredes e vedações.",
+  "Cobertura":               "Fotos do telhado, impermeabilização e rufos instalados.",
+  "Instalações Elétricas":   "Fotos dos cabeamentos, quadro elétrico e pontos de luz.",
+  "Instalações Hidráulicas": "Fotos das tubulações de água fria, quente e esgoto.",
+  "Revestimento":            "Fotos de reboco, azulejo e porcelanato aplicados.",
+  "Acabamento":              "Fotos de pintura, esquadrias, pisos e louças instalados.",
+  "Entrega":                 "Fotos da vistoria final, limpeza e habite-se.",
+};
+
 const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
   PLANEJADA:           { bg: "#f3f4f6", text: "#6b7280" },
   EM_EXECUCAO:         { bg: "#dbeafe", text: "#1d4ed8" },
@@ -121,7 +133,16 @@ export default function ObraDetailScreen() {
                   <Text style={[styles.badgeText, { color: colors.text }]}>{etapa.status.replace(/_/g, " ")}</Text>
                 </View>
               </View>
-              <Text style={styles.etapaValor}>{formatarBRL(etapa.valorLiberacao)}</Text>
+              <View style={styles.etapaTrancheRow}>
+                <Text style={styles.etapaTrancheLabel}>Tranche desta etapa</Text>
+                <Text style={styles.etapaTrancheValor}>{formatarBRL(etapa.valorLiberacao)}</Text>
+              </View>
+              {ETAPA_DESCRICAO[etapa.nome] && (
+                <View style={styles.etapaFotosHint}>
+                  <Text style={styles.etapaFotosIcon}>📸</Text>
+                  <Text style={styles.etapaFotosText}>{ETAPA_DESCRICAO[etapa.nome]}</Text>
+                </View>
+              )}
               {podeEnviar && (
                 <TouchableOpacity
                   style={styles.enviarBtn}
@@ -173,7 +194,12 @@ const styles = StyleSheet.create({
   etapaNome: { fontSize: 14, fontWeight: "600", color: "#111827", flex: 1, marginRight: 8 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
   badgeText: { fontSize: 10, fontWeight: "600" },
-  etapaValor: { fontSize: 13, color: "#6b7280", marginBottom: 8 },
+  etapaTrancheRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
+  etapaTrancheLabel: { fontSize: 11, color: "#6b7280", fontWeight: "500", textTransform: "uppercase", letterSpacing: 0.3 },
+  etapaTrancheValor: { fontSize: 15, fontWeight: "700", color: "#16a34a" },
+  etapaFotosHint: { flexDirection: "row", alignItems: "flex-start", gap: 6, backgroundColor: "#f8fafc", borderRadius: 8, padding: 8, marginBottom: 8 },
+  etapaFotosIcon: { fontSize: 13 },
+  etapaFotosText: { fontSize: 12, color: "#475569", flex: 1, lineHeight: 17 },
   enviarBtn: { backgroundColor: "#2563eb", borderRadius: 10, paddingVertical: 8, alignItems: "center" },
   enviarBtnText: { color: "#fff", fontWeight: "600", fontSize: 13 },
 });

@@ -85,7 +85,12 @@ export default function EnvieSeuProjetoPage() {
       return false;
     }
     if (tipo !== "OBRA_NOVA") {
-      const pct = Number(percentualFisico);
+      const raw = percentualFisico.trim();
+      if (raw === "") {
+        setErro("Informe o percentual físico da obra (0–100).");
+        return false;
+      }
+      const pct = Number(raw);
       if (Number.isNaN(pct) || pct < 0 || pct > 100) {
         setErro("Informe o percentual físico da obra (0–100).");
         return false;
@@ -112,8 +117,8 @@ export default function EnvieSeuProjetoPage() {
       if (empresa.trim()) fd.append("empresa", empresa.trim());
       if (narrativa.trim()) fd.append("narrativa", narrativa.trim());
       if (dataBase) fd.append("dataBase", dataBase);
-      if (tipo !== "OBRA_NOVA" && percentualFisico) {
-        fd.append("percentualFisico", percentualFisico);
+      if (tipo !== "OBRA_NOVA") {
+        fd.append("percentualFisico", percentualFisico.trim());
       }
       if (ficha) fd.append("ficha", ficha);
       for (const [itemId, file] of Object.entries(uploads)) {

@@ -31,8 +31,5 @@
         "track": "internal"
       }
     }
-  },
-  "update": {
-    "channel": "main"
   }
 }

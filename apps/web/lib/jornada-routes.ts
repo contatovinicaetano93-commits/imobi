@@ -40,7 +40,10 @@ export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolea
     case "kyc":
       return pathname.startsWith("/dashboard/kyc");
     case "viabilidade":
-      return pathname.startsWith("/dashboard/viabilidade");
+      return (
+        pathname.startsWith("/dashboard/viabilidade") ||
+        pathname.startsWith("/dashboard/proposta-credito")
+      );
     case "obra":
       return isObrasPath(pathname);
     case "aguardando":
@@ -52,10 +55,7 @@ export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolea
         pathname.startsWith("/dashboard/credito")
       );
     case "credito":
-      return (
-        pathname.startsWith("/dashboard/simulador") ||
-        pathname.startsWith("/dashboard/credito")
-      );
+      return pathname.startsWith("/dashboard/credito");
     case "gestor_kyc":
       return pathname.startsWith("/dashboard/gestor/kyc");
     case "gestor_etapas":

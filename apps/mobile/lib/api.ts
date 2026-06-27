@@ -1,11 +1,20 @@
 import * as SecureStore from "expo-secure-store";
-import { apiClient, ApiError } from "@imbobi/core";
+import { apiClient, ApiError, getApiBaseUrl } from "@imbobi/core";
 import type { UpdatePerfilUsuarioInput } from "@imbobi/schemas";
 
 let _onUnauthorized: (() => void) | null = null;
+let _onSignedIn: (() => void) | null = null;
 
 export function setOnUnauthorized(cb: () => void) {
   _onUnauthorized = cb;
+}
+
+export function setOnSignedIn(cb: () => void) {
+  _onSignedIn = cb;
+}
+
+export function notifySignedIn() {
+  _onSignedIn?.();
 }
 
 async function getToken(): Promise<string | null> {
@@ -30,12 +39,12 @@ export const usuariosApi = {
   obterPerfil: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<UsuarioPerfil>("/api/v1/usuarios/meu-perfil", token ?? undefined);
+      return apiClient.get<UsuarioPerfil>("/usuarios/meu-perfil", token ?? undefined);
     }),
   atualizarPerfil: (data: UpdatePerfilUsuarioInput) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.patch<UsuarioPerfil>("/api/v1/usuarios/meu-perfil", data, token ?? undefined);
+      return apiClient.patch<UsuarioPerfil>("/usuarios/meu-perfil", data, token ?? undefined);
     }),
 };
 
@@ -43,17 +52,17 @@ export const obrasApi = {
   listar: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<Obra[]>("/api/v1/obras", token ?? undefined);
+      return apiClient.get<Obra[]>("/obras", token ?? undefined);
     }),
   buscar: (obraId: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<ObraDetalhe>(`/api/v1/obras/${obraId}`, token ?? undefined);
+      return apiClient.get<ObraDetalhe>(`/obras/${obraId}`, token ?? undefined);
     }),
   progresso: (obraId: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<number>(`/api/v1/obras/${obraId}/progresso`, token ?? undefined);
+      return apiClient.get<number>(`/obras/${obraId}/progresso`, token ?? undefined);
     }),
 };
 
@@ -61,7 +70,7 @@ export const creditoApi = {
   meus: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<Credito[]>("/api/v1/credito/meus", token ?? undefined);
+      return apiClient.get<Credito[]>("/credito/meus", token ?? undefined);
     }),
 };
 
@@ -69,7 +78,7 @@ export const scoreApi = {
   obter: () =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.get<ScoreData>("/api/v1/score/atual", token ?? undefined);
+      return apiClient.get<ScoreData>("/score/atual", token ?? undefined);
     }),
 };
 
@@ -82,12 +91,11 @@ export const kycApi = {
   uploadDocumentoArquivo: (tipo: string, uri: string, mimeType = "image/jpeg") =>
     callApi(async () => {
       const token = await getToken();
-      const apiUrl = process.env["EXPO_PUBLIC_API_URL"] ?? "";
       const ext = mimeType.split("/")[1]?.split("+")[0] ?? "jpg";
       const form = new FormData();
       form.append("tipo", tipo);
       form.append("file", { uri, name: `kyc-${tipo}.${ext}`, type: mimeType } as never);
-      const res = await fetch(`${apiUrl}/api/v1/kyc/upload`, {
+      const res = await fetch(`${getApiBaseUrl()}/kyc/upload`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token ?? ""}` },
         body: form,
@@ -119,7 +127,7 @@ export const authApi = {
   logout: (refreshToken: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.post("/api/v1/auth/logout", { refreshToken }, token ?? undefined);
+      return apiClient.post("/auth/logout", { refreshToken }, token ?? undefined);
     }),
 };
 
@@ -127,7 +135,7 @@ export const pushApi = {
   registrarToken: (fcmToken: string) =>
     callApi(async () => {
       const token = await getToken();
-      return apiClient.post("/api/v1/push-notificacoes/registrar-token", { token: fcmToken }, token ?? undefined);
+      return apiClient.post("/push-notificacoes/registrar-token", { token: fcmToken }, token ?? undefined);
     }),
 };
 

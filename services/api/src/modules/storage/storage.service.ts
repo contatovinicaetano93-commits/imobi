@@ -178,6 +178,39 @@ export class StorageService {
     return { url: key, key };
   }
 
+  async uploadProposta(
+    buffer: Buffer,
+    mimeType: string,
+    propostaId: string,
+    itemId: string,
+    originalName?: string,
+  ) {
+    const ext = extFromMime(mimeType, originalName);
+    const safeItem = itemId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64);
+    const filename = `${safeItem}-${randomUUID()}.${ext}`;
+
+    if (this.useS3()) {
+      const key = `propostas/${propostaId}/${filename}`;
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: mimeType,
+          ServerSideEncryption: "AES256",
+        }),
+      );
+      return { url: key, key };
+    }
+
+    const relDir = path.join("propostas", propostaId);
+    const absDir = path.join(this.uploadRoot, relDir);
+    await mkdir(absDir, { recursive: true });
+    await writeFile(path.join(absDir, filename), buffer);
+    const key = `${LOCAL_PREFIX}${relDir}/${filename}`.replace(/\\/g, "/");
+    return { url: key, key };
+  }
+
   async getSignedUrl(key: string, expiresIn = 3600) {
     // AWS SDK tipos divergem entre client-s3 e s3-request-presigner no monorepo
     return getSignedUrl(

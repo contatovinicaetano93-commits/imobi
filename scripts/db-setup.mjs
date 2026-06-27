@@ -117,7 +117,7 @@ await waitForPostgres();
 
 console.log("\n3/4 Schema + Prisma client...");
 run("pnpm db:generate");
-// db push evita ordem lexicográfica quebrada das pastas 10_* vs 1_* em banco novo
+// db push + baseline — ordem das migrations corrigida (00–09 antes de 10+)
 runDb("pnpm --filter @imbobi/api exec prisma db push --schema prisma/schema.prisma --accept-data-loss");
 try {
   runDb("node scripts/db-baseline.mjs");

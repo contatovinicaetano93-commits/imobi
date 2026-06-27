@@ -8,6 +8,7 @@ Processo **offline hoje** (PDF + Excel por e-mail). Esta pasta consolida os temp
 |---------|-----|
 | [`templates/Empreendimento - Novo.pdf`](templates/Empreendimento%20-%20Novo.pdf) | Checklist de documentos — **obra nova** (pré-obra / lançamento) |
 | [`templates/Empreendimento - Em Andamento.pdf`](templates/Empreendimento%20-%20Em%20Andamento.pdf) | Checklist de documentos — **obra em andamento** |
+| [`templates/Empreendimento - CREDITO PONTE.pdf`](templates/Empreendimento%20-%20CREDITO%20PONTE.pdf) | Checklist de documentos — **crédito ponte** (andamento + legalidade e garantias) |
 | [`templates/Ficha do Empreendimento e Viabilidade IMOBI.xlsx`](templates/Ficha%20do%20Empreendimento%20e%20Viabilidade%20IMOBI.xlsx) | Planilha estruturada (EVEF + unidades + carteira + portfólio do grupo) |
 
 ## Documentação principal

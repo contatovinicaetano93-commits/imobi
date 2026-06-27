@@ -247,11 +247,11 @@ export class JornadaService {
       return {
         perfil: "tomador",
         passoAtual: "viabilidade",
-        titulo: aguardando ? "Dossiê em análise" : "Montar dossiê de viabilidade",
+        titulo: aguardando ? "Proposta em análise" : "Envie seu projeto",
         descricao: aguardando
-          ? "Seu dossiê está com o time IMOBI. Você será notificado quando aprovado."
-          : "Checklist de documentos e Ficha do Empreendimento antes de cadastrar a obra.",
-        href: "/dashboard/viabilidade",
+          ? "Sua documentação está com o time IMOBI. Você será notificado quando aprovado."
+          : "Checklist de documentos e Ficha do Empreendimento — etapa web antes de cadastrar a obra.",
+        href: "/dashboard/proposta-credito",
         concluido: false,
         ...prog,
         bloqueado: aguardando ? "obra" : undefined,
@@ -277,7 +277,7 @@ export class JornadaService {
         perfil: "tomador",
         passoAtual: "credito",
         titulo: "Solicitar crédito",
-        descricao: "Simule e envie o pedido vinculado à sua obra.",
+        descricao: "Solicite crédito vinculado à sua obra.",
         href: "/dashboard/credito/solicitar",
         concluido: false,
         ...prog,

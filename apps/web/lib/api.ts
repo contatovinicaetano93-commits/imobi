@@ -857,15 +857,17 @@ export type DossieDetalhe = DossieResumo & {
   obra?: { obraId: string; nome: string; status: string } | null;
 };
 
+export type TipoCreditoProposta = "OBRA_NOVA" | "OBRA_EM_ANDAMENTO" | "CREDITO_PONTE";
+
 export type ChecklistTemplateResponse = {
+  tipoCredito?: TipoCreditoProposta;
   estagio: EstagioObraDossie;
   meta?: {
-    id: EstagioObraDossie;
+    id: string;
     label: string;
     descricao: string;
     checklistPdf: string;
-    percentualObraMin: number;
-    percentualObraMax: number;
+    estagioObra?: EstagioObraDossie;
   };
   itens: Array<{
     itemId: string;
@@ -874,24 +876,56 @@ export type ChecklistTemplateResponse = {
     blocoId: string;
     blocoTitulo: string;
   }>;
-  estagiosDisponiveis: Array<{
+  tiposDisponiveis?: Array<{
+    id: TipoCreditoProposta;
+    label: string;
+    descricao: string;
+    checklistPdf: string;
+  }>;
+  estagiosDisponiveis?: Array<{
     id: EstagioObraDossie;
     label: string;
     descricao: string;
+    percentualObraMin?: number;
+    percentualObraMax?: number;
   }>;
 };
 
 export type CriarDossiePayload = {
-  estagioObra: EstagioObraDossie;
+  tipoCredito?: TipoCreditoProposta;
+  estagioObra?: EstagioObraDossie;
   nomeEmpreendimento: string;
   percentualFisico?: number;
   dataBase?: string;
   obraId?: string;
+  narrativa?: string;
+};
+
+export const propostasApi = {
+  checklistTemplate: (tipo: TipoCreditoProposta) =>
+    fetch(`/api/proxy/propostas/checklist-template?tipo=${tipo}`).then(async (res) => {
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        throw new Error(body.message ?? "Erro ao carregar checklist.");
+      }
+      return res.json() as Promise<ChecklistTemplateResponse>;
+    }),
+  enviar: (form: FormData) =>
+    fetch("/api/proxy/propostas", { method: "POST", body: form }).then(async (res) => {
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        throw new Error(body.message ?? "Erro ao enviar proposta.");
+      }
+      return res.json() as Promise<{ id: string; status: string; mensagem: string }>;
+    }),
 };
 
 export const dossiesApi = {
-  checklistTemplate: (estagio: EstagioObraDossie) =>
-    apiFetch<ChecklistTemplateResponse>(`/dossies/checklist-template?estagio=${estagio}`),
+  checklistTemplate: (tipoOrEstagio: TipoCreditoProposta | EstagioObraDossie) => {
+    const isTipo = ["OBRA_NOVA", "OBRA_EM_ANDAMENTO", "CREDITO_PONTE"].includes(tipoOrEstagio);
+    const q = isTipo ? `tipo=${tipoOrEstagio}` : `estagio=${tipoOrEstagio}`;
+    return apiFetch<ChecklistTemplateResponse>(`/dossies/checklist-template?${q}`);
+  },
   listar: () => apiFetch<DossieResumo[]>("/dossies"),
   buscar: (id: string) => apiFetch<DossieDetalhe>(`/dossies/${id}`),
   criar: (data: CriarDossiePayload) =>

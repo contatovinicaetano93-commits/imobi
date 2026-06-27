@@ -8,13 +8,14 @@
 
 ---
 
-## 1. Visão geral dos três arquivos
+## 1. Visão geral dos quatro arquivos
 
 | Artefato | Função | Quando usar |
 |----------|--------|-------------|
 | **Empreendimento - Novo.pdf** | Lista o que pedir para **obra nova** (pré-obra / lançamento) | Entrada antes ou no início da obra |
 | **Empreendimento - Em Andamento.pdf** | Lista o que pedir com **obra já iniciada** | Entrada com medição, custos e cronograma real |
-| **Ficha do Empreendimento e Viabilidade IMOBI.xlsx** | Dados estruturados do empreendimento + EVEF + unidades + carteira + portfólio do grupo | **Sempre** — complementa ambos os PDFs |
+| **Empreendimento - CREDITO PONTE.pdf** | Igual **Em Andamento** + bloco **Legalidade e Garantias** (itens 26–31) | Crédito ponte com garantias reforçadas |
+| **Ficha do Empreendimento e Viabilidade IMOBI.xlsx** | Dados estruturados do empreendimento + EVEF + unidades + carteira + portfólio do grupo | **Sempre** — complementa todos os PDFs |
 
 Regra operacional: material com **data-base atualizada**; formatos preferidos **PDF** (documentos) e **Excel** (planilhas).
 
@@ -126,17 +127,35 @@ Idêntico ao checklist Novo.
 
 ---
 
-## 5. Diferença resumida: Novo vs Em andamento
+## 4b. Checklist — CRÉDITO PONTE (`Empreendimento - CREDITO PONTE.pdf`)
 
-| Tema | Obra nova | Obra em andamento |
-|------|-----------|-------------------|
-| Cronograma (item 10) | Previsto / planejado | Atualizado + realizado |
-| Engenharia (11–14) | Não exige | **Obrigatório** |
-| Comercial operacional (17–22) | Não exige (só fluxo projetado) | **Obrigatório** |
-| DRE incorporadora (16) | **Obrigatório** | Não listado no PDF |
-| Organograma + histórico (17–18) | **Obrigatório** | Não listado no PDF |
-| Numeração licenciamento | 13–14 | 23–24 |
-| Numeração EVEF | 15 | 25 |
+**Base:** todos os blocos do checklist **Em Andamento** (itens 1–25).
+
+**Adicional exclusivo — 06 Legalidade e Garantias (itens 26–31):**
+
+26. Registro de Incorporação averbado na matrícula do imóvel (Lei 4.591/64)
+27. Comprovação de averbação do Regime de Patrimônio de Afetação da SPE
+28. Certidões negativas fiscais (federal, estadual, municipal), trabalhistas e forenses da SPE e dos sócios controladores
+29. Instrumento de alienação fiduciária do terreno e/ou da obra em favor do credor
+30. Cessão fiduciária dos recebíveis da carteira de vendas em favor do credor
+31. Aval dos sócios controladores e minuta do contrato de garantia a ser firmado
+
+**Regra operacional:** crédito ponte = obra em andamento + pacote de garantias para estruturação da operação.
+
+---
+
+## 5. Diferença resumida: Novo vs Em andamento vs Crédito ponte
+
+| Tema | Obra nova | Obra em andamento | Crédito ponte |
+|------|-----------|-------------------|---------------|
+| Cronograma (item 10) | Previsto / planejado | Atualizado + realizado | Atualizado + realizado |
+| Engenharia (11–14) | Não exige | **Obrigatório** | **Obrigatório** |
+| Comercial operacional (17–22) | Não exige (só fluxo projetado) | **Obrigatório** | **Obrigatório** |
+| DRE incorporadora (16) | **Obrigatório** | Não listado no PDF | Não listado no PDF |
+| Organograma + histórico (17–18) | **Obrigatório** | Não listado no PDF | Não listado no PDF |
+| Legalidade e garantias (26–31) | — | — | **Obrigatório** |
+| Numeração licenciamento | 13–14 | 23–24 | 23–24 |
+| Numeração EVEF | 15 | 25 | 25 |
 
 **Complemento se a obra for nova:** enviar seções **06** e **07** do PDF Novo (DRE + organograma/histórico). Se a obra já estiver em andamento, trocar pelo bloco **02 (11–14)** e **03 (15–22)** do PDF Em Andamento.
 
@@ -282,6 +301,10 @@ O wizard existente é um **protótipo** alinhado à Ficha, não ao checklist PDF
 ### Obra em andamento
 
 > Para dar continuidade à análise de crédito, envie o checklist **Empreendimento - Em Andamento**, a **Ficha** (Excel) com cronograma e custos atualizados, e os anexos dos itens 1–25. Inclua medição de terceiro, comparativo planejado x realizado, posição de caixa da SPE e carteira analítica com distratos.
+
+### Crédito ponte
+
+> Para dar continuidade à análise de crédito ponte, envie o checklist **Empreendimento - CREDITO PONTE**, a **Ficha** (Excel) com cronograma e custos atualizados, e os anexos dos itens 1–31. Inclua o pacote completo de **Legalidade e Garantias** (incorporação averbada, patrimônio de afetação, certidões negativas, alienação/cessão fiduciária e aval dos sócios).
 
 ### Entrada em etapa avançada (complemento extra)
 

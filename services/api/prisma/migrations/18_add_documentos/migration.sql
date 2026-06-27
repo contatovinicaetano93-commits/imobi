@@ -17,7 +17,7 @@ CREATE TABLE "documentos" (
 );
 
 ALTER TABLE "documentos" ADD CONSTRAINT "documentos_obraId_fkey"
-  FOREIGN KEY ("obraId") REFERENCES "obras"("obraId") ON DELETE SET NULL ON UPDATE CASCADE;
+  FOREIGN KEY ("obraId") REFERENCES "Obra"("obraId") ON DELETE SET NULL ON UPDATE CASCADE;
 
 ALTER TABLE "documentos" ADD CONSTRAINT "documentos_usuarioId_fkey"
-  FOREIGN KEY ("usuarioId") REFERENCES "usuarios"("usuarioId") ON DELETE RESTRICT ON UPDATE CASCADE;
+  FOREIGN KEY ("usuarioId") REFERENCES "Usuario"("usuarioId") ON DELETE RESTRICT ON UPDATE CASCADE;

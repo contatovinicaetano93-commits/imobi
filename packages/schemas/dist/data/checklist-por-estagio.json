@@ -3,6 +3,29 @@
     "versao": "2026-06",
     "formatoAceito": ["PDF", "XLSX", "XLS"],
     "dataBaseObrigatoria": true,
+    "tiposCredito": [
+        {
+            "id": "OBRA_NOVA",
+            "label": "Empreendimento novo (pré-obra / lançamento)",
+            "estagioObra": "NOVO",
+            "checklistPdf": "Empreendimento - Novo.pdf",
+            "descricao": "Obra ainda não iniciada ou em fase inicial. Exige DRE 3 anos e organograma do incorporador."
+        },
+        {
+            "id": "OBRA_EM_ANDAMENTO",
+            "label": "Obra em andamento",
+            "estagioObra": "EM_ANDAMENTO",
+            "checklistPdf": "Empreendimento - Em Andamento.pdf",
+            "descricao": "Obra iniciada com medição, custos incorridos e cronograma realizado."
+        },
+        {
+            "id": "CREDITO_PONTE",
+            "label": "Crédito ponte",
+            "estagioObra": "EM_ANDAMENTO",
+            "checklistPdf": "Empreendimento - CREDITO PONTE.pdf",
+            "descricao": "Obra em andamento com pacote reforçado de legalidade e garantias (incorporação, patrimônio de afetação, alienação/cessão fiduciária, aval dos sócios)."
+        }
+    ],
     "estagiosEntrada": [
         {
             "id": "NOVO",
@@ -168,6 +191,20 @@
             "itens": [
                 { "id": "17_novo", "titulo": "Estrutura societária do grupo e posição da SPE", "obrigatorio": true, "estagios": ["NOVO"], "numeroPdfNovo": 17 },
                 { "id": "18_novo", "titulo": "Obras entregues, atrasos, distratos e processos judiciais relevantes", "obrigatorio": true, "estagios": ["NOVO"], "numeroPdfNovo": 18, "planilhaAbas": ["Obras em Andamento (Grupo)", "Obras Concluídas (Grupo)", "Landbank (Grupo)"] }
+            ]
+        },
+        {
+            "id": "legalidade_garantias",
+            "ordem": 8,
+            "titulo": "Legalidade e Garantias",
+            "somenteTipoCredito": "CREDITO_PONTE",
+            "itens": [
+                { "id": "26", "titulo": "Registro de Incorporação averbado na matrícula do imóvel (Lei 4.591/64)", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"], "tiposCredito": ["CREDITO_PONTE"], "numeroPdfPonte": 26 },
+                { "id": "27", "titulo": "Comprovação de averbação do Regime de Patrimônio de Afetação da SPE", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"], "tiposCredito": ["CREDITO_PONTE"], "numeroPdfPonte": 27 },
+                { "id": "28", "titulo": "Certidões negativas fiscais (federal, estadual, municipal), trabalhistas e forenses da SPE e sócios controladores", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"], "tiposCredito": ["CREDITO_PONTE"], "numeroPdfPonte": 28 },
+                { "id": "29", "titulo": "Instrumento de alienação fiduciária do terreno e/ou da obra em favor do credor", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"], "tiposCredito": ["CREDITO_PONTE"], "numeroPdfPonte": 29 },
+                { "id": "30", "titulo": "Cessão fiduciária dos recebíveis da carteira de vendas em favor do credor", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"], "tiposCredito": ["CREDITO_PONTE"], "numeroPdfPonte": 30 },
+                { "id": "31", "titulo": "Aval dos sócios controladores e minuta do contrato de garantia a ser firmado", "obrigatorio": true, "estagios": ["EM_ANDAMENTO", "ENTRADA_TARDIA"], "tiposCredito": ["CREDITO_PONTE"], "numeroPdfPonte": 31 }
             ]
         }
     ],

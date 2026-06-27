@@ -29,6 +29,7 @@ import { VistoriaModule } from "./modules/vistoria/vistoria.module";
 import { SetupModule } from "./modules/setup/setup.module";
 import { DueDiligenceModule } from "./modules/due-diligence/due-diligence.module";
 import { DossiesModule } from "./modules/dossies/dossies.module";
+import { PropostasModule } from "./modules/propostas/propostas.module";
 import { DocumentosModule } from "./modules/documentos/documentos.module";
 import { ComiteModule } from "./modules/comite/comite.module";
 import { AssistenteModule } from "./modules/assistente/assistente.module";
@@ -113,6 +114,7 @@ const redisConfig = getRedisConfig();
     SetupModule,
     DueDiligenceModule,
     DossiesModule,
+    PropostasModule,
     DocumentosModule,
     ComiteModule,
     AssistenteModule,

@@ -1,18 +1,22 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Logger } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import * as crypto from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
+import { PropostasService } from "../propostas/propostas.service";
 import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
 import { normalizeUserRole } from "../../common/constants/manager-roles";
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
-    private readonly email: EmailService
+    private readonly email: EmailService,
+    private readonly propostas: PropostasService,
   ) {}
 
   async registrar(input: CadastroUsuarioInput) {
@@ -38,6 +42,10 @@ export class AuthService {
       select: { usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true },
     });
 
+    void this.propostas.vincularUsuarioAoFluxo(usuario.usuarioId, usuario.email).catch((err) => {
+      this.logger.warn(`Vínculo proposta pós-cadastro falhou: ${usuario.email}`, err);
+    });
+
     return { usuario, ...await this.gerarTokens(usuario.usuarioId) };
   }
 
@@ -53,6 +61,10 @@ export class AuthService {
     if (usuario.bloqueadoEm) {
       throw new UnauthorizedException("Conta bloqueada pelo administrador. Entre em contato com o suporte.");
     }
+
+    void this.propostas.vincularUsuarioAoFluxo(usuario.usuarioId, usuario.email).catch((err) => {
+      this.logger.warn(`Vínculo proposta pós-login falhou: ${usuario.email}`, err);
+    });
 
     return {
       usuario: {

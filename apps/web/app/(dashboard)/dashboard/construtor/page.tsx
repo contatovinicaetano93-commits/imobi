@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import type { Route } from "next";
 import {
   CreditCard, Building2, CheckCircle2, Clock, AlertTriangle, ArrowRight,
   Upload, FileText, Download, Send, RefreshCw, PlusCircle, Bell,
@@ -202,8 +203,8 @@ export default async function ConstrutorPage() {
             <Link href="/dashboard/credito" style={{ fontSize: "0.72rem", fontWeight: 600, background: MINT, color: NAVY, borderRadius: 8, padding: "0.45rem 0.9rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
               <FileText size={12} /> Extrato completo
             </Link>
-            <Link href="/dashboard/simulador" style={{ fontSize: "0.72rem", fontWeight: 600, background: "rgba(255,255,255,0.1)", color: "white", borderRadius: 8, padding: "0.45rem 0.9rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <BarChart3 size={12} /> Simular novo crédito
+            <Link href={"/dashboard/proposta-credito" as Route} style={{ fontSize: "0.72rem", fontWeight: 600, background: "rgba(255,255,255,0.1)", color: "white", borderRadius: 8, padding: "0.45rem 0.9rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <BarChart3 size={12} /> Enviar projeto
             </Link>
           </div>
         </div>
@@ -211,9 +212,9 @@ export default async function ConstrutorPage() {
         <Card className="p-6 text-center">
           <CreditCard className="w-8 h-8 text-gray-200 mx-auto mb-3" />
           <p className="text-sm font-semibold text-gray-700">Nenhuma operação ativa</p>
-          <p className="text-xs text-gray-400 mt-1 mb-4">Simule e solicite crédito IMOBI para sua obra</p>
-          <Link href="/dashboard/simulador" style={{ display: "inline-block", background: ROYAL, color: "white", borderRadius: 10, padding: "0.55rem 1.25rem", fontSize: "0.8rem", fontWeight: 600, textDecoration: "none" }}>
-            Fazer simulação
+          <p className="text-xs text-gray-400 mt-1 mb-4">Envie documentação do empreendimento para análise de crédito</p>
+          <Link href={"/dashboard/proposta-credito" as Route} style={{ display: "inline-block", background: ROYAL, color: "white", borderRadius: 10, padding: "0.55rem 1.25rem", fontSize: "0.8rem", fontWeight: 600, textDecoration: "none" }}>
+            Enviar documentação
           </Link>
         </Card>
       )}
@@ -272,8 +273,8 @@ export default async function ConstrutorPage() {
         ) : (
           <Card className="p-6 text-center">
             <p className="text-xs text-gray-400">Nenhuma parcela calculada. Solicite crédito para visualizar o cronograma.</p>
-            <Link href="/dashboard/simulador" style={{ display: "inline-block", marginTop: 10, background: ROYAL, color: "white", borderRadius: 10, padding: "0.45rem 1rem", fontSize: "0.75rem", fontWeight: 600, textDecoration: "none" }}>
-              Simular crédito
+            <Link href={"/dashboard/proposta-credito" as Route} style={{ display: "inline-block", marginTop: 10, background: ROYAL, color: "white", borderRadius: 10, padding: "0.45rem 1rem", fontSize: "0.75rem", fontWeight: 600, textDecoration: "none" }}>
+              Enviar projeto
             </Link>
           </Card>
         )}
@@ -554,7 +555,7 @@ export default async function ConstrutorPage() {
           {[
             { label: "Nova tranche",         sub: "Solicite liberação de recursos para a próxima etapa",  icon: PlusCircle,  href: "/dashboard/credito#solicitar-parcela", color: ROYAL },
             { label: "Renegociação",          sub: "Ajuste de prazo, taxa ou condições da operação",       icon: RefreshCw,   href: "/dashboard/credito#renegociacao",        color: "#7c3aed" },
-            { label: "Novo crédito",          sub: "Inicie uma nova operação para outro empreendimento",   icon: Send,        href: "/dashboard/simulador",                   color: "#16a34a" },
+            { label: "Enviar projeto",          sub: "Documentação e viabilidade para novo empreendimento",   icon: Send,        href: "/dashboard/proposta-credito" as Route,                   color: "#16a34a" },
             { label: "Comitê de crédito",     sub: "Acompanhe ou solicite análise pelo comitê",            icon: BarChart3,   href: "/dashboard/comite",                      color: "#0891b2" },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ].map(({ label, sub, icon: Icon, href, color }) => (

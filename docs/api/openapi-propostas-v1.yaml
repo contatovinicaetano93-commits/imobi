@@ -1,0 +1,82 @@
+openapi: 3.0.3
+info:
+  title: Imobi API — Propostas de Crédito (público)
+  version: 1.0.0
+  description: |
+    Captura de leads via marketing (/envie-seu-projeto).
+    Propostas são vinculadas ao usuário no cadastro/login (mesmo e-mail).
+
+servers:
+  - url: https://imobi-api-staging.onrender.com/api/v1
+    description: Staging
+
+tags:
+  - name: propostas
+    description: Proposta pública e fila admin
+
+paths:
+  /propostas/checklist-template:
+    get:
+      tags: [propostas]
+      summary: Template de checklist por tipo de crédito
+      parameters:
+        - name: tipo
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/TipoCreditoProposta'
+      responses:
+        '200':
+          description: Checklist e metadados do tipo
+
+  /propostas:
+    post:
+      tags: [propostas]
+      summary: Enviar proposta (multipart, sem auth)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [tipoCredito, nomeEmpreendimento, nomeContato, email, telefone]
+              properties:
+                tipoCredito:
+                  $ref: '#/components/schemas/TipoCreditoProposta'
+                nomeEmpreendimento:
+                  type: string
+                nomeContato:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                telefone:
+                  type: string
+                percentualFisico:
+                  type: number
+                  description: Obrigatório quando tipoCredito ≠ OBRA_NOVA
+                ficha:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Proposta recebida
+    get:
+      tags: [propostas]
+      summary: Listar propostas pendentes (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Fila de propostas RECEBIDA / EM_ANALISE
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    TipoCreditoProposta:
+      type: string
+      enum: [OBRA_NOVA, OBRA_EM_ANDAMENTO, CREDITO_PONTE]

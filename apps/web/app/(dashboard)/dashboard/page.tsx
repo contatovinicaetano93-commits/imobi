@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import type { Route } from "next";
 import {
   Building2, CreditCard, BarChart3, FileText, TrendingUp, Clock,
   ArrowRight, HardHat, Bell, Download, Send, RefreshCw, PlusCircle,
@@ -123,9 +124,9 @@ export default async function DashboardPage() {
         <div style={{ background: "#f9fafb", border: "1.5px dashed #d1d5db", borderRadius: 18, padding: "1.5rem", textAlign: "center" }}>
           <CreditCard style={{ margin: "0 auto 8px", color: "#d1d5db" }} size={28} />
           <p style={{ fontWeight: 600, color: "#374151", margin: 0 }}>Nenhuma operação de crédito ativa</p>
-          <p style={{ fontSize: "0.78rem", color: "#9ca3af", margin: "4px 0 12px" }}>Simule e solicite crédito IMOBI</p>
-          <Link href="/dashboard/simulador" style={{ fontSize: "0.78rem", fontWeight: 600, background: ROYAL, color: "white", borderRadius: 8, padding: "0.5rem 1.1rem", textDecoration: "none" }}>
-            Fazer simulação
+          <p style={{ fontSize: "0.78rem", color: "#9ca3af", margin: "4px 0 12px" }}>Envie documentação e proposta de crédito</p>
+          <Link href={"/dashboard/proposta-credito" as Route} style={{ fontSize: "0.78rem", fontWeight: 600, background: ROYAL, color: "white", borderRadius: 8, padding: "0.5rem 1.1rem", textDecoration: "none" }}>
+            Enviar projeto
           </Link>
         </div>
       )}
@@ -223,7 +224,7 @@ export default async function DashboardPage() {
           {[
             { label: "Obras",        icon: HardHat,      href: "/dashboard/obras",      bg: ROYAL,    c: "white" },
             { label: "Crédito",      icon: CreditCard,   href: "/dashboard/credito",    bg: "#16a34a", c: "white" },
-            { label: "Simulador",    icon: BarChart3,    href: "/dashboard/simulador",  bg: NAVY,     c: "white" },
+            { label: "Proposta",    icon: BarChart3,    href: "/dashboard/proposta-credito",  bg: NAVY,     c: "white" },
             { label: "Documentos",   icon: FileText,     href: "/dashboard/kyc",        bg: "#0891b2", c: "white" },
             { label: "Score",        icon: TrendingUp,   href: "/dashboard/score",      bg: "#7c3aed", c: "white" },
             { label: "Notificações", icon: Bell,         href: "/dashboard/notificacoes", bg: "#d97706", c: "white" },
@@ -243,7 +244,7 @@ export default async function DashboardPage() {
           {[
             { label: "Nova parcela / tranche",  sub: "Solicite liberação de recursos",      icon: PlusCircle,  href: "/dashboard/credito#solicitar-parcela" },
             { label: "Renegociação",             sub: "Prazo, taxa ou condições",            icon: RefreshCw,   href: "/dashboard/credito#renegociacao" },
-            { label: "Novo crédito",             sub: "Inicie uma nova operação de crédito", icon: Send,        href: "/dashboard/simulador" },
+            { label: "Enviar projeto",             sub: "Documentação e análise de viabilidade", icon: Send,        href: "/dashboard/proposta-credito" as Route },
             { label: "Download de contratos",    sub: "Contratos assinados da operação",     icon: Download,    href: "/dashboard/credito#contratos" },
           ].map(({ label, sub, icon: Icon, href }) => (
             <Link key={href} href={href as any} style={{ background: "white", border: "1px solid #f3f4f6", borderRadius: 12, padding: "0.85rem 1rem", textDecoration: "none", display: "flex", alignItems: "center", gap: 12 }}>

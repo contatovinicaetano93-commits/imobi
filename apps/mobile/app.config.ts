@@ -3,8 +3,8 @@ import type { ExpoConfig } from "expo/config";
 const EAS_PROJECT_ID = "6bf955c5-863a-4344-ac39-6a55c89658d4";
 
 const config: ExpoConfig = {
-  name: "imbobi",
-  slug: "imbobi",
+  name: "imobi-app",
+  slug: "imobi-app",
   version: "1.0.0",
   description: "Crédito para obra com liberação por etapa, validação GPS e acompanhamento mobile.",
   orientation: "portrait",
@@ -17,6 +17,7 @@ const config: ExpoConfig = {
   },
   ios: {
     supportsTablet: false,
+    deploymentTarget: "16.0",
     bundleIdentifier: "com.imbobi.app",
     buildNumber: "1",
     infoPlist: {

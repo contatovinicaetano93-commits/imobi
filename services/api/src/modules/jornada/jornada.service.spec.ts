@@ -111,7 +111,7 @@ describe("JornadaService", () => {
       const j = await service.obter(userId, "TOMADOR");
 
       expect(j.passoAtual).toBe("viabilidade");
-      expect(j.href).toBe("/dashboard/viabilidade");
+      expect(j.href).toBe("/dashboard/proposta-credito");
     });
 
     it("retorna obra após KYC e dossiê aprovados", async () => {

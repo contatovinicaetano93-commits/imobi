@@ -14,8 +14,8 @@ export declare const CadastroUsuarioSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     nome: string;
     email: string;
-    cpf: string;
     telefone: string;
+    cpf: string;
     senha: string;
     consentidoTermos: boolean;
     consentidoPrivacy: boolean;
@@ -24,8 +24,8 @@ export declare const CadastroUsuarioSchema: z.ZodObject<{
 }, {
     nome: string;
     email: string;
-    cpf: string;
     telefone: string;
+    cpf: string;
     senha: string;
     consentidoTermos: boolean;
     consentidoPrivacy: boolean;

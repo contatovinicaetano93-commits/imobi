@@ -60,6 +60,7 @@ model Usuario {
   documentos      Documento[]
   solicitacoes    SolicitacaoCredito[]
   votosComite     VotoComite[]
+  propostasCredito PropostaCredito[]
 
   @@index([email])
   @@index([cpf])
@@ -556,6 +557,7 @@ model DueDiligence {
   obra                  Obra?    @relation(fields: [obraId], references: [obraId], onDelete: SetNull)
   obraId                String?
   estagioObra           EstagioObraDossie?
+  tipoCredito           TipoCreditoProposta?
   percentualFisico      Float?
   dataBase              DateTime?
   nomeEmpreendimento    String
@@ -640,6 +642,44 @@ enum DueDiligenceStatus {
   EM_ANALISE
   APROVADO
   REPROVADO
+}
+
+enum TipoCreditoProposta {
+  OBRA_NOVA
+  OBRA_EM_ANDAMENTO
+  CREDITO_PONTE
+}
+
+enum PropostaCreditoStatus {
+  RECEBIDA
+  EM_ANALISE
+  APROVADA
+  REJEITADA
+}
+
+model PropostaCredito {
+  id                 String                 @id @default(uuid())
+  usuarioId          String?
+  usuario            Usuario?               @relation(fields: [usuarioId], references: [usuarioId], onDelete: SetNull)
+  tipoCredito        TipoCreditoProposta
+  nomeEmpreendimento String
+  nomeContato        String
+  email              String
+  telefone           String
+  empresa            String?
+  narrativa          String?
+  dataBase           DateTime?
+  percentualFisico   Float?
+  arquivos           Json                   @default("[]")
+  status             PropostaCreditoStatus  @default(RECEBIDA)
+  criadoEm           DateTime               @default(now())
+  atualizadoEm       DateTime               @updatedAt
+
+  @@index([usuarioId])
+  @@index([email])
+  @@index([status])
+  @@index([tipoCredito])
+  @@map("propostas_credito")
 }
 
 // ── Documentos ───────────────────────────────────────────────────────────

@@ -39,7 +39,7 @@ export class DossiesController {
   checklistTemplate(
     @Query(new ZodPipe(ChecklistTemplateQuerySchema)) query: ChecklistTemplateQuery,
   ) {
-    return this.dossies.checklistTemplate(query.estagio);
+    return this.dossies.checklistTemplate(query);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

@@ -132,10 +132,10 @@ export function QuickSimulator({
           </div>
 
           <a
-            href="/dashboard/simulador"
+            href="/dashboard/credito"
             className="block w-full text-center px-4 py-2 text-sm font-semibold text-[#1B4FD8] hover:text-blue-800 border-t border-gray-100 pt-4"
           >
-            Ver simulador completo →
+            Ver meus créditos →
           </a>
         </div>
       )}

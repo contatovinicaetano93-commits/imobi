@@ -12,17 +12,24 @@ import {
   DossieChecklistItemStatus,
   EstagioObraDossie,
   Prisma,
+  TipoCreditoProposta,
 } from "@prisma/client";
 import {
   getChecklistItemsForEstagio,
+  getChecklistItemsForTipoCredito,
   getEstagioMeta,
+  getTipoCreditoMeta,
   listarEstagiosEntrada,
+  listarTiposCredito,
+  estagioFromTipoCredito,
+  resolveTipoCredito,
 } from "@imbobi/schemas";
 import type {
   AtualizarDossieInput,
   AtualizarDossieStatusInput,
   CriarDossieInput,
   EstagioObraDossie as EstagioObraDossieSchema,
+  TipoCreditoProposta as TipoCreditoPropostaSchema,
 } from "@imbobi/schemas";
 import { PrismaService } from "../prisma/prisma.service";
 import { isManagerRole } from "../../common/constants/manager-roles";
@@ -55,38 +62,52 @@ export class DossiesService {
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
-  checklistTemplate(estagio: EstagioObraDossieSchema) {
-    const meta = getEstagioMeta(estagio);
-    const itens = getChecklistItemsForEstagio(estagio);
+  checklistTemplate(query: { estagio?: EstagioObraDossieSchema; tipo?: TipoCreditoPropostaSchema }) {
+    const tipo = query.tipo ?? (query.estagio ? resolveTipoCredito({ estagioObra: query.estagio }) : "OBRA_NOVA");
+    const estagio = query.estagio ?? estagioFromTipoCredito(tipo);
+    const meta = getTipoCreditoMeta(tipo);
+    const itens = getChecklistItemsForTipoCredito(tipo);
     return {
+      tipoCredito: tipo,
       estagio,
       meta,
       itens,
+      tiposDisponiveis: listarTiposCredito(),
       estagiosDisponiveis: listarEstagiosEntrada(),
     };
   }
 
   async criar(usuarioId: string, dto: CriarDossieInput) {
+    const tipoCredito = resolveTipoCredito({
+      tipoCredito: dto.tipoCredito,
+      estagioObra: dto.estagioObra,
+    }) as TipoCreditoProposta;
+    const estagioObra = (dto.estagioObra ?? estagioFromTipoCredito(tipoCredito as TipoCreditoPropostaSchema)) as EstagioObraDossie;
+
     if (dto.percentualFisico != null || dto.dataBase) {
-      this.validarEstagioCampos(dto.estagioObra, dto.percentualFisico, dto.dataBase, false);
+      this.validarEstagioCampos(estagioObra, dto.percentualFisico, dto.dataBase, false);
     }
 
     if (dto.obraId) {
       await this.assertObraDoUsuario(dto.obraId, usuarioId);
     }
 
-    const templateItens = getChecklistItemsForEstagio(dto.estagioObra);
+    const templateItens = getChecklistItemsForTipoCredito(tipoCredito as TipoCreditoPropostaSchema);
 
     return this.prisma.$transaction(async (tx) => {
+      const payload: Record<string, unknown> = {};
+      if (dto.narrativa) payload.narrativa = dto.narrativa;
+
       const dossie = await tx.dueDiligence.create({
         data: {
           usuarioId,
-          estagioObra: dto.estagioObra as EstagioObraDossie,
+          estagioObra,
+          tipoCredito,
           nomeEmpreendimento: dto.nomeEmpreendimento,
           percentualFisico: dto.percentualFisico ?? null,
           dataBase: dto.dataBase ?? null,
           obraId: dto.obraId ?? null,
-          payload: {},
+          payload: payload as Prisma.InputJsonValue,
           status: DueDiligenceStatus.RASCUNHO,
           checklistItens: {
             create: templateItens.map((item) => ({
@@ -101,9 +122,74 @@ export class DossiesService {
       });
 
       await this.registrarAudit(tx, dossie.id, usuarioId, "CRIADO", {
-        estagioObra: dto.estagioObra,
+        estagioObra,
+        tipoCredito,
       });
 
+      return dossie;
+    });
+  }
+
+  /** Pré-preenche dossiê a partir de proposta pública (marketing) no 1º login/cadastro. */
+  async importarPropostaPublica(
+    usuarioId: string,
+    proposta: {
+      id: string;
+      tipoCredito: TipoCreditoProposta;
+      nomeEmpreendimento: string;
+      percentualFisico: number | null;
+      dataBase: Date | null;
+      narrativa: string | null;
+    },
+  ) {
+    const existente = await this.prisma.dueDiligence.findFirst({
+      where: { usuarioId },
+      select: { id: true },
+    });
+    if (existente) return existente;
+
+    const estagioObra = estagioFromTipoCredito(
+      proposta.tipoCredito as TipoCreditoPropostaSchema,
+    ) as EstagioObraDossie;
+    const templateItens = getChecklistItemsForTipoCredito(
+      proposta.tipoCredito as TipoCreditoPropostaSchema,
+    );
+
+    return this.prisma.$transaction(async (tx) => {
+      const payload: Record<string, unknown> = {
+        propostaCreditoId: proposta.id,
+        importadoDePropostaPublica: true,
+      };
+      if (proposta.narrativa) payload.narrativa = proposta.narrativa;
+
+      const dossie = await tx.dueDiligence.create({
+        data: {
+          usuarioId,
+          estagioObra,
+          tipoCredito: proposta.tipoCredito,
+          nomeEmpreendimento: proposta.nomeEmpreendimento,
+          percentualFisico: proposta.percentualFisico,
+          dataBase: proposta.dataBase,
+          payload: payload as Prisma.InputJsonValue,
+          status: DueDiligenceStatus.RASCUNHO,
+          checklistItens: {
+            create: templateItens.map((item) => ({
+              itemId: item.itemId,
+              titulo: item.titulo,
+              obrigatorio: item.obrigatorio,
+              status: DossieChecklistItemStatus.PENDENTE,
+            })),
+          },
+        },
+        include: DOSSIE_INCLUDE,
+      });
+
+      await this.registrarAudit(tx, dossie.id, usuarioId, "IMPORTADO_PROPOSTA_PUBLICA", {
+        propostaCreditoId: proposta.id,
+        tipoCredito: proposta.tipoCredito,
+      });
+
+      await invalidateJornadaCache(this.cache, usuarioId);
       return dossie;
     });
   }

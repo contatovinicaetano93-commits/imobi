@@ -49,6 +49,40 @@ export default function KycScreen() {
   }, [load]);
 
   const handleUpload = async (tipo: string) => {
+    if (tipo === "SELFIE") {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert("Permissão necessária", "Permita acesso à câmera para tirar a selfie.");
+        return;
+      }
+      await new Promise<void>((resolve) =>
+        Alert.alert(
+          "Dicas para a selfie",
+          "• Esteja em ambiente bem iluminado\n• Centralize seu rosto na tela\n• Segure o documento ao lado do rosto\n• Evite reflexos e sombras",
+          [{ text: "Entendido, continuar", onPress: () => resolve() }],
+        ),
+      );
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.85,
+        allowsEditing: false,
+        cameraType: ImagePicker.CameraType.front,
+      });
+      if (result.canceled || !result.assets[0]) return;
+      const asset = result.assets[0];
+      setUploading(tipo);
+      try {
+        await kycApi.uploadDocumentoArquivo(tipo, asset.uri, asset.mimeType ?? "image/jpeg");
+        await load();
+        Alert.alert("Enviado", "Selfie enviada para análise.");
+      } catch (e) {
+        Alert.alert("Erro", e instanceof Error ? e.message : "Falha no envio");
+      } finally {
+        setUploading(null);
+      }
+      return;
+    }
+
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
       Alert.alert("Permissão necessária", "Permita acesso à galeria para enviar documentos.");

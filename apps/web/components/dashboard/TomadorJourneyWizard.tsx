@@ -122,11 +122,12 @@ export function TomadorJourneyWizard({ steps }: Props) {
 
 export function buildTomadorJourneySteps(input: {
   kycAprovado: boolean;
+  dossieAprovado: boolean;
   temObra: boolean;
   temCredito: boolean;
   temEtapaLiberada: boolean;
 }): JourneyStep[] {
-  const { kycAprovado, temObra, temCredito, temEtapaLiberada } = input;
+  const { kycAprovado, dossieAprovado, temObra, temCredito, temEtapaLiberada } = input;
 
   const steps: Omit<JourneyStep, "current">[] = [
     {
@@ -135,6 +136,13 @@ export function buildTomadorJourneySteps(input: {
       description: "RG, comprovante e selfie para análise",
       href: "/dashboard/kyc",
       done: kycAprovado,
+    },
+    {
+      id: "viabilidade",
+      title: "Enviar projeto (viabilidade)",
+      description: "Checklist de documentos e Ficha do Empreendimento",
+      href: "/dashboard/proposta-credito",
+      done: dossieAprovado,
     },
     {
       id: "obra",

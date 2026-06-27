@@ -1,10 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ApiError = exports.apiClient = void 0;
+exports.getApiBaseUrl = getApiBaseUrl;
 const _base = typeof process !== "undefined"
     ? (process.env["NEXT_PUBLIC_API_URL"] ?? process.env["EXPO_PUBLIC_API_URL"] ?? "http://localhost:4000")
     : "http://localhost:4000";
-const BASE_URL = _base.endsWith("/api/v1") ? _base : `${_base}/api/v1`;
+function getApiBaseUrl() {
+    return _base.endsWith("/api/v1") ? _base : `${_base}/api/v1`;
+}
+const BASE_URL = getApiBaseUrl();
 class ApiError extends Error {
     constructor(status, message, code) {
         super(message);

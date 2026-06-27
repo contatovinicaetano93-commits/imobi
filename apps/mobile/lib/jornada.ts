@@ -19,6 +19,7 @@ export type Jornada = {
 export function mapJornadaHrefToMobileRoute(href: string): string {
   const path = href.split("?")[0] ?? href;
   if (path.includes("/kyc")) return "/(tabs)/kyc";
+  if (path.includes("/proposta-credito") || path.includes("/viabilidade")) return "/(tabs)/inicio";
   if (path.includes("/credito")) return "/(tabs)/credito";
   if (path.includes("/obras")) return "/(tabs)/obras";
   if (path.includes("/construtor") || path.includes("/gestor")) return "/(tabs)/inicio";
