@@ -10,7 +10,7 @@ async function wakeApi(api: string): Promise<void> {
 export type FetchApiWithRetryOptions = {
   path: string;
   method?: string;
-  body?: string | FormData;
+  body?: string | FormData | ArrayBuffer | Blob;
   headers?: Record<string, string>;
   maxAttemptsPerApi?: number;
   wakeFirst?: boolean;

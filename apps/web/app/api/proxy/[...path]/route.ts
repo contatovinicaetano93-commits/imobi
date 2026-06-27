@@ -6,21 +6,32 @@ async function proxy(req: NextRequest, pathParts: string[], method: string) {
   const token = (await cookies()).get('access_token')?.value;
   const qs = req.nextUrl.search;
   const path = `/${pathParts.join('/')}${qs}`;
+  const contentType = req.headers.get('content-type') ?? '';
+  const isMultipart = contentType.includes('multipart/form-data');
 
-  let body: string | undefined;
+  let body: BodyInit | undefined;
+  const headers: Record<string, string> = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+
   if (method !== 'GET' && method !== 'HEAD') {
-    const raw = await req.text();
-    if (raw) body = raw;
+    if (isMultipart) {
+      body = await req.arrayBuffer();
+      headers['Content-Type'] = contentType;
+    } else {
+      const raw = await req.text();
+      if (raw) {
+        body = raw;
+        headers['Content-Type'] = 'application/json';
+      }
+    }
   }
 
   const res = await fetchApiWithRetry({
     path,
     method,
     body,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers,
     // Jornada é chamada em toda navegação — não acordar API a cada GET (evita 429).
     wakeFirst: method === 'GET' && pathParts[0] === 'jornada' ? false : true,
   });

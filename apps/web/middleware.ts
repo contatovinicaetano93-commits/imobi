@@ -59,6 +59,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (pathname.startsWith("/api/proxy/propostas/checklist-template")) {
+    return NextResponse.next();
+  }
+
+  if (pathname === "/api/proxy/propostas" && request.method === "POST") {
+    return NextResponse.next();
+  }
+
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
   if (isPublic) return NextResponse.next();
 

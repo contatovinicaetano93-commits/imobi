@@ -33,6 +33,7 @@ export default function ContatoPage() {
           </p>
 
           <div className="inst-contact-card">
+            <span className="inst-contact-accent">Atendimento rápido</span>
             <h2>WhatsApp comercial</h2>
             <p>Atendimento em horário comercial (Brasil).</p>
             <a href={waUrl} target="_blank" rel="noopener noreferrer" className="btn-primary inst-wa">
@@ -41,9 +42,12 @@ export default function ContatoPage() {
           </div>
 
           <div className="inst-contact-card">
+            <span className="inst-contact-accent">Plataforma</span>
             <h2>Já decidiu?</h2>
             <p>Crie sua conta e continue de onde parou no envio do projeto.</p>
-            <Link href="/cadastro" className="btn-ghost">Criar conta →</Link>
+            <Link href="/cadastro" className="btn-ghost">
+              Criar conta →
+            </Link>
           </div>
 
           <p className="inst-foot">

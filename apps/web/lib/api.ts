@@ -918,9 +918,16 @@ export type PropostaAdminResumo = {
 export const propostasApi = {
   checklistTemplate: (tipo: TipoCreditoProposta) =>
     fetch(`/api/proxy/propostas/checklist-template?tipo=${tipo}`).then(async (res) => {
+      const contentType = res.headers.get("content-type") ?? "";
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { message?: string };
-        throw new Error(body.message ?? "Erro ao carregar checklist.");
+        if (contentType.includes("application/json")) {
+          const body = (await res.json().catch(() => ({}))) as { message?: string };
+          throw new Error(body.message ?? "Erro ao carregar checklist.");
+        }
+        throw new Error("Erro ao carregar tipos de operação. Tente novamente.");
+      }
+      if (!contentType.includes("application/json")) {
+        throw new Error("Erro ao carregar tipos de operação. Tente novamente.");
       }
       return res.json() as Promise<ChecklistTemplateResponse>;
     }),
