@@ -71,8 +71,11 @@ export default function ConfiguracoesPage() {
         addToast("Configurações salvas com sucesso! As novas regras já valem para próximas solicitações.", "success");
         setTimeout(() => setSaved(false), 4000);
       } else {
-        const d = await res.json().catch(() => ({})) as { message?: string };
-        const msg = d.message ?? "Erro ao salvar configurações. Tente novamente.";
+        const d = await res.json().catch(() => ({})) as { message?: string | string[] };
+        const raw = d.message;
+        const msg = Array.isArray(raw)
+          ? raw.join(", ")
+          : raw ?? "Erro ao salvar configurações. Tente novamente.";
         setSaveErro(msg);
         addToast(msg, "error");
       }

@@ -12,12 +12,14 @@ import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
 import { CriarUsuarioAdminSchema, type CriarUsuarioAdminSchemaDto } from "./dto/criar-usuario-admin.dto";
 import { IniciarComiteSchema, type IniciarComiteDto } from "../comite/dto/comite.dto";
 import { PipelineService } from "./pipeline.service";
+import { ConfiguracoesService } from "./configuracoes.service";
 import {
   AtualizarPipelineEtapaSchema,
   CriarPipelineLeadSchema,
   type AtualizarPipelineEtapaDto,
   type CriarPipelineLeadDto,
 } from "./dto/pipeline.dto";
+import { ConfiguracaoSistemaSchema, type ConfiguracaoSistemaInput } from "@imbobi/schemas";
 
 @Controller("admin")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -27,6 +29,7 @@ export class AdminController {
     private readonly adminService: AdminService,
     private readonly comiteService: ComiteService,
     private readonly pipelineService: PipelineService,
+    private readonly configuracoesService: ConfiguracoesService,
   ) {}
 
   @Get("overview")
@@ -171,5 +174,18 @@ export class AdminController {
       throw new BadRequestException("Fonte inválida.");
     }
     return this.pipelineService.excluir(fonte, id);
+  }
+
+  @Get("configuracoes")
+  obterConfiguracoes() {
+    return this.configuracoesService.obter();
+  }
+
+  @Patch("configuracoes")
+  atualizarConfiguracoes(
+    @Body(new ZodPipe(ConfiguracaoSistemaSchema)) body: ConfiguracaoSistemaInput,
+    @UsuarioAtual() admin: UsuarioAtual,
+  ) {
+    return this.configuracoesService.atualizar(body, admin.id);
   }
 }

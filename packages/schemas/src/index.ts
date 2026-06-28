@@ -10,3 +10,4 @@ export * from "./proposta-credito.schema";
 export * from "./kyc.schema";
 export * from "./jornada.schema";
 export * from "./assistente.schema";
+export * from "./configuracao.schema";
