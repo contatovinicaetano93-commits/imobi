@@ -16,9 +16,7 @@ export const TOMADOR_STEPS: JornadaStepDef[] = [
 ];
 
 export const GESTOR_STEPS: JornadaStepDef[] = [
-  { id: "gestor_kyc", label: "KYC", shortLabel: "KYC" },
-  { id: "gestor_etapas", label: "Etapas", shortLabel: "Etapas" },
-  { id: "gestor_ok", label: "Concluído", shortLabel: "OK" },
+  { id: "gestor_ok", label: "Indicadores", shortLabel: "KPIs" },
 ];
 
 export function getStepsForJornada(jornada: Jornada): JornadaStepDef[] {

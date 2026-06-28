@@ -160,8 +160,8 @@ export class ComiteService {
         u.usuarioId,
         "COMITE_DECISAO",
         titulo,
-        `${mensagem}. Acompanhe o andamento (somente leitura).`,
-        "/dashboard/gestor/comite",
+        `${mensagem}. Indicadores atualizados no painel do fundo.`,
+        "/dashboard/gestor",
       );
     }
 
@@ -254,8 +254,8 @@ export class ComiteService {
         u.usuarioId,
         "COMITE_DECISAO",
         titulo,
-        mensagemObs,
-        "/dashboard/gestor/comite",
+        `${mensagemObs} Consulte os KPIs no painel.`,
+        "/dashboard/gestor",
       );
     }
 
@@ -439,8 +439,8 @@ export class ComiteService {
         u.usuarioId,
         "COMITE_DECISAO",
         `Comitê encerrado: ${decisaoLabel}`,
-        `Proposta de ${cliente.nome} (${valorFmt}) — ${decisaoLabel}.`,
-        "/dashboard/gestor/comite",
+        `Proposta de ${cliente.nome} (${valorFmt}) — ${decisaoLabel}. KPIs no painel.`,
+        "/dashboard/gestor",
       );
     }
   }

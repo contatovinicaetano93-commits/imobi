@@ -33,14 +33,15 @@ GET /jornada → passo atual (redirect estrito)
 
 **Hub:** `/dashboard/construtor` · **Nav:** jornada, KYC, viabilidade, obras, crédito
 
-## Gestor (somente leitura)
+## Gestor (somente KPIs — sem aprovação)
 
-| Passo | Rota |
-|-------|------|
+| Indicador | Rota |
+|-----------|------|
 | Painel | `/dashboard/gestor` |
-| Fila KYC | `/dashboard/gestor/kyc` |
-| Fila etapas | `/dashboard/gestor/etapas` |
-| Comitê | `/dashboard/gestor/comite` |
+| KPI · KYC | `/dashboard/gestor/kyc` |
+| KPI · Etapas | `/dashboard/gestor/etapas` |
+
+Comitê, KYC operacional e liberações são **internos** (Admin / Engenheiro). O gestor **não participa** desses processos.
 
 ## Engenheiro
 

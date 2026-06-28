@@ -160,11 +160,11 @@ function EtapasContent() {
         title="Como funciona"
         icon={<Info className="w-4 h-4 text-blue-600" />}
         priority="secondary"
-        summary="Somente leitura — liberações pelo engenheiro e financeiro"
+        summary="Somente leitura — dados agregados do pipe"
       >
         <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-          Como gestor do fundo, você acompanha saúde, pontos fortes e fracos das operações.
-          Liberações são feitas pelo engenheiro (vistoria) e pelo financeiro IMOBI (pagamento manual).
+          Indicadores de etapas e liberações. Aprovação técnica é do engenheiro; pagamento é do Admin IMOBI.
+          Este painel não executa ações.
         </p>
       </PanelSection>
 

@@ -58,7 +58,7 @@ export class ComiteController {
   // ── Leitura: listar comitês (Admin + Fundo) ───────────────────────
 
   @Get()
-  @Roles("ADMIN", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "GESTOR_OBRA")
+  @Roles("ADMIN", "ENGENHEIRO", "GESTOR_OBRA")
   listar(@Query("status") status?: string) {
     return this.comiteService.listarComites(status);
   }
@@ -66,7 +66,7 @@ export class ComiteController {
   // ── Leitura: dossiê completo ─────────────────────────────────────
 
   @Get(":comiteId")
-  @Roles("ADMIN", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "GESTOR_OBRA")
+  @Roles("ADMIN", "ENGENHEIRO", "GESTOR_OBRA")
   dossie(@Param("comiteId") comiteId: string) {
     return this.comiteService.getDossie(comiteId);
   }

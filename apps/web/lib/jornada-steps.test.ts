@@ -16,7 +16,7 @@ function jornada(partial: Partial<Jornada> & Pick<Jornada, 'perfil' | 'passoAtua
 }
 
 assert.equal(TOMADOR_STEPS.length, 6);
-assert.equal(GESTOR_STEPS.length, 3);
+assert.equal(GESTOR_STEPS.length, 1);
 
 const tomadorKyc = jornada({ perfil: 'tomador', passoAtual: 'kyc' });
 assert.equal(getPassoNumero(tomadorKyc), 1);
@@ -25,8 +25,8 @@ assert.equal(getPassoIndex(tomadorKyc), 0);
 const tomadorObra = jornada({ perfil: 'tomador', passoAtual: 'obra' });
 assert.equal(getPassoNumero(tomadorObra), 3);
 
-const gestorEtapas = jornada({ perfil: 'gestor', passoAtual: 'gestor_etapas' });
-assert.equal(getStepsForJornada(gestorEtapas).length, 3);
-assert.equal(getPassoNumero(gestorEtapas), 2);
+const gestorEtapas = jornada({ perfil: 'gestor', passoAtual: 'gestor_ok' });
+assert.equal(getStepsForJornada(gestorEtapas).length, 1);
+assert.equal(getPassoNumero(gestorEtapas), 1);
 
 console.log('✅ jornada-steps OK');

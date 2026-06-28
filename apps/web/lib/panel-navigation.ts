@@ -60,7 +60,6 @@ const ACTIVE_NAV_OVERRIDES: NavOverride[] = [
   { pattern: /^\/dashboard\/admin\/viabilidade/, navRole: 'ADMIN', targetHref: '/dashboard/admin/viabilidade' },
   { pattern: /^\/dashboard\/gestor\/kyc/, navRole: 'GESTOR', targetHref: '/dashboard/gestor/kyc' },
   { pattern: /^\/dashboard\/gestor\/etapas/, navRole: 'GESTOR', targetHref: '/dashboard/gestor/etapas' },
-  { pattern: /^\/dashboard\/gestor\/comite/, navRole: 'GESTOR', targetHref: '/dashboard/gestor/comite' },
 ];
 
 export type PanelId = AppRole;
@@ -239,7 +238,7 @@ export function getObrasListPath(role: string | null | undefined): string {
 export function getObrasListLabel(role: string | null | undefined): string {
   const r = normalizeRole(role);
   if (r === 'ADMIN') return 'Obras — Admin';
-  if (r === 'GESTOR') return 'Etapas pendentes';
+  if (r === 'GESTOR') return 'KPI · etapas';
   if (r === 'ENGENHEIRO' || r === 'GESTOR_OBRA') return 'Minhas Obras';
   return 'Minhas Obras';
 }
@@ -272,8 +271,9 @@ export const SIPOC_OBRAS_FLOW = [
   { step: 1, label: 'Cadastro', actor: 'Cliente', desc: 'Obra criada com documentos e etapas' },
   { step: 2, label: 'Homologação', actor: 'Admin IMOBI', desc: 'Validação e entrada no pipe ativo' },
   { step: 3, label: 'Vistoria', actor: 'Engenheiro', desc: 'Aprovação técnica por etapa' },
-  { step: 4, label: 'Comitê', actor: 'Gestor do Fundo', desc: 'Acompanhamento e decisão de crédito (somente leitura)' },
+  { step: 4, label: 'Comitê', actor: 'Admin IMOBI', desc: 'Decisão de crédito e condições' },
   { step: 5, label: 'Pagamento', actor: 'Admin IMOBI', desc: 'Transferência manual e confirmação' },
+  { step: 6, label: 'KPIs', actor: 'Gestor do Fundo', desc: 'Indicadores agregados — somente leitura' },
 ] as const;
 
 /** @deprecated use SIPOC_OBRAS_FLOW */

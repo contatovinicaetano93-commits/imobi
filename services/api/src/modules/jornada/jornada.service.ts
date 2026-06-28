@@ -126,52 +126,32 @@ export class JornadaService {
     const stats = (await this.manager.obterEstatisticas()) as {
       filaKyc: number;
       filaAprovacoes: number;
+      creditosAtivos?: number;
+      obrasAtivas?: number;
     };
     const filaKyc = stats.filaKyc ?? 0;
     const filaEtapas = stats.filaAprovacoes ?? 0;
-    const totalPassos = 3;
+    const creditosAtivos = stats.creditosAtivos ?? 0;
+    const obrasAtivas = stats.obrasAtivas ?? 0;
+    const pendencias = filaKyc + filaEtapas;
 
-    if (filaKyc > 0) {
-      return {
-        perfil: "gestor",
-        passoAtual: "gestor_kyc",
-        titulo: "Acompanhar fila KYC",
-        descricao: `${filaKyc} documento(s) na fila — visualização somente leitura`,
-        href: "/dashboard/gestor/kyc",
-        concluido: false,
-        passosConcluidos: 0,
-        totalPassos,
-        progressoPct: 10,
-        fila: { kyc: filaKyc, etapas: filaEtapas },
-      };
-    }
-
-    if (filaEtapas > 0) {
-      return {
-        perfil: "gestor",
-        passoAtual: "gestor_etapas",
-        titulo: "Acompanhar etapas da obra",
-        descricao: `${filaEtapas} etapa(s) no pipe — liberação pelo engenheiro e financeiro`,
-        href: "/dashboard/gestor/etapas",
-        concluido: false,
-        passosConcluidos: 1,
-        totalPassos,
-        progressoPct: 50,
-        fila: { kyc: filaKyc, etapas: filaEtapas },
-      };
-    }
+    const partes: string[] = [];
+    if (filaKyc > 0) partes.push(`${filaKyc} KYC pendente(s)`);
+    if (filaEtapas > 0) partes.push(`${filaEtapas} etapa(s) no pipe`);
+    partes.push(`${creditosAtivos} crédito(s) ativo(s)`);
+    partes.push(`${obrasAtivas} obra(s) em execução`);
 
     return {
       perfil: "gestor",
       passoAtual: "gestor_ok",
-      titulo: "Fila zerada",
-      descricao: "Nenhuma pendência no momento. Bom trabalho!",
+      titulo: "Indicadores de operação",
+      descricao: `${partes.join(" · ")}. Somente leitura — sem aprovações nem comitê.`,
       href: "/dashboard/gestor",
-      concluido: true,
-      passosConcluidos: totalPassos,
-      totalPassos,
-      progressoPct: 100,
-      fila: { kyc: 0, etapas: 0 },
+      concluido: pendencias === 0,
+      passosConcluidos: pendencias === 0 ? 1 : 0,
+      totalPassos: 1,
+      progressoPct: pendencias === 0 ? 100 : 40,
+      fila: { kyc: filaKyc, etapas: filaEtapas },
     };
   }
 

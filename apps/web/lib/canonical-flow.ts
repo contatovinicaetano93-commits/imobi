@@ -52,6 +52,7 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
   "/dashboard/gestor/due-diligence": "/dashboard/gestor",
   "/dashboard/gestor/due-diligence/nova": "/dashboard/gestor",
   "/dashboard/gestor/carteira": "/dashboard/gestor",
+  "/dashboard/gestor/comite": "/dashboard/gestor",
   "/dashboard/engenheiro/checklist": "/dashboard/engenheiro/vistoria",
   "/dashboard/engenheiro/alertas": "/dashboard/engenheiro/vistoria",
 };
@@ -77,10 +78,9 @@ export const CANONICAL_NAV: Record<string, NavItemDef[]> = {
   ],
   CONSTRUTOR: [], // preenchido abaixo
   GESTOR: [
-    { label: "Painel", href: "/dashboard/gestor", icon: Home, section: "geral" },
-    { label: "Fila KYC", href: "/dashboard/gestor/kyc", icon: FileCheck2, section: "operacao" },
-    { label: "Fila etapas", href: "/dashboard/gestor/etapas", icon: Building2, section: "operacao" },
-    { label: "Comitê (leitura)", href: "/dashboard/gestor/comite", icon: Vote, section: "operacao" },
+    { label: "Indicadores", href: "/dashboard/gestor", icon: Home, section: "geral" },
+    { label: "KPI · KYC", href: "/dashboard/gestor/kyc", icon: FileCheck2, section: "operacao" },
+    { label: "KPI · Etapas", href: "/dashboard/gestor/etapas", icon: Building2, section: "operacao" },
     ...ACCOUNT,
   ],
   ENGENHEIRO: [

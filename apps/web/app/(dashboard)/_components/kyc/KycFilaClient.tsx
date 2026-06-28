@@ -446,8 +446,7 @@ export function KycFilaClient({ context }: { context: KycFilaContext }) {
           summary="Visualização somente leitura — aprovação é do Admin"
         >
           <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-            Como gestor do fundo, você visualiza indicadores e filas para acompanhar a operação.
-            Aprovações de KYC são exclusivas do Administrador IMOBI.
+            KPI operacional de documentos pendentes. Aprovação de KYC é interna ao Admin IMOBI — sem ação neste painel.
           </p>
         </PanelSection>
       )}

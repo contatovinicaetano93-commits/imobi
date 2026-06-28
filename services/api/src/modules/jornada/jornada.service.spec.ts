@@ -54,27 +54,30 @@ describe("JornadaService", () => {
   });
 
   describe("obter — gestor", () => {
-    it("prioriza fila KYC", async () => {
-      manager.obterEstatisticas.mockResolvedValue({ filaKyc: 3, filaAprovacoes: 5 });
+    it("sempre aponta para o painel de KPIs", async () => {
+      manager.obterEstatisticas.mockResolvedValue({
+        filaKyc: 3,
+        filaAprovacoes: 5,
+        creditosAtivos: 2,
+        obrasAtivas: 4,
+      });
 
       const j = await service.obter("g1", "GESTOR");
 
-      expect(j.passoAtual).toBe("gestor_kyc");
-      expect(j.href).toBe("/dashboard/gestor/kyc");
+      expect(j.passoAtual).toBe("gestor_ok");
+      expect(j.href).toBe("/dashboard/gestor");
       expect(j.fila).toEqual({ kyc: 3, etapas: 5 });
-    });
-
-    it("aponta etapas quando KYC zerado", async () => {
-      manager.obterEstatisticas.mockResolvedValue({ filaKyc: 0, filaAprovacoes: 2 });
-
-      const j = await service.obter("g1", "GESTOR");
-
-      expect(j.passoAtual).toBe("gestor_etapas");
-      expect(j.href).toBe("/dashboard/gestor/etapas");
+      expect(j.titulo).toContain("Indicadores");
+      expect(j.concluido).toBe(false);
     });
 
     it("marca concluído quando filas zeradas", async () => {
-      manager.obterEstatisticas.mockResolvedValue({ filaKyc: 0, filaAprovacoes: 0 });
+      manager.obterEstatisticas.mockResolvedValue({
+        filaKyc: 0,
+        filaAprovacoes: 0,
+        creditosAtivos: 1,
+        obrasAtivas: 1,
+      });
 
       const j = await service.obter("g1", "GESTOR");
 

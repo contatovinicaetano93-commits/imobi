@@ -109,7 +109,7 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
           Passo {passoNumero} de {jornada.totalPassos || 1}
           <span style={{ color: accent }}> · </span>
           {variant === "gestor"
-            ? "Acompanhe a fila na ordem — sem ações de aprovação"
+            ? "Apenas dados e KPIs — sem participação em processos internos"
             : "Siga na ordem para liberar seu crédito"}
         </p>
       )}
