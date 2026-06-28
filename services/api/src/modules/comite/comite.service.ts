@@ -17,7 +17,8 @@ import { invalidateJornadaCache } from "../jornada/jornada-cache";
 import { JornadaService } from "../jornada/jornada.service";
 import type { SolicitarComiteDto } from "./dto/comite.dto";
 
-const TIPOS_VOTANTE: UsuarioTipo[] = ["ADMIN", "GESTOR", "GESTOR_FUNDO"];
+const TIPOS_VOTANTE: UsuarioTipo[] = ["ADMIN"];
+const TIPOS_OBSERVADOR: UsuarioTipo[] = ["GESTOR", "GESTOR_FUNDO"];
 const TIPOS_PARECER: UsuarioTipo[] = ["ENGENHEIRO", "GESTOR_OBRA"];
 const ADMIN_OPS_EMAIL =
   process.env["ADMIN_OPS_EMAIL"]?.trim() || "contato.vinicaetano93@gmail.com";
@@ -120,13 +121,13 @@ export class ComiteService {
     const titulo = `Comitê aberto: ${valorFmt}`;
     const mensagem = `Proposta de ${solicitacao.usuario.nome} — ${solicitacao.finalidade}`;
 
-    const votantes = await this.listarVotantes();
-    for (const u of votantes) {
+    const admins = await this.listarAdmins();
+    for (const u of admins) {
       await this.notificacoes.criar(
         u.usuarioId,
         "COMITE_DECISAO",
         titulo,
-        `${mensagem}. Aguardando parecer técnico para votação.`,
+        `${mensagem}. Aguardando parecer técnico para votação dos sócios Admin.`,
         "/dashboard/admin/comite",
       );
       this.pushNotificacoes
@@ -138,6 +139,17 @@ export class ComiteService {
           dados: { comiteId: comite.comiteId },
         })
         .catch(() => {});
+    }
+
+    const observadores = await this.listarObservadores();
+    for (const u of observadores) {
+      await this.notificacoes.criar(
+        u.usuarioId,
+        "COMITE_DECISAO",
+        titulo,
+        `${mensagem}. Acompanhe o andamento (somente leitura).`,
+        "/dashboard/gestor/comite",
+      );
     }
 
     const engenheiros = await this.listarEngenheiros();
@@ -200,32 +212,44 @@ export class ComiteService {
 
     const valorFmt = this.formatarBRL(comite.solicitacao.valorSolicitado);
     const titulo = "Comitê em votação";
-    const mensagem = `Parecer registrado para proposta de ${comite.solicitacao.usuario.nome} (${valorFmt}). Registre seu voto.`;
+    const mensagemVoto = `Parecer registrado para proposta de ${comite.solicitacao.usuario.nome} (${valorFmt}). Registre seu voto.`;
+    const mensagemObs = `Parecer registrado para proposta de ${comite.solicitacao.usuario.nome} (${valorFmt}). Comitê em votação — acompanhe.`;
 
-    const votantes = await this.listarVotantes();
-    for (const u of votantes) {
+    const admins = await this.listarAdmins();
+    for (const u of admins) {
       await this.notificacoes.criar(
         u.usuarioId,
         "COMITE_DECISAO",
         titulo,
-        mensagem,
-        u.tipo === "ADMIN" ? "/dashboard/admin/comite" : "/dashboard/gestor/comite",
+        mensagemVoto,
+        "/dashboard/admin/comite",
       );
       this.pushNotificacoes
         .enviarPush({
           usuarioId: u.usuarioId,
           titulo,
-          mensagem,
+          mensagem: mensagemVoto,
           tipo: "COMITE_DECISAO",
           dados: { comiteId },
         })
         .catch(() => {});
     }
 
+    const observadores = await this.listarObservadores();
+    for (const u of observadores) {
+      await this.notificacoes.criar(
+        u.usuarioId,
+        "COMITE_DECISAO",
+        titulo,
+        mensagemObs,
+        "/dashboard/gestor/comite",
+      );
+    }
+
     return updated;
   }
 
-  // ── Admin / Gestor / Gestor Fundo: votar ──────────────────────────────────
+  // ── Admin: votar (Gestor Fundo apenas observa) ────────────────────────────
 
   async votar(
     comiteId: string,
@@ -235,8 +259,8 @@ export class ComiteService {
     condicoes?: string,
   ) {
     const votante = await this.prisma.usuario.findUnique({ where: { usuarioId: votanteId } });
-    if (!votante || !TIPOS_VOTANTE.includes(votante.tipo)) {
-      throw new ForbiddenException("Apenas Admin, Gestor ou Gestor Fundo podem votar no comitê");
+    if (!votante || votante.tipo !== "ADMIN") {
+      throw new ForbiddenException("Apenas sócios Admin podem votar no comitê");
     }
 
     const comite = await this.prisma.comiteDigital.findUnique({
@@ -302,7 +326,7 @@ export class ComiteService {
 
     if (decisao === "APROVADO") {
       const s = comite.solicitacao;
-      await this.prisma.credito.create({
+      const credito = await this.prisma.credito.create({
         data: {
           usuarioId: s.usuarioId,
           valorAprovado: s.valorSolicitado,
@@ -313,6 +337,25 @@ export class ComiteService {
           dataVencimento: new Date(Date.now() + s.prazoMeses * 30 * 24 * 60 * 60 * 1000),
         },
       });
+
+      if (s.obraId) {
+        await this.prisma.obra.update({
+          where: { obraId: s.obraId },
+          data: { creditoId: credito.creditoId },
+        });
+      } else {
+        const obraRecente = await this.prisma.obra.findFirst({
+          where: { usuarioId: s.usuarioId, creditoId: null },
+          orderBy: { criadoEm: "desc" },
+        });
+        if (obraRecente) {
+          await this.prisma.obra.update({
+            where: { obraId: obraRecente.obraId },
+            data: { creditoId: credito.creditoId },
+          });
+        }
+      }
+
       await invalidateJornadaCache(this.cache, s.usuarioId);
     }
 
@@ -376,6 +419,17 @@ export class ComiteService {
         comiteId: comite.comiteId,
       })
       .catch((err: Error) => this.logger.warn(`Email admin comitê falhou: ${err.message}`));
+
+    const observadores = await this.listarObservadores();
+    for (const u of observadores) {
+      await this.notificacoes.criar(
+        u.usuarioId,
+        "COMITE_DECISAO",
+        `Comitê encerrado: ${decisaoLabel}`,
+        `Proposta de ${cliente.nome} (${valorFmt}) — ${decisaoLabel}.`,
+        "/dashboard/gestor/comite",
+      );
+    }
   }
 
   // ── Leitura ───────────────────────────────────────────────────────────────
@@ -431,9 +485,9 @@ export class ComiteService {
     });
   }
 
-  private async listarVotantes() {
+  private async listarObservadores() {
     return this.prisma.usuario.findMany({
-      where: { tipo: { in: TIPOS_VOTANTE }, bloqueadoEm: null },
+      where: { tipo: { in: TIPOS_OBSERVADOR }, bloqueadoEm: null },
       select: { usuarioId: true, nome: true, email: true, tipo: true },
     });
   }

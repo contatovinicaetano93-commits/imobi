@@ -92,7 +92,7 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
             </div>
             <div>
               <h3 className="text-sm font-bold text-gray-900">Iniciar Comitê Digital</h3>
-              <p className="text-xs text-gray-400">Gestor Fundo e sócios Admin votam após parecer do engenheiro</p>
+              <p className="text-xs text-gray-400">Somente sócios Admin votam após parecer do engenheiro</p>
             </div>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "#9ca3af" }}>
@@ -162,7 +162,7 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
 
         {/* Info */}
         <div className="bg-amber-50 rounded-xl p-3 border border-amber-100 text-xs text-amber-800 leading-relaxed">
-          <strong>Fluxo:</strong> Admin abre o comitê → Engenheiro emite parecer técnico → Gestor Fundo e sócios Admin votam → decisão enviada por e-mail ao cliente e à operação IMOBI.
+          <strong>Fluxo:</strong> Admin abre o comitê → Engenheiro emite parecer → <strong>sócios Admin votam</strong> → Gestor Fundo acompanha → e-mails ao cliente e operação IMOBI.
         </div>
 
         <div className="flex gap-3">
