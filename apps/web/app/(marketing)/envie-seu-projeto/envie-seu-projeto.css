@@ -159,6 +159,20 @@
   box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.35);
 }
 
+.esp-tipo.selected strong {
+  color: #4ade80;
+}
+
+.esp-card .btn-hero-primary {
+  background: #22c55e;
+  color: #fff;
+  border: none;
+}
+
+.esp-card .btn-hero-primary:hover {
+  background: #16a34a;
+}
+
 .esp-form label {
   display: block;
   font-size: 0.8rem;

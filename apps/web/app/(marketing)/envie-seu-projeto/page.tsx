@@ -7,7 +7,10 @@ import {
   propostasApi,
   type TipoCreditoProposta,
 } from "@/lib/api";
-import { getPropostaChecklistTemplate } from "@/lib/proposta-checklist-local";
+import {
+  getPropostaChecklistTemplate,
+  TIPOS_CREDITO_OPCOES,
+} from "@/lib/proposta-checklist-local";
 import "../landing.css";
 import "./envie-seu-projeto.css";
 
@@ -181,11 +184,13 @@ export default function EnvieSeuProjetoPage() {
             <>
               <h2>Qual operação você busca?</h2>
               <p className="esp-muted">Selecione o perfil que melhor descreve seu empreendimento.</p>
-              <div className="esp-tipo-grid">
-                {(template.tiposDisponiveis ?? []).map((t) => (
+              <div className="esp-tipo-grid" role="radiogroup" aria-label="Tipo de crédito">
+                {TIPOS_CREDITO_OPCOES.map((t) => (
                   <button
                     key={t.id}
                     type="button"
+                    role="radio"
+                    aria-checked={tipo === t.id}
                     className={`esp-tipo ${tipo === t.id ? "selected" : ""}`}
                     onClick={() => setTipo(t.id)}
                   >
