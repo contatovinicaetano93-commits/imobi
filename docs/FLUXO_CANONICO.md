@@ -1,68 +1,83 @@
-# Fluxo canônico — Imobi (lançamento)
+# Fluxo canônico — Imobi
 
-**Contexto:** produção guiada. Tomador/gestor seguem `GET /jornada` passo a passo (`NEXT_PUBLIC_GUIDED_STRICT=true`).
+**Modo lançamento:** jornada guiada (`NEXT_PUBLIC_GUIDED_STRICT=true`, default) + nav mínima por perfil (`lib/canonical-flow.ts`).
 
 ## URLs
 
 | Ambiente | URL |
 |----------|-----|
 | Web | https://imobi-web-ten.vercel.app |
-| API staging | https://imobi-api-staging.onrender.com |
+| API | https://imobi-api-staging.onrender.com |
 
-## Funil marketing → app autenticado
+## Funil
 
 ```
-/envie-seu-projeto → POST /api/v1/propostas
+/envie-seu-projeto → PropostaCredito
        ↓
-Cadastro/login (mesmo e-mail) → vincula proposta + rascunho dossiê
+Login (mesmo e-mail) → dossiê + jornada
        ↓
-GET /api/v1/jornada → href do passo atual (redirect estrito)
+GET /jornada → passo atual (redirect estrito)
 ```
 
-## Jornada do cliente (TOMADOR / CONSTRUTOR)
+## Tomador / Construtor
 
-| Ordem | Passo | Rota |
-|-------|-------|------|
+| # | Passo | Rota |
+|---|-------|------|
 | 1 | KYC | `/dashboard/kyc` |
 | 2 | Viabilidade | `/dashboard/proposta-credito` |
 | 3 | Obra | `/dashboard/obras/nova` |
-| 4 | Crédito (comitê) | `/dashboard/credito/solicitar` |
+| 4 | Crédito | `/dashboard/credito/solicitar` |
 | 5 | Aguardando comitê | `/dashboard/construtor` |
-| 6 | Acompanhar liberações | `/dashboard/credito` + obras |
-| 7 | Operação quitada | `/dashboard/construtor` (nova operação) |
+| 6 | Liberações | `/dashboard/credito` + `/dashboard/obras` |
+| 7 | Quitado | `/dashboard/construtor` |
 
-## Jornada do gestor (somente leitura)
+**Hub:** `/dashboard/construtor` · **Nav:** jornada, KYC, viabilidade, obras, crédito
 
-| Ordem | Passo | Rota |
-|-------|-------|------|
-| 1 | Fila KYC | `/dashboard/gestor/kyc` |
-| 2 | Fila etapas | `/dashboard/gestor/etapas` |
-| 3 | Fila zerada | `/dashboard/gestor` |
+## Gestor (somente leitura)
 
-**Aprovações:** Admin (KYC, dossiê, homologação, comitê, pagamento) · Engenheiro (vistoria técnica).
+| Passo | Rota |
+|-------|------|
+| Painel | `/dashboard/gestor` |
+| Fila KYC | `/dashboard/gestor/kyc` |
+| Fila etapas | `/dashboard/gestor/etapas` |
+| Comitê | `/dashboard/gestor/comite` |
 
-## SIPOC execução + pagamento
+## Engenheiro
+
+| Passo | Rota |
+|-------|------|
+| Vistorias | `/dashboard/engenheiro/vistoria` |
+| Obras (evidências) | `/dashboard/obras` |
+| Parecer comitê | `/dashboard/engenheiro/comite` |
+
+## Admin — centro de comando
+
+| Fila | Rota |
+|------|------|
+| Hub + SIPOC | `/dashboard/admin` |
+| Pipeline comercial | `/dashboard/admin/pipeline` |
+| Propostas | `/dashboard/admin/propostas` |
+| KYC | `/dashboard/admin/kyc` |
+| Viabilidade | `/dashboard/admin/viabilidade` |
+| Obras / homologação | `/dashboard/admin/obras` |
+| Vistorias | `/dashboard/admin/vistorias` |
+| Comitê | `/dashboard/admin/comite` |
+| Usuários | `/dashboard/admin/usuarios` |
+
+## SIPOC (execução)
 
 1. Admin homologa obra → `EM_EXECUCAO`
-2. Tomador envia evidências GPS
-3. Engenheiro aprova etapa → liberação `AGUARDANDO_PAGAMENTO`
-4. Admin confirma pagamento → parcela `CONCLUIDA`
-5. Quando 100% etapas + valor liberado → crédito `QUITADO`, obra `CONCLUIDA`
+2. Tomador: evidências GPS → etapa `AGUARDANDO_VISTORIA`
+3. Engenheiro aprova → `LiberacaoParcela` `AGUARDANDO_PAGAMENTO`
+4. Admin confirma pagamento (SIPOC)
+5. 100% etapas + valor pago → crédito `QUITADO`, obra `CONCLUIDA`
 
-## Comportamento técnico
+## Rotas removidas / redirect
 
-- **Login:** `redirectAfterLogin()` → `/jornada.href`
-- **Guard:** `JornadaGuard` redireciona rotas fora do passo (estrito)
-- **Gates API:** obra (KYC + dossiê); crédito comitê (obra); comitê valida jornada
-- **Vistoria:** `/vistoria` e `/engenheiros` delegam ao mesmo `EtapasService`
-- **Beta menu legado:** `NEXT_PUBLIC_BETA_MVP_MODE=true` (não usar em produção)
+Score, simulador interno, fundos, relatórios, comercial, checklist e alertas do engenheiro → redirects em `canonical-flow.ts`.
 
-## OpenAPI
+## Técnico
 
-| Módulo | Spec |
-|--------|------|
-| Jornada | `docs/api/openapi-jornada-v1.yaml` |
-| Propostas | `docs/api/openapi-propostas-v1.yaml` |
-| Dossiês | `docs/api/openapi-dossies-v1.yaml` |
-
-Ver checklist: `docs/LAUNCH_3_DIAS.md`
+- **Jornada:** `JornadaGuard` + `GET /jornada`
+- **Middleware:** `isCanonicalRouteAllowed` + legacy redirects
+- **Beta legado:** `NEXT_PUBLIC_BETA_MVP_MODE=true` (não usar em produção)

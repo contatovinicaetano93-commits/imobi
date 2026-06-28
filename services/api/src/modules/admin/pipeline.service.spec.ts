@@ -60,4 +60,72 @@ describe("PipelineService", () => {
     expect(items[0]?.fonte).toBe("solicitacao");
     expect(items[0]?.etapa).toBe("estruturacao");
   });
+
+  it("atualiza status da solicitação ao mover para análise", async () => {
+    const solicitacao = {
+      solicitacaoId: "s1",
+      usuarioId: "u1",
+      valorSolicitado: 500000,
+      finalidade: "CONSTRUCAO",
+      observacoes: null,
+      ltv: 0.65,
+      status: "EM_COMITE" as const,
+      criadoEm: new Date(),
+      atualizadoEm: new Date(),
+      usuario: { nome: "João", email: "j@test.com", usuarioId: "u1" },
+      comite: { comiteId: "c1", status: "ABERTO", decisao: null },
+    };
+
+    prisma.solicitacaoCredito.findUnique.mockResolvedValue(solicitacao);
+    prisma.solicitacaoCredito.update.mockResolvedValue({
+      ...solicitacao,
+      status: "PENDENTE",
+    });
+    prisma.solicitacaoCredito.findUniqueOrThrow.mockResolvedValue({
+      ...solicitacao,
+      status: "PENDENTE",
+    });
+    prisma.credito.findFirst.mockResolvedValue(null);
+
+    await service.atualizarEtapa("solicitacao", "s1", "analise");
+
+    expect(prisma.solicitacaoCredito.update).toHaveBeenCalledWith({
+      where: { solicitacaoId: "s1" },
+      data: { status: "PENDENTE" },
+    });
+  });
+
+  it("move solicitação com comitê para EM_COMITE em estruturação", async () => {
+    const solicitacao = {
+      solicitacaoId: "s2",
+      usuarioId: "u2",
+      valorSolicitado: 800000,
+      finalidade: "CONSTRUCAO",
+      observacoes: null,
+      ltv: 0.7,
+      status: "PENDENTE" as const,
+      criadoEm: new Date(),
+      atualizadoEm: new Date(),
+      usuario: { nome: "Maria", email: "m@test.com", usuarioId: "u2" },
+      comite: { comiteId: "c2", status: "ABERTO", decisao: null },
+    };
+
+    prisma.solicitacaoCredito.findUnique.mockResolvedValue(solicitacao);
+    prisma.solicitacaoCredito.update.mockResolvedValue({
+      ...solicitacao,
+      status: "EM_COMITE",
+    });
+    prisma.solicitacaoCredito.findUniqueOrThrow.mockResolvedValue({
+      ...solicitacao,
+      status: "EM_COMITE",
+    });
+    prisma.credito.findFirst.mockResolvedValue(null);
+
+    await service.atualizarEtapa("solicitacao", "s2", "estruturacao");
+
+    expect(prisma.solicitacaoCredito.update).toHaveBeenCalledWith({
+      where: { solicitacaoId: "s2" },
+      data: { status: "EM_COMITE" },
+    });
+  });
 });

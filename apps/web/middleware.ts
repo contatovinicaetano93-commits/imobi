@@ -2,7 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { decodeJwtPayload } from "@/lib/decode-jwt-payload";
 import { ROLE_HOME, normalizeRole } from "@/lib/role-permissions";
 import { resolveRequestRole } from "@/lib/resolve-request-role";
-import { isMvpRouteAllowed } from "@/lib/beta-mvp";
+import { isMvpRouteAllowed, GUIDED_STRICT_MODE } from "@/lib/beta-mvp";
+import {
+  resolveLegacyRedirect,
+  isCanonicalRouteAllowed,
+} from "@/lib/canonical-flow";
 
 const PUBLIC_PATHS = [
   "/",
@@ -88,7 +92,12 @@ export function middleware(request: NextRequest) {
 
   const role = resolveRequestRole(request, token);
 
-  // Legado: simulador interno redireciona para proposta de crédito (antes do gate MVP).
+  const legacyDest = resolveLegacyRedirect(pathname);
+  if (legacyDest) {
+    return NextResponse.redirect(new URL(legacyDest, request.url));
+  }
+
+  // Legado: simulador interno → viabilidade
   if (
     pathname === "/dashboard/simulador" ||
     pathname.startsWith("/dashboard/simulador/")
@@ -116,6 +125,11 @@ export function middleware(request: NextRequest) {
   if (role && !isMvpRouteAllowed(pathname, role)) {
     const candidate = ROLE_HOME[role] ?? "/dashboard/construtor";
     const home = isMvpRouteAllowed(candidate, role) ? candidate : "/dashboard/construtor";
+    return NextResponse.redirect(new URL(home, request.url));
+  }
+
+  if (role && !isCanonicalRouteAllowed(pathname, role)) {
+    const home = ROLE_HOME[role] ?? "/dashboard/construtor";
     return NextResponse.redirect(new URL(home, request.url));
   }
 

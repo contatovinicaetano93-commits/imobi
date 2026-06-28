@@ -16,7 +16,8 @@ import {
   isAdminPreviewingPanel,
   type NavContext,
 } from "@/lib/panel-navigation";
-import { isMvpNavHref, BETA_MVP_MODE } from "@/lib/beta-mvp";
+import { isMvpRouteAllowed, GUIDED_STRICT_MODE } from "@/lib/beta-mvp";
+import { getCanonicalNav, isCanonicalNavHref } from "@/lib/canonical-flow";
 import { JornadaGuard } from "@/components/dashboard/JornadaGuard";
 import { JornadaProvider } from "@/hooks/jornada-context";
 import { ToastProvider } from "@/hooks/toast-context";
@@ -39,51 +40,7 @@ const WA = "5511993455589";
 const NAVY = "#0C1A3D";
 const MINT = "#4ADE80";
 
-const NAV: NavItem[] = [
-  { label: "Início",        href: "/dashboard",                         icon: Home,        roles: [null],                             section: "geral" },
-  { label: "Painel",        href: "/dashboard/construtor",              icon: Home,        roles: ["CONSTRUTOR", "TOMADOR"],          section: "geral" },
-  { label: "Minhas Obras",  href: "/dashboard/obras",                   icon: HardHat,     roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "obras" },
-  { label: "Crédito",       href: "/dashboard/credito",                 icon: CreditCard,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "credito" },
-  { label: "Comitê",        href: "/dashboard/comite",                  icon: Vote,        roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "credito" },
-  { label: "Envie seu projeto", href: "/dashboard/proposta-credito", icon: Calculator,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "simulador" },
-  { label: "Score",         href: "/dashboard/score",                   icon: Star,        roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "score" },
-  { label: "Documentos",    href: "/dashboard/kyc",                     icon: FileCheck2,  roles: ["TOMADOR", "CONSTRUTOR"],           funcao: "kyc" },
-  { label: "Painel",        href: "/dashboard/gestor",                   icon: Home,        roles: ["GESTOR"],                        section: "geral" },
-  { label: "Comitê",        href: "/dashboard/gestor/comite",            icon: Vote,        roles: ["GESTOR"] },
-  { label: "Etapas",        href: "/dashboard/gestor/etapas",            icon: FileCheck2,  roles: ["GESTOR"] },
-  { label: "KYC",           href: "/dashboard/gestor/kyc",               icon: ShieldCheck, roles: ["GESTOR"] },
-  { label: "Due Diligence", href: "/dashboard/gestor/due-diligence/nova", icon: Building2,  roles: ["GESTOR"] },
-  { label: "Carteira",      href: "/dashboard/fundos",                   icon: Banknote,    roles: ["GESTOR"] },
-  { label: "Relatórios",    href: "/dashboard/relatorios",               icon: BarChart3,   roles: ["GESTOR"] },
-  { label: "Painel",        href: "/dashboard/engenheiro",               icon: Home,        roles: ["ENGENHEIRO","GESTOR_OBRA"], section: "geral" },
-  { label: "Minhas Obras",  href: "/dashboard/obras",                    icon: HardHat,     roles: ["ENGENHEIRO","GESTOR_OBRA"] },
-  { label: "Vistoria",      href: "/dashboard/engenheiro/vistoria",      icon: MapPin,      roles: ["ENGENHEIRO","GESTOR_OBRA"] },
-  { label: "Checklist",     href: "/dashboard/engenheiro/checklist",     icon: FileCheck2,  roles: ["ENGENHEIRO","GESTOR_OBRA"] },
-  { label: "Alertas",       href: "/dashboard/engenheiro/alertas",       icon: Bell,        roles: ["ENGENHEIRO","GESTOR_OBRA"] },
-  { label: "Comitê",        href: "/dashboard/engenheiro/comite",        icon: Vote,        roles: ["ENGENHEIRO","GESTOR_OBRA"] },
-  { label: "Painel",        href: "/dashboard/comercial",                icon: Home,        roles: ["COMERCIAL","PARCEIRO"], section: "geral" },
-  { label: "Indicações",    href: "/dashboard/comercial/leads",          icon: Star,        roles: ["COMERCIAL","PARCEIRO"] },
-  { label: "Comissões",     href: "/dashboard/comercial/comissoes",      icon: Banknote,    roles: ["COMERCIAL","PARCEIRO"] },
-  { label: "Simulador",     href: "/dashboard/comercial/simulador",      icon: Calculator,  roles: ["COMERCIAL","PARCEIRO"] },
-  { label: "Materiais",     href: "/dashboard/comercial/materiais",      icon: FileText,    roles: ["COMERCIAL","PARCEIRO"] },
-  { label: "Ranking",       href: "/dashboard/comercial/ranking",        icon: TrendingUp,  roles: ["COMERCIAL","PARCEIRO"] },
-  { label: "Visão Geral",   href: "/dashboard/admin",                   icon: LayoutDashboard, roles: ["ADMIN"],     section: "admin" },
-  { label: "Pipeline",      href: "/dashboard/admin/pipeline",          icon: Banknote,    roles: ["ADMIN"] },
-  { label: "Comitê",        href: "/dashboard/admin/comite",            icon: Vote,        roles: ["ADMIN"] },
-  { label: "Usuários",      href: "/dashboard/admin/usuarios",          icon: User,        roles: ["ADMIN"] },
-  { label: "Configurações", href: "/dashboard/admin/configuracoes",     icon: Settings,    roles: ["ADMIN"] },
-  { label: "Obras",         href: "/dashboard/admin/obras",             icon: HardHat,     roles: ["ADMIN"] },
-  { label: "Vistorias",     href: "/dashboard/admin/vistorias",         icon: MapPin,      roles: ["ADMIN"] },
-  { label: "KYC",           href: "/dashboard/admin/kyc",              icon: FileCheck2,  roles: ["ADMIN"] },
-  { label: "Propostas",     href: "/dashboard/admin/propostas",        icon: Inbox,       roles: ["ADMIN"] },
-  { label: "Viabilidade",   href: "/dashboard/admin/viabilidade",       icon: FileText,    roles: ["ADMIN"] },
-  { label: "Fundos",        href: "/dashboard/fundos",                  icon: Banknote,    roles: ["ADMIN"],                           funcao: "fundos" },
-  { label: "Relatórios",    href: "/dashboard/relatorios",              icon: BarChart3,   roles: ["ADMIN"],                           funcao: "relatorios" },
-  { label: "Notificações",  href: "/dashboard/notificacoes",            icon: Bell,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], funcao: "notificacoes", section: "conta" },
-  { label: "Perfil",        href: "/dashboard/perfil",                  icon: User,        roles: ["TOMADOR","GESTOR","ENGENHEIRO","GESTOR_OBRA","COMERCIAL","PARCEIRO","ADMIN","CONSTRUTOR",null], section: "conta" },
-];
-
-const SECTION_LABELS: Record<string, string> = { geral: "Geral", operacional: "Operacional", admin: "Admin", conta: "Conta" };
+const SECTION_LABELS: Record<string, string> = { geral: "Jornada", operacao: "Operação", conta: "Conta" };
 
 const ROLE_META: Record<string, { label: string; accent: string }> = {
   CONSTRUTOR:  { label: CLIENTE_BETA_LABEL, accent: MINT },
@@ -102,16 +59,27 @@ function filterNav(
   funcoesBloqueadas: string[],
   navCtx?: NavContext,
 ): NavItem[] {
-  const navRole = getNavRole(role, path, navCtx);
-  const filtered = NAV.filter((item) => {
-    if (!item.roles.includes(navRole)) return false;
-    if (navRole !== "ADMIN" && item.funcao && funcoesBloqueadas.includes(item.funcao)) return false;
-    if (!isMvpNavHref(item.href, navRole)) return false;
-    return true;
-  });
-  const main = filtered.filter((item) => !ACCOUNT_NAV_HREFS.has(item.href));
-  const account = filtered.filter((item) => ACCOUNT_NAV_HREFS.has(item.href));
-  return [...main, ...account];
+  const navRole = getNavRole(role, path, navCtx) ?? role;
+  const canonical = getCanonicalNav(navRole);
+  const filtered = canonical
+    .filter((item) => {
+      if (navRole !== "ADMIN" && item.href.includes("admin") && role !== "ADMIN") return false;
+      return isCanonicalNavHref(item.href, navRole);
+    })
+    .map((item) => ({
+      label: item.label,
+      href: item.href,
+      icon: item.icon,
+      roles: [navRole] as UserRole[],
+      section: item.section,
+    }));
+
+  if (!GUIDED_STRICT_MODE && navRole) {
+    return filtered.filter((item) => isMvpRouteAllowed(item.href, navRole));
+  }
+
+  void funcoesBloqueadas;
+  return filtered;
 }
 
 // Returns the parent path for a back button, or null if at root level.
@@ -324,7 +292,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const parentPath = getParentPath(path);
 
   const jornadaEnabled =
-    BETA_MVP_MODE &&
+    GUIDED_STRICT_MODE &&
     role != null &&
     (role === "TOMADOR" || role === "CONSTRUTOR" || role === "GESTOR");
 
@@ -540,7 +508,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </main>
 
       {/* Assistente IA + WhatsApp */}
-      <ImobiAssistant />
+      {!GUIDED_STRICT_MODE && <ImobiAssistant />}
       <a
         href={`https://wa.me/${WA}?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20IMOBI.`}
         target="_blank"

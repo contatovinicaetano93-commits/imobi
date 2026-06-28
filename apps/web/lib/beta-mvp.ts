@@ -1,4 +1,5 @@
 import { ROLE_HOME } from "@/lib/role-permissions";
+import { isCanonicalRouteAllowed } from "@/lib/canonical-flow";
 
 /**
  * Modo beta MVP — menu reduzido (legado). Desligado no lançamento.
@@ -87,6 +88,9 @@ function matchesPrefix(path: string, prefixes: readonly string[]): boolean {
 }
 
 export function isMvpRouteAllowed(pathname: string, role: string | null): boolean {
+  if (!BETA_MVP_MODE && GUIDED_STRICT_MODE) {
+    return isCanonicalRouteAllowed(pathname, role);
+  }
   if (!BETA_MVP_MODE) return true;
 
   if (

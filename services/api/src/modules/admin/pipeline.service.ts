@@ -276,6 +276,28 @@ export class PipelineService {
     }
   }
 
+  private solicitacaoStatusFromEtapa(
+    etapa: PipelineEtapa,
+    s: Pick<SolicitacaoCredito, "status"> & {
+      comite: { comiteId: string } | null;
+    },
+  ): SolicitacaoStatus {
+    switch (etapa) {
+      case "prospeccao":
+      case "analise":
+        return SolicitacaoStatus.PENDENTE;
+      case "estruturacao":
+        if (s.status === SolicitacaoStatus.APROVADA) return SolicitacaoStatus.APROVADA;
+        return s.comite ? SolicitacaoStatus.EM_COMITE : SolicitacaoStatus.PENDENTE;
+      case "standby":
+        return SolicitacaoStatus.CANCELADA;
+      case "aprovado":
+        return SolicitacaoStatus.APROVADA;
+      default:
+        return SolicitacaoStatus.PENDENTE;
+    }
+  }
+
   private async atualizarEtapaProposta(id: string, etapa: PipelineEtapa) {
     const p = await this.prisma.propostaCredito.findUnique({ where: { id } });
     if (!p) throw new NotFoundException("Proposta não encontrada.");
@@ -303,13 +325,22 @@ export class PipelineService {
       );
     }
 
-    if (etapa === "standby") {
-      if (s.status === "APROVADA") {
-        throw new BadRequestException("Solicitação aprovada não pode ir para Standby.");
-      }
+    if (etapa === "standby" && s.status === "APROVADA") {
+      throw new BadRequestException("Solicitação aprovada não pode ir para Standby.");
+    }
+
+    if (
+      s.status === "APROVADA" &&
+      (etapa === "prospeccao" || etapa === "analise")
+    ) {
+      throw new BadRequestException("Solicitação aprovada não pode retroceder para esta etapa.");
+    }
+
+    const novoStatus = this.solicitacaoStatusFromEtapa(etapa, s);
+    if (novoStatus !== s.status) {
       await this.prisma.solicitacaoCredito.update({
         where: { solicitacaoId: id },
-        data: { status: SolicitacaoStatus.CANCELADA },
+        data: { status: novoStatus },
       });
     }
 

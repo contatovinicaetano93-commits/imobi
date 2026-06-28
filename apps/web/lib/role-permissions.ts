@@ -47,8 +47,8 @@ export const ROLE_HOME: Record<string, string> = {
   GESTOR_FUNDO: '/dashboard/gestor',
   ENGENHEIRO: '/dashboard/engenheiro',
   GESTOR_OBRA: '/dashboard/engenheiro',
-  COMERCIAL: '/dashboard/comercial',
-  PARCEIRO: '/dashboard/comercial',
+  COMERCIAL: '/dashboard/admin/pipeline',
+  PARCEIRO: '/dashboard/admin/pipeline',
   TOMADOR: '/dashboard/construtor',
   CONSTRUTOR: '/dashboard/construtor',
 };
