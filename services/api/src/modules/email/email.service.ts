@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import * as nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
+import { withTimeout } from "../../common/resilience";
 
 interface EmailOptions {
   to: string;
@@ -123,13 +124,16 @@ export class EmailService {
 
     for (let attempt = 1; attempt <= this.retryConfig.maxAttempts; attempt++) {
       try {
-        await this.transporter.sendMail({
-          from: process.env["SMTP_FROM"] || "noreply@imbobi.com",
-          to: opcoes.to,
-          subject: opcoes.subject,
-          html: opcoes.html,
-          text: opcoes.text,
-        });
+        await withTimeout(
+          this.transporter.sendMail({
+            from: process.env["SMTP_FROM"] || "noreply@imbobi.com",
+            to: opcoes.to,
+            subject: opcoes.subject,
+            html: opcoes.html,
+            text: opcoes.text,
+          }),
+          Number(process.env["EMAIL_SEND_TIMEOUT_MS"] ?? 15_000),
+        );
 
         this.logger.debug(`Email enviado para ${opcoes.to} (attempt ${attempt}/${this.retryConfig.maxAttempts})`);
         return true;

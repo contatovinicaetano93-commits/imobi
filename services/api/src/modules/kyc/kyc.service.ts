@@ -1,12 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger, Inject } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bull";
+import type { Queue } from "bull";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import type { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
-import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { StorageService } from "../storage/storage.service";
 import { invalidateJornadaCache } from "../jornada/jornada-cache";
+import { QUEUE_KYC_NOTIFY } from "../../common/constants";
+import type { KycNotifyJob } from "../../workers/kyc-notify.worker";
 
 const KYC_TIPOS = new Set(["RG_FRENTE", "RG_VERSO", "SELFIE", "COMPROVANTE"]);
 const KYC_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
@@ -20,9 +23,9 @@ export class KycService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
-    private readonly email: EmailService,
     private readonly pushNotificacoes: PushNotificacoesService,
     private readonly storage: StorageService,
+    @InjectQueue(QUEUE_KYC_NOTIFY) private readonly kycNotifyQueue: Queue<KycNotifyJob>,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
@@ -194,12 +197,13 @@ export class KycService {
       tipo: "KYC_APROVADO",
     }).catch(() => {});
 
-    // BUG-003: Ensure email is sent before returning response
-    try {
-      await this.email.kycAprovadoEmail(documento.usuario.nome, documento.usuario.email);
-    } catch (error) {
-      this.logger.warn(`Failed to send KYC approval email: ${error}`);
-    }
+    // Enfileira e-mail (assíncrono — não bloqueia resposta HTTP)
+    this.enqueueKycNotify({
+      kind: "aprovado",
+      kycDocumentoId,
+      nome: documento.usuario.nome,
+      email: documento.usuario.email,
+    });
 
     await invalidateJornadaCache(this.cache, documento.usuarioId);
     return atualizado;
@@ -259,15 +263,31 @@ export class KycService {
       dados: { motivo },
     }).catch(() => {});
 
-    // Envia email
-    try {
-      await this.email.kycRejeitadoEmail(documento.usuario.nome, documento.usuario.email, motivo);
-    } catch (error) {
-      this.logger.warn(`Failed to send KYC rejection email: ${error}`);
-    }
+    // Enfileira e-mail (assíncrono)
+    this.enqueueKycNotify({
+      kind: "rejeitado",
+      kycDocumentoId,
+      nome: documento.usuario.nome,
+      email: documento.usuario.email,
+      motivo,
+    });
 
     await invalidateJornadaCache(this.cache, documento.usuarioId);
     return atualizado;
+  }
+
+  private enqueueKycNotify(job: KycNotifyJob) {
+    void this.kycNotifyQueue
+      .add("notificar-usuario", job, {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 1000 },
+      })
+      .catch((error) => {
+        this.logger.error(
+          `Falha ao enfileirar e-mail KYC ${job.kycDocumentoId}`,
+          error instanceof Error ? error.stack : error,
+        );
+      });
   }
 
   async listarPendentes() {

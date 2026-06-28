@@ -1,5 +1,6 @@
 export const QUEUE_LIBERACAO = "liberacao-parcela";
 export const QUEUE_PROPOSTA_NOTIFY = "proposta-notify";
+export const QUEUE_KYC_NOTIFY = "kyc-notify";
 
 export interface LiberacaoJob {
   creditoId: string;

@@ -1,12 +1,13 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BadRequestException } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { getQueueToken } from "@nestjs/bull";
 import { KycService } from "./kyc.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
-import { EmailService } from "../email/email.service";
 import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
 import { StorageService } from "../storage/storage.service";
+import { QUEUE_KYC_NOTIFY } from "../../common/constants";
 
 describe("KycService", () => {
   let service: KycService;
@@ -44,7 +45,7 @@ describe("KycService", () => {
         KycService,
         { provide: PrismaService, useValue: prisma },
         { provide: NotificacoesService, useValue: { criar: jest.fn() } },
-        { provide: EmailService, useValue: {} },
+        { provide: getQueueToken(QUEUE_KYC_NOTIFY), useValue: { add: jest.fn() } },
         { provide: PushNotificacoesService, useValue: { enviarPush: jest.fn() } },
         { provide: StorageService, useValue: storage },
         { provide: CACHE_MANAGER, useValue: cache },

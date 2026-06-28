@@ -39,6 +39,7 @@
     "db:migrate:deploy": "node scripts/db-migrate-deploy.mjs",
     "db:migrate:deploy:staging": "node scripts/db-migrate-deploy.mjs -- --staging",
     "db:rename-migrations": "node scripts/db-rename-migrations.mjs",
+    "db:fix:p3009": "node scripts/db-fix-p3009.mjs",
     "db:baseline": "node scripts/db-baseline.mjs",
     "db:setup": "node scripts/db-setup.mjs",
     "db:setup:fresh": "node scripts/db-setup.mjs -- --fresh",

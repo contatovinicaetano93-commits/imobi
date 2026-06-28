@@ -9,6 +9,7 @@ import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { validateEnvironmentOrThrow, initSentry } from "./common/config";
 import { setupSwagger } from "./common/config/swagger.config";
+import { initializeTracing } from "./common/observability/tracing";
 
 async function bootstrap() {
   // Validate environment first to catch all config errors at startup
@@ -16,6 +17,7 @@ async function bootstrap() {
 
   // Then initialize optional services like Sentry
   initSentry();
+  await initializeTracing();
 
   const fastifyOptions: any = {
     logger: process.env["NODE_ENV"] !== "production",

@@ -1,9 +1,14 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
 import { mkdir, writeFile, readFile, unlink } from "fs/promises";
 import path from "path";
+import {
+  CircuitBreakerService,
+  RetryPolicyService,
+  withTimeout,
+} from "../../common/resilience";
 
 const LOCAL_PREFIX = "local:";
 
@@ -23,6 +28,22 @@ function extFromMime(mimeType: string, filename?: string): string {
 
 @Injectable()
 export class StorageService {
+  private readonly logger = new Logger(StorageService.name);
+  private readonly s3Retry = new RetryPolicyService({
+    name: "s3-storage",
+    maxAttempts: 3,
+    initialDelayMs: 200,
+    maxDelayMs: 5000,
+    multiplier: 2,
+  });
+  private readonly s3Circuit = new CircuitBreakerService({
+    name: "s3-storage",
+    failureThreshold: 5,
+    resetTimeout: 60_000,
+    monitorInterval: 10_000,
+  });
+  private readonly s3TimeoutMs = Number(process.env["S3_OPERATION_TIMEOUT_MS"] ?? 30_000);
+
   private readonly s3 = new S3Client({
     region: process.env["AWS_REGION"] ?? process.env["AWS_S3_REGION"] ?? "us-east-1",
     credentials: {
@@ -58,20 +79,36 @@ export class StorageService {
     }
   }
 
+  private async executeS3<T>(operation: string, fn: () => Promise<T>): Promise<T> {
+    try {
+      return await this.s3Circuit.execute(() =>
+        this.s3Retry.execute(() => withTimeout(fn(), this.s3TimeoutMs)),
+      );
+    } catch (error) {
+      this.logger.error(`S3 ${operation} failed`, {
+        error: error instanceof Error ? error.message : String(error),
+        circuitState: this.s3Circuit.getState(),
+      });
+      throw error;
+    }
+  }
+
   async uploadKycDocument(buffer: Buffer, mimeType: string, usuarioId: string, tipo: string) {
     const ext = extFromMime(mimeType);
     const safeTipo = tipo.replace(/[^A-Z_]/gi, "");
 
     if (this.useS3()) {
       const key = `kyc/${usuarioId}/${safeTipo}/${randomUUID()}.${ext}`;
-      await this.s3.send(
-        new PutObjectCommand({
-          Bucket: this.bucket,
-          Key: key,
-          Body: buffer,
-          ContentType: mimeType,
-          ServerSideEncryption: "AES256",
-        }),
+      await this.executeS3("uploadKycDocument", () =>
+        this.s3.send(
+          new PutObjectCommand({
+            Bucket: this.bucket,
+            Key: key,
+            Body: buffer,
+            ContentType: mimeType,
+            ServerSideEncryption: "AES256",
+          }),
+        ),
       );
       return { url: key, key };
     }
@@ -90,7 +127,9 @@ export class StorageService {
       const local = await this.readLocalFile(key);
       return { buffer: local.buffer, mimeType: fallbackMime ?? local.mimeType };
     }
-    const res = await this.s3.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    const res = await this.executeS3("readBuffer", () =>
+      this.s3.send(new GetObjectCommand({ Bucket: this.bucket, Key: key })),
+    );
     const body = res.Body;
     if (!body) throw new Error("Empty object body");
     const chunks: Uint8Array[] = [];
@@ -124,14 +163,16 @@ export class StorageService {
   async uploadAvatar(buffer: Buffer, mimeType: string, usuarioId: string) {
     const ext = mimeType.split("/")[1]?.split("+")[0] ?? "jpg";
     const key = `avatars/${usuarioId}/${randomUUID()}.${ext}`;
-    await this.s3.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        Body: buffer,
-        ContentType: mimeType,
-        ServerSideEncryption: "AES256",
-      })
+    await this.executeS3("uploadAvatar", () =>
+      this.s3.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: mimeType,
+          ServerSideEncryption: "AES256",
+        }),
+      ),
     );
     const url = await this.getSignedUrl(key);
     return { url, key };
@@ -142,14 +183,16 @@ export class StorageService {
 
     if (this.useS3()) {
       const key = `evidencias/${scopeId}/${randomUUID()}.${ext}`;
-      await this.s3.send(
-        new PutObjectCommand({
-          Bucket: this.bucket,
-          Key: key,
-          Body: buffer,
-          ContentType: mimeType,
-          ServerSideEncryption: "AES256",
-        }),
+      await this.executeS3("upload", () =>
+        this.s3.send(
+          new PutObjectCommand({
+            Bucket: this.bucket,
+            Key: key,
+            Body: buffer,
+            ContentType: mimeType,
+            ServerSideEncryption: "AES256",
+          }),
+        ),
       );
       return { url: key, key };
     }
@@ -176,14 +219,16 @@ export class StorageService {
 
     if (this.useS3()) {
       const key = `documentos/${scope}/${filename}`;
-      await this.s3.send(
-        new PutObjectCommand({
-          Bucket: this.bucket,
-          Key: key,
-          Body: buffer,
-          ContentType: mimeType,
-          ServerSideEncryption: "AES256",
-        }),
+      await this.executeS3("uploadDocumento", () =>
+        this.s3.send(
+          new PutObjectCommand({
+            Bucket: this.bucket,
+            Key: key,
+            Body: buffer,
+            ContentType: mimeType,
+            ServerSideEncryption: "AES256",
+          }),
+        ),
       );
       return { url: key, key };
     }
@@ -209,14 +254,16 @@ export class StorageService {
 
     if (this.useS3()) {
       const key = `propostas/${propostaId}/${filename}`;
-      await this.s3.send(
-        new PutObjectCommand({
-          Bucket: this.bucket,
-          Key: key,
-          Body: buffer,
-          ContentType: mimeType,
-          ServerSideEncryption: "AES256",
-        }),
+      await this.executeS3("uploadProposta", () =>
+        this.s3.send(
+          new PutObjectCommand({
+            Bucket: this.bucket,
+            Key: key,
+            Body: buffer,
+            ContentType: mimeType,
+            ServerSideEncryption: "AES256",
+          }),
+        ),
       );
       return { url: key, key };
     }
@@ -231,10 +278,12 @@ export class StorageService {
 
   async getSignedUrl(key: string, expiresIn = 3600) {
     // AWS SDK tipos divergem entre client-s3 e s3-request-presigner no monorepo
-    return getSignedUrl(
-      this.s3 as never,
-      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
-      { expiresIn },
+    return this.executeS3("getSignedUrl", () =>
+      getSignedUrl(
+        this.s3 as never,
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+        { expiresIn },
+      ),
     );
   }
 
@@ -246,6 +295,8 @@ export class StorageService {
       await unlink(path.join(this.uploadRoot, rel)).catch(() => null);
       return;
     }
-    await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
+    await this.executeS3("delete", () =>
+      this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key })),
+    );
   }
 }

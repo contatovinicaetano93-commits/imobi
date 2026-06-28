@@ -186,10 +186,12 @@
   display: block;
   width: 100%;
   margin-top: 0.35rem;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
   border-radius: 0.75rem;
   padding: 0.65rem 0.85rem;
   font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
 }
 
 .esp-row {

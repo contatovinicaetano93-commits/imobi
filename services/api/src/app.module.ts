@@ -36,7 +36,8 @@ import { AssistenteModule } from "./modules/assistente/assistente.module";
 import { LiberacaoParcelaWorker } from "./workers/liberacao-parcela.worker";
 import { ExcluirUsuarioWorker, QUEUE_EXCLUIR_USUARIO } from "./workers/excluir-usuario.worker";
 import { PropostaNotifyWorker } from "./workers/proposta-notify.worker";
-import { QUEUE_LIBERACAO, QUEUE_PROPOSTA_NOTIFY } from "./common/constants";
+import { KycNotifyWorker } from "./workers/kyc-notify.worker";
+import { QUEUE_LIBERACAO, QUEUE_PROPOSTA_NOTIFY, QUEUE_KYC_NOTIFY } from "./common/constants";
 import { HealthController } from "./common/health.controller";
 import { getRedisConfig } from "./common/config";
 import { ProductionMiddleware } from "./common/middleware/production.middleware";
@@ -83,6 +84,7 @@ const redisConfig = getRedisConfig();
     BullModule.registerQueue({ name: QUEUE_LIBERACAO }),
     BullModule.registerQueue({ name: QUEUE_EXCLUIR_USUARIO }),
     BullModule.registerQueue({ name: QUEUE_PROPOSTA_NOTIFY }),
+    BullModule.registerQueue({ name: QUEUE_KYC_NOTIFY }),
     BullModule.forRoot({
       redis: {
         host: redisConfig.host,
@@ -136,6 +138,7 @@ const redisConfig = getRedisConfig();
     LiberacaoParcelaWorker,
     ExcluirUsuarioWorker,
     PropostaNotifyWorker,
+    KycNotifyWorker,
     {
       provide: APP_INTERCEPTOR,
       useClass: HttpLoggingInterceptor,

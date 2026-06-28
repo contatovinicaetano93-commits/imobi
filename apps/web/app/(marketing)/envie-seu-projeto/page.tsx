@@ -15,6 +15,7 @@ import "../landing.css";
 import "./envie-seu-projeto.css";
 
 const TOTAL_STEPS = 3;
+const FICHA_CHECKLIST_ITEM_ID = "ficha_viabilidade";
 
 type UploadMap = Record<string, File>;
 
@@ -41,6 +42,7 @@ export default function EnvieSeuProjetoPage() {
     if (!template) return [];
     const map = new Map<string, { titulo: string; itens: typeof template.itens }>();
     for (const item of template.itens) {
+      if (item.itemId === FICHA_CHECKLIST_ITEM_ID) continue;
       const g = map.get(item.blocoId) ?? { titulo: item.blocoTitulo, itens: [] };
       g.itens.push(item);
       map.set(item.blocoId, g);
@@ -48,10 +50,21 @@ export default function EnvieSeuProjetoPage() {
     return [...map.values()];
   }, [template]);
 
-  const obrigatorios = template?.itens.filter((i) => i.obrigatorio) ?? [];
-  const anexosOk =
-    !!ficha &&
-    obrigatorios.every((i) => uploads[i.itemId] != null);
+  const obrigatorios = useMemo(
+    () =>
+      (template?.itens.filter((i) => i.obrigatorio && i.itemId !== FICHA_CHECKLIST_ITEM_ID) ?? []),
+    [template],
+  );
+  const anexosOk = !!ficha && obrigatorios.every((i) => uploads[i.itemId] != null);
+
+  function handleFichaChange(file: File | null) {
+    setFicha(file);
+    setUploads((prev) => {
+      const next = { ...prev };
+      delete next[FICHA_CHECKLIST_ITEM_ID];
+      return next;
+    });
+  }
 
   function validarPasso1() {
     if (!nomeEmpreendimento.trim() || nomeEmpreendimento.trim().length < 3) {
@@ -82,6 +95,10 @@ export default function EnvieSeuProjetoPage() {
         return false;
       }
     }
+    if (!dataBase.trim()) {
+      setErro("Informe a data-base dos dados do empreendimento.");
+      return false;
+    }
     setErro(null);
     return true;
   }
@@ -102,12 +119,13 @@ export default function EnvieSeuProjetoPage() {
       fd.append("telefone", telefone.replace(/\D/g, ""));
       if (empresa.trim()) fd.append("empresa", empresa.trim());
       if (narrativa.trim()) fd.append("narrativa", narrativa.trim());
-      if (dataBase) fd.append("dataBase", dataBase);
+      fd.append("dataBase", dataBase);
       if (tipo !== "OBRA_NOVA") {
         fd.append("percentualFisico", percentualFisico.trim());
       }
       if (ficha) fd.append("ficha", ficha);
       for (const [itemId, file] of Object.entries(uploads)) {
+        if (itemId === FICHA_CHECKLIST_ITEM_ID) continue;
         fd.append(`item_${itemId}`, file);
       }
 
@@ -246,8 +264,8 @@ export default function EnvieSeuProjetoPage() {
                   </label>
                 )}
                 <label>
-                  Data-base dos dados
-                  <input type="date" value={dataBase} onChange={(e) => setDataBase(e.target.value)} />
+                  Data-base dos dados *
+                  <input type="date" value={dataBase} onChange={(e) => setDataBase(e.target.value)} required />
                 </label>
                 <label>
                   Contexto do projeto
@@ -280,7 +298,7 @@ export default function EnvieSeuProjetoPage() {
                 <input
                   type="file"
                   accept=".xlsx,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  onChange={(e) => setFicha(e.target.files?.[0] ?? null)}
+                  onChange={(e) => handleFichaChange(e.target.files?.[0] ?? null)}
                 />
                 {ficha && <em>{ficha.name}</em>}
               </label>
