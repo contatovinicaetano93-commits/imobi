@@ -419,6 +419,10 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
   padding: 2.5rem; box-shadow: 0 4px 28px rgba(15,23,42,0.07);
 }
 .form-box-title { font-size: 0.9rem; font-weight: 700; color: var(--ink); margin-bottom: 1.75rem; letter-spacing: -0.01em; }
+.landing-envie-cta { grid-template-columns: 1fr; max-width: 42rem; text-align: center; }
+.landing-envie-cta .form-left { display: flex; flex-direction: column; align-items: center; }
+.landing-envie-cta .promises { align-items: flex-start; text-align: left; width: 100%; max-width: 28rem; margin: 0 auto 2rem; }
+.landing-envie-btn { margin-top: 0.5rem; }
 
 /* ── DEPOIMENTOS ── */
 .depoimentos { padding: 6rem 3rem; background: var(--white); border-top: 1px solid var(--border); }
@@ -542,6 +546,7 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .nav-actions { display: none; }
   .nav-mobile-auth { display: flex !important; align-items: center; gap: 0.4rem; }
   .nav-mobile-auth .btn-login { padding: 0.4rem 0.7rem; font-size: 0.75rem; }
+  .nav-mobile-auth .btn-cta { padding: 0.4rem 0.7rem; font-size: 0.75rem; }
 
   .hero { padding: 6rem 1.25rem 3rem; min-height: auto; }
   .hero-inner { max-width: 100%; }

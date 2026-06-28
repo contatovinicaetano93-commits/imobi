@@ -102,21 +102,23 @@
 }
 
 .esp-card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #0c1a3d 0%, #1b4fd8 55%, #2563eb 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 1.25rem;
   padding: 1.75rem;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 12px 32px rgba(12, 26, 61, 0.22);
+  color: #fff;
 }
 
 .esp-card h2 {
   font-size: 1.15rem;
   font-weight: 700;
   margin: 0 0 0.35rem;
+  color: #fff;
 }
 
 .esp-muted {
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.78);
   font-size: 0.875rem;
   margin: 0 0 1.25rem;
   line-height: 1.5;
@@ -130,10 +132,10 @@
 
 .esp-tipo {
   text-align: left;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
   border-radius: 1rem;
   padding: 1rem 1.1rem;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.06);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
@@ -142,25 +144,26 @@
   display: block;
   font-size: 0.9rem;
   margin-bottom: 0.35rem;
-  color: #0f172a;
+  color: #fff;
 }
 
 .esp-tipo span {
   font-size: 0.78rem;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.72);
   line-height: 1.45;
 }
 
 .esp-tipo.selected {
-  border-color: #1d4ed8;
-  background: #eef2ff;
+  border-color: #4ade80;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.35);
 }
 
 .esp-form label {
   display: block;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #374151;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 1rem;
 }
 
@@ -189,7 +192,7 @@
 .esp-bloco {
   margin-top: 1.25rem;
   padding-top: 1rem;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .esp-bloco h3 {
@@ -197,24 +200,25 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.65);
   margin: 0 0 0.75rem;
 }
 
 .esp-upload {
   display: block;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed rgba(255, 255, 255, 0.35);
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
   margin-bottom: 0.5rem;
   font-size: 0.78rem;
   cursor: pointer;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .esp-upload span {
   display: block;
   font-weight: 600;
-  color: #334155;
+  color: rgba(255, 255, 255, 0.92);
   margin-bottom: 0.35rem;
 }
 
@@ -231,8 +235,8 @@
 }
 
 .esp-upload-highlight {
-  border-color: #93c5fd;
-  background: #f8fafc;
+  border-color: rgba(74, 222, 128, 0.55);
+  background: rgba(255, 255, 255, 0.1);
   margin-bottom: 1rem;
 }
 
@@ -246,13 +250,13 @@
 
 .esp-btn-ghost {
   background: transparent;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
   border-radius: 0.75rem;
   padding: 0.65rem 1.1rem;
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
-  color: #475569;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .esp-error {
@@ -287,6 +291,17 @@
 .esp-card-center {
   text-align: center;
   max-width: 480px;
+  background: linear-gradient(135deg, #0c1a3d 0%, #1b4fd8 55%, #2563eb 100%);
+  color: #fff;
+}
+
+.esp-card-center h1,
+.esp-card-center p {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.esp-card-center .esp-muted {
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .esp-success-icon {

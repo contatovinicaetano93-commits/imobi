@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import {
   propostasApi,
-  type ChecklistTemplateResponse,
   type TipoCreditoProposta,
 } from "@/lib/api";
+import { getPropostaChecklistTemplate } from "@/lib/proposta-checklist-local";
 import "../landing.css";
 import "./envie-seu-projeto.css";
 
@@ -18,8 +18,7 @@ type UploadMap = Record<string, File>;
 export default function EnvieSeuProjetoPage() {
   const [step, setStep] = useState(0);
   const [tipo, setTipo] = useState<TipoCreditoProposta>("OBRA_NOVA");
-  const [template, setTemplate] = useState<ChecklistTemplateResponse | null>(null);
-  const [loadingTpl, setLoadingTpl] = useState(true);
+  const template = useMemo(() => getPropostaChecklistTemplate(tipo), [tipo]);
   const [submitting, setSubmitting] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
@@ -34,22 +33,6 @@ export default function EnvieSeuProjetoPage() {
   const [percentualFisico, setPercentualFisico] = useState("");
   const [ficha, setFicha] = useState<File | null>(null);
   const [uploads, setUploads] = useState<UploadMap>({});
-
-  const carregarTemplate = useCallback(async (t: TipoCreditoProposta) => {
-    setLoadingTpl(true);
-    try {
-      const tpl = await propostasApi.checklistTemplate(t);
-      setTemplate(tpl);
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : "Erro ao carregar checklist.");
-    } finally {
-      setLoadingTpl(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void carregarTemplate(tipo);
-  }, [tipo, carregarTemplate]);
 
   const itensPorBloco = useMemo(() => {
     if (!template) return [];
@@ -199,7 +182,7 @@ export default function EnvieSeuProjetoPage() {
               <h2>Qual operação você busca?</h2>
               <p className="esp-muted">Selecione o perfil que melhor descreve seu empreendimento.</p>
               <div className="esp-tipo-grid">
-                {(template?.tiposDisponiveis ?? []).map((t) => (
+                {(template.tiposDisponiveis ?? []).map((t) => (
                   <button
                     key={t.id}
                     type="button"
@@ -215,7 +198,6 @@ export default function EnvieSeuProjetoPage() {
                 <button
                   type="button"
                   className="btn-hero-primary"
-                  disabled={loadingTpl}
                   onClick={() => { setErro(null); setStep(1); }}
                 >
                   Continuar
@@ -280,7 +262,7 @@ export default function EnvieSeuProjetoPage() {
             </>
           )}
 
-          {step === 2 && template && (
+          {step === 2 && (
             <>
               <h2>Checklist de documentos</h2>
               <p className="esp-muted">

@@ -20,6 +20,7 @@ const PUBLIC_PATHS = [
   "/api/auth",
   "/api/proxy/auth",
   "/api/proxy/credito/simular",
+  "/api/proxy/propostas/checklist-template",
   "/api/proxy/health",
   "/web-api/auth",
 ];

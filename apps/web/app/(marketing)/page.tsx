@@ -99,30 +99,6 @@ export default function LandingPage() {
 
   function scrollTo(id: string) { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); }
 
-  function submitToWhatsApp() {
-    const g = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)?.value?.trim() ?? "";
-    const nome = g("f-nome"), cargo = g("f-cargo"), empresa = g("f-empresa"), tel = g("f-tel"), email = g("f-email"), modalidade = g("f-modalidade"), volume = g("f-volume"), obs = g("f-obs");
-    if (!nome || !tel) { alert("Por favor, preencha nome e WhatsApp."); return; }
-
-    fetch("/api/proxy/leads/captura", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        clienteNome: nome,
-        clienteEmail: email || `sem-email-${Date.now()}@captura.imobi`,
-        clienteTelefone: tel,
-        empresa,
-        cargo,
-        modalidade,
-        volume,
-        observacoes: obs,
-      }),
-    }).catch(() => {});
-
-    const msg = `Olá! Vim pelo site da IMOBI e gostaria de solicitar uma análise de crédito.\n\n*Nome:* ${nome}${cargo ? " · "+cargo : ""}\n*Empresa:* ${empresa}\n*WhatsApp:* ${tel}${email ? "\n*E-mail:* "+email : ""}\n*Modalidade:* ${modalidade||"Não informada"}\n*Volume estimado:* ${volume||"Não informado"}${obs ? "\n*Projeto:* "+obs : ""}`;
-    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, "_blank");
-  }
-
   return (
     <>
       {/* ── NAV ── */}
@@ -133,7 +109,6 @@ export default function LandingPage() {
           <li><a href="#vantagens">Vantagens</a></li>
           <li><a href="#como">Processo</a></li>
           <li><a href="#modalidades">Modalidades</a></li>
-          <li><a href="#analise">Análise gratuita</a></li>
         </ul>
         <div className="nav-actions">
           <button className="btn-login" onClick={() => setModalOpen(true)}>Entrar</button>
@@ -142,6 +117,7 @@ export default function LandingPage() {
         {isMobile && (
           <div className="nav-mobile-auth">
             <button className="btn-login" onClick={() => setModalOpen(true)}>Entrar</button>
+            <button className="btn-cta" onClick={() => router.push("/envie-seu-projeto" as Route)}>Envie seu projeto</button>
           </div>
         )}
       </nav>
@@ -326,53 +302,19 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FORMULÁRIO ── */}
-      <div className="form-wrap" id="analise">
-        <section className="form-section">
+      {/* ── CTA ENVIE PROJETO ── */}
+      <div className="form-wrap" id="envie">
+        <section className="form-section landing-envie-cta">
           <div className="form-left reveal">
-            <p className="eyebrow form-ey">Análise gratuita</p>
-            <h2 className="form-h2">Vamos estruturar<br /><em>seu projeto.</em></h2>
-            <p className="form-desc">Preencha o formulário. A equipe IMOBI entra em contato em até 24 horas com uma análise preliminar sem compromisso.</p>
+            <p className="eyebrow form-ey">Próximo passo</p>
+            <h2 className="form-h2">Envie a documentação<br /><em>do seu empreendimento.</em></h2>
+            <p className="form-desc">Checklist guiado na plataforma. Nossa equipe analisa viabilidade e retorna em até 24 horas.</p>
             <div className="promises">
               {["Retorno em até 24h","Análise desburocratizada e gratuita","Aprovação em tempo recorde","Documentação simplificada · 100% digital"].map(t => (
                 <div className="promise" key={t}><span className="promise-ck">✓</span>{t}</div>
               ))}
             </div>
-          </div>
-          <div className="form-box reveal d2">
-            <p className="form-box-title">Solicitar análise de crédito</p>
-            <div className="form-row">
-              <div className="form-group"><label className="form-label">Nome</label><input type="text" className="form-input" placeholder="Seu nome" id="f-nome" /></div>
-              <div className="form-group"><label className="form-label">Cargo</label><input type="text" className="form-input" placeholder="Diretor, Sócio…" id="f-cargo" /></div>
-            </div>
-            <div className="form-group"><label className="form-label">Incorporadora / Construtora</label><input type="text" className="form-input" placeholder="Nome da empresa" id="f-empresa" /></div>
-            <div className="form-row">
-              <div className="form-group"><label className="form-label">WhatsApp</label><input type="tel" className="form-input" placeholder="(11) 99999-9999" id="f-tel" /></div>
-              <div className="form-group"><label className="form-label">E-mail</label><input type="email" className="form-input" placeholder="seu@email.com.br" id="f-email" /></div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Modalidade de interesse</label>
-              <select className="form-select" id="f-modalidade" defaultValue="">
-                <option value="" disabled>Selecione</option>
-                <option>Crédito de aquisição de terreno</option>
-                <option>Crédito de obra</option>
-                <option>Crédito de finalização</option>
-                <option>Ainda não sei — quero orientação</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Volume estimado do projeto</label>
-              <select className="form-select" id="f-volume" defaultValue="">
-                <option value="" disabled>Selecione</option>
-                <option>Até R$5M</option>
-                <option>R$5M – R$15M</option>
-                <option>R$15M – R$50M</option>
-                <option>Acima de R$50M</option>
-              </select>
-            </div>
-            <div className="form-group"><label className="form-label">Sobre o projeto (opcional)</label><textarea className="form-textarea" placeholder="Cidade, fase atual, prazo estimado…" id="f-obs" /></div>
-            <button className="form-submit" onClick={submitToWhatsApp}>Solicitar análise gratuita →</button>
-            <p className="form-disc">Informações tratadas com total confidencialidade.</p>
+            <button className="btn-hero-primary landing-envie-btn" onClick={() => router.push("/envie-seu-projeto" as Route)}>Envie seu projeto</button>
           </div>
         </section>
       </div>
@@ -426,7 +368,6 @@ export default function LandingPage() {
           </div>
           <div className="cta-actions reveal d3">
             <button className="btn-hero-primary" onClick={() => router.push("/envie-seu-projeto" as Route)}>Envie seu projeto</button>
-            <button className="btn-hero-ghost cta-ghost-light" onClick={() => scrollTo("analise")}>Solicitar análise gratuita</button>
             <a className="cta-wa" href={`https://wa.me/${WA}?text=Olá!%20Gostaria%20de%20estruturar%20um%20projeto%20com%20a%20IMOBI.`} target="_blank" rel="noopener noreferrer">
               <WaIcon size={18} color="rgba(255,255,255,0.75)" /> Falar no WhatsApp
             </a>

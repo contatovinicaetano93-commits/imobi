@@ -929,7 +929,11 @@ export const propostasApi = {
       if (!contentType.includes("application/json")) {
         throw new Error("Erro ao carregar tipos de operação. Tente novamente.");
       }
-      return res.json() as Promise<ChecklistTemplateResponse>;
+      try {
+        return (await res.json()) as ChecklistTemplateResponse;
+      } catch {
+        throw new Error("Erro ao carregar tipos de operação. Tente novamente.");
+      }
     }),
   enviar: (form: FormData) =>
     fetch("/api/proxy/propostas", { method: "POST", body: form }).then(async (res) => {

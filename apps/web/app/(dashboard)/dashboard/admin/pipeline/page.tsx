@@ -40,7 +40,7 @@ const LEADS_INICIAL: Lead[] = [
     vendido: null,
     construido: null,
     grupoWhatsApp: "Imobi <> Ventures",
-    grupoLink: null,
+    grupoLink: "https://chat.whatsapp.com/Eg7tTrNCUZl4CfrMGx39PE",
   },
   {
     id: 2,
@@ -99,8 +99,8 @@ const LEADS_INICIAL: Lead[] = [
     contato: null,
     vendido: null,
     construido: null,
-    grupoWhatsApp: "Imobi <> Ventures",
-    grupoLink: null,
+    grupoWhatsApp: "Espírito Santo Construções",
+    grupoLink: "https://chat.whatsapp.com/JrmKRgjraChICkFdyfZB5h",
   },
   {
     id: 6,
@@ -145,7 +145,7 @@ const LEADS_INICIAL: Lead[] = [
     vendido: "50%",
     construido: "10%",
     grupoWhatsApp: "Imobi <> Finamob",
-    grupoLink: null,
+    grupoLink: "https://chat.whatsapp.com/FXgyx84g8lwDFxNEbMcppo",
   },
   {
     id: 9,
@@ -160,7 +160,7 @@ const LEADS_INICIAL: Lead[] = [
     vendido: null,
     construido: null,
     grupoWhatsApp: "Imobi <> Finamob",
-    grupoLink: null,
+    grupoLink: "https://chat.whatsapp.com/FXgyx84g8lwDFxNEbMcppo",
   },
   {
     id: 10,
