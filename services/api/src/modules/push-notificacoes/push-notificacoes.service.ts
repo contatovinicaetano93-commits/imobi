@@ -6,7 +6,7 @@ interface PushPayload {
   usuarioId: string;
   titulo: string;
   mensagem: string;
-  tipo: "ETAPA_APROVADA" | "PARCELA_LIBERADA" | "KYC_APROVADO" | "KYC_REJEITADO" | "GERAL";
+  tipo: "ETAPA_APROVADA" | "PARCELA_LIBERADA" | "KYC_APROVADO" | "KYC_REJEITADO" | "GERAL" | "COMITE_DECISAO" | "PARECER_SOLICITADO";
   dados?: Record<string, string>;
 }
 

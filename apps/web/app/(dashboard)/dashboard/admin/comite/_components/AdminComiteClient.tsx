@@ -49,13 +49,8 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
     setError(null);
     setBuscaFeita(false);
     try {
-      const res = await fetch("/api/proxy/admin/solicitacoes?status=PENDENTE&semComite=true");
-      if (res.ok) {
-        const data = await res.json();
-        setSolicitacoes(Array.isArray(data) ? data : data.items ?? []);
-      } else {
-        setSolicitacoes([]);
-      }
+      const data = await comiteApi.listarSolicitacoesPendentes();
+      setSolicitacoes(data);
     } catch {
       setSolicitacoes([]);
     } finally {
@@ -67,23 +62,20 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
   async function iniciarComite() {
     const sid = selected?.solicitacaoId ?? solicitacaoId.trim();
     if (!sid) { setError("Informe ou selecione uma solicitação"); return; }
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRe.test(sid)) {
+      setError("ID inválido — use Buscar para selecionar ou cole o UUID completo da solicitação");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/proxy/admin/comite/iniciar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ solicitacaoId: sid }),
-      });
-      if (res.ok) {
-        addToast("Comitê criado! Gestor Fundo e sócios foram notificados.", "success");
-        onSuccess();
-      } else {
-        const d = await res.json().catch(() => ({})) as { message?: string };
-        setError(d.message ?? `Erro ${res.status} ao criar comitê`);
-      }
-    } catch {
-      setError("Erro de conexão. Verifique e tente novamente.");
+      await comiteApi.iniciarComite(sid);
+      addToast("Comitê criado! Gestor Fundo, engenheiros e admins foram notificados.", "success");
+      onSuccess();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Erro ao criar comitê";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -100,7 +92,7 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
             </div>
             <div>
               <h3 className="text-sm font-bold text-gray-900">Iniciar Comitê Digital</h3>
-              <p className="text-xs text-gray-400">Gestor Fundo e sócios Admin serão notificados</p>
+              <p className="text-xs text-gray-400">Gestor Fundo e sócios Admin votam após parecer do engenheiro</p>
             </div>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "#9ca3af" }}>
@@ -120,7 +112,10 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
           </div>
 
           {buscaFeita && solicitacoes.length === 0 && (
-            <p className="text-xs text-gray-400 py-2 text-center">Nenhuma solicitação pendente encontrada</p>
+            <p className="text-xs text-gray-500 py-2 text-center leading-relaxed">
+              Nenhuma solicitação pendente. O construtor envia em{" "}
+              <strong>Comitê → Solicitar crédito</strong> (/dashboard/comite/solicitar).
+            </p>
           )}
 
           {solicitacoes.length > 0 && (
@@ -167,7 +162,7 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
 
         {/* Info */}
         <div className="bg-amber-50 rounded-xl p-3 border border-amber-100 text-xs text-amber-800 leading-relaxed">
-          Ao criar o comitê, uma notificação é enviada automaticamente para o <strong>Gestor Fundo</strong> e todos os <strong>sócios Admin</strong> para votação.
+          <strong>Fluxo:</strong> Admin abre o comitê → Engenheiro emite parecer técnico → Gestor Fundo e sócios Admin votam → decisão enviada por e-mail ao cliente e à operação IMOBI.
         </div>
 
         <div className="flex gap-3">

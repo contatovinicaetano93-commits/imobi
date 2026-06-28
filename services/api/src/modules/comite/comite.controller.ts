@@ -46,7 +46,7 @@ export class ComiteController {
   // ── Admin: votar ─────────────────────────────────────────────────
 
   @Post(":comiteId/votar")
-  @Roles("ADMIN")
+  @Roles("ADMIN", "GESTOR", "GESTOR_FUNDO")
   votar(
     @Param("comiteId") comiteId: string,
     @UsuarioAtual() user: UsuarioAtual,

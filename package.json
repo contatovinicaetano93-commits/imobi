@@ -51,6 +51,7 @@
     "seed:staging:from-render": "node scripts/seed-staging-from-render.mjs",
     "seed:staging:obra": "node scripts/seed-staging-obra-from-render.mjs",
     "seed:staging:beta-tomadores": "node scripts/seed-beta-tomadores-staging.mjs",
+    "seed:staging:comite": "node scripts/seed-staging-comite.mjs",
     "beta:invite": "node scripts/beta-invite.mjs",
     "beta:invite:whatsapp": "node scripts/beta-invite.mjs --whatsapp",
     "render:init": "node scripts/render-init-local.mjs",

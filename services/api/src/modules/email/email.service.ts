@@ -315,10 +315,83 @@ export class EmailService {
     });
   }
 
-  /**
-   * LGPD Article 17 - Account Deletion Confirmation
-   * Sent after 30-day grace period when account is permanently deleted
-   */
+  async comiteDecisaoClienteEmail(params: {
+    nome: string;
+    email: string;
+    valor: number;
+    finalidade: string;
+    prazoMeses: number;
+    decisao: "APROVADO" | "AJUSTADO" | "REPROVADO";
+  }): Promise<boolean> {
+    const valorFmt = params.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    const decisaoLabel =
+      params.decisao === "APROVADO"
+        ? "aprovada"
+        : params.decisao === "AJUSTADO"
+          ? "aprovada com ajustes"
+          : "reprovada";
+    const appUrl = process.env["APP_URL"] || "http://localhost:3000";
+
+    const html = `
+      <h2>Decisão do Comitê Digital — IMOBI</h2>
+      <p>Olá ${params.nome},</p>
+      <p>Sua solicitação de crédito foi <strong>${decisaoLabel}</strong> pelo comitê digital.</p>
+      <ul>
+        <li><strong>Valor:</strong> ${valorFmt}</li>
+        <li><strong>Finalidade:</strong> ${params.finalidade}</li>
+        <li><strong>Prazo:</strong> ${params.prazoMeses} meses</li>
+      </ul>
+      ${
+        params.decisao === "APROVADO"
+          ? "<p>Seu crédito foi registrado na plataforma. Acesse o dashboard para acompanhar.</p>"
+          : params.decisao === "AJUSTADO"
+            ? "<p>A proposta foi aprovada com condições. Nossa equipe entrará em contato com os detalhes.</p>"
+            : "<p>Infelizmente a proposta não foi aprovada neste momento. Você pode entrar em contato conosco para mais informações.</p>"
+      }
+      <p><a href="${appUrl}/dashboard/comite">Ver minhas solicitações</a></p>
+    `;
+
+    return this.enviarEmail({
+      to: params.email,
+      subject: `Comitê Digital — solicitação ${decisaoLabel}`,
+      html,
+    });
+  }
+
+  async comiteDecisaoAdminEmail(params: {
+    email: string;
+    clienteNome: string;
+    clienteEmail: string;
+    valor: number;
+    finalidade: string;
+    decisao: "APROVADO" | "AJUSTADO" | "REPROVADO";
+    comiteId: string;
+  }): Promise<boolean> {
+    const valorFmt = params.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    const decisaoLabel =
+      params.decisao === "APROVADO" ? "Aprovado" : params.decisao === "AJUSTADO" ? "Ajustado" : "Reprovado";
+    const appUrl = process.env["APP_URL"] || "http://localhost:3000";
+
+    const html = `
+      <h2>Comitê encerrado — confirmação operacional</h2>
+      <p>O comitê digital <code>${params.comiteId.slice(0, 8)}…</code> foi encerrado.</p>
+      <ul>
+        <li><strong>Decisão:</strong> ${decisaoLabel}</li>
+        <li><strong>Cliente:</strong> ${params.clienteNome} (${params.clienteEmail})</li>
+        <li><strong>Valor:</strong> ${valorFmt}</li>
+        <li><strong>Finalidade:</strong> ${params.finalidade}</li>
+      </ul>
+      <p><a href="${appUrl}/dashboard/admin/comite">Ver comitês no painel admin</a></p>
+    `;
+
+    return this.enviarEmail({
+      to: params.email,
+      subject: `[IMOBI] Comitê ${decisaoLabel} — ${params.clienteNome} (${valorFmt})`,
+      html,
+    });
+  }
+
+  /** LGPD Article 17 - Account Deletion Confirmation */
   async contaExcluida(nome: string, email: string): Promise<boolean> {
     const html = `
       <h2>Sua Conta foi Permanentemente Excluída</h2>

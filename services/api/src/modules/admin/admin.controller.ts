@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, HttpCode } from "@nestjs/common";
 import { AdminService } from "./admin.service";
+import { ComiteService } from "../comite/comite.service";
 import type { CriarUsuarioAdminDto } from "./admin.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -9,12 +10,16 @@ import { ZodPipe } from "../../common/pipes/zod.pipe";
 import { AtualizarUsuarioAdminSchema } from "@imbobi/schemas";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
 import { CriarUsuarioAdminSchema, type CriarUsuarioAdminSchemaDto } from "./dto/criar-usuario-admin.dto";
+import { IniciarComiteSchema, type IniciarComiteDto } from "../comite/dto/comite.dto";
 
 @Controller("admin")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("ADMIN")
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly comiteService: ComiteService,
+  ) {}
 
   @Get("overview")
   @Roles("GESTOR", "GESTOR_FUNDO", "ADMIN")
@@ -108,5 +113,24 @@ export class AdminController {
     @Body("referenciaPagamento") referenciaPagamento?: string,
   ) {
     return this.adminService.confirmarPagamentoLiberacao(id, referenciaPagamento);
+  }
+
+  @Get("solicitacoes")
+  listarSolicitacoes(
+    @Query("status") status?: string,
+    @Query("semComite") semComite?: string,
+  ) {
+    return this.comiteService.listarSolicitacoesAdmin({
+      status,
+      semComite: semComite === "true",
+    });
+  }
+
+  @Post("comite/iniciar")
+  iniciarComite(
+    @Body(new ZodPipe(IniciarComiteSchema)) body: IniciarComiteDto,
+    @UsuarioAtual() admin: UsuarioAtual,
+  ) {
+    return this.comiteService.iniciarComite(body.solicitacaoId, admin.id);
   }
 }

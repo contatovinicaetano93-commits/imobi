@@ -367,22 +367,15 @@ export const kycApi = {
   verificarKycCompleto: () => apiFetch<{ completo: boolean; documentos: KycDocumento[] }>("/kyc/verificar"),
 };
 
-export type Jornada = {
-  perfil: "tomador" | "gestor" | "outro";
-  passoAtual: string;
-  titulo: string;
-  descricao: string;
-  href: string;
-  concluido: boolean;
-  passosConcluidos: number;
-  totalPassos: number;
-  progressoPct: number;
-  bloqueado?: string;
-  fila?: { kyc: number; etapas: number };
-};
+import { JornadaResponseSchema, type JornadaResponse } from "@imbobi/schemas";
+
+export type Jornada = JornadaResponse;
 
 export const jornadaApi = {
-  obter: () => apiFetch<Jornada>("/jornada"),
+  obter: async (): Promise<Jornada> => {
+    const raw = await apiFetch<unknown>("/jornada");
+    return JornadaResponseSchema.parse(raw);
+  },
 };
 
 // ── Manager ───────────────────────────────────────────────────────────
@@ -1075,4 +1068,11 @@ export const comiteApi = {
     apiFetch<ComiteDigital & { solicitacao: SolicitacaoCredito & { usuario: { usuarioId: string; nome: string; email: string; telefone: string; kycStatus: string; tipo: string; criadoEm: string } } }>(
       `/comite/${comiteId}`
     ),
+  listarSolicitacoesPendentes: () =>
+    apiFetch<SolicitacaoCredito[]>("/admin/solicitacoes?status=PENDENTE&semComite=true"),
+  iniciarComite: (solicitacaoId: string) =>
+    apiFetch<ComiteDigital & { solicitacao: SolicitacaoCredito }>("/admin/comite/iniciar", {
+      method: "POST",
+      body: JSON.stringify({ solicitacaoId }),
+    }),
 };

@@ -23,6 +23,11 @@ export const VotarComiteSchema = z.object({
   condicoes: z.string().max(2000).optional(),
 });
 
+export const IniciarComiteSchema = z.object({
+  solicitacaoId: z.string().uuid("ID da solicitação inválido"),
+});
+
 export type SolicitarComiteDto = z.infer<typeof SolicitarComiteSchema>;
 export type ParecerComiteDto = z.infer<typeof ParecerComiteSchema>;
 export type VotarComiteDto = z.infer<typeof VotarComiteSchema>;
+export type IniciarComiteDto = z.infer<typeof IniciarComiteSchema>;
