@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { adminApi, type AdminObraResumo, type LiberacaoAguardandoPagamento } from "@/lib/api";
-import { useAdminFilasOnChange } from "@/hooks/use-admin-filas-poll";
 import { formatarBRL } from "@imbobi/core";
 import { useToast } from "@/hooks/toast-context";
 import { IMOBI_FINANCEIRO_WHATS_DISPLAY } from "@/lib/financeiro";
@@ -43,8 +42,6 @@ export function AdminSipocPanel() {
   useEffect(() => {
     void recarregar();
   }, [recarregar]);
-
-  useAdminFilasOnChange(() => void recarregar());
 
   const obrasHomologacao = obras.filter((o) => o.status === "AGUARDANDO_HOMOLOGACAO");
 

@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, HttpCode, BadRequestException } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
 import { AdminService } from "./admin.service";
 import { ComiteService } from "../comite/comite.service";
 import type { CriarUsuarioAdminDto } from "./admin.service";
@@ -20,7 +21,9 @@ import {
   type CriarPipelineLeadDto,
 } from "./dto/pipeline.dto";
 import { ConfiguracaoSistemaSchema, type ConfiguracaoSistemaInput } from "@imbobi/schemas";
+import { SKIP_ALL_THROTTLES } from "../../common/guards/throttler.constants";
 
+@SkipThrottle(SKIP_ALL_THROTTLES)
 @Controller("admin")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("ADMIN")

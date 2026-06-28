@@ -383,6 +383,8 @@ function LeadCard({
 export default function PipelinePage() {
   const router = useRouter();
   const { success, error: toastError } = useToast();
+  const toastErrorRef = useRef(toastError);
+  toastErrorRef.current = toastError;
   const [leads, setLeads] = useState<PipelineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [movingId, setMovingId] = useState<string | null>(null);
@@ -396,12 +398,12 @@ export default function PipelinePage() {
     try {
       const { items } = await pipelineApi.listar();
       setLeads(items);
-    } catch (err) {
-      toastError(err instanceof Error ? err.message : "Erro ao carregar pipeline");
+    } catch {
+      setLeads([]);
     } finally {
       setLoading(false);
     }
-  }, [toastError]);
+  }, []);
 
   useEffect(() => {
     void carregar();

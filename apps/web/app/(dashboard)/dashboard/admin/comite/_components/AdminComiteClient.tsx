@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { comiteApi, type ComiteDigital, type SolicitacaoCredito, type VotoDecisao } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
@@ -44,20 +44,25 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
   const [buscaFeita, setBuscaFeita] = useState(false);
   const { addToast } = useToast();
 
-  async function buscarSolicitacoes() {
+  const buscarSolicitacoes = useCallback(async () => {
     setBuscando(true);
     setError(null);
     setBuscaFeita(false);
     try {
       const data = await comiteApi.listarSolicitacoesPendentes();
       setSolicitacoes(data);
-    } catch {
+    } catch (err) {
       setSolicitacoes([]);
+      setError(err instanceof Error ? err.message : "Erro ao buscar solicitações");
     } finally {
       setBuscando(false);
       setBuscaFeita(true);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    void buscarSolicitacoes();
+  }, [buscarSolicitacoes]);
 
   async function iniciarComite() {
     const sid = selected?.solicitacaoId ?? solicitacaoId.trim();
@@ -71,7 +76,7 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
     setError(null);
     try {
       await comiteApi.iniciarComite(sid);
-      addToast("Comitê criado! Gestor Fundo, engenheiros e admins foram notificados.", "success");
+      addToast("Comitê aberto — engenheiro notificado para parecer; admins votam depois.", "success");
       onSuccess();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erro ao criar comitê";
@@ -113,8 +118,10 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
 
           {buscaFeita && solicitacoes.length === 0 && (
             <p className="text-xs text-gray-500 py-2 text-center leading-relaxed">
-              Nenhuma solicitação pendente. O construtor envia em{" "}
-              <strong>Comitê → Solicitar crédito</strong> (/dashboard/comite/solicitar).
+              Nenhuma solicitação pendente. O tomador precisa enviar em{" "}
+              <strong>Crédito → Solicitar</strong> ({`/dashboard/credito/solicitar`}) após KYC,
+              viabilidade aprovada e obra cadastrada. Use o ID da <strong>solicitação</strong>, não o
+              ID da obra.
             </p>
           )}
 
@@ -160,9 +167,21 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
           </div>
         )}
 
+        <div className="bg-blue-50 rounded-xl p-3 border border-blue-100 text-xs text-blue-900 leading-relaxed space-y-1">
+          <p>
+            <strong>Pré-requisito (tomador):</strong> KYC aprovado → dossiê de viabilidade aprovado →
+            obra cadastrada → solicitação de crédito enviada.
+          </p>
+          <p>
+            <strong>Homologação da obra</strong> (Admin → Obras) é passo SIPOC separado — não substitui
+            a solicitação de crédito nem o ID do comitê.
+          </p>
+        </div>
+
         {/* Info */}
         <div className="bg-amber-50 rounded-xl p-3 border border-amber-100 text-xs text-amber-800 leading-relaxed">
-          <strong>Fluxo:</strong> Admin abre o comitê → Engenheiro emite parecer → <strong>sócios Admin votam</strong> → Gestor Fundo acompanha → e-mails ao cliente e operação IMOBI.
+          <strong>Depois de abrir:</strong> Engenheiro emite parecer → sócios Admin votam → crédito
+          aprovado vincula à obra automaticamente.
         </div>
 
         <div className="flex gap-3">
@@ -170,7 +189,9 @@ function CriarComiteModal({ onClose, onSuccess }: { onClose: () => void; onSucce
             className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">
             Cancelar
           </button>
-          <button onClick={iniciarComite} disabled={loading || (!solicitacaoId.trim())}
+          <button
+            onClick={iniciarComite}
+            disabled={loading || (!solicitacaoId.trim() && !selected)}
             className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition disabled:opacity-60 flex items-center justify-center gap-2">
             <Vote className="w-4 h-4" />
             {loading ? "Criando..." : "Iniciar Comitê"}
@@ -464,7 +485,7 @@ export function AdminComiteClient({ comites: initial }: { comites: ComiteItem[] 
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900">Comitê Digital</h1>
-            <p className="text-xs text-gray-400">Vote nas propostas de crédito</p>
+            <p className="text-xs text-gray-400">Abrir comitê sobre solicitações de crédito (não use ID da obra)</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -6,7 +6,6 @@ import { propostasApi, type PropostaAdminResumo } from "@/lib/api";
 import { useAdminFilasOnChange } from "@/hooks/use-admin-filas-poll";
 import { Clock, Inbox, Mail, Phone, User } from "lucide-react";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
-import { useToast } from "@/hooks/toast-context";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
 
@@ -34,7 +33,6 @@ function formatarData(iso: string) {
 }
 
 export default function AdminPropostasPage() {
-  const { error: toastError } = useToast();
   const [loading, setLoading] = useState(true);
   const [lista, setLista] = useState<PropostaAdminResumo[]>([]);
 
@@ -42,12 +40,12 @@ export default function AdminPropostasPage() {
     try {
       const items = await propostasApi.listarAdmin();
       setLista(items);
-    } catch (err) {
-      toastError(err instanceof Error ? err.message : "Erro ao listar propostas");
+    } catch {
+      setLista([]);
     } finally {
       setLoading(false);
     }
-  }, [toastError]);
+  }, []);
 
   useEffect(() => {
     void carregar();

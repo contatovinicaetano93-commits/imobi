@@ -3,7 +3,46 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { adminApi, type AdminFilasResponse } from "@/lib/api";
 
-const DEFAULT_INTERVAL_MS = 20_000;
+const DEFAULT_INTERVAL_MS = 45_000;
+const BACKOFF_AFTER_ERROR_MS = 60_000;
+
+function filasSignature(data: AdminFilasResponse): string {
+  return [
+    data.kycPendentes,
+    data.propostasPublicasPendentes,
+    data.viabilidadePendentes,
+    data.obrasAguardandoHomologacao,
+    data.liberacoesAguardandoPagamento,
+    data.etapasAguardandoVistoria,
+  ].join(":");
+}
+
+let filasInflight: Promise<AdminFilasResponse | null> | null = null;
+let filasBackoffUntil = 0;
+
+async function fetchFilasDeduped(): Promise<AdminFilasResponse | null> {
+  if (Date.now() < filasBackoffUntil) return null;
+  if (filasInflight) return filasInflight;
+
+  filasInflight = adminApi
+    .filas()
+    .then((data) => {
+      filasBackoffUntil = 0;
+      return data;
+    })
+    .catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("Too Many Requests") || msg.includes("Throttler")) {
+        filasBackoffUntil = Date.now() + BACKOFF_AFTER_ERROR_MS;
+      }
+      return null;
+    })
+    .finally(() => {
+      filasInflight = null;
+    });
+
+  return filasInflight;
+}
 
 export function useAdminFilasPoll(
   intervalMs = DEFAULT_INTERVAL_MS,
@@ -11,18 +50,16 @@ export function useAdminFilasPoll(
 ) {
   const [filas, setFilas] = useState<AdminFilasResponse | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-  const prevSig = useRef<string>("");
 
   const recarregar = useCallback(async () => {
-    try {
-      const data = await adminApi.filas();
+    const data = await fetchFilasDeduped();
+    if (data) {
       setFilas(data);
       setErro(null);
-      return data;
-    } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro ao carregar filas");
-      return null;
+    } else if (Date.now() < filasBackoffUntil) {
+      setErro("Muitas requisições — pausa automática de 1 minuto.");
     }
+    return data;
   }, []);
 
   useEffect(() => {
@@ -33,15 +70,6 @@ export function useAdminFilasPoll(
     const tick = async () => {
       const data = await recarregar();
       if (cancelled || !data) return;
-      const sig = [
-        data.kycPendentes,
-        data.propostasPublicasPendentes,
-        data.viabilidadePendentes,
-        data.obrasAguardandoHomologacao,
-        data.liberacoesAguardandoPagamento,
-        data.etapasAguardandoVistoria,
-      ].join(":");
-      prevSig.current = sig;
     };
 
     void tick();
@@ -62,6 +90,8 @@ export function useAdminFilasOnChange(
   enabled = true,
 ) {
   const sigRef = useRef<string>("");
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
     if (!enabled) return;
@@ -69,24 +99,14 @@ export function useAdminFilasOnChange(
     let cancelled = false;
 
     const poll = async () => {
-      try {
-        const data = await adminApi.filas();
-        if (cancelled) return;
-        const sig = [
-          data.kycPendentes,
-          data.propostasPublicasPendentes,
-          data.viabilidadePendentes,
-          data.obrasAguardandoHomologacao,
-          data.liberacoesAguardandoPagamento,
-          data.etapasAguardandoVistoria,
-        ].join(":");
-        if (sigRef.current && sigRef.current !== sig) {
-          onChange();
-        }
-        sigRef.current = sig;
-      } catch {
-        /* polling silencioso */
+      const data = await fetchFilasDeduped();
+      if (cancelled || !data) return;
+
+      const sig = filasSignature(data);
+      if (sigRef.current && sigRef.current !== sig) {
+        onChangeRef.current();
       }
+      sigRef.current = sig;
     };
 
     void poll();
@@ -95,5 +115,5 @@ export function useAdminFilasOnChange(
       cancelled = true;
       clearInterval(id);
     };
-  }, [enabled, intervalMs, onChange]);
+  }, [enabled, intervalMs]);
 }

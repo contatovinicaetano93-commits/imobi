@@ -28,12 +28,12 @@ export default function AdminViabilidadePage() {
           return ia - ib || new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime();
         }),
       );
-    } catch (err) {
-      toastError(err instanceof Error ? err.message : "Erro ao listar dossiês");
+    } catch {
+      setLista([]);
     } finally {
       setLoading(false);
     }
-  }, [toastError]);
+  }, []);
 
   useEffect(() => {
     void carregar();
