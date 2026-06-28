@@ -44,6 +44,8 @@ const SECTION_LABELS: Record<string, string> = { geral: "Jornada", operacao: "Op
 
 function sectionLabel(section: string, navRole: UserRole | null): string {
   if (navRole === "GESTOR" && section === "geral") return "Painel";
+  if (navRole === "ENGENHEIRO" && section === "geral") return "Operação";
+  if (navRole === "COMERCIAL" && section === "geral") return "Comercial";
   return SECTION_LABELS[section] ?? section;
 }
 

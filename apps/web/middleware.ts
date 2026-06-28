@@ -38,7 +38,7 @@ const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: "/dashboard/comercial",  roles: ["COMERCIAL", "PARCEIRO", "ADMIN"] },
   { prefix: "/dashboard/construtor", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
   { prefix: "/dashboard/credito",    roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
-  { prefix: "/dashboard/obras",      roles: ["CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
+  { prefix: "/dashboard/obras",      roles: ["CONSTRUTOR", "TOMADOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
   { prefix: "/dashboard/kyc",        roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
   { prefix: "/dashboard/viabilidade", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
   { prefix: "/dashboard/proposta-credito", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
@@ -114,6 +114,13 @@ export function middleware(request: NextRequest) {
     if (pathname === "/dashboard/gestor/etapas" || pathname.startsWith("/dashboard/gestor/etapas")) {
       return NextResponse.redirect(new URL("/dashboard/admin/vistorias", request.url));
     }
+  }
+
+  if (
+    (role === "ENGENHEIRO" || role === "GESTOR_OBRA") &&
+    (pathname === "/dashboard/obras/nova" || pathname.startsWith("/dashboard/obras/nova/"))
+  ) {
+    return NextResponse.redirect(new URL("/dashboard/engenheiro/vistoria", request.url));
   }
 
   const rule = ROLE_RULES.find((r) => pathname === r.prefix || pathname.startsWith(r.prefix + "/"));

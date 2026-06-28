@@ -167,7 +167,7 @@ export default function VisitDetailPage() {
       await engenheirosApi.aprovarVistoria(visitaId);
       setVisita({ ...visita, status: "CONCLUIDA" });
       success("Vistoria técnica aprovada. Capital aguardando pagamento manual.");
-      router.push("/dashboard/engenheiro");
+      router.push("/dashboard/engenheiro/vistoria");
     } catch (err) {
       toastError(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
@@ -184,7 +184,7 @@ export default function VisitDetailPage() {
     try {
       await engenheirosApi.rejeitarVistoria(visitaId, rejectionReason.trim());
       success("Vistoria reprovada.");
-      router.push("/dashboard/engenheiro");
+      router.push("/dashboard/engenheiro/vistoria");
     } catch (err) {
       toastError(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
@@ -202,7 +202,7 @@ export default function VisitDetailPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Visita não encontrada</h1>
           <Link
-            href="/dashboard/engenheiro"
+            href="/dashboard/engenheiro/vistoria"
             className="text-[#1B4FD8] hover:text-blue-700 text-sm font-semibold"
           >
             ← Voltar
@@ -223,7 +223,7 @@ export default function VisitDetailPage() {
           <p className="text-gray-500 text-sm mt-1">{visita.obra.endereco}</p>
         </div>
         <Link
-          href="/dashboard/engenheiro"
+          href="/dashboard/engenheiro/vistoria"
           className="text-[#1B4FD8] hover:text-blue-700 text-sm font-semibold"
         >
           ← Voltar

@@ -87,7 +87,7 @@ export function rotaParaTipoSetup(tipo: string): string {
   const mapa: Record<string, string> = {
     ADMIN: "/dashboard/admin",
     GESTOR: "/dashboard/gestor",
-    ENGENHEIRO: "/dashboard/engenheiro",
+    ENGENHEIRO: "/dashboard/engenheiro/vistoria",
     COMERCIAL: "/dashboard/comercial",
     CONSTRUTOR: "/dashboard/construtor",
     TOMADOR: "/dashboard/construtor",

@@ -749,7 +749,7 @@ function TabEtapasContent({
 
   const canAprovar = (status: string) =>
     role &&
-    ["GESTOR", "ADMIN"].includes(role) &&
+    ["ADMIN", "ENGENHEIRO"].includes(role) &&
     ["AGUARDANDO_VISTORIA"].includes(status);
 
   const canMedicao = (status: string) =>

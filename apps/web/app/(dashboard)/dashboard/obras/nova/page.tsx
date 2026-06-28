@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { obrasApi } from "@/lib/api";
+import { canCadastrarObra } from "@/lib/role-permissions";
 
 type FormState = {
   nome: string;
@@ -23,6 +24,7 @@ type FormState = {
 
 export default function NovaObraPage() {
   const router = useRouter();
+  const [roleChecked, setRoleChecked] = useState(false);
   const [form, setForm] = useState<FormState>({
     nome: "",
     logradouro: "",
@@ -41,6 +43,19 @@ export default function NovaObraPage() {
   const [loading, setLoading] = useState(false);
   const [localizando, setLocalizando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.authenticated && !canCadastrarObra(d.role)) {
+          router.replace("/dashboard/engenheiro/vistoria");
+          return;
+        }
+        setRoleChecked(true);
+      })
+      .catch(() => setRoleChecked(true));
+  }, [router]);
 
   function set(field: keyof FormState, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -118,6 +133,10 @@ export default function NovaObraPage() {
   const inputCls =
     "w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:opacity-50 text-sm";
   const labelCls = "block text-sm font-semibold text-gray-900 mb-2";
+
+  if (!roleChecked) {
+    return null;
+  }
 
   return (
     <div className="max-w-2xl space-y-8">

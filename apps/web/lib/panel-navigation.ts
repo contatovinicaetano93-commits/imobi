@@ -238,7 +238,7 @@ export function getObrasListLabel(role: string | null | undefined): string {
   const r = normalizeRole(role);
   if (r === 'ADMIN') return 'Obras — Admin';
   if (r === 'GESTOR') return 'KPI · etapas';
-  if (r === 'ENGENHEIRO' || r === 'GESTOR_OBRA') return 'Minhas Obras';
+  if (r === 'ENGENHEIRO' || r === 'GESTOR_OBRA') return 'Obras · evidências';
   return 'Minhas Obras';
 }
 

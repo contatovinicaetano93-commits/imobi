@@ -207,7 +207,7 @@ export function EngenheiroComiteClient({ comites: initial }: { comites: ComiteIt
 
   return (
     <div className="max-w-3xl space-y-5">
-      <button onClick={() => router.push("/dashboard/engenheiro")} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition mb-1" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Jost', sans-serif" }}>
+      <button onClick={() => router.push("/dashboard/engenheiro/vistoria")} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition mb-1" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Jost', sans-serif" }}>
         <ArrowLeft className="w-4 h-4" /> Voltar
       </button>
       <div className="flex items-center justify-between">

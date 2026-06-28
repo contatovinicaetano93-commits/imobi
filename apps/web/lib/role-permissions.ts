@@ -46,14 +46,25 @@ export const ROLE_HOME: Record<string, string> = {
   ADMIN: '/dashboard/admin',
   GESTOR: '/dashboard/gestor',
   GESTOR_FUNDO: '/dashboard/gestor',
-  ENGENHEIRO: '/dashboard/engenheiro',
-  GESTOR_OBRA: '/dashboard/engenheiro',
-  COMERCIAL: '/dashboard/admin/pipeline',
-  PARCEIRO: '/dashboard/admin/pipeline',
+  ENGENHEIRO: '/dashboard/engenheiro/vistoria',
+  GESTOR_OBRA: '/dashboard/engenheiro/vistoria',
+  COMERCIAL: '/dashboard/comercial',
+  PARCEIRO: '/dashboard/comercial',
   TOMADOR: '/dashboard/construtor',
   CONSTRUTOR: '/dashboard/construtor',
 };
 
 export function isGestor(role: string | null | undefined): boolean {
   return normalizeRole(role) === 'GESTOR';
+}
+
+export function isEngenheiro(role: string | null | undefined): boolean {
+  const r = normalizeRole(role);
+  return r === 'ENGENHEIRO' || r === 'GESTOR_OBRA';
+}
+
+/** Cadastro de obra — exclusivo do tomador (SIPOC passo 1). */
+export function canCadastrarObra(role: string | null | undefined): boolean {
+  const r = normalizeRole(role);
+  return r === 'TOMADOR' || r === 'CONSTRUTOR';
 }

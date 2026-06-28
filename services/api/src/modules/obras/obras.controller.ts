@@ -16,12 +16,12 @@ export class ObrasController {
     @UsuarioAtual() u: IUsuario,
     @Body(new ZodPipe(CriarObraSchema)) body: CriarObraInput
   ) {
-    return this.obras.criar(u.id, body);
+    return this.obras.criar(u.id, u.tipo, body);
   }
 
   @Get()
   listar(@UsuarioAtual() u: IUsuario) {
-    return this.obras.listar(u.id);
+    return this.obras.listar(u.id, u.tipo);
   }
 
   @Get(":id")

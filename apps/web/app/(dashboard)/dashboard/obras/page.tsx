@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { obrasApi, type ObraResumo } from "@/lib/api";
-import { ObrasListClient } from "./_components/ObrasListClient";
+import { ObrasPageClient } from "./_components/ObrasPageClient";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Minhas Obras — imbobi" };
+export const metadata: Metadata = { title: "Obras — IMOBI" };
 
-export default async function ObrasPage() {
-  const obras = await obrasApi.listar().catch(() => [] as ObraResumo[]);
-  return <ObrasListClient obras={obras} />;
+export default function ObrasPage() {
+  return <ObrasPageClient />;
 }

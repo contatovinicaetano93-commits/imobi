@@ -20,6 +20,7 @@ import {
   User,
   Bell,
   BarChart3,
+  TrendingUp,
 } from "lucide-react";
 
 export type CanonicalRole =
@@ -49,7 +50,6 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
   "/dashboard/viabilidade": "/dashboard/proposta-credito",
   "/dashboard/fundos": "/dashboard/gestor",
   "/dashboard/relatorios": "/dashboard/admin",
-  "/dashboard/comercial": "/dashboard/admin/pipeline",
   "/dashboard/gestor/due-diligence": "/dashboard/gestor",
   "/dashboard/gestor/due-diligence/nova": "/dashboard/gestor",
   "/dashboard/gestor/carteira": "/dashboard/gestor",
@@ -59,9 +59,7 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
 };
 
 /** Prefixos legados (qualquer subpath) */
-export const LEGACY_PREFIX_REDIRECTS: Array<{ prefix: string; to: string }> = [
-  { prefix: "/dashboard/comercial", to: "/dashboard/admin/pipeline" },
-];
+export const LEGACY_PREFIX_REDIRECTS: Array<{ prefix: string; to: string }> = [];
 
 const ACCOUNT: NavItemDef[] = [
   { label: "Notificações", href: "/dashboard/notificacoes", icon: Bell, section: "conta" },
@@ -86,11 +84,18 @@ export const CANONICAL_NAV: Record<string, NavItemDef[]> = {
   ],
   ENGENHEIRO: [
     { label: "Vistorias", href: "/dashboard/engenheiro/vistoria", icon: MapPin, section: "geral" },
-    { label: "Obras", href: "/dashboard/obras", icon: HardHat, section: "operacao" },
+    { label: "Obras · evidências", href: "/dashboard/obras", icon: HardHat, section: "operacao" },
     { label: "Comitê (parecer)", href: "/dashboard/engenheiro/comite", icon: Vote, section: "operacao" },
     ...ACCOUNT,
   ],
   GESTOR_OBRA: [], // alias eng
+  COMERCIAL: [
+    { label: "Painel comercial", href: "/dashboard/comercial", icon: Banknote, section: "geral" },
+    { label: "Leads", href: "/dashboard/comercial/leads", icon: Inbox, section: "operacao" },
+    { label: "Ranking", href: "/dashboard/comercial/ranking", icon: TrendingUp, section: "operacao" },
+    ...ACCOUNT,
+  ],
+  PARCEIRO: [], // alias abaixo
   ADMIN: [
     { label: "Centro de comando", href: "/dashboard/admin", icon: LayoutDashboard, section: "geral" },
     { label: "Pipeline", href: "/dashboard/admin/pipeline", icon: Banknote, section: "operacao" },
@@ -107,6 +112,7 @@ export const CANONICAL_NAV: Record<string, NavItemDef[]> = {
 
 CANONICAL_NAV.CONSTRUTOR = CANONICAL_NAV.TOMADOR;
 CANONICAL_NAV.GESTOR_OBRA = CANONICAL_NAV.ENGENHEIRO;
+CANONICAL_NAV.PARCEIRO = CANONICAL_NAV.COMERCIAL;
 
 /** Prefixos permitidos por perfil (middleware + nav) */
 export const CANONICAL_PREFIXES: Record<string, readonly string[]> = {
@@ -138,12 +144,17 @@ export const CANONICAL_PREFIXES: Record<string, readonly string[]> = {
     "/dashboard/perfil",
     "/dashboard/notificacoes",
   ],
-  COMERCIAL: ["/dashboard/perfil", "/dashboard/notificacoes"],
-  PARCEIRO: ["/dashboard/perfil", "/dashboard/notificacoes"],
+  COMERCIAL: [
+    "/dashboard/comercial",
+    "/dashboard/perfil",
+    "/dashboard/notificacoes",
+  ],
+  PARCEIRO: [],
 };
 
 CANONICAL_PREFIXES.CONSTRUTOR = CANONICAL_PREFIXES.TOMADOR;
 CANONICAL_PREFIXES.GESTOR_OBRA = CANONICAL_PREFIXES.ENGENHEIRO;
+CANONICAL_PREFIXES.PARCEIRO = CANONICAL_PREFIXES.COMERCIAL;
 
 function matchesPrefix(path: string, prefixes: readonly string[]): boolean {
   return prefixes.some((p) => path === p || path.startsWith(`${p}/`));

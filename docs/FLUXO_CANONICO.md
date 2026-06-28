@@ -52,11 +52,23 @@ Comitê, KYC operacional e liberações são **internos** (Admin / Engenheiro). 
 
 ## Engenheiro
 
+| Passo | Rota | Ação |
+|-------|------|------|
+| Vistorias (hub) | `/dashboard/engenheiro/vistoria` | Fila SIPOC — aprovar/reprovar etapas |
+| Obras · evidências | `/dashboard/obras` | Somente leitura + atalho para vistoria |
+| Parecer comitê | `/dashboard/engenheiro/comite` | Parecer técnico antes da votação admin |
+
+**Não cadastra obra** — cadastro é do tomador; homologação é do Admin (SIPOC passo 2).
+
+## Comercial / Parceiro
+
 | Passo | Rota |
 |-------|------|
-| Vistorias | `/dashboard/engenheiro/vistoria` |
-| Obras (evidências) | `/dashboard/obras` |
-| Parecer comitê | `/dashboard/engenheiro/comite` |
+| Painel (indicações, comissões) | `/dashboard/comercial` |
+| Leads | `/dashboard/comercial/leads` |
+| Ranking | `/dashboard/comercial/ranking` |
+
+**Admin** usa pipeline operacional em `/dashboard/admin/pipeline` (não confundir com o painel do perfil COMERCIAL).
 
 ## Admin — centro de comando
 
@@ -82,7 +94,7 @@ Comitê, KYC operacional e liberações são **internos** (Admin / Engenheiro). 
 
 ## Rotas removidas / redirect
 
-Score, simulador interno, fundos, relatórios, comercial, checklist e alertas do engenheiro → redirects em `canonical-flow.ts`.
+Score, simulador interno, fundos, relatórios, checklist e alertas do engenheiro → redirects em `canonical-flow.ts`.
 
 ## Técnico
 
