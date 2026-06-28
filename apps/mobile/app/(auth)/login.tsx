@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native";
+import { authStyles } from "../../lib/authStyles";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
@@ -134,14 +135,7 @@ const styles = StyleSheet.create({
   form: { gap: 16 },
   field: { gap: 6 },
   label: { fontSize: 13, fontWeight: "600", color: "#374151" },
-  input: { borderWidth: 1.5, borderColor: "#e5e7eb", borderRadius: 14, padding: 14, fontSize: 15, color: "#111827" },
-  inputRow: { flexDirection: "row", alignItems: "center", borderWidth: 1.5, borderColor: "#e5e7eb", borderRadius: 14, paddingHorizontal: 14 },
-  inputFlex: { flex: 1, paddingVertical: 14, fontSize: 15, color: "#111827" },
-  eyeBtn: { padding: 4 },
-  inputError: { borderColor: "#ef4444" },
   errorText: { color: "#ef4444", fontSize: 12 },
-  button: { backgroundColor: "#1d4ed8", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 8 },
-  buttonLoading: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
   link: { textAlign: "center", color: "#1d4ed8", fontSize: 14, fontWeight: "500", marginBottom: 20 },
+  ...authStyles,
 });

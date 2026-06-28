@@ -9,6 +9,7 @@ import { CadastroUsuarioSchema, type CadastroUsuarioInput } from "@imbobi/schema
 import { apiClient } from "@imbobi/core";
 import { notifySignedIn } from "../../lib/api";
 import { resolvePostLoginRoute } from "../../lib/jornada";
+import { authStyles } from "../../lib/authStyles";
 
 function formatCpf(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -216,15 +217,8 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 16, color: "#6b7280", textAlign: "center", marginBottom: 24 },
   field: { marginBottom: 16 },
   label: { fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6 },
-  input: { borderWidth: 1.5, borderColor: "#e5e7eb", borderRadius: 14, padding: 14, fontSize: 15, color: "#111827" },
-  inputRow: { flexDirection: "row", alignItems: "center", borderWidth: 1.5, borderColor: "#e5e7eb", borderRadius: 14, paddingHorizontal: 14 },
-  inputFlex: { flex: 1, paddingVertical: 14, fontSize: 15, color: "#111827" },
-  eyeBtn: { padding: 4 },
-  inputError: { borderColor: "#ef4444" },
   hint: { color: "#9ca3af", fontSize: 11, marginTop: 4 },
   errorText: { color: "#ef4444", fontSize: 12, marginTop: 4 },
-  button: { backgroundColor: "#1d4ed8", borderRadius: 14, padding: 16, alignItems: "center", marginTop: 8 },
-  buttonLoading: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
   link: { textAlign: "center", color: "#1d4ed8", fontSize: 14, fontWeight: "500", marginTop: 12 },
+  ...authStyles,
 });

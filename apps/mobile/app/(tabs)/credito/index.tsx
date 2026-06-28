@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { useSimuladorCredito } from "@imbobi/core/hooks";
 import { formatarBRL, formatarPercentual } from "@imbobi/core";
 import { useEffect, useState } from "react";
@@ -8,17 +8,15 @@ import { creditoApi } from "../../../lib/api";
 export default function CreditoScreen() {
   const [taxaFixada, setTaxaFixada] = useState<number | null>(null);
   const [prazoMax, setPrazoMax] = useState<number | null>(null);
-  const [loadingTaxa, setLoadingTaxa] = useState(true);
 
   useEffect(() => {
     creditoApi.meus().then((creditos) => {
       if (creditos && creditos.length > 0) {
-        // último crédito define a taxa e prazo máximo
         const ultimo = creditos[0];
         setTaxaFixada(ultimo.taxaMensal);
         setPrazoMax(ultimo.prazoMeses);
       }
-    }).catch(() => {}).finally(() => setLoadingTaxa(false));
+    }).catch(() => {});
   }, []);
 
   const taxaEfetiva = taxaFixada ?? 0.0099;
@@ -26,14 +24,6 @@ export default function CreditoScreen() {
 
   const { valorSolicitado, setValorSolicitado, prazoMeses, setPrazoMeses, resultado } =
     useSimuladorCredito(taxaEfetiva);
-
-  if (loadingTaxa) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
-    );
-  }
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>

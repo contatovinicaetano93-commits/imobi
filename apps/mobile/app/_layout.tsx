@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { View, ActivityIndicator, LogBox, DeviceEventEmitter } from "react-native";
 
-LogBox.ignoreAllLogs();
+if (__DEV__) {
+  LogBox.ignoreAllLogs();
+}
 
 if (__DEV__) {
   // The Expo dev-client network inspector opens in "Inspect" mode by default,

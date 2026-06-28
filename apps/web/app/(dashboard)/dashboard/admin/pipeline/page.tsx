@@ -387,7 +387,7 @@ export default function PipelinePage() {
   const [filtro, setFiltro] = useState<Etapa | "todos">("todos");
   const [showForm, setShowForm] = useState(false);
   const [novaOp, setNovaOp] = useState<NovaOp>(OP_VAZIA);
-  const [csvMsg, setCsvMsg] = useState<string | null>(null);
+  const [csvResult, setCsvResult] = useState<{ msg: string; ok: boolean } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const moveEtapa = (id: number, etapa: Etapa) =>
@@ -399,7 +399,7 @@ export default function PipelinePage() {
   const addLead = (e: React.FormEvent) => {
     e.preventDefault();
     if (!novaOp.nome.trim()) return;
-    const newId = Math.max(0, ...leads.map((l) => l.id)) + 1;
+    const newId = leads.reduce((m, l) => l.id > m ? l.id : m, 0) + 1;
     setLeads((prev) => [
       ...prev,
       {
@@ -430,15 +430,15 @@ export default function PipelinePage() {
       try {
         const text = ev.target?.result as string;
         const imported = parseCSV(text);
-        if (imported.length === 0) { setCsvMsg("Nenhuma operação encontrada no CSV."); return; }
+        if (imported.length === 0) { setCsvResult({ msg: "Nenhuma operação encontrada no CSV.", ok: false }); return; }
         setLeads((prev) => {
-          const maxId = Math.max(0, ...prev.map((l) => l.id));
+          const maxId = prev.reduce((m, l) => l.id > m ? l.id : m, 0);
           return [...prev, ...imported.map((op, i) => ({ ...op, id: maxId + i + 1 }))];
         });
-        setCsvMsg(`${imported.length} operação(ões) importada(s) com sucesso.`);
-        setTimeout(() => setCsvMsg(null), 4000);
+        setCsvResult({ msg: `${imported.length} operação(ões) importada(s) com sucesso.`, ok: true });
+        setTimeout(() => setCsvResult(null), 4000);
       } catch {
-        setCsvMsg("Erro ao ler o CSV. Verifique o formato.");
+        setCsvResult({ msg: "Erro ao ler o CSV. Verifique o formato.", ok: false });
       }
       if (fileRef.current) fileRef.current.value = "";
     };
@@ -516,9 +516,9 @@ export default function PipelinePage() {
         </div>
       </div>
 
-      {csvMsg && (
-        <div style={{ background: csvMsg.includes("sucesso") ? "#f0fdf4" : "#fef2f2", border: `1px solid ${csvMsg.includes("sucesso") ? "#bbf7d0" : "#fecaca"}`, borderRadius: 10, padding: "0.65rem 1rem", marginBottom: "1rem", fontSize: "0.8rem", color: csvMsg.includes("sucesso") ? "#16a34a" : "#dc2626", ...jost }}>
-          {csvMsg}
+      {csvResult && (
+        <div style={{ background: csvResult.ok ? "#f0fdf4" : "#fef2f2", border: `1px solid ${csvResult.ok ? "#bbf7d0" : "#fecaca"}`, borderRadius: 10, padding: "0.65rem 1rem", marginBottom: "1rem", fontSize: "0.8rem", color: csvResult.ok ? "#16a34a" : "#dc2626", ...jost }}>
+          {csvResult.msg}
         </div>
       )}
 
