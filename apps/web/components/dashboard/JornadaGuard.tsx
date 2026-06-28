@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { Route } from "next";
-import { BETA_MVP_MODE } from "@/lib/beta-mvp";
+import { GUIDED_STRICT_MODE } from "@/lib/beta-mvp";
 import { isJornadaPathAllowed } from "@/lib/jornada-routes";
 import { useJornadaOptional } from "@/hooks/jornada-context";
 
@@ -16,8 +16,7 @@ type Props = {
 };
 
 /**
- * MVP guiado: revalida jornada ao voltar ao hub.
- * Tomador/gestor navegam livremente pela sidebar (rotas MVP); middleware bloqueia o resto.
+ * Fluxo guiado estrito (lançamento): redireciona tomador/gestor para o passo atual da jornada.
  */
 export function JornadaGuard({ role, children }: Props) {
   const pathname = usePathname();
@@ -25,7 +24,7 @@ export function JornadaGuard({ role, children }: Props) {
   const jornadaCtx = useJornadaOptional();
   const prevPathRef = useRef(pathname);
 
-  const guided = BETA_MVP_MODE && role != null && GUIDED_ROLES.has(role);
+  const guided = GUIDED_STRICT_MODE && role != null && GUIDED_ROLES.has(role);
 
   useEffect(() => {
     if (!guided || !jornadaCtx) return;

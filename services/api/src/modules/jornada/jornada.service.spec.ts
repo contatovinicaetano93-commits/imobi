@@ -16,6 +16,7 @@ describe("JornadaService", () => {
     credito: { findMany: jest.fn() },
     etapaObra: { count: jest.fn() },
     dueDiligence: { findFirst: jest.fn() },
+    solicitacaoCredito: { findFirst: jest.fn() },
   };
 
   const kyc = {
@@ -91,6 +92,7 @@ describe("JornadaService", () => {
       prisma.credito.findMany.mockResolvedValue([]);
       prisma.etapaObra.count.mockResolvedValue(0);
       prisma.dueDiligence.findFirst.mockResolvedValue(null);
+      prisma.solicitacaoCredito.findFirst.mockResolvedValue(null);
       dossies.temDossieAprovado.mockResolvedValue(true);
     });
 
@@ -137,7 +139,7 @@ describe("JornadaService", () => {
       kyc.obterStatus.mockResolvedValue({ status: "APROVADO", documentos: [] });
       prisma.obra.count.mockResolvedValue(1);
       prisma.credito.findMany.mockResolvedValue([
-        { liberacoes: [{ status: "CONCLUIDA" }] },
+        { status: "ATIVO", liberacoes: [{ status: "CONCLUIDA" }] },
       ]);
 
       const j = await service.obter(userId, "TOMADOR");
@@ -174,6 +176,7 @@ describe("JornadaService", () => {
       prisma.obra.count.mockResolvedValue(0);
       prisma.credito.findMany.mockResolvedValue([]);
       prisma.etapaObra.count.mockResolvedValue(0);
+      prisma.solicitacaoCredito.findFirst.mockResolvedValue(null);
       cache.get.mockResolvedValueOnce(undefined);
 
       await service.obter("t1", "TOMADOR");

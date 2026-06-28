@@ -1,6 +1,6 @@
-# Fluxo canônico — Imobi MVP (app de banco)
+# Fluxo canônico — Imobi (lançamento)
 
-**Contexto:** beta guiado. Tomador/gestor navegam dentro do menu MVP; `GET /jornada` define o próximo passo.
+**Contexto:** produção guiada. Tomador/gestor seguem `GET /jornada` passo a passo (`NEXT_PUBLIC_GUIDED_STRICT=true`).
 
 ## URLs
 
@@ -12,53 +12,57 @@
 ## Funil marketing → app autenticado
 
 ```
-/envie-seu-projeto (ou /simulador → redirect) → POST /api/v1/propostas
+/envie-seu-projeto → POST /api/v1/propostas
        ↓
-Cadastro/login (mesmo e-mail) → vincula proposta + cria rascunho de dossiê
+Cadastro/login (mesmo e-mail) → vincula proposta + rascunho dossiê
        ↓
-GET /api/v1/jornada → href do passo atual
+GET /api/v1/jornada → href do passo atual (redirect estrito)
 ```
 
-## Jornada do cliente (role `TOMADOR` / `CONSTRUTOR`)
+## Jornada do cliente (TOMADOR / CONSTRUTOR)
 
 | Ordem | Passo | Rota |
 |-------|-------|------|
 | 1 | KYC | `/dashboard/kyc` |
-| 2 | Viabilidade (dossiê) | `/dashboard/proposta-credito` |
+| 2 | Viabilidade | `/dashboard/proposta-credito` |
 | 3 | Obra | `/dashboard/obras/nova` |
-| 4 | Crédito | `/dashboard/credito/solicitar` |
-| 5 | Aguardar gestor | `/dashboard/construtor` (hero) |
-| 6 | Acompanhar | `/dashboard/construtor` + crédito |
+| 4 | Crédito (comitê) | `/dashboard/credito/solicitar` |
+| 5 | Aguardando comitê | `/dashboard/construtor` |
+| 6 | Acompanhar liberações | `/dashboard/credito` + obras |
+| 7 | Operação quitada | `/dashboard/construtor` (nova operação) |
 
-`/dashboard/viabilidade` e `/dashboard/simulador` redirecionam para `/dashboard/proposta-credito`.
-
-## Jornada do gestor
+## Jornada do gestor (somente leitura)
 
 | Ordem | Passo | Rota |
 |-------|-------|------|
-| 1 | KYC pendente | `/dashboard/gestor/kyc` (somente leitura) |
-| 2 | Etapas pendentes | `/dashboard/gestor/etapas` |
-| 3 | Fila zerada | `/dashboard/gestor` (hero) |
+| 1 | Fila KYC | `/dashboard/gestor/kyc` |
+| 2 | Fila etapas | `/dashboard/gestor/etapas` |
+| 3 | Fila zerada | `/dashboard/gestor` |
 
-Admin aprova KYC em `/dashboard/admin/kyc` e vistorias em `/dashboard/admin/vistorias`.
+**Aprovações:** Admin (KYC, dossiê, homologação, comitê, pagamento) · Engenheiro (vistoria técnica).
+
+## SIPOC execução + pagamento
+
+1. Admin homologa obra → `EM_EXECUCAO`
+2. Tomador envia evidências GPS
+3. Engenheiro aprova etapa → liberação `AGUARDANDO_PAGAMENTO`
+4. Admin confirma pagamento → parcela `CONCLUIDA`
+5. Quando 100% etapas + valor liberado → crédito `QUITADO`, obra `CONCLUIDA`
 
 ## Comportamento técnico
 
-- **Login:** `redirectAfterLogin()` busca `/api/proxy/jornada` e navega para `jornada.href`.
-- **Guard:** `JornadaGuard` + middleware MVP; tomador/gestor têm sidebar MVP livre (não passo-a-passo estrito).
-- **Gates API:** criar obra exige KYC aprovado + dossiê `APROVADO`; solicitar crédito exige obra cadastrada.
-- **Proposta pública:** `POST /propostas` (Zod `EnviarPropostaPublicaSchema`); vínculo no auth por e-mail.
-- **Fail-closed (web):** se `/jornada` falha, `JornadaError` com retry.
-- **Upload proxy:** `/api/proxy/documentos` e `/api/proxy/kyc/upload` usam `fetchApiWithRetry`.
-- **MVP mode:** `NEXT_PUBLIC_BETA_MVP_MODE` default `true`.
+- **Login:** `redirectAfterLogin()` → `/jornada.href`
+- **Guard:** `JornadaGuard` redireciona rotas fora do passo (estrito)
+- **Gates API:** obra (KYC + dossiê); crédito comitê (obra); comitê valida jornada
+- **Vistoria:** `/vistoria` e `/engenheiros` delegam ao mesmo `EtapasService`
+- **Beta menu legado:** `NEXT_PUBLIC_BETA_MVP_MODE=true` (não usar em produção)
 
 ## OpenAPI
 
 | Módulo | Spec |
 |--------|------|
-| Dossiês | `docs/api/openapi-dossies-v1.yaml` |
+| Jornada | `docs/api/openapi-jornada-v1.yaml` |
 | Propostas | `docs/api/openapi-propostas-v1.yaml` |
+| Dossiês | `docs/api/openapi-dossies-v1.yaml` |
 
-## Módulos ativos no beta
-
-auth, kyc, propostas, dossies (viabilidade), obras, etapas, credito, manager, jornada, documentos
+Ver checklist: `docs/LAUNCH_3_DIAS.md`

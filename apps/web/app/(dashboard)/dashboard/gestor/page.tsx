@@ -7,7 +7,7 @@ import { ShieldCheck, AlertTriangle, Zap, Lightbulb } from "lucide-react";
 import { fetchManagerDashboard } from "@/lib/fetch-manager-dashboard";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
-import { BETA_MVP_MODE, mvpSafeHref } from "@/lib/beta-mvp";
+import { BETA_MVP_MODE, GUIDED_STRICT_MODE, mvpSafeHref } from "@/lib/beta-mvp";
 import { JornadaHeroStrip } from "@/components/dashboard/JornadaHeroStrip";
 import { buildGestorTabs } from "./_components/gestor-panel-config";
 
@@ -119,7 +119,7 @@ export default function GestorPage() {
       tabContent={{
         operacoes: (
           <>
-            {BETA_MVP_MODE && <JornadaHeroStrip variant="gestor" />}
+            {GUIDED_STRICT_MODE && <JornadaHeroStrip variant="gestor" />}
             <PanelSection
         id="resumo-fila"
         title="Painel de Operações"

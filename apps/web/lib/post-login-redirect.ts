@@ -1,4 +1,4 @@
-import { BETA_MVP_MODE } from "@/lib/beta-mvp";
+import { GUIDED_STRICT_MODE } from "@/lib/beta-mvp";
 import { ROLE_HOME } from "@/lib/role-permissions";
 import { obterJornadaResiliente } from "@/lib/jornada-fetch";
 
@@ -7,7 +7,7 @@ export { ROLE_HOME };
 const GUIDED_ROLES = new Set(["TOMADOR", "CONSTRUTOR", "GESTOR", "GESTOR_FUNDO"]);
 
 /**
- * Navegação após login — em MVP vai ao passo atual da jornada.
+ * Navegação após login — vai ao passo atual da jornada (modo guiado estrito).
  */
 export async function redirectAfterLogin(role: string, next?: string | null): Promise<void> {
   if (next && next.startsWith("/") && !next.startsWith("//")) {
@@ -15,7 +15,7 @@ export async function redirectAfterLogin(role: string, next?: string | null): Pr
     return;
   }
 
-  if (BETA_MVP_MODE && GUIDED_ROLES.has(role)) {
+  if (GUIDED_STRICT_MODE && GUIDED_ROLES.has(role)) {
     try {
       const jornada = await obterJornadaResiliente();
       setTimeout(() => window.location.assign(jornada.href), 100);

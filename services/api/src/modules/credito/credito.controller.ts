@@ -18,6 +18,7 @@ export class CreditoController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  /** Uso interno/seed — tomador solicita via POST /comite/solicitar */
   @Roles("ADMIN")
   @Post("solicitar")
   solicitar(

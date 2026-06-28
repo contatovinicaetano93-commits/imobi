@@ -1,19 +1,10 @@
 import { Module } from "@nestjs/common";
-import { BullModule } from "@nestjs/bull";
 import { VistoriaController } from "./vistoria.controller";
 import { VistoriaService } from "./vistoria.service";
-import { NotificacoesModule } from "../notificacoes/notificacoes.module";
-import { EmailModule } from "../email/email.module";
-import { PushNotificacoesModule } from "../push-notificacoes/push-notificacoes.module";
-import { QUEUE_LIBERACAO } from "../../common/constants";
+import { EtapasModule } from "../etapas/etapas.module";
 
 @Module({
-  imports: [
-    BullModule.registerQueue({ name: QUEUE_LIBERACAO }),
-    NotificacoesModule,
-    EmailModule,
-    PushNotificacoesModule,
-  ],
+  imports: [EtapasModule],
   controllers: [VistoriaController],
   providers: [VistoriaService],
 })

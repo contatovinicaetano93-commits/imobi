@@ -39,13 +39,13 @@ function loadApiDatabaseUrl() {
 }
 
 function resolveDatabaseUrl() {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
   if (staging) {
     const render = loadRenderEnvFile();
     if (render.DATABASE_URL) return render.DATABASE_URL;
     console.error(`❌ --staging requer DATABASE_URL em ${RENDER_ENV_PATH}`);
     process.exit(1);
   }
+  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
   const local = loadApiDatabaseUrl();
   if (!local) {
     console.error("❌ Defina DATABASE_URL ou use --staging");
@@ -109,17 +109,27 @@ async function main() {
 
     if (failed.length) {
       for (const row of failed) {
-        const legacy = RENAMES.find(([, to]) => to === row.migration_name)?.[0];
-        const legacyApplied =
-          legacy &&
-          before.some(
-            (r) => r.migration_name === legacy && r.finished_at && !r.rolled_back_at,
-          );
+        const renamedFrom = RENAMES.find(([, to]) => to === row.migration_name)?.[0];
+        const renamedTo = RENAMES.find(([from]) => from === row.migration_name)?.[1];
+        const equivalentApplied =
+          (renamedFrom &&
+            before.some(
+              (r) =>
+                r.migration_name === renamedFrom &&
+                r.finished_at &&
+                !r.rolled_back_at,
+            )) ||
+          (renamedTo &&
+            before.some(
+              (r) =>
+                r.migration_name === renamedTo && r.finished_at && !r.rolled_back_at,
+            ));
 
-        if (legacyApplied) {
-          console.log(
-            `  → Remover failed "${row.migration_name}" (já aplicada como "${legacy}")`,
-          );
+        if (equivalentApplied) {
+          const note = renamedTo
+            ? `"${row.migration_name}" (schema já em "${renamedTo}")`
+            : `"${row.migration_name}" (já aplicada como "${renamedFrom}")`;
+          console.log(`  → Remover failed ${note}`);
           if (!dryRun) {
             await prisma.$executeRaw`
               DELETE FROM "_prisma_migrations"

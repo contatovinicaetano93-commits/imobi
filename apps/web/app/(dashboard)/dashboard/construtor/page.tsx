@@ -14,7 +14,7 @@ import {
 import { formatarBRL } from "@imbobi/core";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
-import { BETA_MVP_MODE } from "@/lib/beta-mvp";
+import { BETA_MVP_MODE, GUIDED_STRICT_MODE } from "@/lib/beta-mvp";
 import { JornadaHeroStrip } from "@/components/dashboard/JornadaHeroStrip";
 import { buildConstrutorTabs } from "./_components/construtor-panel-config";
 
@@ -133,7 +133,7 @@ export default async function ConstrutorPage() {
       tabContent={{
         operacao: (
           <>
-      {BETA_MVP_MODE && <JornadaHeroStrip variant="tomador" />}
+      {GUIDED_STRICT_MODE && <JornadaHeroStrip variant="tomador" />}
 
       {alertas.length > 0 && (
         <PanelSection

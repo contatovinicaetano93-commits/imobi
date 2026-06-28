@@ -4,6 +4,7 @@ import { EmailService } from "../email/email.service";
 import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import * as bcrypt from "bcryptjs";
 import { UsuarioTipo } from "@prisma/client";
+import { OperacaoConclusaoService } from "../credito/operacao-conclusao.service";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
 
 export interface CriarUsuarioAdminDto {
@@ -85,6 +86,7 @@ export class AdminService {
     private readonly prisma: PrismaService,
     private readonly email: EmailService,
     private readonly notificacoes: NotificacoesService,
+    private readonly operacaoConclusao: OperacaoConclusaoService,
   ) {}
 
   async overview(): Promise<AdminOverview> {
@@ -564,6 +566,7 @@ export class AdminService {
       liberacaoId,
       valor: lib.valor,
       referenciaPagamento,
+      ...(await this.operacaoConclusao.tentarConcluirCredito(lib.creditoId)),
     };
   }
 

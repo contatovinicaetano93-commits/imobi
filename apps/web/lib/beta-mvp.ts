@@ -1,10 +1,16 @@
 import { ROLE_HOME } from "@/lib/role-permissions";
 
 /**
- * Modo beta MVP — menu reduzido + rotas bloqueadas fora do fluxo guiado.
- * Desligar: NEXT_PUBLIC_BETA_MVP_MODE=false
+ * Modo beta MVP — menu reduzido (legado). Desligado no lançamento.
+ * Ativar apenas para demos: NEXT_PUBLIC_BETA_MVP_MODE=true
  */
-export const BETA_MVP_MODE = process.env.NEXT_PUBLIC_BETA_MVP_MODE !== "false";
+export const BETA_MVP_MODE = process.env.NEXT_PUBLIC_BETA_MVP_MODE === "true";
+
+/**
+ * Jornada passo-a-passo estrita para tomador/gestor.
+ * Default: true (lançamento). Desligar: NEXT_PUBLIC_GUIDED_STRICT=false
+ */
+export const GUIDED_STRICT_MODE = process.env.NEXT_PUBLIC_GUIDED_STRICT !== "false";
 
 /** Evita link para rota bloqueada no MVP (middleware redireciona e “pisca” o painel). */
 export function mvpSafeHref(href: string, role: string | null): string {

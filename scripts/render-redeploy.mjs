@@ -40,7 +40,9 @@ const res = await fetch(`https://api.render.com/v1/services/${sid}/deploys`, {
     Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
   },
-  body: JSON.stringify({ clearCache: 'do_not_clear' }),
+  body: JSON.stringify({
+    clearCache: args.includes('--clear-cache') ? 'clear' : 'do_not_clear',
+  }),
 });
 
 if (!res.ok) {

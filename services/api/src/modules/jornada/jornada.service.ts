@@ -191,8 +191,15 @@ export class JornadaService {
   }
 
   private async obterTomador(usuarioId: string): Promise<JornadaResponse> {
-    const [kycStatus, dossieAprovado, dossieEmAnalise, obrasCount, creditos, etapasLiberadas] =
-      await Promise.all([
+    const [
+      kycStatus,
+      dossieAprovado,
+      dossieEmAnalise,
+      obrasCount,
+      creditos,
+      solicitacaoAberta,
+      etapasLiberadas,
+    ] = await Promise.all([
       this.kyc.obterStatus(usuarioId),
       this.dossies.temDossieAprovado(usuarioId),
       this.prisma.dueDiligence.findFirst({
@@ -207,7 +214,13 @@ export class JornadaService {
         where: { usuarioId },
         include: { liberacoes: { where: { status: "CONCLUIDA" }, take: 1 } },
         orderBy: { criadoEm: "desc" },
-        take: 1,
+      }),
+      this.prisma.solicitacaoCredito.findFirst({
+        where: {
+          usuarioId,
+          status: { in: ["PENDENTE", "EM_COMITE"] },
+        },
+        select: { solicitacaoId: true },
       }),
       this.prisma.etapaObra.count({
         where: {
@@ -219,8 +232,27 @@ export class JornadaService {
 
     const kycAprovado = kycStatus.status === "APROVADO";
     const temObra = obrasCount > 0;
-    const temCredito = creditos.length > 0;
-    const temLiberacao = creditos.some((c) => c.liberacoes.length > 0) || etapasLiberadas > 0;
+    const creditoAtivo = creditos.find((c) => c.status === "ATIVO");
+    const creditoQuitado = creditos.some((c) => c.status === "QUITADO");
+    const temCreditoAtivo = Boolean(creditoAtivo);
+    const temLiberacao =
+      creditos.some((c) => c.liberacoes.length > 0) || etapasLiberadas > 0;
+
+    if (creditoQuitado && !temCreditoAtivo) {
+      const prog = this.tomadorProgresso("concluido");
+      return {
+        perfil: "tomador",
+        passoAtual: "concluido",
+        titulo: "Operação quitada",
+        descricao:
+          "Crédito quitado com sucesso. Cadastre uma nova obra ou solicite novo crédito para iniciar outra operação.",
+        href: "/dashboard/construtor",
+        concluido: true,
+        passosConcluidos: prog.totalPassos,
+        totalPassos: prog.totalPassos,
+        progressoPct: 100,
+      };
+    }
 
     if (!kycAprovado) {
       const aguardando = kycStatus.status === "ENVIADO";
@@ -271,13 +303,26 @@ export class JornadaService {
       };
     }
 
-    if (!temCredito) {
+    if (!temCreditoAtivo) {
+      if (solicitacaoAberta) {
+        const prog = this.tomadorProgresso("aguardando", true);
+        return {
+          perfil: "tomador",
+          passoAtual: "aguardando",
+          titulo: "Solicitação em análise",
+          descricao: "Seu pedido de crédito está com o comitê IMOBI. Você será notificado quando aprovado.",
+          href: "/dashboard/construtor",
+          concluido: false,
+          ...prog,
+        };
+      }
+
       const prog = this.tomadorProgresso("credito");
       return {
         perfil: "tomador",
         passoAtual: "credito",
         titulo: "Solicitar crédito",
-        descricao: "Solicite crédito vinculado à sua obra.",
+        descricao: "Solicite crédito vinculado à sua obra (comitê digital).",
         href: "/dashboard/credito/solicitar",
         concluido: false,
         ...prog,
