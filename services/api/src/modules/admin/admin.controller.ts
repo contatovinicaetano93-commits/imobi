@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, HttpCode } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Delete, Param, Query, Body, UseGuards, HttpCode, BadRequestException } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { ComiteService } from "../comite/comite.service";
 import type { CriarUsuarioAdminDto } from "./admin.service";
@@ -11,6 +11,13 @@ import { AtualizarUsuarioAdminSchema } from "@imbobi/schemas";
 import type { AtualizarUsuarioAdminInput } from "@imbobi/schemas";
 import { CriarUsuarioAdminSchema, type CriarUsuarioAdminSchemaDto } from "./dto/criar-usuario-admin.dto";
 import { IniciarComiteSchema, type IniciarComiteDto } from "../comite/dto/comite.dto";
+import { PipelineService } from "./pipeline.service";
+import {
+  AtualizarPipelineEtapaSchema,
+  CriarPipelineLeadSchema,
+  type AtualizarPipelineEtapaDto,
+  type CriarPipelineLeadDto,
+} from "./dto/pipeline.dto";
 
 @Controller("admin")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -19,6 +26,7 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly comiteService: ComiteService,
+    private readonly pipelineService: PipelineService,
   ) {}
 
   @Get("overview")
@@ -132,5 +140,36 @@ export class AdminController {
     @UsuarioAtual() admin: UsuarioAtual,
   ) {
     return this.comiteService.iniciarComite(body.solicitacaoId, admin.id);
+  }
+
+  @Get("pipeline")
+  listarPipeline() {
+    return this.pipelineService.listar();
+  }
+
+  @Post("pipeline/leads")
+  criarPipelineLead(@Body(new ZodPipe(CriarPipelineLeadSchema)) body: CriarPipelineLeadDto) {
+    return this.pipelineService.criarLead(body);
+  }
+
+  @Patch("pipeline/:fonte/:id/etapa")
+  atualizarPipelineEtapa(
+    @Param("fonte") fonte: string,
+    @Param("id") id: string,
+    @Body(new ZodPipe(AtualizarPipelineEtapaSchema)) body: AtualizarPipelineEtapaDto,
+  ) {
+    if (fonte !== "proposta" && fonte !== "solicitacao") {
+      throw new BadRequestException("Fonte inválida.");
+    }
+    return this.pipelineService.atualizarEtapa(fonte, id, body.etapa);
+  }
+
+  @Delete("pipeline/:fonte/:id")
+  @HttpCode(200)
+  excluirPipelineItem(@Param("fonte") fonte: string, @Param("id") id: string) {
+    if (fonte !== "proposta" && fonte !== "solicitacao") {
+      throw new BadRequestException("Fonte inválida.");
+    }
+    return this.pipelineService.excluir(fonte, id);
   }
 }

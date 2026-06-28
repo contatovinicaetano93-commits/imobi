@@ -939,6 +939,70 @@ export const propostasApi = {
   listarAdmin: () => apiFetch<PropostaAdminResumo[]>("/propostas"),
 };
 
+// ── Pipeline comercial (Admin) ─────────────────────────────────────────
+
+export type PipelineEtapa =
+  | "prospeccao"
+  | "analise"
+  | "estruturacao"
+  | "aprovado"
+  | "standby";
+
+export type PipelineFonte = "proposta" | "solicitacao";
+
+export type PipelineItem = {
+  id: string;
+  fonte: PipelineFonte;
+  etapa: PipelineEtapa;
+  nome: string;
+  local: string | null;
+  tipo: string;
+  valor: number | null;
+  valorFormatado: string | null;
+  contato: string;
+  email: string;
+  telefone: string | null;
+  notas: string | null;
+  responsavel: string | null;
+  vendido: string | null;
+  construido: string | null;
+  grupoWhatsApp: string | null;
+  grupoLink: string | null;
+  href: string;
+  criadoEm: string;
+  atualizadoEm: string;
+  usuarioId: string | null;
+  statusOperacional: string;
+};
+
+export const pipelineApi = {
+  listar: () =>
+    apiFetch<{ items: PipelineItem[]; atualizadoEm: string }>("/admin/pipeline"),
+  criarLead: (data: {
+    nomeEmpreendimento: string;
+    nomeContato: string;
+    email: string;
+    telefone?: string;
+    tipoCredito?: TipoCreditoProposta;
+    local?: string;
+    valorEstimado?: number;
+    notas?: string;
+    contato?: string;
+    etapa?: PipelineEtapa;
+  }) =>
+    apiFetch<PipelineItem>("/admin/pipeline/leads", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  atualizarEtapa: (fonte: PipelineFonte, id: string, etapa: PipelineEtapa) =>
+    apiFetch<PipelineItem>(`/admin/pipeline/${fonte}/${id}/etapa`, {
+      method: "PATCH",
+      body: JSON.stringify({ etapa }),
+    }),
+  excluir: (fonte: PipelineFonte, id: string) =>
+    apiFetch<{ ok: boolean }>(`/admin/pipeline/${fonte}/${id}`, { method: "DELETE" }),
+};
+
 export const dossiesApi = {
   checklistTemplate: (tipoOrEstagio: TipoCreditoProposta | EstagioObraDossie) => {
     const isTipo = ["OBRA_NOVA", "OBRA_EM_ANDAMENTO", "CREDITO_PONTE"].includes(tipoOrEstagio);
