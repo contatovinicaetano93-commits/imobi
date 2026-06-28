@@ -9,7 +9,7 @@ async function proxy(req: NextRequest, pathParts: string[], method: string) {
   const contentType = req.headers.get('content-type') ?? '';
   const isMultipart = contentType.includes('multipart/form-data');
 
-  let body: BodyInit | undefined;
+  let body: string | ArrayBuffer | undefined;
   const headers: Record<string, string> = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
