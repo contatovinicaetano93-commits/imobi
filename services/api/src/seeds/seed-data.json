@@ -231,18 +231,6 @@
     {
       "creditoId": 0,
       "usuarioId": 1,
-      "nome": "Residencial Pinheiros",
-      "endereco": "Rua das Flores, 123",
-      "geoLatitude": -23.5592,
-      "geoLongitude": -46.6613,
-      "raioValidacaoMetros": 50,
-      "areaM2": 2500.00,
-      "tipo": "RESIDENCIAL",
-      "status": "PLANEJAMENTO"
-    },
-    {
-      "creditoId": 0,
-      "usuarioId": 1,
       "nome": "Edifício Vila Madalena",
       "endereco": "Avenida Pedroso de Morais, 456",
       "geoLatitude": -23.5628,

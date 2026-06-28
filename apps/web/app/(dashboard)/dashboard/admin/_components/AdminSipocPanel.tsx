@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { adminApi, type AdminObraResumo, type LiberacaoAguardandoPagamento } from "@/lib/api";
 import { useAdminFilasOnChange } from "@/hooks/use-admin-filas-poll";
 import { formatarBRL } from "@imbobi/core";
 import { useToast } from "@/hooks/toast-context";
-import { Building2, Banknote, CheckCircle2, XCircle } from "lucide-react";
+import { IMOBI_FINANCEIRO_WHATS_DISPLAY } from "@/lib/financeiro";
+import { Building2, Banknote, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 
 function brl(v: number) {
   return formatarBRL(v);
@@ -13,26 +14,31 @@ function brl(v: number) {
 
 export function AdminSipocPanel() {
   const { success, error: toastError } = useToast();
+  const toastErrorRef = useRef(toastError);
+  toastErrorRef.current = toastError;
+
   const [obras, setObras] = useState<AdminObraResumo[]>([]);
   const [liberacoes, setLiberacoes] = useState<LiberacaoAguardandoPagamento[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [refs, setRefs] = useState<Record<string, string>>({});
 
-  const recarregar = useCallback(
-    () =>
-      Promise.all([
+  const recarregar = useCallback(async () => {
+    try {
+      const [obrasData, libData] = await Promise.all([
         adminApi.listarObras(100),
         adminApi.listarLiberacoesAguardandoPagamento(),
-      ])
-        .then(([obrasData, libData]) => {
-          setObras(obrasData);
-          setLiberacoes(libData);
-        })
-        .catch((err) => toastError(err instanceof Error ? err.message : "Erro ao carregar SIPOC"))
-        .finally(() => setLoading(false)),
-    [toastError],
-  );
+      ]);
+      setObras(obrasData);
+      setLiberacoes(libData);
+      setLoadError(null);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Erro ao carregar SIPOC");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     void recarregar();
@@ -40,9 +46,7 @@ export function AdminSipocPanel() {
 
   useAdminFilasOnChange(() => void recarregar());
 
-  const obrasHomologacao = obras.filter((o) =>
-    o.status === "AGUARDANDO_HOMOLOGACAO" || o.status === "PLANEJAMENTO"
-  );
+  const obrasHomologacao = obras.filter((o) => o.status === "AGUARDANDO_HOMOLOGACAO");
 
   const homologar = async (obraId: string) => {
     setBusyId(obraId);
@@ -51,7 +55,7 @@ export function AdminSipocPanel() {
       success("Obra homologada — entrou no pipe ativo.");
       await recarregar();
     } catch (err) {
-      toastError(err instanceof Error ? err.message : "Erro ao homologar");
+      toastErrorRef.current(err instanceof Error ? err.message : "Erro ao homologar");
     } finally {
       setBusyId(null);
     }
@@ -66,7 +70,7 @@ export function AdminSipocPanel() {
       success("Homologação reprovada.");
       await recarregar();
     } catch (err) {
-      toastError(err instanceof Error ? err.message : "Erro ao reprovar");
+      toastErrorRef.current(err instanceof Error ? err.message : "Erro ao reprovar");
     } finally {
       setBusyId(null);
     }
@@ -79,7 +83,7 @@ export function AdminSipocPanel() {
       success("Pagamento confirmado — construtor notificado.");
       await recarregar();
     } catch (err) {
-      toastError(err instanceof Error ? err.message : "Erro ao confirmar pagamento");
+      toastErrorRef.current(err instanceof Error ? err.message : "Erro ao confirmar pagamento");
     } finally {
       setBusyId(null);
     }
@@ -95,12 +99,31 @@ export function AdminSipocPanel() {
 
   return (
     <div className="space-y-6">
+      {loadError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-2 text-sm text-red-800">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{loadError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setLoading(true);
+              void recarregar();
+            }}
+            className="text-sm font-semibold text-red-700 underline shrink-0"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
       <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
         <p className="text-sm text-blue-900 font-semibold">Fluxo SIPOC — liberação manual</p>
         <p className="text-xs text-blue-800 mt-1">
           Viabilidade (dossiê aprovado) → Construtor cadastra obra → Admin homologa → Engenheiro
           aprova vistoria → pagamento manual na conta cadastrada → confirmação pelo financeiro IMOBI
-          (WhatsApp +5511993455589).
+          ({IMOBI_FINANCEIRO_WHATS_DISPLAY}).
         </p>
       </div>
 
@@ -119,7 +142,7 @@ export function AdminSipocPanel() {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 truncate">{obra.nome}</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {obra.tomador ?? "Tomador"} · {obra.status.replace(/_/g, " ")}
+                    {obra.tomador ?? "Tomador"} · aguardando homologação
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">

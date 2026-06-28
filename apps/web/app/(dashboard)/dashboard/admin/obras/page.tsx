@@ -70,9 +70,7 @@ export default function AdminObrasPage() {
     };
   }, []);
 
-  const pendentesHomologacao = obras.filter(
-    (o) => o.status === "AGUARDANDO_HOMOLOGACAO" || o.status === "PLANEJAMENTO",
-  );
+  const pendentesHomologacao = obras.filter((o) => o.status === "AGUARDANDO_HOMOLOGACAO");
 
   const visiveis =
     filter === "homologacao"
@@ -168,8 +166,7 @@ export default function AdminObrasPage() {
             {visiveis.map((obra) => {
               const badge = STATUS_BADGE[obra.status] ?? "bg-gray-100 text-gray-500";
               const label = STATUS_LABEL[obra.status] ?? obra.status.replace(/_/g, " ");
-              const needsHomolog =
-                obra.status === "AGUARDANDO_HOMOLOGACAO" || obra.status === "PLANEJAMENTO";
+              const needsHomolog = obra.status === "AGUARDANDO_HOMOLOGACAO";
 
               return (
                 <Link

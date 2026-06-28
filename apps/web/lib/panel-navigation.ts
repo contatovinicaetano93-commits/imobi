@@ -273,7 +273,6 @@ export const SIPOC_OBRAS_FLOW = [
   { step: 3, label: 'Vistoria', actor: 'Engenheiro', desc: 'Aprovação técnica por etapa' },
   { step: 4, label: 'Comitê', actor: 'Admin IMOBI', desc: 'Decisão de crédito e condições' },
   { step: 5, label: 'Pagamento', actor: 'Admin IMOBI', desc: 'Transferência manual e confirmação' },
-  { step: 6, label: 'KPIs', actor: 'Gestor do Fundo', desc: 'Indicadores agregados — somente leitura' },
 ] as const;
 
 /** @deprecated use SIPOC_OBRAS_FLOW */

@@ -22,10 +22,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 export function useToast() {
   const ctx = useContext(ToastCtx);
   if (!ctx) throw new Error("useToast must be used within ToastProvider");
-  return {
-    ...ctx,
-    success: (message: string) => ctx.addToast(message, "success"),
-    error: (message: string) => ctx.addToast(message, "error"),
-    info: (message: string) => ctx.addToast(message, "info"),
-  };
+  const success = useCallback(
+    (message: string) => ctx.addToast(message, "success"),
+    [ctx.addToast],
+  );
+  const error = useCallback(
+    (message: string) => ctx.addToast(message, "error"),
+    [ctx.addToast],
+  );
+  const info = useCallback(
+    (message: string) => ctx.addToast(message, "info"),
+    [ctx.addToast],
+  );
+  return { ...ctx, success, error, info };
 }
