@@ -51,7 +51,11 @@ function SolicitarForm() {
   const [creditoId, setCreditoId] = useState<string | null>(null);
 
   useEffect(() => {
-    obrasApi.listar().then(setObras).catch(() => setObras([]));
+    obrasApi.listar().then((list) => {
+      setObras(list);
+      const candidata = list.find((o) => !o.credito);
+      if (candidata) setObraId(candidata.id);
+    }).catch(() => setObras([]));
   }, []);
 
   useEffect(() => {
@@ -84,6 +88,12 @@ function SolicitarForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (obras.length > 0 && !obraId) {
+      const msg = "Selecione a obra associada ao crédito.";
+      setError(msg);
+      toastError(msg);
+      return;
+    }
     if (valor < 5000) {
       const msg = "Valor mínimo é R$ 5.000.";
       setError(msg);
@@ -234,17 +244,18 @@ function SolicitarForm() {
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-gray-400" />
             <h2 className="font-semibold text-gray-900">Obra Associada</h2>
-            <span className="ml-auto text-xs text-gray-400">(opcional)</span>
+            <span className="ml-auto text-xs text-red-500 font-medium">obrigatório</span>
           </div>
           {obras.length === 0 ? (
-            <p className="text-sm text-gray-400">Nenhuma obra cadastrada ainda.</p>
+            <p className="text-sm text-gray-400">Cadastre uma obra antes de solicitar crédito.</p>
           ) : (
             <select
               value={obraId}
               onChange={(e) => setObraId(e.target.value)}
+              required
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1B4FD8]/20 focus:border-[#1B4FD8] bg-white"
             >
-              <option value="">Selecione uma obra (opcional)</option>
+              <option value="">Selecione a obra</option>
               {obras.map((o) => (
                 <option key={o.id} value={o.id}>{o.nome}</option>
               ))}
@@ -261,7 +272,7 @@ function SolicitarForm() {
 
         <button
           type="submit"
-          disabled={submitLoading}
+          disabled={submitLoading || (obras.length > 0 && !obraId)}
           className="w-full bg-[#1B4FD8] hover:bg-blue-800 disabled:opacity-60 text-white font-semibold py-4 rounded-2xl transition-all shadow-md shadow-blue-200 text-sm"
         >
           {submitLoading ? "Enviando solicitação..." : "Solicitar Crédito"}

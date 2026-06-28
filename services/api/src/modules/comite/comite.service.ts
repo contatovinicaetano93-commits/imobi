@@ -42,10 +42,23 @@ export class ComiteService {
     await this.jornada.assertPodeSolicitarCredito(usuarioId);
     const rating = this.calcularRating(body.ltv ?? 0);
 
+    let obraId = body.obraId ?? null;
+    if (!obraId) {
+      const obraRecente = await this.prisma.obra.findFirst({
+        where: {
+          usuarioId,
+          creditoId: null,
+          status: { in: ["EM_EXECUCAO", "AGUARDANDO_HOMOLOGACAO", "PLANEJAMENTO"] },
+        },
+        orderBy: { criadoEm: "desc" },
+      });
+      obraId = obraRecente?.obraId ?? null;
+    }
+
     const solicitacao = await this.prisma.solicitacaoCredito.create({
       data: {
         usuarioId,
-        obraId: body.obraId ?? null,
+        obraId,
         valorSolicitado: body.valorSolicitado,
         prazoMeses: body.prazoMeses,
         taxaMensal: body.taxaMensal,

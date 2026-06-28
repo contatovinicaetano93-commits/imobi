@@ -44,37 +44,43 @@ export class EtapasService {
       throw new BadRequestException("Etapa precisa ter ao menos uma evidência fotográfica.");
     }
 
-    const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: "AGUARDANDO_VISTORIA" },
-      data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
-    });
-    if (updated.count === 0) {
-      throw new BadRequestException("Etapa não está aguardando vistoria.");
+    const credito = await this.resolverCreditoObra(etapa.obra);
+    if (!credito || credito.status !== "ATIVO") {
+      throw new BadRequestException(
+        "Obra sem crédito ativo vinculado. Conclua o comitê e associe o crédito à obra antes da vistoria.",
+      );
     }
 
-    await this.prisma.etapaAuditLog.create({
-      data: {
-        etapaId,
-        acaoTipo: "APROVADA",
-        usuarioId: aprovadorId,
-        observacoes: observacao || null,
-      },
-    });
-
-    const credito = etapa.obra.credito;
-    const valorLiberacao = credito
-      ? Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100)
-      : Number(etapa.valorLiberacao) || 0;
+    const valorLiberacao =
+      Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
+    if (valorLiberacao <= 0) {
+      throw new BadRequestException("Valor de liberação inválido para esta etapa.");
+    }
 
     const valorFmt = new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
     }).format(valorLiberacao);
 
-    let liberacaoId: string | null = null;
+    const liberacao = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.etapaObra.updateMany({
+        where: { etapaId, status: "AGUARDANDO_VISTORIA" },
+        data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
+      });
+      if (updated.count === 0) {
+        throw new BadRequestException("Etapa não está aguardando vistoria.");
+      }
 
-    if (credito && credito.status === "ATIVO" && valorLiberacao > 0) {
-      const liberacao = await this.prisma.liberacaoParcela.create({
+      await tx.etapaAuditLog.create({
+        data: {
+          etapaId,
+          acaoTipo: "APROVADA",
+          usuarioId: aprovadorId,
+          observacoes: observacao || null,
+        },
+      });
+
+      return tx.liberacaoParcela.create({
         data: {
           creditoId: credito.creditoId,
           etapaId,
@@ -82,8 +88,9 @@ export class EtapasService {
           status: "AGUARDANDO_PAGAMENTO",
         },
       });
-      liberacaoId = liberacao.liberacaoId;
-    }
+    });
+
+    const liberacaoId = liberacao.liberacaoId;
 
     const whatsMsg = buildCapitalFaseWhatsAppMessage({
       obraNome: etapa.obra.nome,
@@ -143,7 +150,7 @@ export class EtapasService {
       liberacaoId,
       valorLiberacao,
       whatsAppUrl: whatsUrl,
-      aguardandoPagamento: !!liberacaoId,
+      aguardandoPagamento: true,
     };
   }
 
@@ -180,6 +187,31 @@ export class EtapasService {
     );
 
     return { ok: true, motivo };
+  }
+
+  private async resolverCreditoObra(obra: {
+    obraId: string;
+    usuarioId: string;
+    creditoId: string | null;
+    credito: { creditoId: string; status: string; valorAprovado: number } | null;
+  }) {
+    if (obra.credito?.status === "ATIVO") {
+      return obra.credito;
+    }
+
+    const creditoAtivo = await this.prisma.credito.findFirst({
+      where: { usuarioId: obra.usuarioId, status: "ATIVO" },
+      orderBy: { criadoEm: "desc" },
+    });
+
+    if (creditoAtivo && !obra.creditoId) {
+      await this.prisma.obra.update({
+        where: { obraId: obra.obraId },
+        data: { creditoId: creditoAtivo.creditoId },
+      });
+    }
+
+    return creditoAtivo;
   }
 
   async atualizarStatus(etapaId: string, status: string, usuarioId: string, userTipo: string) {

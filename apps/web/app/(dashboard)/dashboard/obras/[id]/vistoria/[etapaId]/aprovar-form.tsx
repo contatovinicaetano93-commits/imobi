@@ -42,7 +42,7 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-      <h3 className="font-semibold text-gray-900 mb-4">Parecer do gestor</h3>
+      <h3 className="font-semibold text-gray-900 mb-4">Parecer técnico</h3>
       <textarea
         value={obs}
         onChange={(e) => setObs(e.target.value)}
@@ -69,7 +69,7 @@ export function AprovarEtapaForm({ etapaId, obraId, valorLiberacao }: Props) {
         </button>
       </div>
       <p className="text-xs text-gray-400 text-center mt-3">
-        Ao aprovar, {formatarBRL(valorLiberacao)} serão liberados automaticamente.
+        Ao aprovar, entra na fila SIPOC — Admin confirma o pagamento de {formatarBRL(valorLiberacao)}.
       </p>
     </div>
   );

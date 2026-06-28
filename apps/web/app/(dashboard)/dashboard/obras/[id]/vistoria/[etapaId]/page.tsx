@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ObraResumo, EvidenciaDetalhe } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
+import { useAuth } from "@/hooks/useAuth";
 import { AprovarEtapaForm } from "./aprovar-form";
 
 export default function VistoriaPage({ params }: { params: { id: string; etapaId: string } }) {
   const router = useRouter();
+  const { user } = useAuth();
   const [obra, setObra] = useState<ObraResumo | null>(null);
   const [evidencias, setEvidencias] = useState<EvidenciaDetalhe[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,8 @@ export default function VistoriaPage({ params }: { params: { id: string; etapaId
 
   const etapa = obra.etapas?.find((e) => e.id === params.etapaId);
   if (!etapa) return <div className="p-8 text-red-600">Etapa não encontrada.</div>;
+
+  const podeAprovar = user?.role === "ADMIN" || user?.role === "ENGENHEIRO";
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -84,11 +88,18 @@ export default function VistoriaPage({ params }: { params: { id: string; etapaId
         )}
       </div>
 
-      <AprovarEtapaForm
-        etapaId={params.etapaId}
-        obraId={params.id}
-        valorLiberacao={Number(etapa.valorLiberacao)}
-      />
+      {podeAprovar ? (
+        <AprovarEtapaForm
+          etapaId={params.etapaId}
+          obraId={params.id}
+          valorLiberacao={Number(etapa.valorLiberacao)}
+        />
+      ) : (
+        <div className="bg-gray-50 rounded-2xl border border-gray-100 p-6 text-sm text-gray-600">
+          Somente engenheiro ou admin podem aprovar esta vistoria. A liberação entra na fila SIPOC após
+          aprovação técnica; o pagamento é confirmado manualmente pelo financeiro IMOBI.
+        </div>
+      )}
     </div>
   );
 }

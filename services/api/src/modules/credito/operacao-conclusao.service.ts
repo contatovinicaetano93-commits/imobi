@@ -40,7 +40,7 @@ export class OperacaoConclusaoService {
       etapas.length > 0 && etapas.every((e) => e.status === "CONCLUIDA");
 
     const pendentePagamento = await this.prisma.liberacaoParcela.count({
-      where: { creditoId, status: { in: ["PENDENTE", "AGUARDANDO_PAGAMENTO"] } },
+      where: { creditoId, status: { in: ["PENDENTE", "AGUARDANDO_PAGAMENTO", "PROCESSANDO"] } },
     });
 
     const totalmenteLiberado = valorLiberado >= valorAprovado * 0.999;
