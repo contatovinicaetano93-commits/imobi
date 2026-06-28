@@ -41,6 +41,8 @@ const ACTIVE_NAV_OVERRIDES: NavOverride[] = [
   { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'ADMIN', targetHref: '/dashboard/admin/obras' },
   { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'TOMADOR', targetHref: '/dashboard/obras' },
   { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/obras' },
+  { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'ENGENHEIRO', targetHref: '/dashboard/obras' },
+  { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'GESTOR_OBRA', targetHref: '/dashboard/obras' },
   { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'ENGENHEIRO', targetHref: '/dashboard/obras' },
   { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'GESTOR_OBRA', targetHref: '/dashboard/obras' },
   { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'GESTOR', targetHref: '/dashboard/gestor/etapas' },
@@ -62,6 +64,15 @@ const ACTIVE_NAV_OVERRIDES: NavOverride[] = [
 ];
 
 export type PanelId = AppRole;
+
+export type NavContext = {
+  /** Admin visualizando outro painel — mantém sidebar ao entrar em rotas compartilhadas */
+  adminPreview?: AppRole | null;
+  /** Obra aberta a partir do Centro de Comando admin (?from=admin) */
+  fromAdmin?: boolean;
+};
+
+export const ADMIN_PREVIEW_STORAGE_KEY = 'imobi_admin_preview';
 
 export type BreadcrumbItem = {
   label: string;
@@ -113,11 +124,30 @@ export function getDashboardSegment(path: string): string {
   return parts[1] ?? '';
 }
 
+/** Painel explícito na URL (admin previewing engenheiro/gestor/etc.) */
+export function getPanelFromPath(path: string): AppRole | null {
+  const seg = getDashboardSegment(path);
+  if (seg === 'engenheiro') return 'ENGENHEIRO';
+  if (seg === 'gestor') {
+    const sub = path.split('/').filter(Boolean)[2];
+    if (sub === 'kyc' || sub === 'etapas') return null;
+    return 'GESTOR';
+  }
+  if (seg === 'construtor' || CONSTRUTOR_PANEL_SEGMENTS.has(seg)) return 'CONSTRUTOR';
+  if (seg === 'comercial') return 'COMERCIAL';
+  if (seg === 'admin') return null;
+  return null;
+}
+
 /**
  * Define qual menu lateral exibir.
  * Cada perfil permanece no seu painel em rotas compartilhadas (padrão admin).
  */
-export function getNavRole(role: AppRole | null, path: string): AppRole | null {
+export function getNavRole(
+  role: AppRole | null,
+  path: string,
+  ctx?: NavContext,
+): AppRole | null {
   if (!role) return null;
 
   const r = normalizeRole(role) ?? role;
@@ -138,10 +168,17 @@ export function getNavRole(role: AppRole | null, path: string): AppRole | null {
   }
 
   if (r === 'ADMIN') {
+    const explicit = getPanelFromPath(path);
+    if (explicit) return explicit;
+
+    const preview = ctx?.adminPreview;
+    const fromAdmin = ctx?.fromAdmin === true;
+    if (preview && !fromAdmin && SHARED_SEGMENTS.has(seg)) {
+      return preview;
+    }
+
     if (SHARED_SEGMENTS.has(seg) || isRootDashboard(seg)) return 'ADMIN';
     if (CONSTRUTOR_PANEL_SEGMENTS.has(seg)) return 'CONSTRUTOR';
-    if (seg === 'engenheiro') return 'ENGENHEIRO';
-    if (seg === 'comercial') return 'COMERCIAL';
     return 'ADMIN';
   }
 
@@ -165,14 +202,18 @@ export function getNavRole(role: AppRole | null, path: string): AppRole | null {
 }
 
 /** Admin está visualizando outro painel de propósito (preview) */
-export function isAdminPreviewingPanel(role: AppRole | null, path: string): boolean {
-  return role === 'ADMIN' && getNavRole(role, path) !== 'ADMIN';
+export function isAdminPreviewingPanel(
+  role: AppRole | null,
+  path: string,
+  ctx?: NavContext,
+): boolean {
+  return role === 'ADMIN' && getNavRole(role, path, ctx) !== 'ADMIN';
 }
 
 /** Home do painel ativo na sidebar */
-export function getPanelHome(role: AppRole | null, path?: string): string {
+export function getPanelHome(role: AppRole | null, path?: string, ctx?: NavContext): string {
   if (!role) return '/dashboard';
-  const navRole = path ? getNavRole(role, path) : normalizeRole(role) ?? role;
+  const navRole = path ? getNavRole(role, path, ctx) : normalizeRole(role) ?? role;
   if (!navRole) return '/dashboard';
   return ROLE_HOME[navRole] ?? '/dashboard';
 }

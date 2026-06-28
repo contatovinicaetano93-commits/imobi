@@ -40,8 +40,9 @@ function expectNavRole(
   role: Parameters<typeof getNavRole>[0],
   path: string,
   expected: string,
+  ctx?: Parameters<typeof getNavRole>[2],
 ) {
-  const got = getNavRole(role, path);
+  const got = getNavRole(role, path, ctx);
   assert.equal(got, expected, `${role} @ ${path} → ${got}, esperado ${expected}`);
 }
 
@@ -50,14 +51,18 @@ function expectActive(
   path: string,
   items: { href: string }[],
   expected: string,
+  ctx?: Parameters<typeof getNavRole>[2],
 ) {
-  const navRole = getNavRole(role, path);
+  const navRole = getNavRole(role, path, ctx);
   const got = getActiveNavHref(path, navRole, items);
   assert.equal(got, expected, `active ${role} @ ${path} → ${got}, esperado ${expected}`);
 }
 
 expectNavRole('ADMIN', '/dashboard/fundos', 'ADMIN');
 expectNavRole('ADMIN', '/dashboard/obras/abc', 'ADMIN');
+expectNavRole('ADMIN', '/dashboard/obras', 'ENGENHEIRO', { adminPreview: 'ENGENHEIRO' });
+expectNavRole('ADMIN', '/dashboard/obras/abc', 'ENGENHEIRO', { adminPreview: 'ENGENHEIRO' });
+expectNavRole('ADMIN', '/dashboard/obras/abc', 'ADMIN', { adminPreview: 'ENGENHEIRO', fromAdmin: true });
 expectNavRole('GESTOR', '/dashboard/obras/abc', 'GESTOR');
 expectNavRole('GESTOR', '/dashboard/fundos', 'GESTOR');
 expectNavRole('GESTOR', '/dashboard/comite', 'GESTOR');
@@ -73,6 +78,8 @@ expectActive('ADMIN', '/dashboard/admin/comite', NAV.admin, '/dashboard/admin/co
 expectActive('ADMIN', '/dashboard/admin/kyc/abc', NAV.admin, '/dashboard/admin/kyc');
 expectActive('ADMIN', '/dashboard/admin/vistorias', NAV.admin, '/dashboard/admin/vistorias');
 expectActive('ADMIN', '/dashboard/obras/xyz', NAV.admin, '/dashboard/admin/obras');
+expectActive('ADMIN', '/dashboard/obras', NAV.engenheiro, '/dashboard/obras', { adminPreview: 'ENGENHEIRO' });
+expectActive('ADMIN', '/dashboard/obras/xyz', NAV.engenheiro, '/dashboard/obras', { adminPreview: 'ENGENHEIRO' });
 expectActive('GESTOR', '/dashboard/gestor/kyc/1', NAV.gestor, '/dashboard/gestor/kyc');
 expectActive('GESTOR', '/dashboard/obras/xyz', NAV.gestor, '/dashboard/gestor/etapas');
 expectActive('TOMADOR', '/dashboard/obras/xyz', NAV.tomador, '/dashboard/obras');

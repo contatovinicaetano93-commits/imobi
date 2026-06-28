@@ -8,9 +8,13 @@ import { useEffect, useState } from "react";
 import { normalizeRole, CLIENTE_BETA_LABEL } from "@/lib/role-permissions";
 import {
   ACCOUNT_NAV_HREFS,
+  ADMIN_PREVIEW_STORAGE_KEY,
   getActiveNavHref,
+  getDashboardSegment,
   getNavRole,
+  getPanelFromPath,
   isAdminPreviewingPanel,
+  type NavContext,
 } from "@/lib/panel-navigation";
 import { isMvpNavHref, BETA_MVP_MODE } from "@/lib/beta-mvp";
 import { JornadaGuard } from "@/components/dashboard/JornadaGuard";
@@ -92,8 +96,13 @@ const ROLE_META: Record<string, { label: string; accent: string }> = {
   ADMIN:       { label: "Admin",       accent: MINT },
 };
 
-function filterNav(role: UserRole, path: string, funcoesBloqueadas: string[]): NavItem[] {
-  const navRole = getNavRole(role, path);
+function filterNav(
+  role: UserRole,
+  path: string,
+  funcoesBloqueadas: string[],
+  navCtx?: NavContext,
+): NavItem[] {
+  const navRole = getNavRole(role, path, navCtx);
   const filtered = NAV.filter((item) => {
     if (!item.roles.includes(navRole)) return false;
     if (navRole !== "ADMIN" && item.funcao && funcoesBloqueadas.includes(item.funcao)) return false;
@@ -220,6 +229,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [funcoesBloqueadas, setFuncoesBloqueadas] = useState<string[]>([]);
   const [notifCount, setNotifCount] = useState(0);
+  const [adminPreview, setAdminPreview] = useState<UserRole>(null);
+  const [fromAdmin, setFromAdmin] = useState(false);
 
   useEffect(() => {
     // Role (and therefore nav + footer) come exclusively from the live API —
@@ -259,11 +270,48 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // Close drawer on route change
   useEffect(() => { setMobileOpen(false); }, [path]);
 
-  const navRole = getNavRole(role, path);
-  const visibleNav = filterNav(role, path, funcoesBloqueadas);
+  useEffect(() => {
+    setFromAdmin(new URLSearchParams(window.location.search).get("from") === "admin");
+  }, [path]);
+
+  // Admin previewing engenheiro/gestor: persist sidebar ao abrir rotas compartilhadas (/obras)
+  useEffect(() => {
+    if (role !== "ADMIN") {
+      setAdminPreview(null);
+      return;
+    }
+    if (fromAdmin) {
+      setAdminPreview(null);
+      return;
+    }
+
+    const panel = getPanelFromPath(path);
+    if (panel) {
+      try { sessionStorage.setItem(ADMIN_PREVIEW_STORAGE_KEY, panel); } catch { /* ignore */ }
+      setAdminPreview(panel as UserRole);
+      return;
+    }
+
+    if (getDashboardSegment(path) === "admin") {
+      try { sessionStorage.removeItem(ADMIN_PREVIEW_STORAGE_KEY); } catch { /* ignore */ }
+      setAdminPreview(null);
+      return;
+    }
+
+    try {
+      const stored = sessionStorage.getItem(ADMIN_PREVIEW_STORAGE_KEY) as UserRole | null;
+      setAdminPreview(stored);
+    } catch {
+      setAdminPreview(null);
+    }
+  }, [role, path, fromAdmin]);
+
+  const navCtx: NavContext = { adminPreview, fromAdmin };
+  const navRole = getNavRole(role, path, navCtx);
+  const visibleNav = filterNav(role, path, funcoesBloqueadas, navCtx);
   const activeHref = getActiveNavHref(path, navRole, visibleNav);
   const isActive = (href: string) => href === activeHref;
-  const isPreviewingOtherPanel = isAdminPreviewingPanel(role, path);
+  const isPreviewingOtherPanel = isAdminPreviewingPanel(role, path, navCtx);
 
   const meta = role ? ROLE_META[role] : null;
   const navMeta = navRole ? ROLE_META[navRole] : meta;
