@@ -6,6 +6,7 @@ assert.equal(GUIDED_STRICT_MODE, true);
 
 assert.equal(mvpSafeHref("/dashboard/credito", "GESTOR"), "/dashboard/credito");
 assert.equal(mvpSafeHref("/dashboard/kyc", "TOMADOR"), "/dashboard/kyc");
-assert.equal(isMvpRouteAllowed("/dashboard/obras", "GESTOR"), true);
+assert.equal(isMvpRouteAllowed("/dashboard/obras", "GESTOR"), false);
+assert.equal(isMvpRouteAllowed("/dashboard/gestor/kyc", "GESTOR"), true);
 
 console.log("✅ beta-mvp OK");

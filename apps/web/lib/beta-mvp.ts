@@ -49,10 +49,9 @@ export const MVP_TOMADOR_PREFIXES = [
   "/dashboard/notificacoes",
 ] as const;
 
-/** Gestor — fila KYC + etapas + vistoria em obras (deep link) */
+/** Gestor — indicadores agregados (sem rotas de obra do tomador) */
 export const MVP_GESTOR_PREFIXES = [
   "/dashboard/gestor",
-  "/dashboard/obras",
   "/dashboard/perfil",
   "/dashboard/notificacoes",
 ] as const;

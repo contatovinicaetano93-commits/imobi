@@ -42,6 +42,11 @@ const MINT = "#4ADE80";
 
 const SECTION_LABELS: Record<string, string> = { geral: "Jornada", operacao: "Operação", conta: "Conta" };
 
+function sectionLabel(section: string, navRole: UserRole | null): string {
+  if (navRole === "GESTOR" && section === "geral") return "Painel";
+  return SECTION_LABELS[section] ?? section;
+}
+
 const ROLE_META: Record<string, { label: string; accent: string }> = {
   CONSTRUTOR:  { label: CLIENTE_BETA_LABEL, accent: MINT },
   TOMADOR:     { label: CLIENTE_BETA_LABEL, accent: MINT },
@@ -130,6 +135,7 @@ function renderNav(
   activeFn: (href: string) => boolean,
   accent: string,
   notifCount: number,
+  navRole: UserRole | null,
   onNavigate?: () => void,
 ) {
   let lastSection = "";
@@ -148,7 +154,7 @@ function renderNav(
             padding: "1.25rem 0.75rem 0.35rem",
             fontFamily: "'Jost', sans-serif",
           }}>
-            {SECTION_LABELS[item.section!]}
+            {sectionLabel(item.section!, navRole)}
           </p>
         )}
         <Link
@@ -294,7 +300,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const jornadaEnabled =
     GUIDED_STRICT_MODE &&
     role != null &&
-    (role === "TOMADOR" || role === "CONSTRUTOR" || role === "GESTOR");
+    (role === "TOMADOR" || role === "CONSTRUTOR");
 
   const userFooter = (compact = false) => (
     <div>
@@ -382,7 +388,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
       )}
       <nav style={{ flex: 1, padding: "0 0.4rem", overflowY: "auto", display: "flex", flexDirection: "column" }}>
-        {roleLoading ? <NavSkeleton /> : renderNav(visibleNav, isActive, accent, notifCount, onNavigate)}
+        {roleLoading ? <NavSkeleton /> : renderNav(visibleNav, isActive, accent, notifCount, navRole, onNavigate)}
       </nav>
       {userFooter(!!onNavigate)}
     </>

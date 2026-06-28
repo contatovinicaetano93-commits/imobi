@@ -160,8 +160,8 @@ export function buildTomadorJourneySteps(input: {
     },
     {
       id: "aprovacao",
-      title: "Aguardar aprovação do gestor",
-      description: "KYC e etapas são analisados pelo fundo",
+      title: "Aguardar análise do IMOBI",
+      description: "Comitê e liberações são processados internamente",
       href: "/dashboard/construtor",
       done: temEtapaLiberada,
     },

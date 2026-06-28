@@ -19,6 +19,7 @@ import {
   Banknote,
   User,
   Bell,
+  BarChart3,
 } from "lucide-react";
 
 export type CanonicalRole =
@@ -78,7 +79,7 @@ export const CANONICAL_NAV: Record<string, NavItemDef[]> = {
   ],
   CONSTRUTOR: [], // preenchido abaixo
   GESTOR: [
-    { label: "Indicadores", href: "/dashboard/gestor", icon: Home, section: "geral" },
+    { label: "Visão geral", href: "/dashboard/gestor", icon: BarChart3, section: "geral" },
     { label: "KPI · KYC", href: "/dashboard/gestor/kyc", icon: FileCheck2, section: "operacao" },
     { label: "KPI · Etapas", href: "/dashboard/gestor/etapas", icon: Building2, section: "operacao" },
     ...ACCOUNT,
@@ -121,7 +122,6 @@ export const CANONICAL_PREFIXES: Record<string, readonly string[]> = {
   CONSTRUTOR: [],
   GESTOR: [
     "/dashboard/gestor",
-    "/dashboard/obras",
     "/dashboard/perfil",
     "/dashboard/notificacoes",
   ],

@@ -50,19 +50,15 @@ const tomadorConcluido = j({
 assert.equal(isJornadaPathAllowed('/dashboard/construtor', tomadorConcluido), true);
 assert.equal(isJornadaPathAllowed('/dashboard/obras/nova', tomadorConcluido), true);
 
-const gestorEtapas = j({
-  perfil: 'gestor',
-  passoAtual: 'gestor_etapas',
-  href: '/dashboard/gestor/etapas',
-});
-assert.equal(isJornadaPathAllowed('/dashboard/gestor/etapas', gestorEtapas), true);
-assert.equal(isJornadaPathAllowed('/dashboard/obras/x/vistoria/y', gestorEtapas), true);
-
 const gestorOk = j({
   perfil: 'gestor',
   passoAtual: 'gestor_ok',
   href: '/dashboard/gestor',
 });
+assert.equal(isJornadaPathAllowed('/dashboard/gestor', gestorOk), true);
+assert.equal(isJornadaPathAllowed('/dashboard/gestor/kyc', gestorOk), true);
+assert.equal(isJornadaPathAllowed('/dashboard/gestor/etapas', gestorOk), true);
+assert.equal(isJornadaPathAllowed('/dashboard/obras/x', gestorOk), false);
 assert.equal(isJornadaHubPath('/dashboard/gestor', gestorOk), true);
 assert.equal(isJornadaHubPath('/dashboard/gestor/etapas', gestorOk), false);
 

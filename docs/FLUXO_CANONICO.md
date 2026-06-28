@@ -41,7 +41,14 @@ GET /jornada → passo atual (redirect estrito)
 | KPI · KYC | `/dashboard/gestor/kyc` |
 | KPI · Etapas | `/dashboard/gestor/etapas` |
 
-Comitê, KYC operacional e liberações são **internos** (Admin / Engenheiro). O gestor **não participa** desses processos.
+Comitê, KYC operacional e liberações são **internos** (Admin / Engenheiro). O gestor **não participa** desses processos e **não acessa** rotas do tomador (`/dashboard/obras`, `/dashboard/credito`, etc.).
+
+## Tomador vs Gestor (copy)
+
+| Perfil | O que faz | O que vê |
+|--------|-----------|----------|
+| **Tomador** | Jornada guiada: KYC → viabilidade → obra → crédito → acompanhar | Análises feitas pelo **time IMOBI** |
+| **Gestor** | Nada operacional — só números | KPIs agregados, drill-down somente leitura |
 
 ## Engenheiro
 

@@ -147,10 +147,10 @@ export class JornadaService {
       titulo: "Indicadores de operação",
       descricao: `${partes.join(" · ")}. Somente leitura — sem aprovações nem comitê.`,
       href: "/dashboard/gestor",
-      concluido: pendencias === 0,
-      passosConcluidos: pendencias === 0 ? 1 : 0,
+      concluido: true,
+      passosConcluidos: 1,
       totalPassos: 1,
-      progressoPct: pendencias === 0 ? 100 : 40,
+      progressoPct: 100,
       fila: { kyc: filaKyc, etapas: filaEtapas },
     };
   }
@@ -242,7 +242,7 @@ export class JornadaService {
         passoAtual: "kyc",
         titulo: aguardando ? "Aguardando análise dos documentos" : "Enviar documentos (KYC)",
         descricao: aguardando
-          ? "Seu gestor está analisando. Você será notificado quando aprovado."
+          ? "O time IMOBI está analisando. Você será notificado quando aprovado."
           : kycStatus.status === "REJEITADO"
             ? "Alguns documentos foram rejeitados. Reenvie para continuar."
             : "RG, comprovante e selfie para liberar o crédito.",
@@ -314,8 +314,8 @@ export class JornadaService {
       return {
         perfil: "tomador",
         passoAtual: "aguardando",
-        titulo: "Aguardando aprovação do fundo",
-        descricao: "Seu pedido está com o gestor. Acompanhe por aqui.",
+        titulo: "Aguardando liberação",
+        descricao: "Seu crédito foi aprovado. Acompanhe liberações e etapas da obra por aqui.",
         href: "/dashboard/construtor",
         concluido: false,
         ...prog,

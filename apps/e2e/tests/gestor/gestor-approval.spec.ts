@@ -2,42 +2,27 @@ import { test, expect } from '@playwright/test';
 import { GESTOR } from '../../fixtures/auth.fixture';
 import { GestorPage } from '../../page-objects/GestorPage';
 
-const MOCK_JORNADA_GESTOR_KYC = {
-  perfil: 'gestor',
-  passoAtual: 'gestor_kyc',
-  titulo: 'Acompanhar fila KYC',
-  descricao: '2 documento(s) na fila — visualização somente leitura',
-  href: '/dashboard/gestor/kyc',
-  concluido: false,
-  passosConcluidos: 0,
-  totalPassos: 2,
-  progressoPct: 0,
-  fila: { kyc: 2, etapas: 0 },
-};
-
-test.describe('Gestor dashboard (MVP)', () => {
+test.describe('Gestor dashboard (KPI-only)', () => {
   test.use({ storageState: GESTOR.storageState });
 
-  test.beforeEach(async ({ page }) => {
-    await page.route('**/api/proxy/jornada**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(MOCK_JORNADA_GESTOR_KYC),
-      }),
+  test('shows operational KPI dashboard without journey UI', async ({ page }) => {
+    const gp = new GestorPage(page);
+    await gp.goto();
+    await expect(gp.pageHeading()).toBeVisible();
+    await expect(page.getByRole('link', { name: /Continuar/i })).toHaveCount(0);
+    await expect(page.getByText(/Seu próximo passo/i)).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: /KPIs da operação/i })).toBeVisible();
+  });
+
+  test('KPI cards link to drill-downs', async ({ page }) => {
+    await page.goto('/dashboard/gestor', { waitUntil: 'domcontentloaded', timeout: 120_000 });
+    await expect(page.getByRole('link', { name: /KYC na fila/i })).toHaveAttribute(
+      'href',
+      '/dashboard/gestor/kyc',
     );
-  });
-
-  test('shows next pending action', async ({ page }) => {
-    const gp = new GestorPage(page);
-    await gp.goto();
-    await expect(gp.nextStepHeading()).toContainText('KYC');
-    await expect(gp.continueButton()).toBeVisible();
-  });
-
-  test('continue links to kyc queue', async ({ page }) => {
-    const gp = new GestorPage(page);
-    await gp.goto();
-    await expect(gp.continueButton()).toHaveAttribute('href', '/dashboard/gestor/kyc');
+    await expect(page.getByRole('link', { name: /Etapas no pipe/i })).toHaveAttribute(
+      'href',
+      '/dashboard/gestor/etapas',
+    );
   });
 });

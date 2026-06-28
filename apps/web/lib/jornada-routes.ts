@@ -7,6 +7,10 @@ function isObrasPath(pathname: string): boolean {
   return pathname === "/dashboard/obras" || pathname.startsWith("/dashboard/obras/");
 }
 
+function isGestorPath(pathname: string): boolean {
+  return pathname === "/dashboard/gestor" || pathname.startsWith("/dashboard/gestor/");
+}
+
 /** Rotas sempre permitidas (conta). */
 function isAccountPath(pathname: string): boolean {
   return ACCOUNT_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -43,24 +47,8 @@ function isTomadorPathStrict(pathname: string, jornada: Jornada): boolean {
       return (
         pathname === "/dashboard/construtor" ||
         pathname.startsWith("/dashboard/credito") ||
-        pathname.startsWith("/dashboard/obras")
+        isObrasPath(pathname)
       );
-    default:
-      return false;
-  }
-}
-
-function isGestorPathStrict(pathname: string, jornada: Jornada): boolean {
-  const href = jornada.href;
-  if (pathname === href || pathname.startsWith(`${href}/`)) return true;
-
-  switch (jornada.passoAtual) {
-    case "gestor_kyc":
-      return pathname.startsWith("/dashboard/gestor/kyc");
-    case "gestor_etapas":
-      return pathname.startsWith("/dashboard/gestor/etapas") || isObrasPath(pathname);
-    case "gestor_ok":
-      return pathname === "/dashboard/gestor" || pathname.startsWith("/dashboard/gestor/");
     default:
       return false;
   }
@@ -68,23 +56,21 @@ function isGestorPathStrict(pathname: string, jornada: Jornada): boolean {
 
 /**
  * Rotas permitidas no fluxo guiado.
- * Lançamento: GUIDED_STRICT_MODE força passo-a-passo (tomador/gestor).
- * Beta legado: sidebar livre dentro do MVP quando BETA_MVP_MODE=true.
+ * Gestor: livre dentro de /dashboard/gestor/* (KPIs, sem jornada linear).
+ * Tomador: passo-a-passo quando GUIDED_STRICT_MODE=true.
  */
 export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolean {
   if (isAccountPath(pathname)) return true;
 
-  if (GUIDED_STRICT_MODE) {
-    if (jornada.perfil === "tomador") return isTomadorPathStrict(pathname, jornada);
-    if (jornada.perfil === "gestor") return isGestorPathStrict(pathname, jornada);
-  } else {
-    if (jornada.perfil === "tomador") {
-      return isMvpRouteAllowed(pathname, "TOMADOR");
-    }
-    if (jornada.perfil === "gestor") {
-      return isMvpRouteAllowed(pathname, "GESTOR");
-    }
+  if (jornada.perfil === "gestor") {
+    return isGestorPath(pathname);
   }
+
+  if (GUIDED_STRICT_MODE) {
+    return isTomadorPathStrict(pathname, jornada);
+  }
+
+  if (isMvpRouteAllowed(pathname, "TOMADOR")) return true;
 
   const href = jornada.href;
   if (pathname === href || pathname.startsWith(`${href}/`)) return true;
@@ -114,20 +100,12 @@ export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolea
       );
     case "credito":
       return pathname.startsWith("/dashboard/credito");
-    case "gestor_kyc":
-      return pathname.startsWith("/dashboard/gestor/kyc");
-    case "gestor_etapas":
-      return (
-        pathname.startsWith("/dashboard/gestor/etapas") || isObrasPath(pathname)
-      );
-    case "gestor_ok":
-      return pathname === "/dashboard/gestor";
     default:
       return false;
   }
 }
 
-/** Hub do perfil — hero com próximo passo. */
+/** Hub do perfil — hero com próximo passo (tomador) ou painel KPI (gestor). */
 export function isJornadaHubPath(pathname: string, jornada: Jornada): boolean {
   if (jornada.perfil === "gestor") {
     return pathname === "/dashboard/gestor";

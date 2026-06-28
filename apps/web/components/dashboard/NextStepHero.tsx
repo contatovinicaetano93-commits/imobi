@@ -12,18 +12,21 @@ type Props = {
   variant?: "tomador" | "gestor";
 };
 
-/** Um único passo — estilo app de banco. */
+/** Um único passo — estilo app de banco (tomador) ou resumo KPI (gestor). */
 export function NextStepHero({ jornada, variant = "tomador" }: Props) {
   const accent = variant === "gestor" ? "#7c3aed" : ROYAL;
+  const isGestor = variant === "gestor";
   const waiting =
-    jornada.passoAtual === "aguardando" ||
-    (jornada.bloqueado != null && jornada.passoAtual !== "kyc" && jornada.passoAtual !== "gestor_kyc");
+    !isGestor &&
+    (jornada.passoAtual === "aguardando" ||
+      (jornada.bloqueado != null && jornada.passoAtual !== "kyc"));
   const passoNumero = getPassoNumero(jornada);
+  const heroLabel = isGestor ? "Painel do fundo" : jornada.concluido ? "Tudo certo" : "Seu próximo passo";
 
   return (
     <section
       className="mx-auto flex w-full max-w-lg flex-col gap-5"
-      aria-label="Próximo passo"
+      aria-label={isGestor ? "Painel do fundo" : "Próximo passo"}
     >
       <div
         className="overflow-hidden rounded-3xl text-white shadow-lg"
@@ -35,7 +38,7 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
       >
         <div className="p-6 sm:p-8">
           <p className="text-xs font-bold uppercase tracking-widest text-white/50">
-            {jornada.concluido ? "Tudo certo" : "Seu próximo passo"}
+            {heroLabel}
           </p>
           <h1
             className="mt-2 text-2xl font-bold leading-tight sm:text-3xl"
@@ -47,7 +50,7 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
             {jornada.descricao}
           </p>
 
-          {jornada.totalPassos > 0 && (
+          {jornada.totalPassos > 0 && !isGestor && (
             <div className="mt-6">
               <div className="mb-2 flex justify-between text-xs text-white/50">
                 <span>
@@ -68,7 +71,7 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
             </div>
           )}
 
-          {!jornada.concluido && !waiting && (
+          {!jornada.concluido && !waiting && !isGestor && (
             <Link
               href={jornada.href as "/"}
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold no-underline transition hover:opacity-95"
@@ -86,7 +89,28 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
             </div>
           )}
 
-          {jornada.concluido && (
+          {isGestor && jornada.fila && (jornada.fila.kyc > 0 || jornada.fila.etapas > 0) && (
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+              {jornada.fila.kyc > 0 && (
+                <Link
+                  href="/dashboard/gestor/kyc"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/20 py-3 text-sm font-semibold text-white no-underline hover:bg-white/10"
+                >
+                  KPI · KYC ({jornada.fila.kyc})
+                </Link>
+              )}
+              {jornada.fila.etapas > 0 && (
+                <Link
+                  href="/dashboard/gestor/etapas"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/20 py-3 text-sm font-semibold text-white no-underline hover:bg-white/10"
+                >
+                  KPI · Etapas ({jornada.fila.etapas})
+                </Link>
+              )}
+            </div>
+          )}
+
+          {jornada.concluido && !isGestor && (
             <Link
               href={jornada.href as "/"}
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 py-3.5 text-sm font-semibold text-white no-underline hover:bg-white/10"
@@ -104,15 +128,17 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
         </p>
       )}
 
-      {!jornada.concluido && (
+      {isGestor ? (
+        <p className="text-center text-xs text-gray-400">
+          Apenas dados e KPIs — sem participação em processos internos
+        </p>
+      ) : !jornada.concluido ? (
         <p className="text-center text-xs text-gray-400">
           Passo {passoNumero} de {jornada.totalPassos || 1}
           <span style={{ color: accent }}> · </span>
-          {variant === "gestor"
-            ? "Apenas dados e KPIs — sem participação em processos internos"
-            : "Siga na ordem para liberar seu crédito"}
+          Siga na ordem para liberar seu crédito
         </p>
-      )}
+      ) : null}
     </section>
   );
 }

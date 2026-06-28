@@ -1,15 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ManagerStats } from "@/lib/api";
 import Link from "next/link";
-import { BarChart3, AlertTriangle, ShieldCheck } from "lucide-react";
+import {
+  BarChart3,
+  AlertTriangle,
+  Building2,
+  FileCheck2,
+  Clock,
+  ChevronRight,
+  RefreshCw,
+} from "lucide-react";
+import {
+  managerApi,
+  type EtapaPendente,
+  type KycPendente,
+  type ManagerStats,
+} from "@/lib/api";
 import { fetchManagerDashboard } from "@/lib/fetch-manager-dashboard";
-import { PanelSection } from "@/components/dashboard/PanelSection";
-import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
-import { mvpSafeHref, BETA_MVP_MODE, GUIDED_STRICT_MODE } from "@/lib/beta-mvp";
-import { JornadaHeroStrip } from "@/components/dashboard/JornadaHeroStrip";
-import { buildGestorTabs } from "./_components/gestor-panel-config";
+import { formatarBRL } from "@imbobi/core";
 
 const ZERO_STATS: ManagerStats = {
   filaAprovacoes: 0,
@@ -18,95 +27,104 @@ const ZERO_STATS: ManagerStats = {
   obrasAtivas: 0,
 };
 
-function StatCard({
+function KpiCard({
   label,
   value,
-  color,
+  hint,
   href,
+  tone,
 }: {
   label: string;
-  value: number;
-  color: "red" | "yellow" | "green";
+  value: number | string;
+  hint?: string;
   href: string;
+  tone: "neutral" | "warn" | "critical" | "ok";
 }) {
-  const bgColor = color === "red" ? "bg-red-50" : color === "yellow" ? "bg-yellow-50" : "bg-green-50";
-  const textColor = color === "red" ? "text-red-600" : color === "yellow" ? "text-yellow-600" : "text-green-600";
-  const borderColor =
-    color === "red"
-      ? "border-red-100 focus:ring-red-500"
-      : color === "yellow"
-        ? "border-yellow-100 focus:ring-yellow-500"
-        : "border-green-100 focus:ring-green-500";
+  const tones = {
+    neutral: "border-gray-100 bg-white",
+    warn: "border-amber-100 bg-amber-50/60",
+    critical: "border-red-100 bg-red-50/60",
+    ok: "border-emerald-100 bg-emerald-50/60",
+  };
+  const valueTone = {
+    neutral: "text-gray-900",
+    warn: "text-amber-700",
+    critical: "text-red-700",
+    ok: "text-emerald-700",
+  };
 
   return (
-    <Link href={href as "/dashboard/gestor"}>
-      <div
-        className={`${bgColor} rounded-2xl border border-gray-100 p-4 sm:p-6 cursor-pointer hover:shadow-md transition-shadow min-h-32 sm:min-h-auto flex flex-col justify-center focus:outline-none focus:ring-2 ${borderColor} focus:ring-offset-2`}
-        role="link"
-        tabIndex={0}
-        aria-label={`${label}: ${value}`}
-      >
-        <p className="text-xs sm:text-sm text-gray-600 mb-2">{label}</p>
-        <p className={`text-2xl sm:text-3xl font-bold ${textColor}`}>{value}</p>
-      </div>
+    <Link
+      href={href as "/dashboard/gestor"}
+      className={`group block rounded-2xl border p-5 shadow-sm transition hover:shadow-md ${tones[tone]}`}
+    >
+      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
+      <p className={`mt-2 text-3xl font-bold tabular-nums ${valueTone[tone]}`}>{value}</p>
+      {hint ? <p className="mt-2 text-xs text-gray-500">{hint}</p> : null}
+      <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-violet-700 opacity-0 transition group-hover:opacity-100">
+        Ver detalhes <ChevronRight className="h-3.5 w-3.5" />
+      </span>
     </Link>
   );
 }
 
-function StatSkeleton() {
+function ListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="bg-gray-50 rounded-2xl border border-gray-100 p-4 sm:p-6 animate-pulse min-h-32">
-      <div className="h-3 bg-gray-200 rounded w-2/5 mb-4" />
-      <div className="h-8 bg-gray-200 rounded w-1/3" />
+    <div className="space-y-2">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="h-14 animate-pulse rounded-xl bg-gray-100" />
+      ))}
     </div>
   );
 }
 
+function pipeTone(count: number): "ok" | "warn" | "critical" {
+  if (count > 10) return "critical";
+  if (count > 5) return "warn";
+  return "ok";
+}
+
 export default function GestorPage() {
   const [stats, setStats] = useState<ManagerStats | null>(null);
+  const [etapas, setEtapas] = useState<EtapaPendente[]>([]);
+  const [kyc, setKyc] = useState<KycPendente[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadStats = () => {
+  const load = () => {
     setLoading(true);
     setError(null);
-    fetchManagerDashboard()
-      .then(setStats)
+    Promise.all([
+      fetchManagerDashboard(),
+      managerApi.listarEtapasPendentes(5, 0, { status: "pendente" }).catch(() => ({ etapas: [], total: 0 })),
+      managerApi.listarKycPendentes(5, 0).catch(() => ({ documentos: [], total: 0 })),
+    ])
+      .then(([dashboard, etapasRes, kycRes]) => {
+        setStats(dashboard);
+        setEtapas(etapasRes.etapas ?? []);
+        setKyc(kycRes.documentos ?? []);
+      })
       .catch((err: unknown) => {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : typeof err === "string"
-              ? err
-              : "Erro ao carregar indicadores";
-        setError(msg);
+        setError(err instanceof Error ? err.message : "Erro ao carregar indicadores");
       })
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    loadStats();
+    load();
   }, []);
 
   const s = stats ?? ZERO_STATS;
-  const etapasHref = "/dashboard/gestor/etapas";
-  const kycHref = "/dashboard/gestor/kyc";
-  const obrasHref = mvpSafeHref("/dashboard/obras", "GESTOR");
-  const gestorTabs = buildGestorTabs(BETA_MVP_MODE);
   const filaTotal = s.filaAprovacoes + s.filaKyc;
+  const valorPipe = etapas.reduce((acc, e) => acc + Number(e.valorLiberacao ?? 0), 0);
 
   if (loading && !stats) {
     return (
-      <div className="space-y-6 sm:space-y-8 p-4 sm:p-6">
-        <div className="bg-violet-50 border border-violet-100 rounded-2xl p-6 text-center">
-          <p className="text-sm font-semibold text-violet-900 mb-1">Carregando indicadores…</p>
-          <p className="text-xs text-violet-700">
-            Se demorar, a API no Render está acordando (plano gratuito). Pode levar até 2 minutos na primeira visita.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6">
+        <div className="h-20 animate-pulse rounded-2xl bg-gray-100" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <StatSkeleton key={i} />
+            <div key={i} className="h-32 animate-pulse rounded-2xl bg-gray-100" />
           ))}
         </div>
       </div>
@@ -114,113 +132,170 @@ export default function GestorPage() {
   }
 
   return (
-    <DashboardPanelShell
-      tabs={gestorTabs}
-      maxWidth="lg"
-      beforeTabs={
-        error ? (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <p className="text-sm text-red-700 font-medium">{error}</p>
-            <button
-              type="button"
-              onClick={loadStats}
-              className="text-sm font-semibold text-red-700 underline shrink-0"
+    <div className="mx-auto max-w-6xl space-y-8 p-4 pb-12 sm:p-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-violet-600">Gestor do fundo</p>
+          <h1 className="mt-1 text-2xl font-bold text-gray-900 sm:text-3xl">Operação em tempo real</h1>
+          <p className="mt-1 max-w-xl text-sm text-gray-500">
+            Números agregados da operação IMOBI — créditos, obras e filas internas. Somente leitura.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={load}
+          disabled={loading}
+          className="inline-flex items-center gap-2 self-start rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          Atualizar
+        </button>
+      </header>
+
+      {error ? (
+        <div className="flex flex-col gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-red-700">{error}</p>
+          <button type="button" onClick={load} className="text-sm font-semibold text-red-700 underline">
+            Tentar novamente
+          </button>
+        </div>
+      ) : null}
+
+      {filaTotal > 10 ? (
+        <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+          <p className="text-sm text-red-800">
+            Pipe elevado — {filaTotal} itens aguardando processamento interno (KYC + etapas).
+          </p>
+        </div>
+      ) : null}
+
+      <section aria-label="Indicadores principais">
+        <div className="mb-4 flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-violet-600" />
+          <h2 className="text-sm font-bold uppercase tracking-wide text-gray-700">KPIs da operação</h2>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard
+            label="Créditos ativos"
+            value={s.creditosAtivos}
+            hint="Operações financiadas em andamento"
+            href="/dashboard/gestor/etapas"
+            tone="ok"
+          />
+          <KpiCard
+            label="Obras em execução"
+            value={s.obrasAtivas}
+            hint="Empreendimentos com obra ativa"
+            href="/dashboard/gestor/etapas"
+            tone="ok"
+          />
+          <KpiCard
+            label="KYC na fila"
+            value={s.filaKyc}
+            hint="Documentos aguardando análise interna"
+            href="/dashboard/gestor/kyc"
+            tone={pipeTone(s.filaKyc)}
+          />
+          <KpiCard
+            label="Etapas no pipe"
+            value={s.filaAprovacoes}
+            hint={
+              valorPipe > 0
+                ? `${formatarBRL(valorPipe)} aguardando vistoria/liberação`
+                : "Etapas aguardando vistoria"
+            }
+            href="/dashboard/gestor/etapas"
+            tone={pipeTone(s.filaAprovacoes)}
+          />
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-violet-600" />
+              <h2 className="font-semibold text-gray-900">Etapas recentes no pipe</h2>
+            </div>
+            <Link
+              href="/dashboard/gestor/etapas"
+              className="text-xs font-semibold text-violet-700 hover:underline"
             >
-              Tentar novamente
-            </button>
+              Ver todas
+            </Link>
           </div>
-        ) : undefined
-      }
-      tabContent={{
-        indicadores: (
-          <>
-            {GUIDED_STRICT_MODE && <JornadaHeroStrip variant="gestor" />}
-            <PanelSection
-              id="resumo-kpis"
-              title="KPIs de operação"
-              icon={<BarChart3 className="w-4 h-4 text-violet-600" />}
-              priority="primary"
-              badge={filaTotal > 0 ? filaTotal : undefined}
-              summary={`${s.creditosAtivos} créditos · ${s.obrasAtivas} obras · ${filaTotal} pendências no pipe`}
-              urgency={filaTotal > 10 ? "critical" : filaTotal > 0 ? "warning" : "none"}
-            >
-              <div className="space-y-4">
-                <div
-                  style={{
-                    background: "linear-gradient(135deg, #3b0764 0%, #4c1d95 100%)",
-                    borderRadius: 16,
-                    padding: "1.5rem 2rem",
-                    color: "white",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.35rem" }}>
-                        <ShieldCheck size={18} color="#a78bfa" />
-                        <p
-                          style={{
-                            fontSize: "0.68rem",
-                            color: "rgba(255,255,255,0.5)",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.1em",
-                            margin: 0,
-                          }}
-                        >
-                          Gestor do fundo
-                        </p>
-                      </div>
-                      <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0 0 0.4rem" }}>Somente leitura</h1>
-                      <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.65)", margin: 0 }}>
-                        Acompanhe números da operação. Aprovações, comitê e pagamentos são internos ao IMOBI.
+          {loading ? (
+            <ListSkeleton />
+          ) : etapas.length === 0 ? (
+            <p className="py-6 text-center text-sm text-gray-500">Nenhuma etapa pendente no momento.</p>
+          ) : (
+            <ul className="space-y-2">
+              {etapas.map((e) => (
+                <li key={e.etapaId}>
+                  <Link
+                    href={`/dashboard/gestor/etapas/${e.etapaId}`}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-3 py-3 hover:bg-gray-50"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-900">{e.obra.nome}</p>
+                      <p className="truncate text-xs text-gray-500">
+                        {e.nome} · {formatarBRL(Number(e.valorLiberacao ?? 0))}
                       </p>
                     </div>
-                  </div>
-                  {(s.filaAprovacoes > 10 || s.filaKyc > 10) && (
-                    <div
-                      style={{
-                        marginTop: "1rem",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        background: "rgba(239,68,68,0.2)",
-                        border: "1px solid rgba(239,68,68,0.3)",
-                        borderRadius: 8,
-                        padding: "0.5rem 0.75rem",
-                      }}
-                    >
-                      <AlertTriangle size={14} color="#f87171" />
-                      <p style={{ fontSize: "0.75rem", color: "#fca5a5", margin: 0 }}>
-                        Pipe elevado — mais de 10 itens aguardando processamento interno
+                    <span className="inline-flex shrink-0 items-center gap-1 text-xs text-amber-700">
+                      <Clock className="h-3.5 w-3.5" />
+                      Pipe
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <FileCheck2 className="h-4 w-4 text-violet-600" />
+              <h2 className="font-semibold text-gray-900">KYC recente na fila</h2>
+            </div>
+            <Link href="/dashboard/gestor/kyc" className="text-xs font-semibold text-violet-700 hover:underline">
+              Ver todos
+            </Link>
+          </div>
+          {loading ? (
+            <ListSkeleton />
+          ) : kyc.length === 0 ? (
+            <p className="py-6 text-center text-sm text-gray-500">Nenhum documento KYC pendente.</p>
+          ) : (
+            <ul className="space-y-2">
+              {kyc.map((doc) => (
+                <li key={doc.kycDocumentoId}>
+                  <Link
+                    href={`/dashboard/gestor/kyc/${doc.kycDocumentoId}`}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-3 py-3 hover:bg-gray-50"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-900">{doc.usuario.nome}</p>
+                      <p className="truncate text-xs text-gray-500">
+                        {doc.tipo} · {doc.usuario.email}
                       </p>
                     </div>
-                  )}
-                </div>
+                    <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                      Pendente
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <StatCard
-                    label="Etapas no pipe"
-                    value={s.filaAprovacoes}
-                    color={s.filaAprovacoes > 10 ? "red" : s.filaAprovacoes > 5 ? "yellow" : "green"}
-                    href={etapasHref}
-                  />
-                  <StatCard
-                    label="KYC pendente"
-                    value={s.filaKyc}
-                    color={s.filaKyc > 10 ? "red" : s.filaKyc > 5 ? "yellow" : "green"}
-                    href={kycHref}
-                  />
-                  <StatCard label="Créditos ativos" value={s.creditosAtivos} color="green" href={etapasHref} />
-                  <StatCard label="Obras em execução" value={s.obrasAtivas} color="green" href={obrasHref} />
-                </div>
-
-                <p className="text-xs text-gray-500 text-center pt-2">
-                  Clique em um indicador para ver detalhes agregados — sem ações de aprovação.
-                </p>
-              </div>
-            </PanelSection>
-          </>
-        ),
-      }}
-    />
+      <p className="text-center text-xs text-gray-400">
+        Aprovações, comitê e pagamentos são internos ao IMOBI — este painel é apenas informativo.
+      </p>
+    </div>
   );
 }

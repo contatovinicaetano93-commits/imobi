@@ -68,7 +68,8 @@ describe("JornadaService", () => {
       expect(j.href).toBe("/dashboard/gestor");
       expect(j.fila).toEqual({ kyc: 3, etapas: 5 });
       expect(j.titulo).toContain("Indicadores");
-      expect(j.concluido).toBe(false);
+      expect(j.concluido).toBe(true);
+      expect(j.progressoPct).toBe(100);
     });
 
     it("marca concluído quando filas zeradas", async () => {

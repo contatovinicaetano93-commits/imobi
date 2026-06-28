@@ -45,7 +45,6 @@ const ACTIVE_NAV_OVERRIDES: NavOverride[] = [
   { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'GESTOR_OBRA', targetHref: '/dashboard/obras' },
   { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'ENGENHEIRO', targetHref: '/dashboard/obras' },
   { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'GESTOR_OBRA', targetHref: '/dashboard/obras' },
-  { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'GESTOR', targetHref: '/dashboard/gestor/etapas' },
   { pattern: /^\/dashboard\/credito/, navRole: 'TOMADOR', targetHref: '/dashboard/credito' },
   { pattern: /^\/dashboard\/credito/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/credito' },
   { pattern: /^\/dashboard\/kyc/, navRole: 'TOMADOR', targetHref: '/dashboard/kyc' },

@@ -81,7 +81,7 @@ expectActive('ADMIN', '/dashboard/obras/xyz', NAV.admin, '/dashboard/admin/obras
 expectActive('ADMIN', '/dashboard/obras', NAV.engenheiro, '/dashboard/obras', { adminPreview: 'ENGENHEIRO' });
 expectActive('ADMIN', '/dashboard/obras/xyz', NAV.engenheiro, '/dashboard/obras', { adminPreview: 'ENGENHEIRO' });
 expectActive('GESTOR', '/dashboard/gestor/kyc/1', NAV.gestor, '/dashboard/gestor/kyc');
-expectActive('GESTOR', '/dashboard/obras/xyz', NAV.gestor, '/dashboard/gestor/etapas');
+assert.equal(getActiveNavHref('/dashboard/obras/xyz', 'GESTOR', NAV.gestor), null);
 expectActive('TOMADOR', '/dashboard/obras/xyz', NAV.tomador, '/dashboard/obras');
 expectActive('TOMADOR', '/dashboard/credito/solicitar', NAV.tomador, '/dashboard/credito');
 expectActive('ENGENHEIRO', '/dashboard/obras/xyz/vistoria/1', NAV.engenheiro, '/dashboard/obras');

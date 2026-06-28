@@ -7,7 +7,7 @@ import { GUIDED_STRICT_MODE } from "@/lib/beta-mvp";
 import { isJornadaPathAllowed } from "@/lib/jornada-routes";
 import { useJornadaOptional } from "@/hooks/jornada-context";
 
-const GUIDED_ROLES = new Set(["TOMADOR", "CONSTRUTOR", "GESTOR", "GESTOR_FUNDO"]);
+const GUIDED_ROLES = new Set(["TOMADOR", "CONSTRUTOR"]);
 const HUB_PATHS = new Set(["/dashboard/construtor", "/dashboard/gestor"]);
 
 type Props = {
@@ -16,7 +16,8 @@ type Props = {
 };
 
 /**
- * Fluxo guiado estrito (lançamento): redireciona tomador/gestor para o passo atual da jornada.
+ * Fluxo guiado estrito (lançamento): redireciona tomador para o passo atual da jornada.
+ * Gestor navega livremente entre KPIs (/dashboard/gestor/*).
  */
 export function JornadaGuard({ role, children }: Props) {
   const pathname = usePathname();
