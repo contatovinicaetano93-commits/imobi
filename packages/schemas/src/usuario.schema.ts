@@ -91,15 +91,11 @@ export type ContaBancariaEmpresaInput = z.infer<typeof ContaBancariaEmpresaSchem
 export const FUNCOES_PAINEL = [
   "obras",
   "credito",
-  "simulador",
-  "score",
+  "proposta-credito",
   "kyc",
   "notificacoes",
   "engenharia",
   "gestor",
-  "due-diligence",
-  "fundos",
-  "relatorios",
   "comercial",
   "construtor",
 ] as const;

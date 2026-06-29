@@ -58,9 +58,9 @@ Uma tela: `/dashboard/gestor`
 
 - DRE operacional (carteira, desembolso, pipe, saúde)
 - KPIs agregados
-- Amostras de KYC e etapas no pipe (scroll na mesma página)
+- Amostras de KYC e etapas no pipe (scroll na mesma página — âncoras `#secao-kyc` e `#secao-etapas`)
 
-Drill-down completo (opcional): `/dashboard/gestor/kyc`, `/dashboard/gestor/etapas` — sem item na nav.
+Rotas legadas `/dashboard/gestor/kyc` e `/dashboard/gestor/etapas` redirecionam para `/dashboard/gestor`.
 
 **API:** `GET /manager/dashboard` → KPIs + objeto `dre`.
 
@@ -75,7 +75,7 @@ Não cadastra obra. Rota `/dashboard/obras` permanece para leitura de evidência
 
 ## Comercial (fase 2)
 
-Rotas ativas; nav oculta até pós-launch.
+Nav oculta. Rotas bloqueadas até `NEXT_PUBLIC_COMERCIAL_ENABLED=true` (stub em `/dashboard/comercial`).
 
 ## Rotas legadas
 

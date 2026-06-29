@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   BarChart3,
   AlertTriangle,
@@ -96,9 +95,9 @@ function KpiCard({
   }
 
   return (
-    <Link href={href as "/dashboard/gestor"} className={className}>
+    <div className={className}>
       {footer}
-    </Link>
+    </div>
   );
 }
 
@@ -168,8 +167,8 @@ export default function GestorPage() {
     setError(null);
     Promise.all([
       fetchManagerDashboard(),
-      managerApi.listarEtapasPendentes(5, 0, { status: "pendente" }).catch(() => ({ etapas: [], total: 0 })),
-      managerApi.listarKycPendentes(5, 0).catch(() => ({ documentos: [], total: 0 })),
+      managerApi.listarEtapasPendentes(15, 0, { status: "pendente" }).catch(() => ({ etapas: [], total: 0 })),
+      managerApi.listarKycPendentes(15, 0).catch(() => ({ documentos: [], total: 0 })),
     ])
       .then(([dashboard, etapasRes, kycRes]) => {
         setStats(dashboard);
@@ -422,17 +421,9 @@ export default function GestorPage() {
           id="secao-etapas"
           className="scroll-mt-24 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
         >
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-violet-600" />
-              <h2 className="font-semibold text-gray-900">Etapas recentes no pipe</h2>
-            </div>
-            <Link
-              href="/dashboard/gestor/etapas"
-              className="text-xs font-semibold text-violet-700 hover:underline"
-            >
-              Ver todas
-            </Link>
+          <div className="mb-4 flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-violet-600" />
+            <h2 className="font-semibold text-gray-900">Etapas recentes no pipe</h2>
           </div>
           {loading ? (
             <ListSkeleton />
@@ -442,10 +433,7 @@ export default function GestorPage() {
             <ul className="space-y-2">
               {etapas.map((e) => (
                 <li key={e.etapaId}>
-                  <Link
-                    href={`/dashboard/gestor/etapas/${e.etapaId}`}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-3 py-3 hover:bg-gray-50"
-                  >
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-3 py-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-gray-900">{e.obra.nome}</p>
                       <p className="truncate text-xs text-gray-500">
@@ -456,7 +444,7 @@ export default function GestorPage() {
                       <Clock className="h-3.5 w-3.5" />
                       Pipe
                     </span>
-                  </Link>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -479,10 +467,7 @@ export default function GestorPage() {
             <ul className="space-y-2">
               {kyc.map((doc) => (
                 <li key={doc.kycDocumentoId}>
-                  <Link
-                    href={`/dashboard/gestor/kyc/${doc.kycDocumentoId}`}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-3 py-3 hover:bg-gray-50"
-                  >
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-3 py-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-gray-900">{doc.usuario.nome}</p>
                       <p className="truncate text-xs text-gray-500">
@@ -492,7 +477,7 @@ export default function GestorPage() {
                     <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
                       Pendente
                     </span>
-                  </Link>
+                  </div>
                 </li>
               ))}
             </ul>

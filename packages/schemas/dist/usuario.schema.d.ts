@@ -123,8 +123,8 @@ export declare const ContaBancariaEmpresaSchema: z.ZodObject<{
     contaPix?: string | undefined;
 }>;
 export type ContaBancariaEmpresaInput = z.infer<typeof ContaBancariaEmpresaSchema>;
-export declare const FUNCOES_PAINEL: readonly ["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"];
-export declare const FuncaoPainelEnum: z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>;
+export declare const FUNCOES_PAINEL: readonly ["obras", "credito", "proposta-credito", "kyc", "notificacoes", "engenharia", "gestor", "comercial", "construtor"];
+export declare const FuncaoPainelEnum: z.ZodEnum<["obras", "credito", "proposta-credito", "kyc", "notificacoes", "engenharia", "gestor", "comercial", "construtor"]>;
 export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
     nome: z.ZodOptional<z.ZodString>;
     email: z.ZodOptional<z.ZodString>;
@@ -133,7 +133,7 @@ export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
     novaSenha: z.ZodOptional<z.ZodString>;
     tipo: z.ZodOptional<z.ZodEnum<["TOMADOR", "GESTOR_OBRA", "ADMIN", "PARCEIRO", "GESTOR", "GESTOR_FUNDO", "ENGENHEIRO", "COMERCIAL", "CONSTRUTOR"]>>;
     bloqueado: z.ZodOptional<z.ZodBoolean>;
-    funcoesBloqueadas: z.ZodOptional<z.ZodArray<z.ZodEnum<["obras", "credito", "simulador", "score", "kyc", "notificacoes", "engenharia", "gestor", "due-diligence", "fundos", "relatorios", "comercial", "construtor"]>, "many">>;
+    funcoesBloqueadas: z.ZodOptional<z.ZodArray<z.ZodEnum<["obras", "credito", "proposta-credito", "kyc", "notificacoes", "engenharia", "gestor", "comercial", "construtor"]>, "many">>;
 }, "strip", z.ZodTypeAny, {
     tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
     nome?: string | undefined;
@@ -142,7 +142,7 @@ export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
     novaSenha?: string | undefined;
     kycStatus?: "APROVADO" | "PENDENTE" | "EM_VERIFICACAO" | "REJEITADO" | undefined;
     bloqueado?: boolean | undefined;
-    funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
+    funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "proposta-credito" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "construtor")[] | undefined;
 }, {
     tipo?: "PARCEIRO" | "COMERCIAL" | "TOMADOR" | "GESTOR_OBRA" | "ADMIN" | "GESTOR" | "GESTOR_FUNDO" | "ENGENHEIRO" | "CONSTRUTOR" | undefined;
     nome?: string | undefined;
@@ -151,7 +151,7 @@ export declare const AtualizarUsuarioAdminSchema: z.ZodObject<{
     novaSenha?: string | undefined;
     kycStatus?: "APROVADO" | "PENDENTE" | "EM_VERIFICACAO" | "REJEITADO" | undefined;
     bloqueado?: boolean | undefined;
-    funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "simulador" | "score" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "due-diligence" | "fundos" | "relatorios" | "construtor")[] | undefined;
+    funcoesBloqueadas?: ("comercial" | "obras" | "credito" | "proposta-credito" | "kyc" | "notificacoes" | "engenharia" | "gestor" | "construtor")[] | undefined;
 }>;
 export type TipoUsuario = z.infer<typeof TipoUsuarioEnum>;
 export type KycStatus = z.infer<typeof KycStatusEnum>;

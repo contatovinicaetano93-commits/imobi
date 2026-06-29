@@ -92,20 +92,20 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
           {isGestor && jornada.fila && (jornada.fila.kyc > 0 || jornada.fila.etapas > 0) && (
             <div className="mt-6 flex flex-col gap-2 sm:flex-row">
               {jornada.fila.kyc > 0 && (
-                <Link
-                  href="/dashboard/gestor/kyc"
+                <a
+                  href="#secao-kyc"
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/20 py-3 text-sm font-semibold text-white no-underline hover:bg-white/10"
                 >
                   KPI · KYC ({jornada.fila.kyc})
-                </Link>
+                </a>
               )}
               {jornada.fila.etapas > 0 && (
-                <Link
-                  href="/dashboard/gestor/etapas"
+                <a
+                  href="#secao-etapas"
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/20 py-3 text-sm font-semibold text-white no-underline hover:bg-white/10"
                 >
                   KPI · Etapas ({jornada.fila.etapas})
-                </Link>
+                </a>
               )}
             </div>
           )}

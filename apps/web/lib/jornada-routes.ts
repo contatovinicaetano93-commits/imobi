@@ -8,7 +8,7 @@ function isObrasPath(pathname: string): boolean {
 }
 
 function isGestorPath(pathname: string): boolean {
-  return pathname === "/dashboard/gestor" || pathname.startsWith("/dashboard/gestor/");
+  return pathname === "/dashboard/gestor";
 }
 
 /** Rotas sempre permitidas (conta). */
@@ -56,7 +56,7 @@ function isTomadorPathStrict(pathname: string, jornada: Jornada): boolean {
 
 /**
  * Rotas permitidas no fluxo guiado.
- * Gestor: livre dentro de /dashboard/gestor/* (KPIs, sem jornada linear).
+ * Gestor: apenas `/dashboard/gestor` (KPIs na mesma tela).
  * Tomador: passo-a-passo quando GUIDED_STRICT_MODE=true.
  */
 export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolean {

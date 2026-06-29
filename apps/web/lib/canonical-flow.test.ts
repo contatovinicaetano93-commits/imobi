@@ -8,6 +8,8 @@ import {
 assert.equal(resolveLegacyRedirect("/dashboard/score"), "/dashboard/construtor");
 assert.equal(resolveLegacyRedirect("/dashboard/fundos"), "/dashboard/gestor");
 assert.equal(resolveLegacyRedirect("/dashboard/gestor/due-diligence/nova"), "/dashboard/gestor");
+assert.equal(resolveLegacyRedirect("/dashboard/gestor/kyc"), "/dashboard/gestor");
+assert.equal(resolveLegacyRedirect("/dashboard/gestor/etapas/abc"), "/dashboard/gestor");
 assert.equal(resolveLegacyRedirect("/dashboard/comite/solicitar"), "/dashboard/credito/solicitar");
 
 const adminNav = getCanonicalNav("ADMIN");
@@ -44,6 +46,8 @@ assert.equal(
   isCanonicalRouteAllowed("/dashboard/admin", "ADMIN"),
   true,
 );
+assert.equal(isCanonicalRouteAllowed("/dashboard/comercial/leads", "COMERCIAL"), false);
+assert.equal(isCanonicalRouteAllowed("/dashboard/comercial", "COMERCIAL"), true);
 
 const tomadorNav = getCanonicalNav("TOMADOR");
 assert.ok(tomadorNav.some((n) => n.href === "/dashboard/construtor"));

@@ -147,24 +147,23 @@ test.describe('Obras workflow — gestor MVP', () => {
     );
   });
 
-  test('jornada aponta fila de etapas do gestor', async ({ page }) => {
+  test('jornada aponta seção de etapas no painel único', async ({ page }) => {
     await page.goto('/dashboard/gestor', { waitUntil: 'domcontentloaded' });
     const hero = page.getByRole('region', { name: 'Próximo passo' });
     await expect(hero).toBeVisible({ timeout: 60_000 });
     await expect(hero.getByRole('heading', { level: 1 })).toContainText(/etapas/i);
-    await expect(page.getByRole('link', { name: /Continuar/i })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: /KPI · Etapas/i })).toHaveAttribute(
       'href',
-      '/dashboard/gestor/etapas',
+      '#secao-etapas',
     );
   });
 
-  test('fila de etapas lista operação no pipe', async ({ page }) => {
-    await page.goto('/dashboard/gestor/etapas', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Monitoramento de operações' })).toBeVisible({
+  test('pipe de etapas visível na página única do gestor', async ({ page }) => {
+    await page.goto('/dashboard/gestor', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { name: 'Etapas recentes no pipe' })).toBeVisible({
       timeout: 60_000,
     });
     await expect(page.getByText(MOCK_OBRA_NOME)).toBeVisible();
     await expect(page.getByText('Estrutura')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Visualizar' })).toBeVisible();
   });
 });

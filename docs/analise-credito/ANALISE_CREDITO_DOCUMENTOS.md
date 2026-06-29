@@ -236,16 +236,16 @@ Hoje não há upload estruturado na plataforma para este pacote completo — ape
 
 | Capacidade | Status | Observação |
 |------------|--------|------------|
-| Wizard Due Diligence (`/dashboard/gestor/due-diligence/nova`) | Parcial | 7 passos: ficha, unidades, apresentação, recebíveis, DRE, organograma, cronograma |
+| Wizard Due Diligence (gestor) | Removido (fase 3) | Substituído por dossiês (`/dossies`) e fluxo admin |
+| API `due-diligence` (legado) | Removido | Usar módulo `dossies` |
 | Seleção estágio obra (novo vs andamento) | Ausente | Deve ser o primeiro passo do fluxo futuro |
 | Upload PDF checklist | Ausente | Hoje manual |
 | Import Excel Ficha | Ausente | Hoje manual |
 | Abas grupo (Landbank, obras grupo) | Ausente | Só na planilha |
-| Itens engenharia 11–14 (andamento) | Parcial | Cronograma no wizard; falta medição terceiro, comparativo, saldo |
+| Itens engenharia 11–14 (andamento) | Parcial | Cronograma legado; falta medição terceiro, comparativo, saldo |
 | Posição financeira SPE 20–22 | Ausente | Crítico para andamento |
-| API `due-diligence` | Básica | `payload` JSON genérico; sem validação por item |
 
-O wizard existente é um **protótipo** alinhado à Ficha, não ao checklist PDF completo.
+O wizard legado foi removido na fase 3; dossiês canônicos em `dossies`.
 
 ---
 
@@ -316,8 +316,7 @@ O wizard existente é um **protótipo** alinhado à Ficha, não ao checklist PDF
 
 - Templates: `docs/analise-credito/templates/`
 - JSON checklist: `docs/analise-credito/checklist-por-estagio.json`
-- Wizard atual: `apps/web/app/(dashboard)/dashboard/gestor/due-diligence/nova/page.tsx`
-- API: `services/api/src/modules/due-diligence/`
+- Dossiês canônicos: `services/api/src/modules/dossies/`
 
 ---
 

@@ -47,7 +47,7 @@ function expectActive(
 expectNavRole('ADMIN', '/dashboard/gestor', 'GESTOR');
 expectNavRole('GESTOR', '/dashboard/gestor/kyc/1', 'GESTOR');
 expectNavRole('TOMADOR', '/dashboard/credito/solicitar', 'TOMADOR');
-expectNavRole('ADMIN', '/dashboard/gestor/kyc', 'ADMIN');
+expectNavRole('ADMIN', '/dashboard/gestor/kyc', 'GESTOR');
 expectNavRole('ADMIN', '/dashboard/admin/kyc/abc', 'ADMIN');
 
 expectActive('ADMIN', '/dashboard/admin/kyc/abc', NAV.admin, '/dashboard/admin');

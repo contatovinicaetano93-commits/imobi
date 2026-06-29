@@ -9,17 +9,14 @@ test.describe('Admin KYC routing (sem painel gestor)', () => {
     await seedAuthCookies(context, ADMIN_EMAIL, ADMIN_PASSWORD);
   });
 
-  test('admin em /dashboard/gestor/kyc redireciona para /dashboard/admin/kyc', async ({ page }) => {
+  test('rotas legadas gestor/kyc redirecionam para painel único', async ({ page }) => {
     await page.goto('/dashboard/gestor/kyc', { waitUntil: 'domcontentloaded' });
-    await page.waitForURL(/\/dashboard\/admin\/kyc/, { timeout: 30_000 });
-    await expect(page.getByRole('link', { name: 'Centro de Comando' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Fila KYC — Aprovação' })).toBeVisible();
+    await page.waitForURL(/\/dashboard\/gestor\/?$/, { timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: /Operação do fundo/i })).toBeVisible();
   });
 
-  test('admin em /dashboard/gestor/etapas redireciona para /dashboard/admin/vistorias', async ({
-    page,
-  }) => {
+  test('rotas legadas gestor/etapas redirecionam para painel único', async ({ page }) => {
     await page.goto('/dashboard/gestor/etapas', { waitUntil: 'domcontentloaded' });
-    await page.waitForURL(/\/dashboard\/admin\/vistorias/, { timeout: 30_000 });
+    await page.waitForURL(/\/dashboard\/gestor\/?$/, { timeout: 30_000 });
   });
 });

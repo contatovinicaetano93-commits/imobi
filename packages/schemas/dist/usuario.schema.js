@@ -81,15 +81,11 @@ exports.ContaBancariaEmpresaSchema = zod_1.z.object({
 exports.FUNCOES_PAINEL = [
     "obras",
     "credito",
-    "simulador",
-    "score",
+    "proposta-credito",
     "kyc",
     "notificacoes",
     "engenharia",
     "gestor",
-    "due-diligence",
-    "fundos",
-    "relatorios",
     "comercial",
     "construtor",
 ];

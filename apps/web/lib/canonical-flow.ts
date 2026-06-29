@@ -18,6 +18,10 @@ import {
   BarChart3,
 } from "lucide-react";
 
+/** Comercial — fase 2; ativar com NEXT_PUBLIC_COMERCIAL_ENABLED=true */
+export const COMERCIAL_LAUNCH_ENABLED =
+  process.env.NEXT_PUBLIC_COMERCIAL_ENABLED === "true";
+
 export type CanonicalRole =
   | "TOMADOR"
   | "CONSTRUTOR"
@@ -49,6 +53,8 @@ export const LEGACY_PREFIX_REDIRECTS: Array<{ prefix: string; to: string }> = [
   { prefix: "/dashboard/fundos", to: "/dashboard/gestor" },
   { prefix: "/dashboard/relatorios", to: "/dashboard/admin" },
   { prefix: "/dashboard/gestor/due-diligence", to: "/dashboard/gestor" },
+  { prefix: "/dashboard/gestor/kyc", to: "/dashboard/gestor" },
+  { prefix: "/dashboard/gestor/etapas", to: "/dashboard/gestor" },
   { prefix: "/dashboard/gestor/carteira", to: "/dashboard/gestor" },
   { prefix: "/dashboard/gestor/comite", to: "/dashboard/gestor" },
   { prefix: "/dashboard/engenheiro/checklist", to: "/dashboard/engenheiro/vistoria" },
@@ -166,6 +172,14 @@ export function isCanonicalRouteAllowed(pathname: string, role: string | null): 
 
   const legacy = resolveLegacyRedirect(pathname);
   if (legacy) return true; // middleware redireciona antes
+
+  if (!COMERCIAL_LAUNCH_ENABLED && pathname.startsWith("/dashboard/comercial/")) {
+    return false;
+  }
+
+  if (role === "GESTOR" && pathname.startsWith("/dashboard/gestor/")) {
+    return false;
+  }
 
   if (!role) return matchesPrefix(pathname, ["/dashboard/perfil", "/dashboard/notificacoes"]);
 

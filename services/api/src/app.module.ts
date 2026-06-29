@@ -27,7 +27,6 @@ import { AdminModule } from "./modules/admin/admin.module";
 import { PushNotificacoesModule } from "./modules/push-notificacoes/push-notificacoes.module";
 import { VistoriaModule } from "./modules/vistoria/vistoria.module";
 import { SetupModule } from "./modules/setup/setup.module";
-import { DueDiligenceModule } from "./modules/due-diligence/due-diligence.module";
 import { DossiesModule } from "./modules/dossies/dossies.module";
 import { PropostasModule } from "./modules/propostas/propostas.module";
 import { DocumentosModule } from "./modules/documentos/documentos.module";
@@ -116,7 +115,6 @@ const redisConfig = getRedisConfig();
     AdminModule,
     VistoriaModule,
     SetupModule,
-    DueDiligenceModule,
     DossiesModule,
     PropostasModule,
     DocumentosModule,

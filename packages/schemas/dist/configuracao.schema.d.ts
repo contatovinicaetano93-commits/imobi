@@ -1,0 +1,87 @@
+import { z } from "zod";
+export declare const ConfiguracaoSistemaSchema: z.ZodEffects<z.ZodEffects<z.ZodObject<{
+    taxaMensalMin: z.ZodNumber;
+    taxaMensalMax: z.ZodNumber;
+    taxaPadrao: z.ZodNumber;
+    valorMinCredito: z.ZodNumber;
+    valorMaxCredito: z.ZodNumber;
+    prazoMaxMeses: z.ZodNumber;
+    raioValidacaoMetrosPadrao: z.ZodNumber;
+    toleranciaPrecisaoGps: z.ZodNumber;
+    diasAprovacao: z.ZodNumber;
+    limiteEvidenciasMB: z.ZodNumber;
+    modoManutencao: z.ZodBoolean;
+}, "strip", z.ZodTypeAny, {
+    taxaMensalMin: number;
+    taxaMensalMax: number;
+    taxaPadrao: number;
+    valorMinCredito: number;
+    valorMaxCredito: number;
+    prazoMaxMeses: number;
+    raioValidacaoMetrosPadrao: number;
+    toleranciaPrecisaoGps: number;
+    diasAprovacao: number;
+    limiteEvidenciasMB: number;
+    modoManutencao: boolean;
+}, {
+    taxaMensalMin: number;
+    taxaMensalMax: number;
+    taxaPadrao: number;
+    valorMinCredito: number;
+    valorMaxCredito: number;
+    prazoMaxMeses: number;
+    raioValidacaoMetrosPadrao: number;
+    toleranciaPrecisaoGps: number;
+    diasAprovacao: number;
+    limiteEvidenciasMB: number;
+    modoManutencao: boolean;
+}>, {
+    taxaMensalMin: number;
+    taxaMensalMax: number;
+    taxaPadrao: number;
+    valorMinCredito: number;
+    valorMaxCredito: number;
+    prazoMaxMeses: number;
+    raioValidacaoMetrosPadrao: number;
+    toleranciaPrecisaoGps: number;
+    diasAprovacao: number;
+    limiteEvidenciasMB: number;
+    modoManutencao: boolean;
+}, {
+    taxaMensalMin: number;
+    taxaMensalMax: number;
+    taxaPadrao: number;
+    valorMinCredito: number;
+    valorMaxCredito: number;
+    prazoMaxMeses: number;
+    raioValidacaoMetrosPadrao: number;
+    toleranciaPrecisaoGps: number;
+    diasAprovacao: number;
+    limiteEvidenciasMB: number;
+    modoManutencao: boolean;
+}>, {
+    taxaMensalMin: number;
+    taxaMensalMax: number;
+    taxaPadrao: number;
+    valorMinCredito: number;
+    valorMaxCredito: number;
+    prazoMaxMeses: number;
+    raioValidacaoMetrosPadrao: number;
+    toleranciaPrecisaoGps: number;
+    diasAprovacao: number;
+    limiteEvidenciasMB: number;
+    modoManutencao: boolean;
+}, {
+    taxaMensalMin: number;
+    taxaMensalMax: number;
+    taxaPadrao: number;
+    valorMinCredito: number;
+    valorMaxCredito: number;
+    prazoMaxMeses: number;
+    raioValidacaoMetrosPadrao: number;
+    toleranciaPrecisaoGps: number;
+    diasAprovacao: number;
+    limiteEvidenciasMB: number;
+    modoManutencao: boolean;
+}>;
+export type ConfiguracaoSistemaInput = z.infer<typeof ConfiguracaoSistemaSchema>;

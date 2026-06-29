@@ -26,3 +26,4 @@ __exportStar(require("./proposta-credito.schema"), exports);
 __exportStar(require("./kyc.schema"), exports);
 __exportStar(require("./jornada.schema"), exports);
 __exportStar(require("./assistente.schema"), exports);
+__exportStar(require("./configuracao.schema"), exports);

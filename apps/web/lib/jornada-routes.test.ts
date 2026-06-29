@@ -56,8 +56,8 @@ const gestorOk = j({
   href: '/dashboard/gestor',
 });
 assert.equal(isJornadaPathAllowed('/dashboard/gestor', gestorOk), true);
-assert.equal(isJornadaPathAllowed('/dashboard/gestor/kyc', gestorOk), true);
-assert.equal(isJornadaPathAllowed('/dashboard/gestor/etapas', gestorOk), true);
+assert.equal(isJornadaPathAllowed('/dashboard/gestor/kyc', gestorOk), false);
+assert.equal(isJornadaPathAllowed('/dashboard/gestor/etapas', gestorOk), false);
 assert.equal(isJornadaPathAllowed('/dashboard/obras/x', gestorOk), false);
 assert.equal(isJornadaHubPath('/dashboard/gestor', gestorOk), true);
 assert.equal(isJornadaHubPath('/dashboard/gestor/etapas', gestorOk), false);

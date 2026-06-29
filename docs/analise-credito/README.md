@@ -20,8 +20,8 @@ Processo **offline hoje** (PDF + Excel por e-mail). Esta pasta consolida os temp
 
 | Área | Caminho | Observação |
 |------|---------|------------|
-| Wizard Due Diligence (gestor) | `apps/web/app/(dashboard)/dashboard/gestor/due-diligence/nova/` | Parcialmente alinhado à Ficha; não cobre todos os PDFs nem estágio da obra |
-| API Due Diligence | `services/api/src/modules/due-diligence/` | Persiste payload JSON; sem checklist por estágio |
+| Wizard Due Diligence (gestor) | Removido | Ver `dossies` e hub admin |
+| API Due Diligence (legado) | Removido | `services/api/src/modules/dossies/` |
 | Jornada tomador | `services/api/src/modules/jornada/` | KYC → obra → crédito (pós-cadastro na plataforma) |
 
 ## Próximo passo (produto)

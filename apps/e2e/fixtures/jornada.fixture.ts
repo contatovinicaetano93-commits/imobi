@@ -44,7 +44,7 @@ export const MOCK_JORNADA_GESTOR_ETAPAS = {
   passoAtual: 'gestor_etapas',
   titulo: 'Analisar etapas de obra',
   descricao: '1 etapa(s) aguardando vistoria',
-  href: '/dashboard/gestor/etapas',
+  href: '/dashboard/gestor',
   concluido: false,
   passosConcluidos: 1,
   totalPassos: 2,

@@ -20,6 +20,7 @@ import { formatarBRL } from "@imbobi/core";
 import type { ParceiroResumo, OperacaoIndicada, ContatoMailing } from "@/lib/api";
 import { PanelSection } from "@/components/dashboard/PanelSection";
 import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
+import { COMERCIAL_LAUNCH_ENABLED } from "@/lib/canonical-flow";
 import { COMERCIAL_TABS } from "./_components/comercial-panel-config";
 
 const ZERO_RESUMO: ParceiroResumo = {
@@ -52,7 +53,19 @@ const MAILING_STATUS: Record<ContatoMailing["status"], { label: string; cls: str
   CONVERTIDO: { label: "Convertido", cls: "bg-green-100 text-green-700" },
 };
 
-export default function ParceiroComercialPage() {
+function ComercialEmBreve() {
+  return (
+    <div className="mx-auto max-w-lg space-y-3 p-8 text-center">
+      <Handshake className="mx-auto h-10 w-10 text-amber-600" />
+      <h1 className="text-xl font-bold text-gray-900">Portal comercial</h1>
+      <p className="text-sm text-gray-600">
+        Módulo em preparação para pós-lançamento. Enquanto isso, use notificações e perfil.
+      </p>
+    </div>
+  );
+}
+
+function ComercialPortalActive() {
   const [resumo, setResumo] = useState<ParceiroResumo | null>(null);
   const [operacoes, setOperacoes] = useState<OperacaoIndicada[] | null>(null);
   const [mailing, setMailing] = useState<ContatoMailing[] | null>(null);
@@ -460,4 +473,9 @@ export default function ParceiroComercialPage() {
       }}
     />
   );
+}
+
+export default function ParceiroComercialPage() {
+  if (!COMERCIAL_LAUNCH_ENABLED) return <ComercialEmBreve />;
+  return <ComercialPortalActive />;
 }

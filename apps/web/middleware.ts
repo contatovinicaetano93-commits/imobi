@@ -91,17 +91,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(legacyDest, request.url));
   }
 
-  // Admin opera KYC/vistorias no Centro de Comando — nunca nas filas do gestor de fundo (somente leitura).
-  if (role === "ADMIN") {
-    if (pathname === "/dashboard/gestor/kyc" || pathname.startsWith("/dashboard/gestor/kyc/")) {
-      const dest = pathname.replace("/dashboard/gestor/kyc", "/dashboard/admin/kyc");
-      return NextResponse.redirect(new URL(dest, request.url));
-    }
-    if (pathname === "/dashboard/gestor/etapas" || pathname.startsWith("/dashboard/gestor/etapas")) {
-      return NextResponse.redirect(new URL("/dashboard/admin/vistorias", request.url));
-    }
-  }
-
   if (
     (role === "ENGENHEIRO" || role === "GESTOR_OBRA") &&
     (pathname === "/dashboard/obras/nova" || pathname.startsWith("/dashboard/obras/nova/"))

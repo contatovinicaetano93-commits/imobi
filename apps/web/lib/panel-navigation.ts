@@ -55,8 +55,6 @@ const ACTIVE_NAV_OVERRIDES: NavOverride[] = [
   { pattern: /^\/dashboard\/admin\/comite/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
   { pattern: /^\/dashboard\/admin\/pipeline/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
   { pattern: /^\/dashboard\/admin\/pagamentos/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
-  { pattern: /^\/dashboard\/gestor\/kyc/, navRole: 'GESTOR', targetHref: '/dashboard/gestor' },
-  { pattern: /^\/dashboard\/gestor\/etapas/, navRole: 'GESTOR', targetHref: '/dashboard/gestor' },
 ];
 
 export type PanelId = AppRole;
@@ -124,11 +122,7 @@ export function getDashboardSegment(path: string): string {
 export function getPanelFromPath(path: string): AppRole | null {
   const seg = getDashboardSegment(path);
   if (seg === 'engenheiro') return 'ENGENHEIRO';
-  if (seg === 'gestor') {
-    const sub = path.split('/').filter(Boolean)[2];
-    if (sub === 'kyc' || sub === 'etapas') return null;
-    return 'GESTOR';
-  }
+  if (seg === 'gestor') return 'GESTOR';
   if (seg === 'construtor' || CONSTRUTOR_PANEL_SEGMENTS.has(seg)) return 'CONSTRUTOR';
   if (seg === 'comercial') return 'COMERCIAL';
   if (seg === 'admin') return null;
@@ -151,14 +145,7 @@ export function getNavRole(
 
   if (seg === 'admin') return 'ADMIN';
   if (seg === 'comercial') return 'COMERCIAL';
-  if (seg === 'gestor') {
-    if (r === 'ADMIN') {
-      const sub = path.split('/').filter(Boolean)[2];
-      if (sub === 'kyc' || sub === 'etapas') return 'ADMIN';
-      return 'GESTOR';
-    }
-    return 'GESTOR';
-  }
+  if (seg === 'gestor') return 'GESTOR';
   if (seg === 'engenheiro') {
     return r === 'GESTOR_OBRA' ? 'GESTOR_OBRA' : 'ENGENHEIRO';
   }
@@ -221,7 +208,7 @@ export function getObrasListPath(role: string | null | undefined): string {
     case 'ADMIN':
       return '/dashboard/admin/obras';
     case 'GESTOR':
-      return '/dashboard/gestor/etapas';
+      return '/dashboard/gestor';
     case 'ENGENHEIRO':
     case 'GESTOR_OBRA':
       return '/dashboard/obras';
@@ -235,7 +222,7 @@ export function getObrasListPath(role: string | null | undefined): string {
 export function getObrasListLabel(role: string | null | undefined): string {
   const r = normalizeRole(role);
   if (r === 'ADMIN') return 'Obras — Admin';
-  if (r === 'GESTOR') return 'KPI · etapas';
+  if (r === 'GESTOR') return 'Operação do fundo';
   if (r === 'ENGENHEIRO' || r === 'GESTOR_OBRA') return 'Obras · evidências';
   return 'Minhas Obras';
 }
