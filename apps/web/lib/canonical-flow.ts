@@ -40,26 +40,25 @@ export type NavItemDef = {
   section?: "geral" | "operacao" | "conta";
 };
 
-/** Rotas legadas → destino canônico */
+/** Rotas legadas → destino canônico (bookmarks antigos) */
 export const LEGACY_REDIRECTS: Record<string, string> = {
   "/dashboard": "/dashboard/construtor",
-  "/dashboard/simulador": "/dashboard/proposta-credito",
-  "/dashboard/score": "/dashboard/construtor",
-  "/dashboard/comite": "/dashboard/credito/solicitar",
-  "/dashboard/comite/solicitar": "/dashboard/credito/solicitar",
-  "/dashboard/viabilidade": "/dashboard/proposta-credito",
-  "/dashboard/fundos": "/dashboard/gestor",
-  "/dashboard/relatorios": "/dashboard/admin",
-  "/dashboard/gestor/due-diligence": "/dashboard/gestor",
-  "/dashboard/gestor/due-diligence/nova": "/dashboard/gestor",
-  "/dashboard/gestor/carteira": "/dashboard/gestor",
-  "/dashboard/gestor/comite": "/dashboard/gestor",
-  "/dashboard/engenheiro/checklist": "/dashboard/engenheiro/vistoria",
-  "/dashboard/engenheiro/alertas": "/dashboard/engenheiro/vistoria",
 };
 
 /** Prefixos legados (qualquer subpath) */
-export const LEGACY_PREFIX_REDIRECTS: Array<{ prefix: string; to: string }> = [];
+export const LEGACY_PREFIX_REDIRECTS: Array<{ prefix: string; to: string }> = [
+  { prefix: "/dashboard/simulador", to: "/dashboard/proposta-credito" },
+  { prefix: "/dashboard/score", to: "/dashboard/construtor" },
+  { prefix: "/dashboard/comite", to: "/dashboard/credito/solicitar" },
+  { prefix: "/dashboard/viabilidade", to: "/dashboard/proposta-credito" },
+  { prefix: "/dashboard/fundos", to: "/dashboard/gestor" },
+  { prefix: "/dashboard/relatorios", to: "/dashboard/admin" },
+  { prefix: "/dashboard/gestor/due-diligence", to: "/dashboard/gestor" },
+  { prefix: "/dashboard/gestor/carteira", to: "/dashboard/gestor" },
+  { prefix: "/dashboard/gestor/comite", to: "/dashboard/gestor" },
+  { prefix: "/dashboard/engenheiro/checklist", to: "/dashboard/engenheiro/vistoria" },
+  { prefix: "/dashboard/engenheiro/alertas", to: "/dashboard/engenheiro/vistoria" },
+];
 
 const ACCOUNT: NavItemDef[] = [
   { label: "Notificações", href: "/dashboard/notificacoes", icon: Bell, section: "conta" },

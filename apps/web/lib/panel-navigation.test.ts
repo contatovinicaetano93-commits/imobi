@@ -11,13 +11,11 @@ const NAV = {
     { href: '/dashboard/admin/kyc' },
     { href: '/dashboard/admin/vistorias' },
     { href: '/dashboard/admin/comite' },
-    { href: '/dashboard/fundos' },
   ],
   gestor: [
     { href: '/dashboard/gestor' },
     { href: '/dashboard/gestor/kyc' },
     { href: '/dashboard/gestor/etapas' },
-    { href: '/dashboard/fundos' },
   ],
   tomador: [
     { href: '/dashboard/construtor' },
@@ -58,19 +56,9 @@ function expectActive(
   assert.equal(got, expected, `active ${role} @ ${path} → ${got}, esperado ${expected}`);
 }
 
-expectNavRole('ADMIN', '/dashboard/fundos', 'ADMIN');
-expectNavRole('ADMIN', '/dashboard/obras/abc', 'ADMIN');
-expectNavRole('ADMIN', '/dashboard/obras', 'ENGENHEIRO', { adminPreview: 'ENGENHEIRO' });
-expectNavRole('ADMIN', '/dashboard/obras/abc', 'ENGENHEIRO', { adminPreview: 'ENGENHEIRO' });
-expectNavRole('ADMIN', '/dashboard/obras/abc', 'ADMIN', { adminPreview: 'ENGENHEIRO', fromAdmin: true });
-expectNavRole('GESTOR', '/dashboard/obras/abc', 'GESTOR');
-expectNavRole('GESTOR', '/dashboard/fundos', 'GESTOR');
-expectNavRole('GESTOR', '/dashboard/comite', 'GESTOR');
-expectNavRole('ENGENHEIRO', '/dashboard/comite', 'ENGENHEIRO');
-expectNavRole('COMERCIAL', '/dashboard/simulador', 'COMERCIAL');
-expectNavRole('TOMADOR', '/dashboard/credito/solicitar', 'TOMADOR');
-expectNavRole('ADMIN', '/dashboard/construtor', 'CONSTRUTOR');
 expectNavRole('ADMIN', '/dashboard/gestor', 'GESTOR');
+expectNavRole('GESTOR', '/dashboard/gestor/kyc/1', 'GESTOR');
+expectNavRole('TOMADOR', '/dashboard/credito/solicitar', 'TOMADOR');
 expectNavRole('ADMIN', '/dashboard/gestor/kyc', 'ADMIN');
 expectNavRole('ADMIN', '/dashboard/gestor/etapas', 'ADMIN');
 

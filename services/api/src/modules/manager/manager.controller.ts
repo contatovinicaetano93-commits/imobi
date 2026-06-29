@@ -42,6 +42,10 @@ export class ManagerController {
 
   @Throttle({ manager: { limit: 20, ttl: 60000 } })
 
+  @UseInterceptors(CacheInterceptor)
+
+  @CacheTTL(60)
+
   async dashboard(@UsuarioAtual() u: IUsuario) {
 
     return this.manager.obterEstatisticas();

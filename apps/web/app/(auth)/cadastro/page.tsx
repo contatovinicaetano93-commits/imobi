@@ -11,7 +11,7 @@ import { redirectAfterLogin } from "@/lib/post-login-redirect";
 
 const WA = "5511993455589";
 
-function buildSimuladorRedirect(params: ReadonlyURLSearchParams): string | null {
+function buildPropostaRedirect(params: ReadonlyURLSearchParams): string | null {
   const valor = params.get("valor");
   const fase = params.get("fase");
   const prazo = params.get("prazo");
@@ -24,7 +24,7 @@ function buildSimuladorRedirect(params: ReadonlyURLSearchParams): string | null 
   const cidade = params.get("cidade");
   if (estado) q.set("estado", estado);
   if (cidade) q.set("cidade", cidade);
-  return `/dashboard/simulador?${q.toString()}`;
+  return `/dashboard/proposta-credito?${q.toString()}`;
 }
 
 function brl(v: number) {
@@ -51,8 +51,8 @@ function CadastroFallback() {
 
 function CadastroForm() {
   const searchParams = useSearchParams();
-  const simuladorNext = useMemo(
-    () => buildSimuladorRedirect(searchParams),
+  const propostaNext = useMemo(
+    () => buildPropostaRedirect(searchParams),
     [searchParams],
   );
   const simValor = searchParams.get("valor");
@@ -82,7 +82,7 @@ function CadastroForm() {
     setStatusMsg("Conectando ao servidor… (a 1ª vez pode levar até 1 minuto)");
     try {
       const result = await registerWithRetry(data, setStatusMsg);
-      redirectAfterLogin(result.role ?? "TOMADOR", simuladorNext ?? "/dashboard");
+      redirectAfterLogin(result.role ?? "TOMADOR", propostaNext ?? "/dashboard");
     } catch (e) {
       setStatusMsg(null);
       setErro(e instanceof Error ? e.message : "Erro inesperado.");
@@ -94,7 +94,7 @@ function CadastroForm() {
       <div style={{ ...cardStyle, maxWidth: 460 }}>
         <LogoHeader />
 
-        {simuladorNext && (
+        {propostaNext && (
           <div style={simBannerStyle}>
             <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "#1B4FD8", marginBottom: "0.35rem" }}>
               Simulação em andamento
@@ -103,7 +103,7 @@ function CadastroForm() {
               {simValor ? `Obra ${brl(Number(simValor))}` : "Obra simulada"}
               {simFase ? ` · ${simFase}` : ""}
               {simPrazo ? ` · ${simPrazo} meses` : ""}
-              {" — após criar a conta você continua no simulador completo."}
+              {" — após criar a conta você continua na viabilidade."}
             </p>
           </div>
         )}

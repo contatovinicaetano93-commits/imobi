@@ -9,15 +9,39 @@
 | Web | https://imobi-web-ten.vercel.app |
 | API | https://imobi-api-staging.onrender.com |
 
-## Funil
+## Funil operacional (único)
 
 ```
 /envie-seu-projeto → PropostaCredito
        ↓
-Login (mesmo e-mail) → dossiê + jornada
+Login + KYC
        ↓
-GET /jornada → passo atual (redirect estrito)
+Dossiê / viabilidade (tomador)
+       ↓
+Admin aprova dossiê
+       ↓
+Tomador cadastra obra
+       ↓
+Admin homologa obra → EM_EXECUCAO
+       ↓
+Tomador solicita crédito / comitê
+       ↓
+Admin abre comitê → Engenheiro parecer + voto
+       ↓
+Comitê APROVADO → Crédito ATIVO
+       ↓
+Tomador: evidências GPS + submete etapa
+       ↓
+Engenheiro aprova vistoria
+       ↓
+LiberacaoParcela AGUARDANDO_PAGAMENTO
+       ↓
+Admin confirma pagamento (SIPOC)
+       ↓
+100% etapas + valor pago → Crédito QUITADO + obra CONCLUIDA
 ```
+
+**Jornada:** `GET /jornada` + `JornadaGuard` (redirect estrito por passo).
 
 ## Tomador / Construtor
 
@@ -33,22 +57,17 @@ GET /jornada → passo atual (redirect estrito)
 
 **Hub:** `/dashboard/construtor` · **Nav:** jornada, KYC, viabilidade, obras, crédito
 
-## Gestor (somente KPIs — sem aprovação)
+## Gestor do fundo (somente KPIs + DRE — sem operação)
 
 | Indicador | Rota |
 |-----------|------|
-| Painel | `/dashboard/gestor` |
-| KPI · KYC | `/dashboard/gestor/kyc` |
-| KPI · Etapas | `/dashboard/gestor/etapas` |
+| Painel + DRE operacional | `/dashboard/gestor` |
+| KPI · KYC (leitura) | `/dashboard/gestor/kyc` |
+| KPI · Etapas (leitura) | `/dashboard/gestor/etapas` |
 
-Comitê, KYC operacional e liberações são **internos** (Admin / Engenheiro). O gestor **não participa** desses processos e **não acessa** rotas do tomador (`/dashboard/obras`, `/dashboard/credito`, etc.).
+**API:** `GET /api/v1/manager/dashboard` → KPIs + objeto `dre` (carteira, desembolso, pipe, saúde).
 
-## Tomador vs Gestor (copy)
-
-| Perfil | O que faz | O que vê |
-|--------|-----------|----------|
-| **Tomador** | Jornada guiada: KYC → viabilidade → obra → crédito → acompanhar | Análises feitas pelo **time IMOBI** |
-| **Gestor** | Nada operacional — só números | KPIs agregados, drill-down somente leitura |
+Comitê, KYC operacional, due diligence e liberações são **internos** (Admin / Engenheiro). O gestor **não participa** desses processos e **não acessa** rotas do tomador.
 
 ## Engenheiro
 
@@ -68,8 +87,6 @@ Comitê, KYC operacional e liberações são **internos** (Admin / Engenheiro). 
 | Leads | `/dashboard/comercial/leads` |
 | Ranking | `/dashboard/comercial/ranking` |
 
-**Admin** usa pipeline operacional em `/dashboard/admin/pipeline` (não confundir com o painel do perfil COMERCIAL).
-
 ## Admin — centro de comando
 
 | Fila | Rota |
@@ -84,20 +101,24 @@ Comitê, KYC operacional e liberações são **internos** (Admin / Engenheiro). 
 | Comitê | `/dashboard/admin/comite` |
 | Usuários | `/dashboard/admin/usuarios` |
 
-## SIPOC (execução)
+## Rotas legadas (redirect automático)
 
-1. Admin homologa obra → `EM_EXECUCAO`
-2. Tomador: evidências GPS → etapa `AGUARDANDO_VISTORIA`
-3. Engenheiro aprova → `LiberacaoParcela` `AGUARDANDO_PAGAMENTO`
-4. Admin confirma pagamento (SIPOC)
-5. 100% etapas + valor pago → crédito `QUITADO`, obra `CONCLUIDA`
+Bookmarks antigos redirecionam via `LEGACY_PREFIX_REDIRECTS` em `canonical-flow.ts`:
 
-## Rotas removidas / redirect
-
-Score, simulador interno, fundos, relatórios, checklist e alertas do engenheiro → redirects em `canonical-flow.ts`.
+| Legado | Destino |
+|--------|---------|
+| `/dashboard/simulador`, `/dashboard/viabilidade` | `/dashboard/proposta-credito` |
+| `/dashboard/score` | `/dashboard/construtor` |
+| `/dashboard/comite` | `/dashboard/credito/solicitar` |
+| `/dashboard/fundos`, `/dashboard/gestor/carteira` | `/dashboard/gestor` |
+| `/dashboard/relatorios` | `/dashboard/admin` |
+| `/dashboard/gestor/comite`, `/dashboard/gestor/due-diligence` | `/dashboard/gestor` |
+| `/dashboard/engenheiro/checklist`, `alertas` | `/dashboard/engenheiro/vistoria` |
 
 ## Técnico
 
-- **Jornada:** `JornadaGuard` + `GET /jornada`
-- **Middleware:** `isCanonicalRouteAllowed` + legacy redirects
+- **API first:** contratos em OpenAPI + `@imbobi/schemas` (Zod)
+- **Resiliência:** throttle + cache (manager dashboard 60s), retry em jobs BullMQ
+- **Escalável:** cache Redis, queries agregadas no `ManagerService`
+- **Guiado:** `GUIDED_STRICT_MODE` + `isCanonicalRouteAllowed`
 - **Beta legado:** `NEXT_PUBLIC_BETA_MVP_MODE=true` (não usar em produção)

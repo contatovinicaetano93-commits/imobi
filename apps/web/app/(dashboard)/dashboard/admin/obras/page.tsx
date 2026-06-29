@@ -214,7 +214,7 @@ export default function AdminObrasPage() {
         title="Atalhos Admin"
         icon={<Link2 className="w-4 h-4 text-gray-500" />}
         priority="secondary"
-        summary="Pipeline, comitê e fundos"
+        summary="Pipeline, comitê e KPIs do fundo"
       >
       <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
         <Link href="/dashboard/admin/pipeline" className="text-[#1B4FD8] font-semibold hover:underline">
@@ -223,8 +223,8 @@ export default function AdminObrasPage() {
         <Link href="/dashboard/admin/comite" className="text-[#1B4FD8] font-semibold hover:underline">
           Comitê
         </Link>
-        <Link href="/dashboard/fundos" className="text-[#1B4FD8] font-semibold hover:underline">
-          Fundos
+        <Link href="/dashboard/gestor" className="text-[#1B4FD8] font-semibold hover:underline">
+          KPIs do fundo
         </Link>
       </div>
       </PanelSection>

@@ -7,6 +7,8 @@ import {
 
 assert.equal(resolveLegacyRedirect("/dashboard/score"), "/dashboard/construtor");
 assert.equal(resolveLegacyRedirect("/dashboard/fundos"), "/dashboard/gestor");
+assert.equal(resolveLegacyRedirect("/dashboard/gestor/due-diligence/nova"), "/dashboard/gestor");
+assert.equal(resolveLegacyRedirect("/dashboard/comite/solicitar"), "/dashboard/credito/solicitar");
 
 assert.equal(
   isCanonicalRouteAllowed("/dashboard/construtor", "TOMADOR"),
@@ -14,6 +16,10 @@ assert.equal(
 );
 assert.equal(
   isCanonicalRouteAllowed("/dashboard/score", "TOMADOR"),
+  true,
+);
+assert.equal(
+  isCanonicalRouteAllowed("/dashboard/admin", "TOMADOR"),
   false,
 );
 assert.equal(

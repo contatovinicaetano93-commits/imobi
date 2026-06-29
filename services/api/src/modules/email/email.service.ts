@@ -348,7 +348,7 @@ export class EmailService {
             ? "<p>A proposta foi aprovada com condições. Nossa equipe entrará em contato com os detalhes.</p>"
             : "<p>Infelizmente a proposta não foi aprovada neste momento. Você pode entrar em contato conosco para mais informações.</p>"
       }
-      <p><a href="${appUrl}/dashboard/comite">Ver minhas solicitações</a></p>
+      <p><a href="${appUrl}/dashboard/credito/solicitar">Ver minhas solicitações</a></p>
     `;
 
     return this.enviarEmail({

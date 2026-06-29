@@ -556,7 +556,7 @@ export default async function ConstrutorPage() {
             { label: "Nova tranche",         sub: "Solicite liberação de recursos para a próxima etapa",  icon: PlusCircle,  href: "/dashboard/credito#solicitar-parcela", color: ROYAL },
             { label: "Renegociação",          sub: "Ajuste de prazo, taxa ou condições da operação",       icon: RefreshCw,   href: "/dashboard/credito#renegociacao",        color: "#7c3aed" },
             { label: "Enviar projeto",          sub: "Documentação e viabilidade para novo empreendimento",   icon: Send,        href: "/dashboard/proposta-credito" as Route,                   color: "#16a34a" },
-            { label: "Comitê de crédito",     sub: "Acompanhe ou solicite análise pelo comitê",            icon: BarChart3,   href: "/dashboard/comite",                      color: "#0891b2" },
+            { label: "Comitê de crédito",     sub: "Acompanhe ou solicite análise pelo comitê",            icon: BarChart3,   href: "/dashboard/credito/solicitar",           color: "#0891b2" },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ].map(({ label, sub, icon: Icon, href, color }) => (
             <Link key={href} href={href as any} style={{ background: "white", border: "1px solid #f3f4f6", borderRadius: 14, padding: "0.9rem 1rem", textDecoration: "none", display: "flex", alignItems: "center", gap: 12 }}>

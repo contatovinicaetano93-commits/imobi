@@ -51,22 +51,18 @@ const KYC_CONFIG: Record<string, { label: string; color: string; bg: string }> =
 const FUNCAO_LABELS: Record<string, string> = {
   "obras":         "Minhas Obras",
   "credito":       "Crédito",
-  "simulador":     "Simulador",
-  "score":         "Score",
+  "proposta-credito": "Viabilidade",
   "kyc":           "Documentos (KYC)",
   "notificacoes":  "Notificações",
   "engenharia":    "Painel Engenharia",
   "gestor":        "Painel Gestor",
-  "due-diligence": "Due Diligence",
-  "fundos":        "Fundos",
-  "relatorios":    "Relatórios",
   "comercial":     "Painel Comercial",
   "construtor":    "Painel Construtor",
 };
 
 const FUNCOES_POR_TIPO: Record<string, string[]> = {
-  TOMADOR:      ["obras", "credito", "simulador", "score", "kyc", "notificacoes"],
-  GESTOR:       ["gestor", "due-diligence", "fundos", "relatorios", "notificacoes"],
+  TOMADOR:      ["obras", "credito", "proposta-credito", "kyc", "notificacoes"],
+  GESTOR:       ["gestor", "notificacoes"],
   ENGENHEIRO:   ["engenharia", "notificacoes"],
   GESTOR_OBRA:  ["engenharia", "notificacoes"],
   COMERCIAL:    ["comercial", "notificacoes"],

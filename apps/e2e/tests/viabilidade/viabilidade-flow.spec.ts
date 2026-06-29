@@ -68,7 +68,7 @@ test.describe('Viabilidade flow', () => {
   test.beforeEach(async ({ page }) => {
     await mockJornada(page, MOCK_JORNADA_VIABILIDADE);
     await mockDossiesApi(page);
-    await page.goto('/dashboard/viabilidade');
+    await page.goto('/dashboard/proposta-credito');
   });
 
   test('renders viabilidade page with dossie checklist', async ({ page }) => {
@@ -113,7 +113,7 @@ test.describe('Viabilidade flow', () => {
 
   test('empty list shows new dossie form', async ({ page }) => {
     await mockDossiesApi(page, []);
-    await page.goto('/dashboard/viabilidade');
+    await page.goto('/dashboard/proposta-credito');
 
     await expect(page.getByRole('heading', { name: 'Novo dossiê' })).toBeVisible();
     await expect(page.getByPlaceholder('Ex.: Residencial Parque Verde')).toBeVisible();

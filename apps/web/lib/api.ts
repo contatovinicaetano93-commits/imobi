@@ -421,11 +421,35 @@ export type KycPendente = {
   };
 };
 
+export type ManagerDreLinha = {
+  label: string;
+  valor: number;
+  tipo: "entrada" | "realizado" | "disponivel" | "pendente";
+};
+
+export type ManagerDreOperacional = {
+  carteiraAprovada: number;
+  capitalDesembolsado: number;
+  saldoADesembolsar: number;
+  capitalEmPipe: number;
+  valorPipeVistoria: number;
+  valorAguardandoPagamento: number;
+  taxaUtilizacaoPct: number;
+  inadimplenciaPct: number;
+  pipePctCarteira: number;
+  creditosQuitados: number;
+  creditosVencidos: number;
+  creditosSuspensos: number;
+  saude: "saudavel" | "atencao" | "critico";
+  linhas: ManagerDreLinha[];
+};
+
 export type ManagerStats = {
   filaAprovacoes: number;
   filaKyc: number;
   creditosAtivos: number;
   obrasAtivas: number;
+  dre?: ManagerDreOperacional;
 };
 
 export type EtapaAuditEntry = {

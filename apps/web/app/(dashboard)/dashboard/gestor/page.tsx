@@ -10,21 +10,43 @@ import {
   Clock,
   ChevronRight,
   RefreshCw,
+  TrendingUp,
+  Wallet,
+  Activity,
 } from "lucide-react";
 import {
   managerApi,
   type EtapaPendente,
   type KycPendente,
+  type ManagerDreOperacional,
   type ManagerStats,
 } from "@/lib/api";
 import { fetchManagerDashboard } from "@/lib/fetch-manager-dashboard";
 import { formatarBRL } from "@imbobi/core";
+
+const ZERO_DRE: ManagerDreOperacional = {
+  carteiraAprovada: 0,
+  capitalDesembolsado: 0,
+  saldoADesembolsar: 0,
+  capitalEmPipe: 0,
+  valorPipeVistoria: 0,
+  valorAguardandoPagamento: 0,
+  taxaUtilizacaoPct: 0,
+  inadimplenciaPct: 0,
+  pipePctCarteira: 0,
+  creditosQuitados: 0,
+  creditosVencidos: 0,
+  creditosSuspensos: 0,
+  saude: "saudavel",
+  linhas: [],
+};
 
 const ZERO_STATS: ManagerStats = {
   filaAprovacoes: 0,
   filaKyc: 0,
   creditosAtivos: 0,
   obrasAtivas: 0,
+  dre: ZERO_DRE,
 };
 
 function KpiCard({
@@ -84,6 +106,44 @@ function pipeTone(count: number): "ok" | "warn" | "critical" {
   return "ok";
 }
 
+function dreSaudeLabel(saude: ManagerDreOperacional["saude"]) {
+  if (saude === "critico") return "Crítico";
+  if (saude === "atencao") return "Atenção";
+  return "Saudável";
+}
+
+function dreSaudeStyles(saude: ManagerDreOperacional["saude"]) {
+  if (saude === "critico") {
+    return {
+      badge: "bg-red-100 text-red-800 border-red-200",
+      ring: "border-red-100 bg-red-50/40",
+    };
+  }
+  if (saude === "atencao") {
+    return {
+      badge: "bg-amber-100 text-amber-800 border-amber-200",
+      ring: "border-amber-100 bg-amber-50/40",
+    };
+  }
+  return {
+    badge: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    ring: "border-emerald-100 bg-emerald-50/40",
+  };
+}
+
+function pctTone(pct: number, warnAt: number, criticalAt: number): "ok" | "warn" | "critical" {
+  if (pct >= criticalAt) return "critical";
+  if (pct >= warnAt) return "warn";
+  return "ok";
+}
+
+function linhaTipoLabel(tipo: ManagerDreOperacional["linhas"][number]["tipo"]) {
+  if (tipo === "entrada") return "Comprometido";
+  if (tipo === "realizado") return "Realizado";
+  if (tipo === "disponivel") return "Disponível";
+  return "Pendente";
+}
+
 export default function GestorPage() {
   const [stats, setStats] = useState<ManagerStats | null>(null);
   const [etapas, setEtapas] = useState<EtapaPendente[]>([]);
@@ -115,6 +175,8 @@ export default function GestorPage() {
   }, []);
 
   const s = stats ?? ZERO_STATS;
+  const dre = s.dre ?? ZERO_DRE;
+  const dreStyles = dreSaudeStyles(dre.saude);
   const filaTotal = s.filaAprovacoes + s.filaKyc;
   const valorPipe = etapas.reduce((acc, e) => acc + Number(e.valorLiberacao ?? 0), 0);
 
@@ -138,8 +200,16 @@ export default function GestorPage() {
           <p className="text-xs font-bold uppercase tracking-widest text-violet-600">Gestor do fundo</p>
           <h1 className="mt-1 text-2xl font-bold text-gray-900 sm:text-3xl">Operação em tempo real</h1>
           <p className="mt-1 max-w-xl text-sm text-gray-500">
-            Números agregados da operação IMOBI — créditos, obras e filas internas. Somente leitura.
+            Números agregados da operação IMOBI — DRE operacional, créditos, obras e filas internas. Somente leitura.
           </p>
+          {!loading ? (
+            <span
+              className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${dreStyles.badge}`}
+            >
+              <Activity className="h-3.5 w-3.5" />
+              Saúde da operação: {dreSaudeLabel(dre.saude)}
+            </span>
+          ) : null}
         </div>
         <button
           type="button"
@@ -209,6 +279,130 @@ export default function GestorPage() {
             tone={pipeTone(s.filaAprovacoes)}
           />
         </div>
+      </section>
+
+      <section aria-label="DRE operacional" className={`rounded-2xl border p-5 shadow-sm sm:p-6 ${dreStyles.ring}`}>
+        <div className="mb-5 flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-violet-600" />
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-gray-700">DRE operacional</h2>
+            <p className="text-xs text-gray-500">Visão financeira agregada da carteira e do capital em circulação</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-xl border border-white/80 bg-white/90 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Carteira aprovada</p>
+            <p className="mt-2 text-2xl font-bold tabular-nums text-gray-900">{formatarBRL(dre.carteiraAprovada)}</p>
+            <p className="mt-1 text-xs text-gray-500">Comprometido com tomadores ativos</p>
+          </div>
+          <div className="rounded-xl border border-white/80 bg-white/90 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Capital desembolsado</p>
+            <p className="mt-2 text-2xl font-bold tabular-nums text-emerald-700">
+              {formatarBRL(dre.capitalDesembolsado)}
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Utilização {dre.taxaUtilizacaoPct.toFixed(1)}% da carteira
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/80 bg-white/90 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Saldo a desembolsar</p>
+            <p className="mt-2 text-2xl font-bold tabular-nums text-violet-700">
+              {formatarBRL(dre.saldoADesembolsar)}
+            </p>
+            <p className="mt-1 text-xs text-gray-500">Aprovado, ainda não liberado</p>
+          </div>
+          <div className="rounded-xl border border-white/80 bg-white/90 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Capital em pipe</p>
+            <p className="mt-2 text-2xl font-bold tabular-nums text-amber-700">{formatarBRL(dre.capitalEmPipe)}</p>
+            <p className="mt-1 text-xs text-gray-500">{dre.pipePctCarteira.toFixed(1)}% da carteira</p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border border-white/80 bg-white/90 p-4">
+            <p className="text-xs font-medium text-gray-500">Taxa de utilização</p>
+            <p
+              className={`mt-1 text-xl font-bold tabular-nums ${
+                pctTone(dre.taxaUtilizacaoPct, 60, 85) === "ok"
+                  ? "text-emerald-700"
+                  : pctTone(dre.taxaUtilizacaoPct, 60, 85) === "warn"
+                    ? "text-amber-700"
+                    : "text-red-700"
+              }`}
+            >
+              {dre.taxaUtilizacaoPct.toFixed(1)}%
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/80 bg-white/90 p-4">
+            <p className="text-xs font-medium text-gray-500">Inadimplência (vencidos)</p>
+            <p
+              className={`mt-1 text-xl font-bold tabular-nums ${
+                pctTone(dre.inadimplenciaPct, 2, 5) === "ok"
+                  ? "text-emerald-700"
+                  : pctTone(dre.inadimplenciaPct, 2, 5) === "warn"
+                    ? "text-amber-700"
+                    : "text-red-700"
+              }`}
+            >
+              {dre.inadimplenciaPct.toFixed(1)}%
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              {dre.creditosVencidos} crédito(s) vencido(s) · {dre.creditosSuspensos} suspenso(s)
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/80 bg-white/90 p-4">
+            <p className="text-xs font-medium text-gray-500">Créditos quitados</p>
+            <p className="mt-1 text-xl font-bold tabular-nums text-gray-900">{dre.creditosQuitados}</p>
+            <p className="mt-1 text-xs text-gray-500">Operações encerradas com sucesso</p>
+          </div>
+        </div>
+
+        {dre.linhas.length > 0 ? (
+          <div className="mt-5 overflow-hidden rounded-xl border border-white/80 bg-white/90">
+            <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3">
+              <Wallet className="h-4 w-4 text-violet-600" />
+              <h3 className="text-sm font-semibold text-gray-900">Demonstrativo simplificado</h3>
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 text-left text-xs uppercase tracking-wide text-gray-500">
+                  <th className="px-4 py-2 font-medium">Linha</th>
+                  <th className="px-4 py-2 font-medium">Tipo</th>
+                  <th className="px-4 py-2 text-right font-medium">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dre.linhas.map((linha) => (
+                  <tr key={linha.label} className="border-b border-gray-50 last:border-0">
+                    <td className="px-4 py-3 font-medium text-gray-900">{linha.label}</td>
+                    <td className="px-4 py-3 text-gray-500">{linhaTipoLabel(linha.tipo)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums font-semibold text-gray-900">
+                      {formatarBRL(linha.valor)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+
+        {dre.saude !== "saudavel" ? (
+          <div
+            className={`mt-4 flex items-start gap-3 rounded-xl border px-4 py-3 ${
+              dre.saude === "critico"
+                ? "border-red-200 bg-red-50 text-red-800"
+                : "border-amber-200 bg-amber-50 text-amber-900"
+            }`}
+          >
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p className="text-sm">
+              {dre.saude === "critico"
+                ? "Indicadores fora da faixa saudável — revisar inadimplência e volume em pipe com o time IMOBI."
+                : "Operação em atenção — acompanhar evolução de pipe e créditos suspensos."}
+            </p>
+          </div>
+        ) : null}
       </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

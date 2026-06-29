@@ -397,7 +397,7 @@ export class ComiteService {
       "COMITE_DECISAO",
       `Comitê encerrado: ${decisaoLabel}`,
       `Sua solicitação de ${valorFmt} foi ${decisaoLabel.toLowerCase()} pelo comitê digital.`,
-      "/dashboard/comite",
+      "/dashboard/credito/solicitar",
     );
 
     this.pushNotificacoes

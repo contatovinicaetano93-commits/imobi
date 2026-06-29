@@ -19,7 +19,7 @@ export const MOCK_JORNADA_VIABILIDADE = {
   passoAtual: 'viabilidade',
   titulo: 'Dossiê de viabilidade',
   descricao: 'Checklist de crédito antes de cadastrar a obra.',
-  href: '/dashboard/viabilidade',
+  href: '/dashboard/proposta-credito',
   concluido: false,
   passosConcluidos: 1,
   totalPassos: 6,

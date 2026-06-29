@@ -10,16 +10,12 @@ const CONSTRUTOR_PANEL_SEGMENTS = new Set([
   'construtor',
   'credito',
   'kyc',
-  'score',
-  'simulador',
-  'comite',
+  'proposta-credito',
 ]);
 
 /** Rotas compartilhadas — mantêm o contexto do perfil real (não trocam sidebar) */
 const SHARED_SEGMENTS = new Set([
   'obras',
-  'fundos',
-  'relatorios',
   'notificacoes',
   'perfil',
 ]);
@@ -51,8 +47,6 @@ const ACTIVE_NAV_OVERRIDES: NavOverride[] = [
   { pattern: /^\/dashboard\/kyc/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/kyc' },
   { pattern: /^\/dashboard\/proposta-credito/, navRole: 'TOMADOR', targetHref: '/dashboard/proposta-credito' },
   { pattern: /^\/dashboard\/proposta-credito/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/proposta-credito' },
-  { pattern: /^\/dashboard\/simulador/, navRole: 'TOMADOR', targetHref: '/dashboard/proposta-credito' },
-  { pattern: /^\/dashboard\/simulador/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/proposta-credito' },
   { pattern: /^\/dashboard\/admin\/kyc/, navRole: 'ADMIN', targetHref: '/dashboard/admin/kyc' },
   { pattern: /^\/dashboard\/admin\/propostas/, navRole: 'ADMIN', targetHref: '/dashboard/admin/propostas' },
   { pattern: /^\/dashboard\/admin\/vistorias/, navRole: 'ADMIN', targetHref: '/dashboard/admin/vistorias' },

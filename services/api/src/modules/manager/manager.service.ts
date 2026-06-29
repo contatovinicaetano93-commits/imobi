@@ -272,11 +272,12 @@ export class ManagerService {
     const cached = await this.cacheManager.get(cacheKey);
     if (cached) return cached;
 
-    const [etapasPendentes, kycPendentes, creditosAtivos, obrasAtivas] = await Promise.all([
+    const [etapasPendentes, kycPendentes, creditosAtivos, obrasAtivas, dre] = await Promise.all([
       this.prisma.etapaObra.count({ where: { status: "AGUARDANDO_VISTORIA" } }),
       this.prisma.kycDocumento.count({ where: { status: "PENDENTE" } }),
       this.prisma.credito.count({ where: { status: "ATIVO" } }),
       this.prisma.obra.count({ where: { status: "EM_EXECUCAO" } }),
+      this.calcularDreOperacional(),
     ]);
 
     const result = {
@@ -284,10 +285,113 @@ export class ManagerService {
       filaKyc: kycPendentes,
       creditosAtivos,
       obrasAtivas,
+      dre,
     };
 
     await this.cacheManager.set(cacheKey, result, 60000);
     return result;
+  }
+
+  /** DRE operacional agregado — somente leitura para gestor do fundo. */
+  private async calcularDreOperacional() {
+    const [
+      creditosCarteira,
+      creditosQuitados,
+      creditosVencidos,
+      creditosSuspensos,
+      pipeVistoria,
+      aguardandoPagamento,
+    ] = await Promise.all([
+      this.prisma.credito.findMany({
+        where: { status: { in: ["ATIVO", "SUSPENSO", "VENCIDO"] } },
+        select: { valorAprovado: true, valorLiberado: true, status: true },
+      }),
+      this.prisma.credito.count({ where: { status: "QUITADO" } }),
+      this.prisma.credito.count({ where: { status: "VENCIDO" } }),
+      this.prisma.credito.count({ where: { status: "SUSPENSO" } }),
+      this.prisma.etapaObra.aggregate({
+        where: { status: "AGUARDANDO_VISTORIA" },
+        _sum: { valorLiberacao: true },
+      }),
+      this.prisma.liberacaoParcela.aggregate({
+        where: { status: "AGUARDANDO_PAGAMENTO" },
+        _sum: { valor: true },
+      }),
+    ]);
+
+    const carteiraAprovada = creditosCarteira.reduce((acc, c) => acc + Number(c.valorAprovado), 0);
+    const capitalDesembolsado = creditosCarteira.reduce((acc, c) => acc + Number(c.valorLiberado), 0);
+    const saldoADesembolsar = Math.max(0, carteiraAprovada - capitalDesembolsado);
+    const valorPipeVistoria = Number(pipeVistoria._sum.valorLiberacao ?? 0);
+    const valorAguardandoPagamento = Number(aguardandoPagamento._sum.valor ?? 0);
+    const capitalEmPipe = valorPipeVistoria + valorAguardandoPagamento;
+
+    const creditosAtivosCarteira = creditosCarteira.filter((c) => c.status === "ATIVO").length;
+    const carteiraEmRisco = creditosAtivosCarteira + creditosVencidos + creditosSuspensos;
+    const inadimplenciaPct =
+      carteiraEmRisco > 0 ? Math.round((creditosVencidos / carteiraEmRisco) * 1000) / 10 : 0;
+
+    const taxaUtilizacaoPct =
+      carteiraAprovada > 0
+        ? Math.round((capitalDesembolsado / carteiraAprovada) * 1000) / 10
+        : 0;
+
+    const pipePctCarteira =
+      carteiraAprovada > 0 ? Math.round((capitalEmPipe / carteiraAprovada) * 1000) / 10 : 0;
+
+    let saude: "saudavel" | "atencao" | "critico" = "saudavel";
+    if (creditosVencidos > 0 || inadimplenciaPct >= 5 || pipePctCarteira >= 35) {
+      saude = "critico";
+    } else if (
+      inadimplenciaPct >= 2 ||
+      pipePctCarteira >= 20 ||
+      creditosSuspensos > 0
+    ) {
+      saude = "atencao";
+    }
+
+    return {
+      carteiraAprovada: Math.round(carteiraAprovada * 100) / 100,
+      capitalDesembolsado: Math.round(capitalDesembolsado * 100) / 100,
+      saldoADesembolsar: Math.round(saldoADesembolsar * 100) / 100,
+      capitalEmPipe: Math.round(capitalEmPipe * 100) / 100,
+      valorPipeVistoria: Math.round(valorPipeVistoria * 100) / 100,
+      valorAguardandoPagamento: Math.round(valorAguardandoPagamento * 100) / 100,
+      taxaUtilizacaoPct,
+      inadimplenciaPct,
+      pipePctCarteira,
+      creditosQuitados,
+      creditosVencidos,
+      creditosSuspensos,
+      saude,
+      linhas: [
+        {
+          label: "Carteira aprovada (comprometida)",
+          valor: Math.round(carteiraAprovada * 100) / 100,
+          tipo: "entrada" as const,
+        },
+        {
+          label: "Capital já desembolsado",
+          valor: Math.round(capitalDesembolsado * 100) / 100,
+          tipo: "realizado" as const,
+        },
+        {
+          label: "Saldo a desembolsar",
+          valor: Math.round(saldoADesembolsar * 100) / 100,
+          tipo: "disponivel" as const,
+        },
+        {
+          label: "Em pipe — vistoria técnica",
+          valor: Math.round(valorPipeVistoria * 100) / 100,
+          tipo: "pendente" as const,
+        },
+        {
+          label: "Aguardando pagamento (SIPOC)",
+          valor: Math.round(valorAguardandoPagamento * 100) / 100,
+          tipo: "pendente" as const,
+        },
+      ],
+    };
   }
 
   /** Visão agregada da operação — somente leitura (gestor IMOBI + investidor do fundo). */

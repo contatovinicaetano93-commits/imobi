@@ -8,7 +8,7 @@ test.describe('Protected routes redirect unauthenticated users', () => {
     '/dashboard/credito',
     '/dashboard/gestor',
     '/dashboard/kyc',
-    '/dashboard/score',
+    '/dashboard/proposta-credito',
   ];
 
   for (const path of protectedPaths) {

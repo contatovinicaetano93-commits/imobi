@@ -30,21 +30,15 @@ const PUBLIC_PATHS = [
 ];
 
 const ROLE_RULES: Array<{ prefix: string; roles: string[] }> = [
-  { prefix: "/dashboard/admin",      roles: ["ADMIN"] },
-  { prefix: "/dashboard/gestor",     roles: ["GESTOR", "ADMIN"] },
-  { prefix: "/dashboard/fundos",     roles: ["GESTOR", "ADMIN"] },
-  { prefix: "/dashboard/relatorios", roles: ["GESTOR", "ADMIN"] },
+  { prefix: "/dashboard/admin", roles: ["ADMIN"] },
+  { prefix: "/dashboard/gestor", roles: ["GESTOR", "ADMIN"] },
   { prefix: "/dashboard/engenheiro", roles: ["ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
-  { prefix: "/dashboard/comercial",  roles: ["COMERCIAL", "PARCEIRO", "ADMIN"] },
+  { prefix: "/dashboard/comercial", roles: ["COMERCIAL", "PARCEIRO", "ADMIN"] },
   { prefix: "/dashboard/construtor", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
-  { prefix: "/dashboard/credito",    roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
-  { prefix: "/dashboard/obras",      roles: ["CONSTRUTOR", "TOMADOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
-  { prefix: "/dashboard/kyc",        roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
-  { prefix: "/dashboard/viabilidade", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
+  { prefix: "/dashboard/credito", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
+  { prefix: "/dashboard/obras", roles: ["CONSTRUTOR", "TOMADOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
+  { prefix: "/dashboard/kyc", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
   { prefix: "/dashboard/proposta-credito", roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
-  { prefix: "/dashboard/score",      roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
-  { prefix: "/dashboard/simulador",  roles: ["CONSTRUTOR", "TOMADOR", "ADMIN"] },
-  { prefix: "/dashboard/comite",     roles: ["CONSTRUTOR", "TOMADOR", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA", "ADMIN"] },
 ];
 
 function decodeJwt(token: string): { role?: string; exp?: number } | null {
@@ -95,14 +89,6 @@ export function middleware(request: NextRequest) {
   const legacyDest = resolveLegacyRedirect(pathname);
   if (legacyDest) {
     return NextResponse.redirect(new URL(legacyDest, request.url));
-  }
-
-  // Legado: simulador interno → viabilidade
-  if (
-    pathname === "/dashboard/simulador" ||
-    pathname.startsWith("/dashboard/simulador/")
-  ) {
-    return NextResponse.redirect(new URL("/dashboard/proposta-credito", request.url));
   }
 
   // Admin opera KYC/vistorias no Centro de Comando — nunca nas filas do gestor de fundo (somente leitura).
