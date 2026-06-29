@@ -70,7 +70,7 @@
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.57.1",
     "tsx": "^4.22.0",
-    "turbo": "^2.9.18",
+    "turbo": "^2.10.0",
     "typescript": "^5.5.0"
   },
   "workspaces": [
