@@ -67,8 +67,6 @@ const MVP_NAV_TOMADOR = new Set([
 
 const MVP_NAV_GESTOR = new Set([
   "/dashboard/gestor",
-  "/dashboard/gestor/kyc",
-  "/dashboard/gestor/etapas",
   "/dashboard/perfil",
   "/dashboard/notificacoes",
 ]);

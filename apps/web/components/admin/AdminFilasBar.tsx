@@ -33,7 +33,7 @@ const ITENS = [
   {
     key: "liberacoesAguardandoPagamento" as const,
     label: "Pagamentos",
-    href: "/dashboard/admin",
+    href: "/dashboard/admin/pagamentos",
   },
 ];
 

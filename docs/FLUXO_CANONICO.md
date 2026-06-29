@@ -1,124 +1,89 @@
-# Fluxo canônico — Imobi
+# Fluxo canônico — Imobi (enxuto)
 
-**Modo lançamento:** jornada guiada (`NEXT_PUBLIC_GUIDED_STRICT=true`, default) + nav mínima por perfil (`lib/canonical-flow.ts`).
+**Modo lançamento:** jornada guiada (`NEXT_PUBLIC_GUIDED_STRICT=true`) + nav mínima por perfil ([`canonical-flow.ts`](../apps/web/lib/canonical-flow.ts)).
 
-## URLs
+## URLs staging
 
 | Ambiente | URL |
 |----------|-----|
 | Web | https://imobi-web-ten.vercel.app |
 | API | https://imobi-api-staging.onrender.com |
 
-## Funil operacional (único)
+## Funil único
 
 ```
-/envie-seu-projeto → PropostaCredito
-       ↓
-Login + KYC
-       ↓
-Dossiê / viabilidade (tomador)
-       ↓
-Admin aprova dossiê
-       ↓
-Tomador cadastra obra
-       ↓
-Admin homologa obra → EM_EXECUCAO
-       ↓
-Tomador solicita crédito / comitê
-       ↓
-Admin abre comitê → Engenheiro parecer + voto
-       ↓
-Comitê APROVADO → Crédito ATIVO
-       ↓
-Tomador: evidências GPS + submete etapa
-       ↓
-Engenheiro aprova vistoria
-       ↓
-LiberacaoParcela AGUARDANDO_PAGAMENTO
-       ↓
-Admin confirma pagamento (SIPOC)
-       ↓
-100% etapas + valor pago → Crédito QUITADO + obra CONCLUIDA
+/envie-seu-projeto → Login + KYC → Dossiê
+→ Admin aprova → Tomador cadastra obra → Admin homologa
+→ Tomador solicita crédito → Comitê (Admin + Eng)
+→ Tomador evidências GPS → Eng vistoria → Admin pagamento SIPOC
+→ Quitado → Gestor vê DRE/KPIs
 ```
 
-**Jornada:** `GET /jornada` + `JornadaGuard` (redirect estrito por passo).
+## Nav por perfil (soft launch)
+
+| Perfil | Nav sidebar | Home |
+|--------|-------------|------|
+| **Tomador** | Jornada · KYC · Viabilidade · Obras · Crédito · Conta | `/dashboard/construtor` |
+| **Admin** | Centro de comando · Usuários · Conta | `/dashboard/admin` |
+| **Engenheiro** | Vistorias · Comitê (parecer) · Conta | `/dashboard/engenheiro/vistoria` |
+| **Gestor** | Operação do fundo · Conta | `/dashboard/gestor` |
+| **Comercial** | Conta only (fase 2) | `/dashboard/comercial` |
+
+Filas operacionais (KYC, viabilidade, obras, vistorias, comitê, propostas, pipeline) ficam **no hub Admin** — cards no centro de comando, não na sidebar.
 
 ## Tomador / Construtor
 
-| # | Passo | Rota |
-|---|-------|------|
-| 1 | KYC | `/dashboard/kyc` |
-| 2 | Viabilidade | `/dashboard/proposta-credito` |
-| 3 | Obra | `/dashboard/obras/nova` |
-| 4 | Crédito | `/dashboard/credito/solicitar` |
-| 5 | Aguardando comitê | `/dashboard/construtor` |
-| 6 | Liberações | `/dashboard/credito` + `/dashboard/obras` |
-| 7 | Quitado | `/dashboard/construtor` |
+| Passo | Rota |
+|-------|------|
+| KYC | `/dashboard/kyc` |
+| Viabilidade | `/dashboard/proposta-credito` |
+| Obra | `/dashboard/obras/nova` |
+| Crédito | `/dashboard/credito/solicitar` |
+| Acompanhar | `/dashboard/construtor` |
 
-**Hub:** `/dashboard/construtor` · **Nav:** jornada, KYC, viabilidade, obras, crédito
+## Admin IMOBI — ambiente operacional
 
-## Gestor do fundo (somente KPIs + DRE — sem operação)
+| Ação | Onde |
+|------|------|
+| Hub + filas + SIPOC homologação | `/dashboard/admin` |
+| Pagamentos manuais | `/dashboard/admin/pagamentos` |
+| Filas (KYC, propostas, etc.) | Cards no hub → rotas `/dashboard/admin/*` |
+| Usuários | `/dashboard/admin/usuarios` |
 
-| Indicador | Rota |
-|-----------|------|
-| Painel + DRE operacional | `/dashboard/gestor` |
-| KPI · KYC (leitura) | `/dashboard/gestor/kyc` |
-| KPI · Etapas (leitura) | `/dashboard/gestor/etapas` |
+**API:** `GET /admin/filas` — contadores das filas operacionais.
 
-**API:** `GET /api/v1/manager/dashboard` → KPIs + objeto `dre` (carteira, desembolso, pipe, saúde).
+## Gestor do fundo — somente leitura
 
-Comitê, KYC operacional, due diligence e liberações são **internos** (Admin / Engenheiro). O gestor **não participa** desses processos e **não acessa** rotas do tomador.
+Uma tela: `/dashboard/gestor`
+
+- DRE operacional (carteira, desembolso, pipe, saúde)
+- KPIs agregados
+- Amostras de KYC e etapas no pipe (scroll na mesma página)
+
+Drill-down completo (opcional): `/dashboard/gestor/kyc`, `/dashboard/gestor/etapas` — sem item na nav.
+
+**API:** `GET /manager/dashboard` → KPIs + objeto `dre`.
 
 ## Engenheiro
 
-| Passo | Rota | Ação |
-|-------|------|------|
-| Vistorias (hub) | `/dashboard/engenheiro/vistoria` | Fila SIPOC — aprovar/reprovar etapas |
-| Obras · evidências | `/dashboard/obras` | Somente leitura + atalho para vistoria |
-| Parecer comitê | `/dashboard/engenheiro/comite` | Parecer técnico antes da votação admin |
-
-**Não cadastra obra** — cadastro é do tomador; homologação é do Admin (SIPOC passo 2).
-
-## Comercial / Parceiro
-
-| Passo | Rota |
-|-------|------|
-| Painel (indicações, comissões) | `/dashboard/comercial` |
-| Leads | `/dashboard/comercial/leads` |
-| Ranking | `/dashboard/comercial/ranking` |
-
-## Admin — centro de comando
-
-| Fila | Rota |
+| Ação | Rota |
 |------|------|
-| Hub + SIPOC | `/dashboard/admin` |
-| Pipeline comercial | `/dashboard/admin/pipeline` |
-| Propostas | `/dashboard/admin/propostas` |
-| KYC | `/dashboard/admin/kyc` |
-| Viabilidade | `/dashboard/admin/viabilidade` |
-| Obras / homologação | `/dashboard/admin/obras` |
-| Vistorias | `/dashboard/admin/vistorias` |
-| Comitê | `/dashboard/admin/comite` |
-| Usuários | `/dashboard/admin/usuarios` |
+| Vistorias | `/dashboard/engenheiro/vistoria` |
+| Parecer comitê | `/dashboard/engenheiro/comite` |
 
-## Rotas legadas (redirect automático)
+Não cadastra obra. Rota `/dashboard/obras` permanece para leitura de evidências quando necessário.
 
-Bookmarks antigos redirecionam via `LEGACY_PREFIX_REDIRECTS` em `canonical-flow.ts`:
+## Comercial (fase 2)
 
-| Legado | Destino |
-|--------|---------|
-| `/dashboard/simulador`, `/dashboard/viabilidade` | `/dashboard/proposta-credito` |
-| `/dashboard/score` | `/dashboard/construtor` |
-| `/dashboard/comite` | `/dashboard/credito/solicitar` |
-| `/dashboard/fundos`, `/dashboard/gestor/carteira` | `/dashboard/gestor` |
-| `/dashboard/relatorios` | `/dashboard/admin` |
-| `/dashboard/gestor/comite`, `/dashboard/gestor/due-diligence` | `/dashboard/gestor` |
-| `/dashboard/engenheiro/checklist`, `alertas` | `/dashboard/engenheiro/vistoria` |
+Rotas ativas; nav oculta até pós-launch.
+
+## Rotas legadas
+
+Redirects em `LEGACY_PREFIX_REDIRECTS` — ex.: `/dashboard/fundos` → `/dashboard/gestor`.
 
 ## Técnico
 
-- **API first:** contratos em OpenAPI + `@imbobi/schemas` (Zod)
-- **Resiliência:** throttle + cache (manager dashboard 60s), retry em jobs BullMQ
-- **Escalável:** cache Redis, queries agregadas no `ManagerService`
-- **Guiado:** `GUIDED_STRICT_MODE` + `isCanonicalRouteAllowed`
-- **Beta legado:** `NEXT_PUBLIC_BETA_MVP_MODE=true` (não usar em produção)
+- **API first:** `@imbobi/schemas` + OpenAPI
+- **Guiado:** middleware + `GET /jornada` + `isCanonicalRouteAllowed`
+- **Resiliente:** throttle + cache (manager dashboard 60s, admin filas poll)
+- **Escalável:** agregações em `ManagerService` / `AdminService`

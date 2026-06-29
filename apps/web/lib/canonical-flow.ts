@@ -13,14 +13,9 @@ import {
   MapPin,
   Vote,
   LayoutDashboard,
-  Inbox,
-  FileText,
-  Building2,
-  Banknote,
   User,
   Bell,
   BarChart3,
-  TrendingUp,
 } from "lucide-react";
 
 export type CanonicalRole =
@@ -76,34 +71,20 @@ export const CANONICAL_NAV: Record<string, NavItemDef[]> = {
   ],
   CONSTRUTOR: [], // preenchido abaixo
   GESTOR: [
-    { label: "Visão geral", href: "/dashboard/gestor", icon: BarChart3, section: "geral" },
-    { label: "KPI · KYC", href: "/dashboard/gestor/kyc", icon: FileCheck2, section: "operacao" },
-    { label: "KPI · Etapas", href: "/dashboard/gestor/etapas", icon: Building2, section: "operacao" },
+    { label: "Operação do fundo", href: "/dashboard/gestor", icon: BarChart3, section: "geral" },
     ...ACCOUNT,
   ],
   ENGENHEIRO: [
     { label: "Vistorias", href: "/dashboard/engenheiro/vistoria", icon: MapPin, section: "geral" },
-    { label: "Obras · evidências", href: "/dashboard/obras", icon: HardHat, section: "operacao" },
     { label: "Comitê (parecer)", href: "/dashboard/engenheiro/comite", icon: Vote, section: "operacao" },
     ...ACCOUNT,
   ],
   GESTOR_OBRA: [], // alias eng
-  COMERCIAL: [
-    { label: "Painel comercial", href: "/dashboard/comercial", icon: Banknote, section: "geral" },
-    { label: "Leads", href: "/dashboard/comercial/leads", icon: Inbox, section: "operacao" },
-    { label: "Ranking", href: "/dashboard/comercial/ranking", icon: TrendingUp, section: "operacao" },
-    ...ACCOUNT,
-  ],
+  /** Fase 2 — nav oculta; rotas e ROLE_HOME permanecem */
+  COMERCIAL: [...ACCOUNT],
   PARCEIRO: [], // alias abaixo
   ADMIN: [
     { label: "Centro de comando", href: "/dashboard/admin", icon: LayoutDashboard, section: "geral" },
-    { label: "Pipeline", href: "/dashboard/admin/pipeline", icon: Banknote, section: "operacao" },
-    { label: "Propostas", href: "/dashboard/admin/propostas", icon: Inbox, section: "operacao" },
-    { label: "KYC", href: "/dashboard/admin/kyc", icon: FileCheck2, section: "operacao" },
-    { label: "Viabilidade", href: "/dashboard/admin/viabilidade", icon: FileText, section: "operacao" },
-    { label: "Obras", href: "/dashboard/admin/obras", icon: HardHat, section: "operacao" },
-    { label: "Vistorias", href: "/dashboard/admin/vistorias", icon: MapPin, section: "operacao" },
-    { label: "Comitê", href: "/dashboard/admin/comite", icon: Vote, section: "operacao" },
     { label: "Usuários", href: "/dashboard/admin/usuarios", icon: User, section: "operacao" },
     ...ACCOUNT,
   ],

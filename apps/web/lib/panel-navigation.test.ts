@@ -7,16 +7,9 @@ import { getNavRole, getActiveNavHref } from './panel-navigation';
 const NAV = {
   admin: [
     { href: '/dashboard/admin' },
-    { href: '/dashboard/admin/obras' },
-    { href: '/dashboard/admin/kyc' },
-    { href: '/dashboard/admin/vistorias' },
-    { href: '/dashboard/admin/comite' },
+    { href: '/dashboard/admin/usuarios' },
   ],
-  gestor: [
-    { href: '/dashboard/gestor' },
-    { href: '/dashboard/gestor/kyc' },
-    { href: '/dashboard/gestor/etapas' },
-  ],
+  gestor: [{ href: '/dashboard/gestor' }],
   tomador: [
     { href: '/dashboard/construtor' },
     { href: '/dashboard/obras' },
@@ -24,13 +17,8 @@ const NAV = {
     { href: '/dashboard/credito' },
   ],
   engenheiro: [
-    { href: '/dashboard/engenheiro' },
-    { href: '/dashboard/obras' },
     { href: '/dashboard/engenheiro/vistoria' },
-  ],
-  comercial: [
-    { href: '/dashboard/comercial' },
-    { href: '/dashboard/comercial/leads' },
+    { href: '/dashboard/engenheiro/comite' },
   ],
 };
 
@@ -60,18 +48,13 @@ expectNavRole('ADMIN', '/dashboard/gestor', 'GESTOR');
 expectNavRole('GESTOR', '/dashboard/gestor/kyc/1', 'GESTOR');
 expectNavRole('TOMADOR', '/dashboard/credito/solicitar', 'TOMADOR');
 expectNavRole('ADMIN', '/dashboard/gestor/kyc', 'ADMIN');
-expectNavRole('ADMIN', '/dashboard/gestor/etapas', 'ADMIN');
+expectNavRole('ADMIN', '/dashboard/admin/kyc/abc', 'ADMIN');
 
-expectActive('ADMIN', '/dashboard/admin/comite', NAV.admin, '/dashboard/admin/comite');
-expectActive('ADMIN', '/dashboard/admin/kyc/abc', NAV.admin, '/dashboard/admin/kyc');
-expectActive('ADMIN', '/dashboard/admin/vistorias', NAV.admin, '/dashboard/admin/vistorias');
-expectActive('ADMIN', '/dashboard/obras/xyz', NAV.admin, '/dashboard/admin/obras');
-expectActive('ADMIN', '/dashboard/obras', NAV.engenheiro, '/dashboard/obras', { adminPreview: 'ENGENHEIRO' });
-expectActive('ADMIN', '/dashboard/obras/xyz', NAV.engenheiro, '/dashboard/obras', { adminPreview: 'ENGENHEIRO' });
-expectActive('GESTOR', '/dashboard/gestor/kyc/1', NAV.gestor, '/dashboard/gestor/kyc');
-assert.equal(getActiveNavHref('/dashboard/obras/xyz', 'GESTOR', NAV.gestor), null);
+expectActive('ADMIN', '/dashboard/admin/kyc/abc', NAV.admin, '/dashboard/admin');
+expectActive('ADMIN', '/dashboard/admin/pagamentos', NAV.admin, '/dashboard/admin');
+expectActive('ADMIN', '/dashboard/admin/usuarios', NAV.admin, '/dashboard/admin/usuarios');
+expectActive('GESTOR', '/dashboard/gestor/kyc/1', NAV.gestor, '/dashboard/gestor');
 expectActive('TOMADOR', '/dashboard/obras/xyz', NAV.tomador, '/dashboard/obras');
-expectActive('TOMADOR', '/dashboard/credito/solicitar', NAV.tomador, '/dashboard/credito');
-expectActive('ENGENHEIRO', '/dashboard/obras/xyz/vistoria/1', NAV.engenheiro, '/dashboard/obras');
+expectActive('ENGENHEIRO', '/dashboard/engenheiro/vistoria', NAV.engenheiro, '/dashboard/engenheiro/vistoria');
 
 console.log('✅ panel-navigation OK');

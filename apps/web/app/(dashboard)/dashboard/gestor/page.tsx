@@ -75,17 +75,29 @@ function KpiCard({
     ok: "text-emerald-700",
   };
 
-  return (
-    <Link
-      href={href as "/dashboard/gestor"}
-      className={`group block rounded-2xl border p-5 shadow-sm transition hover:shadow-md ${tones[tone]}`}
-    >
+  const className = `group block rounded-2xl border p-5 shadow-sm transition hover:shadow-md ${tones[tone]}`;
+  const footer = (
+    <>
       <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
       <p className={`mt-2 text-3xl font-bold tabular-nums ${valueTone[tone]}`}>{value}</p>
       {hint ? <p className="mt-2 text-xs text-gray-500">{hint}</p> : null}
       <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-violet-700 opacity-0 transition group-hover:opacity-100">
         Ver detalhes <ChevronRight className="h-3.5 w-3.5" />
       </span>
+    </>
+  );
+
+  if (href.startsWith("#")) {
+    return (
+      <a href={href} className={className}>
+        {footer}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href as "/dashboard/gestor"} className={className}>
+      {footer}
     </Link>
   );
 }
@@ -198,9 +210,9 @@ export default function GestorPage() {
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-violet-600">Gestor do fundo</p>
-          <h1 className="mt-1 text-2xl font-bold text-gray-900 sm:text-3xl">Operação em tempo real</h1>
+          <h1 className="mt-1 text-2xl font-bold text-gray-900 sm:text-3xl">Operação do fundo</h1>
           <p className="mt-1 max-w-xl text-sm text-gray-500">
-            Números agregados da operação IMOBI — DRE operacional, créditos, obras e filas internas. Somente leitura.
+            DRE operacional, KPIs e amostras do pipe — tudo nesta tela. Somente leitura.
           </p>
           {!loading ? (
             <span
@@ -239,47 +251,6 @@ export default function GestorPage() {
           </p>
         </div>
       ) : null}
-
-      <section aria-label="Indicadores principais">
-        <div className="mb-4 flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-violet-600" />
-          <h2 className="text-sm font-bold uppercase tracking-wide text-gray-700">KPIs da operação</h2>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiCard
-            label="Créditos ativos"
-            value={s.creditosAtivos}
-            hint="Operações financiadas em andamento"
-            href="/dashboard/gestor/etapas"
-            tone="ok"
-          />
-          <KpiCard
-            label="Obras em execução"
-            value={s.obrasAtivas}
-            hint="Empreendimentos com obra ativa"
-            href="/dashboard/gestor/etapas"
-            tone="ok"
-          />
-          <KpiCard
-            label="KYC na fila"
-            value={s.filaKyc}
-            hint="Documentos aguardando análise interna"
-            href="/dashboard/gestor/kyc"
-            tone={pipeTone(s.filaKyc)}
-          />
-          <KpiCard
-            label="Etapas no pipe"
-            value={s.filaAprovacoes}
-            hint={
-              valorPipe > 0
-                ? `${formatarBRL(valorPipe)} aguardando vistoria/liberação`
-                : "Etapas aguardando vistoria"
-            }
-            href="/dashboard/gestor/etapas"
-            tone={pipeTone(s.filaAprovacoes)}
-          />
-        </div>
-      </section>
 
       <section aria-label="DRE operacional" className={`rounded-2xl border p-5 shadow-sm sm:p-6 ${dreStyles.ring}`}>
         <div className="mb-5 flex items-center gap-2">
@@ -405,8 +376,52 @@ export default function GestorPage() {
         ) : null}
       </section>
 
+      <section aria-label="Indicadores principais">
+        <div className="mb-4 flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-violet-600" />
+          <h2 className="text-sm font-bold uppercase tracking-wide text-gray-700">KPIs da operação</h2>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard
+            label="Créditos ativos"
+            value={s.creditosAtivos}
+            hint="Operações financiadas em andamento"
+            href="#secao-etapas"
+            tone="ok"
+          />
+          <KpiCard
+            label="Obras em execução"
+            value={s.obrasAtivas}
+            hint="Empreendimentos com obra ativa"
+            href="#secao-etapas"
+            tone="ok"
+          />
+          <KpiCard
+            label="KYC na fila"
+            value={s.filaKyc}
+            hint="Documentos aguardando análise interna"
+            href="#secao-kyc"
+            tone={pipeTone(s.filaKyc)}
+          />
+          <KpiCard
+            label="Etapas no pipe"
+            value={s.filaAprovacoes}
+            hint={
+              valorPipe > 0
+                ? `${formatarBRL(valorPipe)} aguardando vistoria/liberação`
+                : "Etapas aguardando vistoria"
+            }
+            href="#secao-etapas"
+            tone={pipeTone(s.filaAprovacoes)}
+          />
+        </div>
+      </section>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <section
+          id="secao-etapas"
+          className="scroll-mt-24 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
+        >
           <div className="mb-4 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Building2 className="h-4 w-4 text-violet-600" />
@@ -448,15 +463,13 @@ export default function GestorPage() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <FileCheck2 className="h-4 w-4 text-violet-600" />
-              <h2 className="font-semibold text-gray-900">KYC recente na fila</h2>
-            </div>
-            <Link href="/dashboard/gestor/kyc" className="text-xs font-semibold text-violet-700 hover:underline">
-              Ver todos
-            </Link>
+        <section
+          id="secao-kyc"
+          className="scroll-mt-24 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
+        >
+          <div className="mb-4 flex items-center gap-2">
+            <FileCheck2 className="h-4 w-4 text-violet-600" />
+            <h2 className="font-semibold text-gray-900">KYC recente na fila</h2>
           </div>
           {loading ? (
             <ListSkeleton />

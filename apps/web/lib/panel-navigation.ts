@@ -34,7 +34,7 @@ type NavOverride = {
 
 /** Destaque correto em rotas aninhadas / compartilhadas (mesmo padrão do admin/obras). */
 const ACTIVE_NAV_OVERRIDES: NavOverride[] = [
-  { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'ADMIN', targetHref: '/dashboard/admin/obras' },
+  { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
   { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'TOMADOR', targetHref: '/dashboard/obras' },
   { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/obras' },
   { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'ENGENHEIRO', targetHref: '/dashboard/obras' },
@@ -47,12 +47,16 @@ const ACTIVE_NAV_OVERRIDES: NavOverride[] = [
   { pattern: /^\/dashboard\/kyc/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/kyc' },
   { pattern: /^\/dashboard\/proposta-credito/, navRole: 'TOMADOR', targetHref: '/dashboard/proposta-credito' },
   { pattern: /^\/dashboard\/proposta-credito/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/proposta-credito' },
-  { pattern: /^\/dashboard\/admin\/kyc/, navRole: 'ADMIN', targetHref: '/dashboard/admin/kyc' },
-  { pattern: /^\/dashboard\/admin\/propostas/, navRole: 'ADMIN', targetHref: '/dashboard/admin/propostas' },
-  { pattern: /^\/dashboard\/admin\/vistorias/, navRole: 'ADMIN', targetHref: '/dashboard/admin/vistorias' },
-  { pattern: /^\/dashboard\/admin\/viabilidade/, navRole: 'ADMIN', targetHref: '/dashboard/admin/viabilidade' },
-  { pattern: /^\/dashboard\/gestor\/kyc/, navRole: 'GESTOR', targetHref: '/dashboard/gestor/kyc' },
-  { pattern: /^\/dashboard\/gestor\/etapas/, navRole: 'GESTOR', targetHref: '/dashboard/gestor/etapas' },
+  { pattern: /^\/dashboard\/admin\/kyc/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
+  { pattern: /^\/dashboard\/admin\/propostas/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
+  { pattern: /^\/dashboard\/admin\/vistorias/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
+  { pattern: /^\/dashboard\/admin\/viabilidade/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
+  { pattern: /^\/dashboard\/admin\/obras/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
+  { pattern: /^\/dashboard\/admin\/comite/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
+  { pattern: /^\/dashboard\/admin\/pipeline/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
+  { pattern: /^\/dashboard\/admin\/pagamentos/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
+  { pattern: /^\/dashboard\/gestor\/kyc/, navRole: 'GESTOR', targetHref: '/dashboard/gestor' },
+  { pattern: /^\/dashboard\/gestor\/etapas/, navRole: 'GESTOR', targetHref: '/dashboard/gestor' },
 ];
 
 export type PanelId = AppRole;

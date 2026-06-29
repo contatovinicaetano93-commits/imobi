@@ -1,15 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { adminApi, type AdminObraResumo, type LiberacaoAguardandoPagamento } from "@/lib/api";
-import { formatarBRL } from "@imbobi/core";
+import Link from "next/link";
+import { adminApi, type AdminObraResumo } from "@/lib/api";
 import { useToast } from "@/hooks/toast-context";
 import { IMOBI_FINANCEIRO_WHATS_DISPLAY } from "@/lib/financeiro";
-import { Building2, Banknote, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
-
-function brl(v: number) {
-  return formatarBRL(v);
-}
+import { Building2, CheckCircle2, XCircle, AlertTriangle, Banknote, ChevronRight } from "lucide-react";
 
 export function AdminSipocPanel() {
   const { success, error: toastError } = useToast();
@@ -17,11 +13,10 @@ export function AdminSipocPanel() {
   toastErrorRef.current = toastError;
 
   const [obras, setObras] = useState<AdminObraResumo[]>([]);
-  const [liberacoes, setLiberacoes] = useState<LiberacaoAguardandoPagamento[]>([]);
+  const [pagamentosPendentes, setPagamentosPendentes] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [refs, setRefs] = useState<Record<string, string>>({});
 
   const recarregar = useCallback(async () => {
     try {
@@ -30,7 +25,7 @@ export function AdminSipocPanel() {
         adminApi.listarLiberacoesAguardandoPagamento(),
       ]);
       setObras(obrasData);
-      setLiberacoes(libData);
+      setPagamentosPendentes(libData.length);
       setLoadError(null);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "Erro ao carregar SIPOC");
@@ -73,19 +68,6 @@ export function AdminSipocPanel() {
     }
   };
 
-  const confirmarPagamento = async (liberacaoId: string) => {
-    setBusyId(liberacaoId);
-    try {
-      await adminApi.confirmarPagamento(liberacaoId, refs[liberacaoId]?.trim() || undefined);
-      success("Pagamento confirmado — construtor notificado.");
-      await recarregar();
-    } catch (err) {
-      toastErrorRef.current(err instanceof Error ? err.message : "Erro ao confirmar pagamento");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
   if (loading) {
     return (
       <div className="rounded-2xl border border-gray-100 bg-white p-6 text-sm text-gray-500">
@@ -96,10 +78,10 @@ export function AdminSipocPanel() {
 
   return (
     <div className="space-y-6">
-      {loadError && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {loadError ? (
+        <div className="flex flex-col justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center">
           <div className="flex items-start gap-2 text-sm text-red-800">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{loadError}</span>
           </div>
           <button
@@ -108,57 +90,56 @@ export function AdminSipocPanel() {
               setLoading(true);
               void recarregar();
             }}
-            className="text-sm font-semibold text-red-700 underline shrink-0"
+            className="shrink-0 text-sm font-semibold text-red-700 underline"
           >
             Tentar novamente
           </button>
         </div>
-      )}
+      ) : null}
 
       <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-        <p className="text-sm text-blue-900 font-semibold">Fluxo SIPOC — liberação manual</p>
-        <p className="text-xs text-blue-800 mt-1">
-          Viabilidade (dossiê aprovado) → Construtor cadastra obra → Admin homologa → Engenheiro
-          aprova vistoria → pagamento manual na conta cadastrada → confirmação pelo financeiro IMOBI
-          ({IMOBI_FINANCEIRO_WHATS_DISPLAY}).
+        <p className="text-sm font-semibold text-blue-900">Fluxo SIPOC — liberação manual</p>
+        <p className="mt-1 text-xs text-blue-800">
+          Viabilidade (dossiê aprovado) → Tomador cadastra obra → Admin homologa → Engenheiro aprova
+          vistoria → pagamento manual → confirmação financeiro IMOBI ({IMOBI_FINANCEIRO_WHATS_DISPLAY}).
         </p>
       </div>
 
-      <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 bg-gray-50/80">
-          <Building2 className="w-4 h-4 text-[#1B4FD8]" />
-          <h3 className="font-bold text-gray-900 text-sm">Obras aguardando homologação</h3>
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
+        <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50/80 px-5 py-4">
+          <Building2 className="h-4 w-4 text-[#1B4FD8]" />
+          <h3 className="text-sm font-bold text-gray-900">Obras aguardando homologação</h3>
           <span className="ml-auto text-xs font-semibold text-gray-500">{obrasHomologacao.length}</span>
         </div>
         {obrasHomologacao.length === 0 ? (
-          <p className="p-6 text-sm text-gray-400 text-center">Nenhuma obra pendente de homologação.</p>
+          <p className="p-6 text-center text-sm text-gray-400">Nenhuma obra pendente de homologação.</p>
         ) : (
           <div className="divide-y divide-gray-50">
             {obrasHomologacao.map((obra) => (
-              <div key={obra.id} className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 truncate">{obra.nome}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+              <div key={obra.id} className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-gray-900">{obra.nome}</p>
+                  <p className="mt-0.5 text-xs text-gray-500">
                     {obra.tomador ?? "Tomador"} · aguardando homologação
                   </p>
                 </div>
-                <div className="flex gap-2 shrink-0">
+                <div className="flex shrink-0 gap-2">
                   <button
                     type="button"
                     disabled={busyId === obra.id}
                     onClick={() => homologar(obra.id)}
-                    className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-xs font-semibold px-3 py-2 rounded-lg"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="h-3.5 w-3.5" />
                     Homologar
                   </button>
                   <button
                     type="button"
                     disabled={busyId === obra.id}
                     onClick={() => reprovar(obra.id)}
-                    className="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-700 text-xs font-semibold px-3 py-2 rounded-lg"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
                   >
-                    <XCircle className="w-3.5 h-3.5" />
+                    <XCircle className="h-3.5 w-3.5" />
                     Reprovar
                   </button>
                 </div>
@@ -168,63 +149,23 @@ export function AdminSipocPanel() {
         )}
       </div>
 
-      <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 bg-gray-50/80">
-          <Banknote className="w-4 h-4 text-[#16a34a]" />
-          <h3 className="font-bold text-gray-900 text-sm">Pagamentos manuais pendentes</h3>
-          <span className="ml-auto text-xs font-semibold text-gray-500">{liberacoes.length}</span>
+      <Link
+        href="/dashboard/admin/pagamentos"
+        className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-[#16a34a]/30 hover:shadow-md"
+      >
+        <div className="rounded-xl bg-green-50 p-2.5 text-[#16a34a]">
+          <Banknote className="h-4 w-4" />
         </div>
-        {liberacoes.length === 0 ? (
-          <p className="p-6 text-sm text-gray-400 text-center">Nenhuma liberação aguardando pagamento.</p>
-        ) : (
-          <div className="divide-y divide-gray-50">
-            {liberacoes.map((lib) => (
-              <div key={lib.liberacaoId} className="p-5 space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-gray-900">
-                      {lib.obra?.nome ?? "Obra"} — {brl(Number(lib.valor))}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {lib.tomador} · {new Date(lib.criadoEm).toLocaleDateString("pt-BR")}
-                    </p>
-                  </div>
-                  <p className="text-xs font-mono text-gray-400">#{lib.liberacaoId.slice(0, 8).toUpperCase()}</p>
-                </div>
-                {(lib.conta.banco || lib.conta.pix) && (
-                  <div className="text-xs bg-gray-50 rounded-lg p-3 space-y-1 text-gray-700">
-                    <p><span className="font-semibold">Titular:</span> {lib.conta.titular ?? "—"}</p>
-                    <p><span className="font-semibold">Banco:</span> {lib.conta.banco} · Ag. {lib.conta.agencia} · Cc {lib.conta.numero}</p>
-                    {lib.conta.pix && <p><span className="font-semibold">PIX:</span> {lib.conta.pix}</p>}
-                  </div>
-                )}
-                {!lib.conta.banco && !lib.conta.pix && (
-                  <p className="text-xs text-amber-700 bg-amber-50 rounded-lg p-2">
-                    Tomador ainda não cadastrou conta bancária no perfil.
-                  </p>
-                )}
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="text"
-                    placeholder="Ref. comprovante (opcional)"
-                    value={refs[lib.liberacaoId] ?? ""}
-                    onChange={(e) => setRefs((p) => ({ ...p, [lib.liberacaoId]: e.target.value }))}
-                    className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2"
-                  />
-                  <button
-                    type="button"
-                    disabled={busyId === lib.liberacaoId}
-                    onClick={() => confirmarPagamento(lib.liberacaoId)}
-                    className="bg-[#1B4FD8] hover:bg-blue-800 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-lg whitespace-nowrap"
-                  >
-                    Confirmar pagamento
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-gray-900">Pagamentos SIPOC</p>
+          <p className="text-xs text-gray-500">
+            {pagamentosPendentes === 0
+              ? "Nenhuma liberação aguardando confirmação"
+              : `${pagamentosPendentes} liberação(ões) aguardando pagamento manual`}
+          </p>
+        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 group-hover:text-[#16a34a]" />
+      </Link>
     </div>
   );
 }

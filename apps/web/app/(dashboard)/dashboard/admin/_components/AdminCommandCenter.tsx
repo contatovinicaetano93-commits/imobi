@@ -72,7 +72,7 @@ export function AdminCommandCenter() {
 
       <div className="rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3 text-xs text-blue-900">
         <strong>SIPOC:</strong> homologação (Admin) → evidências (Tomador) → vistoria (Engenheiro) →
-        pagamento manual (Admin). Gestor do fundo acompanha filas em modo leitura.
+        pagamento manual (Admin). Gestor do fundo acompanha DRE e KPIs agregados em modo leitura.
       </div>
     </div>
   );

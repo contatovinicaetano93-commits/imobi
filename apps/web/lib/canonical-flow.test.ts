@@ -10,6 +10,20 @@ assert.equal(resolveLegacyRedirect("/dashboard/fundos"), "/dashboard/gestor");
 assert.equal(resolveLegacyRedirect("/dashboard/gestor/due-diligence/nova"), "/dashboard/gestor");
 assert.equal(resolveLegacyRedirect("/dashboard/comite/solicitar"), "/dashboard/credito/solicitar");
 
+const adminNav = getCanonicalNav("ADMIN");
+assert.equal(adminNav.filter((n) => n.section !== "conta").length, 2);
+assert.ok(adminNav.some((n) => n.href === "/dashboard/admin"));
+assert.ok(adminNav.some((n) => n.href === "/dashboard/admin/usuarios"));
+assert.ok(!adminNav.some((n) => n.href === "/dashboard/admin/kyc"));
+
+const gestorNav = getCanonicalNav("GESTOR");
+assert.equal(gestorNav.filter((n) => n.section !== "conta").length, 1);
+assert.ok(gestorNav.some((n) => n.href === "/dashboard/gestor"));
+
+const engNav = getCanonicalNav("ENGENHEIRO");
+assert.equal(engNav.filter((n) => n.section !== "conta").length, 2);
+assert.ok(!engNav.some((n) => n.href === "/dashboard/obras"));
+
 assert.equal(
   isCanonicalRouteAllowed("/dashboard/construtor", "TOMADOR"),
   true,
@@ -21,6 +35,10 @@ assert.equal(
 assert.equal(
   isCanonicalRouteAllowed("/dashboard/admin", "TOMADOR"),
   false,
+);
+assert.equal(
+  isCanonicalRouteAllowed("/dashboard/admin/pagamentos", "ADMIN"),
+  true,
 );
 assert.equal(
   isCanonicalRouteAllowed("/dashboard/admin", "ADMIN"),
