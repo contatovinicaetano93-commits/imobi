@@ -17,7 +17,6 @@ const config: ExpoConfig = {
   },
   ios: {
     supportsTablet: false,
-    deploymentTarget: "16.0",
     bundleIdentifier: "com.imbobi.app",
     buildNumber: "1",
     infoPlist: {
