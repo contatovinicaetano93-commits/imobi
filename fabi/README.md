@@ -32,7 +32,7 @@ GitHub Pages). Na Vercel: importar o repositório e apontar o *root directory* p
 | --- | --- |
 | Seção **3.0 Quem sou** | Anos de experiência, formação, empresas/setores e registros (CRC etc.) — itens entre `[colchetes]` |
 | Seção **3.0 Quem sou** | Foto profissional (hoje há um bloco reservado com o monograma "F.") |
-| Seção **4.0 Contato** | E-mail profissional definitivo, número de WhatsApp real e URL do LinkedIn |
+| Seção **4.0 Contato** | URL real do LinkedIn (e-mail e WhatsApp já preenchidos) |
 | Geral | Nome/marca da empresa, caso não seja "FFB" |
 
 ## Identidade visual
