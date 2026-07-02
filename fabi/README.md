@@ -1,7 +1,8 @@
 # FFB — Fabiani Fatel Barbosa · Site institucional
 
 Site de página única (one-page) para a consultoria da Fabiani: consultoria empresarial,
-perícia contábil/financeira/trabalhista, advisory para executivos e projetos sob medida.
+interim management, advisory para executivos, projetos sob medida e perícia
+contábil/financeira/trabalhista.
 
 **Projeto independente** — não usa nada do restante do repositório (Imobi).
 É HTML/CSS/JS puro, sem build, sem dependências.
