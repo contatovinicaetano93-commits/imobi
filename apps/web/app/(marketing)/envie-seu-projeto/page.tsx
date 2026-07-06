@@ -293,6 +293,56 @@ export default function EnvieSeuProjetoPage() {
                 Formatos: PDF, XLS, XLSX — data-base atualizada.
               </p>
 
+              <div className="esp-kit">
+                <div className="esp-kit-header">
+                  <span>📥</span>
+                  <div>
+                    <p className="esp-kit-title">Baixe os modelos antes de anexar</p>
+                    <p className="esp-kit-sub">Preencha a planilha e use o PDF do seu tipo de empreendimento como referência.</p>
+                  </div>
+                </div>
+                <div className="esp-kit-files">
+                  <a href="/modelos/Ficha-Empreendimento-Viabilidade.xlsx" download className="esp-kit-file esp-kit-file--excel">
+                    <span>📊</span>
+                    <span className="esp-kit-file-info">
+                      <strong>Ficha de Viabilidade</strong>
+                      <small>Excel · Preencha e anexe</small>
+                    </span>
+                    <span className="esp-kit-dl">↓</span>
+                  </a>
+                  {tipo === "OBRA_NOVA" && (
+                    <a href="/modelos/Modelo-Obra-Nova.pdf" download className="esp-kit-file">
+                      <span>📄</span>
+                      <span className="esp-kit-file-info">
+                        <strong>Modelo Obra Nova</strong>
+                        <small>PDF referência</small>
+                      </span>
+                      <span className="esp-kit-dl">↓</span>
+                    </a>
+                  )}
+                  {tipo === "OBRA_EM_ANDAMENTO" && (
+                    <a href="/modelos/Modelo-Obra-em-Andamento.pdf" download className="esp-kit-file">
+                      <span>📄</span>
+                      <span className="esp-kit-file-info">
+                        <strong>Modelo Obra em Andamento</strong>
+                        <small>PDF referência</small>
+                      </span>
+                      <span className="esp-kit-dl">↓</span>
+                    </a>
+                  )}
+                  {tipo === "CREDITO_PONTE" && (
+                    <a href="/modelos/Modelo-Credito-Ponte.pdf" download className="esp-kit-file">
+                      <span>📄</span>
+                      <span className="esp-kit-file-info">
+                        <strong>Modelo Crédito Ponte</strong>
+                        <small>PDF referência</small>
+                      </span>
+                      <span className="esp-kit-dl">↓</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+
               <label className="esp-upload esp-upload-highlight">
                 <span>Ficha do Empreendimento e Viabilidade (Excel) *</span>
                 <input
