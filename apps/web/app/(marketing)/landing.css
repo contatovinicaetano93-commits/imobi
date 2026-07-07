@@ -247,15 +247,11 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
   animation: heroOrbFloat 6.5s ease-in-out infinite;
 }
 .hero-orb {
-  width: 8.75rem; height: 8.75rem; border-radius: 50%;
-  background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.16);
-  backdrop-filter: blur(6px);
-  display: flex; align-items: center; justify-content: center;
+  width: 8.75rem; height: 8.75rem;
   transform: translate3d(calc(var(--mx) * 65px), calc(var(--my) * 65px), 0);
   transition: transform 0.35s ease-out; will-change: transform;
 }
-.hero-orb .logo-icon { border-color: rgba(74,222,128,0.55); opacity: 0.9; }
+.hero-orb .logo-icon { border-width: 3px; border-color: rgba(74,222,128,0.6); }
 .hero-inner {
   max-width: 800px; margin: 0 auto; width: 100%;
   position: relative; z-index: 1;
