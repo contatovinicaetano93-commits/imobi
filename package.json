@@ -62,6 +62,7 @@
     "render:env:verify": "node scripts/render-env-verify.mjs",
     "render:redeploy": "node scripts/render-redeploy.mjs",
     "render:redeploy:staging": "RENDER_SERVICE_ID=srv-d8fl07h9rddc73ajs7ag node scripts/render-redeploy.mjs",
+    "render:fix:staging-db": "node scripts/fix-staging-database-url.mjs",
     "render:deploy:fix": "node scripts/render-deploy-fix.mjs",
     "vercel:env:push": "node scripts/vercel-push-env.mjs"
   },

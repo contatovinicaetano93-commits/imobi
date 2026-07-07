@@ -10,7 +10,10 @@ export type LoginResult = {
 };
 
 const SERVER_LOGIN_URLS = ['/web-api/auth/login', '/api/proxy/auth/login'];
-const API_BASES = [PRODUCTION_API_URL, STAGING_API_URL];
+const API_BASES = [STAGING_API_URL, PRODUCTION_API_URL];
+
+/** Cold start do Render pode levar ~50s; damos folga na 1ª tentativa. */
+const LOGIN_TIMEOUT_MS = 75_000;
 
 type ApiLoginJson = {
   accessToken?: string;
@@ -21,16 +24,36 @@ type ApiLoginJson = {
   message?: string;
 };
 
+class InvalidCredentialsError extends Error {}
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function tryServerLogin(
   data: LoginInput,
   loginUrl: string,
 ): Promise<{ result: LoginResult | null; message?: string }> {
-  const res = await fetch(loginUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-    credentials: 'same-origin',
-  });
+  const res = await fetchWithTimeout(
+    loginUrl,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      credentials: 'same-origin',
+    },
+    LOGIN_TIMEOUT_MS,
+  );
 
   const json = (await res.json().catch(() => ({}))) as {
     message?: string;
@@ -41,7 +64,7 @@ async function tryServerLogin(
   };
 
   if (res.status === 401 || res.status === 400) {
-    throw new Error(json.message ?? 'Credenciais inválidas');
+    throw new InvalidCredentialsError(json.message ?? 'Credenciais inválidas');
   }
 
   if (res.ok && json.ok !== false) {
@@ -62,16 +85,20 @@ async function tryDirectApiLogin(data: LoginInput): Promise<LoginResult | null> 
   for (const base of API_BASES) {
     const url = `${base.replace(/\/$/, '')}/api/v1/auth/login`;
     try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-        mode: 'cors',
-      });
+      const res = await fetchWithTimeout(
+        url,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+          mode: 'cors',
+        },
+        LOGIN_TIMEOUT_MS,
+      );
 
       if (res.status === 401 || res.status === 400) {
         const err = (await res.json().catch(() => ({}))) as { message?: string };
-        throw new Error(err.message ?? 'Credenciais inválidas');
+        throw new InvalidCredentialsError(err.message ?? 'Credenciais inválidas');
       }
 
       if (!res.ok) continue;
@@ -101,53 +128,69 @@ async function tryDirectApiLogin(data: LoginInput): Promise<LoginResult | null> 
 
       return { ok: true, role, nome, email };
     } catch (e) {
-      if (e instanceof Error && e.message.includes('inválid')) throw e;
+      if (e instanceof InvalidCredentialsError) throw e;
     }
   }
   return null;
 }
 
+/**
+ * Tenta uma passada completa de login (proxies do Vercel + API direta).
+ * Retorna null quando é falha de rede/cold start (vale a pena repetir).
+ * Lança InvalidCredentialsError quando as credenciais são inválidas.
+ */
+async function attemptLogin(
+  data: LoginInput,
+): Promise<{ result: LoginResult | null; message?: string }> {
+  let message: string | undefined;
+
+  for (const url of SERVER_LOGIN_URLS) {
+    try {
+      const { result, message: msg } = await tryServerLogin(data, url);
+      if (msg) message = msg;
+      if (result) return { result };
+    } catch (e) {
+      if (e instanceof InvalidCredentialsError) throw e;
+      // rede/timeout — tenta o próximo caminho
+    }
+  }
+
+  const direct = await tryDirectApiLogin(data);
+  if (direct) return { result: direct };
+
+  return { result: null, message };
+}
+
 export async function loginWithRetry(
   data: LoginInput,
   onStatus?: (msg: string) => void,
-  maxAttempts = 5,
+  maxAttempts = 3,
 ): Promise<LoginResult> {
-  onStatus?.('Acordando servidor… (até 1 minuto na 1ª vez)');
-  await wakeStagingApi();
-
-  let lastError = 'Não foi possível conectar ao servidor.';
+  let lastMessage = 'Não foi possível conectar ao servidor.';
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    if (attempt > 1) {
-      onStatus?.(`Tentativa ${attempt}/${maxAttempts}…`);
-      await wakeStagingApi(3);
-    } else {
-      onStatus?.('Validando credenciais…');
-    }
+    onStatus?.(
+      attempt === 1
+        ? 'Validando credenciais… (a 1ª vez pode levar até 1 minuto)'
+        : `Tentativa ${attempt}/${maxAttempts}…`,
+    );
 
-    for (const url of SERVER_LOGIN_URLS) {
-      try {
-        const { result, message } = await tryServerLogin(data, url);
-        if (message) lastError = message;
-        if (result) return result;
-      } catch (e) {
-        if (e instanceof Error) throw e;
-      }
-    }
-
-    onStatus?.('Tentando conexão direta com a API…');
     try {
-      const direct = await tryDirectApiLogin(data);
-      if (direct) return direct;
+      const { result, message } = await attemptLogin(data);
+      if (result) return result;
+      if (message) lastMessage = message;
     } catch (e) {
-      if (e instanceof Error && e.message.includes('inválid')) throw e;
-      lastError = e instanceof Error ? e.message : lastError;
+      // Credenciais inválidas: não adianta repetir.
+      throw e instanceof Error ? e : new Error('Erro inesperado no login.');
     }
 
-    await new Promise((r) => setTimeout(r, 4000 * attempt));
+    if (attempt < maxAttempts) {
+      onStatus?.('Acordando servidor…');
+      await wakeStagingApi(2);
+    }
   }
 
   throw new Error(
-    `${lastError} Aguarde 1 minuto e tente novamente — o servidor pode estar acordando.`,
+    `${lastMessage} Aguarde alguns segundos e tente novamente — o servidor pode estar iniciando.`,
   );
 }

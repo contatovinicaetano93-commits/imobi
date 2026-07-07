@@ -3,6 +3,7 @@ import { SkipThrottle } from "@nestjs/throttler";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { getRedisConfig, validateRedisConfig } from "./config";
 import { SKIP_ALL_THROTTLES } from "./guards/throttler.constants";
+import { PrismaService } from "../modules/prisma/prisma.service";
 import type { Cache } from "cache-manager";
 
 interface HealthCheck {
@@ -11,7 +12,7 @@ interface HealthCheck {
   redis: { status: string; host?: string; port?: number; error?: string };
   email: { provider: string; configured: boolean };
   firebase: { configured: boolean };
-  database: { configured: boolean };
+  database: { configured: boolean; status: string; error?: string };
 }
 
 @SkipThrottle(SKIP_ALL_THROTTLES)
@@ -19,7 +20,10 @@ interface HealthCheck {
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);
 
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Get()
   async getHealth(): Promise<HealthCheck> {
@@ -46,13 +50,28 @@ export class HealthController {
     const hasEmailConfig = this.hasEmailConfig(emailProvider);
     const hasFirebaseConfig = this.hasFirebaseConfig();
     const hasDatabaseUrl = !!process.env["DATABASE_URL"];
+    let databaseStatus = "error";
+    let databaseError: string | undefined;
+
+    if (!hasDatabaseUrl) {
+      databaseError = "DATABASE_URL ausente";
+    } else {
+      try {
+        await this.prisma.$queryRaw`SELECT 1`;
+        databaseStatus = "connected";
+      } catch (error) {
+        databaseError = error instanceof Error ? error.message : "Unknown error";
+        this.logger.error(`Database health check failed: ${databaseError}`);
+      }
+    }
 
     // Render health check: DB obrigatório; Redis/email/firebase são opcionais
-    const status: HealthCheck["status"] = !hasDatabaseUrl
-      ? "error"
-      : redisStatus === "connected"
-        ? "ok"
-        : "degraded";
+    const status: HealthCheck["status"] =
+      databaseStatus !== "connected"
+        ? "error"
+        : redisStatus === "connected"
+          ? "ok"
+          : "degraded";
 
     const health: HealthCheck = {
       status,
@@ -72,6 +91,8 @@ export class HealthController {
       },
       database: {
         configured: hasDatabaseUrl,
+        status: databaseStatus,
+        ...(databaseError && { error: databaseError }),
       },
     };
 
