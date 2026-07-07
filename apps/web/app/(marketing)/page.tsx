@@ -98,7 +98,7 @@ export default function LandingPage() {
       (entries) => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } }),
       { threshold: 0.12, rootMargin: '0px 0px -32px 0px' },
     );
-    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .steps-track').forEach(el => obs.observe(el));
     return () => obs.disconnect();
   }, []);
 
@@ -136,6 +136,21 @@ export default function LandingPage() {
   }
 
   function scrollTo(id: string) { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); }
+
+  function handleCardTilt(e: React.MouseEvent<HTMLDivElement>) {
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    el.style.setProperty("--tx", (py * -7).toFixed(2) + "deg");
+    el.style.setProperty("--ty", (px * 7).toFixed(2) + "deg");
+  }
+  function resetCardTilt(e: React.MouseEvent<HTMLDivElement>) {
+    const el = e.currentTarget;
+    el.style.setProperty("--tx", "0deg");
+    el.style.setProperty("--ty", "0deg");
+  }
 
   return (
     <>
@@ -279,16 +294,16 @@ export default function LandingPage() {
           <p className="eyebrow reveal">Comparativo</p>
           <h2 className="sec-h2 reveal d1">O mercado mudou.<br /><em>O crédito ainda não.</em></h2>
           <div className="vs-grid">
-            <div className="vs-col vs-them reveal d2">
+            <div className="vs-col vs-them reveal-left">
               <div className="vs-head"><span className="vs-tag-them">Bancos tradicionais</span></div>
-              {["90+ dias para aprovação", "Taxa entre 3,0% e 4,5% ao mês", "Burocracia documental extensa", "80% das construtoras sem acesso", "Obra parada por falta de capital"].map(t => (
-                <div className="vs-item" key={t}><span className="vs-x">✕</span><span>{t}</span></div>
+              {["90+ dias para aprovação", "Taxa entre 3,0% e 4,5% ao mês", "Burocracia documental extensa", "80% das construtoras sem acesso", "Obra parada por falta de capital"].map((t, i) => (
+                <div className={`vs-item reveal d${i + 1}`} key={t}><span className="vs-x">✕</span><span>{t}</span></div>
               ))}
             </div>
-            <div className="vs-col vs-us reveal d3">
+            <div className="vs-col vs-us reveal-right">
               <div className="vs-head"><span className="vs-tag-us">IMOBI</span></div>
-              {["Aprovação em tempo recorde — dias, não meses", "Taxa competitiva, documentada na proposta", "Modelo próprio de garantias — analisamos caso a caso", "Análise de crédito desburocratizada", "Documentação simplificada e processo 100% digital"].map(t => (
-                <div className="vs-item" key={t}><span className="vs-ck">✓</span><span>{t}</span></div>
+              {["Aprovação em tempo recorde — dias, não meses", "Taxa competitiva, documentada na proposta", "Modelo próprio de garantias — analisamos caso a caso", "Análise de crédito desburocratizada", "Documentação simplificada e processo 100% digital"].map((t, i) => (
+                <div className={`vs-item reveal d${i + 1}`} key={t}><span className="vs-ck">✓</span><span>{t}</span></div>
               ))}
             </div>
           </div>
@@ -303,6 +318,7 @@ export default function LandingPage() {
             <h2 className="como-h2">Do pedido ao capital<br /><em>em dias, não meses.</em></h2>
           </div>
           <div className="steps">
+            <div className="steps-track" aria-hidden />
             {[
               { n:"01", t:"Você nos conta o projeto",           d:"Preencha o formulário. A equipe IMOBI retorna em até 24h para alinhar os próximos passos." },
               { n:"02", t:"Análise desburocratizada em tempo recorde", d:"Avaliamos viabilidade com processo simplificado. Proposta com taxa, prazo e condições em tempo recorde — sem burocracia desnecessária." },
@@ -373,7 +389,12 @@ export default function LandingPage() {
               { nome:"Fernanda Lima",  cargo:"Sócia · FL Construções",      texto:"O processo é 100% digital e rastreável. Sabemos exatamente em que etapa está cada aprovação. Transparência que o mercado não estava acostumado." },
               { nome:"Bruno Salles",   cargo:"CEO · Salles Projetos",        texto:"Estruturamos nossa segunda operação com a IMOBI. Primeiro projeto foi tão preciso que não fazia sentido ir a outro lugar." },
             ].map((d, i) => (
-              <div className={`dep-card reveal d${i + 1}`} key={d.nome}>
+              <div
+                className={`dep-card reveal d${i + 1}`}
+                key={d.nome}
+                onMouseMove={handleCardTilt}
+                onMouseLeave={resetCardTilt}
+              >
                 <p className="dep-texto">"{d.texto}"</p>
                 <div className="dep-autor">
                   <div className="dep-av">{d.nome.split(" ").map(n=>n[0]).join("").slice(0,2)}</div>
@@ -466,9 +487,11 @@ function FAQItem({ pergunta, resposta }: { pergunta: string; resposta: string })
     <div className={`faq-item${open ? " open" : ""}`}>
       <button className="faq-q" onClick={() => setOpen(!open)} aria-expanded={open}>
         <span>{pergunta}</span>
-        <span className="faq-icon" aria-hidden>{open ? "−" : "+"}</span>
+        <span className="faq-icon" aria-hidden>+</span>
       </button>
-      {open && <p className="faq-a">{resposta}</p>}
+      <div className="faq-a-wrap">
+        <div className="faq-a-inner"><p className="faq-a">{resposta}</p></div>
+      </div>
     </div>
   );
 }
