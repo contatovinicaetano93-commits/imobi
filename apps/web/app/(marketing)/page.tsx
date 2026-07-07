@@ -295,10 +295,25 @@ export default function LandingPage() {
               <p className="stat-value"><StatCounter value={300} prefix="R$" suffix="M+" /></p>
               <p className="stat-label">em crédito aprovado</p>
             </div>
-            <span className="stat-divider" aria-hidden="true" />
             <div className="stat-tile reveal d1">
               <p className="stat-value"><StatCounter value={100} suffix="+" /></p>
               <p className="stat-label">projetos recebidos</p>
+            </div>
+            <div className="stat-tile reveal d2">
+              <p className="stat-value"><StatCounter value={24} suffix=" dias" /></p>
+              <p className="stat-label">tempo médio de aprovação</p>
+            </div>
+            <div className="stat-tile reveal d3">
+              <p className="stat-value"><StatCounter value={50} prefix="R$" suffix="M" /></p>
+              <p className="stat-label">ticket médio por operação</p>
+            </div>
+          </div>
+          <div className="stats-regions">
+            <p className="stats-regions-label reveal">Presença nacional</p>
+            <div className="stats-regions-list">
+              {["São Paulo", "Paraná", "Santa Catarina", "Porto Alegre", "Minas Gerais", "Espírito Santo"].map((praca, i) => (
+                <span className="region-chip reveal" style={{ transitionDelay: `${0.05 + i * 0.06}s` }} key={praca}>{praca}</span>
+              ))}
             </div>
           </div>
         </div>

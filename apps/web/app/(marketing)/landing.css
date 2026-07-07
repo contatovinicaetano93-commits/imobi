@@ -341,16 +341,30 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
 
 /* ── ESTATÍSTICAS ── */
 .stats { background: var(--white); padding: 4rem 3rem; border-bottom: 1px solid var(--border); }
-.stats-inner { max-width: 900px; margin: 0 auto; }
-.stats-grid { display: flex; align-items: center; justify-content: center; }
-.stat-tile { flex: 1; text-align: center; padding: 0 2rem; }
-.stat-divider { width: 1px; height: 3.5rem; background: var(--border); flex-shrink: 0; }
+.stats-inner { max-width: 1100px; margin: 0 auto; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+.stat-tile { text-align: center; padding: 0 1.5rem; border-left: 1px solid var(--border); }
+.stat-tile:first-child { border-left: none; }
 .stat-value {
   font-family: 'Barlow Condensed', sans-serif; font-weight: 800;
-  font-size: clamp(2.5rem, 5vw, 4rem); color: var(--royal); line-height: 1;
+  font-size: clamp(1.9rem, 3vw, 2.9rem); color: var(--royal); line-height: 1;
   letter-spacing: -0.02em; margin-bottom: 0.5rem; font-variant-numeric: tabular-nums;
 }
-.stat-label { font-size: 0.85rem; color: var(--gray); font-weight: 500; }
+.stat-label { font-size: 0.82rem; color: var(--gray); font-weight: 500; }
+
+.stats-regions {
+  margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); text-align: center;
+}
+.stats-regions-label {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--gray-light); margin-bottom: 1rem;
+}
+.stats-regions-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
+.region-chip {
+  font-size: 0.8rem; font-weight: 500; color: var(--ink-soft);
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 0.4rem 1rem; border-radius: 20px;
+}
 
 /* ── VANTAGENS ── */
 .vantagens { padding: 6rem 3rem; background: var(--white); }
@@ -662,9 +676,12 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .hero-sub { max-width: 100%; }
 
   .stats { padding: 2.75rem 1.25rem; }
-  .stats-grid { flex-direction: column; gap: 2rem; }
-  .stat-divider { display: none; }
-  .stat-tile { padding: 0; }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 2rem 0; }
+  .stat-tile { border-left: none; padding: 0; }
+  .stat-tile:nth-child(3), .stat-tile:nth-child(4) {
+    border-top: 1px solid var(--border); padding-top: 1.5rem;
+  }
+  .stats-regions { margin-top: 2.5rem; padding-top: 1.75rem; }
   .hero-actions { flex-direction: column; align-items: stretch; gap: 0.75rem; }
   .btn-hero-primary { text-align: center; padding: 1rem; }
   .btn-hero-ghost { text-align: center; }
