@@ -510,6 +510,9 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
   will-change: transform;
 }
 .dep-card:hover { box-shadow: 0 20px 40px -14px rgba(15,23,42,0.18); }
+/* Higher specificity than .reveal.in so the scroll-reveal's transform:none doesn't clobber the hover tilt.
+   Scoped to .in so the pre-reveal translateY(26px) slide-in is untouched. */
+.dep-grid .dep-card.reveal.in { transform: rotateX(var(--tx)) rotateY(var(--ty)); }
 .dep-texto { font-size: 0.88rem; line-height: 1.8; color: var(--ink-soft); font-weight: 400; flex: 1; }
 .dep-autor { display: flex; align-items: center; gap: 0.75rem; }
 .dep-av {

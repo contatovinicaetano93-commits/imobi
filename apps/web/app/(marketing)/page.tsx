@@ -63,6 +63,7 @@ export default function LandingPage() {
       });
     }
     function handleLeave() {
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
       hero!.style.setProperty("--mx", "0");
       hero!.style.setProperty("--my", "0");
       hero!.style.setProperty("--rx", "0deg");
@@ -539,7 +540,7 @@ function StatCounter({ value, prefix = "", suffix = "" }: { value: number; prefi
           requestAnimationFrame(tick);
         });
       },
-      { threshold: 0.4 },
+      { threshold: 0.12, rootMargin: "0px 0px -32px 0px" },
     );
     obs.observe(el);
     return () => obs.disconnect();
