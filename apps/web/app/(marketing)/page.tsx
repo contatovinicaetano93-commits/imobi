@@ -254,7 +254,7 @@ export default function LandingPage() {
           <div className="hero-bg-grid" />
           <div className="hero-glow hero-glow-1" />
           <div className="hero-glow hero-glow-2" />
-          <div className="hero-orb-float"><div className="hero-orb"><LogoIcon size={140} /></div></div>
+          <div className="hero-orb-float"><div className="hero-orb"><LogoIcon size="clamp(4.5rem, 10vw, 9.5rem)" /></div></div>
         </div>
         <div className="hero-inner">
           <div className="hero-content">
@@ -496,7 +496,7 @@ export default function LandingPage() {
   );
 }
 
-function LogoIcon({ size = 30 }: { size?: number }) {
+function LogoIcon({ size = 30 }: { size?: number | string }) {
   return (
     <div className="logo-icon" style={{ width: size, height: size }}>
       <b /><b /><b /><b /><b /><b /><b /><b /><b />
