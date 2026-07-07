@@ -542,7 +542,7 @@ function StatCounter({ value, prefix = "", suffix = "" }: { value: number; prefi
       },
       { threshold: 0.12, rootMargin: "0px 0px -32px 0px" },
     );
-    obs.observe(el);
+    obs.observe(el.closest(".stat-tile") ?? el);
     return () => obs.disconnect();
   }, [value]);
 
