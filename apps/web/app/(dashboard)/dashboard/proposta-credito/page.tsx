@@ -332,7 +332,14 @@ export default function ViabilidadePage() {
       {error && (
         <div className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
           <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="flex-1 text-sm text-red-700">{error}</p>
+          <button
+            type="button"
+            onClick={() => void carregar()}
+            className="shrink-0 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+          >
+            Tentar novamente
+          </button>
         </div>
       )}
 

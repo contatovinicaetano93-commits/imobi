@@ -34,6 +34,16 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
       return `user:${req.user.id}`;
     }
 
+    // O guard global roda ANTES do auth guard de rota, então req.user ainda
+    // não existe. Como a web chega via proxy/SSR do Vercel (poucos IPs de
+    // egress compartilhados), cair no IP colocaria todos os usuários no mesmo
+    // balde e estouraria o limite. Extraímos o "sub" do JWT (sem verificar
+    // assinatura — serve só para o balde) para limitar por usuário.
+    const sub = subFromJwt(req.headers?.authorization);
+    if (sub) {
+      return `user:${sub}`;
+    }
+
     // For unauthenticated or malformed user objects, track by IP address
     const ip = req.ip ?? req.headers?.["x-forwarded-for"] ?? req.socket?.remoteAddress ?? "unknown";
     if (ip === "unknown") {
@@ -41,5 +51,23 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
       return `unknown:${Math.random()}`;
     }
     return `ip:${ip}`;
+  }
+}
+
+/** Lê o `sub` de um "Bearer <jwt>" sem validar assinatura (uso: chave de rate-limit). */
+function subFromJwt(authorization: unknown): string | null {
+  if (typeof authorization !== "string") return null;
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!match) return null;
+
+  const parts = match[1].split(".");
+  if (parts.length < 2) return null;
+
+  try {
+    const json = Buffer.from(parts[1], "base64url").toString("utf8");
+    const payload = JSON.parse(json) as { sub?: unknown };
+    return typeof payload.sub === "string" && payload.sub ? payload.sub : null;
+  } catch {
+    return null;
   }
 }

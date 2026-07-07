@@ -48,6 +48,12 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({})) as { message?: string };
+    if (res.status === 429) {
+      throw new ApiError(
+        429,
+        "Muitas requisições em pouco tempo. Aguarde alguns segundos e tente novamente.",
+      );
+    }
     throw new ApiError(res.status, body.message ?? res.statusText);
   }
 
