@@ -293,11 +293,11 @@ export default function LandingPage() {
           <div className="stats-grid">
             <div className="stat-tile reveal">
               <p className="stat-value"><StatCounter value={300} prefix="R$" suffix="M+" /></p>
-              <p className="stat-label">em projetos aprovados</p>
+              <p className="stat-label">em crédito aprovado</p>
             </div>
             <span className="stat-divider" aria-hidden="true" />
             <div className="stat-tile reveal d1">
-              <p className="stat-value"><StatCounter value={500} suffix="+" /></p>
+              <p className="stat-value"><StatCounter value={100} suffix="+" /></p>
               <p className="stat-label">projetos recebidos</p>
             </div>
           </div>
