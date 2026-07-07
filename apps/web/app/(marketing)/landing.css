@@ -339,6 +339,19 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
 }
 .sec-h2 em { font-style: normal; color: var(--royal); }
 
+/* ── ESTATÍSTICAS ── */
+.stats { background: var(--white); padding: 4rem 3rem; border-bottom: 1px solid var(--border); }
+.stats-inner { max-width: 900px; margin: 0 auto; }
+.stats-grid { display: flex; align-items: center; justify-content: center; }
+.stat-tile { flex: 1; text-align: center; padding: 0 2rem; }
+.stat-divider { width: 1px; height: 3.5rem; background: var(--border); flex-shrink: 0; }
+.stat-value {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 800;
+  font-size: clamp(2.5rem, 5vw, 4rem); color: var(--royal); line-height: 1;
+  letter-spacing: -0.02em; margin-bottom: 0.5rem; font-variant-numeric: tabular-nums;
+}
+.stat-label { font-size: 0.85rem; color: var(--gray); font-weight: 500; }
+
 /* ── VANTAGENS ── */
 .vantagens { padding: 6rem 3rem; background: var(--white); }
 .vantagens-inner { max-width: 1200px; margin: 0 auto; }
@@ -647,6 +660,11 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .hero-orb-float { display: none; }
   .hero-inner { max-width: 100%; }
   .hero-sub { max-width: 100%; }
+
+  .stats { padding: 2.75rem 1.25rem; }
+  .stats-grid { flex-direction: column; gap: 2rem; }
+  .stat-divider { display: none; }
+  .stat-tile { padding: 0; }
   .hero-actions { flex-direction: column; align-items: stretch; gap: 0.75rem; }
   .btn-hero-primary { text-align: center; padding: 1rem; }
   .btn-hero-ghost { text-align: center; }

@@ -287,6 +287,22 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── ESTATÍSTICAS ── */}
+      <section className="stats">
+        <div className="stats-inner">
+          <div className="stats-grid">
+            <div className="stat-tile reveal">
+              <p className="stat-value"><StatCounter value={300} prefix="R$" suffix="M+" /></p>
+              <p className="stat-label">em projetos aprovados</p>
+            </div>
+            <span className="stat-divider" aria-hidden="true" />
+            <div className="stat-tile reveal d1">
+              <p className="stat-value"><StatCounter value={500} suffix="+" /></p>
+              <p className="stat-label">projetos recebidos</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ── VANTAGENS ── */}
       <section className="vantagens" id="vantagens">
@@ -479,6 +495,42 @@ function WaIcon({ size = 26, color = "white" }: { size?: number; color?: string 
       <path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.099 1.51 5.824L.057 23.776c-.07.266.166.502.432.432l5.968-1.453A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 01-5.002-1.367l-.359-.213-3.721.905.934-3.62-.233-.372A9.82 9.82 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z" />
     </svg>
   );
+}
+
+function StatCounter({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setDisplay(value);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          obs.disconnect();
+          const duration = 1400;
+          const start = performance.now();
+          function tick(now: number) {
+            const t = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - t, 3);
+            setDisplay(Math.round(eased * value));
+            if (t < 1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+        });
+      },
+      { threshold: 0.4 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [value]);
+
+  return <span ref={ref}>{prefix}{display.toLocaleString("pt-BR")}{suffix}</span>;
 }
 
 function FAQItem({ pergunta, resposta }: { pergunta: string; resposta: string }) {
