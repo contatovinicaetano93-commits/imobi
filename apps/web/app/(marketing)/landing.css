@@ -247,7 +247,6 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
   animation: heroOrbFloat 6.5s ease-in-out infinite;
 }
 .hero-orb {
-  width: 8.75rem; height: 8.75rem;
   transform: translate3d(calc(var(--mx) * 65px), calc(var(--my) * 65px), 0);
   transition: transform 0.35s ease-out; will-change: transform;
 }
