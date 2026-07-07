@@ -40,6 +40,7 @@ export const MVP_PUBLIC_PREFIXES = [
 /** Tomador / construtor — fluxo obra → crédito */
 export const MVP_TOMADOR_PREFIXES = [
   "/dashboard/construtor",
+  "/dashboard/operacao",
   "/dashboard/obras",
   "/dashboard/kyc",
   "/dashboard/proposta-credito",
@@ -57,10 +58,9 @@ export const MVP_GESTOR_PREFIXES = [
 
 const MVP_NAV_TOMADOR = new Set([
   "/dashboard/construtor",
-  "/dashboard/obras",
+  "/dashboard/operacao",
   "/dashboard/kyc",
   "/dashboard/proposta-credito",
-  "/dashboard/credito",
   "/dashboard/perfil",
   "/dashboard/notificacoes",
 ]);

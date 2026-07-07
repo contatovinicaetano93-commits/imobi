@@ -8,6 +8,7 @@ import { normalizeRole, ROLE_HOME, type AppRole } from '@/lib/role-permissions';
 /** Segmentos que pertencem ao painel Construtor/Tomador (cliente) */
 const CONSTRUTOR_PANEL_SEGMENTS = new Set([
   'construtor',
+  'operacao',
   'credito',
   'kyc',
   'proposta-credito',
@@ -35,14 +36,13 @@ type NavOverride = {
 /** Destaque correto em rotas aninhadas / compartilhadas (mesmo padrão do admin/obras). */
 const ACTIVE_NAV_OVERRIDES: NavOverride[] = [
   { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
-  { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'TOMADOR', targetHref: '/dashboard/obras' },
-  { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/obras' },
+  // Tomador/Construtor: obras e crédito vivem sob "Minha operação".
+  { pattern: /^\/dashboard\/(?:operacao|obras|credito)(?:\/|$)/, navRole: 'TOMADOR', targetHref: '/dashboard/operacao' },
+  { pattern: /^\/dashboard\/(?:operacao|obras|credito)(?:\/|$)/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/operacao' },
   { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'ENGENHEIRO', targetHref: '/dashboard/obras' },
   { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'GESTOR_OBRA', targetHref: '/dashboard/obras' },
   { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'ENGENHEIRO', targetHref: '/dashboard/obras' },
   { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'GESTOR_OBRA', targetHref: '/dashboard/obras' },
-  { pattern: /^\/dashboard\/credito/, navRole: 'TOMADOR', targetHref: '/dashboard/credito' },
-  { pattern: /^\/dashboard\/credito/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/credito' },
   { pattern: /^\/dashboard\/kyc/, navRole: 'TOMADOR', targetHref: '/dashboard/kyc' },
   { pattern: /^\/dashboard\/kyc/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/kyc' },
   { pattern: /^\/dashboard\/proposta-credito/, navRole: 'TOMADOR', targetHref: '/dashboard/proposta-credito' },
@@ -214,6 +214,7 @@ export function getObrasListPath(role: string | null | undefined): string {
       return '/dashboard/obras';
     case 'CONSTRUTOR':
     case 'TOMADOR':
+      return '/dashboard/operacao';
     default:
       return '/dashboard/obras';
   }
@@ -224,7 +225,7 @@ export function getObrasListLabel(role: string | null | undefined): string {
   if (r === 'ADMIN') return 'Obras — Admin';
   if (r === 'GESTOR') return 'Operação do fundo';
   if (r === 'ENGENHEIRO' || r === 'GESTOR_OBRA') return 'Obras · evidências';
-  return 'Minhas Obras';
+  return 'Minha operação';
 }
 
 /** Breadcrumbs para detalhe de obra */

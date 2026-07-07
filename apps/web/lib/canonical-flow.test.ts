@@ -52,5 +52,13 @@ assert.equal(isCanonicalRouteAllowed("/dashboard/comercial", "COMERCIAL"), true)
 const tomadorNav = getCanonicalNav("TOMADOR");
 assert.ok(tomadorNav.some((n) => n.href === "/dashboard/construtor"));
 assert.ok(!tomadorNav.some((n) => n.href === "/dashboard/score"));
+// Obras e Crédito foram unificados em "Minha operação" no menu.
+assert.ok(tomadorNav.some((n) => n.href === "/dashboard/operacao"));
+assert.ok(!tomadorNav.some((n) => n.href === "/dashboard/obras"));
+assert.ok(!tomadorNav.some((n) => n.href === "/dashboard/credito"));
+// Mas as rotas de detalhe continuam acessíveis para o tomador.
+assert.equal(isCanonicalRouteAllowed("/dashboard/operacao", "TOMADOR"), true);
+assert.equal(isCanonicalRouteAllowed("/dashboard/obras/abc", "TOMADOR"), true);
+assert.equal(isCanonicalRouteAllowed("/dashboard/credito/solicitar", "TOMADOR"), true);
 
 console.log("canonical-flow.test.ts OK");

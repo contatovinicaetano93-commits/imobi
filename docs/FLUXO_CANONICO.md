@@ -23,7 +23,7 @@
 
 | Perfil | Nav sidebar | Home |
 |--------|-------------|------|
-| **Tomador** | Jornada · KYC · Viabilidade · Obras · Crédito · Conta | `/dashboard/construtor` |
+| **Tomador** | Jornada · KYC · Viabilidade · Minha operação · Conta | `/dashboard/construtor` |
 | **Admin** | Centro de comando · Usuários · Conta | `/dashboard/admin` |
 | **Engenheiro** | Vistorias · Comitê (parecer) · Conta | `/dashboard/engenheiro/vistoria` |
 | **Gestor** | Operação do fundo · Conta | `/dashboard/gestor` |
@@ -40,6 +40,10 @@ Filas operacionais (KYC, viabilidade, obras, vistorias, comitê, propostas, pipe
 | Obra | `/dashboard/obras/nova` |
 | Crédito | `/dashboard/credito/solicitar` |
 | Acompanhar | `/dashboard/construtor` |
+
+**Minha operação** (`/dashboard/operacao`): aba única que agrega **Obras** e **Crédito**
+(antes eram dois itens de menu). As rotas de detalhe `/dashboard/obras/*` e
+`/dashboard/credito/*` continuam válidas e o destaque da sidebar aponta para "Minha operação".
 
 ## Admin IMOBI — ambiente operacional
 

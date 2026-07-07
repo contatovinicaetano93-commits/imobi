@@ -7,6 +7,11 @@ function isObrasPath(pathname: string): boolean {
   return pathname === "/dashboard/obras" || pathname.startsWith("/dashboard/obras/");
 }
 
+/** "Minha operação" agrega obras + crédito (aba única do tomador). */
+function isOperacaoPath(pathname: string): boolean {
+  return pathname === "/dashboard/operacao" || pathname.startsWith("/dashboard/operacao/");
+}
+
 function isGestorPath(pathname: string): boolean {
   return pathname === "/dashboard/gestor";
 }
@@ -21,7 +26,7 @@ function isTomadorPathStrict(pathname: string, jornada: Jornada): boolean {
   if (pathname === href || pathname.startsWith(`${href}/`)) return true;
 
   const bloqueiaObras = jornada.passoAtual === "kyc" || jornada.passoAtual === "viabilidade";
-  if (isObrasPath(pathname) && !bloqueiaObras) return true;
+  if ((isObrasPath(pathname) || isOperacaoPath(pathname)) && !bloqueiaObras) return true;
 
   switch (jornada.passoAtual) {
     case "kyc":
@@ -32,22 +37,28 @@ function isTomadorPathStrict(pathname: string, jornada: Jornada): boolean {
         pathname.startsWith("/dashboard/proposta-credito")
       );
     case "obra":
-      return isObrasPath(pathname);
+      return isObrasPath(pathname) || isOperacaoPath(pathname);
     case "credito":
-      return pathname.startsWith("/dashboard/credito");
+      return pathname.startsWith("/dashboard/credito") || isOperacaoPath(pathname);
     case "aguardando":
-      return pathname === "/dashboard/construtor" || pathname.startsWith("/dashboard/credito");
+      return (
+        pathname === "/dashboard/construtor" ||
+        pathname.startsWith("/dashboard/credito") ||
+        isOperacaoPath(pathname)
+      );
     case "acompanhar":
       return (
         pathname === "/dashboard/construtor" ||
         pathname.startsWith("/dashboard/credito") ||
-        isObrasPath(pathname)
+        isObrasPath(pathname) ||
+        isOperacaoPath(pathname)
       );
     case "concluido":
       return (
         pathname === "/dashboard/construtor" ||
         pathname.startsWith("/dashboard/credito") ||
-        isObrasPath(pathname)
+        isObrasPath(pathname) ||
+        isOperacaoPath(pathname)
       );
     default:
       return false;
@@ -76,7 +87,7 @@ export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolea
   if (pathname === href || pathname.startsWith(`${href}/`)) return true;
 
   const bloqueiaObras = jornada.passoAtual === "kyc" || jornada.passoAtual === "viabilidade";
-  if (isObrasPath(pathname) && !bloqueiaObras) {
+  if ((isObrasPath(pathname) || isOperacaoPath(pathname)) && !bloqueiaObras) {
     return true;
   }
 
@@ -89,17 +100,18 @@ export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolea
         pathname.startsWith("/dashboard/proposta-credito")
       );
     case "obra":
-      return isObrasPath(pathname);
+      return isObrasPath(pathname) || isOperacaoPath(pathname);
     case "aguardando":
       return pathname === "/dashboard/construtor";
     case "acompanhar":
     case "concluido":
       return (
         pathname === "/dashboard/construtor" ||
-        pathname.startsWith("/dashboard/credito")
+        pathname.startsWith("/dashboard/credito") ||
+        isOperacaoPath(pathname)
       );
     case "credito":
-      return pathname.startsWith("/dashboard/credito");
+      return pathname.startsWith("/dashboard/credito") || isOperacaoPath(pathname);
     default:
       return false;
   }

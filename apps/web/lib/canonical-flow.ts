@@ -7,7 +7,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   Home,
   HardHat,
-  CreditCard,
   FileCheck2,
   Calculator,
   MapPin,
@@ -71,8 +70,7 @@ export const CANONICAL_NAV: Record<string, NavItemDef[]> = {
     { label: "Minha jornada", href: "/dashboard/construtor", icon: Home, section: "geral" },
     { label: "Documentos (KYC)", href: "/dashboard/kyc", icon: FileCheck2, section: "operacao" },
     { label: "Viabilidade", href: "/dashboard/proposta-credito", icon: Calculator, section: "operacao" },
-    { label: "Obras", href: "/dashboard/obras", icon: HardHat, section: "operacao" },
-    { label: "Crédito", href: "/dashboard/credito", icon: CreditCard, section: "operacao" },
+    { label: "Minha operação", href: "/dashboard/operacao", icon: HardHat, section: "operacao" },
     ...ACCOUNT,
   ],
   CONSTRUTOR: [], // preenchido abaixo
@@ -106,6 +104,8 @@ export const CANONICAL_PREFIXES: Record<string, readonly string[]> = {
     "/dashboard/construtor",
     "/dashboard/kyc",
     "/dashboard/proposta-credito",
+    "/dashboard/operacao",
+    // Rotas de detalhe (acessadas a partir de "Minha operação")
     "/dashboard/obras",
     "/dashboard/credito",
     "/dashboard/perfil",
