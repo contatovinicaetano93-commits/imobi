@@ -251,6 +251,21 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
   transition: transform 0.35s ease-out; will-change: transform;
 }
 .hero-orb .logo-icon { border-width: 3px; border-color: rgba(74,222,128,0.6); }
+
+/* Mobile has no mouse, so the glows are otherwise static — give them a slow ambient drift instead */
+@media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .hero-glow-1 { animation: heroGlowDrift1 9s ease-in-out infinite; }
+  .hero-glow-2 { animation: heroGlowDrift2 11s ease-in-out infinite; }
+}
+@keyframes heroGlowDrift1 {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(16px, -12px, 0); }
+}
+@keyframes heroGlowDrift2 {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(-18px, 14px, 0); }
+}
+
 .hero-inner {
   max-width: 800px; margin: 0 auto; width: 100%;
   position: relative; z-index: 1;
