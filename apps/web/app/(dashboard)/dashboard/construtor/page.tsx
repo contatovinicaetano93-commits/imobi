@@ -13,10 +13,9 @@ import {
 } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { PanelSection } from "@/components/dashboard/PanelSection";
-import { DashboardPanelShell } from "@/components/dashboard/DashboardPanelShell";
 import { BETA_MVP_MODE, GUIDED_STRICT_MODE } from "@/lib/beta-mvp";
 import { JornadaHeroStrip } from "@/components/dashboard/JornadaHeroStrip";
-import { buildConstrutorTabs } from "./_components/construtor-panel-config";
+import { ConstrutorShell } from "./_components/ConstrutorShell";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Painel Construtor — IMOBI" };
@@ -114,22 +113,17 @@ export default async function ConstrutorPage() {
   const liberacoesPriority = etapasPendentes.length > 0 ? ("critical" as const) : ("primary" as const);
   const kycPriority = docsRejeitados > 0 ? ("critical" as const) : docsPendentes > 0 ? ("primary" as const) : ("secondary" as const);
 
-  const construtorTabs = buildConstrutorTabs({
-    mvpMode: BETA_MVP_MODE,
-    hasAlertas: alertas.length > 0,
-    hasNotifs: notifs.length > 0,
-    liberacoesPriority,
-    kycPriority,
-  });
-
   const operacaoSummary = credito
     ? `${credito.obras?.[0]?.nome ?? "Crédito IMOBI"} · ${formatarBRL(valorLiberado)} devedor`
     : "Nenhuma operação ativa";
 
   return (
-    <DashboardPanelShell
-      tabs={construtorTabs}
-      maxWidth="sm"
+    <ConstrutorShell
+      mvpMode={BETA_MVP_MODE}
+      hasAlertas={alertas.length > 0}
+      hasNotifs={notifs.length > 0}
+      liberacoesPriority={liberacoesPriority}
+      kycPriority={kycPriority}
       tabContent={{
         operacao: (
           <>
