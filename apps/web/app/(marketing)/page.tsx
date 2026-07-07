@@ -254,7 +254,7 @@ export default function LandingPage() {
           <div className="hero-bg-grid" />
           <div className="hero-glow hero-glow-1" />
           <div className="hero-glow hero-glow-2" />
-          <div className="hero-orb-float"><div className="hero-orb"><LogoIcon size={44} /></div></div>
+          <div className="hero-orb-float"><div className="hero-orb"><LogoIcon size={140} /></div></div>
         </div>
         <div className="hero-inner">
           <div className="hero-content">
