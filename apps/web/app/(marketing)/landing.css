@@ -245,6 +245,9 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
 .hero-orb-float {
   position: absolute; top: 20%; right: 14%;
   animation: heroOrbFloat 6.5s ease-in-out infinite;
+  translate: 0 var(--orb-scroll, 0px);
+  transition: translate 0.1s linear;
+  will-change: translate;
 }
 .hero-orb {
   transform: translate3d(calc(var(--mx) * 65px), calc(var(--my) * 65px), 0);

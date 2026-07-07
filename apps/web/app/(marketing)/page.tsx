@@ -70,12 +70,31 @@ export default function LandingPage() {
       hero!.style.setProperty("--ry", "0deg");
     }
 
+    let scrollRaf = 0;
+    function handleScroll() {
+      if (scrollRaf) return;
+      scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = 0;
+        const heroEl = hero!;
+        const scrolled = Math.max(0, window.scrollY);
+        const heroH = heroEl.offsetHeight;
+        const orbTopPct = 0.20;
+        const maxTranslate = heroH * (1 - orbTopPct) - 200;
+        const t = Math.min(scrolled, Math.max(0, maxTranslate));
+        heroEl.style.setProperty("--orb-scroll", `${t}px`);
+      });
+    }
+
     hero.addEventListener("mousemove", handleMove);
     hero.addEventListener("mouseleave", handleLeave);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => {
       hero.removeEventListener("mousemove", handleMove);
       hero.removeEventListener("mouseleave", handleLeave);
+      window.removeEventListener("scroll", handleScroll);
       if (raf) cancelAnimationFrame(raf);
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
     };
   }, [isMobile]);
 
