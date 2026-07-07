@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { z } from "zod";
 import {
   propostasApi,
   type TipoCreditoProposta,
@@ -131,8 +130,7 @@ export default function EnvieSeuProjetoPage() {
       }
 
       const res = await propostasApi.enviar(fd);
-      const { mensagem } = z.object({ mensagem: z.string() }).parse(res);
-      setSucesso(mensagem);
+      setSucesso(res.mensagem);
       setStep(TOTAL_STEPS);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Falha ao enviar proposta.");
