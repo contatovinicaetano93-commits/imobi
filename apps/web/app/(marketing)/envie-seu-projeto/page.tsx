@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
+import { z } from "zod";
 import {
   propostasApi,
   type TipoCreditoProposta,
@@ -130,7 +131,8 @@ export default function EnvieSeuProjetoPage() {
       }
 
       const res = await propostasApi.enviar(fd);
-      setSucesso(res.mensagem);
+      const { mensagem } = z.object({ mensagem: z.string() }).parse(res);
+      setSucesso(mensagem);
       setStep(TOTAL_STEPS);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Falha ao enviar proposta.");
@@ -295,7 +297,7 @@ export default function EnvieSeuProjetoPage() {
 
               <div className="esp-kit">
                 <div className="esp-kit-header">
-                  <span>📥</span>
+                  <span aria-hidden="true">📥</span>
                   <div>
                     <p className="esp-kit-title">Baixe os modelos antes de anexar</p>
                     <p className="esp-kit-sub">Preencha a planilha e use o PDF do seu tipo de empreendimento como referência.</p>
@@ -303,41 +305,41 @@ export default function EnvieSeuProjetoPage() {
                 </div>
                 <div className="esp-kit-files">
                   <a href="/modelos/Ficha-Empreendimento-Viabilidade.xlsx" download className="esp-kit-file esp-kit-file--excel">
-                    <span>📊</span>
+                    <span aria-hidden="true">📊</span>
                     <span className="esp-kit-file-info">
                       <strong>Ficha de Viabilidade</strong>
                       <small>Excel · Preencha e anexe</small>
                     </span>
-                    <span className="esp-kit-dl">↓</span>
+                    <span aria-hidden="true" className="esp-kit-dl">↓</span>
                   </a>
                   {tipo === "OBRA_NOVA" && (
                     <a href="/modelos/Modelo-Obra-Nova.pdf" download className="esp-kit-file">
-                      <span>📄</span>
+                      <span aria-hidden="true">📄</span>
                       <span className="esp-kit-file-info">
                         <strong>Modelo Obra Nova</strong>
                         <small>PDF referência</small>
                       </span>
-                      <span className="esp-kit-dl">↓</span>
+                      <span aria-hidden="true" className="esp-kit-dl">↓</span>
                     </a>
                   )}
                   {tipo === "OBRA_EM_ANDAMENTO" && (
                     <a href="/modelos/Modelo-Obra-em-Andamento.pdf" download className="esp-kit-file">
-                      <span>📄</span>
+                      <span aria-hidden="true">📄</span>
                       <span className="esp-kit-file-info">
                         <strong>Modelo Obra em Andamento</strong>
                         <small>PDF referência</small>
                       </span>
-                      <span className="esp-kit-dl">↓</span>
+                      <span aria-hidden="true" className="esp-kit-dl">↓</span>
                     </a>
                   )}
                   {tipo === "CREDITO_PONTE" && (
                     <a href="/modelos/Modelo-Credito-Ponte.pdf" download className="esp-kit-file">
-                      <span>📄</span>
+                      <span aria-hidden="true">📄</span>
                       <span className="esp-kit-file-info">
                         <strong>Modelo Crédito Ponte</strong>
                         <small>PDF referência</small>
                       </span>
-                      <span className="esp-kit-dl">↓</span>
+                      <span aria-hidden="true" className="esp-kit-dl">↓</span>
                     </a>
                   )}
                 </div>
