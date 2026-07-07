@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Fragment } from "react";
+import { useEffect, useRef, useState, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { redirectAfterLogin } from "@/lib/post-login-redirect";
@@ -38,7 +38,45 @@ export default function LandingPage() {
   const [cadErro,     setCadErro]     = useState<string | null>(null);
   const [cadLoading,  setCadLoading]  = useState(false);
 
+  const heroRef = useRef<HTMLElement>(null);
+
   useEffect(() => { setIsMobile(window.innerWidth <= 768); }, []);
+
+  useEffect(() => {
+    if (isMobile) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const hero = heroRef.current;
+    if (!hero) return;
+
+    let raf = 0;
+    function handleMove(e: MouseEvent) {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const rect = hero!.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) / rect.width - 0.5;
+        const my = (e.clientY - rect.top) / rect.height - 0.5;
+        hero!.style.setProperty("--mx", mx.toFixed(3));
+        hero!.style.setProperty("--my", my.toFixed(3));
+        hero!.style.setProperty("--rx", (mx * 6).toFixed(2) + "deg");
+        hero!.style.setProperty("--ry", (my * -6).toFixed(2) + "deg");
+      });
+    }
+    function handleLeave() {
+      hero!.style.setProperty("--mx", "0");
+      hero!.style.setProperty("--my", "0");
+      hero!.style.setProperty("--rx", "0deg");
+      hero!.style.setProperty("--ry", "0deg");
+    }
+
+    hero.addEventListener("mousemove", handleMove);
+    hero.addEventListener("mouseleave", handleLeave);
+    return () => {
+      hero.removeEventListener("mousemove", handleMove);
+      hero.removeEventListener("mouseleave", handleLeave);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [isMobile]);
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 60);
@@ -195,8 +233,13 @@ export default function LandingPage() {
       )}
 
       {/* ── HERO ── */}
-      <section className="hero">
-        <div className="hero-bg-grid" aria-hidden />
+      <section className="hero" ref={heroRef}>
+        <div className="hero-scene" aria-hidden>
+          <div className="hero-bg-grid" />
+          <div className="hero-glow hero-glow-1" />
+          <div className="hero-glow hero-glow-2" />
+          <div className="hero-orb-float"><div className="hero-orb" /></div>
+        </div>
         <div className="hero-inner">
           <div className="hero-content">
             <div className="hero-badge"><span className="badge-dot" />Crédito desburocratizado · aprovação ágil</div>

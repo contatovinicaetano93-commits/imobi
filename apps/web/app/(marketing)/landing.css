@@ -210,17 +210,54 @@ body { font-family: 'Jost', sans-serif; background: var(--white); color: var(--i
   padding: 8rem 3rem 5rem;
   background-color: var(--navy);
   position: relative; overflow: hidden;
+  perspective: 1200px;
+  --mx: 0; --my: 0; --rx: 0deg; --ry: 0deg;
+}
+.hero-scene {
+  position: absolute; inset: 0; pointer-events: none;
+  transform-style: preserve-3d;
 }
 .hero-bg-grid {
-  position: absolute; inset: 0; pointer-events: none;
+  position: absolute; inset: -12%; pointer-events: none;
   background-image:
     linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
   background-size: 48px 48px;
+  transform: rotateX(var(--ry)) rotateY(var(--rx)) translateZ(-80px) scale(1.12);
+  transition: transform 0.25s ease-out;
+  will-change: transform;
+}
+.hero-glow {
+  position: absolute; border-radius: 50%; filter: blur(90px);
+  opacity: 0.32; transition: transform 0.35s ease-out; will-change: transform;
+}
+.hero-glow-1 {
+  width: 30rem; height: 30rem; top: -12%; left: 6%;
+  background: radial-gradient(circle, var(--mint) 0%, transparent 70%);
+  transform: translate3d(calc(var(--mx) * 40px), calc(var(--my) * 40px), 0);
+}
+.hero-glow-2 {
+  width: 34rem; height: 34rem; bottom: -18%; right: 2%;
+  background: radial-gradient(circle, var(--royal) 0%, transparent 70%);
+  transform: translate3d(calc(var(--mx) * -55px), calc(var(--my) * -55px), 0);
+}
+.hero-orb-float {
+  position: absolute; top: 20%; right: 14%;
+  animation: heroOrbFloat 6.5s ease-in-out infinite;
+}
+.hero-orb {
+  width: 8.75rem; height: 8.75rem; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.16);
+  backdrop-filter: blur(6px);
+  transform: translate3d(calc(var(--mx) * 65px), calc(var(--my) * 65px), 0);
+  transition: transform 0.35s ease-out; will-change: transform;
 }
 .hero-inner {
   max-width: 800px; margin: 0 auto; width: 100%;
   position: relative; z-index: 1;
+  transform: translate3d(calc(var(--mx) * -14px), calc(var(--my) * -10px), 0);
+  transition: transform 0.35s ease-out; will-change: transform;
 }
 .hero-content { display: flex; flex-direction: column; }
 .hero-badge {
@@ -521,6 +558,11 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .hero-sub                      { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.52s both; }
   .hero-actions                  { animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) 0.62s both; }
 
+  @keyframes heroOrbFloat {
+    0%, 100% { margin-top: 0; }
+    50%      { margin-top: -18px; }
+  }
+
   /* Scroll reveal — JS adds .in class on IntersectionObserver trigger */
   .reveal {
     opacity: 0;
@@ -549,6 +591,7 @@ footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.07); 
   .nav-mobile-auth .btn-cta { padding: 0.4rem 0.7rem; font-size: 0.75rem; }
 
   .hero { padding: 6rem 1.25rem 3rem; min-height: auto; }
+  .hero-orb-float { display: none; }
   .hero-inner { max-width: 100%; }
   .hero-sub { max-width: 100%; }
   .hero-actions { flex-direction: column; align-items: stretch; gap: 0.75rem; }
