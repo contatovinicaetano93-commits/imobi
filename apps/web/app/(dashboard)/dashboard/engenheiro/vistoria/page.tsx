@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { engenheirosApi, type Visita } from "@/lib/api";
+import { engenheirosApi, safeArr, type Visita } from "@/lib/api";
 import Link from "next/link";
 import { MapPin, CalendarClock, CheckCircle2, Clock, Play, ArrowRight } from "lucide-react";
 
@@ -13,7 +13,9 @@ const STATUS_CONFIG: Record<Visita["status"], { label: string; cls: string; icon
 };
 
 export default async function VistoriaPage() {
-  const visitas = await engenheirosApi.listarVisitas().catch(() => [] as Visita[]);
+  const visitas = safeArr<Visita>(
+    await engenheirosApi.listarVisitas().catch(() => [] as Visita[]),
+  );
 
   const agendadas  = visitas.filter((v) => v.status === "AGENDADA");
   const iniciadas  = visitas.filter((v) => v.status === "INICIADA");

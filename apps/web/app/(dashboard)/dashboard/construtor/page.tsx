@@ -8,7 +8,7 @@ import {
   HardHat, BarChart3, XCircle,
 } from "lucide-react";
 import {
-  creditoApi, obrasApi, kycApi, notificacoesApi,
+  creditoApi, obrasApi, kycApi, notificacoesApi, safeArr, safeNum,
   type CreditoResumo, type ObraResumo, type KycStatus, type Notificacao,
 } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
@@ -55,19 +55,27 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default async function ConstrutorPage() {
-  const [creditos, obras, kycStatus, notifs] = await Promise.all([
+  const [creditosRaw, obrasRaw, kycStatusRaw, notifsRaw] = await Promise.all([
     creditoApi.meus().catch(() => [] as CreditoResumo[]),
     obrasApi.listar().catch(() => [] as ObraResumo[]),
     kycApi.obterStatus().catch(() => null as KycStatus | null),
     notificacoesApi.listarNaoLidas().catch(() => [] as Notificacao[]),
   ]);
 
+  // A API pode devolver 200 com corpo inesperado (cold start, objeto de erro).
+  // safeArr garante array e evita crash do Server Component (.find/.flatMap).
+  const creditos = safeArr<CreditoResumo>(creditosRaw);
+  const obras = safeArr<ObraResumo>(obrasRaw);
+  const kycStatus =
+    kycStatusRaw && typeof kycStatusRaw === "object" ? (kycStatusRaw as KycStatus) : null;
+  const notifs = safeArr<Notificacao>(notifsRaw);
+
   const credito = creditos.find((c) => c.status === "ATIVO") ?? creditos[0] ?? null;
-  const valorAprovado   = credito ? Number(credito.valorAprovado)  : 0;
-  const valorLiberado   = credito ? Number(credito.valorLiberado)  : 0;
+  const valorAprovado   = credito ? safeNum(credito.valorAprovado)  : 0;
+  const valorLiberado   = credito ? safeNum(credito.valorLiberado)  : 0;
   const saldoDisponivel = valorAprovado - valorLiberado;
-  const taxaMensal      = credito ? Number(credito.taxaMensal)     : 0;
-  const prazoMeses      = credito ? Number(credito.prazoMeses)     : 0;
+  const taxaMensal      = credito ? safeNum(credito.taxaMensal)     : 0;
+  const prazoMeses      = credito ? safeNum(credito.prazoMeses)     : 0;
   const parcela         = calcParcela(valorLiberado, taxaMensal, prazoMeses);
 
   // Prazo restante: assume dataAprovacao + prazoMeses
