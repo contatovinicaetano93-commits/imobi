@@ -401,7 +401,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     <SkipLink />
     <JornadaProvider enabled={jornadaEnabled} scopeKey={jornadaEnabled ? (userEmail ?? role) : null}>
     <JornadaGuard role={role}>
-    <div className="dash-root" style={{ display: "flex", minHeight: "100vh", background: "#EEF3FF", fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
+    <div className="dash-root" style={{ fontFamily: "'Jost', 'Inter', system-ui, sans-serif" }}>
 
       {/* Sidebar desktop */}
       <aside
@@ -417,10 +417,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {sidebarContent()}
       </aside>
 
+      <div className="dash-mobile-column">
+
       {/* Mobile topbar — padrão SOMA (hamburger · logo · chip usuário) */}
-      <>
       <header
-        className="dash-mhidden"
+        className="dash-mhidden dash-mobile-header"
         style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
           height: 56, background: NAVY,
@@ -507,7 +508,27 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      {/* Mobile drawer — full height, item ativo com borda mint */}
+      {/* Main */}
+      <main
+        id="main-content"
+        className="dash-main"
+        style={{ flex: 1, minHeight: 0, overflowX: "hidden" }}
+      >
+        <div style={{ height: 56 }} className="dash-spacer" />
+        {children}
+      </main>
+
+      <MobileBottomNav
+        tabs={mobileTabs}
+        pathname={path}
+        activeHref={activeHref ?? path}
+        accent={accent}
+        onOpenMenu={() => setMobileOpen(true)}
+      />
+
+      </div>
+
+      {/* Mobile drawer — overlay fora da coluna scrollável */}
       {mobileOpen && (
         <>
           <div
@@ -607,25 +628,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </aside>
         </>
       )}
-
-      <MobileBottomNav
-        tabs={mobileTabs}
-        pathname={path}
-        activeHref={activeHref ?? path}
-        accent={accent}
-        onOpenMenu={() => setMobileOpen(true)}
-      />
-      </>
-
-      {/* Main */}
-      <main
-        id="main-content"
-        className="dash-main"
-        style={{ flex: 1, overflowX: "hidden" }}
-      >
-        <div style={{ height: 56 }} className="dash-spacer" />
-        {children}
-      </main>
 
       {/* Assistente IA + WhatsApp */}
       {!GUIDED_STRICT_MODE && <ImobiAssistant />}

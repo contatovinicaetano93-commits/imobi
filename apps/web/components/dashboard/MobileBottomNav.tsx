@@ -26,13 +26,16 @@ export function MobileBottomNav({
 }: Props) {
   if (tabs.length === 0) return null;
 
+  const itemClass =
+    "relative flex h-14 min-h-[3.5rem] flex-col items-center justify-center gap-0.5 px-1";
+
   return (
     <nav
-      className="dash-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-imobi-navy shadow-imobi-nav"
+      className="dash-bottom-nav z-40 w-full shrink-0 border-t border-white/10 bg-imobi-navy pb-[env(safe-area-inset-bottom,0px)] shadow-imobi-nav"
       aria-label="Navegação principal"
     >
       <div
-        className="mx-auto grid max-w-lg"
+        className="mx-auto grid h-14 max-w-lg"
         style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
       >
         {tabs.map((tab) => {
@@ -47,11 +50,11 @@ export function MobileBottomNav({
                 key={tab.href}
                 type="button"
                 onClick={onOpenMenu}
-                className="relative flex flex-col items-center gap-1 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+                className={itemClass}
                 aria-label="Abrir menu"
               >
                 <Icon size={20} className="text-white/45" strokeWidth={2} />
-                <span className="font-sans text-[0.66rem] font-semibold text-white/45">
+                <span className="font-sans text-[0.66rem] font-semibold leading-none text-white/45">
                   {tab.shortLabel}
                 </span>
               </button>
@@ -62,7 +65,7 @@ export function MobileBottomNav({
             <Link
               key={tab.href}
               href={tab.href as "/"}
-              className="relative flex flex-col items-center gap-1 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+              className={itemClass}
               aria-current={active ? "page" : undefined}
             >
               {active && (
@@ -78,7 +81,7 @@ export function MobileBottomNav({
               />
               <span
                 className={cx(
-                  "font-sans text-[0.66rem] font-semibold",
+                  "font-sans text-[0.66rem] font-semibold leading-none",
                   active ? "" : "text-white/45",
                 )}
                 style={active ? { color: accent } : undefined}

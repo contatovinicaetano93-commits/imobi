@@ -3,16 +3,90 @@
   50%       { opacity: 0.8; }
 }
 
+:root {
+  --dash-bottom-nav-height: 3.5rem;
+  --dash-bottom-nav-safe: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  --dash-shell-bg: #eef3ff;
+}
+
+.dash-root {
+  display: flex;
+  min-height: 100vh;
+  background: var(--dash-shell-bg);
+}
+
 .dash-main {
   padding: 1rem;
   overflow-x: hidden;
-  /* espaço para bottom tab nav (mobile) */
-  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--dash-bottom-nav-height) + var(--dash-bottom-nav-safe));
+}
+
+.dash-mobile-column {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
 /* WhatsApp FAB — sobe quando há bottom nav */
 .dash-wa-fab {
-  bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  bottom: calc(var(--dash-bottom-nav-height) + var(--dash-bottom-nav-safe)) !important;
+}
+
+/* Mobile: coluna flex — header + main scrollável + bottom nav no fluxo (sem gap branco) */
+@media (max-width: 767px) {
+  html:has(.dash-root),
+  body:has(.dash-root) {
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--dash-shell-bg);
+    overscroll-behavior: none;
+  }
+
+  .dash-root {
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    flex-direction: column;
+  }
+
+  .dash-mobile-column {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .dash-mobile-header {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    flex-shrink: 0;
+  }
+
+  .dash-spacer {
+    display: none !important;
+  }
+
+  .dash-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    /* nav está no fluxo — só espaço pro FAB */
+    padding-bottom: 4.5rem;
+  }
+
+  .dash-bottom-nav {
+    position: relative !important;
+    bottom: auto !important;
+    flex-shrink: 0;
+    width: 100%;
+    z-index: 90;
+  }
 }
 
 @media (min-width: 768px) {

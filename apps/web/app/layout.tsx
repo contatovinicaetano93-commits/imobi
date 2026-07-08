@@ -7,6 +7,12 @@ export const metadata = {
   description: "Plataforma fintech de crédito imobiliário",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+};
+
 export const dynamic = "force-dynamic";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
