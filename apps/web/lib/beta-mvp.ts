@@ -1,4 +1,4 @@
-import { isCanonicalRouteAllowed } from "@/lib/canonical-flow";
+import { isCanonicalRouteAllowed, PUBLIC_MARKETING_PATHS } from "@/lib/canonical-flow";
 
 /**
  * Modo beta MVP — menu reduzido (legado). Desligado no lançamento.
@@ -13,20 +13,7 @@ export const BETA_MVP_MODE = process.env.NEXT_PUBLIC_BETA_MVP_MODE === "true";
 export const GUIDED_STRICT_MODE = process.env.NEXT_PUBLIC_GUIDED_STRICT !== "false";
 
 /** Rotas públicas (marketing + auth) — sempre acessíveis */
-export const MVP_PUBLIC_PREFIXES = [
-  "/",
-  "/login",
-  "/cadastro",
-  "/esqueceu-senha",
-  "/redefinir-senha",
-  "/termos",
-  "/privacy-policy",
-  "/simulador",
-  "/envie-seu-projeto",
-  "/quem-somos",
-  "/como-funciona",
-  "/contato",
-] as const;
+export const MVP_PUBLIC_PREFIXES = PUBLIC_MARKETING_PATHS;
 
 /** Tomador / construtor — fluxo obra → crédito */
 export const MVP_TOMADOR_PREFIXES = [

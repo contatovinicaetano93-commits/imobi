@@ -38,6 +38,22 @@ export type NavItemDef = {
   section?: "geral" | "operacao" | "conta";
 };
 
+/** Rotas públicas (marketing + auth) — fonte única, sem login. */
+export const PUBLIC_MARKETING_PATHS = [
+  "/",
+  "/login",
+  "/cadastro",
+  "/esqueceu-senha",
+  "/redefinir-senha",
+  "/termos",
+  "/privacy-policy",
+  "/simulador",
+  "/envie-seu-projeto",
+  "/quem-somos",
+  "/como-funciona",
+  "/contato",
+] as const;
+
 /** Rotas legadas → destino canônico (bookmarks antigos) */
 export const LEGACY_REDIRECTS: Record<string, string> = {
   "/dashboard": "/dashboard/construtor",

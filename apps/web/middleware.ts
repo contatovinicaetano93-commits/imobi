@@ -6,21 +6,11 @@ import { isMvpRouteAllowed, GUIDED_STRICT_MODE } from "@/lib/beta-mvp";
 import {
   resolveLegacyRedirect,
   isCanonicalRouteAllowed,
+  PUBLIC_MARKETING_PATHS,
 } from "@/lib/canonical-flow";
 
 const PUBLIC_PATHS = [
-  "/",
-  "/login",
-  "/cadastro",
-  "/esqueceu-senha",
-  "/redefinir-senha",
-  "/termos",
-  "/privacy-policy",
-  "/simulador",
-  "/envie-seu-projeto",
-  "/quem-somos",
-  "/como-funciona",
-  "/contato",
+  ...PUBLIC_MARKETING_PATHS,
   "/api/auth",
   "/api/proxy/auth",
   "/api/proxy/credito/simular",
