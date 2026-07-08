@@ -12,6 +12,7 @@ import {
   getActiveNavHref,
   getDashboardSegment,
   getNavRole,
+  getPanelHome,
   getPanelFromPath,
   isAdminPreviewingPanel,
   type NavContext,
@@ -280,6 +281,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   const navCtx: NavContext = { adminPreview, fromAdmin };
   const navRole = getNavRole(role, path, navCtx);
+  const panelHome = getPanelHome(role, path, navCtx);
   const visibleNav = filterNav(role, path, navCtx);
   const activeHref = getActiveNavHref(path, navRole, visibleNav);
   const isActive = (href: string) => href === activeHref;
@@ -457,7 +459,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         )}
 
         <Link
-          href="/dashboard/construtor"
+          href={panelHome as "/"}
           style={{
             display: "flex", alignItems: "center", gap: "0.45rem",
             textDecoration: "none", flex: 1, justifyContent: "center",
@@ -526,7 +528,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               display: "flex", alignItems: "center", justifyContent: "space-between",
               marginBottom: "1.25rem", padding: "0 0.25rem",
             }}>
-              <Link href="/dashboard/construtor" onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+              <Link href={panelHome as "/"} onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
                 <Logo size={22} />
                 <span style={{ color: "white", fontWeight: 800, fontSize: "1.05rem", letterSpacing: "0.1em", fontFamily: "'Barlow Condensed', sans-serif" }}>IMOBI</span>
               </Link>

@@ -53,9 +53,8 @@ function truncateLabel(label: string): string {
   return first.length > 10 ? `${first.slice(0, 9)}.` : first;
 }
 
-/** Verifica se o pathname corresponde à aba (inclui sub-rotas). */
-export function isMobileTabActive(pathname: string, href: string, activeHref: string): boolean {
+/** Verifica se a aba corresponde ao único item ativo resolvido pela navegação. */
+export function isMobileTabActive(_pathname: string, href: string, activeHref: string): boolean {
   if (href === "__menu__") return false;
-  if (href === activeHref) return true;
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return href === activeHref;
 }

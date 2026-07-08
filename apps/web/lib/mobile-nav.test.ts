@@ -19,5 +19,7 @@ assert.equal(drawerItems.length, 5);
 assert.equal(isMobileTabActive("/dashboard/kyc", "/dashboard/kyc", "/dashboard/kyc"), true);
 assert.equal(isMobileTabActive("/dashboard/kyc/upload", "/dashboard/kyc", "/dashboard/kyc"), true);
 assert.equal(isMobileTabActive("/dashboard/construtor", "/dashboard/kyc", "/dashboard/construtor"), false);
+assert.equal(isMobileTabActive("/dashboard/admin/usuarios", "/dashboard/admin", "/dashboard/admin/usuarios"), false);
+assert.equal(isMobileTabActive("/dashboard/admin/usuarios", "/dashboard/admin/usuarios", "/dashboard/admin/usuarios"), true);
 
 console.log("✅ mobile-nav OK");
