@@ -9,6 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        imobi: {
+          navy: "#0C1A3D",
+          royal: "#1B4FD8",
+          mint: "#4ADE80",
+          canvas: "#EEF3FF",
+          surface: "#FFFFFF",
+          ink: "#0F172A",
+          muted: "#64748B",
+          border: "#E2E8F0",
+          gain: "#16A34A",
+          loss: "#DC2626",
+          warn: "#D97706",
+        },
         brand: {
           50: "#f0fdf4",
           100: "#dcfce7",
@@ -35,6 +48,22 @@ const config: Config = {
           900: "#1e3a8a",
           950: "#172554",
         },
+      },
+      fontFamily: {
+        display: ["'Barlow Condensed'", "sans-serif"],
+        sans: ["'Jost'", "system-ui", "sans-serif"],
+        num: ["'Inter'", "system-ui", "sans-serif"],
+      },
+      backgroundImage: {
+        "imobi-chip": "linear-gradient(135deg, #4ADE80 0%, #22C55E 55%, #16A34A 100%)",
+      },
+      boxShadow: {
+        "imobi-card": "0 1px 3px rgba(12,26,61,0.06)",
+        "imobi-nav": "0 -4px 24px rgba(12,26,61,0.12)",
+      },
+      borderRadius: {
+        "2xl": "1.25rem",
+        "3xl": "1.75rem",
       },
     },
   },
