@@ -1,11 +1,5 @@
 import { getApiV1Fallbacks } from '@/lib/api-base';
-
-async function wakeApi(api: string): Promise<void> {
-  await fetch(`${api}/health`, {
-    cache: 'no-store',
-    signal: AbortSignal.timeout(25_000),
-  }).catch(() => null);
-}
+import { RESILIENCE_TIMEOUTS, sleep, wakeApiHealth } from '@/lib/resilience';
 
 export type FetchApiWithRetryOptions = {
   path: string;
@@ -31,7 +25,7 @@ export async function fetchApiWithRetry({
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
 
   for (const api of apis) {
-    if (wakeFirst) await wakeApi(api);
+    if (wakeFirst) await wakeApiHealth(api);
 
     for (let attempt = 0; attempt < maxAttemptsPerApi; attempt++) {
       const hasBody =
@@ -41,11 +35,11 @@ export async function fetchApiWithRetry({
         headers,
         body: hasBody ? body : undefined,
         cache: "no-store",
-        signal: AbortSignal.timeout(30_000),
+        signal: AbortSignal.timeout(RESILIENCE_TIMEOUTS.request),
       }).catch(() => null);
 
       if (!res) {
-        await new Promise((r) => setTimeout(r, 2500 * (attempt + 1)));
+        await sleep(2500 * (attempt + 1));
         continue;
       }
 
@@ -54,8 +48,8 @@ export async function fetchApiWithRetry({
       }
 
       if (res.status >= 500 || res.status === 503 || res.status === 502 || res.status === 504) {
-        await wakeApi(api);
-        await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
+        await wakeApiHealth(api);
+        await sleep(3000 * (attempt + 1));
         continue;
       }
 

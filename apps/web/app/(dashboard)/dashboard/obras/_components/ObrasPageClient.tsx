@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { obrasApi, type ObraResumo } from "@/lib/api";
+import { obrasApi, safeArr, type ObraResumo } from "@/lib/api";
 import { ObrasListClient } from "./ObrasListClient";
 import { PageSkeleton } from "@/app/(dashboard)/_components/PageSkeleton";
 
@@ -20,7 +20,7 @@ export function ObrasPageClient() {
     ])
       .then(([userRole, list]) => {
         setRole(userRole);
-        setObras(list);
+        setObras(safeArr<ObraResumo>(list));
       })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : "Erro ao carregar obras");

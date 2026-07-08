@@ -1,6 +1,7 @@
 import type { CadastroUsuarioInput } from '@imbobi/schemas';
 import { wakeStagingApi } from '@/lib/wake-staging-api';
 import { normalizeCadastroInput } from '@/lib/normalize-cadastro';
+import { sleep } from '@/lib/resilience';
 
 const REGISTER_URLS = ['/web-api/auth/registrar', '/api/proxy/auth/registrar'];
 
@@ -66,7 +67,7 @@ export async function registerWithRetry(
       if (json.message) lastError = json.message;
     }
 
-    await new Promise((r) => setTimeout(r, 4000 * attempt));
+    await sleep(4000 * attempt);
   }
 
   throw new Error(`${lastError} Aguarde 1 minuto e tente novamente.`);

@@ -1,6 +1,7 @@
 import type { LoginInput } from '@imbobi/schemas';
 import { PRODUCTION_API_URL, STAGING_API_URL } from '@/lib/api-base';
 import { wakeStagingApi } from '@/lib/wake-staging-api';
+import { RESILIENCE_TIMEOUTS, fetchWithTimeout } from '@/lib/resilience';
 
 export type LoginResult = {
   ok: true;
@@ -13,7 +14,7 @@ const SERVER_LOGIN_URLS = ['/web-api/auth/login', '/api/proxy/auth/login'];
 const API_BASES = [STAGING_API_URL, PRODUCTION_API_URL];
 
 /** Cold start do Render pode levar ~50s; damos folga na 1ª tentativa. */
-const LOGIN_TIMEOUT_MS = 75_000;
+const LOGIN_TIMEOUT_MS = RESILIENCE_TIMEOUTS.login;
 
 type ApiLoginJson = {
   accessToken?: string;
@@ -25,20 +26,6 @@ type ApiLoginJson = {
 };
 
 class InvalidCredentialsError extends Error {}
-
-async function fetchWithTimeout(
-  url: string,
-  init: RequestInit,
-  timeoutMs: number,
-): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 async function tryServerLogin(
   data: LoginInput,

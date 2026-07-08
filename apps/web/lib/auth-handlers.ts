@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getApiV1Fallbacks } from '@/lib/api-base';
+import { RESILIENCE_TIMEOUTS, sleep, wakeApiHealth } from '@/lib/resilience';
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -10,10 +11,6 @@ const COOKIE_OPTS = {
 
 export const maxDuration = 60;
 
-async function wakeApi(api: string): Promise<void> {
-  await fetch(`${api}/health`, { cache: 'no-store', signal: AbortSignal.timeout(20_000) }).catch(() => null);
-}
-
 async function postAuth(
   path: 'login' | 'registrar',
   body: string,
@@ -21,24 +18,24 @@ async function postAuth(
   const apis = getApiV1Fallbacks();
 
   for (const api of apis) {
-    await wakeApi(api);
+    await wakeApiHealth(api, 20_000);
     for (let attempt = 0; attempt < 4; attempt++) {
       const res = await fetch(`${api}/auth/${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body,
         cache: 'no-store',
-        signal: AbortSignal.timeout(25_000),
+        signal: AbortSignal.timeout(RESILIENCE_TIMEOUTS.wakeHealth),
       }).catch(() => null);
 
       if (!res) {
-        await new Promise((r) => setTimeout(r, 2000));
+        await sleep(2000);
         continue;
       }
       if (res.status === 401 || res.status === 400 || res.status === 409) return res;
       if (res.ok) return res;
       if (res.status >= 500 || res.status === 503) {
-        await new Promise((r) => setTimeout(r, 2500));
+        await sleep(2500);
         continue;
       }
       return res;
@@ -184,10 +181,7 @@ export async function handleRegisterPost(req: NextRequest): Promise<NextResponse
 
 export async function handleWakeGet(): Promise<NextResponse> {
   for (const api of getApiV1Fallbacks()) {
-    const res = await fetch(`${api}/health`, {
-      cache: 'no-store',
-      signal: AbortSignal.timeout(25_000),
-    }).catch(() => null);
+    const res = await wakeApiHealth(api);
     if (res?.ok) {
       return NextResponse.json({ ok: true, status: res.status });
     }

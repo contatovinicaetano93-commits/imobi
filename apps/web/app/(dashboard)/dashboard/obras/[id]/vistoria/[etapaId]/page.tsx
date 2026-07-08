@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { ObraResumo, EvidenciaDetalhe } from "@/lib/api";
+import { safeArr, type ObraResumo, type EvidenciaDetalhe } from "@/lib/api";
 import { formatarBRL } from "@imbobi/core";
 import { useAuth } from "@/hooks/useAuth";
 import { AprovarEtapaForm } from "./aprovar-form";
@@ -22,7 +22,7 @@ export default function VistoriaPage({ params }: { params: { id: string; etapaId
       .then(([obraData, evidenciasData]) => {
         if (!obraData) { router.replace('/dashboard/obras'); return; }
         setObra(obraData);
-        setEvidencias(evidenciasData ?? []);
+        setEvidencias(safeArr<EvidenciaDetalhe>(evidenciasData));
       })
       .finally(() => setLoading(false));
   }, [params.id, params.etapaId, router]);

@@ -1,18 +1,10 @@
 import { PRODUCTION_API_URL, STAGING_API_URL } from '@/lib/api-base';
+import { RESILIENCE_TIMEOUTS, fetchOrNull, sleep } from '@/lib/resilience';
 
 const WAKE_URLS = ['/web-api/auth/wake', '/api/proxy/auth/wake'];
-const PING_TIMEOUT_MS = 8_000;
 
-async function ping(url: string, init: RequestInit = {}): Promise<Response | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), PING_TIMEOUT_MS);
-  try {
-    return await fetch(url, { cache: 'no-store', ...init, signal: controller.signal });
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
+function ping(url: string, init: RequestInit = {}): Promise<Response | null> {
+  return fetchOrNull(url, { cache: 'no-store', ...init }, RESILIENCE_TIMEOUTS.ping);
 }
 
 async function pingRenderDirect(): Promise<void> {
@@ -36,7 +28,7 @@ export async function wakeStagingApi(maxAttempts = 6): Promise<boolean> {
       if (data?.ok) return true;
     }
 
-    await new Promise((r) => setTimeout(r, 2000 * (i + 1)));
+    await sleep(2000 * (i + 1));
   }
 
   return false;

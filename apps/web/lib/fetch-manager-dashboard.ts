@@ -1,6 +1,7 @@
 import type { ManagerStats } from '@/lib/api';
 import { readApiErrorMessage } from '@/lib/read-api-error';
 import { wakeStagingApi } from '@/lib/wake-staging-api';
+import { sleep } from '@/lib/resilience';
 
 export async function fetchManagerDashboard(maxAttempts = 8): Promise<ManagerStats> {
   await wakeStagingApi(6);
@@ -31,7 +32,7 @@ export async function fetchManagerDashboard(maxAttempts = 8): Promise<ManagerSta
 
     if (res.status === 502 || res.status === 503 || res.status === 504) {
       await wakeStagingApi(4);
-      await new Promise((r) => setTimeout(r, 4000 * attempt));
+      await sleep(4000 * attempt);
       continue;
     }
 
