@@ -11,7 +11,6 @@ import {
 
 const PUBLIC_PATHS = [
   ...PUBLIC_MARKETING_PATHS,
-  "/soma", // preview do redesign (mock, sem auth)
   "/api/auth",
   "/api/proxy/auth",
   "/api/proxy/credito/simular",

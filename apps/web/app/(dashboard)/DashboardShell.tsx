@@ -24,10 +24,10 @@ import { ToastProvider } from "@/hooks/toast-context";
 import { Toaster } from "@/components/ui/toaster";
 import { ImobiAssistant } from "@/components/dashboard/ImobiAssistant";
 import { SkipLink } from "@/components/SkipLink";
+import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
+import { buildMobileTabs } from "@/lib/mobile-nav";
 import {
-  Home, HardHat, CreditCard, Calculator, Star, FileCheck2, Bell, User,
-  ShieldCheck, BarChart3, Banknote, Settings, LogOut,
-  ChevronRight, Building2, ArrowLeft, Vote, LayoutDashboard, MapPin, TrendingUp, FileText, Inbox, type LucideIcon,
+  LogOut, ChevronRight, ArrowLeft, X, Menu, type LucideIcon,
 } from "lucide-react";
 
 type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "GESTOR_OBRA" | "TOMADOR" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | null;
@@ -295,6 +295,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   const parentPath = getParentPath(path);
 
+  const { tabs: mobileTabs } = buildMobileTabs(visibleNav);
+
   const jornadaEnabled =
     GUIDED_STRICT_MODE &&
     role != null &&
@@ -413,92 +415,204 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {sidebarContent()}
       </aside>
 
-      {/* Mobile header */}
+      {/* Mobile topbar — padrão SOMA (hamburger · logo · chip usuário) */}
       <>
-      <div
+      <header
         className="dash-mhidden"
         style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-          height: 52, background: NAVY,
+          height: 56, background: NAVY,
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 1rem",
+          padding: "0 0.75rem",
           borderBottom: "1px solid rgba(255,255,255,0.06)",
-          gap: "0.5rem",
+          gap: "0.35rem",
         }}
       >
-        {/* Back button on sub-pages, logo on root pages */}
         {parentPath ? (
           <button
-            onClick={() => router.push(parentPath as any)}
+            onClick={() => router.push(parentPath as "/")}
             aria-label="Voltar"
             style={{
               background: "none", border: "none", cursor: "pointer",
-              color: "white", display: "flex", alignItems: "center", gap: "0.35rem",
-              padding: "0.5rem 0.6rem", minHeight: 44,
-              fontSize: "0.82rem", fontFamily: "'Jost', sans-serif",
-              fontWeight: 600, textDecoration: "none", flexShrink: 0,
+              color: "white", display: "grid", placeItems: "center",
+              width: 44, height: 44, flexShrink: 0,
             }}
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={20} />
           </button>
         ) : (
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none", flexShrink: 0 }}>
-            <Logo size={20} />
-            <span style={{ color: "white", fontWeight: 800, fontSize: "1rem", letterSpacing: "0.04em", fontFamily: "'Barlow Condensed', sans-serif" }}>IMOBI</span>
-          </Link>
+          <button
+            onClick={() => setMobileOpen(true)}
+            aria-label="Abrir menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav-drawer"
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              color: "rgba(255,255,255,0.75)", display: "grid", placeItems: "center",
+              width: 44, height: 44, flexShrink: 0,
+            }}
+          >
+            <Menu size={22} />
+          </button>
         )}
 
-        {/* Center: logo when on sub-page */}
-        {parentPath && (
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.4rem", textDecoration: "none", flex: 1, justifyContent: "center" }}>
-            <Logo size={18} />
-            <span style={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.04em", fontFamily: "'Barlow Condensed', sans-serif" }}>IMOBI</span>
-          </Link>
-        )}
-
-        {/* Hamburger */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Menu"
-          aria-expanded={mobileOpen}
-          aria-controls="mobile-nav-drawer"
+        <Link
+          href="/dashboard/construtor"
           style={{
-            background: "none", border: "none", cursor: "pointer",
-            width: 44, height: 44, display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            gap: 4.5, flexShrink: 0,
+            display: "flex", alignItems: "center", gap: "0.45rem",
+            textDecoration: "none", flex: 1, justifyContent: "center",
           }}
         >
-          {[
-            mobileOpen ? "rotate(45deg) translate(4.5px,4.5px)" : "none",
-            "none",
-            mobileOpen ? "rotate(-45deg) translate(4.5px,-4.5px)" : "none",
-          ].map((transform, i) => (
-            <span key={i} style={{
-              display: "block", width: 20, height: 1.5,
-              background: "rgba(255,255,255,0.75)", borderRadius: 2,
-              transition: "all 0.2s",
-              transform,
-              opacity: i === 1 && mobileOpen ? 0 : 1,
-            }} />
-          ))}
-        </button>
-      </div>
+          <Logo size={20} />
+          <span style={{
+            color: "white", fontWeight: 800, fontSize: "1rem",
+            letterSpacing: "0.12em", fontFamily: "'Barlow Condensed', sans-serif",
+          }}>
+            IMOBI
+          </span>
+        </Link>
 
-      {/* Mobile drawer */}
+        <div
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            borderRadius: 9999, background: `linear-gradient(135deg, ${MINT} 0%, #22C55E 100%)`,
+            padding: "3px 10px 3px 3px", flexShrink: 0, maxWidth: 130,
+          }}
+        >
+          <span style={{
+            width: 28, height: 28, borderRadius: "50%", background: NAVY,
+            display: "grid", placeItems: "center",
+            fontSize: "0.62rem", fontWeight: 700, color: MINT,
+            fontFamily: "'Jost', sans-serif",
+          }}>
+            {initials}
+          </span>
+          <div style={{ minWidth: 0, lineHeight: 1.2 }}>
+            <p style={{
+              margin: 0, fontSize: "0.62rem", fontWeight: 500, color: "rgba(12,26,61,0.65)",
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+              fontFamily: "'Jost', sans-serif",
+            }}>
+              {userName ?? "Usuário"}
+            </p>
+            <p style={{
+              margin: 0, fontSize: "0.68rem", fontWeight: 700, color: NAVY,
+              fontFamily: "'Jost', sans-serif",
+            }}>
+              {navMeta?.label ?? ""}
+            </p>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile drawer — full height, item ativo com borda mint */}
       {mobileOpen && (
         <>
-          <div onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(12,26,61,0.6)", zIndex: 150 }} />
-          <div id="mobile-nav-drawer" style={{
-            position: "fixed", top: 52, left: 0, bottom: 0,
-            width: "min(224px, calc(100vw - 48px))",
-            background: NAVY, zIndex: 200,
-            overflowY: "auto", display: "flex", flexDirection: "column",
-          }}>
-            {sidebarContent(() => setMobileOpen(false))}
-          </div>
+          <div
+            onClick={() => setMobileOpen(false)}
+            style={{ position: "fixed", inset: 0, background: "rgba(12,26,61,0.75)", zIndex: 150 }}
+          />
+          <aside
+            id="mobile-nav-drawer"
+            style={{
+              position: "fixed", top: 0, left: 0, bottom: 0,
+              width: "min(300px, 85vw)",
+              background: NAVY, zIndex: 200,
+              overflowY: "auto", display: "flex", flexDirection: "column",
+              padding: "1rem 0.75rem",
+            }}
+          >
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              marginBottom: "1.25rem", padding: "0 0.25rem",
+            }}>
+              <Link href="/dashboard/construtor" onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+                <Logo size={22} />
+                <span style={{ color: "white", fontWeight: 800, fontSize: "1.05rem", letterSpacing: "0.1em", fontFamily: "'Barlow Condensed', sans-serif" }}>IMOBI</span>
+              </Link>
+              <button
+                onClick={() => setMobileOpen(false)}
+                aria-label="Fechar menu"
+                style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.5)", width: 40, height: 40, display: "grid", placeItems: "center" }}
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            {isPreviewingOtherPanel && (
+              <div style={{ margin: "0 0 0.75rem", padding: "0.5rem 0.75rem", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <p style={{ fontSize: "0.58rem", fontWeight: 700, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 4px", fontFamily: "'Jost', sans-serif" }}>Visualizando como</p>
+                <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "white", margin: "0 0 6px", fontFamily: "'Jost', sans-serif" }}>{ROLE_META[navRole ?? ""]?.label ?? navRole}</p>
+                <Link href="/dashboard/admin" onClick={() => setMobileOpen(false)} style={{ fontSize: "0.65rem", fontWeight: 600, color: MINT, textDecoration: "none", display: "flex", alignItems: "center", gap: 4, fontFamily: "'Jost', sans-serif" }}>
+                  <ArrowLeft size={10} /> Voltar ao Admin
+                </Link>
+              </div>
+            )}
+
+            <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+              {roleLoading ? <NavSkeleton /> : visibleNav.map((item) => {
+                const active = isActive(item.href);
+                const Icon = item.icon;
+                const badge = item.href === "/dashboard/notificacoes" && notifCount > 0 ? notifCount : 0;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href as "/"}
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "0.75rem",
+                      padding: "0.75rem 0.85rem", borderRadius: 14,
+                      fontSize: "0.88rem", fontWeight: active ? 600 : 500,
+                      color: active ? MINT : "rgba(255,255,255,0.55)",
+                      background: active ? "rgba(74,222,128,0.08)" : "transparent",
+                      border: active ? `1px solid ${MINT}55` : "1px solid transparent",
+                      textDecoration: "none", fontFamily: "'Jost', sans-serif",
+                      minHeight: 48,
+                    }}
+                  >
+                    <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {badge > 0 && (
+                      <span style={{ background: "#ef4444", color: "white", borderRadius: 9999, fontSize: "0.6rem", fontWeight: 700, padding: "2px 6px" }}>
+                        {badge > 99 ? "99+" : badge}
+                      </span>
+                    )}
+                    <ChevronRight size={14} style={{ opacity: 0.4 }} />
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "0.75rem", marginTop: "0.5rem" }}>
+              <button
+                onClick={async () => {
+                  await fetch("/api/auth/session", { method: "DELETE" });
+                  try { sessionStorage.removeItem("imobi_auth"); } catch { /* ignore */ }
+                  window.location.href = "/login";
+                }}
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.75rem", width: "100%",
+                  padding: "0.75rem 0.85rem", borderRadius: 14, border: "none", cursor: "pointer",
+                  background: "transparent", color: MINT, fontSize: "0.88rem", fontWeight: 600,
+                  fontFamily: "'Jost', sans-serif", textAlign: "left",
+                }}
+              >
+                <LogOut size={18} />
+                <span style={{ flex: 1 }}>Sair da conta</span>
+                <ChevronRight size={14} style={{ opacity: 0.4 }} />
+              </button>
+            </div>
+          </aside>
         </>
       )}
+
+      <MobileBottomNav
+        tabs={mobileTabs}
+        pathname={path}
+        activeHref={activeHref ?? path}
+        accent={accent}
+        onOpenMenu={() => setMobileOpen(true)}
+      />
       </>
 
       {/* Main */}
@@ -507,7 +621,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         className="dash-main"
         style={{ flex: 1, overflowX: "hidden" }}
       >
-        <div style={{ height: 52 }} className="dash-spacer" />
+        <div style={{ height: 56 }} className="dash-spacer" />
         {children}
       </main>
 
@@ -518,6 +632,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Suporte via WhatsApp"
+        className="dash-wa-fab"
         style={{
           position: "fixed", bottom: 24, right: 24,
           width: 44, height: 44, borderRadius: "50%",

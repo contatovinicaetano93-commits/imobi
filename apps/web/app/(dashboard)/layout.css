@@ -6,12 +6,20 @@
 .dash-main {
   padding: 1rem;
   overflow-x: hidden;
-  padding-bottom: 88px;
+  /* espaço para bottom tab nav (mobile) */
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* WhatsApp FAB — sobe quando há bottom nav */
+.dash-wa-fab {
+  bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
 }
 
 @media (min-width: 768px) {
   .dash-sidebar  { display: flex !important; }
   .dash-mhidden  { display: none !important; }
+  .dash-bottom-nav { display: none !important; }
   .dash-spacer   { display: none !important; }
   .dash-main     { padding: 2rem; padding-bottom: 2rem; }
+  .dash-wa-fab   { bottom: 24px !important; }
 }

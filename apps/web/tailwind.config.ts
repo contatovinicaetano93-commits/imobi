@@ -9,21 +9,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // SOMA — tema dark/dourado (app mobile-first)
-        soma: {
-          bg: "#0B0B0F",
-          surface: "#16161C",
-          surface2: "#1E1E26",
-          line: "#2A2A33",
-          gold: "#E8B84B",
-          "gold-hi": "#F5D27E",
-          "gold-lo": "#B8891F",
-          text: "#F5F5F7",
-          muted: "#9A9AA5",
-          faint: "#5A5A66",
-          gain: "#34D399",
-          loss: "#F87171",
-          warn: "#F5B544",
+        imobi: {
+          navy: "#0C1A3D",
+          royal: "#1B4FD8",
+          mint: "#4ADE80",
+          canvas: "#EEF3FF",
+          surface: "#FFFFFF",
+          ink: "#0F172A",
+          muted: "#64748B",
+          border: "#E2E8F0",
+          gain: "#16A34A",
+          loss: "#DC2626",
+          warn: "#D97706",
         },
         brand: {
           50: "#f0fdf4",
@@ -58,12 +55,11 @@ const config: Config = {
         num: ["'Inter'", "system-ui", "sans-serif"],
       },
       backgroundImage: {
-        "gold-grad": "linear-gradient(135deg, #F5D27E 0%, #E8B84B 45%, #B8891F 100%)",
-        "gold-soft": "linear-gradient(180deg, rgba(232,184,75,0.14) 0%, rgba(232,184,75,0.02) 100%)",
+        "imobi-chip": "linear-gradient(135deg, #4ADE80 0%, #22C55E 55%, #16A34A 100%)",
       },
       boxShadow: {
-        "soma-card": "0 1px 0 0 rgba(255,255,255,0.03) inset, 0 8px 24px -12px rgba(0,0,0,0.6)",
-        "gold-glow": "0 8px 32px -8px rgba(232,184,75,0.45)",
+        "imobi-card": "0 1px 3px rgba(12,26,61,0.06)",
+        "imobi-nav": "0 -4px 24px rgba(12,26,61,0.12)",
       },
       borderRadius: {
         "2xl": "1.25rem",
