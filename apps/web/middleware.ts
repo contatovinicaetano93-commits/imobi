@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { decodeJwtPayload } from "@/lib/decode-jwt-payload";
 import { ROLE_HOME, normalizeRole } from "@/lib/role-permissions";
 import { resolveRequestRole } from "@/lib/resolve-request-role";
-import { isMvpRouteAllowed, GUIDED_STRICT_MODE } from "@/lib/beta-mvp";
+import { isMvpRouteAllowed } from "@/lib/beta-mvp";
 import {
   resolveLegacyRedirect,
   isCanonicalRouteAllowed,
@@ -106,7 +106,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(home, request.url));
   }
 
-  return NextResponse.next();
+  // Expõe o pathname para Server Components (gating de jornada server-side).
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {
