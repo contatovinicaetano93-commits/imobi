@@ -1,6 +1,6 @@
 "use client";
 
-import { ADMIN_OBRAS_FLOW } from "@/lib/panel-navigation";
+import { SIPOC_OBRAS_FLOW } from "@/lib/panel-navigation";
 
 const NAVY = "#0C1A3D";
 const MINT = "#4ADE80";
@@ -17,7 +17,7 @@ export function AdminFlowGuide({ activeStep }: Props) {
         Fluxo SIPOC — liberação guiada
       </p>
       <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 sm:gap-3">
-        {ADMIN_OBRAS_FLOW.map(({ step, label, actor, desc }) => {
+        {SIPOC_OBRAS_FLOW.map(({ step, label, actor, desc }) => {
           const isActive = activeStep === step;
           return (
             <li

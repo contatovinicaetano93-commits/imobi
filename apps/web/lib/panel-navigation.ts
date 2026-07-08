@@ -260,5 +260,3 @@ export const SIPOC_OBRAS_FLOW = [
   { step: 5, label: 'Pagamento', actor: 'Admin IMOBI', desc: 'Transferência manual e confirmação' },
 ] as const;
 
-/** @deprecated use SIPOC_OBRAS_FLOW */
-export const ADMIN_OBRAS_FLOW = SIPOC_OBRAS_FLOW;

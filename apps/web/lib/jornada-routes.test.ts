@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import type { Jornada } from '@/lib/api';
-import { isJornadaPathAllowed, isJornadaHubPath } from './jornada-routes';
+import { isJornadaPathAllowed } from './jornada-routes';
 
 function j(partial: Partial<Jornada> & Pick<Jornada, 'perfil' | 'passoAtual' | 'href'>): Jornada {
   return {
@@ -59,7 +59,5 @@ assert.equal(isJornadaPathAllowed('/dashboard/gestor', gestorOk), true);
 assert.equal(isJornadaPathAllowed('/dashboard/gestor/kyc', gestorOk), false);
 assert.equal(isJornadaPathAllowed('/dashboard/gestor/etapas', gestorOk), false);
 assert.equal(isJornadaPathAllowed('/dashboard/obras/x', gestorOk), false);
-assert.equal(isJornadaHubPath('/dashboard/gestor', gestorOk), true);
-assert.equal(isJornadaHubPath('/dashboard/gestor/etapas', gestorOk), false);
 
 console.log('✅ jornada-routes OK');

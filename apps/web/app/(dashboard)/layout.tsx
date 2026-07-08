@@ -63,7 +63,6 @@ const ROLE_META: Record<string, { label: string; accent: string }> = {
 function filterNav(
   role: UserRole,
   path: string,
-  funcoesBloqueadas: string[],
   navCtx?: NavContext,
 ): NavItem[] {
   const navRole = getNavRole(role, path, navCtx) ?? role;
@@ -85,7 +84,6 @@ function filterNav(
     return filtered.filter((item) => isMvpRouteAllowed(item.href, navRole));
   }
 
-  void funcoesBloqueadas;
   return filtered;
 }
 
@@ -203,7 +201,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [roleLoading, setRoleLoading] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [funcoesBloqueadas, setFuncoesBloqueadas] = useState<string[]>([]);
   const [notifCount, setNotifCount] = useState(0);
   const [adminPreview, setAdminPreview] = useState<UserRole>(null);
   const [fromAdmin, setFromAdmin] = useState(false);
@@ -220,7 +217,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           setRole(normalizeRole(d.role) ?? null);
           setUserName(d.nome ?? null);
           setUserEmail(d.email ?? null);
-          setFuncoesBloqueadas(Array.isArray(d.funcoesBloqueadas) ? d.funcoesBloqueadas : []);
         } else {
           try { sessionStorage.removeItem("imobi_auth"); } catch { /* ignore */ }
           window.location.replace("/login");
@@ -284,7 +280,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const navCtx: NavContext = { adminPreview, fromAdmin };
   const navRole = getNavRole(role, path, navCtx);
-  const visibleNav = filterNav(role, path, funcoesBloqueadas, navCtx);
+  const visibleNav = filterNav(role, path, navCtx);
   const activeHref = getActiveNavHref(path, navRole, visibleNav);
   const isActive = (href: string) => href === activeHref;
   const isPreviewingOtherPanel = isAdminPreviewingPanel(role, path, navCtx);

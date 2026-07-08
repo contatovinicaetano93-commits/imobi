@@ -116,14 +116,3 @@ export function isJornadaPathAllowed(pathname: string, jornada: Jornada): boolea
       return false;
   }
 }
-
-/** Hub do perfil — hero com próximo passo (tomador) ou painel KPI (gestor). */
-export function isJornadaHubPath(pathname: string, jornada: Jornada): boolean {
-  if (jornada.perfil === "gestor") {
-    return pathname === "/dashboard/gestor";
-  }
-  if (jornada.perfil === "tomador") {
-    return pathname === "/dashboard/construtor";
-  }
-  return false;
-}
