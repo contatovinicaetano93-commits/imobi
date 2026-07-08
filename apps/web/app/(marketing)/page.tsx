@@ -11,6 +11,25 @@ import "./landing.css";
 
 const WA = "5511993455589";
 
+const HERO_PHOTOS = [
+  {
+    src: "https://images.unsplash.com/photo-1541976590-713941681591?w=1400&q=85&fit=crop",
+    alt: "Operário em obra com vista da cidade",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1400&q=85&fit=crop",
+    alt: "Obra em andamento com guindaste",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1400&q=85&fit=crop",
+    alt: "Skyline de empreendimentos urbanos",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1400&q=85&fit=crop",
+    alt: "Equipe em canteiro de obras",
+  },
+] as const;
+
 export const dynamic = "force-dynamic";
 
 export default function LandingPage() {
@@ -70,31 +89,12 @@ export default function LandingPage() {
       hero!.style.setProperty("--ry", "0deg");
     }
 
-    let scrollRaf = 0;
-    function handleScroll() {
-      if (scrollRaf) return;
-      scrollRaf = requestAnimationFrame(() => {
-        scrollRaf = 0;
-        const heroEl = hero!;
-        const scrolled = Math.max(0, window.scrollY);
-        const heroH = heroEl.offsetHeight;
-        const orbTopPct = 0.20;
-        const maxTranslate = heroH * (1 - orbTopPct) - 200;
-        const t = Math.min(scrolled, Math.max(0, maxTranslate));
-        heroEl.style.setProperty("--orb-scroll", `${t}px`);
-      });
-    }
-
     hero.addEventListener("mousemove", handleMove);
     hero.addEventListener("mouseleave", handleLeave);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
     return () => {
       hero.removeEventListener("mousemove", handleMove);
       hero.removeEventListener("mouseleave", handleLeave);
-      window.removeEventListener("scroll", handleScroll);
       if (raf) cancelAnimationFrame(raf);
-      if (scrollRaf) cancelAnimationFrame(scrollRaf);
     };
   }, [isMobile]);
 
@@ -270,10 +270,23 @@ export default function LandingPage() {
       {/* ── HERO ── */}
       <section className="hero" ref={heroRef}>
         <div className="hero-scene" aria-hidden>
+          <div className="hero-photo-panel">
+            {HERO_PHOTOS.map((photo, i) => (
+              <div
+                key={photo.src}
+                className="hero-photo-slide"
+                style={{
+                  backgroundImage: `url(${photo.src})`,
+                  animationDelay: `${i * 10}s`,
+                }}
+              />
+            ))}
+            <div className="hero-photo-scrim" />
+            <div className="hero-photo-tint" />
+          </div>
           <div className="hero-bg-grid" />
           <div className="hero-glow hero-glow-1" />
           <div className="hero-glow hero-glow-2" />
-          <div className="hero-orb-float"><div className="hero-orb"><LogoIcon size="clamp(4.5rem, 10vw, 9.5rem)" /></div></div>
         </div>
         <div className="hero-inner">
           <div className="hero-content">
