@@ -1,2 +1,0 @@
--- AlterEnum
-ALTER TYPE "UsuarioTipo" ADD VALUE IF NOT EXISTS 'GESTOR_FUNDO';

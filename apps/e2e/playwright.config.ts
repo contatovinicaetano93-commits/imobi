@@ -67,14 +67,9 @@ export default defineConfig({
     ? []
     : [
         {
-          command: 'pnpm --filter @imbobi/api dev:test',
-          url: 'http://localhost:4000/api/v1/health',
-          reuseExistingServer: !process.env.CI,
-          timeout: 180_000,
-        },
-        {
+          // API embutida no Next.js — 1 servidor só.
           command: 'pnpm --filter @imbobi/web dev',
-          url: 'http://localhost:3000',
+          url: 'http://localhost:3000/api/v1/health',
           reuseExistingServer: !process.env.CI,
           timeout: 180_000,
         },

@@ -1,9 +1,9 @@
-# 🚀 START HERE — Vercel + Render
+# 🚀 START HERE — Vercel + Neon
 
-**Stack canônica:** web no **Vercel**, API no **Render**.  
+**Stack canônica:** web + API no **Vercel** (route handlers em `apps/web/app/api/v1`), banco no **Neon**.
 **Fonte única:** [`docs/DEPLOY_STACK.md`](docs/DEPLOY_STACK.md)
 
-Railway e AWS EC2 estão **bloqueados** (legado em `docs/legacy/`).
+Render, Railway, AWS EC2 e Docker estão **descontinuados** (legado em `docs/legacy/`).
 
 ---
 
@@ -11,15 +11,13 @@ Railway e AWS EC2 estão **bloqueados** (legado em `docs/legacy/`).
 
 | Serviço | URL |
 |---------|-----|
-| Web | https://imobi-web-ten.vercel.app |
-| API staging | https://imobi-api-staging.onrender.com |
-| API prod | https://imobi-api-efgg.onrender.com |
+| Web + API | https://imobi-web-ten.vercel.app |
 
 ---
 
 ## STEP 0: Branch canônica
 
-Todo deploy usa **`main`**. Após merge, Vercel e Render disparam automaticamente.
+Todo deploy usa **`main`**. Após merge, Vercel dispara automaticamente.
 
 ```bash
 git checkout main && git pull origin main
@@ -30,52 +28,25 @@ git checkout main && git pull origin main
 ## STEP 1: Verificar API (2 min)
 
 ```bash
-curl -s https://imobi-api-staging.onrender.com/api/v1/health | jq .
+curl -s https://imobi-web-ten.vercel.app/api/v1/health | jq .
 # Esperado: "status": "ok"
 ```
 
-Se falhar: cold start do Render (aguarde ~30s) ou `pnpm render:redeploy`.
-
 ---
 
-## STEP 2: Secrets Render (5 min)
+## STEP 2: Dev local
 
 ```bash
-pnpm render:init          # cria/sanitiza .env.render.local (remove … inválido)
-# Edite .env.render.local → RENDER_API_KEY=rnd_SUA_CHAVE_REAL (dashboard Render)
-pnpm render:key:check     # deve mostrar OK
-pnpm seed:staging:from-render
-```
-
-Secrets locais (gitignored):
-
-- `.env.render.local` — `RENDER_API_KEY` (mínimo para seed) + demais vars para `render:env:push`
-- `.env.vercel.local` — Web (`JWT_SECRET`, `NEXT_PUBLIC_API_URL`)
-
-```bash
-pnpm render:env:push
-pnpm vercel:env:push
+pnpm install
+pnpm db:generate     # gera Prisma Client
+cp apps/web/.env.local.example apps/web/.env.local  # se não existir, criar com DATABASE_URL do Neon + JWT_SECRET
+pnpm dev              # sobe o Next.js (web + API) em localhost:3000
+pnpm seed:dev          # popula 1 usuário por papel (admin/fundo/eng/cliente@imobi.com.br)
 ```
 
 ---
 
-## STEP 3: Validar staging (1 comando)
-
-```bash
-pnpm check:staging
-```
-
-Inclui: health API, auth, simulador, login web. Opcional local: `pnpm check:staging:local` (+ type-check + build).
-
-Alternativa detalhada:
-
-```bash
-bash scripts/deploy-orchestrator.sh https://imobi-api-staging.onrender.com
-```
-
----
-
-## STEP 4: Vercel — se web retorna 404
+## STEP 3: Vercel — se web retorna 404 ou erro de build
 
 No dashboard Vercel → projeto **`imobi-web`** → Settings → General:
 
@@ -86,7 +57,7 @@ No dashboard Vercel → projeto **`imobi-web`** → Settings → General:
 | Production Branch | `main` |
 | Build Command | *(deixar vazio — usa `apps/web/vercel.json`)* |
 
-Depois:
+Env vars obrigatórias (Production + Preview): `DATABASE_URL`, `JWT_SECRET`, `AWS_*`, `EMAIL_PROVIDER`, `APP_URL`.
 
 ```bash
 pnpm vercel:env:push
@@ -97,24 +68,18 @@ Validar: `curl -s -o /dev/null -w "%{http_code}\n" https://imobi-web-ten.vercel.
 
 ---
 
-## STEP 5: Deploy de código
+## STEP 4: Deploy de código
 
-| Onde | Como |
-|------|------|
-| **Render** | Push em `main` (auto-deploy) ou `pnpm render:redeploy` |
-| **Vercel** | Push em `main` no projeto `imobi-web` (auto-deploy) |
-| **CI** | GitHub Actions: quality gate + health gate (`ci-cd.yml`, `deploy-api.yml`) |
-
-**Sync com Claude:** [`docs/CLAUDE_SYNC.md`](docs/CLAUDE_SYNC.md)
+Push em `main` → Vercel auto-deploy. CI (`ci-cd.yml`) roda type-check, lint, build e health gate pós-deploy.
 
 ---
 
 ## Comandos úteis
 
 ```bash
-pnpm dev              # web + api local
-pnpm dev:api          # só API
-pnpm render:redeploy  # força redeploy Render
+pnpm dev              # web + API local (mesmo processo)
+pnpm db:migrate       # nova migration em dev
+pnpm db:migrate:deploy # aplica migrations pendentes no Neon
 pnpm type-check       # antes de push
 ```
 
@@ -122,14 +87,11 @@ pnpm type-check       # antes de push
 
 ## Legado (não usar)
 
-- `docs/legacy/RAILWAY_*.md`, `railway.toml`
-- `docs/legacy/scripts/deploy-api.sh` (AWS EC2)
-- Secrets `RAILWAY_*` no GitHub
+- `docs/legacy/` — Railway, AWS EC2, Docker, NestJS/Render (decomissionado jul/2026)
 
 ---
 
 ## Próximo passo após checklist verde
 
 1. Login em https://imobi-web-ten.vercel.app/login
-2. `bash scripts/setup-monitoring.sh https://imobi-api-staging.onrender.com`
-3. Seguir roadmap em `CLAUDE.md`
+2. Seguir roadmap em `CLAUDE.md`

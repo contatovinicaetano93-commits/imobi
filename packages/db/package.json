@@ -8,12 +8,15 @@
     "generate": "prisma generate --schema prisma/schema.prisma",
     "migrate:deploy": "prisma migrate deploy --schema prisma/schema.prisma",
     "migrate:dev": "prisma migrate dev --schema prisma/schema.prisma",
-    "studio": "prisma studio --schema prisma/schema.prisma"
+    "studio": "prisma studio --schema prisma/schema.prisma",
+    "seed:dev": "tsx src/seeds/dev-seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.0.0"
+    "@prisma/client": "^5.0.0",
+    "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
-    "prisma": "^5.0.0"
+    "prisma": "^5.0.0",
+    "tsx": "^4.22.0"
   }
 }

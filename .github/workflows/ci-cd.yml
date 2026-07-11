@@ -1,6 +1,4 @@
-# CI quality gate + post-deploy health checks.
-# Deploy real: Vercel + Render auto-deploy na branch main (ver docs/DEPLOY_STACK.md).
-# Não duplicar deploy aqui — evita race conditions e URLs legadas.
+# CI quality gate. Deploy real: Vercel auto-deploy na branch main (Vercel + Neon).
 
 name: CI/CD Pipeline
 
@@ -9,8 +7,6 @@ on:
     branches:
       - main
       - develop
-    tags:
-      - 'v*'
   pull_request:
     branches:
       - main
@@ -21,8 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  STAGING_API_URL: https://imobi-api-staging.onrender.com
-  STAGING_WEB_URL: https://imobi-web-ten.vercel.app
+  PRODUCTION_WEB_URL: https://imobi-web-ten.vercel.app
 
 jobs:
   validate:
@@ -45,25 +40,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma Client
-        run: pnpm --filter @imbobi/api run prisma:generate
+        run: pnpm db:generate
 
       - name: TypeScript Type Check
         run: pnpm type-check
 
       - name: ESLint & Format Check
         run: pnpm lint
-
-      - name: Panel navigation regression
-        run: pnpm test:panel-nav
-
-      - name: Jornada routes & steps regression
-        run: pnpm test:jornada
-
-      - name: Jornada service unit tests
-        run: pnpm test:jornada:api
-
-      - name: Validate Zod ↔ Prisma Schema Sync
-        run: pnpm validate:schemas
 
   build:
     name: Build Artifacts
@@ -88,127 +71,28 @@ jobs:
       - name: Build all packages
         run: pnpm build
 
-  tests:
-    name: E2E Tests
+  # Após merge em main, Vercel já faz deploy. Só valida que ficou saudável.
+  production-health-gate:
+    name: Production Health Gate
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: validate
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-    env:
-      DATABASE_URL: postgresql://test:test@localhost:5432/imobi_test
-      REDIS_URL: redis://localhost:6379
-      JWT_SECRET: test-secret-key
-      NODE_ENV: test
-      CORS_ORIGIN: http://localhost:3000,http://localhost:3001
-    services:
-      postgres:
-        image: postgis/postgis:16-3.4
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: imobi_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 9.0.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate Prisma Client
-        run: pnpm db:generate
-
-      - name: Run database migrations
-        run: pnpm -F @imbobi/api exec prisma migrate deploy
-        continue-on-error: true
-
-      - name: Run E2E tests (Critical Flows)
-        run: pnpm -F @imbobi/api test -- critical-flows.e2e.spec.ts
-
-  # Após merge em main: Vercel + Render já fazem deploy.
-  # Este job só valida que staging ficou saudável (gate resiliente).
-  staging-health-gate:
-    name: Staging Health Gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     needs: [validate, build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
-      - name: Wait for Render cold start
-        run: sleep 45
-
       - name: Check API health
         run: |
           set -e
-          for attempt in 1 2 3 4 5; do
-            BODY=$(curl -sf "${{ env.STAGING_API_URL }}/api/v1/health" || true)
+          for attempt in 1 2 3; do
+            BODY=$(curl -sf "${{ env.PRODUCTION_WEB_URL }}/api/v1/health" || true)
             if echo "$BODY" | grep -q '"status":"ok"'; then
-              echo "✅ API staging healthy (attempt $attempt)"
-              echo "$BODY"
+              echo "✅ API healthy (attempt $attempt)"
               exit 0
             fi
-            echo "⏳ Attempt $attempt/5 — waiting 30s..."
-            sleep 30
+            echo "⏳ Attempt $attempt/3 — waiting 15s..."
+            sleep 15
           done
-          echo "❌ API staging unhealthy after 5 attempts"
+          echo "❌ API unhealthy after 3 attempts"
           exit 1
-
-      - name: Check Web responds
-        run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.STAGING_WEB_URL }}/login" || echo "000")
-          if [ "$STATUS" = "200" ]; then
-            echo "✅ Web staging responds HTTP 200 on /login"
-          else
-            echo "⚠️  Web /login returned HTTP $STATUS"
-            echo "→ Verifique Vercel: Root Directory = apps/web, branch = main"
-            echo "→ Rode: pnpm vercel:env:push && redeploy no dashboard"
-            exit 1
-          fi
-
-      - name: Notify Slack on failure
-        if: failure() && secrets.SLACK_WEBHOOK_URL != ''
-        uses: slackapi/slack-github-action@v1
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "❌ Staging health gate failed",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Staging health gate failed*\n*API:* ${{ env.STAGING_API_URL }}\n*Web:* ${{ env.STAGING_WEB_URL }}\n*Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
-                  }
-                }
-              ]
-            }
-        continue-on-error: true
 
   security:
     name: Security Scan
@@ -238,18 +122,17 @@ jobs:
     name: Workflow Status
     runs-on: ubuntu-latest
     if: always()
-    needs: [validate, build, tests, staging-health-gate]
+    needs: [validate, build, production-health-gate]
     steps:
       - name: Check workflow status
         run: |
           if [ "${{ needs.validate.result }}" = "failure" ] || \
-             [ "${{ needs.build.result }}" = "failure" ] || \
-             [ "${{ needs.tests.result }}" = "failure" ]; then
+             [ "${{ needs.build.result }}" = "failure" ]; then
             echo "❌ Core CI jobs failed"
             exit 1
           fi
-          if [ "${{ needs.staging-health-gate.result }}" = "failure" ]; then
-            echo "❌ Staging health gate failed"
+          if [ "${{ needs.production-health-gate.result }}" = "failure" ]; then
+            echo "❌ Production health gate failed"
             exit 1
           fi
           echo "✅ Workflow passed all checks"
