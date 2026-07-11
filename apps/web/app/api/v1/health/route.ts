@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@imbobi/db";
 
+// Sem cookies/headers no handler, o Next.js tentava otimizar como estático e
+// a CDN da Vercel cacheava a resposta — health check reportava status velho.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   let databaseStatus = "error";
   let databaseError: string | undefined;
