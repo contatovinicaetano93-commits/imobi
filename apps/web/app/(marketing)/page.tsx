@@ -141,16 +141,10 @@ export default function LandingPage() {
     try {
       const result = await registerWithRetry({
         nome: cadNome,
-        cpf: cadCpf.replace(/\D/g, ""),
         email: cadEmail,
-        telefone: cadTelefone.replace(/\D/g, ""),
         senha: cadSenha,
-        consentidoTermos: cadTermos,
-        consentidoPrivacy: cadPrivacy,
-        consentidoKyc: cadKyc,
-        consentidoMarketing: false,
       });
-      redirectAfterLogin(result.role ?? "TOMADOR");
+      redirectAfterLogin(result.role ?? "CLIENTE");
     } catch (err) { setCadErro(err instanceof Error ? err.message : "Erro inesperado."); }
     finally { setCadLoading(false); }
   }

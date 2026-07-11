@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Clock } from "lucide-react";
 import type { Jornada } from "@/lib/api";
-import { getPassoNumero } from "@/lib/jornada-steps";
+import { getPassoNumero, getStepsForJornada } from "@/lib/jornada-steps";
 
 const NAVY = "#0C1A3D";
 const MINT = "#4ADE80";
@@ -9,29 +9,28 @@ const ROYAL = "#1B4FD8";
 
 type Props = {
   jornada: Jornada;
-  variant?: "tomador" | "gestor";
+  variant?: "cliente" | "fundo";
 };
 
-/** Um único passo — estilo app de banco (tomador) ou resumo KPI (gestor). */
-export function NextStepHero({ jornada, variant = "tomador" }: Props) {
-  const accent = variant === "gestor" ? "#7c3aed" : ROYAL;
-  const isGestor = variant === "gestor";
+export function NextStepHero({ jornada, variant = "cliente" }: Props) {
+  const accent = variant === "fundo" ? "#7c3aed" : ROYAL;
+  const isFundo = variant === "fundo" || jornada.role === "FUNDO";
   const waiting =
-    !isGestor &&
-    (jornada.passoAtual === "aguardando" ||
-      (jornada.bloqueado != null && jornada.passoAtual !== "kyc"));
+    !isFundo &&
+    jornada.etapaAtual === "DOSSIE_EM_ANALISE";
   const passoNumero = getPassoNumero(jornada);
-  const heroLabel = isGestor ? "Painel do fundo" : jornada.concluido ? "Tudo certo" : "Seu próximo passo";
+  const totalPassos = getStepsForJornada(jornada).length || 1;
+  const heroLabel = isFundo ? "Painel do fundo" : jornada.concluido ? "Tudo certo" : "Seu próximo passo";
 
   return (
     <section
       className="mx-auto flex w-full max-w-lg flex-col gap-5"
-      aria-label={isGestor ? "Painel do fundo" : "Próximo passo"}
+      aria-label={isFundo ? "Painel do fundo" : "Próximo passo"}
     >
       <div
         className="overflow-hidden rounded-3xl text-white shadow-lg"
         style={{
-          background: variant === "gestor"
+          background: isFundo
             ? "linear-gradient(145deg, #3b0764 0%, #5b21b6 100%)"
             : `linear-gradient(145deg, ${NAVY} 0%, #1e3a6e 100%)`,
         }}
@@ -50,15 +49,15 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
             {jornada.descricao}
           </p>
 
-          {jornada.totalPassos > 0 && !isGestor && (
+          {!isFundo && (
             <div className="mt-6">
               <div className="mb-2 flex justify-between text-xs text-white/50">
                 <span>
                   {jornada.concluido
-                    ? `${jornada.totalPassos} de ${jornada.totalPassos} etapas`
+                    ? `${totalPassos} de ${totalPassos} etapas`
                     : waiting
                       ? `Passo ${passoNumero} em andamento`
-                      : `${jornada.passosConcluidos} de ${jornada.totalPassos} concluídas`}
+                      : `Passo ${passoNumero} de ${totalPassos}`}
                 </span>
                 <span>{jornada.progressoPct}%</span>
               </div>
@@ -71,7 +70,7 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
             </div>
           )}
 
-          {!jornada.concluido && !waiting && !isGestor && (
+          {!jornada.concluido && !waiting && !isFundo && (
             <Link
               href={jornada.href as "/"}
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold no-underline transition hover:opacity-95"
@@ -89,52 +88,25 @@ export function NextStepHero({ jornada, variant = "tomador" }: Props) {
             </div>
           )}
 
-          {isGestor && jornada.fila && (jornada.fila.kyc > 0 || jornada.fila.etapas > 0) && (
-            <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-              {jornada.fila.kyc > 0 && (
-                <a
-                  href="#secao-kyc"
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/20 py-3 text-sm font-semibold text-white no-underline hover:bg-white/10"
-                >
-                  KPI · KYC ({jornada.fila.kyc})
-                </a>
-              )}
-              {jornada.fila.etapas > 0 && (
-                <a
-                  href="#secao-etapas"
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/20 py-3 text-sm font-semibold text-white no-underline hover:bg-white/10"
-                >
-                  KPI · Etapas ({jornada.fila.etapas})
-                </a>
-              )}
-            </div>
-          )}
-
-          {jornada.concluido && !isGestor && (
+          {jornada.concluido && !isFundo && (
             <Link
               href={jornada.href as "/"}
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 py-3.5 text-sm font-semibold text-white no-underline hover:bg-white/10"
             >
               <CheckCircle2 size={18} style={{ color: MINT }} />
-              Ver extrato e progresso
+              Ver progresso
             </Link>
           )}
         </div>
       </div>
 
-      {jornada.fila && (jornada.fila.kyc > 0 || jornada.fila.etapas > 0) && (
-        <p className="text-center text-xs text-gray-500">
-          Fila operacional: {jornada.fila.kyc} KYC · {jornada.fila.etapas} etapas
-        </p>
-      )}
-
-      {isGestor ? (
+      {isFundo ? (
         <p className="text-center text-xs text-gray-400">
-          Apenas dados e KPIs — sem participação em processos internos
+          Apenas dados e KPIs — somente leitura
         </p>
       ) : !jornada.concluido ? (
         <p className="text-center text-xs text-gray-400">
-          Passo {passoNumero} de {jornada.totalPassos || 1}
+          Passo {passoNumero} de {totalPassos}
           <span style={{ color: accent }}> · </span>
           Siga na ordem para liberar seu crédito
         </p>

@@ -1,27 +1,9 @@
 /**
- * Navegação guiada por painel — fonte única para sidebar, breadcrumbs e retorno.
- * Evita que perfis "se percam" ao acessar rotas compartilhadas (obras, fundos, etc.).
+ * Navegação guiada por painel — 4 papéis canônicos.
  */
 
 import { normalizeRole, ROLE_HOME, type AppRole } from '@/lib/role-permissions';
 
-/** Segmentos que pertencem ao painel Construtor/Tomador (cliente) */
-const CONSTRUTOR_PANEL_SEGMENTS = new Set([
-  'construtor',
-  'operacao',
-  'credito',
-  'kyc',
-  'proposta-credito',
-]);
-
-/** Rotas compartilhadas — mantêm o contexto do perfil real (não trocam sidebar) */
-const SHARED_SEGMENTS = new Set([
-  'obras',
-  'notificacoes',
-  'perfil',
-]);
-
-/** Itens de conta — renderizados por último na sidebar */
 export const ACCOUNT_NAV_HREFS = new Set([
   '/dashboard/notificacoes',
   '/dashboard/perfil',
@@ -33,36 +15,17 @@ type NavOverride = {
   targetHref: string;
 };
 
-/** Destaque correto em rotas aninhadas / compartilhadas (mesmo padrão do admin/obras). */
 const ACTIVE_NAV_OVERRIDES: NavOverride[] = [
-  { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
-  // Tomador/Construtor: obras e crédito vivem sob "Minha operação".
-  { pattern: /^\/dashboard\/(?:operacao|obras|credito)(?:\/|$)/, navRole: 'TOMADOR', targetHref: '/dashboard/operacao' },
-  { pattern: /^\/dashboard\/(?:operacao|obras|credito)(?:\/|$)/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/operacao' },
-  { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'ENGENHEIRO', targetHref: '/dashboard/obras' },
-  { pattern: /^\/dashboard\/obras(?:\/|$)/, navRole: 'GESTOR_OBRA', targetHref: '/dashboard/obras' },
-  { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'ENGENHEIRO', targetHref: '/dashboard/obras' },
-  { pattern: /^\/dashboard\/obras\/[^/]+/, navRole: 'GESTOR_OBRA', targetHref: '/dashboard/obras' },
-  { pattern: /^\/dashboard\/kyc/, navRole: 'TOMADOR', targetHref: '/dashboard/kyc' },
-  { pattern: /^\/dashboard\/kyc/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/kyc' },
-  { pattern: /^\/dashboard\/proposta-credito/, navRole: 'TOMADOR', targetHref: '/dashboard/proposta-credito' },
-  { pattern: /^\/dashboard\/proposta-credito/, navRole: 'CONSTRUTOR', targetHref: '/dashboard/proposta-credito' },
-  { pattern: /^\/dashboard\/admin\/kyc/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
-  { pattern: /^\/dashboard\/admin\/propostas/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
-  { pattern: /^\/dashboard\/admin\/vistorias/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
-  { pattern: /^\/dashboard\/admin\/viabilidade/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
-  { pattern: /^\/dashboard\/admin\/obras/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
-  { pattern: /^\/dashboard\/admin\/comite/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
-  { pattern: /^\/dashboard\/admin\/pipeline/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
-  { pattern: /^\/dashboard\/admin\/pagamentos/, navRole: 'ADMIN', targetHref: '/dashboard/admin' },
+  { pattern: /^\/dashboard\/cliente\/obra/, navRole: 'CLIENTE', targetHref: '/dashboard/cliente/obra' },
+  { pattern: /^\/dashboard\/cliente\/documentos/, navRole: 'CLIENTE', targetHref: '/dashboard/cliente/documentos' },
+  { pattern: /^\/dashboard\/obras/, navRole: 'ENGENHEIRO', targetHref: '/dashboard/engenheiro' },
+  { pattern: /^\/dashboard\/engenheiro\/vistoria/, navRole: 'ENGENHEIRO', targetHref: '/dashboard/engenheiro/vistoria' },
 ];
 
 export type PanelId = AppRole;
 
 export type NavContext = {
-  /** Admin visualizando outro painel — mantém sidebar ao entrar em rotas compartilhadas */
   adminPreview?: AppRole | null;
-  /** Obra aberta a partir do Centro de Comando admin (?from=admin) */
   fromAdmin?: boolean;
 };
 
@@ -79,10 +42,6 @@ function isRootDashboard(seg: string): boolean {
   return seg === '' || seg === 'dashboard';
 }
 
-/**
- * Resolve o único item ativo da sidebar (maior prefixo correspondente).
- * Evita marcar "Visão Geral" e "Comitê" ao mesmo tempo em /dashboard/admin/comite.
- */
 export function getActiveNavHref(
   path: string,
   navRole: AppRole | null,
@@ -112,27 +71,20 @@ export function getActiveNavHref(
   return best;
 }
 
-/** Segmento principal após /dashboard */
 export function getDashboardSegment(path: string): string {
   const parts = path.split('/').filter(Boolean);
   return parts[1] ?? '';
 }
 
-/** Painel explícito na URL (admin previewing engenheiro/gestor/etc.) */
 export function getPanelFromPath(path: string): AppRole | null {
   const seg = getDashboardSegment(path);
   if (seg === 'engenheiro') return 'ENGENHEIRO';
-  if (seg === 'gestor') return 'GESTOR';
-  if (seg === 'construtor' || CONSTRUTOR_PANEL_SEGMENTS.has(seg)) return 'CONSTRUTOR';
-  if (seg === 'comercial') return 'COMERCIAL';
+  if (seg === 'fundo' || seg === 'gestor') return 'FUNDO';
+  if (seg === 'cliente' || seg === 'construtor' || seg === 'kyc' || seg === 'operacao') return 'CLIENTE';
   if (seg === 'admin') return null;
   return null;
 }
 
-/**
- * Define qual menu lateral exibir.
- * Cada perfil permanece no seu painel em rotas compartilhadas (padrão admin).
- */
 export function getNavRole(
   role: AppRole | null,
   path: string,
@@ -144,10 +96,10 @@ export function getNavRole(
   const seg = getDashboardSegment(path);
 
   if (seg === 'admin') return 'ADMIN';
-  if (seg === 'comercial') return 'COMERCIAL';
-  if (seg === 'gestor') return 'GESTOR';
-  if (seg === 'engenheiro') {
-    return r === 'GESTOR_OBRA' ? 'GESTOR_OBRA' : 'ENGENHEIRO';
+  if (seg === 'engenheiro') return 'ENGENHEIRO';
+  if (seg === 'fundo' || seg === 'gestor') return 'FUNDO';
+  if (seg === 'cliente' || seg === 'construtor' || seg === 'kyc' || seg === 'operacao' || seg === 'obras') {
+    if (r === 'CLIENTE') return 'CLIENTE';
   }
 
   if (r === 'ADMIN') {
@@ -156,35 +108,17 @@ export function getNavRole(
 
     const preview = ctx?.adminPreview;
     const fromAdmin = ctx?.fromAdmin === true;
-    if (preview && !fromAdmin && SHARED_SEGMENTS.has(seg)) {
+    if (preview && !fromAdmin && (seg === 'obras' || seg === 'perfil' || seg === 'notificacoes')) {
       return preview;
     }
 
-    if (SHARED_SEGMENTS.has(seg) || isRootDashboard(seg)) return 'ADMIN';
-    if (CONSTRUTOR_PANEL_SEGMENTS.has(seg)) return 'CONSTRUTOR';
+    if (isRootDashboard(seg)) return 'ADMIN';
     return 'ADMIN';
-  }
-
-  if (r === 'GESTOR') {
-    return 'GESTOR';
-  }
-
-  if (r === 'COMERCIAL' || r === 'PARCEIRO') {
-    return r === 'PARCEIRO' ? 'PARCEIRO' : 'COMERCIAL';
-  }
-
-  if (r === 'ENGENHEIRO' || r === 'GESTOR_OBRA') {
-    return r;
-  }
-
-  if (CONSTRUTOR_PANEL_SEGMENTS.has(seg) || seg === 'obras') {
-    return r === 'TOMADOR' ? 'TOMADOR' : 'CONSTRUTOR';
   }
 
   return r;
 }
 
-/** Admin está visualizando outro painel de propósito (preview) */
 export function isAdminPreviewingPanel(
   role: AppRole | null,
   path: string,
@@ -193,7 +127,6 @@ export function isAdminPreviewingPanel(
   return role === 'ADMIN' && getNavRole(role, path, ctx) !== 'ADMIN';
 }
 
-/** Home do painel ativo na sidebar */
 export function getPanelHome(role: AppRole | null, path?: string, ctx?: NavContext): string {
   if (!role) return '/dashboard';
   const navRole = path ? getNavRole(role, path, ctx) : normalizeRole(role) ?? role;
@@ -201,34 +134,30 @@ export function getPanelHome(role: AppRole | null, path?: string, ctx?: NavConte
   return ROLE_HOME[navRole] ?? '/dashboard';
 }
 
-/** Lista de obras — destino do breadcrumb "voltar" por perfil */
 export function getObrasListPath(role: string | null | undefined): string {
   const r = normalizeRole(role);
   switch (r) {
     case 'ADMIN':
-      return '/dashboard/admin/obras';
-    case 'GESTOR':
-      return '/dashboard/gestor';
+      return '/dashboard/admin';
+    case 'FUNDO':
+      return '/dashboard/fundo';
     case 'ENGENHEIRO':
-    case 'GESTOR_OBRA':
-      return '/dashboard/obras';
-    case 'CONSTRUTOR':
-    case 'TOMADOR':
-      return '/dashboard/operacao';
+      return '/dashboard/engenheiro';
+    case 'CLIENTE':
+      return '/dashboard/cliente/obra';
     default:
-      return '/dashboard/obras';
+      return '/dashboard/cliente/obra';
   }
 }
 
 export function getObrasListLabel(role: string | null | undefined): string {
   const r = normalizeRole(role);
-  if (r === 'ADMIN') return 'Obras — Admin';
-  if (r === 'GESTOR') return 'Operação do fundo';
-  if (r === 'ENGENHEIRO' || r === 'GESTOR_OBRA') return 'Obras · evidências';
-  return 'Minha operação';
+  if (r === 'ADMIN') return 'Centro de comando';
+  if (r === 'FUNDO') return 'Dashboard do fundo';
+  if (r === 'ENGENHEIRO') return 'Minhas obras';
+  return 'Minha obra';
 }
 
-/** Breadcrumbs para detalhe de obra */
 export function getObraDetailBreadcrumbs(
   role: string | null | undefined,
   obraNome: string,
@@ -238,10 +167,8 @@ export function getObraDetailBreadcrumbs(
 
   if (r === 'ADMIN') {
     items.push({ label: 'Admin', href: '/dashboard/admin' });
-    items.push({ label: 'Obras', href: '/dashboard/admin/obras' });
-  } else if (r === 'GESTOR') {
-    items.push({ label: 'Painel do Fundo', href: '/dashboard/gestor' });
-    items.push({ label: 'Etapas', href: getObrasListPath(role) });
+  } else if (r === 'FUNDO') {
+    items.push({ label: 'Fundo', href: '/dashboard/fundo' });
   } else {
     items.push({ label: getObrasListLabel(role), href: getObrasListPath(role) });
   }
@@ -250,13 +177,11 @@ export function getObraDetailBreadcrumbs(
   return items;
 }
 
-/** Passos SIPOC — fluxo operacional (fonte única para guias de painel) */
 export const SIPOC_OBRAS_FLOW = [
-  { step: 0, label: 'Viabilidade', actor: 'Incorporador', desc: 'Dossiê de crédito: checklist + Ficha do Empreendimento' },
-  { step: 1, label: 'Cadastro', actor: 'Cliente', desc: 'Obra criada com documentos e etapas' },
-  { step: 2, label: 'Homologação', actor: 'Admin IMOBI', desc: 'Validação e entrada no pipe ativo' },
-  { step: 3, label: 'Vistoria', actor: 'Engenheiro', desc: 'Aprovação técnica por etapa' },
-  { step: 4, label: 'Comitê', actor: 'Admin IMOBI', desc: 'Decisão de crédito e condições' },
-  { step: 5, label: 'Pagamento', actor: 'Admin IMOBI', desc: 'Transferência manual e confirmação' },
+  { step: 0, label: 'Documentos', actor: 'Cliente', desc: 'KYC e documentos da obra' },
+  { step: 1, label: 'Cadastro', actor: 'Cliente', desc: 'Obra criada com valor de crédito' },
+  { step: 2, label: 'Homologação', actor: 'Admin', desc: 'Validação e engenheiro vinculado' },
+  { step: 3, label: 'Vistoria', actor: 'Engenheiro', desc: 'Validação técnica por tranche' },
+  { step: 4, label: 'Liberação', actor: 'Admin', desc: 'Transferência e confirmação' },
+  { step: 5, label: 'Quitado', actor: 'Sistema', desc: 'Crédito totalmente liberado' },
 ] as const;
-

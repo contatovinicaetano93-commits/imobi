@@ -384,6 +384,75 @@ export const jornadaApi = {
   },
 };
 
+// ── API canônica (4 papéis) ───────────────────────────────────────────
+
+export type ObraCanonica = {
+  id: string;
+  nome: string;
+  endereco: string;
+  valorCredito: number | string;
+  etapa: string;
+  criadoEm: string;
+  documentos?: DocumentoCanonica[];
+  tranches?: TrancheCanonica[];
+};
+
+export type DocumentoCanonica = {
+  id: string;
+  tipo: string;
+  url: string;
+  status: string;
+  criadoEm: string;
+};
+
+export type TrancheCanonica = {
+  id: string;
+  numero: number;
+  valor: number | string;
+  status: string;
+};
+
+export type CriarObraCanonicoPayload = {
+  nome: string;
+  endereco: string;
+  valorCredito: number;
+};
+
+export type ManagerDashboardCanonico = {
+  obrasPorEtapa: Record<string, number>;
+  tranchesPorStatus: Record<string, number>;
+  dre: {
+    capitalContratado: number | string;
+    capitalLiberado: number | string;
+    capitalPendente: number | string;
+  };
+};
+
+export const obrasCanonicoApi = {
+  minhas: () => apiFetch<ObraCanonica[]>("/obras/minhas"),
+  obter: (id: string) => apiFetch<ObraCanonica>(`/obras/${id}`),
+  criar: (data: CriarObraCanonicoPayload) =>
+    apiFetch<ObraCanonica>("/obras", { method: "POST", body: JSON.stringify(data) }),
+};
+
+export const documentosCanonicoApi = {
+  listarPorObra: (obraId: string) => apiFetch<DocumentoCanonica[]>(`/documentos/obra/${obraId}`),
+  enviar: (data: { obraId: string; tipo: string; url: string }) =>
+    apiFetch<DocumentoCanonica>("/documentos", { method: "POST", body: JSON.stringify(data) }),
+};
+
+export const storageCanonicoApi = {
+  urlDeUpload: (prefixo: string, contentType: string) =>
+    apiFetch<{ url: string; key: string }>("/storage/upload-url", {
+      method: "POST",
+      body: JSON.stringify({ prefixo, contentType }),
+    }),
+};
+
+export const managerCanonicoApi = {
+  dashboard: () => apiFetch<ManagerDashboardCanonico>("/manager/dashboard"),
+};
+
 // ── Manager ───────────────────────────────────────────────────────────
 
 export type EtapaPendente = {

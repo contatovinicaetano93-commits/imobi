@@ -2,13 +2,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { decodeJwtPayload } from "@/lib/decode-jwt-payload";
 import { ROLE_HOME, normalizeRole } from "@/lib/role-permissions";
 import { resolveRequestRole } from "@/lib/resolve-request-role";
-import { isCanonicalRouteAllowed, PUBLIC_MARKETING_PATHS } from "@/lib/canonical-flow";
+import {
+  isCanonicalRouteAllowed,
+  PUBLIC_MARKETING_PATHS,
+  resolveLegacyRedirect,
+} from "@/lib/canonical-flow";
 
 const PUBLIC_PATHS = [
   ...PUBLIC_MARKETING_PATHS,
   "/api/auth",
   "/api/proxy/auth",
   "/api/proxy/health",
+  "/api/proxy/credito/simular",
+  "/api/proxy/propostas",
   "/web-api/auth",
 ];
 
@@ -16,7 +22,10 @@ function decodeJwt(token: string): { role?: string; exp?: number } | null {
   const payload = decodeJwtPayload(token);
   if (!payload) return null;
   const raw = typeof payload.role === "string" ? payload.role : undefined;
-  return { role: raw ? (normalizeRole(raw) ?? raw) : undefined, exp: typeof payload.exp === "number" ? payload.exp : undefined };
+  return {
+    role: raw ? (normalizeRole(raw) ?? undefined) : undefined,
+    exp: typeof payload.exp === "number" ? payload.exp : undefined,
+  };
 }
 
 export function middleware(request: NextRequest) {
@@ -26,7 +35,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  const legacyDest = resolveLegacyRedirect(pathname);
+  if (legacyDest) {
+    return NextResponse.redirect(new URL(legacyDest, request.url));
+  }
+
+  const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   if (isPublic) return NextResponse.next();
 
   const token = request.cookies.get("access_token")?.value;

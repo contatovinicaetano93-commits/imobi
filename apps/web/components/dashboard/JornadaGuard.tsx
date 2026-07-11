@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { Route } from "next";
 import { useJornadaOptional } from "@/hooks/jornada-context";
+import { isAccountRoute } from "@/lib/jornada-steps";
+import { normalizeRole } from "@/lib/role-permissions";
 
 type Props = {
   role: string | null;
@@ -17,7 +19,8 @@ export function JornadaGuard({ role, children }: Props) {
   const jornadaCtx = useJornadaOptional();
   const prevPathRef = useRef(pathname);
 
-  const guided = role != null;
+  const canonicalRole = normalizeRole(role);
+  const guided = canonicalRole === "CLIENTE" || canonicalRole === "ENGENHEIRO" || canonicalRole === "ADMIN";
 
   useEffect(() => {
     if (!guided || !jornadaCtx) return;
@@ -28,6 +31,7 @@ export function JornadaGuard({ role, children }: Props) {
 
   useEffect(() => {
     if (!guided || !jornadaCtx?.jornada || jornadaCtx.loading) return;
+    if (isAccountRoute(pathname)) return;
     const { jornada } = jornadaCtx;
     if (jornada.concluido) return;
     const onHref = pathname === jornada.href || pathname.startsWith(`${jornada.href}/`);

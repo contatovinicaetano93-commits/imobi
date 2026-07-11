@@ -1,4 +1,5 @@
 import type { Jornada } from "@/lib/api";
+import { ACCOUNT_ROUTE_PREFIXES } from "@/lib/canonical-flow";
 
 export type JornadaStepDef = {
   id: string;
@@ -6,30 +7,34 @@ export type JornadaStepDef = {
   shortLabel: string;
 };
 
-export const TOMADOR_STEPS: JornadaStepDef[] = [
-  { id: "kyc", label: "Documentos", shortLabel: "KYC" },
-  { id: "viabilidade", label: "Viabilidade", shortLabel: "Dossiê" },
-  { id: "obra", label: "Obra", shortLabel: "Obra" },
-  { id: "credito", label: "Crédito", shortLabel: "Crédito" },
-  { id: "aguardando", label: "Análise", shortLabel: "Análise" },
-  { id: "acompanhar", label: "Acompanhar", shortLabel: "Obra ativa" },
-];
-
-export const GESTOR_STEPS: JornadaStepDef[] = [
-  { id: "gestor_ok", label: "Indicadores", shortLabel: "KPIs" },
+export const CLIENTE_STEPS: JornadaStepDef[] = [
+  { id: "KYC_PENDENTE", label: "Documentos", shortLabel: "KYC" },
+  { id: "DOSSIE_EM_ANALISE", label: "Análise", shortLabel: "Análise" },
+  { id: "APROVADO", label: "Obra", shortLabel: "Obra" },
+  { id: "OBRA_CADASTRADA", label: "Homologação", shortLabel: "Homolog." },
+  { id: "HOMOLOGADA", label: "Início", shortLabel: "Início" },
+  { id: "EM_ANDAMENTO", label: "Tranches", shortLabel: "Tranches" },
+  { id: "QUITADO", label: "Quitado", shortLabel: "Quitado" },
 ];
 
 export function getStepsForJornada(jornada: Jornada): JornadaStepDef[] {
-  return jornada.perfil === "gestor" ? GESTOR_STEPS : TOMADOR_STEPS;
+  return jornada.role === "FUNDO" ? [] : CLIENTE_STEPS;
 }
 
 export function getPassoIndex(jornada: Jornada): number {
   const steps = getStepsForJornada(jornada);
-  const idx = steps.findIndex((s) => s.id === jornada.passoAtual);
+  const idx = jornada.etapaAtual
+    ? steps.findIndex((s) => s.id === jornada.etapaAtual)
+    : -1;
   return idx >= 0 ? idx : 0;
 }
 
-/** Número do passo atual (1-based) — alinhado com a barra de progresso. */
 export function getPassoNumero(jornada: Jornada): number {
   return getPassoIndex(jornada) + 1;
+}
+
+export function isAccountRoute(pathname: string): boolean {
+  return ACCOUNT_ROUTE_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
 }

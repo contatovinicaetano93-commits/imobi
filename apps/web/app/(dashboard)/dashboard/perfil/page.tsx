@@ -1,161 +1,78 @@
-import type { Metadata } from "next";
-import { usuariosApi } from "@/lib/api";
-import { formatarCPF, formatarTelefone } from "@imbobi/core";
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { AlertCircle, Lock, Bell } from "lucide-react";
+import { ROLE_LABELS, type AppRole } from "@/lib/role-permissions";
 import { PerfilForm } from "./perfil-form";
-import { PerfilAvatar } from "./perfil-avatar";
 import { PerfilContaBancaria } from "./perfil-conta-bancaria";
-import { AlertCircle, Lock, Building2, Bell } from "lucide-react";
 
-export const dynamic = 'force-dynamic';
-
-export const metadata: Metadata = { title: "Perfil — IMOBI" };
-
-const KYC_STATUS_MAP: Record<string, { label: string; cor: string; icone: string }> = {
-  PENDENTE:       { label: "Pendente",       cor: "text-yellow-600", icone: "⏳" },
-  EM_VERIFICACAO: { label: "Em Verificação", cor: "text-blue-600",   icone: "🔍" },
-  APROVADO:       { label: "Aprovado",        cor: "text-green-600",  icone: "✓"  },
-  REJEITADO:      { label: "Rejeitado",       cor: "text-red-600",    icone: "✗"  },
+type MeResponse = {
+  authenticated: boolean;
+  nome?: string | null;
+  email?: string | null;
+  role?: AppRole | null;
 };
 
-const USER_TYPE_MAP: Record<string, string> = {
-  TOMADOR:     "Cliente",
-  CONSTRUTOR:  "Cliente",
-  GESTOR:      "Gestor de Fundo",
-  GESTOR_OBRA: "Gestor de Obra",
-  GESTOR_FUNDO:"Gestor de Fundo",
-  ADMIN:       "Administrador",
-  PARCEIRO:    "Parceiro",
-  COMERCIAL:   "Comercial",
-  ENGENHEIRO:  "Engenheiro",
-};
+export default function PerfilPage() {
+  const [usuario, setUsuario] = useState<MeResponse | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export default async function PerfilPage() {
-  const usuario = await usuariosApi.meuPerfil().catch(() => null);
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setUsuario(d))
+      .finally(() => setLoading(false));
+  }, []);
 
-  if (!usuario) {
+  if (loading) {
+    return <div className="max-w-2xl p-6 text-sm text-gray-500">Carregando perfil…</div>;
+  }
+
+  if (!usuario?.authenticated || !usuario.email) {
     return (
       <div className="max-w-2xl space-y-6">
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Perfil</h1>
         <div className="bg-gray-50 rounded-2xl border border-gray-100 p-12 text-center">
           <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-4" />
           <p className="font-semibold text-gray-600 mb-2">Não foi possível carregar o perfil</p>
-          <p className="text-sm text-gray-400 max-w-xs mx-auto">
-            Verifique sua conexão e recarregue a página.
-          </p>
-          <a
-            href="/dashboard/perfil"
-            className="inline-block mt-6 text-sm font-semibold text-[#1B4FD8] hover:underline"
-          >
-            Tentar novamente →
-          </a>
         </div>
       </div>
     );
   }
 
-  const kycInfo = KYC_STATUS_MAP[usuario.kycStatus] ?? KYC_STATUS_MAP.PENDENTE;
+  const nome = usuario.nome ?? "Usuário";
+  const roleLabel = usuario.role ? ROLE_LABELS[usuario.role] : "Usuário";
 
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Perfil</h1>
 
-      {/* Header */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <PerfilAvatar nome={usuario.nome} avatarUrl={usuario.avatarUrl} />
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">{usuario.nome}</h2>
-              <p className="text-sm text-gray-500 mt-0.5">{USER_TYPE_MAP[usuario.tipo] ?? usuario.tipo}</p>
-              <p className="text-sm text-gray-400 mt-0.5">{usuario.email}</p>
-            </div>
-          </div>
-          <div className="shrink-0 text-right">
-            <p className={`text-lg font-bold ${kycInfo.cor}`}>{kycInfo.icone}</p>
-            <p className={`text-xs font-semibold ${kycInfo.cor} mt-1`}>{kycInfo.label}</p>
-          </div>
-        </div>
+        <h2 className="text-xl font-bold text-gray-900">{nome}</h2>
+        <p className="text-sm text-gray-500 mt-0.5">{roleLabel}</p>
+        <p className="text-sm text-gray-400 mt-0.5">{usuario.email}</p>
       </div>
 
-      {/* KYC warning */}
-      {usuario.kycStatus !== "APROVADO" && (
-        <div className="bg-yellow-50 rounded-2xl border border-yellow-200 p-5">
-          <h3 className="font-semibold text-yellow-900 text-sm mb-1">Status de Validação</h3>
-          <p className="text-sm text-yellow-800">
-            {usuario.kycStatus === "PENDENTE"
-              ? "Seu documento ainda não foi enviado. Complete a validação para desbloquear todas as funcionalidades."
-              : usuario.kycStatus === "EM_VERIFICACAO"
-              ? "Seu documento está em análise. Você receberá uma notificação em breve."
-              : "Seu documento foi rejeitado. Entre em contato com suporte."}
-          </p>
-          {usuario.kycStatus === "PENDENTE" && (
-            <a href="/dashboard/kyc" className="inline-block mt-3 text-sm font-semibold text-yellow-700 hover:text-yellow-800">
-              Iniciar Validação →
-            </a>
-          )}
-        </div>
-      )}
-
-      {/* Dados pessoais — edição inline */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-base font-bold text-gray-900 mb-1">Informações pessoais</h2>
-        <p className="text-sm text-gray-500 mb-5">Edite seu nome e telefone. E-mail e CPF não podem ser alterados aqui.</p>
-        <PerfilForm usuario={usuario} />
+        <h3 className="text-sm font-bold text-gray-900 mb-4">Dados pessoais</h3>
+        <PerfilForm usuario={{ nome, email: usuario.email }} />
       </div>
 
-      {(usuario.tipo === "CONSTRUTOR" || usuario.tipo === "TOMADOR") && (
-        <PerfilContaBancaria usuario={usuario} />
-      )}
-
-      {/* Dados da conta */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-base font-bold text-gray-900 mb-5">Dados da Conta</h2>
-        <div className="space-y-4">
-          {[
-            { label: "ID do Usuário", value: usuario.usuarioId, mono: true },
-            { label: "E-mail", value: usuario.email },
-            { label: "CPF", value: formatarCPF(usuario.cpf) },
-            { label: "Telefone", value: formatarTelefone(usuario.telefone ?? "") },
-            {
-              label: "Membro desde",
-              value: new Date(usuario.criadoEm).toLocaleDateString("pt-BR", { year: "numeric", month: "long", day: "numeric" }),
-            },
-          ].filter(item => item.value).map((item) => (
-            <div key={item.label}>
-              <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">{item.label}</p>
-              <p className={`text-sm text-gray-900 ${item.mono ? "font-mono" : ""}`}>{item.value}</p>
-            </div>
-          ))}
-        </div>
+        <h3 className="text-sm font-bold text-gray-900 mb-4">Conta bancária</h3>
+        <PerfilContaBancaria usuario={{ nome }} />
       </div>
 
-      {/* Segurança & Dados Bancários */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-base font-bold text-gray-900 mb-5">Configurações</h2>
-        <div className="space-y-3">
-          {/* Alterar Senha */}
-          <a href="/dashboard/perfil/seguranca" className="block w-full px-4 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center gap-3">
-            <Lock className="w-4 h-4" />
-            <span>Alterar Senha</span>
-            <span className="ml-auto text-gray-400">→</span>
-          </a>
-
-          {/* Dados Bancários */}
-          {(usuario.tipo === "CONSTRUTOR" || usuario.tipo === "TOMADOR") && (
-            <a href="/dashboard/perfil/banco" className="block w-full px-4 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center gap-3">
-              <Building2 className="w-4 h-4" />
-              <span>Dados Bancários</span>
-              <span className="ml-auto text-gray-400">→</span>
-            </a>
-          )}
-
-          {/* Preferências de Notificações */}
-          <a href="/dashboard/notificacoes/preferencias" className="block w-full px-4 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center gap-3">
-            <Bell className="w-4 h-4" />
-            <span>Preferências de Notificações</span>
-            <span className="ml-auto text-gray-400">→</span>
-          </a>
-        </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Link href="/dashboard/perfil/seguranca" className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 no-underline">
+          <Lock size={18} className="text-[#1B4FD8]" />
+          <span className="text-sm font-semibold text-gray-900">Segurança</span>
+        </Link>
+        <Link href="/dashboard/notificacoes" className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 no-underline">
+          <Bell size={18} className="text-[#1B4FD8]" />
+          <span className="text-sm font-semibold text-gray-900">Notificações</span>
+        </Link>
       </div>
     </div>
   );

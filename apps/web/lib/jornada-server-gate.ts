@@ -1,7 +1,8 @@
 import type { Jornada } from "@/lib/api";
 import { jornadaApi } from "@/lib/api";
-import { normalizeRole } from "@/lib/role-permissions";
+import { ACCOUNT_ROUTE_PREFIXES } from "@/lib/canonical-flow";
 import { decodeJwtPayload } from "@/lib/decode-jwt-payload";
+import { normalizeRole } from "@/lib/role-permissions";
 import { promiseWithTimeout } from "@/lib/resilience";
 
 /**
@@ -16,6 +17,7 @@ const GATE_TIMEOUT_MS = 2_500;
 /** Decisão pura (sem IO): href de redirect ou `null` se a rota pode ser exibida. */
 export function jornadaGateDecision(pathname: string | null, jornada: Jornada | null): string | null {
   if (!pathname || !pathname.startsWith("/dashboard")) return null;
+  if (ACCOUNT_ROUTE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null;
   if (!jornada || jornada.concluido) return null;
   if (pathname === jornada.href || pathname.startsWith(`${jornada.href}/`)) return null;
   return jornada.href;

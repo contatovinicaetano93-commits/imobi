@@ -7,13 +7,13 @@ import type { EtapaFunil, JornadaResponse, Role } from "@imbobi/schemas";
 const CACHE_TTL_MS = 30_000;
 
 const TITULOS: Record<EtapaFunil, { titulo: string; descricao: string; href: string }> = {
-  KYC_PENDENTE: { titulo: "Envie seus documentos", descricao: "KYC pendente de envio.", href: "/dashboard/kyc" },
-  DOSSIE_EM_ANALISE: { titulo: "Dossiê em análise", descricao: "Admin está revisando seus documentos.", href: "/dashboard/construtor" },
-  APROVADO: { titulo: "Cadastre sua obra", descricao: "Dossiê aprovado — informe os dados da obra.", href: "/dashboard/obras/nova" },
-  OBRA_CADASTRADA: { titulo: "Aguardando homologação", descricao: "Admin vai vincular um engenheiro.", href: "/dashboard/construtor" },
-  HOMOLOGADA: { titulo: "Obra homologada", descricao: "Engenheiro vinculado — aguardando início.", href: "/dashboard/operacao" },
-  EM_ANDAMENTO: { titulo: "Acompanhe as tranches", descricao: "Engenheiro valida cada fase, admin libera o valor.", href: "/dashboard/operacao" },
-  QUITADO: { titulo: "Obra quitada", descricao: "Crédito totalmente liberado e quitado.", href: "/dashboard/operacao" },
+  KYC_PENDENTE: { titulo: "Envie seus documentos", descricao: "KYC pendente de envio.", href: "/dashboard/cliente/documentos" },
+  DOSSIE_EM_ANALISE: { titulo: "Dossiê em análise", descricao: "Admin está revisando seus documentos.", href: "/dashboard/cliente" },
+  APROVADO: { titulo: "Cadastre sua obra", descricao: "Dossiê aprovado — informe os dados da obra.", href: "/dashboard/cliente/obra/nova" },
+  OBRA_CADASTRADA: { titulo: "Aguardando homologação", descricao: "Admin vai vincular um engenheiro.", href: "/dashboard/cliente" },
+  HOMOLOGADA: { titulo: "Obra homologada", descricao: "Engenheiro vinculado — aguardando início.", href: "/dashboard/cliente/obra" },
+  EM_ANDAMENTO: { titulo: "Acompanhe as tranches", descricao: "Engenheiro valida cada fase, admin libera o valor.", href: "/dashboard/cliente/obra" },
+  QUITADO: { titulo: "Obra quitada", descricao: "Crédito totalmente liberado e quitado.", href: "/dashboard/cliente/obra" },
 };
 
 const ORDEM: EtapaFunil[] = [

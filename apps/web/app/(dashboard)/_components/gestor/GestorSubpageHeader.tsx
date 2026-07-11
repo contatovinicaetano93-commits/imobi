@@ -23,7 +23,7 @@ export function GestorSubpageHeader({
   refreshing,
   badge,
 }: Props) {
-  const home = backHref ?? getPanelHome("GESTOR");
+  const home = backHref ?? getPanelHome("FUNDO");
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">

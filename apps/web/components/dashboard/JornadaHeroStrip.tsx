@@ -7,7 +7,7 @@ import { JORNADA_PANEL_ID } from "@/components/dashboard/PanelToolbar";
 import { useJornada } from "@/hooks/jornada-context";
 
 type Props = {
-  variant: "tomador" | "gestor";
+  variant: "cliente" | "fundo";
 };
 
 /** Próximo passo — colapsável como os demais quadros do painel. */
@@ -25,7 +25,7 @@ export function JornadaHeroStrip({ variant }: Props) {
       priority="primary"
       summary={summary}
       badge={
-        jornada && !jornada.concluido && jornada.totalPassos > 0
+        jornada && !jornada.concluido && jornada.progressoPct > 0
           ? `${jornada.progressoPct}%`
           : undefined
       }

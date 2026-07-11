@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import "./layout.css";
 import { useEffect, useState } from "react";
-import { normalizeRole, CLIENTE_BETA_LABEL } from "@/lib/role-permissions";
+import { normalizeRole, ROLE_LABELS, GUIDED_STRICT_MODE, type AppRole } from "@/lib/role-permissions";
 import {
   ACCOUNT_NAV_HREFS,
   ADMIN_PREVIEW_STORAGE_KEY,
@@ -17,7 +17,6 @@ import {
   isAdminPreviewingPanel,
   type NavContext,
 } from "@/lib/panel-navigation";
-import { isMvpRouteAllowed, GUIDED_STRICT_MODE } from "@/lib/beta-mvp";
 import { getCanonicalNav, isCanonicalNavHref } from "@/lib/canonical-flow";
 import { JornadaGuard } from "@/components/dashboard/JornadaGuard";
 import { JornadaProvider } from "@/hooks/jornada-context";
@@ -31,10 +30,9 @@ import {
   LogOut, ChevronRight, ArrowLeft, X, Menu, type LucideIcon,
 } from "lucide-react";
 
-type UserRole = "ADMIN" | "GESTOR" | "ENGENHEIRO" | "GESTOR_OBRA" | "TOMADOR" | "COMERCIAL" | "PARCEIRO" | "CONSTRUTOR" | null;
 type NavItem = {
   label: string; href: string; icon: LucideIcon;
-  roles: UserRole[]; section?: string; funcao?: string;
+  roles: AppRole[]; section?: string; funcao?: string;
 };
 
 const WA = "5511993455589";
@@ -43,32 +41,28 @@ const MINT = "#4ADE80";
 
 const SECTION_LABELS: Record<string, string> = { geral: "Jornada", operacao: "Operação", conta: "Conta" };
 
-function sectionLabel(section: string, navRole: UserRole | null): string {
-  if (navRole === "GESTOR" && section === "geral") return "Painel";
+function sectionLabel(section: string, navRole: AppRole | null): string {
+  if (navRole === "FUNDO" && section === "geral") return "Painel";
   if (navRole === "ENGENHEIRO" && section === "geral") return "Operação";
-  if (navRole === "COMERCIAL" && section === "geral") return "Comercial";
   return SECTION_LABELS[section] ?? section;
 }
 
-const ROLE_META: Record<string, { label: string; accent: string }> = {
-  CONSTRUTOR:  { label: CLIENTE_BETA_LABEL, accent: MINT },
-  TOMADOR:     { label: CLIENTE_BETA_LABEL, accent: MINT },
-  GESTOR:      { label: "Gestor do Fundo", accent: "#a78bfa" },
-  ENGENHEIRO:  { label: "Engenheiro",  accent: "#fb923c" },
-  GESTOR_OBRA: { label: "Engenheiro",  accent: "#fb923c" },
-  COMERCIAL:   { label: "Comercial",   accent: "#fbbf24" },
-  PARCEIRO:    { label: "Comercial",   accent: "#fbbf24" },
-  ADMIN:       { label: "Admin",       accent: MINT },
+const ROLE_META: Record<AppRole, { label: string; accent: string }> = {
+  CLIENTE:   { label: ROLE_LABELS.CLIENTE, accent: MINT },
+  FUNDO:     { label: ROLE_LABELS.FUNDO, accent: "#a78bfa" },
+  ENGENHEIRO:{ label: ROLE_LABELS.ENGENHEIRO, accent: "#fb923c" },
+  ADMIN:     { label: ROLE_LABELS.ADMIN, accent: MINT },
 };
 
 function filterNav(
-  role: UserRole,
+  role: AppRole | null,
   path: string,
   navCtx?: NavContext,
 ): NavItem[] {
   const navRole = getNavRole(role, path, navCtx) ?? role;
+  if (!navRole) return [];
   const canonical = getCanonicalNav(navRole);
-  const filtered = canonical
+  return canonical
     .filter((item) => {
       if (navRole !== "ADMIN" && item.href.includes("admin") && role !== "ADMIN") return false;
       return isCanonicalNavHref(item.href, navRole);
@@ -77,15 +71,9 @@ function filterNav(
       label: item.label,
       href: item.href,
       icon: item.icon,
-      roles: [navRole] as UserRole[],
+      roles: [navRole],
       section: item.section,
     }));
-
-  if (!GUIDED_STRICT_MODE && navRole) {
-    return filtered.filter((item) => isMvpRouteAllowed(item.href, navRole));
-  }
-
-  return filtered;
 }
 
 // Returns the parent path for a back button, or null if at root level.
@@ -136,7 +124,7 @@ function renderNav(
   activeFn: (href: string) => boolean,
   accent: string,
   notifCount: number,
-  navRole: UserRole | null,
+  navRole: AppRole | null,
   onNavigate?: () => void,
 ) {
   let lastSection = "";
@@ -198,12 +186,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [role, setRole] = useState<UserRole>(null);
+  const [role, setRole] = useState<AppRole | null>(null);
   const [roleLoading, setRoleLoading] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [notifCount, setNotifCount] = useState(0);
-  const [adminPreview, setAdminPreview] = useState<UserRole>(null);
+  const [adminPreview, setAdminPreview] = useState<AppRole | null>(null);
   const [fromAdmin, setFromAdmin] = useState(false);
 
   useEffect(() => {
@@ -261,7 +249,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     const panel = getPanelFromPath(path);
     if (panel) {
       try { sessionStorage.setItem(ADMIN_PREVIEW_STORAGE_KEY, panel); } catch { /* ignore */ }
-      setAdminPreview(panel as UserRole);
+      setAdminPreview(panel);
       return;
     }
 
@@ -272,7 +260,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     }
 
     try {
-      const stored = sessionStorage.getItem(ADMIN_PREVIEW_STORAGE_KEY) as UserRole | null;
+      const stored = sessionStorage.getItem(ADMIN_PREVIEW_STORAGE_KEY) as AppRole | null;
       setAdminPreview(stored);
     } catch {
       setAdminPreview(null);
@@ -302,7 +290,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const jornadaEnabled =
     GUIDED_STRICT_MODE &&
     role != null &&
-    (role === "TOMADOR" || role === "CONSTRUTOR");
+    (role === "CLIENTE" || role === "ENGENHEIRO" || role === "ADMIN");
 
   const userFooter = (compact = false) => (
     <div>
@@ -383,7 +371,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       {isPreviewingOtherPanel && (
         <div style={{ margin: "0 0.75rem 0.25rem", padding: "0.4rem 0.65rem", borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
           <p style={{ fontSize: "0.58rem", fontWeight: 700, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 4px", fontFamily: "'Jost', sans-serif" }}>Visualizando como</p>
-          <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "white", margin: "0 0 6px", fontFamily: "'Jost', sans-serif" }}>{ROLE_META[navRole ?? ""]?.label ?? navRole}</p>
+          <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "white", margin: "0 0 6px", fontFamily: "'Jost', sans-serif" }}>{navRole ? ROLE_META[navRole]?.label ?? navRole : ""}</p>
           <Link href="/dashboard/admin" onClick={onNavigate} style={{ fontSize: "0.65rem", fontWeight: 600, color: MINT, textDecoration: "none", display: "flex", alignItems: "center", gap: 4, fontFamily: "'Jost', sans-serif" }}>
             <ArrowLeft size={10} /> Voltar ao Admin
           </Link>
@@ -553,7 +541,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             {isPreviewingOtherPanel && (
               <div style={{ margin: "0 0 0.75rem", padding: "0.5rem 0.75rem", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
                 <p style={{ fontSize: "0.58rem", fontWeight: 700, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 4px", fontFamily: "'Jost', sans-serif" }}>Visualizando como</p>
-                <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "white", margin: "0 0 6px", fontFamily: "'Jost', sans-serif" }}>{ROLE_META[navRole ?? ""]?.label ?? navRole}</p>
+                <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "white", margin: "0 0 6px", fontFamily: "'Jost', sans-serif" }}>{navRole ? ROLE_META[navRole]?.label ?? navRole : ""}</p>
                 <Link href="/dashboard/admin" onClick={() => setMobileOpen(false)} style={{ fontSize: "0.65rem", fontWeight: 600, color: MINT, textDecoration: "none", display: "flex", alignItems: "center", gap: 4, fontFamily: "'Jost', sans-serif" }}>
                   <ArrowLeft size={10} /> Voltar ao Admin
                 </Link>

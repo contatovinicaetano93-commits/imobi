@@ -9,15 +9,15 @@ const NAV = {
     { href: '/dashboard/admin' },
     { href: '/dashboard/admin/usuarios' },
   ],
-  gestor: [{ href: '/dashboard/gestor' }],
-  tomador: [
-    { href: '/dashboard/construtor' },
-    { href: '/dashboard/operacao' },
-    { href: '/dashboard/kyc' },
+  fundo: [{ href: '/dashboard/fundo' }],
+  cliente: [
+    { href: '/dashboard/cliente' },
+    { href: '/dashboard/cliente/obra' },
+    { href: '/dashboard/cliente/documentos' },
   ],
   engenheiro: [
+    { href: '/dashboard/engenheiro' },
     { href: '/dashboard/engenheiro/vistoria' },
-    { href: '/dashboard/engenheiro/comite' },
   ],
 };
 
@@ -43,19 +43,14 @@ function expectActive(
   assert.equal(got, expected, `active ${role} @ ${path} → ${got}, esperado ${expected}`);
 }
 
-expectNavRole('ADMIN', '/dashboard/gestor', 'GESTOR');
-expectNavRole('GESTOR', '/dashboard/gestor/kyc/1', 'GESTOR');
-expectNavRole('TOMADOR', '/dashboard/credito/solicitar', 'TOMADOR');
-expectNavRole('ADMIN', '/dashboard/gestor/kyc', 'GESTOR');
-expectNavRole('ADMIN', '/dashboard/admin/kyc/abc', 'ADMIN');
+expectNavRole('ADMIN', '/dashboard/fundo', 'FUNDO');
+expectNavRole('FUNDO', '/dashboard/fundo', 'FUNDO');
+expectNavRole('CLIENTE', '/dashboard/cliente/documentos', 'CLIENTE');
+expectNavRole('ADMIN', '/dashboard/admin/usuarios', 'ADMIN');
 
-expectActive('ADMIN', '/dashboard/admin/kyc/abc', NAV.admin, '/dashboard/admin');
-expectActive('ADMIN', '/dashboard/admin/pagamentos', NAV.admin, '/dashboard/admin');
 expectActive('ADMIN', '/dashboard/admin/usuarios', NAV.admin, '/dashboard/admin/usuarios');
-expectActive('GESTOR', '/dashboard/gestor/kyc/1', NAV.gestor, '/dashboard/gestor');
-expectActive('TOMADOR', '/dashboard/obras/xyz', NAV.tomador, '/dashboard/operacao');
-expectActive('TOMADOR', '/dashboard/credito/solicitar', NAV.tomador, '/dashboard/operacao');
-expectActive('TOMADOR', '/dashboard/operacao', NAV.tomador, '/dashboard/operacao');
+expectActive('FUNDO', '/dashboard/fundo', NAV.fundo, '/dashboard/fundo');
+expectActive('CLIENTE', '/dashboard/cliente/obra/nova', NAV.cliente, '/dashboard/cliente/obra');
 expectActive('ENGENHEIRO', '/dashboard/engenheiro/vistoria', NAV.engenheiro, '/dashboard/engenheiro/vistoria');
 
 console.log('✅ panel-navigation OK');

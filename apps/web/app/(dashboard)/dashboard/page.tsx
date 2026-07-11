@@ -27,6 +27,6 @@ export default async function DashboardPage() {
   if (!token) redirect("/login");
 
   const role = normalizeRole(decodeRole(token));
-  const home = role ? (ROLE_HOME[role] ?? "/dashboard/construtor") : "/dashboard/construtor";
+  const home = role ? (ROLE_HOME[role] ?? "/dashboard/cliente") : "/dashboard/cliente";
   redirect(home);
 }

@@ -11,7 +11,7 @@ const MINT = "#4ADE80";
 const ROYAL = "#1B4FD8";
 
 type Props = {
-  variant: "tomador" | "gestor";
+  variant: "cliente" | "fundo";
   children: React.ReactNode;
   hideStepRail?: boolean;
   pageTitle?: string;
@@ -44,7 +44,7 @@ function Logo({ size = 22 }: { size?: number }) {
 function StepRail({ jornada }: { jornada: Jornada }) {
   const steps = getStepsForJornada(jornada);
   const currentIdx = getPassoIndex(jornada);
-  const accent = jornada.perfil === "gestor" ? "#7c3aed" : ROYAL;
+  const accent = jornada.role === "FUNDO" ? "#7c3aed" : ROYAL;
 
   return (
     <nav aria-label="Etapas da jornada" className="mt-4 overflow-x-auto pb-1">
@@ -114,7 +114,8 @@ export function GuidedFlowShell({
     );
   }
 
-  const accent = variant === "gestor" ? "#7c3aed" : ROYAL;
+  const accent = variant === "fundo" ? "#7c3aed" : ROYAL;
+  const totalPassos = getStepsForJornada(jornada).length;
 
   return (
     <div className="guided-shell min-h-[calc(100vh-52px)]">
@@ -139,12 +140,12 @@ export function GuidedFlowShell({
                 IMOBI
               </span>
             </Link>
-            {jornada.totalPassos > 0 && (
+            {totalPassos > 0 && (
               <span
                 className="shrink-0 rounded-full px-3 py-1 text-xs font-bold"
                 style={{ background: `${accent}14`, color: accent }}
               >
-                Passo {getPassoNumero(jornada)} de {jornada.totalPassos}
+                Passo {getPassoNumero(jornada)} de {totalPassos}
               </span>
             )}
           </div>
