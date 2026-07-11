@@ -1,194 +1,93 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Logger } from "@nestjs/common";
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import * as crypto from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
-import { PropostasService } from "../propostas/propostas.service";
 import type { CadastroUsuarioInput, LoginInput } from "@imbobi/schemas";
-import { normalizeUserRole } from "../../common/constants/manager-roles";
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly email: EmailService,
-    private readonly propostas: PropostasService,
   ) {}
 
+  /** Cadastro público — sempre CLIENTE. Admin/Fundo/Engenheiro só via UsuariosService.criar (admin-only). */
   async registrar(input: CadastroUsuarioInput) {
-    const existe = await this.prisma.usuario.findFirst({
-      where: { OR: [{ email: input.email }, { cpf: input.cpf }] },
-    });
-    if (existe) throw new ConflictException("E-mail ou CPF já cadastrado.");
+    const existe = await this.prisma.usuario.findUnique({ where: { email: input.email } });
+    if (existe) throw new ConflictException("E-mail já cadastrado.");
 
-    const passwordHash = await bcrypt.hash(input.senha, 12);
+    const senhaHash = await bcrypt.hash(input.senha, 12);
     const usuario = await this.prisma.usuario.create({
-      data: {
-        nome: input.nome,
-        email: input.email,
-        cpf: input.cpf,
-        telefone: input.telefone,
-        passwordHash,
-        consentidoTermos: input.consentidoTermos,
-        consentidoPrivacy: input.consentidoPrivacy,
-        consentidoKyc: input.consentidoKyc,
-        consentidoMarketing: input.consentidoMarketing ?? false,
-        consentidoEm: new Date(),
-      },
-      select: { usuarioId: true, nome: true, email: true, tipo: true, kycStatus: true },
+      data: { nome: input.nome, email: input.email, senhaHash, role: "CLIENTE" },
+      select: { id: true, nome: true, email: true, role: true },
     });
 
-    void this.propostas.vincularUsuarioAoFluxo(usuario.usuarioId, usuario.email).catch((err) => {
-      this.logger.warn(`Vínculo proposta pós-cadastro falhou: ${usuario.email}`, err);
-    });
-
-    return { usuario, ...await this.gerarTokens(usuario.usuarioId) };
+    return { usuario, ...this.gerarTokens(usuario.id, usuario.role) };
   }
 
   async login(input: LoginInput) {
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { email: input.email },
-    });
+    const usuario = await this.prisma.usuario.findUnique({ where: { email: input.email } });
     if (!usuario) throw new UnauthorizedException("Credenciais inválidas.");
 
-    const senhaOk = await bcrypt.compare(input.senha, usuario.passwordHash);
+    const senhaOk = await bcrypt.compare(input.senha, usuario.senhaHash);
     if (!senhaOk) throw new UnauthorizedException("Credenciais inválidas.");
-
-    if (usuario.bloqueadoEm) {
-      throw new UnauthorizedException("Conta bloqueada pelo administrador. Entre em contato com o suporte.");
-    }
-
-    void this.propostas.vincularUsuarioAoFluxo(usuario.usuarioId, usuario.email).catch((err) => {
-      this.logger.warn(`Vínculo proposta pós-login falhou: ${usuario.email}`, err);
-    });
+    if (!usuario.ativo) throw new UnauthorizedException("Conta desativada. Contate o administrador.");
 
     return {
-      usuario: {
-        usuarioId: usuario.usuarioId,
-        nome: usuario.nome,
-        email: usuario.email,
-        tipo: normalizeUserRole(usuario.tipo) ?? usuario.tipo,
-      },
-      ...await this.gerarTokens(usuario.usuarioId),
+      usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, role: usuario.role },
+      ...this.gerarTokens(usuario.id, usuario.role),
     };
   }
 
   async renovarToken(refreshToken: string) {
-    if (!refreshToken) throw new UnauthorizedException("Token de atualização não fornecido.");
-    const sessao = await this.prisma.sessaoToken.findUnique({
-      where: { refreshToken },
-    });
-    if (!sessao || sessao.revogadoEm || sessao.expiresAt < new Date()) {
-      throw new UnauthorizedException("Sessão inválida ou expirada.");
+    try {
+      const payload = this.jwt.verify<{ sub: string; type: string }>(refreshToken);
+      if (payload.type !== "refresh") throw new Error("tipo inválido");
+      const usuario = await this.prisma.usuario.findUnique({ where: { id: payload.sub } });
+      if (!usuario || !usuario.ativo) throw new UnauthorizedException("Sessão inválida.");
+      return this.gerarTokens(usuario.id, usuario.role);
+    } catch {
+      throw new UnauthorizedException("Token de atualização inválido ou expirado.");
     }
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { usuarioId: sessao.usuarioId },
-      select: { bloqueadoEm: true },
-    });
-    if (!usuario || usuario.bloqueadoEm) {
-      throw new UnauthorizedException("Conta bloqueada pelo administrador. Entre em contato com o suporte.");
-    }
-    await this.prisma.sessaoToken.update({
-      where: { sessionId: sessao.sessionId },
-      data: { revogadoEm: new Date() },
-    });
-    return await this.gerarTokens(sessao.usuarioId);
-  }
-
-  async revogarToken(refreshToken: string) {
-    await this.prisma.sessaoToken.updateMany({
-      where: { refreshToken },
-      data: { revogadoEm: new Date() },
-    });
   }
 
   async esqueceuSenha(emailInput: string) {
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { email: emailInput },
-    });
-
-    if (!usuario) {
-      return { message: "Se o email estiver cadastrado, você receberá um link em breve" };
-    }
+    const usuario = await this.prisma.usuario.findUnique({ where: { email: emailInput } });
+    if (!usuario) return { message: "Se o email estiver cadastrado, você receberá um link em breve." };
 
     const rawToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
-    const expires = new Date(Date.now() + 60 * 60 * 1000);
 
     await this.prisma.usuario.update({
-      where: { usuarioId: usuario.usuarioId },
-      data: {
-        passwordResetToken: hashedToken,
-        passwordResetExpires: expires,
-      },
+      where: { id: usuario.id },
+      data: { resetToken: hashedToken, resetTokenExpiraEm: new Date(Date.now() + 60 * 60 * 1000) },
     });
 
     await this.email.recuperacaoSenhaEmail(usuario.nome, usuario.email, rawToken);
-
-    return { message: "Se o email estiver cadastrado, você receberá um link em breve" };
+    return { message: "Se o email estiver cadastrado, você receberá um link em breve." };
   }
 
   async redefinirSenha(token: string, novaSenha: string) {
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-
     const usuario = await this.prisma.usuario.findFirst({
-      where: {
-        passwordResetToken: hashedToken,
-        passwordResetExpires: { gt: new Date() },
-      },
+      where: { resetToken: hashedToken, resetTokenExpiraEm: { gt: new Date() } },
     });
+    if (!usuario) throw new BadRequestException("Link inválido ou expirado.");
 
-    if (!usuario) {
-      throw new BadRequestException("Link inválido ou expirado");
-    }
-
-    const passwordHash = await bcrypt.hash(novaSenha, 12);
-
+    const senhaHash = await bcrypt.hash(novaSenha, 12);
     await this.prisma.usuario.update({
-      where: { usuarioId: usuario.usuarioId },
-      data: {
-        passwordHash,
-        passwordResetToken: null,
-        passwordResetExpires: null,
-      },
+      where: { id: usuario.id },
+      data: { senhaHash, resetToken: null, resetTokenExpiraEm: null },
     });
-
-    return { message: "Senha redefinida com sucesso" };
+    return { message: "Senha redefinida com sucesso." };
   }
 
-  private async gerarTokens(usuarioId: string) {
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { usuarioId },
-      select: { tipo: true, nome: true, email: true, funcoesBloqueadas: true, bloqueadoEm: true },
-    });
-    const accessToken = this.jwt.sign(
-      {
-        sub: usuarioId,
-        role: normalizeUserRole(usuario?.tipo ?? null),
-        nome: usuario?.nome ?? null,
-        email: usuario?.email ?? null,
-        funcoesBloqueadas: usuario?.funcoesBloqueadas ?? [],
-        bloqueado: !!usuario?.bloqueadoEm,
-      },
-      { expiresIn: "8h" }
-    );
-    const refreshToken = this.jwt.sign(
-      { sub: usuarioId, type: "refresh", jti: crypto.randomUUID() },
-      { expiresIn: "7d" },
-    );
-
-    await this.prisma.sessaoToken.create({
-      data: {
-        usuarioId,
-        refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
-
+  private gerarTokens(usuarioId: string, role: string) {
+    const accessToken = this.jwt.sign({ sub: usuarioId, role }, { expiresIn: "8h" });
+    const refreshToken = this.jwt.sign({ sub: usuarioId, type: "refresh" }, { expiresIn: "7d" });
     return { accessToken, refreshToken };
   }
 }

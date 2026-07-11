@@ -4,8 +4,10 @@
 }
 
 :root {
+  --dash-header-height: 3.5rem;
   --dash-bottom-nav-height: 3.5rem;
-  --dash-bottom-nav-safe: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  --dash-bottom-nav-safe: env(safe-area-inset-bottom, 0px);
+  --dash-bottom-nav-total: calc(var(--dash-bottom-nav-height) + var(--dash-bottom-nav-safe));
   --dash-shell-bg: #eef3ff;
 }
 
@@ -18,6 +20,8 @@
 .dash-main {
   padding: 1rem;
   overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
   padding-bottom: calc(var(--dash-bottom-nav-height) + var(--dash-bottom-nav-safe));
 }
 
@@ -29,12 +33,25 @@
   min-height: 0;
 }
 
-/* WhatsApp FAB — sobe quando há bottom nav */
-.dash-wa-fab {
-  bottom: calc(var(--dash-bottom-nav-height) + var(--dash-bottom-nav-safe)) !important;
+.dash-mobile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  height: var(--dash-header-height);
+  padding: 0 0.75rem;
+  gap: 0.35rem;
+  background: #0c1a3d;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 100;
 }
 
-/* Mobile: coluna flex — header + main scrollável + bottom nav no fluxo (sem gap branco) */
+/* WhatsApp FAB — desktop default */
+.dash-wa-fab {
+  bottom: 1.5rem !important;
+}
+
+/* Mobile: coluna flex — header + main scrollável + bottom nav no fluxo */
 @media (max-width: 767px) {
   html:has(.dash-root),
   body:has(.dash-root) {
@@ -58,34 +75,24 @@
     height: 100%;
   }
 
-  .dash-mobile-header {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    flex-shrink: 0;
-  }
-
-  .dash-spacer {
-    display: none !important;
-  }
-
   .dash-main {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
-    /* nav está no fluxo — só espaço pro FAB */
-    padding-bottom: 4.5rem;
+    /* nav no fluxo — espaço pro FAB não cobrir o último card */
+    padding-bottom: calc(var(--dash-bottom-nav-total) + 3rem);
   }
 
   .dash-bottom-nav {
-    position: relative !important;
-    bottom: auto !important;
     flex-shrink: 0;
     width: 100%;
     z-index: 90;
+  }
+
+  .dash-wa-fab {
+    bottom: calc(var(--dash-bottom-nav-total) + 0.75rem) !important;
   }
 }
 
@@ -93,7 +100,5 @@
   .dash-sidebar  { display: flex !important; }
   .dash-mhidden  { display: none !important; }
   .dash-bottom-nav { display: none !important; }
-  .dash-spacer   { display: none !important; }
   .dash-main     { padding: 2rem; padding-bottom: 2rem; }
-  .dash-wa-fab   { bottom: 24px !important; }
 }

@@ -1,96 +1,24 @@
-/**
- * Seed de usuários de teste para desenvolvimento.
- * Cria (ou atualiza) as 5 contas de staff + 1 cliente.
- *
- * Executar: pnpm --filter api seed:dev
- */
 import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
+import { getSetupUsers } from "./setup-users";
 
 const prisma = new PrismaClient();
 
-const USUARIOS = [
-  {
-    nome:     "Administrador IMOBI",
-    email:    "admin@imobi.com.br",
-    cpf:      "00000000001",
-    telefone: "11900000001",
-    senha:    "Admin@123",
-    tipo:     "ADMIN" as const,
-  },
-  {
-    nome:     "Gestor do Fundo",
-    email:    "gestor@imobi.com.br",
-    cpf:      "00000000002",
-    telefone: "11900000002",
-    senha:    "Gestor@123",
-    tipo:     "GESTOR" as const,
-  },
-  {
-    nome:     "Engenheiro Responsável",
-    email:    "eng@imobi.com.br",
-    cpf:      "00000000003",
-    telefone: "11900000003",
-    senha:    "Eng@123",
-    tipo:     "ENGENHEIRO" as const,
-  },
-  {
-    nome:     "Parceiro Comercial",
-    email:    "comercial@imobi.com.br",
-    cpf:      "00000000004",
-    telefone: "11900000004",
-    senha:    "Comercial@123",
-    tipo:     "COMERCIAL" as const,
-  },
-  {
-    nome:     "Cliente Tomador",
-    email:    "tomador@imobi.com.br",
-    cpf:      "00000000005",
-    telefone: "11900000005",
-    senha:    "Tomador@123",
-    tipo:     "TOMADOR" as const,
-  },
-];
-
 async function main() {
-  console.log("──────────────────────────────────────");
-  console.log("  Seed de usuários de teste — IMOBI   ");
-  console.log("──────────────────────────────────────");
-
-  for (const u of USUARIOS) {
-    const passwordHash = await hash(u.senha, 12);
-    const payload = {
-      nome: u.nome,
-      email: u.email,
-      cpf: u.cpf,
-      telefone: u.telefone,
-      passwordHash,
-      tipo: u.tipo as "ADMIN" | "GESTOR" | "ENGENHEIRO" | "COMERCIAL" | "TOMADOR",
-      kycStatus: "APROVADO" as const,
-      consentidoTermos: true,
-      consentidoPrivacy: true,
-      consentidoKyc: true,
-    };
-
-    const byEmail = await prisma.usuario.findUnique({ where: { email: u.email } });
-    const byCpf = await prisma.usuario.findUnique({ where: { cpf: u.cpf } });
-
-    if (byCpf && (!byEmail || byCpf.usuarioId !== byEmail.usuarioId)) {
-      await prisma.usuario.delete({ where: { usuarioId: byCpf.usuarioId } });
-    }
-
+  for (const u of getSetupUsers()) {
+    const senhaHash = await hash(u.senha, 12);
     await prisma.usuario.upsert({
       where: { email: u.email },
-      update: payload,
-      create: payload,
+      update: { senhaHash, role: u.role, nome: u.nome },
+      create: { nome: u.nome, email: u.email, senhaHash, role: u.role },
     });
-    console.log(`  [${u.tipo.padEnd(11)}]  ${u.email}  /  ${u.senha}`);
+    console.log(`Seed: ${u.role} ${u.email} OK`);
   }
-
-  console.log("\n  Todos os usuários criados/atualizados com sucesso.");
-  console.log("──────────────────────────────────────\n");
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
   .finally(() => prisma.$disconnect());

@@ -2,7 +2,7 @@ import { createParamDecorator, type ExecutionContext } from "@nestjs/common";
 
 export interface UsuarioAtual {
   id: string;
-  tipo: string;
+  role: string;
 }
 
 export const UsuarioAtual = createParamDecorator(

@@ -1,46 +1,25 @@
-import { Controller, Get, Patch, Param, Body, UseGuards } from "@nestjs/common";
+import { Controller, Get, UseGuards, ForbiddenException } from "@nestjs/common";
 import { EtapasService } from "./etapas.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-import { RolesGuard } from "../../common/guards/roles.guard";
-import { Roles } from "../../common/decorators/roles.decorator";
-import { UsuarioAtual, type UsuarioAtual as IUsuario } from "../../common/decorators/usuario-atual.decorator";
+import { UsuarioAtual, type UsuarioAtual as UsuarioAtualType } from "../../common/decorators/usuario-atual.decorator";
 
+/** Um único endpoint guiado — cada papel recebe o passo que importa agora. */
+@Controller("jornada")
 @UseGuards(JwtAuthGuard)
-@Controller("etapas")
 export class EtapasController {
   constructor(private readonly etapas: EtapasService) {}
 
-  @Get("obra/:obraId")
-  listar(@Param("obraId") obraId: string, @UsuarioAtual() u: IUsuario) {
-    return this.etapas.listarPorObra(obraId, u.id, u.tipo);
-  }
-
-  @UseGuards(RolesGuard)
-  @Roles("ENGENHEIRO", "ADMIN")
-  @Patch(":id/aprovar")
-  aprovar(
-    @Param("id") id: string,
-    @UsuarioAtual() u: IUsuario,
-    @Body("observacao") obs?: string
-  ) {
-    return this.etapas.aprovar(u.id, id, obs);
-  }
-
-  @UseGuards(RolesGuard)
-  @Roles("ENGENHEIRO", "ADMIN")
-  @Patch(":id/rejeitar")
-  rejeitar(
-    @Param("id") id: string,
-    @UsuarioAtual() u: IUsuario,
-    @Body("motivo") motivo: string,
-  ) {
-    return this.etapas.rejeitar(u.id, id, motivo);
-  }
-
-  @UseGuards(RolesGuard)
-  @Roles("CONSTRUTOR", "TOMADOR", "ENGENHEIRO", "GESTOR", "ADMIN")
-  @Patch(":id/status")
-  status(@Param("id") id: string, @Body("status") status: string, @UsuarioAtual() u: IUsuario) {
-    return this.etapas.atualizarStatus(id, status, u.id, u.tipo);
+  @Get()
+  obter(@UsuarioAtual() user: UsuarioAtualType) {
+    switch (user.role) {
+      case "CLIENTE":
+        return this.etapas.paraCliente(user.id);
+      case "ENGENHEIRO":
+        return this.etapas.paraEngenheiro(user.id);
+      case "ADMIN":
+        return this.etapas.paraAdmin();
+      default:
+        throw new ForbiddenException("Papel sem jornada guiada.");
+    }
   }
 }

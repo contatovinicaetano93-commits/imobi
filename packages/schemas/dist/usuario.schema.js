@@ -1,42 +1,29 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AtualizarUsuarioAdminSchema = exports.FuncaoPainelEnum = exports.FUNCOES_PAINEL = exports.ContaBancariaEmpresaSchema = exports.UpdatePerfilUsuarioSchema = exports.UpdateUsuarioSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.RefreshTokenBodySchema = exports.LoginSchema = exports.CadastroUsuarioSchema = exports.KycStatusEnum = exports.TipoUsuarioEnum = void 0;
+exports.AtualizarUsuarioAdminSchema = exports.RedefinirSenhaSchema = exports.EsqueceuSenhaSchema = exports.RefreshTokenBodySchema = exports.LoginSchema = exports.CriarUsuarioAdminSchema = exports.CadastroUsuarioSchema = exports.RoleEnum = void 0;
 const zod_1 = require("zod");
-exports.TipoUsuarioEnum = zod_1.z.enum([
-    "TOMADOR",
-    "GESTOR_OBRA",
-    "ADMIN",
-    "PARCEIRO",
-    "GESTOR",
-    "GESTOR_FUNDO",
-    "ENGENHEIRO",
-    "COMERCIAL",
-    "CONSTRUTOR",
-]);
-exports.KycStatusEnum = zod_1.z.enum([
-    "PENDENTE",
-    "EM_VERIFICACAO",
-    "APROVADO",
-    "REJEITADO",
-]);
+/** 4 papéis únicos — sem aliases. */
+exports.RoleEnum = zod_1.z.enum(["ADMIN", "CLIENTE", "FUNDO", "ENGENHEIRO"]);
+/** Cadastro público — sempre CLIENTE. Outros papéis só via Admin (CriarUsuarioAdminSchema). */
 exports.CadastroUsuarioSchema = zod_1.z.object({
     nome: zod_1.z.string().min(3).max(120),
-    cpf: zod_1.z
-        .string()
-        .regex(/^\d{11}$/, "CPF deve conter 11 dígitos numéricos"),
     email: zod_1.z.string().email(),
-    telefone: zod_1.z
-        .string()
-        .regex(/^\d{10,11}$/, "Telefone inválido"),
     senha: zod_1.z
         .string()
         .min(8, "Mínimo 8 caracteres")
         .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
         .regex(/[0-9]/, "Deve conter ao menos um número"),
-    consentidoTermos: zod_1.z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
-    consentidoPrivacy: zod_1.z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
-    consentidoKyc: zod_1.z.boolean().refine((v) => v === true, { message: "Obrigatório" }),
-    consentidoMarketing: zod_1.z.boolean().default(false),
+});
+/** Admin cria contas de qualquer papel (ex: Engenheiro, Fundo). */
+exports.CriarUsuarioAdminSchema = zod_1.z.object({
+    nome: zod_1.z.string().min(3).max(120),
+    email: zod_1.z.string().email(),
+    senha: zod_1.z
+        .string()
+        .min(8, "Mínimo 8 caracteres")
+        .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
+        .regex(/[0-9]/, "Deve conter ao menos um número"),
+    role: exports.RoleEnum,
 });
 exports.LoginSchema = zod_1.z.object({
     email: zod_1.z.string().email(),
@@ -56,55 +43,14 @@ exports.RedefinirSenhaSchema = zod_1.z.object({
         .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
         .regex(/[0-9]/, "Deve conter ao menos um número"),
 });
-exports.UpdateUsuarioSchema = exports.CadastroUsuarioSchema.omit({
-    senha: true,
-    cpf: true,
-}).partial();
-/** Campos editáveis pelo usuário em /dashboard/perfil */
-exports.UpdatePerfilUsuarioSchema = zod_1.z.object({
-    nome: zod_1.z.string().min(3, "Nome deve ter pelo menos 3 caracteres").max(120),
-    telefone: zod_1.z
-        .string()
-        .transform((v) => v.replace(/\D/g, ""))
-        .pipe(zod_1.z.string().regex(/^\d{10,11}$/, "Telefone inválido")),
-});
-/** Conta bancária da empresa (pagamentos manuais SIPOC). */
-exports.ContaBancariaEmpresaSchema = zod_1.z.object({
-    contaTitular: zod_1.z.string().min(3).max(120),
-    contaBanco: zod_1.z.string().min(2).max(80),
-    contaAgencia: zod_1.z.string().min(1).max(20),
-    contaNumero: zod_1.z.string().min(1).max(30),
-    contaPix: zod_1.z.string().min(5).max(120).optional().or(zod_1.z.literal("")),
-});
-// ── Fiscalização (Admin) ────────────────────────────────────────────
-// Funções de painel que o admin pode liberar/bloquear por usuário.
-exports.FUNCOES_PAINEL = [
-    "obras",
-    "credito",
-    "proposta-credito",
-    "kyc",
-    "notificacoes",
-    "engenharia",
-    "gestor",
-    "comercial",
-    "construtor",
-];
-exports.FuncaoPainelEnum = zod_1.z.enum(exports.FUNCOES_PAINEL);
 exports.AtualizarUsuarioAdminSchema = zod_1.z.object({
     nome: zod_1.z.string().min(3).max(120).optional(),
     email: zod_1.z.string().email().optional(),
-    telefone: zod_1.z
-        .string()
-        .regex(/^\d{10,11}$/, "Telefone inválido")
-        .optional(),
-    kycStatus: exports.KycStatusEnum.optional(),
+    role: exports.RoleEnum.optional(),
     novaSenha: zod_1.z
         .string()
         .min(8, "Mínimo 8 caracteres")
         .regex(/[A-Z]/, "Deve conter ao menos uma letra maiúscula")
         .regex(/[0-9]/, "Deve conter ao menos um número")
         .optional(),
-    tipo: exports.TipoUsuarioEnum.optional(),
-    bloqueado: zod_1.z.boolean().optional(),
-    funcoesBloqueadas: zod_1.z.array(exports.FuncaoPainelEnum).optional(),
 });

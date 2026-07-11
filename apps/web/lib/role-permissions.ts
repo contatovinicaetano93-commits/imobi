@@ -1,70 +1,24 @@
-/**
- * Licenças e permissões por perfil (web).
- *
- * GESTOR — Gestor do Fundo: indicadores agregados (KPI · KYC, KPI · Etapas).
- * Sem aprovações, comitê ou rotas operacionais do tomador.
- * Aprovações ficam com Admin (KYC, comitê, pagamentos) e Engenheiro (vistoria).
- * GESTOR_FUNDO no JWT/banco é alias legado → normalizado para GESTOR.
- */
+/** 4 papéis únicos — sem aliases. */
+export type AppRole = 'ADMIN' | 'CLIENTE' | 'FUNDO' | 'ENGENHEIRO';
 
-export type AppRole =
-  | 'ADMIN'
-  | 'GESTOR'
-  | 'ENGENHEIRO'
-  | 'GESTOR_OBRA'
-  | 'COMERCIAL'
-  | 'PARCEIRO'
-  | 'CONSTRUTOR'
-  | 'TOMADOR';
-
-/** @deprecated alias legado — use normalizeRole() */
-export const GESTOR_LEGACY_ALIAS = 'GESTOR_FUNDO';
-
-export function normalizeRole(role: string | null | undefined): AppRole | null {
-  if (!role) return null;
-  if (role === GESTOR_LEGACY_ALIAS) return 'GESTOR';
-  return role as AppRole;
-}
-
-/** Rótulo único no MVP — TOMADOR e CONSTRUTOR são o mesmo perfil (role legado vs canônico). */
-export const CLIENTE_BETA_LABEL = 'Cliente';
-
-export const ROLE_LABELS: Record<string, string> = {
+export const ROLE_LABELS: Record<AppRole, string> = {
   ADMIN: 'Administrador',
-  GESTOR: 'Gestor do Fundo',
-  GESTOR_FUNDO: 'Gestor do Fundo',
+  CLIENTE: 'Cliente',
+  FUNDO: 'Fundo',
   ENGENHEIRO: 'Engenheiro',
-  GESTOR_OBRA: 'Gestor de Obra',
-  COMERCIAL: 'Comercial',
-  PARCEIRO: 'Parceiro',
-  CONSTRUTOR: CLIENTE_BETA_LABEL,
-  TOMADOR: CLIENTE_BETA_LABEL,
 };
 
 /** Home após login */
-export const ROLE_HOME: Record<string, string> = {
+export const ROLE_HOME: Record<AppRole, string> = {
   ADMIN: '/dashboard/admin',
-  GESTOR: '/dashboard/gestor',
-  GESTOR_FUNDO: '/dashboard/gestor',
-  ENGENHEIRO: '/dashboard/engenheiro/vistoria',
-  GESTOR_OBRA: '/dashboard/engenheiro/vistoria',
-  COMERCIAL: '/dashboard/comercial',
-  PARCEIRO: '/dashboard/comercial',
-  TOMADOR: '/dashboard/construtor',
-  CONSTRUTOR: '/dashboard/construtor',
+  CLIENTE: '/dashboard/cliente',
+  FUNDO: '/dashboard/fundo',
+  ENGENHEIRO: '/dashboard/engenheiro',
 };
 
-export function isGestor(role: string | null | undefined): boolean {
-  return normalizeRole(role) === 'GESTOR';
-}
-
-export function isEngenheiro(role: string | null | undefined): boolean {
-  const r = normalizeRole(role);
-  return r === 'ENGENHEIRO' || r === 'GESTOR_OBRA';
-}
-
-/** Cadastro de obra — exclusivo do tomador (SIPOC passo 1). */
-export function canCadastrarObra(role: string | null | undefined): boolean {
-  const r = normalizeRole(role);
-  return r === 'TOMADOR' || r === 'CONSTRUTOR';
+export function normalizeRole(role: string | null | undefined): AppRole | null {
+  if (role === 'ADMIN' || role === 'CLIENTE' || role === 'FUNDO' || role === 'ENGENHEIRO') {
+    return role;
+  }
+  return null;
 }

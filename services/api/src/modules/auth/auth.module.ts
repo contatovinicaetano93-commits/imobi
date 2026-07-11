@@ -6,18 +6,16 @@ import { AuthController } from "./auth.controller";
 import { JwtStrategy } from "./jwt.strategy";
 import { EmailModule } from "../email/email.module";
 import { PrismaModule } from "../prisma/prisma.module";
-import { PropostasModule } from "../propostas/propostas.module";
 
 @Module({
   imports: [
     PassportModule,
     JwtModule.register({
       secret: process.env["JWT_SECRET"],
-      signOptions: { expiresIn: "15m" },
+      signOptions: { expiresIn: "8h" },
     }),
     EmailModule,
     PrismaModule,
-    PropostasModule,
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],

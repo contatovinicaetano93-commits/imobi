@@ -3,48 +3,35 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { Route } from "next";
-import { GUIDED_STRICT_MODE } from "@/lib/beta-mvp";
-import { isJornadaPathAllowed } from "@/lib/jornada-routes";
 import { useJornadaOptional } from "@/hooks/jornada-context";
-
-const GUIDED_ROLES = new Set(["TOMADOR", "CONSTRUTOR"]);
-const HUB_PATHS = new Set(["/dashboard/construtor", "/dashboard/gestor"]);
 
 type Props = {
   role: string | null;
   children: React.ReactNode;
 };
 
-/**
- * Fluxo guiado estrito (lançamento): redireciona tomador para o passo atual da jornada.
- * Gestor navega livremente entre KPIs (/dashboard/gestor/*).
- */
+/** Fluxo guiado: fora do href atual da jornada (e não concluída) → volta pro passo certo. */
 export function JornadaGuard({ role, children }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const jornadaCtx = useJornadaOptional();
   const prevPathRef = useRef(pathname);
 
-  const guided = GUIDED_STRICT_MODE && role != null && GUIDED_ROLES.has(role);
+  const guided = role != null;
 
   useEffect(() => {
     if (!guided || !jornadaCtx) return;
-
     const prev = prevPathRef.current;
     prevPathRef.current = pathname;
-
-    const enteredHub = HUB_PATHS.has(pathname) && !HUB_PATHS.has(prev);
-    if (enteredHub) {
-      void jornadaCtx.refresh();
-    }
+    if (pathname !== prev) void jornadaCtx.refresh();
   }, [guided, pathname, jornadaCtx]);
 
   useEffect(() => {
     if (!guided || !jornadaCtx?.jornada || jornadaCtx.loading) return;
-
-    if (!isJornadaPathAllowed(pathname, jornadaCtx.jornada)) {
-      router.replace(jornadaCtx.jornada.href as Route);
-    }
+    const { jornada } = jornadaCtx;
+    if (jornada.concluido) return;
+    const onHref = pathname === jornada.href || pathname.startsWith(`${jornada.href}/`);
+    if (!onHref) router.replace(jornada.href as Route);
   }, [guided, pathname, jornadaCtx, router]);
 
   return <>{children}</>;

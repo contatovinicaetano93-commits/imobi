@@ -1,7 +1,6 @@
 import { Controller, Get, Logger, Inject } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import { getRedisConfig, validateRedisConfig } from "./config";
 import { SKIP_ALL_THROTTLES } from "./guards/throttler.constants";
 import { PrismaService } from "../modules/prisma/prisma.service";
 import type { Cache } from "cache-manager";
@@ -9,9 +8,8 @@ import type { Cache } from "cache-manager";
 interface HealthCheck {
   status: "ok" | "degraded" | "error";
   timestamp: string;
-  redis: { status: string; host?: string; port?: number; error?: string };
+  cache: { status: string; error?: string };
   email: { provider: string; configured: boolean };
-  firebase: { configured: boolean };
   database: { configured: boolean; status: string; error?: string };
 }
 
@@ -27,28 +25,18 @@ export class HealthController {
 
   @Get()
   async getHealth(): Promise<HealthCheck> {
-    const redisConfig = getRedisConfig();
-    const redisValidationErrors = validateRedisConfig(redisConfig);
-    let redisStatus = "connected";
-    let redisError: string | undefined;
-
-    if (redisValidationErrors.length > 0) {
-      redisStatus = "error";
-      redisError = redisValidationErrors.join("; ");
-    } else {
-      try {
-        await this.cacheManager.get("_health_check");
-        redisStatus = "connected";
-      } catch (error) {
-        redisStatus = "error";
-        redisError = error instanceof Error ? error.message : "Unknown error";
-        this.logger.error(`Redis health check failed: ${redisError}`);
-      }
+    let cacheStatus = "connected";
+    let cacheError: string | undefined;
+    try {
+      await this.cacheManager.get("_health_check");
+    } catch (error) {
+      cacheStatus = "error";
+      cacheError = error instanceof Error ? error.message : "Unknown error";
+      this.logger.error(`Cache health check failed: ${cacheError}`);
     }
 
     const emailProvider = process.env["EMAIL_PROVIDER"] ?? "smtp";
     const hasEmailConfig = this.hasEmailConfig(emailProvider);
-    const hasFirebaseConfig = this.hasFirebaseConfig();
     const hasDatabaseUrl = !!process.env["DATABASE_URL"];
     let databaseStatus = "error";
     let databaseError: string | undefined;
@@ -65,69 +53,33 @@ export class HealthController {
       }
     }
 
-    // Render health check: DB obrigatório; Redis/email/firebase são opcionais
     const status: HealthCheck["status"] =
-      databaseStatus !== "connected"
-        ? "error"
-        : redisStatus === "connected"
-          ? "ok"
-          : "degraded";
+      databaseStatus !== "connected" ? "error" : cacheStatus === "connected" ? "ok" : "degraded";
 
-    const health: HealthCheck = {
+    return {
       status,
       timestamp: new Date().toISOString(),
-      redis: {
-        status: redisStatus,
-        host: redisConfig.host,
-        port: redisConfig.port,
-        ...(redisError && { error: redisError }),
-      },
-      email: {
-        provider: emailProvider,
-        configured: hasEmailConfig,
-      },
-      firebase: {
-        configured: hasFirebaseConfig,
-      },
+      cache: { status: cacheStatus, ...(cacheError && { error: cacheError }) },
+      email: { provider: emailProvider, configured: hasEmailConfig },
       database: {
         configured: hasDatabaseUrl,
         status: databaseStatus,
         ...(databaseError && { error: databaseError }),
       },
     };
-
-    this.logger.debug(`Health check: ${JSON.stringify(health)}`);
-    return health;
   }
 
   private hasEmailConfig(provider: string): boolean {
-    const provider_lower = provider.toLowerCase();
-
-    if (provider_lower === "sendgrid") {
-      return !!process.env["SENDGRID_API_KEY"];
-    }
-
-    if (provider_lower === "ses") {
+    const providerLower = provider.toLowerCase();
+    if (providerLower === "sendgrid") return !!process.env["SENDGRID_API_KEY"];
+    if (providerLower === "ses") {
       return !!(
         process.env["AWS_REGION"] &&
         process.env["AWS_ACCESS_KEY_ID"] &&
         process.env["AWS_SECRET_ACCESS_KEY"]
       );
     }
-
-    if (provider_lower === "console") {
-      return true;
-    }
-
-    // SMTP
+    if (providerLower === "console") return true;
     return !!(process.env["SMTP_HOST"] && process.env["SMTP_PORT"]);
-  }
-
-  private hasFirebaseConfig(): boolean {
-    return !!(
-      process.env["FIREBASE_PROJECT_ID"] &&
-      process.env["FIREBASE_PRIVATE_KEY"] &&
-      process.env["FIREBASE_CLIENT_EMAIL"]
-    );
   }
 }

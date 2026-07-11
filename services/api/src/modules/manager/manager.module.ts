@@ -1,12 +1,12 @@
 import { Module } from "@nestjs/common";
 import { ManagerService } from "./manager.service";
 import { ManagerController } from "./manager.controller";
-import { KycModule } from "../kyc/kyc.module";
+import { PrismaModule } from "../prisma/prisma.module";
 
 @Module({
-  imports: [KycModule],
-  controllers: [ManagerController],
+  imports: [PrismaModule],
   providers: [ManagerService],
+  controllers: [ManagerController],
   exports: [ManagerService],
 })
 export class ManagerModule {}

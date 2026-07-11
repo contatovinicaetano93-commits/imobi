@@ -4,66 +4,40 @@
 export type SetupUser = {
   nome: string;
   email: string;
-  cpf: string;
-  telefone: string;
   senha: string;
-  tipo: "ADMIN" | "GESTOR" | "ENGENHEIRO" | "COMERCIAL" | "CONSTRUTOR" | "TOMADOR";
+  role: "ADMIN" | "CLIENTE" | "FUNDO" | "ENGENHEIRO";
 };
 
 function pwd(envKey: string, fallback: string): string {
   return process.env[envKey]?.trim() || fallback;
 }
 
-/** Contas padrão de staging/dev — alinhadas com dev-seed.ts */
+/** Contas padrão de staging/dev — 1 por papel. */
 export function getSetupUsers(): SetupUser[] {
   const users: SetupUser[] = [
     {
       nome: "Administrador IMOBI",
       email: "admin@imobi.com.br",
-      cpf: "00000000001",
-      telefone: "11900000001",
       senha: pwd("SEED_ADMIN_PASSWORD", "Admin@123"),
-      tipo: "ADMIN",
+      role: "ADMIN",
     },
     {
-      nome: "Gestor do Fundo",
-      email: "gestor@imobi.com.br",
-      cpf: "00000000002",
-      telefone: "11900000002",
-      senha: pwd("SEED_GESTOR_PASSWORD", "Gestor@123"),
-      tipo: "GESTOR",
+      nome: "Fundo IMOBI",
+      email: "fundo@imobi.com.br",
+      senha: pwd("SEED_FUNDO_PASSWORD", "Fundo@123"),
+      role: "FUNDO",
     },
     {
       nome: "Engenheiro IMOBI",
       email: "eng@imobi.com.br",
-      cpf: "00000000003",
-      telefone: "11900000003",
       senha: pwd("SEED_ENGENHEIRO_PASSWORD", "Eng@123"),
-      tipo: "ENGENHEIRO",
+      role: "ENGENHEIRO",
     },
     {
-      nome: "Parceiro Comercial",
-      email: "comercial@imobi.com.br",
-      cpf: "00000000004",
-      telefone: "11900000004",
-      senha: pwd("SEED_COMERCIAL_PASSWORD", "Comercial@123"),
-      tipo: "COMERCIAL",
-    },
-    {
-      nome: "Construtor IMOBI",
-      email: "construtor@imobi.com.br",
-      cpf: "00000000005",
-      telefone: "11900000005",
-      senha: pwd("SEED_CONSTRUTOR_PASSWORD", "Construtor@123"),
-      tipo: "CONSTRUTOR",
-    },
-    {
-      nome: "Tomador Teste",
-      email: "tomador@imobi.com.br",
-      cpf: "00000000006",
-      telefone: "11900000006",
-      senha: pwd("SEED_TOMADOR_PASSWORD", "Tomador@123"),
-      tipo: "TOMADOR",
+      nome: "Cliente Teste",
+      email: "cliente@imobi.com.br",
+      senha: pwd("SEED_CLIENTE_PASSWORD", "Cliente@123"),
+      role: "CLIENTE",
     },
   ];
 
@@ -73,24 +47,20 @@ export function getSetupUsers(): SetupUser[] {
     users.unshift({
       nome: process.env.SEED_OWNER_NAME?.trim() || "Owner",
       email: ownerEmail,
-      cpf: process.env.SEED_OWNER_CPF?.trim() || "00000000099",
-      telefone: process.env.SEED_OWNER_PHONE?.trim() || "11999999999",
       senha: ownerPassword,
-      tipo: "ADMIN",
+      role: "ADMIN",
     });
   }
 
   return users;
 }
 
-export function rotaParaTipoSetup(tipo: string): string {
+export function rotaParaRoleSetup(role: string): string {
   const mapa: Record<string, string> = {
     ADMIN: "/dashboard/admin",
-    GESTOR: "/dashboard/gestor",
-    ENGENHEIRO: "/dashboard/engenheiro/vistoria",
-    COMERCIAL: "/dashboard/comercial",
-    CONSTRUTOR: "/dashboard/construtor",
-    TOMADOR: "/dashboard/construtor",
+    FUNDO: "/dashboard/fundo",
+    ENGENHEIRO: "/dashboard/engenheiro",
+    CLIENTE: "/dashboard/cliente",
   };
-  return mapa[tipo] ?? "/dashboard";
+  return mapa[role] ?? "/dashboard";
 }

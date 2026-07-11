@@ -1,58 +1,31 @@
 import { z } from "zod";
-export declare const JornadaPassoIdEnum: z.ZodEnum<["kyc", "viabilidade", "obra", "credito", "aguardando", "acompanhar", "concluido", "gestor_kyc", "gestor_etapas", "gestor_ok"]>;
-export declare const JornadaPerfilEnum: z.ZodEnum<["tomador", "gestor", "outro"]>;
+/** Passo guiado — 1 fonte de verdade pro que cada papel vê/faz agora. */
 export declare const JornadaResponseSchema: z.ZodObject<{
-    perfil: z.ZodEnum<["tomador", "gestor", "outro"]>;
-    passoAtual: z.ZodEnum<["kyc", "viabilidade", "obra", "credito", "aguardando", "acompanhar", "concluido", "gestor_kyc", "gestor_etapas", "gestor_ok"]>;
+    role: z.ZodEnum<["ADMIN", "CLIENTE", "FUNDO", "ENGENHEIRO"]>;
+    etapaAtual: z.ZodOptional<z.ZodEnum<["KYC_PENDENTE", "DOSSIE_EM_ANALISE", "APROVADO", "OBRA_CADASTRADA", "HOMOLOGADA", "EM_ANDAMENTO", "QUITADO"]>>;
     titulo: z.ZodString;
     descricao: z.ZodString;
     href: z.ZodString;
     concluido: z.ZodBoolean;
-    passosConcluidos: z.ZodNumber;
-    totalPassos: z.ZodNumber;
     progressoPct: z.ZodNumber;
     bloqueado: z.ZodOptional<z.ZodString>;
-    fila: z.ZodOptional<z.ZodObject<{
-        kyc: z.ZodNumber;
-        etapas: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        kyc: number;
-        etapas: number;
-    }, {
-        kyc: number;
-        etapas: number;
-    }>>;
 }, "strip", z.ZodTypeAny, {
+    role: "ADMIN" | "CLIENTE" | "FUNDO" | "ENGENHEIRO";
     descricao: string;
-    concluido: boolean;
-    perfil: "gestor" | "tomador" | "outro";
-    passoAtual: "obra" | "credito" | "kyc" | "viabilidade" | "aguardando" | "acompanhar" | "concluido" | "gestor_kyc" | "gestor_etapas" | "gestor_ok";
     titulo: string;
     href: string;
-    passosConcluidos: number;
-    totalPassos: number;
+    concluido: boolean;
     progressoPct: number;
+    etapaAtual?: "APROVADO" | "KYC_PENDENTE" | "DOSSIE_EM_ANALISE" | "OBRA_CADASTRADA" | "HOMOLOGADA" | "EM_ANDAMENTO" | "QUITADO" | undefined;
     bloqueado?: string | undefined;
-    fila?: {
-        kyc: number;
-        etapas: number;
-    } | undefined;
 }, {
+    role: "ADMIN" | "CLIENTE" | "FUNDO" | "ENGENHEIRO";
     descricao: string;
-    concluido: boolean;
-    perfil: "gestor" | "tomador" | "outro";
-    passoAtual: "obra" | "credito" | "kyc" | "viabilidade" | "aguardando" | "acompanhar" | "concluido" | "gestor_kyc" | "gestor_etapas" | "gestor_ok";
     titulo: string;
     href: string;
-    passosConcluidos: number;
-    totalPassos: number;
+    concluido: boolean;
     progressoPct: number;
+    etapaAtual?: "APROVADO" | "KYC_PENDENTE" | "DOSSIE_EM_ANALISE" | "OBRA_CADASTRADA" | "HOMOLOGADA" | "EM_ANDAMENTO" | "QUITADO" | undefined;
     bloqueado?: string | undefined;
-    fila?: {
-        kyc: number;
-        etapas: number;
-    } | undefined;
 }>;
-export type JornadaPassoId = z.infer<typeof JornadaPassoIdEnum>;
-export type JornadaPerfil = z.infer<typeof JornadaPerfilEnum>;
 export type JornadaResponse = z.infer<typeof JornadaResponseSchema>;

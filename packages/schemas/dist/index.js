@@ -15,15 +15,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./usuario.schema"), exports);
-__exportStar(require("./credito.schema"), exports);
 __exportStar(require("./obra.schema"), exports);
-__exportStar(require("./evidencia.schema"), exports);
-__exportStar(require("./comercial.schema"), exports);
-__exportStar(require("./notificacao.schema"), exports);
-__exportStar(require("./dossie-viabilidade.schema"), exports);
-__exportStar(require("./dossie-checklist-template"), exports);
-__exportStar(require("./proposta-credito.schema"), exports);
-__exportStar(require("./kyc.schema"), exports);
+__exportStar(require("./documento.schema"), exports);
+__exportStar(require("./tranche.schema"), exports);
 __exportStar(require("./jornada.schema"), exports);
-__exportStar(require("./assistente.schema"), exports);
-__exportStar(require("./configuracao.schema"), exports);
+__exportStar(require("./notificacao.schema"), exports);

@@ -1,261 +1,108 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-} from "@nestjs/common";
-import type { EtapaStatus } from "@prisma/client";
+import { Injectable, Inject } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import type { Cache } from "cache-manager";
 import { PrismaService } from "../prisma/prisma.service";
-import { NotificacoesService } from "../notificacoes/notificacoes.service";
-import { EmailService } from "../email/email.service";
-import { PushNotificacoesService } from "../push-notificacoes/push-notificacoes.service";
-import {
-  buildCapitalFaseWhatsAppMessage,
-  buildFinanceiroWhatsAppUrl,
-} from "../../common/constants/financeiro";
+import type { EtapaFunil, JornadaResponse, Role } from "@imbobi/schemas";
+
+const CACHE_TTL_MS = 30_000;
+
+const TITULOS: Record<EtapaFunil, { titulo: string; descricao: string; href: string }> = {
+  KYC_PENDENTE: { titulo: "Envie seus documentos", descricao: "KYC pendente de envio.", href: "/dashboard/kyc" },
+  DOSSIE_EM_ANALISE: { titulo: "Dossiê em análise", descricao: "Admin está revisando seus documentos.", href: "/dashboard/construtor" },
+  APROVADO: { titulo: "Cadastre sua obra", descricao: "Dossiê aprovado — informe os dados da obra.", href: "/dashboard/obras/nova" },
+  OBRA_CADASTRADA: { titulo: "Aguardando homologação", descricao: "Admin vai vincular um engenheiro.", href: "/dashboard/construtor" },
+  HOMOLOGADA: { titulo: "Obra homologada", descricao: "Engenheiro vinculado — aguardando início.", href: "/dashboard/operacao" },
+  EM_ANDAMENTO: { titulo: "Acompanhe as tranches", descricao: "Engenheiro valida cada fase, admin libera o valor.", href: "/dashboard/operacao" },
+  QUITADO: { titulo: "Obra quitada", descricao: "Crédito totalmente liberado e quitado.", href: "/dashboard/operacao" },
+};
+
+const ORDEM: EtapaFunil[] = [
+  "KYC_PENDENTE",
+  "DOSSIE_EM_ANALISE",
+  "APROVADO",
+  "OBRA_CADASTRADA",
+  "HOMOLOGADA",
+  "EM_ANDAMENTO",
+  "QUITADO",
+];
 
 @Injectable()
 export class EtapasService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notificacoes: NotificacoesService,
-    private readonly email: EmailService,
-    private readonly pushNotificacoes: PushNotificacoesService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
-  /** Aprovação técnica (engenheiro) — dispara liberação financeira manual. */
-  async aprovar(aprovadorId: string, etapaId: string, observacao?: string) {
-    const etapa = await this.prisma.etapaObra.findUnique({
-      where: { etapaId },
-      include: { obra: { include: { credito: true, usuario: true } } },
+  /**
+   * Passo guiado do CLIENTE — cliente pode ter várias obras; a que ainda não
+   * terminou e está parada há mais tempo dita a jornada (a mais urgente).
+   * Só olha pra obra concluída se todas já estiverem QUITADO.
+   */
+  async paraCliente(usuarioId: string): Promise<JornadaResponse> {
+    const cacheKey = `jornada:cliente:${usuarioId}`;
+    const cached = await this.cache.get<JornadaResponse>(cacheKey);
+    if (cached) return cached;
+
+    const pendente = await this.prisma.obra.findFirst({
+      where: { clienteId: usuarioId, etapa: { not: "QUITADO" } },
+      orderBy: { criadoEm: "asc" },
     });
-    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+    const obra =
+      pendente ?? (await this.prisma.obra.findFirst({ where: { clienteId: usuarioId }, orderBy: { criadoEm: "desc" } }));
 
-    if (etapa.obra.status !== "EM_EXECUCAO") {
-      throw new BadRequestException(
-        "Obra ainda não está no pipe ativo. Aguarde homologação do Admin.",
-      );
-    }
+    const resposta = this.montarResposta("CLIENTE", obra?.etapa ?? "KYC_PENDENTE");
+    await this.cache.set(cacheKey, resposta, CACHE_TTL_MS);
+    return resposta;
+  }
 
-    const evidencias = await this.prisma.evidenciaEtapa.count({
-      where: { etapaId },
+  /** Passo guiado do ENGENHEIRO — quantas tranches aguardam validação. */
+  async paraEngenheiro(usuarioId: string): Promise<JornadaResponse> {
+    const pendentes = await this.prisma.tranche.count({
+      where: { status: "PENDENTE", obra: { engenheiroId: usuarioId } },
     });
-    if (evidencias === 0) {
-      throw new BadRequestException("Etapa precisa ter ao menos uma evidência fotográfica.");
-    }
-
-    const credito = await this.resolverCreditoObra(etapa.obra);
-    if (!credito || credito.status !== "ATIVO") {
-      throw new BadRequestException(
-        "Obra sem crédito ativo vinculado. Conclua o comitê e associe o crédito à obra antes da vistoria.",
-      );
-    }
-
-    const valorLiberacao =
-      Number(credito.valorAprovado) * (Number(etapa.percentualObra) / 100);
-    if (valorLiberacao <= 0) {
-      throw new BadRequestException("Valor de liberação inválido para esta etapa.");
-    }
-
-    const valorFmt = new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(valorLiberacao);
-
-    const liberacao = await this.prisma.$transaction(async (tx) => {
-      const updated = await tx.etapaObra.updateMany({
-        where: { etapaId, status: "AGUARDANDO_VISTORIA" },
-        data: { status: "CONCLUIDA", dataConclusaoReal: new Date() },
-      });
-      if (updated.count === 0) {
-        throw new BadRequestException("Etapa não está aguardando vistoria.");
-      }
-
-      await tx.etapaAuditLog.create({
-        data: {
-          etapaId,
-          acaoTipo: "APROVADA",
-          usuarioId: aprovadorId,
-          observacoes: observacao || null,
-        },
-      });
-
-      return tx.liberacaoParcela.create({
-        data: {
-          creditoId: credito.creditoId,
-          etapaId,
-          valor: valorLiberacao,
-          status: "AGUARDANDO_PAGAMENTO",
-        },
-      });
-    });
-
-    const liberacaoId = liberacao.liberacaoId;
-
-    const whatsMsg = buildCapitalFaseWhatsAppMessage({
-      obraNome: etapa.obra.nome,
-      etapaNome: etapa.nome,
-      valorFormatado: valorFmt,
-      liberacaoId: liberacaoId ?? etapaId,
-      tomadorNome: etapa.obra.usuario?.nome ?? "Tomador",
-    });
-    const whatsUrl = buildFinanceiroWhatsAppUrl(whatsMsg);
-
-    const notifCorpo = [
-      `Capital da fase "${etapa.nome}" aprovado tecnicamente (${valorFmt}).`,
-      "O financeiro IMOBI processará o pagamento na conta cadastrada.",
-      `Confirme pelo WhatsApp: ${whatsUrl}`,
-    ].join(" ");
-
-    await this.notificacoes.criar(
-      etapa.obra.usuarioId,
-      "PARCELA_LIBERADA",
-      `Capital fase liberado: ${etapa.nome}`,
-      notifCorpo,
-      `/dashboard/obras/${etapa.obra.obraId}`,
-    );
-
-    this.pushNotificacoes
-      .enviarPush({
-        usuarioId: etapa.obra.usuarioId,
-        titulo: `Capital fase ${etapa.nome} liberado`,
-        mensagem: `${valorFmt} — aguardando pagamento. Fale com o financeiro pelo WhatsApp.`,
-        tipo: "PARCELA_LIBERADA",
-        dados: {
-          obraId: etapa.obra.obraId,
-          etapaId,
-          liberacaoId: liberacaoId ?? "",
-          whatsAppUrl: whatsUrl,
-        },
-      })
-      .catch(() => {});
-
-    if (etapa.obra.usuario?.email) {
-      this.email
-        .capitalFaseAguardandoPagamentoEmail({
-          nome: etapa.obra.usuario.nome,
-          email: etapa.obra.usuario.email,
-          obraNome: etapa.obra.nome,
-          etapaNome: etapa.nome,
-          valor: valorLiberacao,
-          whatsAppUrl: whatsUrl,
-          liberacaoRef: liberacaoId?.slice(0, 8).toUpperCase() ?? "",
-        })
-        .catch(() => {});
-    }
-
     return {
-      ok: true,
-      observacao,
-      liberacaoId,
-      valorLiberacao,
-      whatsAppUrl: whatsUrl,
-      aguardandoPagamento: true,
+      role: "ENGENHEIRO",
+      titulo: pendentes > 0 ? `${pendentes} tranche(s) aguardando validação` : "Nenhuma pendência",
+      descricao: "Valide fases da obra para liberar as tranches.",
+      href: "/dashboard/engenheiro/vistoria",
+      concluido: pendentes === 0,
+      progressoPct: pendentes === 0 ? 100 : 0,
     };
   }
 
-  async rejeitar(aprovadorId: string, etapaId: string, motivo: string) {
-    const etapa = await this.prisma.etapaObra.findUnique({
-      where: { etapaId },
-      include: { obra: { include: { usuario: true } } },
-    });
-    if (!etapa) throw new NotFoundException("Etapa não encontrada.");
+  /** ADMIN vê o funil operacional inteiro — filas por etapa. */
+  async paraAdmin(): Promise<JornadaResponse> {
+    const cacheKey = "jornada:admin";
+    const cached = await this.cache.get<JornadaResponse>(cacheKey);
+    if (cached) return cached;
 
-    const updated = await this.prisma.etapaObra.updateMany({
-      where: { etapaId, status: "AGUARDANDO_VISTORIA" },
-      data: { status: "REPROVADA" },
-    });
-    if (updated.count === 0) {
-      throw new BadRequestException("Etapa não está aguardando vistoria.");
-    }
-
-    await this.prisma.etapaAuditLog.create({
-      data: {
-        etapaId,
-        acaoTipo: "REJEITADA",
-        usuarioId: aprovadorId,
-        observacoes: motivo,
-      },
+    const pendencias = await this.prisma.obra.count({
+      where: { etapa: { in: ["KYC_PENDENTE", "DOSSIE_EM_ANALISE", "OBRA_CADASTRADA"] } },
     });
 
-    await this.notificacoes.criar(
-      etapa.obra.usuarioId,
-      "ETAPA_REPROVADA",
-      `Etapa reprovada: ${etapa.nome}`,
-      `A etapa "${etapa.nome}" foi reprovada na vistoria. Motivo: ${motivo}`,
-      `/dashboard/obras/${etapa.obra.obraId}`,
-    );
-
-    return { ok: true, motivo };
+    const resposta: JornadaResponse = {
+      role: "ADMIN",
+      titulo: pendencias > 0 ? `${pendencias} obra(s) aguardando ação` : "Fila operacional limpa",
+      descricao: "Centro de comando — filas de KYC, homologação e liberação.",
+      href: "/dashboard/admin",
+      concluido: pendencias === 0,
+      progressoPct: pendencias === 0 ? 100 : 0,
+    };
+    await this.cache.set(cacheKey, resposta, CACHE_TTL_MS);
+    return resposta;
   }
 
-  private async resolverCreditoObra(obra: {
-    obraId: string;
-    usuarioId: string;
-    creditoId: string | null;
-    credito: { creditoId: string; status: string; valorAprovado: number } | null;
-  }) {
-    if (obra.credito?.status === "ATIVO") {
-      return obra.credito;
-    }
-
-    const creditoAtivo = await this.prisma.credito.findFirst({
-      where: { usuarioId: obra.usuarioId, status: "ATIVO" },
-      orderBy: { criadoEm: "desc" },
-    });
-
-    if (creditoAtivo && !obra.creditoId) {
-      await this.prisma.obra.update({
-        where: { obraId: obra.obraId },
-        data: { creditoId: creditoAtivo.creditoId },
-      });
-    }
-
-    return creditoAtivo;
-  }
-
-  async atualizarStatus(etapaId: string, status: string, usuarioId: string, userTipo: string) {
-    const etapaExistente = await this.prisma.etapaObra.findUnique({
-      where: { etapaId },
-      include: { obra: true },
-    });
-    if (!etapaExistente) throw new NotFoundException("Etapa não encontrada.");
-
-    const normalizedTipo = userTipo === "GESTOR_FUNDO" ? "GESTOR" : userTipo;
-    const isPrivileged = ["GESTOR", "ADMIN", "ENGENHEIRO"].includes(normalizedTipo);
-    if (!isPrivileged) {
-      if (etapaExistente.obra.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
-      if (status !== "AGUARDANDO_VISTORIA") {
-        throw new ForbiddenException("Você só pode submeter a etapa para vistoria.");
-      }
-      if (etapaExistente.obra.status !== "EM_EXECUCAO") {
-        throw new BadRequestException("Obra aguardando homologação do Admin IMOBI.");
-      }
-    }
-
-    return this.prisma.etapaObra.update({
-      where: { etapaId },
-      data: { status: status as EtapaStatus },
-    });
-  }
-
-  async listarPorObra(obraId: string, usuarioId: string, tipo: string) {
-    const isStaff = ["ADMIN", "GESTOR", "ENGENHEIRO", "GESTOR_OBRA"].includes(tipo);
-    if (!isStaff) {
-      const obra = await this.prisma.obra.findUnique({ where: { obraId }, select: { usuarioId: true } });
-      if (!obra) throw new NotFoundException("Obra não encontrada.");
-      if (obra.usuarioId !== usuarioId) throw new ForbiddenException("Acesso negado.");
-    }
-    return this.prisma.etapaObra.findMany({
-      where: { obraId },
-      orderBy: { ordem: "asc" },
-      include: {
-        evidencias: {
-          select: { evidenciaId: true, fotoUrl: true, validada: true, criadoEm: true },
-          orderBy: { criadoEm: "desc" },
-          take: 5,
-        },
-      },
-    });
+  private montarResposta(role: Role, etapa: EtapaFunil): JornadaResponse {
+    const { titulo, descricao, href } = TITULOS[etapa];
+    const indice = ORDEM.indexOf(etapa);
+    return {
+      role,
+      etapaAtual: etapa,
+      titulo,
+      descricao,
+      href,
+      concluido: etapa === "QUITADO",
+      progressoPct: Math.round(((indice + 1) / ORDEM.length) * 100),
+    };
   }
 }

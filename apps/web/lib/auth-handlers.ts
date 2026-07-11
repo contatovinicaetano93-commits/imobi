@@ -52,8 +52,8 @@ function parseAuthPayload(data: Record<string, unknown>) {
   let nome: string | null = null;
   let email: string | null = null;
 
-  const usuario = data.usuario as { tipo?: string; nome?: string; email?: string } | undefined;
-  if (usuario?.tipo) role = usuario.tipo;
+  const usuario = data.usuario as { role?: string; nome?: string; email?: string } | undefined;
+  if (usuario?.role) role = usuario.role;
   if (usuario?.nome) nome = usuario.nome;
   if (usuario?.email) email = usuario.email;
 
@@ -167,14 +167,14 @@ export async function handleRegisterPost(req: NextRequest): Promise<NextResponse
 
   const response = NextResponse.json({
     ok: true,
-    role: parsed.role ?? 'TOMADOR',
+    role: parsed.role ?? 'CLIENTE',
     nome: parsed.nome,
     email: parsed.email,
   });
   applyAuthCookies(response, {
     accessToken: parsed.accessToken,
     refreshToken: parsed.refreshToken,
-    role: parsed.role ?? 'TOMADOR',
+    role: parsed.role ?? 'CLIENTE',
   });
   return response;
 }

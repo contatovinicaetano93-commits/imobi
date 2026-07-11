@@ -31,7 +31,7 @@ export function MobileBottomNav({
 
   return (
     <nav
-      className="dash-bottom-nav z-40 w-full shrink-0 border-t border-white/10 bg-imobi-navy pb-[env(safe-area-inset-bottom,0px)] shadow-imobi-nav"
+      className="dash-bottom-nav z-40 w-full shrink-0 border-t border-white/10 bg-imobi-navy pb-[var(--dash-bottom-nav-safe)] shadow-imobi-nav"
       aria-label="Navegação principal"
     >
       <div

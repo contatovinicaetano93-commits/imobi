@@ -420,17 +420,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <div className="dash-mobile-column">
 
       {/* Mobile topbar — padrão SOMA (hamburger · logo · chip usuário) */}
-      <header
-        className="dash-mhidden dash-mobile-header"
-        style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-          height: 56, background: NAVY,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 0.75rem",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          gap: "0.35rem",
-        }}
-      >
+      <header className="dash-mhidden dash-mobile-header">
         {parentPath ? (
           <button
             onClick={() => router.push(parentPath as "/")}
@@ -512,9 +502,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <main
         id="main-content"
         className="dash-main"
-        style={{ flex: 1, minHeight: 0, overflowX: "hidden" }}
       >
-        <div style={{ height: 56 }} className="dash-spacer" />
         {children}
       </main>
 
@@ -638,7 +626,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         aria-label="Suporte via WhatsApp"
         className="dash-wa-fab"
         style={{
-          position: "fixed", bottom: 24, right: 24,
+          position: "fixed", right: 24,
           width: 44, height: 44, borderRadius: "50%",
           backgroundColor: "#25D366", display: "flex",
           alignItems: "center", justifyContent: "center",

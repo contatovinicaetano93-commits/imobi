@@ -1,14 +1,12 @@
 import { Module } from "@nestjs/common";
-import { EtapasController } from "./etapas.controller";
 import { EtapasService } from "./etapas.service";
-import { NotificacoesModule } from "../notificacoes/notificacoes.module";
-import { EmailModule } from "../email/email.module";
-import { PushNotificacoesModule } from "../push-notificacoes/push-notificacoes.module";
+import { EtapasController } from "./etapas.controller";
+import { PrismaModule } from "../prisma/prisma.module";
 
 @Module({
-  imports: [NotificacoesModule, EmailModule, PushNotificacoesModule],
-  controllers: [EtapasController],
+  imports: [PrismaModule],
   providers: [EtapasService],
+  controllers: [EtapasController],
   exports: [EtapasService],
 })
 export class EtapasModule {}
