@@ -21,7 +21,7 @@ type ApiLoginJson = {
   refreshToken?: string;
   access_token?: string;
   refresh_token?: string;
-  usuario?: { tipo?: string; nome?: string; email?: string };
+  usuario?: { role?: string; tipo?: string; nome?: string; email?: string };
   message?: string;
 };
 
@@ -94,7 +94,7 @@ async function tryDirectApiLogin(data: LoginInput): Promise<LoginResult | null> 
       const accessToken = json.accessToken ?? json.access_token;
       if (!accessToken) continue;
 
-      const role = json.usuario?.tipo ?? null;
+      const role = json.usuario?.role ?? json.usuario?.tipo ?? null;
       const nome = json.usuario?.nome ?? null;
       const email = json.usuario?.email ?? null;
       const refreshToken = json.refreshToken ?? json.refresh_token;
