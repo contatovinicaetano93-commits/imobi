@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { redirectAfterLogin } from "@/lib/post-login-redirect";
-import { wakeStagingApi } from "@/lib/wake-staging-api";
 import { loginWithRetry } from "@/lib/login-with-retry";
 import { registerWithRetry } from "@/lib/register-with-retry";
 import "./landing.css";
@@ -102,10 +101,6 @@ export default function LandingPage() {
     const h = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", h, { passive: true });
     return () => window.removeEventListener("scroll", h);
-  }, []);
-
-  useEffect(() => {
-    void wakeStagingApi(2);
   }, []);
 
   useEffect(() => {

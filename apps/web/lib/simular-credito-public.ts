@@ -1,5 +1,4 @@
 import type { CreditoSimulacao } from '@/lib/api';
-import { wakeStagingApi } from '@/lib/wake-staging-api';
 import { sleep } from '@/lib/resilience';
 
 export type SimularCreditoPublicInput = {
@@ -25,7 +24,6 @@ export async function simularCreditoPublic(
   input: SimularCreditoPublicInput,
   onStatus?: (msg: string) => void,
 ): Promise<CreditoSimulacao> {
-  await wakeStagingApi(2);
   onStatus?.('Calculando simulação…');
 
   const payload = {
@@ -52,8 +50,7 @@ export async function simularCreditoPublic(
     lastMessage = body.message ?? lastMessage;
 
     if (res.status >= 500 || res.status === 503) {
-      onStatus?.('Servidor acordando… aguarde um instante.');
-      await wakeStagingApi(3);
+      onStatus?.('Tentando novamente…');
       await sleep(3500 * attempt);
       continue;
     }

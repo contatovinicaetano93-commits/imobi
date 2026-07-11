@@ -31,6 +31,12 @@ function decodeJwt(token: string): { role?: string; exp?: number } | null {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // API embutida cuida da própria auth (requireAuth/requireRole) e devolve 401/403 em JSON,
+  // não faz sentido redirecionar pra /login aqui.
+  if (pathname.startsWith("/api/v1")) {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/api/proxy/auth") || pathname.startsWith("/web-api/auth")) {
     return NextResponse.next();
   }

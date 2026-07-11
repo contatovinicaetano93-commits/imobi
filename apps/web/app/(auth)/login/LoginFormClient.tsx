@@ -2,11 +2,10 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { LoginSchema, type LoginInput } from "@imbobi/schemas";
 import PasswordInput from "../_components/PasswordInput";
 import { redirectAfterLogin } from "@/lib/post-login-redirect";
-import { wakeStagingApi } from "@/lib/wake-staging-api";
 import { loginWithRetry } from "@/lib/login-with-retry";
 
 type Props = {
@@ -22,10 +21,6 @@ export default function LoginFormClient({ next }: Props) {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({ resolver: zodResolver(LoginSchema) });
-
-  useEffect(() => {
-    void wakeStagingApi(2);
-  }, []);
 
   const onSubmit = async (data: LoginInput) => {
     setErro(null);

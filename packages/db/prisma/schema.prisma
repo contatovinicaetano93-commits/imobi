@@ -1,0 +1,159 @@
+// Schema canônico Imobi (reestruturado) — ver docs/FLUXO_CANONICO.md
+// 4 papéis: ADMIN, CLIENTE, FUNDO, ENGENHEIRO
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ───────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  CLIENTE
+  FUNDO
+  ENGENHEIRO
+}
+
+/// Funil único — fonte de verdade do estágio da obra
+enum EtapaFunil {
+  KYC_PENDENTE
+  DOSSIE_EM_ANALISE
+  APROVADO
+  OBRA_CADASTRADA
+  HOMOLOGADA
+  EM_ANDAMENTO
+  QUITADO
+}
+
+enum DocumentoStatus {
+  PENDENTE
+  APROVADO
+  REJEITADO
+}
+
+enum TrancheStatus {
+  PENDENTE
+  VALIDADA_ENGENHEIRO
+  LIBERADA_ADMIN
+  REJEITADA
+}
+
+// ── Modelos ─────────────────────────────────────────────────────────
+
+model Usuario {
+  id           String   @id @default(uuid())
+  nome         String
+  email        String   @unique
+  senhaHash    String
+  role         Role
+  ativo        Boolean   @default(true)
+  resetToken           String?   @unique
+  resetTokenExpiraEm   DateTime?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  obrasComoCliente    Obra[]          @relation("ObraCliente")
+  obrasComoEngenheiro Obra[]          @relation("ObraEngenheiro")
+  tranchesValidadas   Tranche[]       @relation("TrancheValidadaPor")
+  tranchesLiberadas   Tranche[]       @relation("TrancheLiberadaPor")
+  historicoEtapas     HistoricoEtapa[]
+
+  @@map("usuarios")
+}
+
+model Obra {
+  id            String     @id @default(uuid())
+  nome          String
+  endereco      String
+  valorCredito  Decimal    @db.Decimal(14, 2)
+  etapa         EtapaFunil @default(KYC_PENDENTE)
+  criadoEm      DateTime   @default(now())
+  atualizadoEm  DateTime   @updatedAt
+
+  clienteId     String
+  cliente       Usuario    @relation("ObraCliente", fields: [clienteId], references: [id])
+
+  engenheiroId  String?
+  engenheiro    Usuario?   @relation("ObraEngenheiro", fields: [engenheiroId], references: [id])
+
+  documentos    Documento[]
+  tranches      Tranche[]
+  historico     HistoricoEtapa[]
+
+  @@index([clienteId])
+  @@index([engenheiroId])
+  @@index([etapa])
+  @@map("obras")
+}
+
+/// KYC do cliente + documentos da obra — um único modelo, `tipo` diferencia
+model Documento {
+  id        String          @id @default(uuid())
+  tipo      String
+  url       String
+  status    DocumentoStatus @default(PENDENTE)
+  criadoEm  DateTime        @default(now())
+
+  obraId    String
+  obra      Obra            @relation(fields: [obraId], references: [id])
+
+  @@index([obraId])
+  @@map("documentos")
+}
+
+model Tranche {
+  id        String        @id @default(uuid())
+  numero    Int
+  valor     Decimal       @db.Decimal(14, 2)
+  status    TrancheStatus @default(PENDENTE)
+
+  validadoPorId String?
+  validadoPor   Usuario?  @relation("TrancheValidadaPor", fields: [validadoPorId], references: [id])
+  validadoEm    DateTime?
+
+  liberadoPorId String?
+  liberadoPor   Usuario?  @relation("TrancheLiberadaPor", fields: [liberadoPorId], references: [id])
+  liberadoEm    DateTime?
+
+  obraId    String
+  obra      Obra          @relation(fields: [obraId], references: [id])
+
+  evidencias Evidencia[]
+
+  @@index([obraId])
+  @@map("tranches")
+}
+
+model Evidencia {
+  id          String   @id @default(uuid())
+  url         String
+  descricao   String?
+  criadoEm    DateTime @default(now())
+
+  trancheId   String
+  tranche     Tranche  @relation(fields: [trancheId], references: [id])
+
+  @@index([trancheId])
+  @@map("evidencias")
+}
+
+/// Log de auditoria — transições de etapa (usado pelos KPIs do Fundo)
+model HistoricoEtapa {
+  id         String     @id @default(uuid())
+  etapa      EtapaFunil
+  criadoEm   DateTime   @default(now())
+
+  obraId     String
+  obra       Obra       @relation(fields: [obraId], references: [id])
+
+  usuarioId  String?
+  usuario    Usuario?   @relation(fields: [usuarioId], references: [id])
+
+  @@index([obraId])
+  @@map("historico_etapas")
+}

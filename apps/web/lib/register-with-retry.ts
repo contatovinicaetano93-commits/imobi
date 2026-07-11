@@ -1,9 +1,5 @@
 import type { CadastroUsuarioInput } from '@imbobi/schemas';
-import { wakeStagingApi } from '@/lib/wake-staging-api';
 import { normalizeCadastroInput } from '@/lib/normalize-cadastro';
-import { sleep } from '@/lib/resilience';
-
-const REGISTER_URLS = ['/web-api/auth/registrar', '/api/proxy/auth/registrar'];
 
 export type RegisterResult = {
   ok: true;
@@ -12,63 +8,47 @@ export type RegisterResult = {
   email: string | null;
 };
 
+/** API é same-origin agora — sem wake, sem fallback entre hosts. */
 export async function registerWithRetry(
   data: CadastroUsuarioInput,
   onStatus?: (msg: string) => void,
-  maxAttempts = 4,
+  maxAttempts = 2,
 ): Promise<RegisterResult> {
-  onStatus?.('Acordando servidor… (até 1 minuto na 1ª vez)');
-  await wakeStagingApi(3);
-
-  const normalized = normalizeCadastroInput(data);
-  const payload = JSON.stringify({ ...normalized, consentidoEm: new Date().toISOString() });
+  const payload = JSON.stringify(normalizeCadastroInput(data));
   let lastError = 'Não foi possível criar a conta.';
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    if (attempt > 1) {
-      onStatus?.(`Tentativa ${attempt}/${maxAttempts}…`);
-      await wakeStagingApi(2);
-    } else {
-      onStatus?.('Criando sua conta…');
+    onStatus?.(attempt === 1 ? 'Criando sua conta…' : `Tentativa ${attempt}/${maxAttempts}…`);
+
+    const res = await fetch('/web-api/auth/registrar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+      credentials: 'same-origin',
+    }).catch(() => null);
+
+    if (!res) {
+      lastError = 'Falha de rede. Tentando novamente…';
+      continue;
     }
 
-    for (const url of REGISTER_URLS) {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payload,
-        credentials: 'same-origin',
-      });
+    const json = (await res.json().catch(() => ({}))) as {
+      message?: string;
+      role?: string | null;
+      nome?: string | null;
+      email?: string | null;
+      ok?: boolean;
+    };
 
-      const json = (await res.json().catch(() => ({}))) as {
-        message?: string;
-        role?: string | null;
-        nome?: string | null;
-        email?: string | null;
-        ok?: boolean;
-      };
+    if (res.status === 409) throw new Error(json.message ?? 'E-mail já cadastrado.');
+    if (res.status === 400) throw new Error(json.message ?? 'Dados inválidos. Verifique o formulário.');
 
-      if (res.status === 409) {
-        throw new Error(json.message ?? 'E-mail ou CPF já cadastrado.');
-      }
-      if (res.status === 400) {
-        throw new Error(json.message ?? 'Dados inválidos. Verifique o formulário.');
-      }
-
-      if (res.ok && json.ok !== false) {
-        return {
-          ok: true,
-          role: json.role ?? 'TOMADOR',
-          nome: json.nome ?? null,
-          email: json.email ?? null,
-        };
-      }
-
-      if (json.message) lastError = json.message;
+    if (res.ok && json.ok !== false) {
+      return { ok: true, role: json.role ?? 'CLIENTE', nome: json.nome ?? null, email: json.email ?? null };
     }
 
-    await sleep(4000 * attempt);
+    if (json.message) lastError = json.message;
   }
 
-  throw new Error(`${lastError} Aguarde 1 minuto e tente novamente.`);
+  throw new Error(lastError);
 }
