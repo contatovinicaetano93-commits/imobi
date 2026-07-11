@@ -15,4 +15,21 @@ export class AdminService {
 
     return { documentosPendentes, obrasParaHomologar, tranchesParaLiberar };
   }
+
+  /** Tranches validadas pelo engenheiro aguardando liberação do admin. */
+  tranchesPendentesLiberacao() {
+    return this.prisma.tranche.findMany({
+      where: { status: "VALIDADA_ENGENHEIRO" },
+      include: {
+        obra: {
+          select: {
+            id: true,
+            nome: true,
+            cliente: { select: { nome: true, email: true } },
+          },
+        },
+      },
+      orderBy: [{ obraId: "asc" }, { numero: "asc" }],
+    });
+  }
 }

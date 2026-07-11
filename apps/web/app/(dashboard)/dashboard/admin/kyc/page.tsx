@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { KycFilaClient } from "@/app/(dashboard)/_components/kyc/KycFilaClient";
-
-export default function AdminKycPage() {
-  return <KycFilaClient context="admin" />;
+export default function AdminKycLegacyPage() {
+  redirect("/dashboard/admin/documentos");
 }

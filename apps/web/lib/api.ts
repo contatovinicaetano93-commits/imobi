@@ -790,8 +790,30 @@ export type AtividadeRecente = {
 export type AdminObraResumo = {
   id: string;
   nome: string;
+  endereco?: string;
+  etapa: string;
+  valorCredito?: number | string;
+  cliente?: { nome: string; email: string };
+};
+
+export type AdminTranchePendente = {
+  id: string;
+  numero: number;
+  valor: number | string;
   status: string;
-  tomador?: string;
+  obra: {
+    id: string;
+    nome: string;
+    cliente: { nome: string; email: string };
+  };
+};
+
+export type AdminUsuarioResumo = {
+  id: string;
+  nome: string;
+  email: string;
+  role: string;
+  ativo: boolean;
 };
 
 export type AdminSearchTipo = "usuario" | "obra" | "dossie" | "documento";
@@ -813,13 +835,9 @@ export type AdminSearchResponse = {
 };
 
 export type AdminFilasResponse = {
-  kycPendentes: number;
-  viabilidadePendentes: number;
-  propostasPublicasPendentes: number;
-  obrasAguardandoHomologacao: number;
-  liberacoesAguardandoPagamento: number;
-  etapasAguardandoVistoria: number;
-  atualizadoEm: string;
+  documentosPendentes: number;
+  obrasParaHomologar: number;
+  tranchesParaLiberar: number;
 };
 
 export type LiberacaoAguardandoPagamento = {
@@ -841,30 +859,24 @@ export type LiberacaoAguardandoPagamento = {
 };
 
 export const adminApi = {
-  overview: () => apiFetch<AdminOverview>("/admin/overview"),
-  metricas: () => apiFetch<AdminMetricas>("/admin/metricas"),
   filas: () => apiFetch<AdminFilasResponse>("/admin/filas"),
-  buscar: (q: string, limit = 20) =>
-    apiFetch<AdminSearchResponse>(
-      `/admin/search?q=${encodeURIComponent(q)}&limit=${limit}`,
-    ),
-  atividades: (limit?: number) =>
-    apiFetch<AtividadeRecente[]>(`/admin/atividades${limit ? `?limit=${limit}` : ""}`),
-  listarObras: (limit = 50) =>
-    apiFetch<AdminObraResumo[]>(`/admin/obras?limit=${limit}`),
-  homologarObra: (obraId: string) =>
-    apiFetch(`/admin/obras/${obraId}/homologar`, { method: "PATCH" }),
-  reprovarHomologacao: (obraId: string, motivo: string) =>
-    apiFetch(`/admin/obras/${obraId}/reprovar-homologacao`, {
+  listarObras: () => apiFetch<AdminObraResumo[]>("/obras"),
+  listarEngenheiros: () => apiFetch<AdminUsuarioResumo[]>("/usuarios?role=ENGENHEIRO"),
+  homologarObra: (obraId: string, engenheiroId: string) =>
+    apiFetch(`/obras/${obraId}/homologar`, {
       method: "PATCH",
-      body: JSON.stringify({ motivo }),
+      body: JSON.stringify({ engenheiroId }),
     }),
-  listarLiberacoesAguardandoPagamento: () =>
-    apiFetch<LiberacaoAguardandoPagamento[]>("/admin/liberacoes/aguardando-pagamento"),
-  confirmarPagamento: (liberacaoId: string, referenciaPagamento?: string) =>
-    apiFetch(`/admin/liberacoes/${liberacaoId}/confirmar-pagamento`, {
+  avancarObra: (obraId: string) =>
+    apiFetch(`/obras/${obraId}/avancar`, { method: "PATCH" }),
+  tranchesPendentesLiberacao: () =>
+    apiFetch<AdminTranchePendente[]>("/admin/tranches/pendentes-liberacao"),
+  liberarTranche: (trancheId: string) =>
+    apiFetch(`/tranches/${trancheId}/liberar`, { method: "PATCH" }),
+  revisarDocumento: (documentoId: string, status: "APROVADO" | "REJEITADO") =>
+    apiFetch(`/documentos/${documentoId}/revisar`, {
       method: "PATCH",
-      body: JSON.stringify({ referenciaPagamento }),
+      body: JSON.stringify({ status }),
     }),
 };
 

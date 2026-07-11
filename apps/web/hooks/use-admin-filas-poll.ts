@@ -8,12 +8,9 @@ const BACKOFF_AFTER_ERROR_MS = 60_000;
 
 function filasSignature(data: AdminFilasResponse): string {
   return [
-    data.kycPendentes,
-    data.propostasPublicasPendentes,
-    data.viabilidadePendentes,
-    data.obrasAguardandoHomologacao,
-    data.liberacoesAguardandoPagamento,
-    data.etapasAguardandoVistoria,
+    data.documentosPendentes,
+    data.obrasParaHomologar,
+    data.tranchesParaLiberar,
   ].join(":");
 }
 
@@ -83,7 +80,6 @@ export function useAdminFilasPoll(
   return { filas, erro, recarregar };
 }
 
-/** Dispara callback quando totais das filas mudam (útil para refetch de listas). */
 export function useAdminFilasOnChange(
   onChange: () => void,
   intervalMs = DEFAULT_INTERVAL_MS,

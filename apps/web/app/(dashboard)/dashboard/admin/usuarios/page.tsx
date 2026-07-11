@@ -105,7 +105,7 @@ export default function UsuariosAdminPage() {
   const [editForm, setEditForm] = useState<EditarUsuarioForm | null>(null);
 
   useEffect(() => {
-    fetch("/api/proxy/admin/usuarios")
+    fetch("/api/proxy/usuarios")
       .then(async (r) => {
         if (!r.ok) {
           const json = await r.json().catch(() => ({}));
@@ -138,7 +138,7 @@ export default function UsuariosAdminPage() {
     setSalvando(id);
     setErroAcao("");
     try {
-      const res = await fetch(`/api/proxy/admin/usuarios/${id}`, {
+      const res = await fetch(`/api/proxy/usuarios/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -216,7 +216,7 @@ export default function UsuariosAdminPage() {
     setCriando(true);
     setErroForm("");
     try {
-      const res = await fetch("/api/proxy/admin/usuarios", {
+      const res = await fetch("/api/proxy/usuarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -240,7 +240,7 @@ export default function UsuariosAdminPage() {
     setExcluindo(true);
     setErroAcao("");
     try {
-      const res = await fetch(`/api/proxy/admin/usuarios/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/proxy/usuarios/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
         setErroAcao((json as { message?: string })?.message ?? "Erro ao excluir usuário.");

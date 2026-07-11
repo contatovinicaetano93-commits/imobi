@@ -14,4 +14,9 @@ export class AdminController {
   filas() {
     return this.admin.filas();
   }
+
+  @Get("tranches/pendentes-liberacao")
+  tranchesPendentesLiberacao() {
+    return this.admin.tranchesPendentesLiberacao();
+  }
 }
