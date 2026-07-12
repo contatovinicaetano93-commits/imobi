@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Push Imobi WEB env vars to Vercel (API token in .env.vercel.local — gitignored).
+ * Push Imobi env vars to Vercel (API token in .env.vercel.local — gitignored).
  *
  *   pnpm vercel:env:push
  *   pnpm vercel:env:push -- --project imobi-web
  *
- * Secrets stay on Render (API). Vercel web only needs JWT + API URL.
+ * Stack: Vercel (web + API embutida) + Neon (Postgres) — sem serviço de API separado.
+ * Só envia as chaves presentes em .env.vercel.local / no ambiente (não sobrescreve com vazio).
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -38,21 +39,49 @@ if (!token) {
   process.exit(1);
 }
 
-const JWT_SECRET = (process.env.JWT_SECRET ?? fileEnv.JWT_SECRET ?? '').trim();
-if (!JWT_SECRET) {
-  console.error('❌ JWT_SECRET ausente em .env.vercel.local (obrigatório — sem fallback no script)');
-  process.exit(1);
+function required(key) {
+  const value = (process.env[key] ?? fileEnv[key] ?? '').trim();
+  if (!value) {
+    console.error(`❌ ${key} ausente em .env.vercel.local (obrigatório)`);
+    process.exit(1);
+  }
+  return value;
 }
 
-const NEXT_PUBLIC_API_URL =
-  process.env.NEXT_PUBLIC_API_URL ??
-  fileEnv.NEXT_PUBLIC_API_URL ??
-  'https://imobi-api-staging.onrender.com';
+function optional(key) {
+  const value = (process.env[key] ?? fileEnv[key] ?? '').trim();
+  return value || undefined;
+}
+
+const DATABASE_URL = required('DATABASE_URL');
+const JWT_SECRET = required('JWT_SECRET');
+
+// Chaves opcionais — só entram na lista se estiverem definidas localmente.
+const OPTIONAL_KEYS = [
+  'APP_URL',
+  'EMAIL_PROVIDER',
+  'SENDGRID_API_KEY',
+  'SMTP_HOST',
+  'SMTP_PORT',
+  'SMTP_USER',
+  'SMTP_PASS',
+  'SMTP_FROM',
+  'AWS_REGION',
+  'AWS_S3_REGION',
+  'AWS_S3_BUCKET',
+  'AWS_ACCESS_KEY_ID',
+  'AWS_SECRET_ACCESS_KEY',
+  'NEXT_PUBLIC_APP_NAME',
+];
+
+const SECRET_KEYS = new Set(['JWT_SECRET', 'DATABASE_URL', 'SENDGRID_API_KEY', 'SMTP_PASS', 'AWS_SECRET_ACCESS_KEY']);
 
 const VARS = [
+  { key: 'DATABASE_URL', value: DATABASE_URL, type: 'encrypted' },
   { key: 'JWT_SECRET', value: JWT_SECRET, type: 'encrypted' },
-  { key: 'NEXT_PUBLIC_API_URL', value: NEXT_PUBLIC_API_URL, type: 'plain' },
-  { key: 'NEXT_PUBLIC_APP_NAME', value: 'IMOBI', type: 'plain' },
+  ...OPTIONAL_KEYS.map((key) => ({ key, value: optional(key), type: SECRET_KEYS.has(key) ? 'encrypted' : 'plain' })).filter(
+    (v) => v.value !== undefined,
+  ),
 ];
 
 const targets = ['production', 'preview', 'development'];

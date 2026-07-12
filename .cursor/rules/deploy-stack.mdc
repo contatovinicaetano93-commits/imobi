@@ -1,12 +1,12 @@
 ---
-description: Stack de deploy canônica — Vercel + Render apenas. Railway e AWS EC2 são legado bloqueado.
+description: Stack de deploy canônica — Vercel + Neon apenas. Render, Railway, AWS EC2 e Docker são legado.
 globs:
 alwaysApply: true
 ---
 
 # Deploy stack — Imobi (fonte única)
 
-**Decisão vigente:** API no **Render**, web no **Vercel**. Railway e AWS EC2 estão **pausados/bloqueados**.
+**Decisão vigente:** web + API no **Vercel** (route handlers em `apps/web/app/api/v1`), banco no **Neon**. Render, Railway, AWS EC2 e Docker estão **descontinuados**.
 
 ## Referência obrigatória
 
@@ -16,33 +16,30 @@ Antes de sugerir deploy, infra ou env vars, ler `docs/DEPLOY_STACK.md`.
 
 | Recurso | URL |
 |---------|-----|
-| Web | https://imobi-web-ten.vercel.app |
-| API staging | https://imobi-api-staging.onrender.com |
-| API prod | https://imobi-api-efgg.onrender.com |
+| Web + API | https://imobi-web-ten.vercel.app |
 
 ## Comandos de deploy
 
 ```bash
 pnpm vercel:env:push
-pnpm render:env:push
-pnpm render:redeploy
-bash scripts/post-deploy-verification.sh https://imobi-api-staging.onrender.com
+pnpm db:migrate:deploy
 ```
 
-Secrets locais: `.env.vercel.local`, `.env.render.local` (gitignored).
+Secrets locais: `.env.vercel.local`, `apps/web/.env.local` (gitignored).
 
-**Branch canônica:** `main` — Vercel + Render fazem auto-deploy nesta branch.
+**Branch canônica:** `main` — Vercel faz auto-deploy nesta branch.
 
 ## Proibido (não sugerir nem reativar)
 
+- Render (`services/api`, `render.yaml`, `RENDER_*` secrets) — removido jul/2026
 - Railway (`railway.toml`, `docs/legacy/RAILWAY_*.md`, `RAILWAY_*` secrets)
 - `docs/legacy/scripts/deploy-api.sh` (AWS EC2)
-- Workflow legado com deploy Railway/AWS (usar `ci-cd.yml` + `deploy-api.yml` como quality gate)
-- Criar novos guias ou scripts que mencionem Railway como opção ativa
+- Docker/NestJS API separada — API agora roda embutida no Next.js
+- Criar novos guias ou scripts que mencionem Render/Railway como opção ativa
 - Usar branches `claude/*` como branch de deploy (legado)
 
 ## Ao tocar em CI/CD ou scripts de deploy
 
 1. Validar contra `docs/DEPLOY_STACK.md`
-2. Usar Render API (`pnpm render:*`) e Vercel (`pnpm vercel:*`)
-3. Health check: `curl -s https://imobi-api-staging.onrender.com/api/v1/health`
+2. Usar Vercel (`pnpm vercel:*`) e Neon (`pnpm db:*`)
+3. Health check: `curl -s https://imobi-web-ten.vercel.app/api/v1/health`
