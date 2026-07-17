@@ -288,7 +288,7 @@ export default function LandingPage() {
             <p className="hero-sub">Crédito ágil para sua obra. Envie a documentação do empreendimento, nossa equipe analisa a viabilidade e estrutura a operação — com liberação por etapa e transparência total.</p>
             <div className="hero-actions">
               <button className="btn-hero-primary" onClick={() => router.push("/envie-seu-projeto" as Route)}>Envie seu projeto</button>
-              <button className="btn-hero-ghost"   onClick={() => scrollTo("como")}>Ver o processo →</button>
+              <button className="btn-hero-ghost"   onClick={() => scrollTo("como")}>Ver o processo <span className="btn-arrow">→</span></button>
             </div>
             <div className="hero-strip">
               {[
